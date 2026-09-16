@@ -3448,6 +3448,54 @@ async function checkGradingHistory(browser, base) {
   }
 }
 
+async function checkInputCoverage(browser, base) {
+  for (const width of [1280, 390, 320]) {
+    for (const variant of ['partial', 'empty']) {
+      const data = JSON.parse(await readFile(path.join(FIXTURES, variant + '.json'), 'utf8'));
+      const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/' + variant + '.json', FRESH_NOW, width);
+      const cov = data.run.coverage, a = cov.acceptance;
+      const coverText = await said(page, '#cover-dek');
+      check(variant + ' ' + width + ': honest empty headline', (await said(page, '#cover-h1')).includes(variant === 'partial' ? 'evaluated subset' : 'Nothing qualifies'));
+      check(variant + ' ' + width + ': coverage beside verdict', coverText.includes(variant === 'partial' ? a.ready_stocks + ' of ' + a.intended_stocks : 'All ' + a.intended_stocks + ' intended stocks'), coverText);
+      if (variant === 'partial') {
+        check('unfetched count and benchmark scope are visible beside empty verdict', coverText.includes(cov.unfetched_budget + ' fetch names were never attempted') && coverText.includes('fetch counts include the benchmark'));
+        check('empty workspace retains coverage warning', (await said(page, '[data-empty=bursts]')).includes('Incomplete input coverage'));
+        check('next-action message retains coverage warning', (await said(page, '#next-p')).includes('Incomplete input coverage'));
+      }
+      await go(page, '#/method');
+      const method = await said(page, '#run-meta');
+      for (const words of ['split-adjusted (not dividend-adjusted)', 'historical point-in-time membership',
+          'intended stocks', 'budget-unfetched', 'missing required previous session', 'Expected 2026-09-10']) {
+        check(variant + ' ' + width + ': Method says ' + words, method.includes(words), method);
+      }
+      check('Method reports ready denominator', (await said(page, '#run-strip')).includes(a.ready_stocks + ' of ' + a.intended_stocks));
+      check('Method has no horizontal overflow at ' + width, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+      eq('input page has no browser errors', errors.length, 0);
+      if (shotsDir && variant === 'partial') {
+        await mkdir(shotsDir, { recursive: true });
+        await page.screenshot({ path: path.join(shotsDir, 'inputs-method-' + width + '.png'), fullPage: true });
+        await go(page, '#/explore');
+        await page.screenshot({ path: path.join(shotsDir, 'inputs-empty-' + width + '.png'), fullPage: true });
+      }
+      await context.close();
+    }
+  }
+  const legacy = JSON.parse(await readFile(path.join(FIXTURES, 'empty.json'), 'utf8'));
+  delete legacy.run.coverage.version; delete legacy.run.coverage.acceptance; delete legacy.run.input_basis;
+  legacy.cover.dek = 'No reaction candidates were recorded.';
+  const filename = path.join(ROOT, 'tests/fixtures/page/_inputs-legacy.json');
+  await writeFile(filename, JSON.stringify(legacy));
+  try {
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/_inputs-legacy.json', FRESH_NOW, 390);
+    check('legacy empty result stays unknown', (await said(page, '#cover-dek')).includes('Input completeness was not recorded'));
+    await go(page, '#/method');
+    check('legacy basis is not backfilled', (await said(page, '#run-meta')).includes('adjustment basis not recorded'));
+    check('legacy stats do not invent completeness', (await said(page, '#run-strip')).includes('not recorded'));
+    eq('legacy inputs browser errors', errors.length, 0);
+    await context.close();
+  } finally { await unlink(filename); }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -3477,6 +3525,7 @@ async function main() {
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
     if (runs('grading')) await checkGradingHistory(browser, base);
+    if (runs('inputs')) await checkInputCoverage(browser, base);
   } finally {
     await browser.close();
     server.close();

@@ -1,6 +1,6 @@
 # SpicyStock — working notes
 
-An evening run over every US-listed common stock, a static page that says
+An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
 `knowledge/method.md` says whose number every rule is, `README.md` says what
 the software does with them, `knowledge/strategy.md` is the rulebook the
@@ -271,8 +271,8 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1137 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
-over eight fixtures walked through every view, stock, lens, search, the
+The suite now collects 1176 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+over ten fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
 keyboard, deep links
@@ -1725,3 +1725,70 @@ the new fixture path was not. A second AND allowlist matches only those two
 exact values at that exact path, with scope protection in the regression suite.
 No fixture bytes, credential, default detector or historical commit changed.
 The initial Tests run and subsequent CI results are linked from PR #68.
+
+## Checkpoint, 16 Sep 2026 — universe, coverage and bar basis
+
+Tahir authorized Stock-only repository edits, branch/commit/push and one PR;
+no merge, live scan, deployment, email or credential/settings change. Branch
+`reliability/input-truthfulness` starts at verified origin/main
+`7e6d056672079e2ac46b6e5a84ae9589f1648e80`, after PR #68. The existing partial
+draft was preserved and completed. Main was rechecked unchanged and no PR was
+open before publication. Work used one active builder and no subagents.
+
+**Reproduced on the base.** Five negative assertions failed as intended: a
+valid common stock with directory volume 50,000 disappeared before its actual
++5% / 150,000-share reaction bar could be scanned; a $2.90 directory quote hid
+an actual $3.05 breakout; a three-name fetch reported three requests after only
+two were attempted; published coverage lacked its intended population; and a
+September 10 scan did not identify its September 15 directory as a later snapshot.
+
+**Settled contract.** Security classification no longer gates on directory
+quotes. The existing $3 policy reads cent-rounded session closes after fetch,
+with seed/explicit exceptions retained; actual-session volume stays in each
+scanner. Selection and the extended DownloadStats reconcile directory rows,
+classification, seeds, capacity, requests, no bars, retry failures, permanent
+refusals, unattempted tails, stale/gapped/unreadable frames, benchmark, price
+exclusions, measured routes and quality errors. Counts have bounded reason
+samples and membership identities; inconsistent populations cannot publish.
+Duplicate repair is an overlapping diagnostic, not another exclusive bucket.
+
+The unchanged 50% minimum now means usable session bars divided by intended
+stocks, excluding SPY and before current-price eligibility. Below it, or on
+permanent refusal, no new record publishes. Partial coverage at/above it,
+capacity cuts or scan/quality errors are degraded; incomplete empty results
+name their evaluated subset. Complete means this selection, never every listed
+security. The 8,000-name bound can exclude a breakout if it binds and is said
+so; it cuts zero names in the measured archive. The 900-second budget stays.
+
+**Basis and history.** The actual request and published metadata agree on
+Alpaca daily `Adjustment.SPLIT`, explicit feed and expected/evaluated sessions.
+Method, stock details, archived recovery context and newly saved originals
+carry the basis. Old originals remain unknown. Nasdaq live/cache/seed/explicit
+source, capture timestamp, selection identity, snapshot SHA-256 and date
+relationship are explicit. Neither a current nor a cached directory establishes
+historical point-in-time membership; no survivorship-free backtest is claimed.
+
+**Measured impact.** The archived 7,141-row directory admits 3,039→4,797 stocks;
+initial SDK batches rise 31→48 (+54.84%). The uniform 260-bar fake returns
+790,400→1,247,480 bars in 13.260→20.186 seconds. Full fixture bytes are
+228,193→231,724 raw and 27,159→28,034 gzip. These are offline measurements,
+not live timing or dollar-cost forecasts. The twelve-read chart-reader cap is
+unchanged; future candidate-dependent calls can vary within it. No live Nasdaq,
+Alpaca, other provider, chart-reader model or Resend call was made.
+
+**Verification.** Full pytest: 1,176 passed; fixtures: eleven current;
+continuity: 83 passed; chart: 182 passed; full page with screenshots: 3,692
+passed. Six targeted mutations were killed with unaffected controls remaining
+green. Desktop and 390/320px screenshots, including Method, incomplete results
+and saved continuity, were inspected. The last wording clarification separates
+stock coverage from fetch counts that include the benchmark; its focused
+Python/browser and regenerated-fixture checks are recorded in the PR. Design
+v2.13.0 remains installed, all 22 hashes match, and vendored assets are untouched.
+
+KEEP discovery v1, scan-aware grading, historical audit, My setups/recovery,
+browser-local annotations and ticket/breadth gates. FIX the input boundary only.
+DEFER holiday/short-session timing, full measurement-to-publication provenance,
+dollar-formula source validation, real qualifying-ticket evidence and trading
+edge. OMIT paid replay, manual deployment and sibling changes. Exact published
+head and automatic CI status belong to the PR. Next: review that PR; merging
+requires separate authorization. No older dispatch prompt supersedes this scope.

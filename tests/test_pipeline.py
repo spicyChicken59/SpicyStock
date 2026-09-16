@@ -376,17 +376,15 @@ def test_a_burst_no_limit_can_hold_a_stop_under_is_published_without_a_ticket(fa
 
 
 def test_a_thin_night_degrades_and_publishes_over_the_names_that_printed(market, claude, fake_resend, fake_alpaca, tmp_path):
-    """Eight of thirteen names one session stale: under half carry the
-    session, over five percent do. The run continues over the five that
-    printed, says coverage_thin, and breadth counts those five."""
-    stale = [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(8)]
+    """Six of thirteen names stale: usable coverage exceeds half and degrades."""
+    stale = [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(6)]
     for name in stale:
         fake_alpaca.add_history(name, fake_alpaca.history[name], stale_sessions=1)
     rep, data, docs = evening(tmp_path, market)
     assert rep.exit_code() == pipeline.EXIT_DEGRADED, rep.failure
     assert [p["kind"] for p in data["run"]["problems"]] == ["coverage_thin"]
-    assert data["run"]["session"] == SESSION and data["run"]["coverage"]["stale"] == 8
-    assert data["breadth"]["universe"] == 5 and data["trades"] == ["AAA"]
+    assert data["run"]["session"] == SESSION and data["run"]["coverage"]["stale"] == 6
+    assert data["breadth"]["universe"] == 7 and data["trades"] == ["AAA"]
 
 
 @pytest.mark.parametrize("name, value, words", [

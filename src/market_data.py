@@ -17,6 +17,7 @@ SCAN_FEED          optional: 'sip' or 'iex'. An unknown value raises.
 from __future__ import annotations
 
 import logging
+import math
 import os
 import re
 import time
@@ -45,6 +46,7 @@ REQUIRED_ENV: tuple[str, ...] = ("ALPACA_API_KEY", "ALPACA_SECRET_KEY")
 #: feed: delayed_sip"} on every batch, Actions run 34013173587, 6 Sep 2026).
 #: A free plan reads `sip` with the window held back SIP_HOLDBACK_MINUTES.
 DEFAULT_FEED = DataFeed.SIP
+BAR_ADJUSTMENT = Adjustment.SPLIT
 
 #: Alpaca documents fifteen minutes for a SIP query's `end` on a plan without
 #: a real-time subscription; one more is margin between the two clocks.
@@ -238,7 +240,7 @@ def _download_batch(client, tickers: list[str], session: date, lookback_days: in
         timeframe=TimeFrame.Day,
         start=start,
         end=end,
-        adjustment=Adjustment.SPLIT,
+        adjustment=BAR_ADJUSTMENT,
         feed=feed,
     )
     bars = client.get_stock_bars(request)
@@ -283,6 +285,11 @@ class DownloadStats:
     with_bars: int = 0
     #: symbols lost because their batch failed twice
     dropped: int = 0
+    dropped_symbols: list[str] = field(default_factory=list)
+    unfetched: list[str] = field(default_factory=list)
+    refused: list[str] = field(default_factory=list)
+    unrequested: list[str] = field(default_factory=list)
+    batch_attempts: int = 0
     #: symbols the feed answered with nothing, sorted
     no_bars: list[str] = field(default_factory=list)
     #: symbol -> extra copies of a repeated timestamp dropped
@@ -293,6 +300,7 @@ class DownloadStats:
     #: symbol -> the bar it has before the session (None when it has none),
     #: for names whose bar before the session is not the session before
     gapped: dict[str, date | None] = field(default_factory=dict)
+    unreadable: list[str] = field(default_factory=list)
     previous_session: date | None = None
     previous_session_observed: bool = False
     #: frames that carried a bar on `previous_session`
@@ -314,7 +322,7 @@ class DownloadStats:
     @property
     def ready(self) -> int:
         """Frames that carried the session and the session before it."""
-        return self.with_bars - len(self.stale) - len(self.gapped)
+        return self.with_bars - len(self.stale) - len(self.gapped) - len(self.unreadable)
 
 
 def _names(symbols: list[str], limit: int = 8) -> str:
@@ -340,28 +348,43 @@ def download_bars(client, tickers: list[str], session: date,
     """
     feed = feed_from_env() if feed is None else feed
     tickers = list(tickers)
-    stats = DownloadStats(session=session, feed=feed.value, requested=len(tickers))
+    stats = DownloadStats(session=session, feed=feed.value)
     frames: dict[str, pd.DataFrame] = {}
     no_bars: list[str] = []
 
     for i in range(0, len(tickers), batch_size):
         batch = tickers[i: i + batch_size]
+        stats.requested += len(batch)
+
+        def abort(exc):
+            # Preserve successful earlier batches without pretending that later
+            # names were requested or that a permanent refusal was retried.
+            stats.refused.extend(batch)
+            stats.unrequested = tickers[i + len(batch):]
+            stats.no_bars = sorted(no_bars)
+            error = _refusal_error(feed, exc)
+            error.download_stats, error.frames = stats, frames
+            raise error from exc
+
         try:
+            stats.batch_attempts += 1
             histories = _download_batch(client, batch, session, lookback_days, feed,
                                         now=now, duplicates=stats.duplicates)
         except Exception as e:  # noqa: BLE001 -- classified below
             if _is_permanent_refusal(e):
-                raise _refusal_error(feed, e) from e
+                abort(e)
             log.warning("Batch %d failed (%s); retrying once", i, e)
             time.sleep(RETRY_WAIT_SECONDS)
             try:
+                stats.batch_attempts += 1
                 histories = _download_batch(client, batch, session, lookback_days, feed,
                                             now=now, duplicates=stats.duplicates)
             except Exception as e2:  # noqa: BLE001
                 if _is_permanent_refusal(e2):
-                    raise _refusal_error(feed, e2) from e2
+                    abort(e2)
                 # A hand-typed, sector-grouped list loses a contiguous block.
                 stats.dropped += len(batch)
+                stats.dropped_symbols.extend(batch)
                 log.error("Batch %d failed twice (%s) -- dropping %d symbols: %s",
                           i, e2, len(batch), _names(batch))
                 continue
@@ -375,7 +398,7 @@ def download_bars(client, tickers: list[str], session: date,
     stats.no_bars = sorted(no_bars)
     if stats.no_bars:
         log.warning("%d of %d symbols returned no bar at all in the window asked for and "
-                    "were skipped -- unknown to the feed, or purged: %s",
+                    "were skipped -- the response does not establish why: %s",
                     len(stats.no_bars), len(tickers), _names(stats.no_bars))
     if stats.duplicates:
         worst = sorted(stats.duplicates.items(), key=lambda kv: (-kv[1], kv[0]))
@@ -452,7 +475,7 @@ def newest_stale(stale: dict[str, date | None]) -> date | None:
 def drop_stale(histories: dict[str, pd.DataFrame],
                session: date) -> tuple[dict[str, pd.DataFrame], dict[str, date | None]]:
     """Split frames into those whose newest bar is `session` and those behind
-    it (halted, delisted, untraded), the latter with their newest date --
+    it, the latter with their newest date (absence does not establish why) --
     None when the stamp is unreadable rather than a NaT every later reader
     compares. Without this a name that stopped printing weeks ago is measured
     across whatever two bars it has left."""
@@ -584,7 +607,28 @@ def apply_session_rules(frames: dict[str, pd.DataFrame], session: date,
     stats.closure_agreed = tally.get("agreed")
     stats.closure_day = tally.get("day")
     stats.closure_min_symbols = min_symbols
-    return fresh
+    # Both bars must be readable by the actual OHLCV consumers. Presence of a
+    # timestamp alone must not turn NaN/non-finite prices into a non-match.
+    stats.unreadable = sorted(t for t, df in fresh.items() if not readable_pair(df))
+    return {t: df for t, df in fresh.items() if t not in stats.unreadable}
+
+
+def readable_pair(df: pd.DataFrame) -> bool:
+    """Current and required prior bars, without inventing missing values."""
+    try:
+        if len(df) < 2:
+            return False
+        for _, row in df.iloc[-2:].iterrows():
+            values = {key: float(row[key]) for key in OHLCV}
+            if not all(math.isfinite(v) for v in values.values()):
+                return False
+            if values['Volume'] < 0 or min(values[k] for k in OHLCV if k != 'Volume') <= 0:
+                return False
+            if not values['Low'] <= min(values['Open'], values['Close']) <= max(values['Open'], values['Close']) <= values['High']:
+                return False
+        return True
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 def session_calendar(frames: dict, min_fraction: float = 0.5) -> list[date]:

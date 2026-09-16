@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "a10516091332"
+  "rules_version": "a5a4fdb7ddef"
  },
  "cover": {
   "h1": "Trade tomorrow. 1 A-quality burst.",
@@ -26,20 +26,166 @@
    "label": "31 named on the command line (--tickers)",
    "size": 31,
    "source": "explicit",
+   "source_kind": "explicit",
    "fetched_at": null,
-   "identity": "f97bc6805de5df88"
+   "identity": "f97bc6805de5df88",
+   "snapshot_sha256": null,
+   "counts": {
+    "admitted": 31
+   },
+   "selection": {
+    "kind": "explicit",
+    "listed": 0,
+    "duplicate_rows": 0,
+    "security_admitted": 0,
+    "security_excluded": 0,
+    "exclusions": {},
+    "seed_overrides": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "seed_added": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "manual_admitted": 31,
+    "before_capacity": 31,
+    "capacity_excluded": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "intended": 31
+   },
+   "snapshot_relation": "unrecorded",
+   "scan_session": "2026-09-11",
+   "snapshot_date_basis": "UTC",
+   "point_in_time_membership": false,
+   "membership_limit": "Security-name classification is an approximation. This snapshot does not establish historical point-in-time membership."
+  },
+  "input_basis": {
+   "provider": "Alpaca",
+   "feed": "sip",
+   "adjustment": "split",
+   "timeframe": "1Day",
+   "expected_session": "2026-09-11",
+   "evaluated_session": "2026-09-11"
   },
   "coverage": {
+   "version": 1,
+   "intended": 32,
    "requested": 32,
    "with_bars": 32,
-   "on_session": 32,
-   "measured": 31,
-   "stale": 0,
-   "gapped": 0,
    "no_bars": 0,
    "dropped": 0,
+   "unfetched_budget": 0,
+   "unfetched_failure": 0,
+   "refused": 0,
+   "stale": 0,
+   "gapped": 0,
+   "unreadable": 0,
+   "on_session": 32,
+   "session_ready": 32,
+   "benchmark_ready": 1,
+   "scan_ready": 31,
+   "price_excluded": 0,
+   "not_scanned_closed": 0,
+   "measured": 31,
+   "scan_errors": 0,
+   "scan_unattempted": 0,
+   "quality_success": 2,
+   "quality_errors": 0,
+   "matched": {
+    "burst": 0,
+    "dollar": 0,
+    "both": 2,
+    "neither": 29
+   },
    "errors": 0,
-   "duplicate_bars": 0
+   "duplicate_symbols": 0,
+   "duplicate_bars": 0,
+   "returned_bars": 8173,
+   "batch_attempts": 1,
+   "intended_identity": "12ecde3aab5494ac",
+   "benchmark_added": 1,
+   "acceptance": {
+    "status": "ok",
+    "denominator": "intended stocks, excluding benchmark",
+    "intended_stocks": 31,
+    "ready_stocks": 31,
+    "fraction": 1.0,
+    "minimum_fraction": 0.5,
+    "complete_evaluation": true,
+    "complete_intended": true,
+    "capacity_excluded": 0
+   },
+   "sessions": {
+    "expected": "2026-09-11",
+    "evaluated": "2026-09-11",
+    "expected_present": 32,
+    "latest_bar_dates": {
+     "2026-09-11": 32
+    },
+    "previous": "2026-09-10",
+    "previous_observed": false,
+    "previous_printed": 32,
+    "closure_voters": 32,
+    "closure_agreed": 32
+   },
+   "reasons": {
+    "no_bars": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "dropped": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "unfetched_budget": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "stale": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "gapped": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "unreadable": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "duplicate_repaired": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "refused": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "unfetched_failure": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    },
+    "price_excluded": {
+     "count": 0,
+     "identity": "e3b0c44298fc1c14",
+     "sample": []
+    }
+   }
   },
   "bursts": 2,
   "graded": {
@@ -394,10 +540,14 @@
    }
   },
   "universe": {
-   "min_price": 3.0,
-   "min_volume": 100000,
+   "session_min_price": 3.0,
+   "price_exempt": "seed and explicit",
+   "directory_quote_filter": false,
    "max_discovery": 8000,
    "identity": "f97bc6805de5df88"
+  },
+  "inputs": {
+   "version": 1
   }
  },
  "breadth": {
@@ -4416,81 +4566,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:a10516091332": {
+   "burst:AAPL:2026-09-10:a5a4fdb7ddef": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:a10516091332": {
+   "burst:AMD:2026-09-10:a5a4fdb7ddef": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:a10516091332": {
+   "burst:NVDA:2026-09-10:a5a4fdb7ddef": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:a10516091332": {
+   "burst:TSLA:2026-09-10:a5a4fdb7ddef": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:a10516091332": {
+   "burst:PLUG:2026-09-10:a5a4fdb7ddef": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:a10516091332": {
+   "burst:DLLR:2026-09-10:a5a4fdb7ddef": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:a10516091332": {
+   "anticipation:COIL:2026-09-10:a5a4fdb7ddef": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:a10516091332": {
+   "burst:NVDA:2026-09-11:a5a4fdb7ddef": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:a10516091332": {
+   "burst:COIL:2026-09-11:a5a4fdb7ddef": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:a10516091332": {
+   "anticipation:VRT:2026-09-11:a5a4fdb7ddef": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    },
-   "anticipation:AMD:2026-09-11:a10516091332": {
+   "anticipation:AMD:2026-09-11:a5a4fdb7ddef": {
     "ticker": "AMD",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "a10516091332",
+    "rules_version": "a5a4fdb7ddef",
     "coverage": "observed"
    }
   },
@@ -4502,7 +4652,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all, with the calendar it could not read named in its limits. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all, with the calendar it could not read named in its limits. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

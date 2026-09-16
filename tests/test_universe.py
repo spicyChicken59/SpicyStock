@@ -307,12 +307,6 @@ def test_an_unexpected_error_falls_back_with_a_controlled_sentence(monkeypatch, 
     ({"symbol": "abc"}, "symbol format"),
     ({"symbol": "TOOLONG"}, "symbol format"),
     ({"symbol": 7}, "symbol format"),
-    ({"lastsale": "$2.99"}, "price under $3"),
-    ({"lastsale": ""}, "price under $3"),
-    ({"lastsale": "n/a"}, "price under $3"),
-    ({"volume": "99,999"}, "volume under 100,000 shares"),
-    ({"volume": "99999"}, "volume under 100,000 shares"),
-    ({"volume": ""}, "volume under 100,000 shares"),
 ])
 def test_each_exclusion_refuses_for_the_reason_it_names(values, reason):
     row = company(**values)
@@ -409,13 +403,11 @@ def test_shares_of_beneficial_interest_are_a_trust_and_refused():
     assert universe.classify(company("REIT", name="Acme REIT Inc. Common Stock"), set()) is None
 
 
-def test_the_floors_are_bondes_numbers_and_inclusive_at_the_edge():
-    assert universe.MIN_PRICE == 3.0 and universe.MIN_VOLUME == 100_000
-    assert universe.classify(company(lastsale="$3.00"), set()) is None
-    assert universe.classify(company(lastsale="$2.99"), set()) == "price under $3"
-    assert universe.classify(company(volume="100,000"), set()) is None
-    assert universe.classify(company(volume="100000"), set()) is None
-    assert universe.classify(company(volume="99,999"), set()) == "volume under 100,000 shares"
+@pytest.mark.parametrize("values", [{"lastsale": "$2.99"}, {"lastsale": ""}, {"lastsale": "n/a"},
+                                       {"volume": "99,999"}, {"volume": "0"}, {"volume": ""}])
+def test_directory_quotes_do_not_decide_session_eligibility(values):
+    assert universe.classify(company(**values), set()) is None
+    assert universe.admit([company(**values)], [])[0] == ["NEW"]
 
 
 def test_seed_names_are_admitted_whether_or_not_the_directory_lists_them(monkeypatch, docs, seed_file):
@@ -444,18 +436,20 @@ def test_a_seed_name_the_rules_would_admit_anyway_is_not_an_exception(monkeypatc
 def test_the_counts_add_up_to_what_was_listed_plus_the_seeds_the_directory_lacked(monkeypatch, docs, seed_file):
     seed_file.write_text("AAPL\nMSFT\nZZZZ\nYYYY\n")
     rows = listings(500, company("AAPL"), company("MSFT", lastsale="$1"),
-                    company(name="Some Trust ETF"), company("CANA", country="Canada"), company(industry="Blank Checks"),
-                    company(industry=""), company(lastsale="$2"), company(volume="5"), company(symbol="BRK.B"),
+                    company("REIT", name="Some Trust ETF"), company("CANA", country="Canada"),
+                    company("BLNK", industry="Blank Checks"), company("UNKN", industry=""),
+                    company("CHEAP", lastsale="$2"), company("QUIET", volume="5"), company(symbol="BRK.B"),
                     "not a row at all")
     Endpoint(monkeypatch, response(rows=rows))
     built = universe.build(docs, now=NOW)
     exclusions = {k: v for k, v in built.counts.items() if k not in {"listed", "admitted", universe.SEED_EXCEPTION}}
-    assert built.counts["listed"] == 509, "a row that is not an object is not a listing"
-    assert set(exclusions) == {"not verified common stock", "blank check company",
-                               "unknown industry", "price under $3", "volume under 100,000 shares", "symbol format"}
+    assert built.counts["listed"] == 510
+    assert set(exclusions) == {"not verified common stock", "blank check company", "unknown industry", "symbol format", "malformed row"}
+    assert built.counts["admitted"] == 507
     assert built.counts["admitted"] + sum(exclusions.values()) == built.counts["listed"] + 2
-    assert built.counts[universe.SEED_EXCEPTION] == 3
-    assert "CANA" in built.symbols and built.flags["CANA"] == {"foreign"}, "a domicile is a flag, not a cut"
+    assert built.counts[universe.SEED_EXCEPTION] == 2
+    assert universe.selection_faults(built.selection) == []
+    assert "CANA" in built.symbols and built.flags["CANA"] == {"foreign"}
 
 
 # ------------------------------------------------------------ overrides ----
@@ -553,13 +547,13 @@ def test_the_real_seed_file_parses_and_a_typo_refuses_the_run(tmp_path):
         universe.read_seed(tmp_path / "absent.txt")
 
 
-def test_the_label_names_the_source_the_floors_and_the_flag_count(monkeypatch, docs):
+def test_the_label_names_the_source_the_quote_policy_and_the_flag_count(monkeypatch, docs):
     rows = listings(500, company("BIO", industry="Biotechnology: Pharmaceutical Preparations"),
                     company("SHOP", country="Canada"), company("TEVA", country="Israel", sector="Health Care"))
     Endpoint(monkeypatch, response(rows=rows))
     built = universe.build(docs, now=NOW)
-    assert built.label == ("505 US-listed common stocks from the Nasdaq directory 2026-09-11, "
-                           "$3+ and 100,000+ shares last session (2 flagged biotech, 2 flagged foreign)")
+    assert built.label == ("505 classified US-listed stocks from the Nasdaq directory 2026-09-11; no directory price/volume gate"
+                           " (2 flagged biotech, 2 flagged foreign)")
     Endpoint(monkeypatch, requests.ReadTimeout)
     cached = universe.build(docs, now=NOW + timedelta(days=2))
-    assert cached.label.startswith("505 US-listed common stocks from the Nasdaq directory captured 2026-09-11, ")
+    assert cached.label.startswith("505 classified US-listed stocks from the Nasdaq directory captured 2026-09-11; ")

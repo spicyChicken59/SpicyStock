@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing
+from src import timing, inputs
 from src import universe
 from src import watchlist
 
@@ -31,7 +31,7 @@ MAX_READS = 12                 # Claude reads per night, by mechanical grade (P)
 FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P)
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
-MIN_COVERAGE_FRACTION = 0.5    # fewer names answering than this is a feed outage (P)
+MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publish (P)
 CLOSED_FRACTION = 0.05         # fewer names on the expected session than this is a closed market (P)
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
@@ -81,6 +81,8 @@ class RunReport:
     published: bool = False
     failed: bool = False
     failure: str | None = None
+
+    input_coverage: dict = field(default_factory=dict)
 
     def problem(self, kind: str, message: Any) -> None:
         self.problems.append(report.problem(self.stage, kind, message))
@@ -184,20 +186,32 @@ def fetch_universe(client, symbols: list[str], session: date, feed, rep: RunRepo
     fetched = 0
     for start in range(0, len(symbols), FETCH_CHUNK):
         chunk = symbols[start:start + FETCH_CHUNK]
-        got, stats = market_data.download_bars(client, chunk, session, LOOKBACK_DAYS, feed, now=now)
+        refusal = None
+        try:
+            got, stats = market_data.download_bars(client, chunk, session, LOOKBACK_DAYS, feed, now=now)
+        except (market_data.FeedNotAuthorizedError, market_data.CredentialsRejectedError) as exc:
+            got, stats, refusal = exc.frames, exc.download_stats, exc
         frames.update(got)
         merged.requested += stats.requested
         merged.with_bars += stats.with_bars
         merged.dropped += stats.dropped
+        merged.dropped_symbols.extend(stats.dropped_symbols)
+        merged.batch_attempts += stats.batch_attempts
         merged.no_bars.extend(stats.no_bars)
         merged.duplicates.update(stats.duplicates)
+        merged.refused.extend(stats.refused)
+        merged.unrequested.extend(stats.unrequested)
+        if refusal is not None:
+            merged.unrequested.extend(symbols[start + len(chunk):])
+            refusal.frames, refusal.download_stats = frames, merged
+            raise refusal
         fetched += len(chunk)
         elapsed = time.monotonic() - started
         if elapsed > budget_seconds and fetched < len(symbols):
             rep.problem("coverage_thin",
                         f"the bars fetch passed its {int(budget_seconds)}s budget after {fetched} of "
                         f"{len(symbols)} names; the rest were not read tonight")
-            merged.requested += len(symbols) - fetched
+            merged.unfetched = symbols[fetched:]
             break
     merged.no_bars.sort()
     return frames, merged, time.monotonic() - started
@@ -271,11 +285,13 @@ def extension_pct(df: pd.DataFrame, sessions: int = quality.EXTENSION_SMA_SESSIO
 
 
 def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
-                rep: RunReport) -> tuple[list[dict], int, int]:
+                rep: RunReport, *, ledger: dict | None = None) -> tuple[list[dict], int, int]:
     """Every burst tonight (4% or $ breakout) with its measurements and its
     checklist assessment; plus how many names were measured and how many raised."""
     bursts: list[dict] = []
     measured = errors = 0
+    tally = {"measured": 0, "scan_errors": 0, "quality_errors": 0, "quality_success": 0,
+             "matched": {"burst": 0, "dollar": 0, "both": 0, "neither": 0}}
     for ticker, df in frames.items():
         if ticker == BENCHMARK_SYMBOL:
             continue
@@ -284,17 +300,22 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
             measured += 1
         except Exception as exc:  # noqa: BLE001 -- counted, never fatal per symbol
             errors += 1
+            tally["scan_errors"] += 1
             log.debug("scan raised for %s: %s", ticker, exc)
             continue
         burst, dollar = found.get("burst"), found.get("dollar")
+        route = "both" if burst and dollar else "burst" if burst else "dollar" if dollar else "neither"
+        tally["matched"][route] += 1
         if not burst and not dollar:
             continue
         try:
             assessment = quality.assess(df)
         except Exception as exc:  # noqa: BLE001
             errors += 1
+            tally["quality_errors"] += 1
             log.debug("quality raised for %s: %s", ticker, exc)
             continue
+        tally["quality_success"] += 1
         last, prev = df.iloc[-1], df.iloc[-2]
         source = burst or {}
         # the session's volume over the previous session's: one field with
@@ -327,7 +348,11 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
         # those values for the ones that actually passed the scan.
         row["discovery"] = discovery.contract({**row, **(burst or {}), **(dollar or {})})
         bursts.append(row)
-    if measured and errors / max(measured + errors, 1) > MAX_ERROR_FRACTION:
+    tally["measured"] = measured
+    if ledger is not None:
+        ledger.update(tally, errors=errors, scan_unattempted=0)
+        inputs.evaluated(ledger)
+    if errors / max(measured + tally["scan_errors"], 1) > MAX_ERROR_FRACTION:
         raise RuntimeError(f"{errors} of {measured + errors} names raised inside the scan: "
                            "a code fault, not a market")
     if errors:
@@ -517,13 +542,15 @@ def et_now(now: datetime | None = None) -> datetime:
 
 def build_rules(uni: universe.Universe) -> dict:
     """Every module's RULES, nested by family (``rules.plan.final_exit_day``),
-    plus the universe's floors and identity. The digest of this block is
+    plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
     for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
-    flat.update({"universe.min_price": universe.MIN_PRICE, "universe.min_volume": universe.MIN_VOLUME,
+    flat.update({"universe.session_min_price": universe.MIN_PRICE,
+                 "universe.price_exempt": "seed and explicit", "universe.directory_quote_filter": False,
+                 "inputs.version": inputs.VERSION,
                  "universe.max_discovery": universe.MAX_DISCOVERY, "universe.identity": uni.identity})
     nested: dict = {}
     for key, value in flat.items():
@@ -568,8 +595,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     try:
         rep.stage = "universe"
         uni = universe.build(docs, explicit=tickers, now=now)
+        if universe.selection_faults(uni.selection):
+            raise ValueError("universe selection does not reconcile")
         if uni.warning:
-            rep.problem("universe_cached", uni.warning)
+            rep.problem("coverage_thin" if uni.source == universe.SOURCE_LIVE else "universe_cached", uni.warning)
         symbols = list(uni.symbols)
         if BENCHMARK_SYMBOL not in symbols:
             symbols.append(BENCHMARK_SYMBOL)
@@ -578,26 +607,41 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         expected = expected_session(now)
         client = market_data.get_clients()
         feed = market_data.feed_from_env()
-        frames, stats, fetch_seconds = fetch_universe(client, symbols, expected, feed, rep,
-                                                      budget_seconds=fetch_budget, now=now)
-        answered = len(frames)
-        if not frames or answered / max(len(symbols), 1) < MIN_COVERAGE_FRACTION:
-            raise RuntimeError(f"only {answered} of {len(symbols)} names answered: a feed outage, not a market")
-
+        try:
+            frames, stats, fetch_seconds = fetch_universe(client, symbols, expected, feed, rep,
+                                                          budget_seconds=fetch_budget, now=now)
+        except (market_data.FeedNotAuthorizedError, market_data.CredentialsRejectedError) as exc:
+            ready = market_data.apply_session_rules(exc.frames, expected, exc.download_stats)
+            rep.input_coverage = inputs.build(uni, symbols, exc.frames, exc.download_stats, ready,
+                expected, expected, closed=False, minimum=MIN_COVERAGE_FRACTION, benchmark=BENCHMARK_SYMBOL)
+            inputs.evaluated(rep.input_coverage)
+            log.info("Refused fetch input coverage: %s", json.dumps(rep.input_coverage, sort_keys=True))
+            raise
         rep.stage = "session"
         state, have = session_state(frames, expected)
-        if state == "outage":
-            if have < MIN_COVERAGE_FRACTION and have >= CLOSED_FRACTION:
-                rep.problem("coverage_thin", f"only {have:.0%} of names carry a bar for {expected}")
-            elif have < CLOSED_FRACTION:
-                raise RuntimeError(f"no bars for {expected} and the previous session is not carried "
-                                   "either: the feed answered stale frames")
         closed = state == "closed"
         session = newest_common_session(frames) if closed else expected
-        if session is None:
-            raise RuntimeError("the frames carry no common session")
+        session = session or expected
         stats.session = session
-        fresh = market_data.apply_session_rules(frames, session, stats) if not closed else {}
+        ready = market_data.apply_session_rules(frames, session, stats)
+        coverage = inputs.build(uni, symbols, frames, stats, ready, expected, session,
+                                closed=closed, minimum=MIN_COVERAGE_FRACTION, benchmark=BENCHMARK_SYMBOL)
+        fresh, price_excluded = universe.session_eligible(ready, uni, exempt=(BENCHMARK_SYMBOL,)) if not closed else ({}, {})
+        coverage["price_excluded"] = len(price_excluded)
+        coverage["reasons"]["price_excluded"] = universe.population(price_excluded)
+        coverage["scan_ready"] = len(fresh) - int(BENCHMARK_SYMBOL in fresh)
+        coverage["scan_unattempted"] = coverage["scan_ready"]
+        inputs.evaluated(coverage)
+        rep.input_coverage = coverage
+        if inputs.faults(coverage):
+            raise ValueError("; ".join(inputs.faults(coverage)))
+        log.info("Input coverage: %s", json.dumps(coverage, sort_keys=True))
+        if coverage["acceptance"]["status"] == "fail":
+            raise RuntimeError(f"insufficient usable coverage: {coverage['acceptance']['ready_stocks']} of "
+                               f"{coverage['acceptance']['intended_stocks']} intended stocks; "
+                               "no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)")
+        if coverage["acceptance"]["status"] == "degraded" and not any(p["kind"] == "coverage_thin" for p in rep.problems):
+            rep.problem("coverage_thin", inputs.coverage_sentence({"coverage": coverage}))
         # a closed night re-presents the plans the previous session published,
         # when the record on disk is that session's; the tickets still stand
         carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}
@@ -605,13 +649,13 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         rep.stage = "breadth"
         # the Market Monitor is over the names that printed on the session:
         # on a thin night the minority that answered, never the stale majority
-        counted = fresh if not closed else frames
+        counted = fresh if not closed else ready
         breadth_block = breadth.snapshot({t: df for t, df in counted.items() if t != BENCHMARK_SYMBOL}, session)
         breadth_block["notes"] = breadth_notes(breadth_block)
         regime = breadth_block.get("regime", {"verdict": "green", "size_multiplier": 1.0, "reasons": []})
 
         rep.stage = "scan"
-        bursts, measured, errors = ([], 0, 0) if closed else scan_frames(fresh, uni, rep)
+        bursts, measured, errors = ([], 0, 0) if closed else scan_frames(fresh, uni, rep, ledger=coverage)
         for b in bursts:
             b["grade"] = b["grade_mechanical"]
 
@@ -673,18 +717,21 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if carried:
             published_bursts = published_carried
         graded = {key: sum(1 for b in bursts if b["grade"] == g) for key, g in GRADE_KEYS.items()}
-        coverage = {"requested": stats.requested, "with_bars": stats.with_bars, "on_session": len(fresh),
-                    "measured": measured, "stale": len(stats.stale), "gapped": len(stats.gapped),
-                    "no_bars": len(stats.no_bars), "dropped": stats.dropped, "errors": errors,
-                    "duplicate_bars": sum(stats.duplicates.values())}
+        faults = inputs.faults(coverage)
+        if faults:
+            raise ValueError("; ".join(faults))
+        log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
         elapsed = round(time.monotonic() - started, 1)
         run_block = {
             "session": session.isoformat(), "session_state": "closed" if closed else "open",
             "expected_session": expected.isoformat(),
             "status": run_status(rep, closed), "problems": list(rep.problems),
             "dry_run": dry_run, "model": grader.MODEL, "feed": getattr(feed, "value", str(feed)),
-            "universe": {"label": uni.label, "size": len(uni.symbols), "source": uni.source,
-                         "fetched_at": uni.fetched_at, "identity": uni.identity},
+            "universe": universe.provenance(uni, expected),
+            "input_basis": {"provider": "Alpaca", "feed": stats.feed,
+                            "adjustment": market_data.BAR_ADJUSTMENT.value,
+                            "timeframe": "1Day", "expected_session": expected.isoformat(),
+                            "evaluated_session": session.isoformat()},
             "coverage": coverage, "bursts": len(bursts), "graded": graded, "reads": reads,
             "email": "skipped", "published_at": generated,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,

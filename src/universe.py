@@ -1,22 +1,10 @@
-"""Bonde's universe: every US common stock the directory lists, at a price and
-a volume floor, and nothing narrower.
+"""Nasdaq security classification, not a prediction of today's price/volume.
 
-TC2000's "Common Stock" list is what Bonde scans -- about 6,500 names, with no
-float, market-cap or sector exclusion and a stated preference for the low-float,
-low-priced end. This module builds the closest thing the Nasdaq stock directory
-can supply: classified common stock (the name says it is a common share and not
-a depositary receipt, a preferred, a warrant, a note, a fund or a trust; it is
-not a blank-check shell), at `MIN_PRICE` and `MIN_VOLUME`. Healthcare and
-biotech are ADMITTED and flagged, and so are US-listed shares of
-foreign-domiciled companies -- his list excludes neither -- so the page can
-warn about binary-event and domicile risk without the screener deciding on the
-owner's behalf.
-
-Nasdaq supplies the classification and the last session's price and volume; it
-never supplies the bars the scans read. The transport -- the browser headers,
-the bounded retry, the dated gzip cache and the fallback to the checked-in seed
--- is carried over unchanged from the module this replaces, because every one
-of those rules was established by execution on a GitHub runner.
+Name/industry rules approximate a common-stock universe; they are not TC2000
+membership. Directory quotes never decide which stocks reach the bar fetch.
+The existing $3 policy is applied to actual session closes, with the existing
+seed/explicit exceptions. Each scan owns its actual-session volume conditions.
+Live/cache/seed transport and the explicit capacity bound remain in force.
 """
 from __future__ import annotations
 
@@ -30,7 +18,7 @@ import re
 import tempfile
 import time
 import zlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -44,22 +32,14 @@ SOURCE_URL = "https://api.nasdaq.com/api/screener/stocks?tableonly=true&limit=10
 #: it. The seed is also the whole universe under SCAN_UNIVERSE=seed and the
 #: fallback when neither a live directory nor a valid cache can be had.
 SEED_FILE = Path(__file__).resolve().parent.parent / "data" / "symbols.txt"
-#: Bonde's floors, from his own scan (`c/c1>=1.04 and v>v1 and v>=100000`) and
-#: the field guide's "typically price >= $3". Both are read off the directory
-#: row: `lastsale` is the last print and `volume` is the LAST SESSION's share
-#: volume, not an average -- so a name that was quiet yesterday and bursts
-#: today is refused tonight and admitted tomorrow. That is the cost of a
-#: floor read from a listing rather than from bars, and it is stated here
-#: rather than hidden. A price exactly at the floor and a volume exactly at
-#: the floor are admitted, as `v>=100000` says.
+#: Existing implementation price policy, now read from the scan-session bar.
+#: Seed/explicit choices retain their former exemption; not a universal Bonde rule.
 MIN_PRICE = 3.0
-MIN_VOLUME = 100_000
-#: A safety bound on how many names one scan may ask for, NOT a selection
-#: rule: Bonde's list runs to ~6,500 and the 10 Sep 2026 directory admits
-#: 3,027 under the floors above, so this binds only if the endpoint expands
-#: past anything seen. When it does, the least-liquid tail is cut, the cut is
-#: counted under "discovery capacity" and the warning says so.
+#: Capacity safeguard, not strategy selection. Its liquidity ranking can exclude
+#: a legitimate same-session breakout; all cuts are counted and publication is
+#: degraded. Directory price/volume are used ONLY if this explicit bound binds.
 MAX_DISCOVERY = 8000
+SAMPLE_LIMIT = 8
 
 DIRECTORY_CACHE = "universe-directory.json.gz"
 DIRECTORY_CACHE_SCHEMA = 1
@@ -160,6 +140,9 @@ class Universe:
     counts: dict[str, int]
     label: str
     warning: str | None = None
+    selection: dict = field(default_factory=dict)
+    snapshot_sha256: str | None = None
+    price_exempt: tuple[str, ...] = ()
 
     @property
     def identity(self) -> str:
@@ -350,60 +333,104 @@ def classify(row: dict, seeds: set[str]) -> str | None:
         return "unknown industry"
     if str(industry).lower() == BLANK_CHECK_INDUSTRY:
         return "blank check company"
-    price, volume = _number(row.get("lastsale")), _number(row.get("volume"))
-    if price is None or price < MIN_PRICE:
-        return f"price under ${MIN_PRICE:g}"
-    if volume is None or volume < MIN_VOLUME:
-        return f"volume under {MIN_VOLUME:,} shares"
     return None
 
 
-def admit(rows: list[dict], seeds: list[str]) -> tuple[list[str], dict[str, str], dict[str, set[str]], dict[str, int]]:
-    """Every admitted symbol with its name, flags and the exclusion counts.
+def population(symbols) -> dict:
+    """Bounded reason evidence: count, stable membership digest and sample."""
+    names = sorted(set(symbols))
+    return {"count": len(names), "identity": identity(names), "sample": names[:SAMPLE_LIMIT]}
 
-    Seeds are admitted whether or not the directory carries them, and counted
-    under SEED_EXCEPTION when the rules alone would not have admitted them.
-    Past MAX_DISCOVERY the least-liquid tail (last price times last volume) is
-    cut and counted under CAPACITY_REASON; seeds are never cut.
+
+def admit(rows: list[dict], seeds: list[str], *, ledger: dict | None = None
+          ) -> tuple[list[str], dict[str, str], dict[str, set[str]], dict[str, int]]:
+    """Classify once per symbol; preserve seed overrides; count capacity cuts.
+
+    The first directory row for a symbol wins deterministically; duplicate rows
+    are accounted separately rather than inflating admission. Malformed rows
+    are exclusions too. Price/volume rank ONLY an explicitly bounded tail.
     """
     seed_set = set(seeds)
-    names: dict[str, str] = {}
-    flags: dict[str, set[str]] = {}
-    dollars: dict[str, float] = {}
-    counts: dict[str, int] = {"listed": 0}
-    exceptions = 0
-    for row in rows:
-        if not isinstance(row, dict):
+    names, flags, dollars = {}, {}, {}
+    counts = {"listed": len(rows)}
+    excluded, classified, overrides, seen = {}, set(), set(), set()
+    duplicates = 0
+    for index, row in enumerate(rows):
+        symbol = row.get("symbol") if isinstance(row, dict) else None
+        if isinstance(symbol, str) and symbol in seen:
+            duplicates += 1
             continue
-        counts["listed"] += 1
-        reason = classify(row, seed_set)
-        if reason is not None:
-            counts[reason] = counts.get(reason, 0) + 1
-            continue
-        symbol = row["symbol"]
-        if symbol in seed_set and classify(row, set()) is not None:
-            exceptions += 1
+        if isinstance(symbol, str):
+            seen.add(symbol)
+        reason = classify(row, set()) if isinstance(row, dict) else "malformed row"
+        if reason:
+            excluded.setdefault(reason, []).append(symbol if isinstance(symbol, str) else f"<row {index}>")
+            if not isinstance(symbol, str) or symbol not in seed_set:
+                counts[reason] = counts.get(reason, 0) + 1
+                continue
+            overrides.add(symbol)
+        else:
+            classified.add(symbol)
         if isinstance(row.get("name"), str) and row["name"].strip():
             names[symbol] = row["name"].strip()
-        flags[symbol] = flags.get(symbol, set()) | flags_for(row)
+        flags[symbol] = flags_for(row)
         price, volume = _number(row.get("lastsale")), _number(row.get("volume"))
-        dollars[symbol] = max(dollars.get(symbol, 0.0), (price or 0.0) * (volume or 0.0))
-    for symbol in seed_set - set(dollars):
-        exceptions += 1
-        flags.setdefault(symbol, set())
+        dollars[symbol] = max(0.0, (price or 0.0) * (volume or 0.0))
+    added = seed_set - set(dollars)
+    for symbol in added:
+        flags[symbol] = set()
         dollars[symbol] = math.inf
+    exceptions = len(overrides) + len(added)
     if exceptions:
         counts[SEED_EXCEPTION] = exceptions
+    if duplicates:
+        counts["duplicate rows"] = duplicates
     ranked = sorted(dollars, key=lambda symbol: (symbol not in seed_set, -dollars[symbol], symbol))
-    if len(ranked) > MAX_DISCOVERY:
-        counts[CAPACITY_REASON] = len(ranked) - MAX_DISCOVERY
-        for symbol in ranked[MAX_DISCOVERY:]:
+    # A reviewed seed is never silently truncated even if it exceeds the bound.
+    limit = max(MAX_DISCOVERY, len(seed_set))
+    cut = ranked[limit:]
+    if cut:
+        counts[CAPACITY_REASON] = len(cut)
+        for symbol in cut:
             flags.pop(symbol, None)
             names.pop(symbol, None)
-        ranked = ranked[:MAX_DISCOVERY]
-    symbols = sorted(ranked)
+    symbols = sorted(ranked[:limit])
     counts["admitted"] = len(symbols)
+    if ledger is not None:
+        ledger.update({"kind": "directory", "listed": len(rows), "duplicate_rows": duplicates,
+                       "security_admitted": len(classified),
+                       "security_excluded": sum(map(len, excluded.values())),
+                       "exclusions": {k: {**population(v), "count": len(v)} for k, v in sorted(excluded.items())},
+                       "seed_overrides": population(overrides), "seed_added": population(added),
+                       "before_capacity": len(ranked), "capacity_excluded": population(cut),
+                       "intended": len(symbols)})
     return symbols, names, flags, counts
+
+
+def provenance(uni: Universe, session) -> dict:
+    """A snapshot date is evidence of capture, never historical membership."""
+    captured = datetime.fromisoformat(uni.fetched_at).date() if uni.fetched_at else None
+    relation = ("unrecorded" if captured is None else "same_date" if captured == session
+                else "after_session" if captured > session else "before_session")
+    source_kind = ("directory_cache" if uni.source.startswith(SOURCE_CACHE) else
+                   "directory_live" if uni.source == SOURCE_LIVE else
+                   "seed" if uni.source == SOURCE_SEED else "explicit" if uni.source == SOURCE_EXPLICIT else "unknown")
+    return {"label": uni.label, "size": len(uni.symbols), "source": uni.source, "source_kind": source_kind,
+            "fetched_at": uni.fetched_at, "identity": uni.identity,
+            "snapshot_sha256": uni.snapshot_sha256, "counts": uni.counts,
+            "selection": uni.selection, "snapshot_relation": relation, "scan_session": str(session),
+            "snapshot_date_basis": "UTC", "point_in_time_membership": False,
+            "membership_limit": "Security-name classification is an approximation. This snapshot does not establish historical point-in-time membership."}
+
+
+def session_eligible(frames: dict, uni: Universe, *, exempt=()) -> tuple[dict, dict]:
+    """Existing price policy on actual closes; scanner volume rules stay local."""
+    exemptions = set(uni.price_exempt) | set(exempt)
+    if uni.source in (SOURCE_SEED, SOURCE_EXPLICIT):
+        exemptions.update(uni.symbols)
+    excluded = {t: float(df.iloc[-1]["Close"]) for t, df in frames.items()
+                if t not in exemptions and round(float(df.iloc[-1]["Close"]), 2) < MIN_PRICE}
+    return {t: df for t, df in frames.items() if t not in excluded}, excluded
 
 
 # ------------------------------------------------------------------ build ----
@@ -414,15 +441,42 @@ def identity(symbols: list[str]) -> str:
     return hashlib.sha256("\n".join(sorted(symbols)).encode()).hexdigest()[:16]
 
 
-def _floors() -> str:
-    return f"${MIN_PRICE:g}+ and {MIN_VOLUME:,}+ shares last session"
+def selection_faults(selection: dict) -> list[str]:
+    """Disjoint directory rows, seed exceptions and capacity must reconcile."""
+    if not selection:  # older archives and caller-supplied legacy Universe objects
+        return []
+    try:
+        counts = [selection[k] for k in ("listed", "duplicate_rows", "security_admitted",
+                  "security_excluded", "before_capacity", "intended")]
+        if any(type(n) is not int or n < 0 for n in counts):
+            raise ValueError
+        excluded = sum(p["count"] for p in selection["exclusions"].values())
+        valid = (
+            selection["listed"] == sum(counts[1:4])
+            and excluded == selection["security_excluded"]
+            and selection["before_capacity"] == (selection["security_admitted"]
+                + selection["seed_overrides"]["count"] + selection["seed_added"]["count"]
+                + selection.get("manual_admitted", 0))
+            and selection["before_capacity"] == selection["intended"] + selection["capacity_excluded"]["count"])
+        return [] if valid else ["universe selection does not reconcile"]
+    except (KeyError, TypeError, ValueError):
+        return ["universe selection does not reconcile"]
+
+
+def manual_selection(symbols, kind):
+    return {"kind": kind, "listed": 0, "duplicate_rows": 0,
+            "security_admitted": 0, "security_excluded": 0, "exclusions": {},
+            "seed_overrides": population([]), "seed_added": population([]),
+            "manual_admitted": len(symbols), "before_capacity": len(symbols),
+            "capacity_excluded": population([]), "intended": len(symbols)}
 
 
 def _seed_universe(seeds: list[str], warning: str | None) -> Universe:
     symbols = sorted(seeds)
     return Universe(symbols=symbols, names={}, flags={s: set() for s in symbols}, source=SOURCE_SEED,
                     fetched_at=None, counts={"admitted": len(symbols)},
-                    label=f"{len(symbols)} checked-in US common stocks (data/symbols.txt)", warning=warning)
+                    label=f"{len(symbols)} checked-in US common stocks (data/symbols.txt)", warning=warning,
+                    selection=manual_selection(symbols, "seed"))
 
 
 def _explicit_universe(explicit: list[str]) -> Universe:
@@ -432,7 +486,8 @@ def _explicit_universe(explicit: list[str]) -> Universe:
         raise ValueError(f"explicit tickers must be A-Z symbols of 1-5 characters; refused {bad or 'an empty list'}")
     return Universe(symbols=symbols, names={}, flags={s: set() for s in symbols}, source=SOURCE_EXPLICIT,
                     fetched_at=None, counts={"admitted": len(symbols)},
-                    label=f"{len(symbols)} named on the command line (--tickers)")
+                    label=f"{len(symbols)} named on the command line (--tickers)",
+                    selection=manual_selection(symbols, "explicit"))
 
 
 def _directory(docs: Path, now: datetime) -> tuple[list[dict], str, datetime]:
@@ -479,7 +534,8 @@ def build(docs: Path, *, explicit: list[str] | None = None, now: datetime | None
                    f"Universe refresh unavailable ({type(exc).__name__}); using the curated seed")
         log.warning("%s", warning)
         return _seed_universe(seeds, warning)
-    symbols, names, flags, counts = admit(rows, seeds)
+    selection = {}
+    symbols, names, flags, counts = admit(rows, seeds, ledger=selection)
     age_days = (now - captured).total_seconds() / 86400
     if source == SOURCE_CACHE:
         source = f"{SOURCE_CACHE} {age_days:.1f} days old"
@@ -495,8 +551,12 @@ def build(docs: Path, *, explicit: list[str] | None = None, now: datetime | None
         log.warning("%s", cut)
     biotech = sum(BIOTECH_FLAG in flagged for flagged in flags.values())
     foreign = sum(FOREIGN_FLAG in flagged for flagged in flags.values())
-    label = (f"{len(symbols)} US-listed common stocks from the {provenance}, {_floors()}"
+    label = (f"{len(symbols)} classified US-listed stocks from the {provenance}; no directory price/volume gate"
              f" ({biotech} flagged {BIOTECH_FLAG}, {foreign} flagged {FOREIGN_FLAG})")
     log.info("Universe: %s", label)
     return Universe(symbols=symbols, names=names, flags=flags, source=source,
-                    fetched_at=captured.isoformat(), counts=counts, label=label, warning=warning)
+                    fetched_at=captured.isoformat(), counts=counts, label=label, warning=warning,
+                    selection=selection, price_exempt=tuple(seeds),
+                    snapshot_sha256=hashlib.sha256(json.dumps(
+                        [{key: row.get(key) for key in DIRECTORY_FIELDS} for row in rows if isinstance(row, dict)],
+                        sort_keys=True, separators=(",", ":")).encode()).hexdigest())

@@ -38,7 +38,7 @@ def test_the_readme_quotes_the_pipelines_own_numbers():
     assert f"up to {['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'][pipeline.MAX_READS]}" in README
     assert f"{pipeline.LOOKBACK_DAYS} sessions of daily bars" in README
     assert f"{int(pipeline.FETCH_BUDGET_SECONDS)}-second budget" in README
-    assert "Fewer than half the names answering" in README and pipeline.MIN_COVERAGE_FRACTION == 0.5
+    assert "Fewer than half the intended stocks with usable" in README and pipeline.MIN_COVERAGE_FRACTION == 0.5
     assert f"{market_holdback()} minutes behind the clock" in README
 
 
@@ -50,7 +50,7 @@ def market_holdback() -> str:
 def test_the_readme_quotes_the_scans_and_the_universe_floors():
     assert f"c/c1 >= {scans.BURST_RATIO} and v > v1 and v >= {scans.MIN_VOLUME}" in README
     assert f"c - o >= {scans.DOLLAR_MOVE:.2f} and v > {scans.MIN_VOLUME}" in README
-    assert f"${universe.MIN_PRICE:g} and {universe.MIN_VOLUME:,} shares" in README
+    assert f"${universe.MIN_PRICE:g} session-close policy" in README
     assert "228-name seed" in README
     seed = [l for l in (ROOT / "data" / "symbols.txt").read_text().splitlines() if l and not l.startswith("#")]
     assert len(seed) == 228
@@ -131,7 +131,7 @@ def test_the_readme_and_the_env_example_name_every_required_variable():
 # -------------------------------------------------------- .env.example ----
 def test_the_env_example_quotes_the_read_cap_and_the_universe_floors():
     assert f"MAX_READS ({pipeline.MAX_READS})" in ENV
-    assert f"${universe.MIN_PRICE:g} and {universe.MIN_VOLUME:,} shares" in ENV
+    assert f"${universe.MIN_PRICE:g} session-close policy" in ENV
     assert f"data/symbols.txt ({228} names)" in ENV
     assert f"$10,000, {plan.DEFAULT_RISK_PCT:g}% risk a trade" in ENV and plan.DEFAULT_EQUITY == 10_000
     assert "0.25-1%" in ENV and (plan.RISK_PCT_BAND_LOW, plan.RISK_PCT_BAND_HIGH) == (0.25, 1.0)
@@ -163,7 +163,7 @@ def collected_tests() -> int:
 def test_claude_md_is_short_and_names_the_fixture_count():
     assert len(CLAUDE_MD.splitlines()) <= 150
     every = make_fixture.VARIANTS + make_fixture.SEQUELS
-    assert f"over {['eight'][0]} fixtures" in CLAUDE_MD and len(every) == 8
+    assert "over ten fixtures" in CLAUDE_MD and len(every) == 10
 
 
 # --------------------------------------------- the page's chart anchors ----

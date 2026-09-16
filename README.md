@@ -1,6 +1,6 @@
 # SpicyStock
 
-One evening run over every US-listed common stock, one page that says what
+One evening run over an explicitly selected US-stock universe, one page that says what
 to do tomorrow and why, one email that says the same in fewer words. The
 method is Pradeep Bonde's (Stockbee) momentum burst: a 4% range-expansion
 day out of a quiet base, bought the next morning inside a narrow zone with
@@ -313,23 +313,47 @@ offset; the guard runs the right one) and again at 8:16 PM ET as a retry
 that runs only if `docs/data.json` does not already carry tonight's
 session. The run:
 
-- **universe** — Nasdaq's stock directory, every US-listed common stock at
-  $3 and 100,000 shares (about 3,000 names; biotech and foreign are flags on
-  the page, not exclusions). A directory that will not answer falls back to
-  its seven-day cache, then to the 228-name seed, and the run is marked
-  `universe_cached`.
+- **universe** — Nasdaq's security-name and industry classifier approximates
+  common stock; it is not exact TC2000 membership. Directory price and volume
+  never gate discovery. Biotech and foreign domicile remain flags. The
+  seven-day cache and 228-name seed fallback remain explicit. Seeds can bypass
+  classification; overrides and additions are counted. The 8,000-name capacity
+  safeguard retains seeds, ranks any remaining tail by directory dollar volume,
+  and counts every cut. A capacity cut degrades coverage; it can lose a breakout
+  and is not a strategy rule. It does not bind on the archived September 15
+  directory: 4,797 selected stocks versus 3,039 under the old quote gates.
 - **fetch** — 260 sessions of daily bars from Alpaca's consolidated `sip`
-  feed, the request held sixteen minutes behind the clock (the free plan's
-  route), in chunks, under a 900-second budget. Fewer than half the names
-  answering is a feed outage and the run fails before spending anything
-  else. SPY rides along for the scorecard's comparison line.
-- **session** — from the bars alone: if half the names carry a bar for the
-  expected session the market was open; if almost none do but the previous
-  session is there, it was closed and the run republishes the previous
-  session's tickets verbatim with its picks as plans that have had no
-  session yet; between the two it is a thin night, `coverage_thin`, and the
-  run goes on over the names that printed; fewer than that with the previous
-  session absent too is an outage and the run fails.
+  feed, explicitly split-adjusted, not raw or dividend-adjusted. The request
+  remains sixteen minutes behind the clock, in chunks, under a 900-second budget.
+  SPY rides along for the scorecard. The archived population expansion changes
+  estimated initial SDK batches from 31 to 48, before pagination/retries; it does
+  not raise the timeout or the twelve-call chart-reader cap. Actual calls can
+  vary with qualifying candidates within that cap; this milestone used none.
+- **session and coverage** — the existing bar-based open/closed inference is
+  retained. Each frame needs the evaluated session and the required previous
+  session with readable OHLCV. Fewer than half the intended stocks with usable
+  session bars refuses publication before grading; the denominator excludes SPY.
+  At least half but less than all is degraded, as is any capacity cut or scan/
+  quality error. A fully evaluated selection can be complete without being the
+  complete listed market. The existing $3 session-close policy now reads actual
+  cent-rounded bars, with seed/explicit exemptions preserved; actual scan volume
+  remains the scanner's rule. Closed runs explicitly count stocks not scanned.
+  No-bar responses, failed batches, budget-unfetched names, stale frames, gaps,
+  unreadable pairs and repaired duplicates are distinct in `run.coverage`.
+  Counts reconcile from selection through measured burst/dollar/both/neither and
+  quality outcomes; each reason carries a bounded sample and membership digest.
+  Below-threshold failures retain their population on `RunReport.input_coverage`
+  and in the run log, leaving the last published record intact.
+  `run.universe` records the source, capture timestamp, snapshot hash, selection
+  identity, exclusions and the snapshot date's relation to the scan session.
+  A contemporary or cached directory never proves historical point-in-time
+  membership; pinned sessions carry that limitation. No survivorship-bias-free
+  historical backtest is claimed. `run.input_basis` records the feed, split
+  adjustment and expected/evaluated sessions; recovery copies the original run.
+  Older records without these fields remain explicitly unknown on the page.
+  See `docs/input-truthfulness/README.md` for conservation equations and offline impact.
+  Method shows the ledger concisely, and incomplete empty results are qualified
+  beside the verdict and empty-state text.
 - **breadth** — the Market Monitor columns and the regime: green (full
   size), yellow (half size, A+ only), red (no new longs; the open plans get
   a tighten-and-sell clause).
@@ -464,7 +488,7 @@ not a backtest or a claim about either ceiling.
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
-`closed`), plus two sequels of the `full` night (`next`, `revised`) run over
+`closed`, `empty`, `partial`), plus two sequels of the `full` night (`next`, `revised`) run over
 the docs that night wrote, so a setup followed then can be read against a
 genuinely newer record: `next` is the same market one session on, where the
 ticket and the withheld setup have left the record, one burst has burst
@@ -525,7 +549,7 @@ what the bars say happened to them.
 
 ```
 src/            history.py (public recovery and coverage)
-                pipeline.py (the run) · universe.py · market_data.py · clock.py
+                pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py

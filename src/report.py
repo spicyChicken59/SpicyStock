@@ -28,7 +28,7 @@ from typing import Any
 
 import resend
 
-from src import timing
+from src import timing, inputs
 
 log = logging.getLogger(__name__)
 
@@ -115,7 +115,8 @@ CONTRACT: dict[str, str] = {
              "and anchor, and the verb. Composed from the numbers below; never edited by hand.",
     "run": "The run that produced this file: session, session_state, expected_session, status "
            "(ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the "
-           "page prints one fixed sentence per kind), coverage, counts, email state, timings. run.sanitised "
+           "page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, "
+           "input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised "
            "counts the non-finite numbers replaced with null on the way in. run.timing is a different fact "
            "from the two above it: the session tonight's plans are FOR and the instants its entry window is "
            "scheduled between, offset and all, with the calendar it could not read named in its limits. A "
@@ -344,6 +345,12 @@ def cover(run: dict, breadth: dict | None, trades: list, bursts: list,
     it so; the count is the list's, not a recount of grades.
     """
     run = run if isinstance(run, dict) else {}
+    def result(head, dek, action, verb):
+        cov = run.get("coverage") or {}
+        if cov.get("version") and (cov.get("acceptance", {}).get("status") != "ok" or not bursts):
+            dek += " " + inputs.coverage_sentence(run)
+        return _cover(head, dek, action, verb)
+
     expected = _first(_text(run.get("expected_session")), _text(run.get("session")), "the next session")
     session = _text(run.get("session"))
     problems = problem_sentences(run.get("problems"))
@@ -351,23 +358,25 @@ def cover(run: dict, breadth: dict | None, trades: list, bursts: list,
         dek = "The evening run stopped before it published a plan. The open model plans are unchanged."
         if problems:
             dek += " " + problems[0]
-        return _cover(H1_FAILED.format(expected=expected), dek, HOLD_ACTION, "none")
+        return result(H1_FAILED.format(expected=expected), dek, HOLD_ACTION, "none")
     if run.get("session_state") == "closed" or run.get("status") == "closed":
         dek = f"No session on {expected}."
         if session:
             dek += f" The plans from {session} stand; day counts did not advance."
-        return _cover(H1_CLOSED, dek, HOLD_ACTION, "hold")
+        return result(H1_CLOSED, dek, HOLD_ACTION, "hold")
     verdict = _get(breadth, "regime", "verdict")
     sentence = breadth_sentence(breadth)
     n = len(trades) if isinstance(trades, list) else 0
     if verdict == "red":
-        return _cover(H1_STAND_ASIDE, sentence, HOLD_ACTION, "stand aside")
+        return result(H1_STAND_ASIDE, sentence, HOLD_ACTION, "stand aside")
     if n and verdict == "yellow":
-        return _cover(H1_TRADE_SMALL.format(n=n, noun=_plural(n, "burst")), sentence,
+        return result(H1_TRADE_SMALL.format(n=n, noun=_plural(n, "burst")), sentence,
                       ORDERS_ACTION, "trade small")
     if n:
-        return _cover(H1_TRADE.format(n=n, noun=_plural(n, "burst")), sentence, ORDERS_ACTION, "trade")
-    return _cover(H1_KEEP_CASH, no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
+        return result(H1_TRADE.format(n=n, noun=_plural(n, "burst")), sentence, ORDERS_ACTION, "trade")
+    if (run.get("coverage") or {}).get("acceptance", {}).get("status") == "degraded":
+        return result("No qualifying tickets in the evaluated subset.", no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
+    return result(H1_KEEP_CASH, no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
 
 
 def summary(burst: dict) -> str:
@@ -629,6 +638,7 @@ def validate(data: dict) -> None:
             if not isinstance(p["message"], str) or len(p["message"]) > MESSAGE_MAX_CHARS:
                 faults.append(f"run.problems[{i}].message is not plain text of at most {MESSAGE_MAX_CHARS} chars")
     faults.extend(timing_faults(run.get("timing")))
+    faults.extend(inputs.record_faults(run))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
