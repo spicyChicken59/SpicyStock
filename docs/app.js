@@ -2443,7 +2443,10 @@
       evidence: followEvidenceOf(c, record),
       provenance: record.provenance || { session: run.session, published_at: run.published_at, run_id: run.run_id, rules_version: app.rules_version },
       snapshot: {
-        evidence_ref: b.evidence ? { version: b.evidence.version, id: b.evidence.id, context_sha256: b.evidence.context_sha256, source_sha256: b.evidence.source.sha256, gate: b.evidence.gate } : null,
+        published_plan: hasTicket ? {order_json:plan.order_json,
+          horizon_end:((plan.exit_schedule || []).slice(-1)[0] || {}).date || null} : null,
+        evidence_ref: b.evidence ? { version: b.evidence.version, id: b.evidence.id, context_sha256: b.evidence.context_sha256, source_sha256: b.evidence.source.sha256, gate: b.evidence.gate,
+          plan_sha256:(plan.evidence_ref || {}).plan_sha256 || null, pick_sha256:(plan.evidence_ref || {}).pick_sha256 || null } : null,
         timing: run.timing || null, calendar: run.calendar ? { exchange: run.calendar.exchange, library: run.calendar.library, library_version: run.calendar.library_version, measured: run.calendar.measured, applicable: run.calendar.applicable } : null,
         input_basis: run.input_basis || null, universe: run.universe ? { source: run.universe.source, fetched_at: run.universe.fetched_at, identity: run.universe.identity, snapshot_relation: run.universe.snapshot_relation } : null,
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
@@ -2552,8 +2555,12 @@
       const bars = recordBarsFor(it.ticker);
       if (bars.length) updates.push({ id: it.id, bars: bars, from_session: session, from_rules: text(app.rules_version), basis: basisOf(it, bars, session) });
     });
-    if (!updates.length) return null;
-    const res = await SCStock.follow.commit('observe', updates);
+    const res = updates.length ? await SCStock.follow.commit('observe', updates) : null;
+    const plans = [];
+    items.forEach(item => (current.open_plans || []).forEach(row => {
+      if (SCStock.follow.matchesPlan(item, row)) plans.push({id:item.id, row, from_session:session, published_at:run.published_at, rules_version:app.rules_version});
+    }));
+    if (plans.length) await SCStock.follow.commit('observePlans', plans);
     if (res && res.changed) invalidateFollow();
     return res;
   }
@@ -2615,6 +2622,22 @@
   // Anything else is named as another signal's and shown apart, never folded
   // into the saved plan.
   function modelUpdateOf(item) {
+    const selection = SCStock.follow.selectedPlan(item);
+    if (selection) {
+      const exact = (current.open_plans || []).find(row => SCStock.follow.matchesPlan(item, row));
+      const kept = item.model_observation;
+      const useKept = kept && SCStock.follow.matchesPlan(item, kept.row) && (!exact || kept.from_session > text((current.run || {}).session) ||
+        kept.from_session === text((current.run || {}).session) && text(kept.published_at) > text((current.run || {}).published_at));
+      const row = useKept ? kept.row : exact;
+      if (row) return {plan:row, matched:true, exact:true, through:row.last_date, from:useKept ? kept.from_session : text((current.run || {}).session), why:''};
+      const end = ((item.snapshot || {}).published_plan || {}).horizon_end;
+      const session = text((current.run || {}).session);
+      return {plan:null, matched:false, why:!selection.reference ? 'Legacy plan identity is incomplete; no exact model outcome is linked.' : !session
+        ? 'Source unavailable: no public record is loaded.' : session <= item.session
+          ? 'Awaiting a later published model observation.' : end && session > end
+            ? 'The public model window ended without an exact outcome loaded here. No result is inferred.'
+            : 'No exact model outcome is available in this record. No fill or result is inferred.'};
+    }
     const app = current.app || {};
     const same = (current.open_plans || []).filter((o) => o && o.ticker === item.ticker);
     if (!same.length) return { plan: null, matched: false, why: '' };
@@ -2682,7 +2705,41 @@
     const setup = followSetupOf(c), existing = SCStock.follow.find(SCStock.follow.identity(setup));
     const pub = setup.provenance && setup.provenance.published_at;
     if (existing && pub && (existing.provenance || {}).published_at && existing.provenance.published_at !== pub) setup.revision_id = 'publication-' + pub;
+    const before = ((existing || {}).snapshot || {}).evidence_ref, next = setup.snapshot.evidence_ref;
+    if (before && next && before.id !== next.id) setup.revision_id = 'evidence-' + next.id;
     return setup;
+  }
+  function planSelectionControl(setup, item, savedDetail) {
+    if ((setup.snapshot || {}).status !== 'ticket') return null;
+    const selection = SCStock.follow.selectedPlan(item), id = item ? item.id : SCStock.follow.identity(setup);
+    const box = el('div', {'class':'ss-plan-selection'});
+    const button = el('button', {type:'button', 'class':'sc-btn sc-btn--secondary sc-btn--sm', 'data-select-plan':'',
+      'aria-pressed':selection ? 'true' : 'false', text:selection ? savedDetail ? 'Clear plan selection' : 'Following plan · open' : 'I followed this plan'});
+    const note = el('p', {'class':'sc-hint', role:'status', text:selection
+      ? 'Selected ' + selection.selected_at + ' · your choice of plan, not an order or fill.'
+      : 'Save this exact published plan as your choice to follow. No order, fill or actual quantity is recorded.'});
+    button.addEventListener('click', async () => {
+      if (selection && !savedDetail) {navigate(savedHash(id)); return;}
+      button.disabled = true; box.setAttribute('aria-busy', 'true');
+      const res = selection ? await SCStock.follow.commit('clearPlan', id)
+        : await SCStock.follow.commit('selectPlan', setup, !!item);
+      button.disabled = false; box.setAttribute('aria-busy', 'false');
+      if (!res.ok) {note.textContent = res.error; recoveryDownload(box); button.focus({preventScroll:true}); return;}
+      await recordObservations(); afterFollowChange(); renderDetailFollow();
+      if (savedDetail) {openSaved(id, false); const control = d.querySelector('.ss-saved [data-select-plan]'); if (control) control.focus();}
+      else {const control = d.querySelector('#detail [data-select-plan]'); if (control) control.focus({preventScroll:true});}
+    });
+    box.appendChild(button); box.appendChild(note); return box;
+  }
+  function planSelectionSummary(item) {
+    const selection = SCStock.follow.selectedPlan(item);
+    if (!selection) return null;
+    const update = modelUpdateOf(item), row = update.plan, session = text((current.run || {}).session);
+    return el('div', {'class':'ss-followed__group', 'data-following-plan':''}, [
+      el('p', {'class':'sc-eyebrow', text:'Following plan · selected ' + dateWords(selection.selected_at.slice(0,10))}),
+      el('p', {'data-personal-model-state':'', text:row ? 'Model plan: ' + (PLAN_STATUS[row.status] || [words(row.status).toUpperCase()])[0] + ' · evidence through ' + dateWords(row.last_date) : 'Model plan: not established'}),
+      el('p', {'class':'sc-hint', 'data-plan-coverage':'', text:row ? (update.from < session ? 'No newer exact model observation. ' : update.from > session ? 'Saved outcome is newer than this loaded record. ' : st && ['stale1', 'stale2'].includes(st.state) ? 'The loaded publication is stale. ' : '') + 'Public model evidence, not your execution or P&L.' : update.why})
+    ]);
   }
   function saveButton(c) {
     const setup = setupForSave(c), id = SCStock.follow.identity(setup), saved = SCStock.follow.find(id);
@@ -2712,10 +2769,10 @@
     const message = el('p', { 'class': 'sc-hint', role: 'status', 'data-annotation-status': '', text: annotationDrafts.has(item.id) ? 'Unsaved amount: save to keep this edit.' : '' });
     const submit = el('button', { type: 'submit', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', text: 'Save amount' });
     const clearAmount = el('button', { type: 'button', 'class': 'sc-btn sc-btn--ghost sc-btn--sm', text: 'Clear amount' });
-    form.appendChild(el('label', { 'class': 'ss-annotation__taken', for: 'setup-taken' }, [taken, ' I took this setup']));
+    if (Object.prototype.hasOwnProperty.call(a, 'taken')) form.appendChild(el('label', { 'class': 'ss-annotation__taken', for: 'setup-taken' }, [taken, ' Legacy note: I took this setup']));
     form.appendChild(el('label', { for: 'setup-amount', text: 'Reference amount (USD)' }));
     form.appendChild(el('div', { 'class': 'ss-annotation__amount' }, [amount, submit, clearAmount]));
-    form.appendChild(el('p', { 'class': 'sc-hint', text: 'Optional, browser-local notes. A marking time is not a purchase date. Unmarked means unmarked. Amounts do not imply shares, fills or personal P&L.' }));
+    form.appendChild(el('p', { 'class': 'sc-hint', text: 'Optional, browser-local reference amount. Amounts do not imply shares, fills or personal P&L. A legacy setup note is preserved separately and is not converted into a plan selection or execution evidence.' }));
     form.appendChild(message);
     if (a.taken_marked_at) form.appendChild(el('p', { 'class': 'sc-hint', text: 'Indication marked at ' + a.taken_marked_at + ' (not a purchase date).' }));
     amount.addEventListener('input', () => annotationDrafts.set(item.id, amount.value));
@@ -2827,6 +2884,8 @@
       warn(st0.error || 'Storage is blocked in this browser; nothing can be followed here.');
       return box;
     }
+    const selection = planSelectionControl(setup, item, false);
+    if (selection) box.appendChild(selection);
     if (!item) {
       const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Save setup', 'data-follow-action': 'add' });
       btn.addEventListener('click', async () => {
@@ -2939,9 +2998,10 @@
       ? 'your reference size ' + plural(item.reference_shares, 'share') + (isNum(item.suggested_shares) ? ' · plan suggested ' + item.suggested_shares : '')
       : (isNum(item.suggested_shares) ? plural(item.suggested_shares, 'share') + ' suggested by the plan' : 'observation only, no size') }));
     const annotation = item.annotation || {};
-    if (annotation.taken) at.appendChild(el('p', { 'class': 'sc-hint', text: 'You marked: I took this setup' }));
+    if (annotation.taken) at.appendChild(el('p', { 'class': 'sc-hint', text: 'Legacy note: I took this setup (not execution evidence)' }));
     if (annotation.reference_amount) at.appendChild(el('p', { 'class': 'sc-hint', text: 'Reference amount: USD ' + amountText(annotation.reference_amount) }));
     card.appendChild(at);
+    const selected = planSelectionSummary(item); if (selected) card.appendChild(selected);
     // group two: what has been seen since
     const since = el('div', { 'class': 'ss-followed__group', 'data-group': 'since' }, [el('span', { 'class': 'sc-eyebrow', text: 'since the signal' })]);
     if (o.latest) {
@@ -3150,11 +3210,11 @@
         el('p', null, [d.createTextNode('Day ' + plain(p.day) + ' · '), chip(PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][0] : words(p.status), PLAN_STATUS[p.status] ? PLAN_STATUS[p.status][1] : 'neutral'),
           d.createTextNode(isNum(p.current_stop) ? ' · stop now ' + usd(p.current_stop) : '')]),
         text(p.instruction) ? el('p', { 'class': 'ss-saved__quote', text: '“' + p.instruction + '”' }) : null,
-        el('p', { 'class': 'sc-hint', text: 'The model’s own plan over configured sizing assumptions, matched to this signal by its session and its rules. It is not your position and not a record of anything you did.' })
+        el('p', { 'class': 'sc-hint', text: upd.exact ? 'The public model outcome matches the frozen evidence and plan identities. It is not your position or execution.' : 'Legacy model association by signal session and rules only; exact plan identity was not recorded. It is not your position or execution.' })
       ]));
     } else if (upd.why) {
       box.appendChild(el('div', { 'class': 'ss-saved__model', 'data-model-update': 'apart' }, [
-        el('span', { 'class': 'sc-eyebrow', text: 'a model plan, but not this signal’s' }),
+        el('span', { 'class': 'sc-eyebrow', text: SCStock.follow.selectedPlan(item) ? 'model outcome coverage' : 'a model plan, but not this signal’s' }),
         el('p', { 'class': 'sc-hint', text: upd.why })
       ]));
     }
@@ -3188,6 +3248,8 @@
     wrap.appendChild(el('p', { 'class': 'ss-saved__note', text: cap((text(snap.status_words) || 'no ticket')) + ' in the ' + dateWords(item.session) + ' record — a fact about that record, not a ticket available now.' }));
     wrap.appendChild(el('p', { 'class': 'sc-hint', 'data-saved-input-basis': '', text: 'Original bars: ' + barBasis({ input_basis: snap.input_basis }) + '. Directory snapshot: ' + ((snap.universe || {}).fetched_at || 'not recorded') + '; historical membership is not established.' }));
     wrap.appendChild(el('p', { 'class': 'sc-hint', 'data-saved-timing': '', text: snap.calendar && snap.timing ? 'Original timing: ' + snap.timing.applicable_session + '; scheduled close ' + snap.timing.closes_at + '; ' + snap.calendar.exchange + ' / ' + snap.calendar.library + ' ' + snap.calendar.library_version + '. This saved evidence is not rewritten.' : 'Original exchange-calendar provenance is unknown; historical timing has not been recalculated.' }));
+    const selection = planSelectionControl(item, item, true); if (selection) wrap.appendChild(selection);
+    const selected = planSelectionSummary(item); if (selected) wrap.appendChild(selected);
     wrap.appendChild(annotationForm(item));
     wrap.appendChild(savedSignalSection(item));
     wrap.appendChild(savedSinceSection(item));

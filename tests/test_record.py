@@ -46,6 +46,29 @@ def calendar_frames(n_names: int = 3) -> dict[str, pd.DataFrame]:
     return frames
 
 
+@pytest.mark.parametrize("bars", [
+    [],
+    [{"date": "2026-09-03", "o": 100.5, "h": 103.0, "l": 100.0, "c": 102.0}],
+    [{"date": "2026-09-02", "o": 97.0, "h": 98.0, "l": 96.5, "c": 97.5}],
+    [{"date": "2026-09-02", "o": 99.0, "h": 101.0, "l": 98.0, "c": 100.0}],
+    [{"date": "2026-09-02", "o": 100.5, "h": 103.0, "l": 100.0, "c": 102.0}],
+    [{"date": d, "o": o, "h": h, "l": l, "c": c} for d, o, h, l, c in LATER],
+])
+def test_replay_keeps_exact_plan_identity_without_changing_outcome(bars):
+    from src import provenance
+    p = pick()
+    before = record.replay(p, bars)
+    reference = {"version": 1, "id": "1" * 64, "context_sha256": "2" * 64,
+                 "plan_sha256": "3" * 64,
+                 "pick_sha256": provenance.digest({k: v for k, v in p.items() if k != "date"})}
+    p["evidence_ref"] = reference
+    assert record.pick_problem(p) is None
+    after = record.replay(p, bars)
+    assert after.pop("evidence_ref") == reference
+    assert after == before
+    assert "evidence_ref" not in before
+
+
 # ---------------------------------------------------------------- file ----
 def test_a_missing_file_is_an_empty_record(tmp_path):
     rec = record.load(tmp_path)

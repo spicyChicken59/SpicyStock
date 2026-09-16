@@ -18,6 +18,7 @@
    Needs playwright (npm install --no-save playwright) and its chromium. */
 import { createServer } from 'node:http';
 import { checkActionability } from './actionability_cases.mjs';
+import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -1260,7 +1261,7 @@ async function checkFollowThrough(browser, base, full) {
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await seedStore(page, LEGACY);
   await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
-  eq('a v1 store is upgraded in place', (await readStore(page)).version, 3);
+  eq('a v1 store is upgraded in place', (await readStore(page)).version, 4);
   eq('and the payload it replaced is kept beside it', await storeKeys(page), [FOLLOW_KEY, FOLLOW_KEY + '.previous']);
   eq('verbatim', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.previous')), FOLLOW_KEY), LEGACY);
   const legacy = (await readStore(page)).items[0];
@@ -3585,6 +3586,7 @@ async function main() {
       await checkVariant(browser, base, v, data);
     }
     if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+    if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
     if (runs('provenance')) await checkPlanEvidence(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);
