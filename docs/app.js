@@ -38,6 +38,7 @@
   const RUNS_API = 'https://api.github.com/repos/' + REPO + '/actions/workflows/evening.yml/runs?per_page=1';
   const RUNS_URL = 'https://github.com/' + REPO + '/actions/workflows/evening.yml';
   const METHOD_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/method.md';
+  const DISCOVERY_SOURCES_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/reaction-discovery.md';
   const RULEBOOK_URL = 'https://github.com/' + REPO + '/blob/main/knowledge/strategy.md';
 
   // One fixed sentence per problem kind, the same seven src/report.py mails
@@ -550,10 +551,11 @@
       meta.appendChild(li);
     } else meta.appendChild(el('li', null, [el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'The evening runs on GitHub' })]));
     const body = clear($('method-body'));
-    body.appendChild(el('p', { text: 'SpicyStock is an implementation of Pradeep Bonde’s momentum burst method with explicit assumptions: a 4% range-expansion day out of a quiet base, bought the next morning inside a narrow zone with the stop under the burst bar, sold into strength over three to five days, and only when breadth allows it. It is not a proven edge and it knows nothing about what you hold.' }));
+    body.appendChild(el('p', { text: 'SpicyStock implements Pradeep Bonde’s momentum burst method with explicit assumptions. Reaction discovery has two routes: 4% breakout or Dollar breakout. A Dollar candidate can qualify below +4%; A-quality is judged after discovery, and breadth and entry rules separately decide whether a ticket is available. It is not a proven edge and it knows nothing about what you hold.' }));
     body.appendChild(el('p', { text: 'Setting up is the anticipation list: quiet, coiled names inside established momentum, with a buy stop a few cents over the box. Bursts are the range-expansion days the scan found on the session, graded on Bonde’s checklist; a grade, a plan and a ticket are three different things, and the page says which a stock has. Every ticket is sized at its limit, the highest fill it permits, so the fixed quantity keeps the risk budget, the position cap and his 4% stop line at every fill it can take; a stop past that line at the limit withholds the ticket and keeps the setup.' }));
     body.appendChild(el('p', { text: 'The Record is a model: a fill is booked only at the next open inside the ticket, the published stop is one R, sales are whole shares, and a fill the daily bars cannot establish is uncertain and scored nowhere. Paper prices, published daily bars, no slippage. Not investment advice.' }));
     body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'the rulebook the chart reader follows (knowledge/strategy.md)' })]));
+    body.appendChild(el('p', { 'class': 'sc-hint' }, [el('a', { href: DISCOVERY_SOURCES_URL, target: '_blank', rel: 'noopener', text: 'Current discovery sources' }), d.createTextNode(': primary 4% formula dated May 21, 2015; primary Dollar formula dated July 13, 2017. Precision and universe filters are SpicyStock choices. Historical records keep their recorded rules.')]));
     const notes = clear($('account-notes'));
     (acct.notes || []).forEach((n) => notes.appendChild(el('li', { text: n })));
     if (!(acct.notes || []).length) notes.appendChild(el('li', { text: 'No sizing notes were recorded.' }));

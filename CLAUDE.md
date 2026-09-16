@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1266 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1276 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1913,3 +1913,54 @@ locally reproduced the exact three differing source IDs. The synthetic provider
 now serves eight-decimal OHLC and whole-share volume before the pipeline reads
 it. Production hashing/inputs are unchanged. Both CPU dispatch paths regenerate
 the same fixtures and source objects. The correction belongs to the same PR #71.
+
+## Checkpoint, 16 Sep 2026 — primary-source Dollar reaction contract
+
+Base `660e9beefd1125203628f8a162ddae4d6f3c3549`; branch
+`strategy/dollar-source-contract`; Astra only, no subagents. Main matched
+the supplied base, the existing checkout was clean, no PR was open and no
+applicable AGENTS.md was present. The latest #71 checkpoint was read.
+Prior branches/work were preserved in a separate worktree. Exact published
+head and PR are recorded in the focused PR; nothing is merged or deployed.
+
+**Outcome A, no formula change.** Bonde's public May 21, 2015 post establishes
+the selected PRIMARY 4% formula. September 20, 2016 prints a Dollar PCF with
+an inclusive current-volume floor; July 13, 2017 prints the selected
+`c-o>=.90 and v>100000`. This is a dated primary mapping, not a claim of
+one timeless formula or intentional universal supersession. The 2017 post's
+4% volume floor is strict too; the repository retains its selected 2015
+burst version. Near-high setup quality and high-price context are separate
+from Dollar discovery. No prior/average volume or +4% condition is added.
+
+`knowledge/reaction-discovery.md`, revision reaction-discovery-sources-v1,
+is the source contract. It labels PRIMARY, LATER BONDE, COMMUNITY and
+IMPLEMENTATION, distinguishes cent/share/ratio normalization and universe
+policy, and keeps quality, breadth and plans downstream. Bonde's January 4
+and January 14, 2014 article text was also inspected, alongside lukebrod's
+May 29, 2022 TradingView description and the supplied field guide. The
+July 5, 2017 video landing page and Wiley chapter metadata/summary were
+partially inspected. November 18, 2015 blog full-text retrieval failed;
+the supplied X thread returned 403. Full chapter, Pine code, embedded
+charts/videos/transcripts and member materials were not inspected or purchased.
+No latest-member-formula claim follows from these public sources.
+
+README/Method's universal-4% introduction is corrected, with one source note.
+Scanner changes are comments/docstrings only; its executable AST, constants,
+grader prompt, schemas and payloads match the base. Source revision is
+documentation only: no rules_version or evidence-ID change and no backfill.
+The retained full fixture still has rules a6354faa5da9; production legacy
+rules remain e1032aa5ee21. Discovery v1 and provenance v1 still verify.
+
+Verification: 317 focused checks, 1,276 full pytest cases, twelve current
+fixtures, 89 continuity and 182 chart checks; 4,182 page checks.
+Desktop and 390/320px Method screenshots inspected; wording fits. Three mutations were killed (source label, volume boundary,
+open/prior-close reference) with unaffected controls passing. All 1,408 history
+files and 1,465 retained production/history/audit/provenance/design files match
+the base byte-for-byte. September 11/14 grades are unchanged. Installed and
+latest released design remain v2.13.0, source 14a752d, with 22/22 hashes intact.
+
+KEEP #68–#71 software-trust layers. FIX source attribution and its presentation.
+DEFER prospective live qualifying-ticket validation and profitability evaluation.
+OMIT tuning, dashboard expansion, anticipation/EP edits and paid membership
+research. Provider/model/market scan, email, manual dispatch, merge and deployment
+actions: zero. Next: review the focused PR; no merge authorization is inferred.

@@ -23,7 +23,9 @@ record prints at 4.0% is never one the scan refused at 3.996%. The dollar move
 is the worked example: 23.90 - 23.00 is 0.8999999999999986 in binary, and an
 unrounded compare refuses a ninety-cent body beside an archived $0.90.
 
-Strict and inclusive comparisons are kept exactly as Bonde writes them, and
+Reaction source versions and implementation precision are distinguished in
+knowledge/reaction-discovery.md. Comparison operators follow those selected
+dated formulas, not one timeless Bonde formula, and
 RULES says which is which: a ``min_``/``max_`` key is inclusive unless its
 name ends in ``_exclusive``.
 """
@@ -34,7 +36,7 @@ import numpy as np
 import pandas as pd
 
 # 4% breakout: c/c1 >= 1.04 and v > v1 and v >= 100000. Bonde's momentum
-# burst scan, the 2015 100,000-share version; the mirror is the breakdown the
+# burst scan, the May 21, 2015 version; the mirror is the breakdown the
 # breadth counts and the quality checks read.
 BURST_RATIO = 1.04
 BREAKDOWN_RATIO = 0.96
@@ -42,8 +44,10 @@ BREAKDOWN_RATIO = 0.96
 MIN_VOLUME = 100_000
 # $ breakout: c - o >= 0.90 and v > 100000. Close minus OPEN -- the day's own
 # body, so the overnight gap is excluded -- and absolute, so a $4 day on a
-# $200 stock is 2%. The community TradingView variant measures c - c1 and
-# requires the close within 30% of the high; this is Bonde's.
+# $200 stock is 2%. PRIMARY: Bonde's July 13, 2017 process-loop post;
+# his September 20, 2016 version used v >= 100000 instead. See the dated
+# source contract in knowledge/reaction-discovery.md. Numeric rounding above
+# is IMPLEMENTATION, not a claim of exact TC2000 execution equivalence.
 DOLLAR_MOVE = 0.90
 # Double Trouble: c/minl252 >= 1.8 and minv3.1 >= 100000, read with the
 # +-1% quiet-day filter for anticipation.
@@ -403,10 +407,11 @@ def breakdown_4pct(df: pd.DataFrame, at: int = -1) -> dict | None:
 def dollar_breakout(df: pd.DataFrame, at: int = -1) -> dict | None:
     """c - o >= 0.90 and v > 100000, the move rounded to cents once.
 
-    Bonde's formula: the day's body, in dollars, so a gap is excluded and a
-    high-priced name that moved $4 qualifies without a 4% day. The community
-    TradingView variant measures c - c1 and requires the close within 30% of
-    the high with no volume term; that one is not implemented.
+    Bonde's July 13, 2017 predicate, with SpicyStock's numeric precision:
+    the day's body excludes the gap and can qualify without a 4% day.
+    The community variant documented in knowledge/reaction-discovery.md
+    measures c - c1 and requires the close within 30% of the high with no
+    volume term; that one is not implemented.
     """
     b = _bars(df, at)
     return None if b is None else _dollar(b)

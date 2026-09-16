@@ -4,6 +4,10 @@ Pradeep Bonde's (Stockbee) Momentum Burst method, as the field guide
 "The Stockbee A-Quality Setup & Momentum-Burst Method" states it and as the
 rebuild's research lenses sourced it. Every number the code applies is a named
 constant in the module that reads it; this file says whose number it is.
+For reaction discovery, the directly inspected, dated
+[source contract](reaction-discovery.md) supersedes this file's older broad
+attributions. Its PRIMARY / LATER BONDE / COMMUNITY / IMPLEMENTATION labels
+keep formula authorship separate from the repository's operational choices.
 
 Marks: **(B)** Bonde's own words or formula · **(V)** his 2018 video, one
 machine transcription, corroborated by an independent port · **(P)** this
@@ -19,16 +23,22 @@ it hundreds of times a year. "This is a pattern and probability based trade."
 
 ## Universe (`src/universe.py`)
 
-US-listed common stocks (Bonde's TC2000 "Common Stock" list, ~6,500 names),
-price ≥ $3 (B), last-session volume ≥ 100,000 shares (B: `v>=100000`). No
-float, cap or sector exclusion (B). Biotech and foreign-domiciled names are
+US-listed common stocks, with a separate SpicyStock session-price policy
+of ≥ $3 and seed/explicit exceptions (P); directory quotes do not gate
+admission. Volume belongs to each scan's own formula, not a shared universe
+prefilter. The optional price filters in Bonde's posts are documented in the
+reaction source contract and are not universal PCF terms. Biotech and foreign-domiciled names are
 flagged, not excluded (P: binary-event and home-market risk are the page's
 warning, not a filter Bonde applies).
 
 ## Scans (`src/scans.py`)
 
-- 4% burst: `c/c1 >= 1.04 and v > v1 and v >= 100000` (B, 2015/2017).
-- $ breakout: `c - o >= 0.90 and v > 100000` (B, 2017) — close minus OPEN.
+- 4% burst: `c/c1 >= 1.04 and v > v1 and v >= 100000` (PRIMARY, May 21,
+  2015; repeated September 20, 2016).
+- $ breakout: `c - o >= 0.90 and v > 100000` (PRIMARY, July 13, 2017) —
+  close minus OPEN. The 2016 Dollar version has an inclusive volume floor;
+  the 2017 4% version has a strict one. See the source contract for these
+  dated differences; no formula changed during source verification.
 - 4% breakdown: the mirror, `c/c1 <= 0.96` (B).
 - Anticipation pool: Double Trouble `c/minl252 >= 1.8`, TI65
   `avgc7/avgc65 > 1.05`, MDT `c/avgc126 > 1.19`, each with `minv3.1 > 100000`
@@ -108,12 +118,17 @@ theStrat Lab's EP9M backtest: negative expectancy without a hard low-of-day
 stop; break-even on day 2 collapses the win rate. Attribution: the 4% event
 studies are Fluxus-Trade-Lab's, not theStrat Lab's.
 
-## Unreachable from this sandbox
+## Earlier access limits
 
-stockbee.blogspot.com, x.com, YouTube and archive.org were all blocked; every
+At the rebuild, stockbee.blogspot.com, x.com, YouTube and archive.org were
+blocked; every
 (B) quote came through a research archive that quotes his posts verbatim with
 per-post URLs, his bootcamp notes on GitHub, and search-engine snippets. The
 2018 video numbers (2%, 20% of the high) should be re-listened to once.
+On September 16, 2026, public Bonde blog text was directly retrieved for the
+reaction source contract. Its evidence register records exactly what was
+inspected and what remains unavailable; it does not re-certify unrelated
+quality, breadth or plan attributions above.
 
 ## The record (`src/record.py`)
 

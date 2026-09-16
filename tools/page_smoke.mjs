@@ -635,6 +635,10 @@ async function checkVariant(browser, base, variant, data) {
   // the method view: the run strip and the sizing assumptions
   await go(page, '#/method');
   eq(`${variant} method view`, await visibleView(page), ['view-method']);
+  const methodBody = await text(page, '#method-body');
+  check(`${variant} Method separates Dollar discovery and quality`, methodBody.includes('4% breakout or Dollar breakout') && methodBody.includes('below +4%') && methodBody.includes('A-quality is judged after discovery'), methodBody);
+  check(`${variant} Method pins current sources without relabelling history`, methodBody.includes('May 21, 2015') && methodBody.includes('July 13, 2017') && methodBody.includes('Historical records keep their recorded rules.'), methodBody);
+  eq(`${variant} Method links the dated source contract`, await page.locator('#method-body a').filter({ hasText: 'Current discovery sources' }).getAttribute('href'), 'https://github.com/spicyChicken59/SpicyStock/blob/main/knowledge/reaction-discovery.md');
   const strip = await text(page, '#run-strip');
   check(`${variant} strip carries the graded counts`, strip.includes(`${run.graded.a} A · ${run.graded.a_plus} A+`), strip);
   check(`${variant} strip carries the reads`, strip.includes(`${run.reads.done} of ${run.reads.requested} read`), strip);

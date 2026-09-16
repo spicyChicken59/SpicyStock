@@ -2,11 +2,15 @@
 
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The
-method is Pradeep Bonde's (Stockbee) momentum burst: a 4% range-expansion
-day out of a quiet base, bought the next morning inside a narrow zone with
+method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
+discovered by either the 4% or Dollar route, then judged for expansion out of
+a quiet base, bought the next morning inside a narrow zone with
 the stop under the burst bar, sold into strength over three to five days,
 and only when breadth allows it. `knowledge/method.md` says whose number
-every rule is; this file says what the software does with them.
+every rule is; this file says what the software does with them. The dated
+[reaction discovery source contract](knowledge/reaction-discovery.md) pins
+the primary 2015 4% and 2017 Dollar formulas, their differing volume
+boundaries, and the repository's separate precision/universe choices.
 
 The page is the product. It is generated, static, and renders one file,
 `docs/data.json`; it computes nothing of its own except whether the record
