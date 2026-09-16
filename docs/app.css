@@ -669,7 +669,7 @@
 .ss-history__search { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: 1rem 0; }
 .ss-history__search input { width: 10rem; max-width: 100%; }
 .ss-history__result { padding: 1rem 0; border-top: 1px solid var(--sc-border); }
-.ss-history__source, .ss-saved__facts dd { overflow-wrap: anywhere; }
+.ss-history__source, .ss-saved__facts dd, .ss-evidence-id { overflow-wrap: anywhere; }
 .ss-annotation { padding: 1rem; border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); margin-bottom: 1rem; }
 .ss-annotation__taken { display: flex; gap: .5rem; align-items: center; margin-bottom: 1rem; }
 .ss-annotation__amount { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }

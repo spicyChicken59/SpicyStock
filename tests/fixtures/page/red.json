@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "eb6c9a6097b6"
+  "rules_version": "a6354faa5da9"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -728,6 +728,10 @@
     ]
    }
   },
+  "evidence": {
+   "version": 1,
+   "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317"
+  },
   "sanitised": {
    "replaced": 0,
    "paths": []
@@ -1001,6 +1005,33 @@
    "completion_buffer_minutes": 15,
    "schedule_past_days": 45,
    "schedule_future_days": 45
+  },
+  "provenance": {
+   "version": 1,
+   "canonicalization": "typed-json-f64hex-v1",
+   "grade_bands": [
+    [
+     9.0,
+     "A+"
+    ],
+    [
+     8.0,
+     "A"
+    ],
+    [
+     6.5,
+     "B"
+    ],
+    [
+     5.0,
+     "C"
+    ]
+   ],
+   "quality_gate_letters": [
+    "2",
+    "H"
+   ],
+   "quality_gate_cap": "B"
   },
   "pipeline": {
    "max_reads": 12,
@@ -1624,10 +1655,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc",
+    "input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "676d7ac4d59cbd66c0ae2443a5cb8ae4c9ea1b8313ef7ff7ea66c108832b9911",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 1,
+   "evidence": {
+    "source": {
+     "sha256": "c1a3aa274768ca00d6b8a2a89a13c3eb8f695f2847654c53f7641c5273ccf1f8",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "b47557c499b8f18c07d7bf3d94ab154331104745805193339b368fa3634e7aad",
+     "quality_sha256": "b47557c499b8f18c07d7bf3d94ab154331104745805193339b368fa3634e7aad"
+    },
+    "facts_sha256": "ba6a154493cb9197aa56e8ed255d2257d2eb5a01408b7386f739f9b0e3845026",
+    "discovery_sha256": "7000541e4ef39d73ce8accee46db2511f070091bd35d3974828d23e010120274",
+    "quality_sha256": "750c78d48b7ab1fb6d227e5fdddc6189a5cd964b9af1f0e8639aa4ac311d075f",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc"
+    },
+    "reader_sha256": "06b6072c18a8afa2724b9203c52b78cb99b985d0fcd63ec3fb0145aa655efe81",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AAPL",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "A+",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "0853e618103f0d0c5ebaab9ffaf2147e7bbcfeface39bd665b74f9a42aa4785b"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -2819,10 +2911,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50",
+    "input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "d292334e957d3bb529f67ad0b34c7f9243f502f3eb748102e02a6178c371c210",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 2,
+   "evidence": {
+    "source": {
+     "sha256": "85916ca1ec419bc8c881604d62c78b7c5b36b0a1230ce38911f5603ba2b9c589",
+     "rows": 109,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "93d4cb5c6177824272204ebd75709c39f3270e755b34ddf157ba2790f197b4c0",
+     "quality_sha256": "93d4cb5c6177824272204ebd75709c39f3270e755b34ddf157ba2790f197b4c0"
+    },
+    "facts_sha256": "0fa3fb937f969a3888eaaf9a17dd10b04430e756fd9bb76308a24f8bb1ec10cb",
+    "discovery_sha256": "50d2f2c37b0a0422cf6c737c55e1245119278fd53bebc4985ac329aab7f87f1f",
+    "quality_sha256": "8b2421270c4a1a7fe655964f8695ab62dbc8c097ab9093398769e40d77b78768",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50"
+    },
+    "reader_sha256": "4dafe2506bb8831b431f8abae7fda4de6cde6d63e5738d6dca5b29414b3b49cf",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AMD",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "A+",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "807b4ef6f49217442942e80aa99e6ad657704d2d56d5eab6ee6810f3508b8f65"
+   },
    "series": [
     {
      "date": "2026-04-07",
@@ -3982,10 +4135,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0",
+    "input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b781bfc4378c9233b5380c4aef4129099c7e49f667423fede1a8d0141658ff3c",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 3,
+   "evidence": {
+    "source": {
+     "sha256": "d9b0808f2bb1e9e10151b897f578f30f8b88ee1643f4b5709a57460b5489aa75",
+     "rows": 114,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "b7c5a328526263c8854a744f77a915338db5e6e4c0b23d3658a35dc1661340cd",
+     "quality_sha256": "b7c5a328526263c8854a744f77a915338db5e6e4c0b23d3658a35dc1661340cd"
+    },
+    "facts_sha256": "216983b43ab624e36bafffe8133dab8d62c881a1d789efb6f8cd2117c694bec4",
+    "discovery_sha256": "0beb04596622067df5a879cd8139cbbb7110e36223c0a5ec2be4c6605d88990e",
+    "quality_sha256": "12279adfeccce3d20926714b5fecba487e61446cafd75bc760482ddd2c0a204c",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0"
+    },
+    "reader_sha256": "cf223b1bd12954f0300c5c419e741dacbe986aed60006b4d502c7e01d121b56b",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "NVDA",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "A+",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "232664759348250ed53433fcfa757593b0e67e67960b9cd800d9614eb1cb8d4a"
+   },
    "series": [
     {
      "date": "2026-03-30",
@@ -5185,10 +5399,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a",
+    "input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "131b2f290a18b050b7c8d4d0fb6adf93d8bd74744a85b0bc9e841e3d4c334a5a",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 4,
+   "evidence": {
+    "source": {
+     "sha256": "8438005e1a7c625bbf821d2580f5114b616147f9b2e7fd1489a635406c75cbfe",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "212f90fa84ef25791c977c8db7b5768aa071fdafee05989d7a4614615745f23f",
+     "quality_sha256": "212f90fa84ef25791c977c8db7b5768aa071fdafee05989d7a4614615745f23f"
+    },
+    "facts_sha256": "baf6c38eb2a9fb59026da7ac124dd98403dafbd1b6001d4cc79a26feec3625fb",
+    "discovery_sha256": "d79879c8006ffce98161cff0a21272603526596b0e56e2f51dd21ca55eb43747",
+    "quality_sha256": "c7074aa4ee1a9e15aa7a777620c34f1fdb725848ac32d7214bccd8c8b901b239",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a"
+    },
+    "reader_sha256": "f1e4ecbe60d8e1ce4a18813b29ffd1852fed2210f88864463cc9086592b5a5ef",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "TSLA",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "A+",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "401abc99bb642eb9205ad5419a6fa65d127f30ddf4d1407e59af05c37dd40f76"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -6381,10 +6656,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e",
+    "input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "484f0223512bf62211784fe5bba700478d82e14da8275586eb17da9e870eac00",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 5,
+   "evidence": {
+    "source": {
+     "sha256": "f106909bff8ee9f502f1647e96d7b61b338694c962bbe7b6462d536b6b8174af",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "92a644587e1627af2bfd9d534f70fce517e55109f2c4db9b6ed09b21898c51d0",
+     "quality_sha256": "92a644587e1627af2bfd9d534f70fce517e55109f2c4db9b6ed09b21898c51d0"
+    },
+    "facts_sha256": "626d682ebca4fbb17022a9256ac021ce814c1f2972caef3b6362e911f5803033",
+    "discovery_sha256": "286f3831af5d6601843a6e76c93884a44ee7a686ba8efa7f7e8cb4d6fde7db03",
+    "quality_sha256": "061ce857a3eaad29e6275c4642c75fac57c7841dd65de1ab69e4ac09c940fc9f",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e"
+    },
+    "reader_sha256": "b883ee677051854bd70412eb3cd1c3468147d6ad4917b954eeb9ae0472bf08b7",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "PLUG",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "C",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "47d7c778714a508684620f150f9ba4ef64067af04f2393878e5e97750228fc93"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -7577,10 +7913,71 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4",
+    "input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b8c54ea7db218277df44b0802d615369015a0d3e5c310e3a7526461de142dcc5",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 6,
+   "evidence": {
+    "source": {
+     "sha256": "d03d056027d1b591380345e4d26b87baf2d314be2a33654486f0a5b5f6b544c6",
+     "rows": 280,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "7033501bbf9230305a59423a97880916c27e7a0cddea4a508cb488d8e235cb78",
+     "quality_sha256": "7033501bbf9230305a59423a97880916c27e7a0cddea4a508cb488d8e235cb78"
+    },
+    "facts_sha256": "8ad16256c53135bf989a97e5f6ffe2a97a5025498d3e4580f55f39e52aeff69b",
+    "discovery_sha256": "c85a3177f9f59bd26aad09d67da51a53d476437bc7ac3140cc3213a6be1c778a",
+    "quality_sha256": "ab7b4ee41775df078d62097a1642a32aa57169efaaffceca50ab9b0f5e9b39b9",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4"
+    },
+    "reader_sha256": "d82356e712628efe24f5e25644e7d17084fe3b65e5fadc0ae5ff9ef687785208",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "DLLR",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+    "gate": {
+     "regime": "red",
+     "final_grade": "C",
+     "allowed_grades": [],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "183147204445dbebf62fe58e6df224d147cda0b395acfe3720eadcb5c4f517d9"
+   },
    "series": [
     {
      "date": "2026-03-20",
@@ -8804,7 +9201,14 @@
        "key": "day5_exit",
        "instruction": "at the day 5 close: exit the remainder into strength."
       }
-     ]
+     ],
+     "evidence_ref": {
+      "version": 1,
+      "id": "dc84cd575824b95d3841ba9053b273507c1347964b4786037ab7ea5af2521d20",
+      "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+      "plan_sha256": "cee75ad67e54fc9ce96b64c9f16be510795c3ecdb906f840d460d0c85ec0a89d",
+      "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
+     }
     },
     "series": [
      {
@@ -9767,7 +10171,60 @@
       "c": 110.0,
       "v": 120000.0
      }
-    ]
+    ],
+    "evidence": {
+     "source": {
+      "sha256": "f220d97c23dec26541c2f2c3e7e1743a0c215de6da5ad27f7bad2353b8da5e46",
+      "rows": 300,
+      "evaluated_session": "2026-09-10",
+      "previous_session": "2026-09-09",
+      "watch_sha256": "40d672ebfe83c186a52f0126bb95fd6cd31a82eda2874193047260d8c927798b"
+     },
+     "measurements_sha256": "053a46dbe0dfb74fd3b623a7709ea50bf0fa639922d0c4213be9d0803a6dd478",
+     "mechanical": "not_applicable",
+     "reader": "not_graded",
+     "reason": "anticipation watchlist: measured, not reaction-graded",
+     "planning": {
+      "inputs": {
+       "ticker": "COIL",
+       "close": 110.0,
+       "box_high": 110.5,
+       "box_low": 109.5,
+       "lows_last3": [
+        109.5,
+        109.5,
+        109.5
+       ],
+       "account": {
+        "equity": 10000.0,
+        "risk_pct": 0.5,
+        "max_position_pct": 25.0,
+        "max_open_positions": 4
+       },
+       "size_multiplier": 0.0
+      },
+      "regime_sha256": "af8b08d6594c00cee5f476ff4e671ee54da9f42cddac49defe21b66026fdd519",
+      "session": "2026-09-10",
+      "output_sha256": "cee75ad67e54fc9ce96b64c9f16be510795c3ecdb906f840d460d0c85ec0a89d",
+      "error": null,
+      "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
+     },
+     "version": 1,
+     "kind": "anticipation",
+     "ticker": "COIL",
+     "session": "2026-09-10",
+     "rules_version": "a6354faa5da9",
+     "context_sha256": "6ba5a05c26710ad0a3e67bc24e4e86f9b61efcb0946f5705651844c8336bf317",
+     "gate": {
+      "regime": "red",
+      "final_grade": "watch",
+      "allowed_grades": null,
+      "ticket": false,
+      "reason": "regime_gate",
+      "detail": null
+     },
+     "id": "dc84cd575824b95d3841ba9053b273507c1347964b4786037ab7ea5af2521d20"
+    }
    }
   ],
   "also_quiet": [],
@@ -10208,53 +10665,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:eb6c9a6097b6": {
+   "burst:AAPL:2026-09-10:a6354faa5da9": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:eb6c9a6097b6": {
+   "burst:AMD:2026-09-10:a6354faa5da9": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:eb6c9a6097b6": {
+   "burst:NVDA:2026-09-10:a6354faa5da9": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:eb6c9a6097b6": {
+   "burst:TSLA:2026-09-10:a6354faa5da9": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:eb6c9a6097b6": {
+   "burst:PLUG:2026-09-10:a6354faa5da9": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:eb6c9a6097b6": {
+   "burst:DLLR:2026-09-10:a6354faa5da9": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:eb6c9a6097b6": {
+   "anticipation:COIL:2026-09-10:a6354faa5da9": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    }
   },

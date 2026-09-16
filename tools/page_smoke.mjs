@@ -291,6 +291,12 @@ async function checkDetail(page, variant, b, data, blocked) {
   if (status !== 'ticket') check(`${variant} ${b.ticker} plan says it once`, !/no ticket\W{0,4}no ticket|No ticket tonight: ticket withheld/i.test(planText), planText.slice(-200));
   // provenance
   const prov = await text(page, '#disc-provenance');
+  if (b.evidence) {
+    const recorded = await text(page, '[data-plan-evidence]');
+    check(`${variant} ${b.ticker} evidence recorded`, recorded.includes('Evidence recorded') && recorded.includes('split-adjusted'), recorded);
+    check(`${variant} ${b.ticker} evidence distinguishes ticket from quality`, recorded.includes(b.evidence.gate.ticket ? 'A conditional ticket was published.' : 'No ticket:'), recorded);
+    check(`${variant} ${b.ticker} technical reference matches publication`, prov.includes(b.evidence.id), 'evidence id');
+  }
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} claude read`, prov.includes(b.claude.reason), 'reason');
   if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} a fixture's reader reply is labelled simulated`, prov.includes('simulated chart-reader reply') && !prov.includes('claude read the chart'), prov.slice(0, 120));
   if ((b.series || []).length) check(`${variant} ${b.ticker} chart panel carries the demo chip`, (await text(page, '#detail .ss-chart-panel__head')).includes('demo data'), 'chip');
@@ -3527,6 +3533,33 @@ async function checkExchangeCalendar(browser, base) {
   }
 }
 
+async function checkPlanEvidence(browser, base) {
+  console.log('-- plan evidence');
+  for (const width of [1280, 390, 320]) for (const theme of ['dark', 'light']) {
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, width,
+      { theme, lens: 'all', hash: '#/explore/bursts/AAPL' });
+    await page.locator('#disc-provenance > summary').click();
+    const technical = page.locator('#disc-provenance details');
+    eq('technical hashes start collapsed', await technical.getAttribute('open'), null);
+    check('receipt explains that a ticket existed', (await text(page, '[data-plan-evidence]')).includes('A conditional ticket was published.'));
+    if (shotsDir) {
+      await mkdir(shotsDir, { recursive: true });
+      await page.locator('#disc-provenance').screenshot({ path: path.join(shotsDir, `provenance-${width}-${theme}.png`) });
+    }
+    await technical.locator('summary').click();
+    check('technical reference wraps within mobile width', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    eq('provenance browser errors', errors, []);
+    await context.close();
+  }
+  const red = await open(browser, base, '/tests/fixtures/page/red.json', FRESH_NOW, 390,
+    { lens: 'all', hash: '#/explore/bursts/AAPL' });
+  await red.page.locator('#disc-provenance > summary').click();
+  check('red receipt explains the regime refusal', (await text(red.page, '[data-plan-evidence]')).includes('No ticket: regime gate.'));
+  if (shotsDir) await red.page.locator('#disc-provenance').screenshot({ path: path.join(shotsDir, 'provenance-red-390.png') });
+  eq('red provenance browser errors', red.errors, []);
+  await red.context.close();
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -3541,6 +3574,7 @@ async function main() {
       await checkVariant(browser, base, v, data);
     }
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
+    if (runs('provenance')) await checkPlanEvidence(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);
     if (runs('modes')) await checkModes(browser, base, full);
     if (runs('lens')) await checkLens(browser, base, full);

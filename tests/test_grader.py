@@ -615,10 +615,15 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     chart = render_chart("AAA", ohlcv("burst"), str(tmp_path))
     result = grade_candidate("AAA", metrics(), chart, SYSTEM)
     prov = result["provenance"]
-    assert prov == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
+    assert {k: v for k, v in prov.items() if k not in ("input", "attempts", "attempted_model")} == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
                     "chart_seen": True, "error": None,
                     "request_text_sha256": hashlib.sha256(json.dumps(
                         {"system": SYSTEM, "user": user_text(metrics())}, sort_keys=True).encode()).hexdigest()}
+    from src.provenance import digest
+    assert prov["input"]["chart_sha256"] == hashlib.sha256(Path(chart).read_bytes()).hexdigest()
+    assert prov["input"]["metrics_sha256"] == digest(metrics())
+    assert prov["attempts"] == [{"request_sha256": digest(claude.calls[0]), "correction": False, "outcome": "model"}]
+    assert prov["attempted_model"] == prov["model"]
     blocks = claude.calls[0]["messages"][0]["content"]
     images = [b for b in blocks if b["type"] == "image"]
     assert len(images) == 1
@@ -636,7 +641,7 @@ def test_a_grade_made_without_the_chart_says_so_and_attaches_nothing(claude):
 def test_a_row_carries_exactly_the_published_keys(claude):
     result = grade_candidate("AAA", metrics(), None, SYSTEM)
     assert set(result) == {"grade", "score", "reason", "key_risk", "entry_note", "provenance"}
-    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256"}
+    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256", "input", "attempts", "attempted_model"}
 
 
 # ------------------------------------------------------------- the budget ----

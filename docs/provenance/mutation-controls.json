@@ -1,0 +1,44 @@
+[
+  {
+    "guard": "discovery",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "quality",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "reader",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "down_only",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "plan_rules",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "calendar",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  },
+  {
+    "guard": "picks",
+    "target_exit": 1,
+    "control_exit": 0,
+    "killed": true
+  }
+]

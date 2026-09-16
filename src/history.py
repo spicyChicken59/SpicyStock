@@ -158,6 +158,9 @@ def publish(raw, root, *, source_commit=None):
     if len(records) > RECORDS_MAX:
         raise ValueError("recovery revision bound exceeded; existing catalog left intact")
     context = {k: deepcopy(data.get(k, {})) for k in ["app", "run", "rules", "breadth", "cash_budget"]}
+    if data.get("run", {}).get("evidence"):
+        context["account"] = deepcopy(data["account"])
+        context["evidence_candidates"] = [[kind, row["ticker"], quiet] for kind, row, quiet in candidates]
     context["trades"] = data.get("trades", [])
     context["provenance"] = provenance
     files = {f"{source}/record.json": encoded(context)}
@@ -183,6 +186,8 @@ def publish(raw, root, *, source_commit=None):
         entries.append({"ticker": ticker, "kind": kind, "grade": row.get("grade"), "rank": row.get("rank"),
                         "scan": row.get("scan"), "source": source, "path": name,
                         "sha256": hashlib.sha256(evidence).hexdigest(), "chart": bool(series)})
+        if row.get("evidence"):
+            entries[-1]["evidence_id"] = row["evidence"]["id"]
     index = {"version": 1, "as_of": as_of, "days": DAYS, "records_max": RECORDS_MAX,
              "dates": sorted({v["session"] for v in records.values()}), "records": records,
              "entries": sorted(entries, key=lambda e: (records[e["source"]]["session"], e["ticker"], e["source"]), reverse=True)}

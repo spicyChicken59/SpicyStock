@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "eb6c9a6097b6"
+  "rules_version": "a6354faa5da9"
  },
  "cover": {
   "h1": "Trade next session. 1 A-quality burst.",
@@ -728,6 +728,10 @@
     ]
    }
   },
+  "evidence": {
+   "version": 1,
+   "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7"
+  },
   "sanitised": {
    "replaced": 0,
    "paths": []
@@ -1001,6 +1005,33 @@
    "completion_buffer_minutes": 15,
    "schedule_past_days": 45,
    "schedule_future_days": 45
+  },
+  "provenance": {
+   "version": 1,
+   "canonicalization": "typed-json-f64hex-v1",
+   "grade_bands": [
+    [
+     9.0,
+     "A+"
+    ],
+    [
+     8.0,
+     "A"
+    ],
+    [
+     6.5,
+     "B"
+    ],
+    [
+     5.0,
+     "C"
+    ]
+   ],
+   "quality_gate_letters": [
+    "2",
+    "H"
+   ],
+   "quality_gate_cap": "B"
   },
   "pipeline": {
    "max_reads": 12,
@@ -1865,7 +1896,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "bbf2e5775756032962126cd56b4e38e63b8f0f54016d898dd8e6c8ef50b035e1",
+     "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+     "plan_sha256": "82bffeaaba91fe0b1831710e82de39c4a82e02cf384e5751c1967b7034b63846",
+     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+    }
    },
    "chart": "charts/AAPL.png",
    "claude": {
@@ -1878,10 +1916,91 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc",
+    "input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "676d7ac4d59cbd66c0ae2443a5cb8ae4c9ea1b8313ef7ff7ea66c108832b9911",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 1,
+   "evidence": {
+    "source": {
+     "sha256": "909da4ce3a94f49f7e14f18dfd7ad9877bdc36fee1c0afd93e7d4b26d7850cae",
+     "rows": 113,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "4269177710b694e280fc03d46de4325db667d7488966369616f574c0fd641400",
+     "quality_sha256": "4269177710b694e280fc03d46de4325db667d7488966369616f574c0fd641400"
+    },
+    "facts_sha256": "ba6a154493cb9197aa56e8ed255d2257d2eb5a01408b7386f739f9b0e3845026",
+    "discovery_sha256": "7000541e4ef39d73ce8accee46db2511f070091bd35d3974828d23e010120274",
+    "quality_sha256": "b40a7585632e0e870a228cf5040cd7e7e9c7c0953e6722070ced47b25ed33ca6",
+    "planning": {
+     "inputs": {
+      "ticker": "AAPL",
+      "close": 124.21,
+      "low": 118.35,
+      "high": 124.49,
+      "open_": 118.96,
+      "prev_close": 117.18,
+      "gain_pct": 6.0,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 1.0,
+      "scan": "4pct",
+      "extension_pct": 5.2
+     },
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "82bffeaaba91fe0b1831710e82de39c4a82e02cf384e5751c1967b7034b63846",
+     "error": null,
+     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+    },
+    "reader_input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc"
+    },
+    "reader_sha256": "06b6072c18a8afa2724b9203c52b78cb99b985d0fcd63ec3fb0145aa655efe81",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AAPL",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": true,
+     "reason": null,
+     "detail": null
+    },
+    "id": "bbf2e5775756032962126cd56b4e38e63b8f0f54016d898dd8e6c8ef50b035e1"
+   },
    "series": [
     {
      "date": "2026-03-26",
@@ -3309,7 +3428,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "f3540f6f4669257cdea2bd4d51823efda427d0dc4d0a5073b682b6c6b14976ba",
+     "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+     "plan_sha256": "63a3f30550f05eb78f3fbbb689b03ba415b1ac8a3d20e657a21f8ad9ec8ab639",
+     "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
+    }
    },
    "chart": "charts/AMD.png",
    "claude": {
@@ -3322,10 +3448,91 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50",
+    "input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "d292334e957d3bb529f67ad0b34c7f9243f502f3eb748102e02a6178c371c210",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 2,
+   "evidence": {
+    "source": {
+     "sha256": "95627a9106bd8c1dffa6e942c550939fab086a368c8c8422065341ebaea8b071",
+     "rows": 109,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "63780d22e35e3733ee3ef751b7f4cf1b24e6adbe0093b4b8bf52484b8d4d0a69",
+     "quality_sha256": "63780d22e35e3733ee3ef751b7f4cf1b24e6adbe0093b4b8bf52484b8d4d0a69"
+    },
+    "facts_sha256": "0fa3fb937f969a3888eaaf9a17dd10b04430e756fd9bb76308a24f8bb1ec10cb",
+    "discovery_sha256": "50d2f2c37b0a0422cf6c737c55e1245119278fd53bebc4985ac329aab7f87f1f",
+    "quality_sha256": "a0109676f19c5fa5c6fa43a7c282dd40a656c176701a408a7798157dd6387cf8",
+    "planning": {
+     "inputs": {
+      "ticker": "AMD",
+      "close": 123.27,
+      "low": 123.1,
+      "high": 123.28,
+      "open_": 123.12,
+      "prev_close": 117.18,
+      "gain_pct": 5.2,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 1.0,
+      "scan": "4pct",
+      "extension_pct": 4.9
+     },
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "63a3f30550f05eb78f3fbbb689b03ba415b1ac8a3d20e657a21f8ad9ec8ab639",
+     "error": null,
+     "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
+    },
+    "reader_input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50"
+    },
+    "reader_sha256": "4dafe2506bb8831b431f8abae7fda4de6cde6d63e5738d6dca5b29414b3b49cf",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AMD",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "slot_cap",
+     "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
+    },
+    "id": "f3540f6f4669257cdea2bd4d51823efda427d0dc4d0a5073b682b6c6b14976ba"
+   },
    "series": [
     {
      "date": "2026-04-01",
@@ -4722,7 +4929,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "244c3ebc3ac7c940e23e4ec71500ee563f13d79754ad1d376b8f92af6c0845d9",
+     "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+     "plan_sha256": "3e564d4316c04daf684703c84d7b8224b4fb5eeb5747d0d6d573309b0d85d3b7",
+     "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
+    }
    },
    "chart": "charts/NVDA.png",
    "claude": {
@@ -4735,10 +4949,91 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0",
+    "input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b781bfc4378c9233b5380c4aef4129099c7e49f667423fede1a8d0141658ff3c",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 3,
+   "evidence": {
+    "source": {
+     "sha256": "96d93a707762b3857f5bc8d29b6b9fd8db3d8ecbd00c7618bab76de1cdb41349",
+     "rows": 114,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "fa679fd6437ee51e7053ed8122759313411bab0c18fac46bcd54fb407fc974d1",
+     "quality_sha256": "fa679fd6437ee51e7053ed8122759313411bab0c18fac46bcd54fb407fc974d1"
+    },
+    "facts_sha256": "216983b43ab624e36bafffe8133dab8d62c881a1d789efb6f8cd2117c694bec4",
+    "discovery_sha256": "0beb04596622067df5a879cd8139cbbb7110e36223c0a5ec2be4c6605d88990e",
+    "quality_sha256": "b45c3cfda42c04d386f703370b6c7efba18cbc604cc6b473103b409e0f2d16b8",
+    "planning": {
+     "inputs": {
+      "ticker": "NVDA",
+      "close": 126.88,
+      "low": 123.0,
+      "high": 127.57,
+      "open_": 123.46,
+      "prev_close": 118.14,
+      "gain_pct": 7.4,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 1.0,
+      "scan": "4pct",
+      "extension_pct": 6.8
+     },
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "3e564d4316c04daf684703c84d7b8224b4fb5eeb5747d0d6d573309b0d85d3b7",
+     "error": null,
+     "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
+    },
+    "reader_input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0"
+    },
+    "reader_sha256": "cf223b1bd12954f0300c5c419e741dacbe986aed60006b4d502c7e01d121b56b",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "NVDA",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "slot_cap",
+     "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
+    },
+    "id": "244c3ebc3ac7c940e23e4ec71500ee563f13d79754ad1d376b8f92af6c0845d9"
+   },
    "series": [
     {
      "date": "2026-03-25",
@@ -6154,7 +6449,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "5e4464b0e08c9bbe0378fb7b17191fe975a8864a9a27333bb138f3bfce91add1",
+     "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+     "plan_sha256": "7972317ea9c5c2127d984a97cf185a3c0fe84c3d0acd55dcf2348d59f7aa7bf2",
+     "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
+    }
    },
    "chart": "charts/TSLA.png",
    "claude": {
@@ -6167,10 +6469,91 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a",
+    "input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "131b2f290a18b050b7c8d4d0fb6adf93d8bd74744a85b0bc9e841e3d4c334a5a",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 4,
+   "evidence": {
+    "source": {
+     "sha256": "e8412e0b7f64c7b483b8e0d8de9ce872e810196a92408d587958989bc3e936b0",
+     "rows": 113,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "7e08139713a180b46ac844802d3dc4c8d958d9aca36728b8860ab3c3e522b851",
+     "quality_sha256": "7e08139713a180b46ac844802d3dc4c8d958d9aca36728b8860ab3c3e522b851"
+    },
+    "facts_sha256": "baf6c38eb2a9fb59026da7ac124dd98403dafbd1b6001d4cc79a26feec3625fb",
+    "discovery_sha256": "d79879c8006ffce98161cff0a21272603526596b0e56e2f51dd21ca55eb43747",
+    "quality_sha256": "0b70a510c2036dce23cc26695450bac1f7bee0d8bec13b6f77f97d336761b732",
+    "planning": {
+     "inputs": {
+      "ticker": "TSLA",
+      "close": 124.21,
+      "low": 113.59,
+      "high": 124.77,
+      "open_": 114.71,
+      "prev_close": 117.18,
+      "gain_pct": 6.0,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 1.0,
+      "scan": "4pct",
+      "extension_pct": 5.2
+     },
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "7972317ea9c5c2127d984a97cf185a3c0fe84c3d0acd55dcf2348d59f7aa7bf2",
+     "error": null,
+     "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
+    },
+    "reader_input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a"
+    },
+    "reader_sha256": "f1e4ecbe60d8e1ce4a18813b29ffd1852fed2210f88864463cc9086592b5a5ef",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "TSLA",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "withheld",
+     "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
+    },
+    "id": "5e4464b0e08c9bbe0378fb7b17191fe975a8864a9a27333bb138f3bfce91add1"
+   },
    "series": [
     {
      "date": "2026-03-26",
@@ -7363,10 +7746,74 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e",
+    "input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "484f0223512bf62211784fe5bba700478d82e14da8275586eb17da9e870eac00",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 5,
+   "evidence": {
+    "source": {
+     "sha256": "9b6ea6398e41d565c5f44a7d68347ea2bc84c71f1b613f6dc1259b9aa21beda0",
+     "rows": 113,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "3b5842c91b8a2e6407f28b4cf250d48985cc7df165380257201309abd4a75e6a",
+     "quality_sha256": "3b5842c91b8a2e6407f28b4cf250d48985cc7df165380257201309abd4a75e6a"
+    },
+    "facts_sha256": "626d682ebca4fbb17022a9256ac021ce814c1f2972caef3b6362e911f5803033",
+    "discovery_sha256": "286f3831af5d6601843a6e76c93884a44ee7a686ba8efa7f7e8cb4d6fde7db03",
+    "quality_sha256": "41a9a98a5b9ee0773be51b6158c85adf75732c0f30f9219b9e85d540a0757854",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e"
+    },
+    "reader_sha256": "b883ee677051854bd70412eb3cd1c3468147d6ad4917b954eeb9ae0472bf08b7",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "PLUG",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "C",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "quality_grade",
+     "detail": null
+    },
+    "id": "3641ab5e30c9e9f995606185483c86965dd0db71eca332f1dcea9d8daee50fc2"
+   },
    "series": [
     {
      "date": "2026-03-26",
@@ -8559,10 +9006,74 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4",
+    "input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b8c54ea7db218277df44b0802d615369015a0d3e5c310e3a7526461de142dcc5",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 6,
+   "evidence": {
+    "source": {
+     "sha256": "5e4532cb131d3116ae495f156b88e25aafabf9d3d9550c5f3e5c517aafb0ee52",
+     "rows": 280,
+     "evaluated_session": "2026-09-04",
+     "previous_session": "2026-09-03",
+     "scan_sha256": "c8c062f878e97b2eb6f57567ba752358302ef189bce8123fb64e1391f6cef516",
+     "quality_sha256": "c8c062f878e97b2eb6f57567ba752358302ef189bce8123fb64e1391f6cef516"
+    },
+    "facts_sha256": "8ad16256c53135bf989a97e5f6ffe2a97a5025498d3e4580f55f39e52aeff69b",
+    "discovery_sha256": "c85a3177f9f59bd26aad09d67da51a53d476437bc7ac3140cc3213a6be1c778a",
+    "quality_sha256": "2794c5d62d442a362b985fca2281b04f3e18918146b6c873a26bfc4be3b0046f",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+     "session": "2026-09-04",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4"
+    },
+    "reader_sha256": "d82356e712628efe24f5e25644e7d17084fe3b65e5fadc0ae5ff9ef687785208",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "DLLR",
+    "session": "2026-09-04",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+    "gate": {
+     "regime": "green",
+     "final_grade": "C",
+     "allowed_grades": [
+      "A+",
+      "A"
+     ],
+     "ticket": false,
+     "reason": "quality_grade",
+     "detail": null
+    },
+    "id": "c124f3f2a6dd8009715aec339add6544bfdb7e0552531df536a4238ff96ca22c"
+   },
    "series": [
     {
      "date": "2026-03-17",
@@ -9847,7 +10358,14 @@
        "key": "day5_exit",
        "instruction": "at the day 5 close: exit the remainder into strength."
       }
-     ]
+     ],
+     "evidence_ref": {
+      "version": 1,
+      "id": "78806f575c7214ef4d42fa8a2e1e850f79841262968f283ea0c545d956d32497",
+      "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+      "plan_sha256": "d4e5f8bdc688509df2197a19b9eb979d34c5461fa706fa873daaf4a6cc9d0117",
+      "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
+     }
     },
     "series": [
      {
@@ -10810,7 +11328,60 @@
       "c": 110.0,
       "v": 120000.0
      }
-    ]
+    ],
+    "evidence": {
+     "source": {
+      "sha256": "866d452aab0b84f3edb4f8a190ddacbb98c58a127030c3dde52f779afe75d2db",
+      "rows": 300,
+      "evaluated_session": "2026-09-04",
+      "previous_session": "2026-09-03",
+      "watch_sha256": "711138fa15b30faf56d177d81c2a5aee97cae33750f64c4ec06337a885cc4a64"
+     },
+     "measurements_sha256": "b81962f3164896daa2cb017460bbcc7c910cd72024f32a1d0d499521f632b382",
+     "mechanical": "not_applicable",
+     "reader": "not_graded",
+     "reason": "anticipation watchlist: measured, not reaction-graded",
+     "planning": {
+      "inputs": {
+       "ticker": "COIL",
+       "close": 110.0,
+       "box_high": 110.5,
+       "box_low": 109.5,
+       "lows_last3": [
+        109.5,
+        109.5,
+        109.5
+       ],
+       "account": {
+        "equity": 10000.0,
+        "risk_pct": 0.5,
+        "max_position_pct": 25.0,
+        "max_open_positions": 4
+       },
+       "size_multiplier": 1.0
+      },
+      "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
+      "session": "2026-09-04",
+      "output_sha256": "d4e5f8bdc688509df2197a19b9eb979d34c5461fa706fa873daaf4a6cc9d0117",
+      "error": null,
+      "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
+     },
+     "version": 1,
+     "kind": "anticipation",
+     "ticker": "COIL",
+     "session": "2026-09-04",
+     "rules_version": "a6354faa5da9",
+     "context_sha256": "0ce2588c5caac0b7240a466b181d0bd839c6e89c6ed33f88a0f1d4c3eee7bbd7",
+     "gate": {
+      "regime": "green",
+      "final_grade": "watch",
+      "allowed_grades": null,
+      "ticket": true,
+      "reason": null,
+      "detail": null
+     },
+     "id": "78806f575c7214ef4d42fa8a2e1e850f79841262968f283ea0c545d956d32497"
+    }
    }
   ],
   "also_quiet": [],
@@ -11251,53 +11822,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-04:eb6c9a6097b6": {
+   "burst:AAPL:2026-09-04:a6354faa5da9": {
     "ticker": "AAPL",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-04:eb6c9a6097b6": {
+   "burst:AMD:2026-09-04:a6354faa5da9": {
     "ticker": "AMD",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-04:eb6c9a6097b6": {
+   "burst:NVDA:2026-09-04:a6354faa5da9": {
     "ticker": "NVDA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-04:eb6c9a6097b6": {
+   "burst:TSLA:2026-09-04:a6354faa5da9": {
     "ticker": "TSLA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-04:eb6c9a6097b6": {
+   "burst:PLUG:2026-09-04:a6354faa5da9": {
     "ticker": "PLUG",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-04:eb6c9a6097b6": {
+   "burst:DLLR:2026-09-04:a6354faa5da9": {
     "ticker": "DLLR",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-04:eb6c9a6097b6": {
+   "anticipation:COIL:2026-09-04:a6354faa5da9": {
     "ticker": "COIL",
     "session": "2026-09-04",
     "kind": "anticipation",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    }
   },

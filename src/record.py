@@ -49,7 +49,7 @@ from src import plan
 log = logging.getLogger("spicystock.record")
 
 PICKS_FILE = "picks.json"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 OPEN_PLAN_SESSIONS = plan.FINAL_EXIT_DAY   # (B) a pick is followed for his five-session hold
 SCORECARD_SESSIONS = 60                    # (P) picks older than this leave the scorecard
 SCORECARD_MIN_PLANS = 20                   # (P) below this the page prints the count, never a rate
@@ -140,6 +140,17 @@ def pick_problem(pick: Any) -> str | None:
         return f"{pick['ticker']}: trigger {trigger} is not above the stop {pick['stop']}"
     if trigger is not None and limit is not None and limit < trigger:
         return f"{pick['ticker']}: limit {limit} is under the trigger {trigger}"
+    ref = pick.get("evidence_ref")
+    if ref is not None:
+        from src import provenance
+        if not isinstance(ref, dict) or ref.get("version") != provenance.VERSION:
+            return f"{pick['ticker']}: unsupported evidence reference"
+        if any(not isinstance(ref.get(k), str) or not provenance.HEX.fullmatch(ref[k])
+               for k in ("id", "context_sha256", "plan_sha256", "pick_sha256")):
+            return f"{pick['ticker']}: incomplete evidence reference"
+        projection = {k: v for k, v in pick.items() if k not in ("date", "regime", "evidence_ref")}
+        if provenance.digest(projection) != ref["pick_sha256"]:
+            return f"{pick['ticker']}: pick evidence digest mismatch"
     return None
 
 
@@ -168,6 +179,9 @@ def load(docs: Path) -> dict:
         # must never be walked as history. Not set aside -- save() replaces it.
         log.info("%s is the %s fixture; starting a fresh record", PICKS_FILE, raw["fixture"])
         return empty()
+    version = raw.get("schema_version", 1)
+    if isinstance(version, bool) or version not in (1, SCHEMA_VERSION):
+        raise ValueError(f"unsupported picks schema {version!r}; original file preserved")
     kept, dropped = [], []
     for pick in raw["picks"]:
         problem = pick_problem(pick)
@@ -220,8 +234,8 @@ def append(rec: dict, session: str, picks: list[dict], regime: str = "green") ->
         if problem:
             raise ValueError(f"refusing to record a pick the walk could not read: {problem}")
         stamped.append(row)
-    tonight = {(p["date"], p["ticker"]) for p in stamped}
-    kept = [p for p in rec.get("picks", []) if (p["date"], p["ticker"]) not in tonight] + stamped
+    tonight = {(p["date"], p["ticker"], p["kind"]) for p in stamped}
+    kept = [p for p in rec.get("picks", []) if (p["date"], p["ticker"], p["kind"]) not in tonight] + stamped
     kept.sort(key=lambda p: (p["date"], p["ticker"]))
     return {"schema_version": SCHEMA_VERSION, "picks": kept[-MAX_PICKS:]}
 

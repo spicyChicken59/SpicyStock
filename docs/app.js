@@ -2233,6 +2233,7 @@
       evidence: followEvidenceOf(c, record),
       provenance: record.provenance || { session: run.session, published_at: run.published_at, run_id: run.run_id, rules_version: app.rules_version },
       snapshot: {
+        evidence_ref: b.evidence ? { version: b.evidence.version, id: b.evidence.id, context_sha256: b.evidence.context_sha256, source_sha256: b.evidence.source.sha256, gate: b.evidence.gate } : null,
         timing: run.timing || null, calendar: run.calendar ? { exchange: run.calendar.exchange, library: run.calendar.library, library_version: run.calendar.library_version, measured: run.calendar.measured, applicable: run.calendar.applicable } : null,
         input_basis: run.input_basis || null, universe: run.universe ? { source: run.universe.source, fetched_at: run.universe.fetched_at, identity: run.universe.identity, snapshot_relation: run.universe.snapshot_relation } : null,
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
@@ -3299,6 +3300,11 @@
   }
   function discProvenance(c) {
     const b = c.row, run = current.run || {}, app = current.app || {}, cl = b.claude || null, kids = [];
+    const ev = b.evidence;
+    kids.push(el('p', { 'class': 'sc-hint', 'data-plan-evidence': '', text: ev
+      ? 'Evidence recorded · ' + dateWords(ev.session) + ' · ' + barBasis(run) + '. ' + (ev.gate.ticket ? 'A conditional ticket was published.' : 'No ticket: ' + String(ev.gate.reason || 'withheld').replace(/_/g, ' ') + '.')
+      : run.evidence ? 'No decision receipt: this row is research only.' : 'Legacy evidence: a complete decision chain was not recorded.' }));
+    if (ev) kids.push(el('details', null, [el('summary', { text: 'Technical evidence reference' }), el('p', { 'class': 'sc-hint ss-evidence-id', text: 'Schema ' + ev.version + ' · ' + ev.id })]));
     if (c.stage === 'bursts') {
       if (cl && cl.source === 'claude') {
         kids.push(el('div', { 'class': 'sc-insight' }, [
@@ -3307,7 +3313,7 @@
           el('p', { text: cl.reason || '' }),
           text(cl.key_risk) ? el('p', null, [el('strong', { text: 'Key risk: ' }), cl.key_risk]) : null,
           text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,
-          el('p', { 'class': 'sc-hint', text: 'Model grade ' + (cl.grade || '—') + (isNum(cl.score) ? ' · ' + cl.score.toFixed(1) : '') + (cl.chart_seen === false ? ' · read from the numbers alone, no chart' : '') })
+          el('p', { 'class': 'sc-hint', text: 'Model grade ' + (cl.returned_grade || cl.grade || '—') + (isNum(cl.score) ? ' · ' + cl.score.toFixed(1) : '') + (cl.chart_seen === false ? ' · read from the numbers alone, no chart' : '') })
         ]));
       } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; no usable chart-reader judgement' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));

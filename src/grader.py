@@ -185,6 +185,11 @@ def grade_for(score: float) -> str:
     return SKIP
 
 
+def final_grade(mechanical: str, returned: str) -> str:
+    """The one down-only adjustment used by publication and verification."""
+    return max((mechanical, returned), key=GRADES.index)
+
+
 # --------------------------------------------------------------- request ----
 def _reply_shape() -> str:
     """The JSON shape the request asks for, spelled from SCORE_SCHEMA."""
@@ -418,10 +423,18 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
     content.append({"type": "text", "text": user_text(metrics)})
 
     kwargs = request_kwargs(system_prompt, content)
+    from src.provenance import digest
+    input_evidence = {"metrics_sha256": digest(metrics),
+                      "system_sha256": hashlib.sha256(system_prompt.encode()).hexdigest(),
+                      "chart_sha256": hashlib.sha256(base64.b64decode(content[0]["source"]["data"])).hexdigest() if chart_seen else None}
+    attempts_evidence = []
     text_hash = hashlib.sha256(json.dumps({"system": system_prompt, "user": content[-1]["text"]},
                                           sort_keys=True).encode()).hexdigest()
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
+        attempt_evidence = {"request_sha256": digest(kwargs), "correction": attempt > 1 and any(
+            block.get("text") == RETRY_CORRECTION for block in kwargs["messages"][0]["content"]), "outcome": None}
+        attempts_evidence.append(attempt_evidence)
         try:
             resp = _client().messages.create(**kwargs)
             parsed = _validated(_extract_json(_reply_text(resp)))
@@ -434,6 +447,7 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
                         usage[key] = usage.get(key, 0) + value
                 raise DiscoveryConflict("inapplicable discovery rule in " + ", ".join(conflicts))
         except Exception as e:  # noqa: BLE001 -- narrowed by the retry and provenance below
+            attempt_evidence.update(outcome="rejected", error=_error_text(e))
             last_error = e
             log.warning("Claude grading attempt %d/%d failed for %s: %s",
                         attempt, attempts, ticker, _error_text(e))
@@ -454,13 +468,16 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
             "chart_seen": chart_seen,
             "error": None,
             "request_text_sha256": text_hash,
+            "input": input_evidence, "attempts": attempts_evidence, "attempted_model": kwargs["model"],
         }
+        attempt_evidence["outcome"] = "model"
         return parsed
 
     log.error("Claude grading failed for %s after %d attempts (%s) -- checklist fallback",
               ticker, attempts, _error_text(last_error))
     fallback = _fallback(metrics, _error_text(last_error))
     fallback["provenance"]["request_text_sha256"] = text_hash
+    fallback["provenance"].update(input=input_evidence, attempts=attempts_evidence, attempted_model=kwargs["model"])
     return fallback
 
 

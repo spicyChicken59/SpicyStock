@@ -1,0 +1,230 @@
+{
+  "base": "f744b88a6117b933310f370b8f9ab4cd1d03a3c8",
+  "schema": 1,
+  "full_fixture": {
+    "before": {
+      "raw": 247832,
+      "gzip": 29416
+    },
+    "after": {
+      "raw": 270499,
+      "gzip": 46336
+    }
+  },
+  "full_picks": {
+    "before": {
+      "raw": 43898,
+      "gzip": 3556
+    },
+    "after": {
+      "raw": 44670,
+      "gzip": 3956
+    }
+  },
+  "receipts_compact": {
+    "burst:AAPL": {
+      "raw": 2076,
+      "gzip": 1147
+    },
+    "burst:AMD": {
+      "raw": 2197,
+      "gzip": 1233
+    },
+    "burst:NVDA": {
+      "raw": 2200,
+      "gzip": 1233
+    },
+    "burst:TSLA": {
+      "raw": 2370,
+      "gzip": 1300
+    },
+    "burst:PLUG": {
+      "raw": 1834,
+      "gzip": 975
+    },
+    "burst:DLLR": {
+      "raw": 1834,
+      "gzip": 971
+    },
+    "anticipation:COIL": {
+      "raw": 1340,
+      "gzip": 783
+    }
+  },
+  "plan_references_compact": {
+    "AAPL": {
+      "raw": 331,
+      "gzip": 235
+    },
+    "AMD": {
+      "raw": 331,
+      "gzip": 235
+    },
+    "NVDA": {
+      "raw": 331,
+      "gzip": 234
+    },
+    "TSLA": {
+      "raw": 331,
+      "gzip": 234
+    },
+    "COIL": {
+      "raw": 331,
+      "gzip": 233
+    }
+  },
+  "candidate_payloads_compact": {
+    "AAPL": {
+      "before": {
+        "raw": 21679,
+        "gzip": 5212
+      },
+      "after": {
+        "raw": 24597,
+        "gzip": 6336
+      }
+    },
+    "AMD": {
+      "before": {
+        "raw": 21317,
+        "gzip": 5177
+      },
+      "after": {
+        "raw": 24356,
+        "gzip": 6370
+      }
+    },
+    "NVDA": {
+      "before": {
+        "raw": 21819,
+        "gzip": 5203
+      },
+      "after": {
+        "raw": 24861,
+        "gzip": 6396
+      }
+    },
+    "TSLA": {
+      "before": {
+        "raw": 20935,
+        "gzip": 4976
+      },
+      "after": {
+        "raw": 24147,
+        "gzip": 6101
+      }
+    },
+    "PLUG": {
+      "before": {
+        "raw": 14279,
+        "gzip": 2788
+      },
+      "after": {
+        "raw": 16607,
+        "gzip": 3768
+      }
+    },
+    "DLLR": {
+      "before": {
+        "raw": 16192,
+        "gzip": 5549
+      },
+      "after": {
+        "raw": 18520,
+        "gzip": 6524
+      }
+    },
+    "COIL": {
+      "before": {
+        "raw": 15418,
+        "gzip": 2924
+      },
+      "after": {
+        "raw": 17117,
+        "gzip": 3647
+      }
+    }
+  },
+  "plan_payloads_compact": {
+    "AAPL": {
+      "before": {
+        "raw": 7197,
+        "gzip": 2595
+      },
+      "after": {
+        "raw": 7544,
+        "gzip": 2838
+      }
+    },
+    "AMD": {
+      "before": {
+        "raw": 7097,
+        "gzip": 2537
+      },
+      "after": {
+        "raw": 7444,
+        "gzip": 2777
+      }
+    },
+    "NVDA": {
+      "before": {
+        "raw": 7246,
+        "gzip": 2582
+      },
+      "after": {
+        "raw": 7593,
+        "gzip": 2822
+      }
+    },
+    "TSLA": {
+      "before": {
+        "raw": 6448,
+        "gzip": 2350
+      },
+      "after": {
+        "raw": 6795,
+        "gzip": 2591
+      }
+    },
+    "COIL": {
+      "before": {
+        "raw": 5816,
+        "gzip": 2137
+      },
+      "after": {
+        "raw": 6163,
+        "gzip": 2380
+      }
+    }
+  },
+  "recovery_snapshot": {
+    "before": {
+      "files": 9,
+      "raw": 161445,
+      "gzip_individual": 38608
+    },
+    "after": {
+      "files": 9,
+      "raw": 182132,
+      "gzip_individual": 46949
+    }
+  },
+  "source_archive_full_fixture": {
+    "objects": 9,
+    "stored_bytes": 21015,
+    "expanded_json_bytes": 76355,
+    "note": "separate lazy objects; fixture image is a fixed PNG double, not a real chart-size estimate"
+  },
+  "verification": {
+    "candidates": 7,
+    "first_ms": 459.45,
+    "warm_mean_ms": 118.147,
+    "warm_p95_ms": 153.554,
+    "samples": 20,
+    "scope": "full chain, retained source/reader inputs and persisted picks"
+  },
+  "production_records_changed": false,
+  "provider_calls": 0,
+  "model_calls": 0,
+  "initial_browser_requests_added": 0
+}
