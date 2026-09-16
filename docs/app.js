@@ -2647,11 +2647,14 @@
       return { plan: null, matched: false, other: other,
         why: 'The record keeps an open model plan for ' + item.ticker + ', but it was picked ' + dateWords(text(other.picked)) + ' — a different signal from this one, so it is not this setup’s.' };
     }
+    const reference = SCStock.follow.planReference(item.snapshot);
+    if (reference && !SCStock.follow.sameReference(reference, exact.evidence_ref)) return {plan:null, matched:false,
+      why:'The public model row has a different or missing plan identity. It is not linked to this saved publication.'};
     if (text(app.rules_version) && text(item.rules_version) && app.rules_version !== item.rules_version) {
       return { plan: null, matched: false, other: exact,
         why: 'The record’s model plan for this signal was written under different rules (' + app.rules_version.slice(0, 8) + ' against the saved ' + item.rules_version.slice(0, 8) + '), so it is shown apart from the saved plan rather than as an update to it.' };
     }
-    return { plan: exact, matched: true, why: '' };
+    return { plan: exact, matched: true, exact:!!reference, why: '' };
   }
   // is this symbol in the loaded record at all, and is it THIS signal?
   function currentSetupFor(item) {

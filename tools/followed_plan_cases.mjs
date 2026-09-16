@@ -126,6 +126,18 @@ export async function checkFollowedPlan({browser, base, data, open, check, eq, s
   eq('followed-plan page errors', app.errors, []);
   await app.context.close();
 
+  const savedOnly = await open(browser, base, '/tests/fixtures/page/full.json', NOW, 1280, {hash:'#/explore/bursts/'+ticket.ticker});
+  await savedOnly.page.locator('#detail [data-follow-action="add"]').click();
+  await savedOnly.page.waitForFunction(() => SCStock.follow.list().length === 1);
+  await savedOnly.page.evaluate(r => {SCStock.render(r,new Date('2026-09-11T22:31:00Z'));SCStock.navigate('#/followed/'+encodeURIComponent(SCStock.follow.list()[0].id));}, next);
+  await savedOnly.page.waitForTimeout(180);
+  check('saved native plan without personal selection identifies its exact public match', /matches the frozen evidence and plan identities/.test(await savedOnly.page.locator('#saved [data-model-update]').innerText()));
+  await savedOnly.page.evaluate(r => SCStock.render(r,new Date('2026-09-11T22:31:00Z')), mismatch);
+  await savedOnly.page.waitForTimeout(180);
+  eq('saved native plan cannot inherit a different same-session publication', await savedOnly.page.locator('#saved [data-model-update]').getAttribute('data-model-update'), 'apart');
+  check('different plan identity is disclosed', /different or missing plan identity/.test(await savedOnly.page.locator('#saved [data-model-update]').innerText()));
+  await savedOnly.context.close();
+
   const failing = await open(browser, base, '/tests/fixtures/page/full.json', NOW, 390, {hash:'#/explore/bursts/'+ticket.ticker});
   await failing.page.evaluate(() => {const set = Storage.prototype.setItem; Storage.prototype.setItem = function(k,v){if(k === SCStock.follow.DEMO_KEY)throw Error('quota'); return set.call(this,k,v);};});
   await failing.page.locator('#detail [data-select-plan]').click();

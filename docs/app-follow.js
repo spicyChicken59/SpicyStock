@@ -515,7 +515,7 @@
     list: function () { return read(); },
     find: function (id) { return read().find((it) => it.id === id) || null; },
     commit: commit, parseAmount: parseAmount, setAnnotation: (...a) => commit('setAnnotation', ...a), pending: () => pendingWrite,
-    selectedPlan, matchesPlan, planReference,
+    selectedPlan, matchesPlan, planReference, sameReference,
     add: (...a) => commit('add', ...a), remove: (...a) => commit('remove', ...a), setShares: (...a) => commit('setShares', ...a), observe: (...a) => commit('observe', ...a), attachEvidence: (...a) => commit('attachEvidence', ...a), identity: identity,
     onChange: function (fn) { if (typeof fn === 'function') listeners.push(fn); }
   };

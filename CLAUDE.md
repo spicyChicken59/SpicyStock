@@ -2059,6 +2059,9 @@ Focused validation: 143 record/provenance checks, 11 selection-store checks,
 controls passing. The unchanged 4,000-character low-storage regression caught
 unnecessary duplicated plan fields; the compact chart-free save is 3,979 characters.
 Full verification and exact published head/PR are recorded in the PR closeout.
+Final material review also applies the receipt guard to native saves without a
+personal selection. Its mismatch mutation was killed with 11 independent store
+controls passing; the corrected focused browser run passes 198 checks.
 Only offline sequel fixtures gain outcome receipt fields; production data/picks,
 September 11/14 history, source objects and reaction rules remain unchanged.
 Installed/latest design v2.13.0, source 14a752d: 22/22 hashes intact, zero drift.
