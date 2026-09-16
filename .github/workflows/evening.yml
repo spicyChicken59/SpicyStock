@@ -1,7 +1,7 @@
 name: Evening scan (6:16 PM ET)
 # The one scheduled run. It reads the whole US common-stock market after the
 # close, grades tonight's bursts, writes docs/data.json + docs/picks.json and
-# commits them back so GitHub Pages can publish the plan for tomorrow.
+# commits them back so GitHub Pages can publish the plan for the next XNYS session.
 #
 # Two cron pairs, because GitHub crons are UTC and the US switches between
 # EDT and EST: the guard below runs only the slot that matches today's offset.
@@ -25,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       session:
-        description: "Backfill: the session to scan, YYYY-MM-DD. Leave empty to scan the newest session the bars carry."
+        description: "Requested XNYS session, YYYY-MM-DD; a holiday is refused. Empty uses today's completed session, skipping non-session dates."
         required: false
         default: ""
       dry_run:
@@ -69,9 +69,8 @@ jobs:
           elif [ "$FIRED" = "$RETRY" ]; then
             # Tonight's session is today's date in market time (it is still the
             # evening in New York at 8:16 PM). Run only if the committed record
-            # does not already carry it; a holiday publishes a "closed" record
-            # for the previous session, whose expected_session is today, so it
-            # counts as published too.
+            # does not already carry it. The pipeline recognizes holidays
+            # before directory/bars/model work; both slots may log that skip.
             SESSION=$(TZ=America/New_York date +%Y-%m-%d)
             if jq -e --arg s "$SESSION" \
               '(.run.session == $s) or (.run.expected_session == $s)' docs/data.json > /dev/null 2>&1; then
@@ -129,6 +128,7 @@ jobs:
         # Only 1 means there is nothing trustworthy to commit. Never a rehearsal.
         if: >-
           steps.guard.outputs.go == 'true'
+          && steps.pipeline.outputs.published == 'true'
           && inputs.dry_run != true
           && (steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2'
               || steps.pipeline.outputs.code == '3')
@@ -158,7 +158,7 @@ jobs:
           echo "::error::docs/ could not be pushed after 3 attempts; tonight's record did not reach the branch."
           exit 1
       - name: Keep the run's artifacts
-        if: (success() || failure()) && steps.guard.outputs.go == 'true'
+        if: (success() || failure()) && steps.guard.outputs.go == 'true' && steps.pipeline.outputs.outcome != 'no_session' && steps.pipeline.outputs.outcome != 'session_incomplete'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) || ((steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id)) }}

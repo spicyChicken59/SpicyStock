@@ -709,7 +709,7 @@ def test_cash_budget_counts_slots_and_dollars_in_rank_order():
     assert b["within"] == ["T1", "T2", "T3", "T4"]
     assert b["beyond"] == [{"ticker": "T5", "rank": 5, "reason": "slot_cap", "position_usd": 2400.0}]
     assert b["skipped"] == [{"ticker": "T1", "rank": 6, "reason": "no_order"}]
-    assert b["sentence"] == "Model allocation: tomorrow's tickets would commit $9,600.00 of the configured $10,000.00; 4 of 4 slots"
+    assert b["sentence"] == "Model allocation: next-session tickets would commit $9,600.00 of the configured $10,000.00; 4 of 4 slots"
     kinds = {(c["ticker"], c["kind"]) for c in b["cut"]}
     assert kinds == {("T5", "slot_cap"), ("T1", "withheld")} and all(c["kind"] in plan.CUT_KINDS for c in b["cut"])
     withheld = next(c for c in b["cut"] if c["kind"] == "withheld")
@@ -722,9 +722,9 @@ def test_cash_budget_cuts_on_the_equity_and_counts_positions_already_open():
     assert b["beyond"][0]["reason"] == "equity"
     two_open = plan.cash_budget(_plans(2400, 2400, 2400), Account(), open_positions=2)
     assert two_open["within"] == ["T1", "T2"] and two_open["beyond"][0]["reason"] == "slot_cap"
-    assert two_open["sentence"] == "Model allocation: tomorrow's tickets would commit $4,800.00 of the configured $10,000.00; 4 of 4 slots (2 open model plans)"
+    assert two_open["sentence"] == "Model allocation: next-session tickets would commit $4,800.00 of the configured $10,000.00; 4 of 4 slots (2 open model plans)"
     assert "(1 open model plan)" in plan.cash_budget(_plans(2400), Account(), open_positions=1)["sentence"]
-    assert plan.cash_budget([], Account())["sentence"] == "Model allocation: tomorrow's tickets would commit $0.00 of the configured $10,000.00; 0 of 4 slots"
+    assert plan.cash_budget([], Account())["sentence"] == "Model allocation: next-session tickets would commit $0.00 of the configured $10,000.00; 0 of 4 slots"
     assert plan.cash_budget(_plans(0, action="no_new_longs"), Account())["skipped"][0]["reason"] == "no_order"
     with pytest.raises(ValueError):
         plan.cash_budget([], Account(), open_positions=-1)

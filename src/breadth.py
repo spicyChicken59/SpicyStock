@@ -6,7 +6,7 @@ the volumes, MINC65/MAXC65 the lowest/highest close over the last 65
 sessions INCLUDING today, MINC34/MAXC34 likewise, AVGC20/AVGV20 the
 20-session simple averages including today.
 
-Sessions are the calendar ``observed_sessions()`` reads across the frames, so
+Sessions come from the versioned XNYS calendar across the frames' span, so
 every window counts sessions rather than bars: a symbol with a hole inside a
 window is not measured for that column, never a shorter window under the
 same name. A NaN or missing input makes a symbol "not measured" for the
@@ -19,6 +19,8 @@ scales each by today's measured universe over REFERENCE_UNIVERSE and compares
 the count to the scaled number it prints. The ratios are scale-free.
 """
 from __future__ import annotations
+
+from src import sessions as exchange_sessions
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
@@ -79,7 +81,7 @@ SIZE_MULTIPLIER = {"green": 1.0, "yellow": 0.5, "red": 0.0}
 # --- plumbing --------------------------------------------------------------
 #: How many sessions snapshot() carries in ``history``.
 HISTORY_SESSIONS = 30
-#: A date is a session when at least this fraction of frames carry a bar on it.
+#: Legacy API default; session membership now comes only from XNYS.
 MIN_SESSION_FRACTION = 0.5
 #: Ratios and pct_above_40ma are rounded ONCE, here, and every comparison
 #: reads the rounded number a surface prints.
@@ -148,18 +150,18 @@ def _bar_dates(index) -> np.ndarray:
 
 def observed_sessions(frames: Mapping[str, pd.DataFrame],
                       min_fraction: float = MIN_SESSION_FRACTION) -> list[date]:
-    """Dates at least ``min_fraction`` of the frames carry a bar on, oldest
-    first. A date one frame prints on (a phantom, a holiday) is not a session."""
+    """Expected XNYS sessions across the available span, including missing days.
+
+    The legacy fraction argument is accepted for callers, but provider votes
+    cannot remove a real session or admit a phantom date.
+    """
     if not 0 < min_fraction <= 1:
         raise ValueError(f"min_fraction must be in (0, 1], got {min_fraction}")
     if not frames:
         return []
-    stamped = [np.unique(_bar_dates(df.index)) for df in frames.values()]
-    stamps = np.concatenate(stamped)
+    stamps = np.concatenate([_bar_dates(df.index) for df in frames.values()])
     stamps = stamps[~np.isnat(stamps)]
-    dates, counts = np.unique(stamps, return_counts=True)
-    kept = dates[counts >= min_fraction * len(frames)]
-    return kept.astype(object).tolist()
+    return exchange_sessions.dates(stamps.min().astype(object), stamps.max().astype(object)) if len(stamps) else []
 
 
 # --------------------------------------------------------- wide matrix ----

@@ -11,19 +11,20 @@ pipeline.
     python tools/make_fixture.py            # rewrite every fixture
     python tools/make_fixture.py --check    # exit 1 if any fixture is stale
 
-Variants (each a night, all pinned to the same Thursday evening):
+Variants (ordinary nights use Thursday September 10, 2026):
   full      four A-quality bursts: one ticket, two cut by the slot cap, one
             withheld by the stop rule at its limit (the textbook bar); a
             coiled name; three open model plans (a hold, a whole-share half
             sale holding its last share, an uncertain fill); a readable
-            scorecard with uncertain fills counted      -> "Trade tomorrow."
+            scorecard with uncertain fills counted      -> "Trade next session."
   degraded  Claude down and a chart that would not render -> the same night,
             graded by the checklist alone, run.status degraded
   notrade   Claude lowers every grade to C                -> "Nothing qualifies."
   yellow    three names break down: the 10-day ratio
             falls under Bonde's line, A+ alone trades     -> "Trade small."
   red       six names break down: the down-4% alarm       -> "Stand aside."
-  closed    no bar for the expected session               -> "Market closed."
+  closed    Labor Day Sep 7 preserves the Sep 4 publication, actionable Sep 8
+  early     Nov 27, 2024 signal for Nov 29, whose XNYS close is 13:00 ET
 
   empty     complete selection, zero reaction candidates -> honest empty result
   partial   quiet market, budget stops after two thirds -> incomplete empty result
@@ -50,7 +51,7 @@ import os
 import shutil
 import sys
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -59,14 +60,14 @@ sys.path.insert(0, str(ROOT))
 
 import pandas as pd  # noqa: E402
 
-from src import charts, market_data, pipeline, plan, record, scans  # noqa: E402
+from src import sessions as exchange_sessions, charts, market_data, pipeline, plan, record, scans  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as quiet_bar  # noqa: E402
 from tests.test_watchlist import coil  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "page"
-VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed", "empty", "partial")
+VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed", "empty", "partial", "early")
 #: the sequels, each run over the docs the `full` night wrote
 SEQUELS = ("next", "revised")
 EVENING = datetime(2026, 9, 10, 22, 30, tzinfo=timezone.utc)   # Thursday, after the close
@@ -241,7 +242,7 @@ def append_bar(df: pd.DataFrame, row: list[float]) -> pd.DataFrame:
     """One more session on the end of a frame. The double re-dates every frame
     it serves to the request's own end, so the index handed in only has to be
     ordered and one longer; the bar's SHAPE is the fact being added."""
-    stamp = df.index[-1] + pd.tseries.offsets.BDay(1)
+    stamp = pd.Timestamp(exchange_sessions.next_sessions(df.index[-1].date(), 1)[0])
     one = pd.DataFrame([row], index=pd.DatetimeIndex([stamp], name=df.index.name),
                        columns=list(df.columns), dtype=float)
     return pd.concat([df, one])
@@ -309,13 +310,11 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
     for name, df in frames.items():
         fake.add_history(name, df)
     fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0))
-    if variant == "closed":
-        fake.close_session(SESSION)
     return list(frames)
 
 
 # ---------------------------------------------------------------- picks ----
-def prior_picks(fake: FakeAlpaca) -> dict:
+def prior_picks(fake: FakeAlpaca, measured: date = SESSION) -> dict:
     """A picks.json the night inherits: three picks from the last five
     sessions (the open model plans: a hold, the whole-share half sale, an
     uncertain fill) and one a session for the forty-four before those (a
@@ -323,7 +322,7 @@ def prior_picks(fake: FakeAlpaca) -> dict:
     frame it names as the double will serve it. The stop is the pick day's
     low or 4% under the close, whichever is lower, and the recorded ticket's
     sell leg carries that same stop."""
-    sessions = pd.bdate_range(end=SESSION, periods=60)
+    sessions = pd.DatetimeIndex(exchange_sessions.sessions_before(measured + timedelta(days=1), 60))
     picks = []
 
     def pick(name: str, back: int, kind: str = "burst") -> dict:
@@ -354,6 +353,8 @@ def prior_picks(fake: FakeAlpaca) -> dict:
 
 # ------------------------------------------------------------------ run ----
 def run_variant(variant: str, docs: Path) -> dict:
+    measured = date(2026, 9, 4) if variant == "closed" else date(2024, 11, 27) if variant == "early" else SESSION
+    at = datetime(2026, 9, 4, 22, 30, tzinfo=timezone.utc) if variant == "closed" else datetime(2024, 11, 27, 23, 30, tzinfo=timezone.utc) if variant == "early" else FOLLOW_EVENING if variant in SEQUELS else EVENING
     fake = FakeAlpaca()
     tickers = register(fake, variant)
     if variant in ("empty", "partial"):
@@ -364,7 +365,7 @@ def run_variant(variant: str, docs: Path) -> dict:
     # a sequel inherits the record and the picks the full night wrote, the way
     # a real night inherits the last one; seeding it again would throw them away
     if variant not in SEQUELS:
-        record.save(prior_picks(fake), docs)
+        record.save(prior_picks(fake, measured), docs)
     claude = type("FixtureClaude", (FakeAnthropic,), {"calls": [], "payload": {}, "raw": None, "raises": None})
 
     def answer(metrics: dict) -> dict:
@@ -409,8 +410,15 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"), \
             mock.patch.object(pipeline, "FETCH_CHUNK", max(1, len(tickers) * 2 // 3) if variant == "partial" else pipeline.FETCH_CHUNK):
         rep = pipeline.run_evening(tickers=tickers, docs=docs,
-                                   now=FOLLOW_EVENING if variant in SEQUELS else EVENING,
+                                   now=at,
                                    fetch_budget=-1 if variant == "partial" else pipeline.FETCH_BUDGET_SECONDS)
+        if variant == "closed":
+            before = {p: p.read_bytes() for p in docs.rglob("*") if p.is_file()}
+            calls = (len(fake.bar_requests), len(claude.calls))
+            skipped = pipeline.run_evening(tickers=tickers, docs=docs, now=datetime(2026, 9, 7, 22, 30, tzinfo=timezone.utc))
+            assert skipped.status == "no_session" and not skipped.published
+            assert calls == (len(fake.bar_requests), len(claude.calls))
+            assert before == {p: p.read_bytes() for p in docs.rglob("*") if p.is_file()}
     if not rep.published:
         raise SystemExit(f"{variant}: the pipeline did not publish ({rep.failure})")
     data = json.loads((docs / pipeline.DATA_FILE).read_text())
@@ -447,7 +455,7 @@ def expected_shape(variant: str, data: dict) -> None:
         assert data["run"]["coverage"]["acceptance"]["status"] == ("degraded" if variant == "partial" else "ok")
         assert ("evaluated subset" in h1) == (variant == "partial")
     if variant == "full":
-        assert h1.startswith("Trade tomorrow."), h1
+        assert h1.startswith("Trade next session."), h1
         assert len(data["trades"]) >= 1 and data["beyond_cap"], (data["trades"], data["beyond_cap"])
         kinds = {c["ticker"]: c["kind"] for c in data["cash_budget"]["cut"]}
         assert "withheld" in kinds.values() and "slot_cap" in kinds.values(), kinds
@@ -486,7 +494,11 @@ def expected_shape(variant: str, data: dict) -> None:
     elif variant == "red":
         assert h1 == "Stand aside." and data["breadth"]["regime"]["verdict"] == "red", h1
     elif variant == "closed":
-        assert h1 == "Market closed. Plans unchanged." and data["run"]["session_state"] == "closed", h1
+        assert data["run"]["session"] == "2026-09-04" and data["run"]["timing"]["applicable_session"] == "2026-09-08"
+        assert data["run"]["status"] == "ok", data["run"]["problems"]
+    elif variant == "early":
+        assert data["run"]["timing"]["closes_at"] == "2024-11-29T13:00:00-05:00"
+        assert data["run"]["timing"]["shortened"] is True
     elif variant in SEQUELS:
         # the night after, and the four facts a follow-through reading needs of
         # it: a newer session, two followed symbols gone from the candidates,

@@ -234,7 +234,7 @@ def test_the_request_asks_for_every_field_the_schema_requires():
     for field in SCORE_SCHEMA["required"]:
         assert f'"{field}":' in shape, field
     assert "|".join(GRADES) in shape
-    assert "tomorrow's open" in shape
+    assert "the next session's open" in shape and "tomorrow" not in shape
     assert "three sentences" in shape and "decisive factor" in shape
 
 

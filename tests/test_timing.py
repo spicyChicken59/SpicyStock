@@ -60,22 +60,16 @@ def test_the_applicable_session_is_the_one_the_dated_schedule_calls_day_one():
 def test_a_friday_night_plans_for_monday_and_not_for_saturday():
     tm = pipeline.plan_timing(FRI, FRI, closed=False)
     assert tm["applicable_session"] == "2026-09-14"
-    assert tm["basis"] == timing.BASIS_WEEKDAY_AFTER
+    assert tm["basis"] == timing.BASIS_EXCHANGE_AFTER
     assert tm["closed_session"] is None
 
 
-def test_a_closed_night_applies_the_standing_plans_after_the_day_that_did_not_happen():
-    """The ONE piece of holiday knowledge this repository gets: a night whose
-    expected session printed no bars was not a session. The plans dated for it
-    apply to the weekday after THAT, and the closed date is kept so the page
-    can explain a plan's own day 1 rather than contradict it."""
-    tm = pipeline.plan_timing(date(2026, 9, 9), date(2026, 9, 10), closed=True)
-    assert tm["measured_session"] == "2026-09-09"
-    assert tm["closed_session"] == "2026-09-10"
-    assert tm["applicable_session"] == "2026-09-11"
-    assert tm["basis"] == timing.BASIS_AFTER_CLOSED
-    # and an OPEN night on the same session does not: it is the day after it
-    assert pipeline.plan_timing(date(2026, 9, 9), date(2026, 9, 9), closed=False)["applicable_session"] == "2026-09-10"
+def test_calendar_closure_cannot_be_inferred_on_an_expected_open_day():
+    with pytest.raises(ValueError, match="expected-open"):
+        pipeline.plan_timing(date(2026, 9, 9), date(2026, 9, 10), closed=True)
+    tm = pipeline.plan_timing(date(2026, 9, 4), date(2026, 9, 7), closed=True)
+    assert tm["applicable_session"] == "2026-09-08"
+    assert tm["basis"] == timing.BASIS_EXCHANGE_AFTER
 
 
 def test_a_plan_cannot_be_for_a_session_already_measured():
@@ -233,14 +227,14 @@ def test_the_run_writes_the_block_on_every_night_the_fixtures_hold():
     seen = {}
     for path in sorted((ROOT / "tests" / "fixtures" / "page").glob("*.json")):
         data = json.loads(path.read_text())
-        if "picks" in data:       # the record's own picks file, not a docs/data.json
+        if path.name.startswith(".") or "picks" in data:       # the record's own picks file, not a docs/data.json
             continue
         tm = data["run"]["timing"]
         assert report.timing_faults(tm) == [], path.name
         assert tm["measured_session"] == data["run"]["session"], path.name
         seen[path.stem] = tm["basis"]
     # and both bases are actually exercised by the committed fixtures
-    assert set(seen.values()) == set(timing.BASES), seen
+    assert set(seen.values()) == {timing.BASIS_EXCHANGE_AFTER}, seen
 
 
 # ------------------------------------------- the page reads the same words --

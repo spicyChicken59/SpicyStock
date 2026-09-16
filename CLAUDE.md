@@ -116,13 +116,14 @@ newest record and did the run finish. `run.timing` (`src/timing.py`, written
 by `pipeline.plan_timing()`) is ACTION TIMING: the session the published
 plans are FOR -- `plan.next_sessions(session, 1)[0]`, the same call
 `dated_schedule()` makes for its day 1, so the two cannot disagree -- and
-the instants its entry window is scheduled between, built with `zoneinfo`
-from `REGULAR_OPEN_ET` and `plan.ENTRY_WINDOW_MINUTES` so DST is the tz
-database's answer and no offset is ever written by hand. `PREPARE_BEFORE_ET`
-(9:28 AM) is the desk's own reminder and its own field, never the cutoff. A
-closed night uses the one holiday fact the run ever gets -- its expected
-session printed no bars -- and applies the standing plans to the weekday
-after THAT, naming the closed date; what it cannot read it says, in `limits`.
+the offset-aware instants its entry window is scheduled between. The shared
+`src/sessions.py` authority uses XNYS via exchange_calendars 4.13.2; the strategy
+still owns window duration and the desk's 9:28 reminder. Completion is the
+scheduled close plus 15 minutes. Known non-session runs skip all providers and
+preserve the prior publication; missing bars on an expected-open day are an
+outage. `run.calendar` freezes versioned dates/hours and a bounded schedule for
+the browser. Historical records without it retain their limitations and are
+research only; their immutable timing is never recomputed.
 `availability(data, now)` is the ONE answer every surface that offers an
 action asks (the compact area, the stock action bar, `discPlan()` and its
 copy control, `renderTickets()`, `cmpFacts()`, `nextAction()`), and timing
@@ -271,8 +272,8 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1176 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
-over ten fixtures walked through every view, stock, lens, search, the
+The suite now collects 1209 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
 keyboard, deep links
@@ -1792,3 +1793,66 @@ dollar-formula source validation, real qualifying-ticket evidence and trading
 edge. OMIT paid replay, manual deployment and sibling changes. Exact published
 head and automatic CI status belong to the PR. Next: review that PR; merging
 requires separate authorization. No older dispatch prompt supersedes this scope.
+
+## Exchange-session truthfulness — next milestone after #69
+
+Base `5dbcf41d157b37caaa519a3466c3a622f1945616`. This supersedes older
+weekday/closure-inference descriptions above; historical publications remain
+unchanged. `src/sessions.py` owns XNYS dates and actual scheduled hours through
+pinned exchange_calendars 4.13.2. No handwritten holiday table or second browser
+calendar. The calendar spans 1990–2035; scans require their lookback and plan
+context within it. New rules digests include calendar identity, version, range,
+15-minute completion buffer and the ±45-day browser schedule policy.
+
+Baseline protections failed for their semantic reasons: Friday→holiday Monday,
+Tuesday's previous session incorrectly Monday, accepted holiday pin, 16:00
+serialized on a 13:00 close, holiday universe/provider work, fixed 16:15 completion
+on an early close, and all-stale expected-open data incorrectly called closed.
+All seven now have regressions. Six targeted calendar mutations were killed,
+each with an unaffected outage control passing; originals were restored before
+normal verification. Known holidays preserve every publication/pick/history byte
+and send no duplicate signals or email. A missing expected-open session remains
+coverage/outage evidence. Breadth includes expected missing dates; replay refuses
+missing-session renumbering. Strategy formulas and thresholds are unchanged.
+
+`run.calendar` records exchange/library/version, measured/prior/applicable dates,
+scheduled open/close, shortened status and completion policy; `run.timing` uses
+that same authority and retains the strategy's entry window. Browser freshness
+uses the bounded serialized schedule; missing/out-of-range evidence is unknown
+and research only. Method/email state actual hours and dates. New saves freeze
+original timing; old records retain their limitations. Known closure is logged
+as `no_session`, unfinished evening as `session_incomplete`; workflow persistence
+requires `published=true`. Cron slots stay unchanged; either holiday slot may log
+a no-spend skip.
+
+Measured in the existing Python 3.12 environment: dependency install 23.926 s,
+approximately 654 kB of new wheels and 2,836,036 installed bytes including package
+metadata/bytecode. Added exchange_calendars, korean_lunar_calendar, pyluach, toolz,
+tzdata; no existing dependency changed. Cold calendar construction 0.275 s;
+1,000 warm completed/prior/next-five groups averaged 0.080 ms; first publication
+snapshot 9.658 ms. Full fixture 231,724→247,832 raw bytes and 28,034→29,416 gzip.
+These are local measurements, not production latency or dollar-saving forecasts.
+On the deterministic Sep 2, 2024 holiday baseline, 32 symbols/one SDK batch/8,110
+rows were read and a record published; now all provider work is skipped. Model
+calls were zero in both versions of that holiday fixture. No live Nasdaq, Alpaca,
+chart-reader/model or email call was made for this milestone.
+
+KEEP input ledger, split-adjusted bars, discovery v1, scan-aware grading,
+history/recovery, My setups/private annotations, ticket/breadth gates and design
+v2.13.0. FIX calendar dates, hours, adjacency and closure truthfulness. DEFER full
+measurement→grade→plan→publication provenance, dollar-formula primary-source
+validation, real qualifying-ticket evidence and profitability evidence. OMIT a
+calendar dashboard, speculative holiday maintenance and paid replay. Do not
+merge or deploy; exact head and terminal verification belong in the focused PR.
+
+Terminal local verification: 1,209 pytest cases pass; twelve generated fixtures
+are current; continuity 83/83; chart 182/182; full page 4,057/4,057. The obsolete
+prompt assertion requiring “tomorrow's open” was corrected to require “next
+session's open” and forbid “tomorrow”; grading fields and thresholds remain
+unchanged. Desktop/mobile holiday and shortened-session Method screenshots,
+ordinary pages and saved-original timing were inspected. A final presentation
+sweep labels the navigation “Latest scan” and the Method block “Published run”,
+so an unchanged holiday publication is not called tonight's run. Calendar/mobile/
+entry-window browser checks passed 155/155 for that wording; docs checks passed 33/33. All 22 vendored design
+hashes still match v2.13.0. Production data.json, picks.json and history archives
+are unchanged. No live provider/model/email call, merge or deployment occurred.

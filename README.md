@@ -1,7 +1,7 @@
 # SpicyStock
 
 One evening run over an explicitly selected US-stock universe, one page that says what
-to do tomorrow and why, one email that says the same in fewer words. The
+to do next session and why, one email that says the same in fewer words. The
 method is Pradeep Bonde's (Stockbee) momentum burst: a 4% range-expansion
 day out of a quiet base, bought the next morning inside a narrow zone with
 the stop under the burst bar, sold into strength over three to five days,
@@ -40,9 +40,8 @@ does not carry, falls back to Explore and says so.
    the page keeps them apart, because freshness is not permission.
    **Publication** is the one thing the page computes: from the record's
    session and the browser's clock in ET it says *fresh*, *tonight's run
-   pending*, *STALE · 1 session behind* (closed or failed, it cannot tell),
-   *STALE · N sessions behind* (never a closure: no two US market holidays
-   are adjacent), *market closed* or *degraded*, with one fixed sentence per
+   pending*, *STALE · 1 session behind* or *STALE · N sessions behind*
+   (the versioned XNYS schedule expected sessions), *market closed* or *degraded*, with one fixed sentence per
    problem kind. A stale page says *Do not place these orders*, points at
    the run log, and withholds every ticket from the action area, the plan
    and the order sheet, keeping the setups.
@@ -66,7 +65,7 @@ does not carry, falls back to Explore and says so.
    disclosure and the reader's focus all stay where they were — and a copy
    asks again immediately before it writes.
 2. **Explore**, the default view. The market in a line: the verdict, one
-   of six sentences — *Trade tomorrow. N A-quality bursts.* · *Trade small.
+   of six sentences — *Trade next session. N A-quality bursts.* · *Trade small.
    N A+ bursts.* (a yellow regime) · *Stand aside.* (red) · *Nothing
    qualifies. Keep cash.* · *Market closed. Plans unchanged.* · *No verdict
    for <session>.* (the run failed before it published) — with the dek's
@@ -240,17 +239,17 @@ does not carry, falls back to Explore and says so.
    filled), with the stop the rules would have moved it to; SpicyStock
    does not know what you hold. Then the bars-only scorecard (plans, fills,
    win rate, average R, SPY over the same days) and fourteen dots for the
-   last fourteen evenings: ok, degraded, closed, missing.
-5. **Market.** Bonde's Market Monitor over every stock that printed today:
+   last fourteen exchange sessions: ok, degraded or missing; older recorded closure outcomes remain readable.
+5. **Market.** Bonde's Market Monitor over usable fetched stock frames for the measured session:
    up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
-6. **Method.** Tonight's run (coverage, grades, reads, delivery, timing,
+6. **Method.** Published run (coverage, grades, reads, delivery, timing,
    the run log), how to read the page, and the configured sizing
    assumptions every ticket was computed from.
-7. **My setups.** A prominent peer to **Today’s scan**, reachable even when
+7. **My setups.** A prominent peer to **Latest scan**, reachable even when
    empty. **Save setup** on cards, details and comparison entries freezes the
    exact signal in this browser. Discovery’s **Saved in this scan** lens is
    only a subset; My setups includes every local save regardless of filters,
@@ -329,15 +328,16 @@ session. The run:
   estimated initial SDK batches from 31 to 48, before pagination/retries; it does
   not raise the timeout or the twelve-call chart-reader cap. Actual calls can
   vary with qualifying candidates within that cap; this milestone used none.
-- **session and coverage** — the existing bar-based open/closed inference is
-  retained. Each frame needs the evaluated session and the required previous
+- **session and coverage** — XNYS owns expected session dates and hours;
+  missing bars on an expected session are outage/coverage evidence, never proof
+  of a holiday. Each frame needs the evaluated session and the required previous
   session with readable OHLCV. Fewer than half the intended stocks with usable
   session bars refuses publication before grading; the denominator excludes SPY.
   At least half but less than all is degraded, as is any capacity cut or scan/
   quality error. A fully evaluated selection can be complete without being the
   complete listed market. The existing $3 session-close policy now reads actual
   cent-rounded bars, with seed/explicit exemptions preserved; actual scan volume
-  remains the scanner's rule. Closed runs explicitly count stocks not scanned.
+  remains the scanner's rule. Known non-session runs skip before universe/provider work and preserve the prior publication.
   No-bar responses, failed batches, budget-unfetched names, stale frames, gaps,
   unreadable pairs and repaired duplicates are distinct in `run.coverage`.
   Counts reconcile from selection through measured burst/dollar/both/neither and
@@ -488,7 +488,7 @@ not a backtest or a claim about either ceiling.
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
-`closed`, `empty`, `partial`), plus two sequels of the `full` night (`next`, `revised`) run over
+`closed`, `empty`, `partial`, `early`), plus two sequels of the `full` night (`next`, `revised`) run over
 the docs that night wrote, so a setup followed then can be read against a
 genuinely newer record: `next` is the same market one session on, where the
 ticket and the withheld setup have left the record, one burst has burst
@@ -545,12 +545,53 @@ work the reader was not going to do. What remains is the evening run, the
 page, the email, and the one record that needs no hand: the picks file and
 what the bars say happened to them.
 
+
+### Exchange-session basis
+
+`src/sessions.py` is the single authority: **XNYS (New York Stock Exchange)**,
+from pinned [`exchange_calendars` 4.13.2](https://pypi.org/project/exchange_calendars/4.13.2/).
+It works offline after installation and supplies historical holidays, exceptional
+closures and shortened hours. [NYSE hours](https://www.nyse.com/markets/hours-calendars)
+are the exchange reference. The calendar range is explicitly 1990–2035; requested sessions also need
+their lookback and plan dates inside it. Requests without that context fail instead of substituting weekdays. Future schedules can change.
+
+The newest completed session reaches its **scheduled close plus 15 minutes**;
+this policy is separate from the exchange close and does not guarantee extended-hours
+bar finality. Plan day 1 and subsequent dated exits enumerate actual sessions.
+The entry window remains the strategy's first 30 minutes after the scheduled open.
+All instants carry America/New_York offsets; no UTC offset is hard-coded.
+
+A known holiday/weekend evening or intraday run logs `no_session`, publishes
+nothing, preserves every previous file and sends no duplicate signal email. An
+incomplete evening session logs `session_incomplete`. `SCAN_SESSION_DATE` means
+requested exchange session: a pinned non-session is a precise preflight failure.
+The workflow's cron slots are unchanged; `published=false` prevents persistence,
+and skipped runs do not upload the previous record as a new artifact. The retry
+may log the same skip, still without any provider work.
+
+`run.calendar` records calendar schema, exchange/library/version, measured,
+previous and next applicable session, scheduled opens/closes, shortened status,
+and completion policy. Its ±45-calendar-day schedule lets the browser count real
+sessions without independent holiday arithmetic. Beyond that window, or on old
+records lacking provenance, freshness is unknown and actions are withheld. Old
+records and saved setups retain their original timing and limitations. New saves
+freeze their original timing evidence; later observations do not replace it.
+
+Deterministic cases include 2024-08-26 (ordinary Monday), Aug 31/Sep 1 (weekend),
+Sep 2 (Labor Day), Aug 30→Sep 3 (adjacent sessions), Nov 29 (13:00 ET close),
+Dec 2 (the following session), Mar 8→11 and Nov 1→4 (DST offsets). Historical
+1992-11-27 closes at 14:00 ET, proving shortened hours are not a fixed 13:00 rule.
+The `closed` fixture is an unchanged Sep 4, 2026 publication viewed on Labor Day;
+`early` is the Nov 27, 2024 signal for Black Friday. These are offline fixtures,
+not historical point-in-time universe or profitability evidence.
+
 ## Layout
 
 ```
 src/            history.py (public recovery and coverage)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
+                sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/

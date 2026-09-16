@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#111F31">
 <title>SpicyStock</title>
-<meta name="description" content="SpicyStock — the evening verdict for tomorrow's 4% momentum bursts: the market, the stocks setting up and the bursts, each with its annotated chart, its conditions and its conditional ticket.">
+<meta name="description" content="SpicyStock — the evening verdict for the next session's momentum plans: the market, the stocks setting up and the bursts, each with its annotated chart, its conditions and its conditional ticket.">
 <!-- SpicyChicken Design System · exact local snapshot recorded in design-system/provenance.json -->
 <link rel="icon" href="design-system/assets/favicon.ico" sizes="16x16 32x32 48x48">
 <link rel="icon" href="design-system/assets/sc-avatar-tile.svg" type="image/svg+xml">
@@ -36,7 +36,7 @@
   </a>
   <div class="sc-masthead__right ss-masthead__right">
     <nav class="sc-nav ss-nav" id="nav" aria-label="Views">
-      <a href="#/explore" data-view="explore">Today’s scan</a>
+      <a href="#/explore" data-view="explore">Latest scan</a>
       <a href="#/setups" data-view="setups">My setups</a>
       <a href="#/record" data-view="record">Record</a>
       <a href="#/market" data-view="market">Market</a>
@@ -60,7 +60,7 @@
     <div class="sc-card ss-market" id="market-bar">
       <div class="ss-market__verdict">
         <div class="sc-eyebrow" id="cover-eyebrow">spicystock · evening run</div>
-        <h1 class="ss-market__h1" id="cover-h1">Reading tonight's record…</h1>
+        <h1 class="ss-market__h1" id="cover-h1">Reading the published record…</h1>
         <p class="ss-market__dek" id="cover-dek"></p>
         <p class="ss-market__regime" id="cover-regime"></p>
       </div>
@@ -105,7 +105,7 @@
     </div>
 
     <details class="sc-disclosure ss-tickets" id="orders">
-      <summary id="orders-summary">Tomorrow's tickets</summary>
+      <summary id="orders-summary">Next-session tickets</summary>
       <div class="ss-tickets__body">
         <p class="ss-budget" id="budget"></p>
         <div class="sc-table-scroll" id="orders-table"></div>
@@ -164,10 +164,10 @@
       <span class="sc-chapter__index" aria-hidden="true">03</span>
       <div class="sc-chapter__body">
         <h2 id="breadth-h2">Is it a night to trade?</h2>
-        <p>Bonde's Market Monitor, computed over every common stock that printed today.</p>
+        <p>Bonde's Market Monitor, computed over usable fetched stock frames for the measured session.</p>
       </div>
     </header>
-    <dl class="sc-stat-strip sc-stat-strip--4 sc-stat-strip--instrument" id="breadth-deck" aria-label="Breadth today"></dl>
+    <dl class="sc-stat-strip sc-stat-strip--4 sc-stat-strip--instrument" id="breadth-deck" aria-label="Breadth for the measured session"></dl>
     <aside class="sc-callout sc-callout--core ss-regime" id="regime"></aside>
     <figure class="sc-card sc-evidence ss-breadth-chart" id="ratio-chart"></figure>
     <div class="sc-grid sc-grid--3 ss-facts-grid" id="breadth-facts"></div>
@@ -179,12 +179,12 @@
       <span class="sc-chapter__index" aria-hidden="true">04</span>
       <div class="sc-chapter__body">
         <h2 id="method-h2">Method and run details</h2>
-        <p>Whose number each rule is, what tonight's run read, and the sizing assumptions every ticket was computed from.</p>
+        <p>Whose number each rule is, what the published run read, and the sizing assumptions every ticket was computed from.</p>
       </div>
     </header>
     <div class="sc-card" id="run-details" aria-labelledby="run-h3">
-      <div class="sc-card__head"><div><h3 id="run-h3">Tonight's run</h3><p class="sc-hint">Coverage, grading and delivery, as the run recorded them.</p></div></div>
-      <dl class="sc-stat-strip sc-stat-strip--instrument ss-strip" id="run-strip" aria-label="Tonight's run"></dl>
+      <div class="sc-card__head"><div><h3 id="run-h3">Published run</h3><p class="sc-hint">Coverage, grading and delivery, as the run recorded them.</p></div></div>
+      <dl class="sc-stat-strip sc-stat-strip--instrument ss-strip" id="run-strip" aria-label="Published run"></dl>
       <ul class="ss-notes" id="run-meta"></ul>
     </div>
     <div class="sc-card" id="method-card" aria-labelledby="method-h3">
@@ -200,7 +200,7 @@
   <!-- the one next action, whatever the view -->
   <section class="sc-callout sc-callout--spice ss-next" id="next" aria-label="Next action">
     <div class="sc-callout__label">next</div>
-    <h3 id="next-h3">Reading tonight's record…</h3>
+    <h3 id="next-h3">Reading the published record…</h3>
     <p id="next-p"></p>
   </section>
 </main>

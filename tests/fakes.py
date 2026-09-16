@@ -90,8 +90,8 @@ class FakeAlpaca:
         `gap_before_session` removes the bar BEFORE the newest one after the
         frame has been re-dated -- a full-day halt, or a bar the feed dropped.
         It has to be an option here rather than a row deleted from the frame
-        handed in, because _align_to_end rebuilds the index as contiguous
-        business days: a hole in the input is closed on the way out, which is
+        handed in, because _align_to_end rebuilds the index as actual
+        exchange sessions: a hole in the input is closed on the way out, which is
         right for every other test and wrong for the one about holes.
         """
         self.history[ticker] = df
@@ -108,7 +108,7 @@ class FakeAlpaca:
 
         The feed-wide sibling of `gap_before_session`, and a separate knob
         for the same reason that one is: _align_to_end rebuilds every index as
-        contiguous business days, so a holiday cannot be handed in as a
+        actual exchange sessions, so a holiday cannot be handed in as a
         frame, and a per-name hole is a different fact from a day nobody
         printed. No test in the suite could hold a business day every frame
         lacked before this existed, which is how the scan's gap rule read the
@@ -136,7 +136,7 @@ class FakeAlpaca:
 
         A knob rather than a frame handed in, for the same reason
         `gap_before_session` is one: _align_to_end rebuilds the index as
-        contiguous business days, so a duplicated timestamp handed in is
+        actual exchange sessions, so a duplicated timestamp handed in is
         renumbered away on the way out. What the wire does with a repeated
         bar -- which copy is preliminary and which corrected -- is unknown,
         so the extra copies are byte-identical here and the volume the
@@ -221,12 +221,9 @@ class FakeAlpaca:
     def _align_to_end(df: pd.DataFrame, end: Any, stale_sessions: int) -> pd.DataFrame:
         """Re-date a frame so its newest bar is the session `end` asked for.
 
-        Rebuilt as business days rather than slid by a fixed offset: a shift
-        of an arbitrary number of calendar days would leave the fixtures'
-        bars sitting on Saturdays, and `stale_sessions` would count weekend
-        days as sessions. Weekends only, no holidays -- the same simplification
-        the scanner makes, so the double is wrong in the same places the code
-        under test is, and no test can pass on a disagreement between them.
+        Rebuilt on actual XNYS sessions, with stale_sessions counting real
+        sessions. Explicit hole/closure knobs still simulate provider omissions;
+        they cannot teach the product that an expected-open day was a holiday.
 
         `end` of None means the request set no upper bound: the frame comes
         back as registered, which is how stale a real response would look if
@@ -235,7 +232,9 @@ class FakeAlpaca:
         if end is None or df.empty:
             return df
         target = pd.Timestamp(getattr(end, "date", lambda: end)())
-        span = pd.bdate_range(end=target.normalize(), periods=len(df) + stale_sessions)
+        from src import sessions
+        from datetime import timedelta
+        span = pd.DatetimeIndex(sessions.sessions_before(target.date() + timedelta(days=1), len(df) + stale_sessions))
         aligned = df.copy()
         aligned.index = pd.DatetimeIndex(span[:len(df)], name=df.index.name)
         return aligned

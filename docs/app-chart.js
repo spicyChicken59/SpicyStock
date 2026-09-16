@@ -182,7 +182,7 @@
     burstIndex = burstIndex !== null && burstIndex >= 0 && burstIndex < n && bars[burstIndex].candle ? Math.floor(burstIndex) : null;
     var card = !!options.card, ruler = !!options.targetRuler;
     var futureSlots = Math.max(0, Math.floor(num(options.futureSlots) || 0));
-    var futureLabel = typeof options.futureLabel === 'string' && options.futureLabel ? options.futureLabel : 'tomorrow \u2192';
+    var futureLabel = typeof options.futureLabel === 'string' && options.futureLabel ? options.futureLabel : 'next session \u2192';
     var upDays = Math.max(0, Math.floor(num(options.upDays) || 0));
     var volRatio = num(options.burstVolumeRatio), rangeExp = num(options.rangeExpansion), volAvgN = num(options.volumeAvg);
 

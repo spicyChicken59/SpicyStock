@@ -28,7 +28,7 @@ from typing import Any
 
 import resend
 
-from src import timing, inputs
+from src import timing, inputs, sessions
 
 log = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ SERIES_KEYS: tuple[str, ...] = ("date", "o", "h", "l", "c", "v")
 
 # --- the cover -----------------------------------------------------------------
 
-H1_TRADE = "Trade tomorrow. {n} A-quality {noun}."
+H1_TRADE = "Trade next session. {n} A-quality {noun}."
 H1_TRADE_SMALL = "Trade small. {n} A+ {noun}."
 H1_STAND_ASIDE = "Stand aside."
 H1_KEEP_CASH = "Nothing qualifies. Keep cash."
@@ -82,7 +82,7 @@ H1_CLOSED = "Market closed. Plans unchanged."
 H1_FAILED = "No verdict for {expected}."
 
 VERBS: tuple[str, ...] = ("trade", "trade small", "stand aside", "keep cash", "hold", "none")
-ORDERS_ACTION = ("Tomorrow's orders", "#orders")
+ORDERS_ACTION = ("Next-session orders", "#orders")
 HOLD_ACTION = ("Open model plans", "#hold")
 
 #: What the regime's size multiplier says in words. Read off the published
@@ -108,7 +108,7 @@ FAILED_SUBJECT = "FAILED — no plan for {expected}"
 CONTRACT: dict[str, str] = {
     "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
     "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, "
-                 "run.session_state and this, against the browser's clock in ET.",
+                 "run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
     "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the "
            "rules block, so two nights under different constants never read as one screener.",
     "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label "
@@ -119,7 +119,8 @@ CONTRACT: dict[str, str] = {
            "input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised "
            "counts the non-finite numbers replaced with null on the way in. run.timing is a different fact "
            "from the two above it: the session tonight's plans are FOR and the instants its entry window is "
-           "scheduled between, offset and all, with the calendar it could not read named in its limits. A "
+           "scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, "
+           "actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A "
            "record without it is one published before the field existed, and the page says entry timing is "
            "unavailable rather than guessing at a deadline.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
@@ -133,12 +134,12 @@ CONTRACT: dict[str, str] = {
               "a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over "
               "the previous session's for every row, the $-only ones included (null when the previous session "
               "printed none); quality.burst holds the checklist's copy at two places.",
-    "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red "
+    "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red "
               "regime this is empty whatever the grades say.",
     "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the "
                   "limit, past the slots or the configured equity, or sized to no whole share. Each has a "
                   "reason in cash_budget.cut. Not checklist refusals.",
-    "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the "
+    "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the "
                    "model slots used (open model plans count), and every plan without a ticket with its kind "
                    "and reason. Never a balance or buying power.",
     "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
@@ -409,9 +410,9 @@ def summary(burst: dict) -> str:
     clauses = []
     lo, hi = _price(plan.get("entry_low")), _price(plan.get("entry_high"))
     if lo and hi:
-        buy = f"buy {lo}–{hi} tomorrow"
+        buy = f"buy {lo}–{hi} next session"
     elif lo or hi:
-        buy = f"buy at {lo or hi} tomorrow"
+        buy = f"buy at {lo or hi} next session"
     else:
         buy = None
     if buy:
@@ -639,6 +640,7 @@ def validate(data: dict) -> None:
                 faults.append(f"run.problems[{i}].message is not plain text of at most {MESSAGE_MAX_CHARS} chars")
     faults.extend(timing_faults(run.get("timing")))
     faults.extend(inputs.record_faults(run))
+    faults.extend(sessions.record_faults(run))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -1012,15 +1014,22 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out = [f'<div style="{_S_PAGE}">',
            f'<p style="{_S_EYEBROW}"><span style="{_S_EYEBROW_SLASH}">// </span>spicystock · {esc(session)} · '
            f'{esc(run.get("type") or "evening")} run</p>',
-           f'<div style="{_S_INK}"><p style="{_S_INK_LABEL}">// tonight\'s verdict</p>'
+           f'<div style="{_S_INK}"><p style="{_S_INK_LABEL}">// session verdict</p>'
            f'<h1 style="{_S_H1}">{esc(cover_block.get("h1") or H1_KEEP_CASH)}</h1>'
            f'<p style="margin:0">{esc(cover_block.get("dek") or "")}</p></div>',
            _breadth_line(data.get("breadth"))]
-    out.append(f'<h2 style="{_S_H2}">Tomorrow\'s orders</h2>')
+    tm = run.get("timing") or {}
+    if tm.get("applicable_session"):
+        out.append(f'<p>Plans for {esc(tm["applicable_session"])}. Entry {esc(tm.get("opens_at"))} to {esc(tm.get("cutoff_at"))}; '
+                   f'scheduled close {esc(tm.get("closes_at"))}' + (' (shortened session)' if tm.get("shortened") else '') + '.</p>')
+    cal = run.get("calendar") or {}
+    out.append(f'<p style="{_S_MUTED}">Calendar: {esc(cal.get("exchange", "unknown — historical timing limitations apply"))} '
+               f'{esc(cal.get("library", ""))} {esc(cal.get("library_version", ""))}. Exchange schedules may change.</p>')
+    out.append(f'<h2 style="{_S_H2}">Next-session orders</h2>')
     if trades:
         out.extend(_trade_block(b, data.get("breadth")) for b in trades)
     else:
-        out.append(f'<p style="margin:0 0 12px">No orders for tomorrow.</p>')
+        out.append(f'<p style="margin:0 0 12px">No orders for the next session.</p>')
     out.extend(_no_ticket_lines(data))
     if trades:
         sentence = _text(_get(data, "cash_budget", "sentence"))
@@ -1029,7 +1038,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
             used, slots = _int(_get(data, "cash_budget", "slots_used")), _int(_get(data, "cash_budget", "slots_max"))
             budget = []
             if committed and equity:
-                budget.append(f"Model allocation: tomorrow's tickets would commit {committed} of the configured {equity}")
+                budget.append(f"Model allocation: next-session tickets would commit {committed} of the configured {equity}")
             if used is not None and slots is not None:
                 budget.append(f"{used} of {slots} slots")
             sentence = " · ".join(budget) if budget else None
@@ -1047,7 +1056,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')
     out.extend(_alert_row(r) for r in alerts)
     if not alerts:
-        out.append('<p style="margin:0 0 12px">No anticipation names tonight.</p>')
+        out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')
@@ -1065,7 +1074,7 @@ def failure_html(run_type: str, problems: list[dict], expected: str) -> str:
     return "".join([
         f'<div style="{_S_PAGE}">',
         f'<p style="{_S_EYEBROW}"><span style="{_S_EYEBROW_SLASH}">// </span>spicystock · {esc(run_type)} run</p>',
-        f'<div style="{_S_INK}"><p style="{_S_INK_LABEL}">// tonight\'s verdict</p>'
+        f'<div style="{_S_INK}"><p style="{_S_INK_LABEL}">// session verdict</p>'
         f'<h1 style="{_S_H1}">{esc(H1_FAILED.format(expected=expected))}</h1>'
         f'<p style="margin:0">The {esc(run_type)} run stopped before it published a plan. The open model plans '
         f'are unchanged: if you hold one, keep the stops from the last plan you acted on.</p></div>',

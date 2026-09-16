@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src import breadth
+from src import breadth, sessions as exchange_sessions
 from src.breadth import BreadthDay
 
 END = "2026-09-10"
@@ -24,12 +24,16 @@ END = "2026-09-10"
 LIQUID = 1_000_000.0
 
 
+def exchange_index(end, periods):
+    return pd.DatetimeIndex(exchange_sessions.sessions_before(pd.Timestamp(end).date() + timedelta(days=1), periods))
+
+
 def frame(closes, volumes=None, *, end: str = END, index=None) -> pd.DataFrame:
     """N sessions of bars, newest on ``end``, in the transport's column case."""
     closes = np.asarray(closes, dtype=float)
     n = len(closes)
     if index is None:
-        index = pd.bdate_range(end=end, periods=n)
+        index = exchange_index(end=end, periods=n)
     volumes = np.full(n, LIQUID) if volumes is None else np.asarray(volumes, dtype=float)
     return pd.DataFrame({"Open": closes, "High": closes, "Low": closes,
                          "Close": closes, "Volume": volumes}, index=index)
@@ -94,26 +98,26 @@ def test_every_numeric_constant_is_strategy_or_plumbing_and_the_strategy_ones_ar
 
 def test_observed_sessions_excludes_a_date_only_a_fifth_of_frames_carry():
     """One frame prints on a Saturday; four do not. Not a session."""
-    weekdays = pd.bdate_range(end=END, periods=3)
+    weekdays = exchange_index(end=END, periods=3)
     saturday = pd.Timestamp("2026-09-12")
     frames = {f"S{i}": frame([1, 2, 3], index=weekdays) for i in range(4)}
     frames["odd"] = frame([1, 2, 3, 4], index=weekdays.append(pd.DatetimeIndex([saturday])))
     got = breadth.observed_sessions(frames)
-    assert got == [d.date() for d in weekdays]
+    assert got == [d.date() for d in weekdays] + [date(2026, 9, 11)]
     assert saturday.date() not in got
 
 
-def test_observed_sessions_fraction_is_inclusive_at_the_boundary():
+def test_provider_fraction_does_not_remove_expected_breadth_sessions():
     """Two of four frames is exactly half, and half is in."""
-    weekdays = pd.bdate_range(end=END, periods=3)
+    weekdays = exchange_index(end=END, periods=3)
     frames = {"a": frame([1, 2, 3], index=weekdays), "b": frame([1, 2, 3], index=weekdays),
               "c": frame([1, 2], index=weekdays[:2]), "d": frame([1, 2], index=weekdays[:2])}
     assert weekdays[-1].date() in breadth.observed_sessions(frames)
-    assert weekdays[-1].date() not in breadth.observed_sessions(frames, min_fraction=0.51)
+    assert weekdays[-1].date() in breadth.observed_sessions(frames, min_fraction=0.51)
 
 
 def test_observed_sessions_is_oldest_first_and_empty_without_frames():
-    idx = pd.bdate_range(end=END, periods=5)
+    idx = exchange_index(end=END, periods=5)
     frames = {"a": frame([1] * 5, index=idx[::-1])}  # newest-first on the wire
     got = breadth.observed_sessions(frames)
     assert got == sorted(got) == [d.date() for d in idx]
@@ -125,7 +129,7 @@ def test_observed_sessions_is_oldest_first_and_empty_without_frames():
 def test_a_tz_aware_index_reads_the_same_dates_as_a_naive_one():
     """Alpaca stamps daily bars at midnight ET; the date is the wall-clock
     date the way Timestamp.date() reads it, in any zone."""
-    naive = pd.bdate_range(end=END, periods=3)
+    naive = exchange_index(end=END, periods=3)
     utc = naive.tz_localize("UTC") + pd.Timedelta(hours=4)
     eastern = naive.tz_localize("America/New_York")
     evening = eastern + pd.Timedelta(hours=20)  # still that date in ET, tomorrow in UTC
@@ -142,7 +146,7 @@ def test_daily_counts_refuses_a_session_the_calendar_does_not_hold():
               "c": frame([100, 104], [50_000, 200_000])}
     phantom = date(2026, 9, 12)  # one frame of three carries it: under half
     frames["a"] = frame([100, 104, 105], [50_000, 200_000, 300_000],
-                        index=pd.bdate_range(end=END, periods=2).append(pd.DatetimeIndex([pd.Timestamp(phantom)])))
+                        index=exchange_index(end=END, periods=2).append(pd.DatetimeIndex([pd.Timestamp(phantom)])))
     with pytest.raises(ValueError, match="2026-09-12"):
         breadth.daily_counts(frames, [phantom])
     assert breadth.daily_counts(frames, []) == []
@@ -150,7 +154,7 @@ def test_daily_counts_refuses_a_session_the_calendar_does_not_hold():
 
 def test_a_bar_on_a_date_that_is_not_a_session_is_dropped_not_read():
     """The phantom bar must not become yesterday's close for the next scan."""
-    weekdays = pd.bdate_range(end=END, periods=3)
+    weekdays = exchange_index(end=END, periods=3)
     saturday = pd.DatetimeIndex([pd.Timestamp("2026-09-12")])
     monday = pd.DatetimeIndex([pd.Timestamp("2026-09-14")])
     idx = weekdays.append(saturday).append(monday)
@@ -159,7 +163,12 @@ def test_a_bar_on_a_date_that_is_not_a_session_is_dropped_not_read():
     for i in range(4):
         frames[f"S{i}"] = frame([1, 1, 1, 1], index=weekdays.append(monday))
     got = breadth.daily_counts(frames, [monday[0].date()])[0]
-    assert got.up4 == 1  # 104 against Thursday's 100, not against 50
+    assert got.up4 == 0 and got.universe == 0  # Friday is missing, so Monday cannot be measured.
+    for df in frames.values():
+        df.loc[pd.Timestamp("2026-09-11")] = df.loc[pd.Timestamp(END)]
+        df.sort_index(inplace=True)
+    got = breadth.daily_counts(frames, [monday[0].date()])[0]
+    assert got.up4 == 1  # 104 against Friday's 100, never against the phantom 50
     # A phantom AFTER the last real bar has no later bar to overwrite it.
     idx = weekdays.append(saturday)
     frames = {"odd": frame([100, 100, 104, 50], [LIQUID, LIQUID, 2 * LIQUID, LIQUID], index=idx)}
@@ -217,7 +226,7 @@ def test_a_symbol_missing_any_4pct_input_is_not_measured_and_not_counted():
 def test_the_bar_before_a_hole_is_not_yesterday():
     """A has no bar yesterday; its last two bars are 100 then 110, which a
     positional read would call +10%."""
-    idx = pd.bdate_range(end=END, periods=3)
+    idx = exchange_index(end=END, periods=3)
     frames = {"A": frame([100, 110], [50_000, 200_000], index=idx[[0, 2]]),
               "B": frame([1, 1, 1], index=idx), "C": frame([1, 1, 1], index=idx)}
     got = breadth.daily_counts(frames, [idx[-1].date()])[0]
@@ -371,7 +380,7 @@ def test_a_hole_inside_a_window_leaves_that_column_unmeasured(how, hole):
     window, the 20-session liquidity average included."""
     closes = [100.0] * 64 + [130.0]
     volumes = [LIQUID] * 63 + [LIQUID, 2 * LIQUID]
-    idx = pd.bdate_range(end=END, periods=65)
+    idx = exchange_index(end=END, periods=65)
     a = frame(closes, volumes, index=idx)
     if how == "nan":
         a.iloc[hole, a.columns.get_loc("Close")] = np.nan
@@ -602,7 +611,7 @@ def test_regime_echoes_the_inputs_it_read():
 
 def _market(sessions: int, symbols: int = 3) -> dict:
     """Small deterministic market: closes drift, one symbol bursts often."""
-    idx = pd.bdate_range(end=END, periods=sessions)
+    idx = exchange_index(end=END, periods=sessions)
     frames = {}
     for j in range(symbols):
         closes = 100.0 + np.arange(sessions) * (0.1 * (j + 1))
@@ -734,7 +743,7 @@ def _reference(frames: dict, calendar: list[date], session: date) -> dict:
 
 def _random_market(seed: int, symbols: int, sessions: int) -> dict:
     rng = np.random.default_rng(seed)
-    idx = pd.bdate_range(end=END, periods=sessions)
+    idx = exchange_index(end=END, periods=sessions)
     frames = {}
     for j in range(symbols):
         closes = np.exp(np.cumsum(rng.normal(0, 0.08, sessions))) * rng.choice([0.5, 3, 30, 300])
@@ -774,7 +783,7 @@ def test_daily_counts_is_built_once_for_a_full_universe():
     """6,500 symbols x 110 sessions inside the budget the strip needs; a
     per-frame rolling loop is an order of magnitude over it."""
     rng = np.random.default_rng(7)
-    idx = pd.bdate_range(end=END, periods=110)
+    idx = exchange_index(end=END, periods=110)
     frames = {}
     for j in range(6500):
         closes = 20 * np.exp(np.cumsum(rng.normal(0, 0.03, 110)))

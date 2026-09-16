@@ -5,3 +5,4 @@ mplfinance>=0.12.10b0
 anthropic>=0.40
 resend>=2.0
 alpaca-py>=0.21
+exchange_calendars==4.13.2

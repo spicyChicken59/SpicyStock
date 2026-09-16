@@ -337,7 +337,7 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
 
 async function checkVariant(browser, base, variant, data) {
   console.log(`-- ${variant}`);
-  const { context, page, errors, aborted } = await open(browser, base, `/tests/fixtures/page/${variant}.json`, FRESH_NOW, 1280);
+  const { context, page, errors, aborted } = await open(browser, base, `/tests/fixtures/page/${variant}.json`, variant === 'closed' ? '2026-09-07T22:31:00Z' : new Date(Date.parse(data.generated) + 60000).toISOString(), 1280);
   const run = data.run, byTicker = Object.fromEntries(data.bursts.map((b) => [b.ticker, b]));
   const trades = data.trades.map((t) => byTicker[t]);
   const top = data.watchlist.top, also = data.watchlist.also_quiet;
@@ -706,7 +706,7 @@ async function checkVariant(browser, base, variant, data) {
   }
   await context.close();
   if (shotsDir && variant === 'full') {
-    const light = await open(browser, base, `/tests/fixtures/page/${variant}.json`, FRESH_NOW, 1280, { theme: 'light' });
+    const light = await open(browser, base, `/tests/fixtures/page/${variant}.json`, variant === 'closed' ? '2026-09-07T22:31:00Z' : new Date(Date.parse(data.generated) + 60000).toISOString(), 1280, { theme: 'light' });
     await light.page.screenshot({ path: path.join(shotsDir, `${variant}-1280-light.png`), fullPage: true });
     eq(`${variant} light page errors`, light.errors, []);
     await light.context.close();
@@ -2975,7 +2975,7 @@ async function checkSession(browser, base, full) {
     bell: 'open', inside: 'open', last: 'open', cutoff: 'ended', after: 'ended', evening2: 'ended' };
   // by evening2 the record IS a session behind (the next run has not landed),
   // so publication refuses there too: the one instant where both do
-  const pubWant = { evening2: 'pending' };
+  const pubWant = { evening2: 'pending', saturday: 'closed', sunday: 'closed' };
   for (const key of Object.keys(want)) {
     const got = await phaseAt(page, next, key);
     eq(`${WHEN[key][1]} -> the window is ${want[key]}`, got.phase, want[key]);
@@ -3125,13 +3125,11 @@ async function checkSession(browser, base, full) {
       (await text(r.page, '#next-p')).includes('entry window for'), await text(r.page, '#next-p'));
     eq('red-night page errors', r.errors, []);
     await r.context.close();
-    // a closed night names the day that did not happen
+    // A holiday reads the unchanged Friday publication, applicable Tuesday.
     const clTm = closed.run.timing;
-    const cl = await open(browser, base, '/tests/fixtures/page/closed.json', atSession(clTm, '09:00'), 1280, { lens: 'all' });
-    check('a closed night says the plans dated for the closed day apply to the next session',
-      (await text(cl.page, '#next-p')).includes(dateWords(clTm.closed_session)) &&
-      (await said(cl.page, '#market-facts [data-fact="plan"]')).includes(dateWords(clTm.applicable_session)),
-      `${await text(cl.page, '#next-p')} | ${await said(cl.page, '#market-facts [data-fact="plan"]')}`);
+    const cl = await open(browser, base, '/tests/fixtures/page/closed.json', '2026-09-07T22:31:00Z', 1280, { lens: 'all' });
+    check('a known holiday preserves the Friday plan and names the actual Tuesday session',
+      (await text(cl.page, '#status-line')).includes('8 Sep') && clTm.applicable_session === '2026-09-08', await text(cl.page, '#status-line'));
     eq('closed-night page errors', cl.errors, []);
     await cl.context.close();
     // a stale page is refused whatever the window says: publication first
@@ -3496,6 +3494,39 @@ async function checkInputCoverage(browser, base) {
   } finally { await unlink(filename); }
 }
 
+async function checkExchangeCalendar(browser, base) {
+  console.log('-- exchange calendar');
+  const holiday = JSON.parse(await readFile(path.join(FIXTURES, 'closed.json'), 'utf8'));
+  const early = JSON.parse(await readFile(path.join(FIXTURES, 'early.json'), 'utf8'));
+  for (const width of [1280, 390]) {
+    const h = await open(browser, base, '/tests/fixtures/page/closed.json', '2026-09-07T22:31:00Z', width, { lens: 'all' });
+    eq('holiday keeps the Friday measured date', holiday.run.session, '2026-09-04');
+    eq('holiday plan applies Tuesday', holiday.run.timing.applicable_session, '2026-09-08');
+    eq('holiday is closed, with no false missing-session count', await h.page.evaluate((data) => [SCStock.status(data, new Date('2026-09-07T22:31:00Z')).state], holiday), ['closed']);
+    check('dated Tuesday action survives the holiday', (await text(h.page, '#next-p')).includes('8 Sep'), await text(h.page, '#next-p'));
+    await go(h.page, '#/record');
+    eq('reliability row does not invent a missing Labor Day session', await count(h.page, '#nights [data-session="2026-09-07"]'), 0);
+    if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await go(h.page, '#/explore'); await h.page.screenshot({ path: path.join(shotsDir, `calendar-holiday-${width}.png`) }); }
+    eq('holiday calendar page errors', h.errors, []); await h.context.close();
+    const e = await open(browser, base, '/tests/fixtures/page/early.json', '2024-11-29T17:59:00Z', width, { lens: 'all', hash: '#/method' });
+    const method = await text(e.page, '#run-meta');
+    check('actual early close is rendered with provenance', method.includes('2024-11-29T13:00:00-05:00') && method.includes('shortened session') && method.includes('exchange_calendars 4.13.2'), method);
+    const phases = await e.page.evaluate((data) => ['2024-11-29T18:14:59Z', '2024-11-29T18:15:00Z'].map((at) => {
+      const s = SCStock.status(data, new Date(at)); return [s.expected, s.state];
+    }), early);
+    eq('early close completion buffer gates freshness', phases, [['2024-11-27', 'fresh'], ['2024-11-29', 'pending']]);
+    if (shotsDir) await e.page.screenshot({ path: path.join(shotsDir, `calendar-early-${width}.png`), fullPage: true });
+    const cases = await e.page.evaluate((data) => {
+      const legacy = JSON.parse(JSON.stringify(data)); delete legacy.run.calendar;
+      const unknown = SCStock.availability(legacy, new Date('2024-11-29T14:40:00Z'));
+      const far = SCStock.availability(data, new Date('2025-03-01T14:40:00Z'));
+      return [unknown.pub.state, unknown.offered, far.pub.state, far.offered, legacy.run.timing.closes_at];
+    }, early);
+    eq('legacy and out-of-window calendar evidence never authorizes action', cases, ['unknown', false, 'unknown', false, '2024-11-29T13:00:00-05:00']);
+    eq('early-close page errors', e.errors, []); await e.context.close();
+  }
+}
+
 async function main() {
   const chromium = await loadChromium();
   if (!chromium) { console.log('playwright is not installed: npm install --no-save playwright'); process.exit(1); }
@@ -3509,6 +3540,7 @@ async function main() {
       const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
       await checkVariant(browser, base, v, data);
     }
+    if (runs('calendar')) await checkExchangeCalendar(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);
     if (runs('modes')) await checkModes(browser, base, full);
     if (runs('lens')) await checkLens(browser, base, full);

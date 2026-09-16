@@ -433,11 +433,11 @@ def test_a_name_with_no_bar_since_its_pick_is_unmeasured_not_a_live_ticket():
     # the same name on a night no session has passed is a ticket that stands
     frames_tonight = {k: frame([PICK_DAY]) for k in ("C0", "C1", "C2", "HALT")}
     rows = record.open_plans(rec, frames_tonight, "2026-09-02")
-    assert rows[0]["status"] == "pending" and "No session since" in rows[0]["instruction"]
+    assert rows[0]["status"] == "unmeasured" and "No bar since" in rows[0]["instruction"]
 
 
-def test_sessions_before_falls_back_to_weekdays_without_a_calendar():
-    assert record.sessions_before({}, "2026-09-09", 3) == ["2026-09-04", "2026-09-07", "2026-09-08"]
+def test_sessions_before_uses_exchange_calendar_even_without_frames():
+    assert record.sessions_before({}, "2026-09-09", 3) == ["2026-09-03", "2026-09-04", "2026-09-08"]
     assert record.sessions_before({}, "bad", 3) == []
 
 

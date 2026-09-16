@@ -145,7 +145,8 @@ def _raw_bars(frame: pd.DataFrame, session: date, hour: int = 4) -> list[dict]:
     """One symbol's frame as the wire rows a real BarSet is decoded from,
     oldest first, ending on `session`. Timestamps are UTC at `hour`: a daily
     bar's timestamp is midnight ET, 04:00Z under EDT and 05:00Z under EST."""
-    index = pd.bdate_range(end=pd.Timestamp(session), periods=len(frame))
+    from src import sessions
+    index = pd.DatetimeIndex(sessions.sessions_before(session + timedelta(days=1), len(frame)))
     rows = []
     for stamp, (_, bar) in zip(index, frame.iterrows()):
         rows.append({
@@ -587,7 +588,7 @@ def test_the_day_after_a_closure_is_read_through_a_real_barset_newest_first(
     frames = {f"G{i}": ohlcv("burst", variant=i) for i in range(12)}
     rows = {t: [bar for bar in _raw_bars(f, TUESDAY_AFTER_LABOR_DAY) if not bar["t"].startswith("2026-09-07")]
             for t, f in frames.items()}
-    assert all(len(r) == len(frames[t]) - 1 for t, r in rows.items()), "precondition: the Monday bar is gone"
+    assert all(len(r) == len(frames[t]) for t, r in rows.items()), "precondition: the actual calendar never creates a Monday holiday bar"
     monkeypatch.setattr(FakeDataClient, "get_stock_bars",
                         lambda self, request: BarSet({t: list(reversed(r)) for t, r in rows.items()}))
 
@@ -595,7 +596,7 @@ def test_the_day_after_a_closure_is_read_through_a_real_barset_newest_first(
 
     assert sorted(fresh) == sorted(frames)
     assert stats.gapped == {} and stats.stale == {}
-    assert stats.previous_session == date(2026, 9, 4) and stats.previous_session_observed is True
+    assert stats.previous_session == date(2026, 9, 4) and stats.previous_session_observed is False
 
 
 def test_a_stale_symbol_is_recognised_as_stale_through_a_real_barset(fake_alpaca, ohlcv, monkeypatch):
@@ -1262,20 +1263,18 @@ def _closed_market(fake_alpaca, ohlcv, n: int, *, prefix: str = "G", variant0: i
     return names
 
 
-def test_a_business_day_no_name_printed_is_a_closure_not_a_hole_on_every_name(fake_alpaca, ohlcv, caplog):
-    """Every frame lacks Monday 7 Sep. The session before Tuesday's is Friday
-    4 Sep, read off the night's frames, and all twelve are measurable."""
+def test_calendar_holiday_adjacency_keeps_all_healthy_names(fake_alpaca, ohlcv, caplog):
+    """XNYS supplies Friday before Labor Day Tuesday; provider votes remain diagnostics."""
     names = _closed_market(fake_alpaca, ohlcv, 12)
     with caplog.at_level(logging.INFO, logger="src.market_data"):
         fresh, stats = _scan(names, TUESDAY_AFTER_LABOR_DAY)
 
     assert stats.gapped == {} and len(fresh) == 12
     assert stats.previous_session == date(2026, 9, 4)
-    assert stats.previous_session_observed is True
+    assert stats.previous_session_observed is False
     assert (stats.closure_voters, stats.closure_agreed, stats.closure_day) == (12, 12, date(2026, 9, 4))
     assert stats.previous_session_printed == 12
-    warned = _warned(caplog, "market closure")
-    assert "12 of 12 fresh frames carry 2026-09-04" in warned and "measures against 2026-09-04" in warned
+    assert not any("market closure" in rec.getMessage() for rec in caplog.records), "the calendar supplies adjacency; bars do not infer closure"
 
 
 def test_a_closure_read_off_the_batch_does_not_excuse_one_names_own_hole(fake_alpaca, ohlcv):
@@ -1290,33 +1289,29 @@ def test_a_closure_read_off_the_batch_does_not_excuse_one_names_own_hole(fake_al
     assert "HOLE" not in fresh and len(fresh) == 12
 
 
-def test_a_closure_is_read_only_from_the_minimum_of_voting_names(fake_alpaca, ohlcv):
-    """Below the minimum the arithmetic stands -- every `--tickers` smoke
-    test -- so one fewer than the minimum stays gapped and exactly the
-    minimum votes it through; `>=` and `>` are one character apart."""
+def test_calendar_adjacency_is_independent_of_the_number_of_voting_names(fake_alpaca, ohlcv):
+    """Small and large batches share exactly the same calendar-owned previous session."""
     n = DEFAULT_MIN_SYMBOLS
     names = _closed_market(fake_alpaca, ohlcv, n)
 
     fresh, stats = _scan(names[:n - 1], TUESDAY_AFTER_LABOR_DAY)
-    assert len(stats.gapped) == n - 1 and fresh == {}
-    assert stats.previous_session == LABOR_DAY and stats.previous_session_observed is False
+    assert stats.gapped == {} and len(fresh) == n - 1
+    assert stats.previous_session == date(2026, 9, 4) and stats.previous_session_observed is False
 
     fresh, stats = _scan(names, TUESDAY_AFTER_LABOR_DAY)
     assert stats.gapped == {} and len(fresh) == n
-    assert stats.previous_session_observed is True
+    assert stats.previous_session_observed is False
 
 
-def test_a_split_vote_moves_the_previous_session_nowhere(fake_alpaca, ohlcv):
-    """MORE than half: ten on Friday and ten on Thursday agree on nothing,
-    so every one of them is a hole; one more on Friday's side and it is a
-    closure with nine holes."""
+def test_a_split_vote_keeps_healthy_frames_and_rejects_real_gaps(fake_alpaca, ohlcv):
+    """A split vote does not remove Friday: healthy names pass and Thursday-only names remain gapped."""
     friday = _closed_market(fake_alpaca, ohlcv, 10, prefix="F")
     thursday = [f"T{i}" for i in range(10)]
     for i, name in enumerate(thursday):
         fake_alpaca.add_history(name, ohlcv("burst", variant=20 + i), gap_before_session=True)
 
     fresh, stats = _scan(friday + thursday, TUESDAY_AFTER_LABOR_DAY)
-    assert fresh == {} and len(stats.gapped) == 20
+    assert sorted(fresh) == sorted(friday) and set(stats.gapped) == set(thursday)
     assert stats.previous_session_observed is False
 
     fake_alpaca.add_history("F10", ohlcv("burst", variant=40))
@@ -1342,11 +1337,8 @@ def _frames_whose_bar_before_the_session_is(days: list[date], session: date, n: 
     return out
 
 
-def test_a_majority_can_move_the_previous_session_back_and_never_forward():
-    """A phantom Saturday every frame carries is LATER than the arithmetic
-    and must not become the previous session; the same frames with an
-    earlier shared bar do move it -- and the gap rule then refuses the
-    phantom's frames, which is the half that keeps `>=` out of the guard."""
+def test_no_majority_can_move_the_exchange_previous_session():
+    """Neither a phantom weekend nor unanimous missing Friday bars changes the expected prior session."""
     monday, saturday, friday, thursday = (date(2026, 9, 14), date(2026, 9, 12),
                                           date(2026, 9, 11), date(2026, 9, 10))
     phantom = _frames_whose_bar_before_the_session_is([friday, saturday], monday, 12)
@@ -1356,24 +1348,24 @@ def test_a_majority_can_move_the_previous_session_back_and_never_forward():
     assert set(gapped.values()) == {saturday}
 
     earlier = _frames_whose_bar_before_the_session_is([thursday], monday, 12)
-    assert observed_previous_session(earlier, monday) == (thursday, True)
+    assert observed_previous_session(earlier, monday) == (friday, False)
+    assert drop_gapped(earlier, monday)[0] == {}
     assert previous_session(monday) == friday, "precondition: the arithmetic says Friday"
 
 
 def test_a_frame_with_one_bar_has_no_vote_and_stays_a_hole():
-    """Ten single-bar frames beside ten that agree on Thursday are ten of
-    ten voting, not ten of twenty; each is still refused by the gap rule."""
+    """Single-bar and Thursday-only frames both lack the actual prior Friday; all remain gapped."""
     monday, thursday = date(2026, 9, 14), date(2026, 9, 10)
     frames = _frames_whose_bar_before_the_session_is([thursday], monday, 10)
     for i in range(10):
         frames[f"S{i}"] = pd.DataFrame({"Close": 10.0, "Volume": 1e6},
                                        index=pd.DatetimeIndex([pd.Timestamp(monday)]))
 
-    assert observed_previous_session(frames, monday) == (thursday, True)
-    kept, gapped = drop_gapped(frames, monday, thursday)
-    assert sorted(kept) == sorted(f"P{i}" for i in range(10))
-    assert sorted(gapped) == sorted(f"S{i}" for i in range(10))
-    assert set(gapped.values()) == {monday}, "a frame with no bar before the session is filed under its newest"
+    assert observed_previous_session(frames, monday) == (date(2026, 9, 11), False)
+    kept, gapped = drop_gapped(frames, monday)
+    assert kept == {}
+    assert sorted(gapped) == sorted(frames)
+    assert {gapped[f"S{i}"] for i in range(10)} == {monday}, "a frame with no bar before the session is filed under its newest"
     # With NO voter at all and the minimum switched off, the arithmetic
     # stands rather than max() raising over an empty vote.
     alone = {k: v for k, v in frames.items() if k.startswith("S")}
@@ -1389,9 +1381,9 @@ def test_a_nat_in_a_frames_index_neither_votes_nor_takes_the_download_down():
         frames[f"NAT{i}"] = pd.DataFrame({"Close": 10.0, "Volume": 1e6},
                                          index=pd.DatetimeIndex([pd.NaT, pd.Timestamp(monday)]))
 
-    assert observed_previous_session(frames, monday) == (thursday, True)
-    kept, gapped = drop_gapped(frames, monday, thursday)
-    assert sorted(gapped) == sorted(f"NAT{i}" for i in range(10))
+    assert observed_previous_session(frames, monday) == (date(2026, 9, 11), False)
+    kept, gapped = drop_gapped(frames, monday)
+    assert sorted(gapped) == sorted(frames)
     assert not any(k.startswith("NAT") for k in kept)
 
 
@@ -1448,7 +1440,7 @@ def test_only_the_fresh_frames_vote_on_what_the_session_before_was(fake_alpaca, 
     fresh, stats = _scan(fresh_names + dead, TUESDAY_AFTER_LABOR_DAY, min_symbols=3)
 
     assert stats.previous_session == date(2026, 9, 4)
-    assert stats.previous_session_observed is True
+    assert stats.previous_session_observed is False
     assert sorted(fresh) == sorted(fresh_names) and stats.gapped == {}
     assert stats.closure_min_symbols == 3, "the minimum recorded is the one this run applied"
 
@@ -1460,10 +1452,11 @@ def test_a_weekend_phantom_earlier_than_the_arithmetic_is_not_the_session_before
     tuesday, sunday, friday = date(2026, 9, 8), date(2026, 9, 6), date(2026, 9, 4)
     frames = _frames_whose_bar_before_the_session_is([friday, sunday], tuesday, 12)
 
-    assert previous_session(tuesday) == date(2026, 9, 7), "precondition: the arithmetic says Monday"
-    assert observed_previous_session(frames, tuesday) == (date(2026, 9, 7), False)
+    assert previous_session(tuesday) == friday
+    assert observed_previous_session(frames, tuesday) == (friday, False)
+    assert drop_gapped(frames, tuesday)[0] == {}
     real = _frames_whose_bar_before_the_session_is([friday], tuesday, 12)
-    assert observed_previous_session(real, tuesday) == (friday, True)
+    assert observed_previous_session(real, tuesday) == (friday, False)
 
 
 def _nan_on_the_bar_before_the_session(ohlcv, column: str) -> pd.DataFrame:
@@ -1490,7 +1483,7 @@ def test_a_nan_on_the_bar_before_the_session_is_a_hole_and_not_a_two_session_mov
     fresh, stats = _scan(["NANB"] + quiet, SCAN_DAY)
 
     assert "NANB" not in fresh and len(fresh) == 11
-    assert stats.gapped == {"NANB": date(2026, 9, 7)}
+    assert stats.gapped == {"NANB": date(2026, 9, 4)}
     assert stats.stale == {}, "the session's own bar is readable"
 
 
@@ -1510,7 +1503,7 @@ def test_a_nat_on_the_newest_bar_is_a_stale_name_without_a_date_and_not_a_TypeEr
 
     assert fresh == {} and len(stats.stale) == 20
     assert sum(1 for last in stats.stale.values() if last is None) == 10
-    assert newest_stale(stats.stale) == date(2026, 9, 4)
+    assert newest_stale(stats.stale) == date(2026, 9, 3)
     assert newest_stale({"A": None}) is None
 
 
@@ -1547,7 +1540,7 @@ _WEEK = ["2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27", "2026-08-28",
          "2026-08-31", "2026-09-01"]
 
 
-def test_the_session_calendar_is_read_across_frames_by_majority():
+def test_the_calendar_includes_missing_sessions_and_excludes_phantoms():
     """One frame's hole does not remove a session; one frame's phantom bar
     does not add one; a lone frame is no calendar."""
     whole = _dated(range(7), _WEEK)
@@ -1566,28 +1559,26 @@ def test_the_session_calendar_is_read_across_frames_by_majority():
     ends_on_saturday = _dated(range(6), _WEEK[:5] + ["2026-08-29"])
     past = [d.isoformat() for d in session_calendar({"E": ends_on_saturday, "A": whole, "B": holed})]
     assert "2026-08-29" not in past and past == _WEEK
-    assert session_calendar({"B": holed}) == [], "one frame is no calendar: it cannot vote against its own hole"
+    assert [str(d) for d in session_calendar({"B": holed})] == _WEEK, "even a lone frame cannot hide its hole"
     # A frame that does not span a date has no vote on it.
     assert "2026-08-27" in [d.isoformat() for d in session_calendar({"B": holed, "A": whole, "L": late})]
     assert session_calendar({}) == [] and session_calendar({"X": None}) == []
-    assert session_calendar({"X": whole, "Y": whole.iloc[:0]}) == [], "an empty frame is not a second frame"
+    assert [str(d) for d in session_calendar({"X": whole, "Y": whole.iloc[:0]})] == _WEEK
 
 
-def test_the_calendars_majority_is_the_fraction_it_is_given():
-    """At the default half, 27 Aug is carried by two of three spanning frames
-    and is in; asked for unanimity it is out. Pinned so the parameter is read
-    rather than decoration over a hard-coded half."""
+def test_provider_vote_threshold_cannot_remove_an_expected_exchange_session():
+    """The legacy fraction argument cannot remove an expected exchange session."""
     whole = _dated(range(7), _WEEK)
     holed = _dated(range(6), _WEEK[:3] + _WEEK[4:])
     frames = {"A": whole, "B": holed, "C": whole}
     assert "2026-08-27" in [d.isoformat() for d in session_calendar(frames)]
     assert "2026-08-27" in [d.isoformat() for d in session_calendar(frames, min_fraction=0.5)]
-    assert "2026-08-27" not in [d.isoformat() for d in session_calendar(frames, min_fraction=1.0)]
+    assert "2026-08-27" in [d.isoformat() for d in session_calendar(frames, min_fraction=1.0)]
     # Exactly half carries it: in at 0.5 (a session missing from half the
     # frames is still a session), out at anything stricter.
     two = {"A": whole, "B": holed}
     assert "2026-08-27" in [d.isoformat() for d in session_calendar(two)]
-    assert "2026-08-27" not in [d.isoformat() for d in session_calendar(two, min_fraction=0.51)]
+    assert "2026-08-27" in [d.isoformat() for d in session_calendar(two, min_fraction=0.51)]
 
 
 def test_a_nat_in_a_frames_index_is_not_a_session_in_the_calendar():

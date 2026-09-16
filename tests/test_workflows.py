@@ -66,6 +66,7 @@ def test_the_persist_step_keeps_every_code_that_published_and_never_a_rehearsal(
         assert f"steps.pipeline.outputs.code == '{code}'" in cond
     assert f"steps.pipeline.outputs.code == '{pipeline.EXIT_FAILED}'" not in cond
     assert "inputs.dry_run != true" in cond
+    assert "steps.pipeline.outputs.published == 'true'" in cond
     assert "git add docs" in persist["run"] and "git diff --staged --quiet && exit 0" in persist["run"]
     assert persist["run"].count("git push") == 1 and "for attempt in 1 2 3" in persist["run"]
 
@@ -84,6 +85,7 @@ def test_the_artifact_keeps_the_record_the_picks_and_the_charts():
     wf = load("evening.yml")
     art = steps(wf, "scan")["Keep the run's artifacts"]
     assert art["if"].startswith("(success() || failure())")
+    assert "!= 'no_session'" in art["if"] and "!= 'session_incomplete'" in art["if"]
     assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/picks.json", "docs/charts/"}
 
 

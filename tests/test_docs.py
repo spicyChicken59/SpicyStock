@@ -114,7 +114,7 @@ def test_the_readme_layout_names_files_that_exist():
 def test_the_readme_names_the_six_cover_sentences():
     for h1 in (report.H1_STAND_ASIDE, report.H1_KEEP_CASH, report.H1_CLOSED):
         assert h1 in README, h1
-    assert "Trade tomorrow. N A-quality" in README and "Trade small. N A+" in README and "No verdict for" in README
+    assert "Trade next session. N A-quality" in README and "Trade small. N A+" in README and "No verdict for" in README
 
 
 def test_the_readme_and_the_env_example_name_every_required_variable():
@@ -163,7 +163,7 @@ def collected_tests() -> int:
 def test_claude_md_is_short_and_names_the_fixture_count():
     assert len(CLAUDE_MD.splitlines()) <= 150
     every = make_fixture.VARIANTS + make_fixture.SEQUELS
-    assert "over ten fixtures" in CLAUDE_MD and len(every) == 10
+    assert "over eleven fixtures" in CLAUDE_MD and len(every) == 11
 
 
 # --------------------------------------------- the page's chart anchors ----

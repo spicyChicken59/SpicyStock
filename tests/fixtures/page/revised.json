@@ -4,12 +4,12 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "a5a4fdb7ddef"
+  "rules_version": "eb6c9a6097b6"
  },
  "cover": {
-  "h1": "Trade tomorrow. 1 A-quality burst.",
+  "h1": "Trade next session. 1 A-quality burst.",
   "dek": "Breadth is green: 2 up 4% vs 0 down, 10-day ratio 4. Full size.",
-  "action_label": "Tomorrow's orders",
+  "action_label": "Next-session orders",
   "action_target": "#orders",
   "verb": "trade"
  },
@@ -216,16 +216,517 @@
    "cutoff_at": "2026-09-14T10:00:00-04:00",
    "prepare_by": "2026-09-14T09:28:00-04:00",
    "closes_at": "2026-09-14T16:00:00-04:00",
+   "shortened": false,
+   "calendar": {
+    "version": 1,
+    "exchange": "XNYS",
+    "exchange_name": "New York Stock Exchange",
+    "library": "exchange_calendars",
+    "library_version": "4.13.2",
+    "timezone": "America/New_York",
+    "supported_start": "1990-01-01",
+    "supported_end": "2035-12-31",
+    "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+    "completion_buffer_minutes": 15,
+    "limits": [
+     "exchange_schedule_may_change"
+    ]
+   },
    "opens_et": "09:30",
    "cutoff_et": "10:00",
    "prepare_by_et": "09:28",
    "window": "first 30 minutes",
    "window_minutes": 30,
-   "basis": "weekday_after_session",
+   "basis": "exchange_session_after",
    "limits": [
-    "no_holiday_calendar",
-    "regular_hours_assumed"
+    "exchange_schedule_may_change"
    ]
+  },
+  "calendar": {
+   "version": 1,
+   "exchange": "XNYS",
+   "exchange_name": "New York Stock Exchange",
+   "library": "exchange_calendars",
+   "library_version": "4.13.2",
+   "timezone": "America/New_York",
+   "supported_start": "1990-01-01",
+   "supported_end": "2035-12-31",
+   "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+   "completion_buffer_minutes": 15,
+   "limits": [
+    "exchange_schedule_may_change"
+   ],
+   "measured_session": "2026-09-11",
+   "previous_session": "2026-09-10",
+   "applicable_session": "2026-09-14",
+   "measured": {
+    "session": "2026-09-11",
+    "opens_at": "2026-09-11T09:30:00-04:00",
+    "closes_at": "2026-09-11T16:00:00-04:00",
+    "completion_at": "2026-09-11T16:15:00-04:00",
+    "shortened": false
+   },
+   "applicable": {
+    "session": "2026-09-14",
+    "opens_at": "2026-09-14T09:30:00-04:00",
+    "closes_at": "2026-09-14T16:00:00-04:00",
+    "completion_at": "2026-09-14T16:15:00-04:00",
+    "shortened": false
+   },
+   "schedule": {
+    "start": "2026-07-28",
+    "through": "2026-10-26",
+    "sessions": [
+     {
+      "session": "2026-07-28",
+      "opens_at": "2026-07-28T09:30:00-04:00",
+      "closes_at": "2026-07-28T16:00:00-04:00",
+      "completion_at": "2026-07-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-29",
+      "opens_at": "2026-07-29T09:30:00-04:00",
+      "closes_at": "2026-07-29T16:00:00-04:00",
+      "completion_at": "2026-07-29T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-30",
+      "opens_at": "2026-07-30T09:30:00-04:00",
+      "closes_at": "2026-07-30T16:00:00-04:00",
+      "completion_at": "2026-07-30T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-31",
+      "opens_at": "2026-07-31T09:30:00-04:00",
+      "closes_at": "2026-07-31T16:00:00-04:00",
+      "completion_at": "2026-07-31T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-03",
+      "opens_at": "2026-08-03T09:30:00-04:00",
+      "closes_at": "2026-08-03T16:00:00-04:00",
+      "completion_at": "2026-08-03T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-04",
+      "opens_at": "2026-08-04T09:30:00-04:00",
+      "closes_at": "2026-08-04T16:00:00-04:00",
+      "completion_at": "2026-08-04T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-05",
+      "opens_at": "2026-08-05T09:30:00-04:00",
+      "closes_at": "2026-08-05T16:00:00-04:00",
+      "completion_at": "2026-08-05T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-06",
+      "opens_at": "2026-08-06T09:30:00-04:00",
+      "closes_at": "2026-08-06T16:00:00-04:00",
+      "completion_at": "2026-08-06T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-07",
+      "opens_at": "2026-08-07T09:30:00-04:00",
+      "closes_at": "2026-08-07T16:00:00-04:00",
+      "completion_at": "2026-08-07T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-10",
+      "opens_at": "2026-08-10T09:30:00-04:00",
+      "closes_at": "2026-08-10T16:00:00-04:00",
+      "completion_at": "2026-08-10T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-11",
+      "opens_at": "2026-08-11T09:30:00-04:00",
+      "closes_at": "2026-08-11T16:00:00-04:00",
+      "completion_at": "2026-08-11T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-12",
+      "opens_at": "2026-08-12T09:30:00-04:00",
+      "closes_at": "2026-08-12T16:00:00-04:00",
+      "completion_at": "2026-08-12T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-13",
+      "opens_at": "2026-08-13T09:30:00-04:00",
+      "closes_at": "2026-08-13T16:00:00-04:00",
+      "completion_at": "2026-08-13T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-14",
+      "opens_at": "2026-08-14T09:30:00-04:00",
+      "closes_at": "2026-08-14T16:00:00-04:00",
+      "completion_at": "2026-08-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-17",
+      "opens_at": "2026-08-17T09:30:00-04:00",
+      "closes_at": "2026-08-17T16:00:00-04:00",
+      "completion_at": "2026-08-17T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-18",
+      "opens_at": "2026-08-18T09:30:00-04:00",
+      "closes_at": "2026-08-18T16:00:00-04:00",
+      "completion_at": "2026-08-18T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-19",
+      "opens_at": "2026-08-19T09:30:00-04:00",
+      "closes_at": "2026-08-19T16:00:00-04:00",
+      "completion_at": "2026-08-19T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-20",
+      "opens_at": "2026-08-20T09:30:00-04:00",
+      "closes_at": "2026-08-20T16:00:00-04:00",
+      "completion_at": "2026-08-20T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-21",
+      "opens_at": "2026-08-21T09:30:00-04:00",
+      "closes_at": "2026-08-21T16:00:00-04:00",
+      "completion_at": "2026-08-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-24",
+      "opens_at": "2026-08-24T09:30:00-04:00",
+      "closes_at": "2026-08-24T16:00:00-04:00",
+      "completion_at": "2026-08-24T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-25",
+      "opens_at": "2026-08-25T09:30:00-04:00",
+      "closes_at": "2026-08-25T16:00:00-04:00",
+      "completion_at": "2026-08-25T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-26",
+      "opens_at": "2026-08-26T09:30:00-04:00",
+      "closes_at": "2026-08-26T16:00:00-04:00",
+      "completion_at": "2026-08-26T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-27",
+      "opens_at": "2026-08-27T09:30:00-04:00",
+      "closes_at": "2026-08-27T16:00:00-04:00",
+      "completion_at": "2026-08-27T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-28",
+      "opens_at": "2026-08-28T09:30:00-04:00",
+      "closes_at": "2026-08-28T16:00:00-04:00",
+      "completion_at": "2026-08-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-31",
+      "opens_at": "2026-08-31T09:30:00-04:00",
+      "closes_at": "2026-08-31T16:00:00-04:00",
+      "completion_at": "2026-08-31T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-01",
+      "opens_at": "2026-09-01T09:30:00-04:00",
+      "closes_at": "2026-09-01T16:00:00-04:00",
+      "completion_at": "2026-09-01T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-02",
+      "opens_at": "2026-09-02T09:30:00-04:00",
+      "closes_at": "2026-09-02T16:00:00-04:00",
+      "completion_at": "2026-09-02T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-03",
+      "opens_at": "2026-09-03T09:30:00-04:00",
+      "closes_at": "2026-09-03T16:00:00-04:00",
+      "completion_at": "2026-09-03T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-04",
+      "opens_at": "2026-09-04T09:30:00-04:00",
+      "closes_at": "2026-09-04T16:00:00-04:00",
+      "completion_at": "2026-09-04T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-08",
+      "opens_at": "2026-09-08T09:30:00-04:00",
+      "closes_at": "2026-09-08T16:00:00-04:00",
+      "completion_at": "2026-09-08T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-09",
+      "opens_at": "2026-09-09T09:30:00-04:00",
+      "closes_at": "2026-09-09T16:00:00-04:00",
+      "completion_at": "2026-09-09T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-10",
+      "opens_at": "2026-09-10T09:30:00-04:00",
+      "closes_at": "2026-09-10T16:00:00-04:00",
+      "completion_at": "2026-09-10T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-11",
+      "opens_at": "2026-09-11T09:30:00-04:00",
+      "closes_at": "2026-09-11T16:00:00-04:00",
+      "completion_at": "2026-09-11T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-14",
+      "opens_at": "2026-09-14T09:30:00-04:00",
+      "closes_at": "2026-09-14T16:00:00-04:00",
+      "completion_at": "2026-09-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-15",
+      "opens_at": "2026-09-15T09:30:00-04:00",
+      "closes_at": "2026-09-15T16:00:00-04:00",
+      "completion_at": "2026-09-15T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-16",
+      "opens_at": "2026-09-16T09:30:00-04:00",
+      "closes_at": "2026-09-16T16:00:00-04:00",
+      "completion_at": "2026-09-16T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-17",
+      "opens_at": "2026-09-17T09:30:00-04:00",
+      "closes_at": "2026-09-17T16:00:00-04:00",
+      "completion_at": "2026-09-17T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-18",
+      "opens_at": "2026-09-18T09:30:00-04:00",
+      "closes_at": "2026-09-18T16:00:00-04:00",
+      "completion_at": "2026-09-18T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-21",
+      "opens_at": "2026-09-21T09:30:00-04:00",
+      "closes_at": "2026-09-21T16:00:00-04:00",
+      "completion_at": "2026-09-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-22",
+      "opens_at": "2026-09-22T09:30:00-04:00",
+      "closes_at": "2026-09-22T16:00:00-04:00",
+      "completion_at": "2026-09-22T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-23",
+      "opens_at": "2026-09-23T09:30:00-04:00",
+      "closes_at": "2026-09-23T16:00:00-04:00",
+      "completion_at": "2026-09-23T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-24",
+      "opens_at": "2026-09-24T09:30:00-04:00",
+      "closes_at": "2026-09-24T16:00:00-04:00",
+      "completion_at": "2026-09-24T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-25",
+      "opens_at": "2026-09-25T09:30:00-04:00",
+      "closes_at": "2026-09-25T16:00:00-04:00",
+      "completion_at": "2026-09-25T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-28",
+      "opens_at": "2026-09-28T09:30:00-04:00",
+      "closes_at": "2026-09-28T16:00:00-04:00",
+      "completion_at": "2026-09-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-29",
+      "opens_at": "2026-09-29T09:30:00-04:00",
+      "closes_at": "2026-09-29T16:00:00-04:00",
+      "completion_at": "2026-09-29T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-30",
+      "opens_at": "2026-09-30T09:30:00-04:00",
+      "closes_at": "2026-09-30T16:00:00-04:00",
+      "completion_at": "2026-09-30T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-01",
+      "opens_at": "2026-10-01T09:30:00-04:00",
+      "closes_at": "2026-10-01T16:00:00-04:00",
+      "completion_at": "2026-10-01T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-02",
+      "opens_at": "2026-10-02T09:30:00-04:00",
+      "closes_at": "2026-10-02T16:00:00-04:00",
+      "completion_at": "2026-10-02T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-05",
+      "opens_at": "2026-10-05T09:30:00-04:00",
+      "closes_at": "2026-10-05T16:00:00-04:00",
+      "completion_at": "2026-10-05T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-06",
+      "opens_at": "2026-10-06T09:30:00-04:00",
+      "closes_at": "2026-10-06T16:00:00-04:00",
+      "completion_at": "2026-10-06T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-07",
+      "opens_at": "2026-10-07T09:30:00-04:00",
+      "closes_at": "2026-10-07T16:00:00-04:00",
+      "completion_at": "2026-10-07T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-08",
+      "opens_at": "2026-10-08T09:30:00-04:00",
+      "closes_at": "2026-10-08T16:00:00-04:00",
+      "completion_at": "2026-10-08T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-09",
+      "opens_at": "2026-10-09T09:30:00-04:00",
+      "closes_at": "2026-10-09T16:00:00-04:00",
+      "completion_at": "2026-10-09T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-12",
+      "opens_at": "2026-10-12T09:30:00-04:00",
+      "closes_at": "2026-10-12T16:00:00-04:00",
+      "completion_at": "2026-10-12T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-13",
+      "opens_at": "2026-10-13T09:30:00-04:00",
+      "closes_at": "2026-10-13T16:00:00-04:00",
+      "completion_at": "2026-10-13T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-14",
+      "opens_at": "2026-10-14T09:30:00-04:00",
+      "closes_at": "2026-10-14T16:00:00-04:00",
+      "completion_at": "2026-10-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-15",
+      "opens_at": "2026-10-15T09:30:00-04:00",
+      "closes_at": "2026-10-15T16:00:00-04:00",
+      "completion_at": "2026-10-15T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-16",
+      "opens_at": "2026-10-16T09:30:00-04:00",
+      "closes_at": "2026-10-16T16:00:00-04:00",
+      "completion_at": "2026-10-16T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-19",
+      "opens_at": "2026-10-19T09:30:00-04:00",
+      "closes_at": "2026-10-19T16:00:00-04:00",
+      "completion_at": "2026-10-19T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-20",
+      "opens_at": "2026-10-20T09:30:00-04:00",
+      "closes_at": "2026-10-20T16:00:00-04:00",
+      "completion_at": "2026-10-20T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-21",
+      "opens_at": "2026-10-21T09:30:00-04:00",
+      "closes_at": "2026-10-21T16:00:00-04:00",
+      "completion_at": "2026-10-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-22",
+      "opens_at": "2026-10-22T09:30:00-04:00",
+      "closes_at": "2026-10-22T16:00:00-04:00",
+      "completion_at": "2026-10-22T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-23",
+      "opens_at": "2026-10-23T09:30:00-04:00",
+      "closes_at": "2026-10-23T16:00:00-04:00",
+      "completion_at": "2026-10-23T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-26",
+      "opens_at": "2026-10-26T09:30:00-04:00",
+      "closes_at": "2026-10-26T16:00:00-04:00",
+      "completion_at": "2026-10-26T16:15:00-04:00",
+      "shortened": false
+     }
+    ]
+   }
   },
   "sanitised": {
    "replaced": 0,
@@ -485,19 +986,32 @@
    "prepare_before_et": "09:28",
    "bases": [
     "weekday_after_session",
-    "weekday_after_closed_session"
+    "weekday_after_closed_session",
+    "exchange_session_after"
    ],
    "limits": [
     "no_holiday_calendar",
-    "regular_hours_assumed"
+    "regular_hours_assumed",
+    "exchange_schedule_may_change"
    ]
+  },
+  "calendar": {
+   "version": 1,
+   "exchange": "XNYS",
+   "library": "exchange_calendars",
+   "library_version": "4.13.2",
+   "timezone": "America/New_York",
+   "supported_start": "1990-01-01",
+   "supported_end": "2035-12-31",
+   "completion_buffer_minutes": 15,
+   "schedule_past_days": 45,
+   "schedule_future_days": 45
   },
   "pipeline": {
    "max_reads": 12,
    "fetch_budget_seconds": 900,
    "lookback_days": 260,
    "min_coverage_fraction": 0.5,
-   "closed_fraction": 0.05,
    "max_error_fraction": 0.05,
    "trade_grades": [
     "A+",
@@ -607,70 +1121,76 @@
   },
   "history": [
    {
-    "date": "2026-08-03",
+    "date": "2026-07-31",
     "up4": 1,
     "down4": 1,
     "ratio_10d": 0.83
    },
    {
-    "date": "2026-08-04",
+    "date": "2026-08-03",
     "up4": 1,
     "down4": 0,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-08-05",
+    "date": "2026-08-04",
     "up4": 1,
     "down4": 1,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-08-06",
+    "date": "2026-08-05",
     "up4": 0,
     "down4": 0,
     "ratio_10d": 1.2
    },
    {
-    "date": "2026-08-07",
+    "date": "2026-08-06",
     "up4": 0,
+    "down4": 1,
+    "ratio_10d": 0.83
+   },
+   {
+    "date": "2026-08-07",
+    "up4": 1,
     "down4": 1,
     "ratio_10d": 0.83
    },
    {
     "date": "2026-08-10",
     "up4": 1,
-    "down4": 1,
+    "down4": 0,
     "ratio_10d": 0.83
    },
    {
     "date": "2026-08-11",
     "up4": 1,
-    "down4": 0,
-    "ratio_10d": 0.83
-   },
-   {
-    "date": "2026-08-12",
-    "up4": 1,
     "down4": 1,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-08-13",
+    "date": "2026-08-12",
     "up4": 1,
     "down4": 0,
     "ratio_10d": 1.4
    },
    {
-    "date": "2026-08-14",
+    "date": "2026-08-13",
     "up4": 0,
     "down4": 1,
     "ratio_10d": 1.17
    },
    {
-    "date": "2026-08-17",
+    "date": "2026-08-14",
     "up4": 0,
     "down4": 0,
     "ratio_10d": 1.2
+   },
+   {
+    "date": "2026-08-17",
+    "up4": 1,
+    "down4": 1,
+    "ratio_10d": 1.0
    },
    {
     "date": "2026-08-18",
@@ -686,78 +1206,72 @@
    },
    {
     "date": "2026-08-20",
-    "up4": 1,
+    "up4": 0,
     "down4": 1,
     "ratio_10d": 1.0
    },
    {
     "date": "2026-08-21",
     "up4": 0,
-    "down4": 1,
-    "ratio_10d": 1.0
-   },
-   {
-    "date": "2026-08-24",
-    "up4": 0,
     "down4": 0,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-08-25",
+    "date": "2026-08-24",
     "up4": 1,
     "down4": 1,
     "ratio_10d": 0.86
    },
    {
-    "date": "2026-08-26",
+    "date": "2026-08-25",
     "up4": 2,
     "down4": 0,
     "ratio_10d": 1.17
    },
    {
-    "date": "2026-08-27",
+    "date": "2026-08-26",
     "up4": 1,
     "down4": 1,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-08-28",
+    "date": "2026-08-27",
     "up4": 1,
     "down4": 1,
+    "ratio_10d": 1.14
+   },
+   {
+    "date": "2026-08-28",
+    "up4": 0,
+    "down4": 0,
     "ratio_10d": 1.14
    },
    {
     "date": "2026-08-31",
     "up4": 0,
-    "down4": 0,
-    "ratio_10d": 1.14
-   },
-   {
-    "date": "2026-09-01",
-    "up4": 0,
     "down4": 1,
     "ratio_10d": 1.0
    },
    {
-    "date": "2026-09-02",
+    "date": "2026-09-01",
     "up4": 1,
     "down4": 0,
     "ratio_10d": 1.17
    },
    {
-    "date": "2026-09-03",
+    "date": "2026-09-02",
     "up4": 1,
     "down4": 0,
     "ratio_10d": 1.4
    },
    {
-    "date": "2026-09-04",
+    "date": "2026-09-03",
     "up4": 1,
     "down4": 0,
     "ratio_10d": 2.0
    },
    {
-    "date": "2026-09-07",
+    "date": "2026-09-04",
     "up4": 1,
     "down4": 1,
     "ratio_10d": 1.8
@@ -1034,7 +1548,7 @@
      "extension: close 12.0% vs its 20-SMA, 13.0% over 20 sessions"
     ],
     "base": {
-     "start": "2026-08-14",
+     "start": "2026-08-13",
      "end": "2026-09-10",
      "start_index": 94,
      "end_index": 113,
@@ -1369,11 +1883,43 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
-    "request_text_sha256": "0d66187870c46ceeb052e9264033358f4c868c6432bff9ed885131e0f388e822",
+    "request_text_sha256": "7db9a9c75a580260a5580fd0dbbf010c30e87e447a58078e2e57ae0752b469d5",
     "discovery_version": 1
    },
    "rank": 1,
    "series": [
+    {
+     "date": "2026-03-30",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-03-31",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-01",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
+    {
+     "date": "2026-04-02",
+     "o": 100.0,
+     "h": 100.8,
+     "l": 99.2,
+     "c": 100.0,
+     "v": 1000000.0
+    },
     {
      "date": "2026-04-06",
      "o": 100.0,
@@ -1655,14 +2201,6 @@
      "v": 1000000.0
     },
     {
-     "date": "2026-05-25",
-     "o": 100.0,
-     "h": 100.8,
-     "l": 99.2,
-     "c": 100.0,
-     "v": 1000000.0
-    },
-    {
      "date": "2026-05-26",
      "o": 100.0,
      "h": 100.8,
@@ -1807,14 +2345,6 @@
      "v": 1000000.0
     },
     {
-     "date": "2026-06-19",
-     "o": 100.0,
-     "h": 100.8,
-     "l": 99.2,
-     "c": 100.0,
-     "v": 1000000.0
-    },
-    {
      "date": "2026-06-22",
      "o": 100.0,
      "h": 100.8,
@@ -1880,14 +2410,6 @@
     },
     {
      "date": "2026-07-02",
-     "o": 100.0,
-     "h": 100.8,
-     "l": 99.2,
-     "c": 100.0,
-     "v": 1000000.0
-    },
-    {
-     "date": "2026-07-03",
      "o": 100.0,
      "h": 100.8,
      "l": 99.2,
@@ -2009,21 +2531,13 @@
     {
      "date": "2026-07-24",
      "o": 100.0,
-     "h": 100.8,
-     "l": 99.2,
-     "c": 100.0,
-     "v": 1000000.0
-    },
-    {
-     "date": "2026-07-27",
-     "o": 100.0,
      "h": 101.91,
      "l": 99.5,
      "c": 101.4,
      "v": 1500000.0
     },
     {
-     "date": "2026-07-28",
+     "date": "2026-07-27",
      "o": 101.4,
      "h": 103.33,
      "l": 100.89,
@@ -2031,7 +2545,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-07-29",
+     "date": "2026-07-28",
      "o": 102.82,
      "h": 104.78,
      "l": 102.31,
@@ -2039,7 +2553,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-07-30",
+     "date": "2026-07-29",
      "o": 104.26,
      "h": 106.25,
      "l": 103.74,
@@ -2047,7 +2561,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-07-31",
+     "date": "2026-07-30",
      "o": 105.72,
      "h": 107.74,
      "l": 105.19,
@@ -2055,7 +2569,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-03",
+     "date": "2026-07-31",
      "o": 107.2,
      "h": 109.24,
      "l": 106.66,
@@ -2063,7 +2577,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-04",
+     "date": "2026-08-03",
      "o": 108.7,
      "h": 110.77,
      "l": 108.16,
@@ -2071,7 +2585,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-05",
+     "date": "2026-08-04",
      "o": 110.22,
      "h": 112.32,
      "l": 109.67,
@@ -2079,7 +2593,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-06",
+     "date": "2026-08-05",
      "o": 111.76,
      "h": 113.89,
      "l": 111.2,
@@ -2087,7 +2601,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-07",
+     "date": "2026-08-06",
      "o": 113.32,
      "h": 115.48,
      "l": 112.75,
@@ -2095,7 +2609,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-10",
+     "date": "2026-08-07",
      "o": 114.91,
      "h": 117.1,
      "l": 114.34,
@@ -2103,7 +2617,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-11",
+     "date": "2026-08-10",
      "o": 116.52,
      "h": 118.74,
      "l": 115.94,
@@ -2111,7 +2625,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-12",
+     "date": "2026-08-11",
      "o": 118.15,
      "h": 120.4,
      "l": 117.56,
@@ -2119,7 +2633,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-13",
+     "date": "2026-08-12",
      "o": 119.8,
      "h": 122.09,
      "l": 119.2,
@@ -2127,7 +2641,7 @@
      "v": 1500000.0
     },
     {
-     "date": "2026-08-14",
+     "date": "2026-08-13",
      "o": 121.48,
      "h": 121.57,
      "l": 118.45,
@@ -2135,111 +2649,111 @@
      "v": 600000.0
     },
     {
-     "date": "2026-08-17",
+     "date": "2026-08-14",
      "o": 118.54,
      "h": 118.63,
      "l": 118.25,
      "c": 118.34,
+     "v": 600000.0
+    },
+    {
+     "date": "2026-08-17",
+     "o": 118.34,
+     "h": 118.63,
+     "l": 118.25,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-08-18",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-08-19",
-     "o": 118.54,
+     "o": 118.34,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.34,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-08-20",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-08-21",
-     "o": 118.54,
+     "o": 118.34,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.34,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-08-24",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-08-25",
-     "o": 118.54,
+     "o": 118.34,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.34,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-08-26",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-08-27",
-     "o": 118.54,
+     "o": 118.34,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.34,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-08-28",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-08-31",
-     "o": 118.54,
+     "o": 118.34,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.34,
+     "c": 118.54,
      "v": 600000.0
     },
     {
      "date": "2026-09-01",
-     "o": 118.34,
+     "o": 118.54,
      "h": 118.63,
      "l": 118.25,
-     "c": 118.54,
+     "c": 118.34,
      "v": 600000.0
     },
     {
      "date": "2026-09-02",
-     "o": 118.54,
-     "h": 118.63,
-     "l": 118.25,
-     "c": 118.34,
-     "v": 600000.0
-    },
-    {
-     "date": "2026-09-03",
      "o": 118.34,
      "h": 118.63,
      "l": 118.25,
@@ -2247,7 +2761,7 @@
      "v": 600000.0
     },
     {
-     "date": "2026-09-04",
+     "date": "2026-09-03",
      "o": 118.54,
      "h": 118.63,
      "l": 118.25,
@@ -2255,7 +2769,7 @@
      "v": 600000.0
     },
     {
-     "date": "2026-09-07",
+     "date": "2026-09-04",
      "o": 118.34,
      "h": 118.63,
      "l": 118.25,
@@ -2295,7 +2809,7 @@
      "v": 4080000.0
     }
    ],
-   "summary": "NVDA: +5.6% on 1.2× volume out of a base 3.3% deep. Buy 131.31–136.85 tomorrow in the first 30 minutes, stop 131.38, aim 146.16–162.40. A 8.5, 5 of 6 criteria."
+   "summary": "NVDA: +5.6% on 1.2× volume out of a base 3.3% deep. Buy 131.31–136.85 next session in the first 30 minutes, stop 131.38, aim 146.16–162.40. A 8.5, 5 of 6 criteria."
   },
   {
    "ticker": "COIL",
@@ -2496,7 +3010,7 @@
      "prior breakouts worked 0 of 1 (closed higher 3 sessions later, last 4 in 60 sessions)"
     ],
     "base": {
-     "start": "2026-08-27",
+     "start": "2026-08-26",
      "end": "2026-09-10",
      "start_index": 289,
      "end_index": 299,
@@ -2831,11 +3345,51 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
-    "request_text_sha256": "da264179a9f3c8deb30c890c6c914d0e19fbb99bb3935b19357ef8641b328c75",
+    "request_text_sha256": "2612aa92024d0b4e49e939aa081413d921234da8f6237bb6194057cd1f73ee3c",
     "discovery_version": 1
    },
    "rank": 2,
    "series": [
+    {
+     "date": "2026-03-23",
+     "o": 100.0,
+     "h": 101.5,
+     "l": 98.5,
+     "c": 100.0,
+     "v": 200000.0
+    },
+    {
+     "date": "2026-03-24",
+     "o": 100.0,
+     "h": 101.5,
+     "l": 98.5,
+     "c": 100.0,
+     "v": 200000.0
+    },
+    {
+     "date": "2026-03-25",
+     "o": 100.0,
+     "h": 101.5,
+     "l": 98.5,
+     "c": 100.0,
+     "v": 200000.0
+    },
+    {
+     "date": "2026-03-26",
+     "o": 100.0,
+     "h": 101.5,
+     "l": 98.5,
+     "c": 100.0,
+     "v": 200000.0
+    },
+    {
+     "date": "2026-03-27",
+     "o": 100.0,
+     "h": 101.5,
+     "l": 98.5,
+     "c": 100.0,
+     "v": 200000.0
+    },
     {
      "date": "2026-03-30",
      "o": 100.0,
@@ -2862,14 +3416,6 @@
     },
     {
      "date": "2026-04-02",
-     "o": 100.0,
-     "h": 101.5,
-     "l": 98.5,
-     "c": 100.0,
-     "v": 200000.0
-    },
-    {
-     "date": "2026-04-03",
      "o": 100.0,
      "h": 101.5,
      "l": 98.5,
@@ -3157,14 +3703,6 @@
      "v": 200000.0
     },
     {
-     "date": "2026-05-25",
-     "o": 100.0,
-     "h": 101.5,
-     "l": 98.5,
-     "c": 100.0,
-     "v": 200000.0
-    },
-    {
      "date": "2026-05-26",
      "o": 100.0,
      "h": 101.5,
@@ -3309,14 +3847,6 @@
      "v": 200000.0
     },
     {
-     "date": "2026-06-19",
-     "o": 100.0,
-     "h": 101.5,
-     "l": 98.5,
-     "c": 100.0,
-     "v": 200000.0
-    },
-    {
      "date": "2026-06-22",
      "o": 100.0,
      "h": 101.5,
@@ -3382,14 +3912,6 @@
     },
     {
      "date": "2026-07-02",
-     "o": 100.0,
-     "h": 101.5,
-     "l": 98.5,
-     "c": 100.0,
-     "v": 200000.0
-    },
-    {
-     "date": "2026-07-03",
      "o": 100.0,
      "h": 101.5,
      "l": 98.5,
@@ -3687,18 +4209,18 @@
     {
      "date": "2026-08-25",
      "o": 100.0,
-     "h": 101.5,
-     "l": 98.5,
-     "c": 100.0,
-     "v": 200000.0
-    },
-    {
-     "date": "2026-08-26",
-     "o": 100.0,
      "h": 114.0,
      "l": 100.0,
      "c": 113.0,
      "v": 600000.0
+    },
+    {
+     "date": "2026-08-26",
+     "o": 113.0,
+     "h": 114.0,
+     "l": 112.6,
+     "c": 113.0,
+     "v": 180000.0
     },
     {
      "date": "2026-08-27",
@@ -3742,14 +4264,6 @@
     },
     {
      "date": "2026-09-03",
-     "o": 113.0,
-     "h": 114.0,
-     "l": 112.6,
-     "c": 113.0,
-     "v": 180000.0
-    },
-    {
-     "date": "2026-09-04",
      "o": 110.0,
      "h": 110.5,
      "l": 109.5,
@@ -3757,7 +4271,7 @@
      "v": 120000.0
     },
     {
-     "date": "2026-09-07",
+     "date": "2026-09-04",
      "o": 110.0,
      "h": 110.5,
      "l": 109.5,
@@ -3797,7 +4311,7 @@
      "v": 480000.0
     }
    ],
-   "summary": "COIL: +5.0% on 4.0× volume out of a base 3.9% deep. Buy 113.19–115.72 tomorrow in the first 30 minutes, stop 111.10, aim 124.98–138.86. A 8.0, 5 of 6 criteria."
+   "summary": "COIL: +5.0% on 4.0× volume out of a base 3.9% deep. Buy 113.19–115.72 next session in the first 30 minutes, stop 111.10, aim 124.98–138.86. A 8.0, 5 of 6 criteria."
   }
  ],
  "trades": [
@@ -3832,7 +4346,7 @@
    }
   ],
   "skipped": [],
-  "sentence": "Model allocation: tomorrow's tickets would commit $547.40 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
+  "sentence": "Model allocation: next-session tickets would commit $547.40 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
  },
  "watchlist": {
   "top": [],
@@ -3870,7 +4384,7 @@
      "length": 5,
      "spread": 2.39,
      "spread_limit": 3.36,
-     "start": "2026-09-07",
+     "start": "2026-09-04",
      "end": "2026-09-11",
      "sessions": 5
     },
@@ -3976,7 +4490,7 @@
   {
    "ticker": "VRT",
    "kind": "burst",
-   "picked": "2026-09-04",
+   "picked": "2026-09-03",
    "day": 5,
    "sessions": 5,
    "status": "stopped",
@@ -3984,7 +4498,7 @@
    "events": [
     {
      "day": 1,
-     "date": "2026-09-07",
+     "date": "2026-09-04",
      "event": "sell_half",
      "price": 194.4,
      "shares": 2,
@@ -3992,7 +4506,7 @@
     },
     {
      "day": 1,
-     "date": "2026-09-07",
+     "date": "2026-09-04",
      "event": "stop_raised",
      "price": 195.95
     },
@@ -4046,7 +4560,7 @@
   {
    "ticker": "SMCI",
    "kind": "burst",
-   "picked": "2026-09-07",
+   "picked": "2026-09-04",
    "grade": "A",
    "stop": 23.58,
    "targets": {
@@ -4566,81 +5080,81 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:a5a4fdb7ddef": {
+   "burst:AAPL:2026-09-10:eb6c9a6097b6": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:a5a4fdb7ddef": {
+   "burst:AMD:2026-09-10:eb6c9a6097b6": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:a5a4fdb7ddef": {
+   "burst:NVDA:2026-09-10:eb6c9a6097b6": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:a5a4fdb7ddef": {
+   "burst:TSLA:2026-09-10:eb6c9a6097b6": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:a5a4fdb7ddef": {
+   "burst:PLUG:2026-09-10:eb6c9a6097b6": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:a5a4fdb7ddef": {
+   "burst:DLLR:2026-09-10:eb6c9a6097b6": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:a5a4fdb7ddef": {
+   "anticipation:COIL:2026-09-10:eb6c9a6097b6": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:a5a4fdb7ddef": {
+   "burst:NVDA:2026-09-11:eb6c9a6097b6": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:a5a4fdb7ddef": {
+   "burst:COIL:2026-09-11:eb6c9a6097b6": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:a5a4fdb7ddef": {
+   "anticipation:VRT:2026-09-11:eb6c9a6097b6": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    },
-   "anticipation:AMD:2026-09-11:a5a4fdb7ddef": {
+   "anticipation:AMD:2026-09-11:eb6c9a6097b6": {
     "ticker": "AMD",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "a5a4fdb7ddef",
+    "rules_version": "eb6c9a6097b6",
     "coverage": "observed"
    }
   },
@@ -4649,18 +5163,18 @@
  "closest_miss": null,
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
-  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
+  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all, with the calendar it could not read named in its limits. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
-  "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
+  "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
-  "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
+  "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",
