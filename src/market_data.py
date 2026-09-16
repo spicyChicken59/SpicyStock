@@ -34,6 +34,7 @@ from alpaca.data.requests import StockBarsRequest
 from alpaca.data.timeframe import TimeFrame
 
 from src.clock import previous_session
+from src import sessions
 
 log = logging.getLogger(__name__)
 
@@ -494,33 +495,10 @@ def observed_previous_session(histories: dict[str, pd.DataFrame], session: date,
                               min_symbols: int = DEFAULT_MIN_SYMBOLS,
                               downloaded: dict[str, pd.DataFrame] | None = None,
                               tally: dict | None = None) -> tuple[date, bool]:
-    """The session before `session`, read off the night's frames: (date, observed).
+    """Calendar-owned previous session; bar votes remain diagnostics only.
 
-    previous_session() is weekend arithmetic, and the day after a weekday
-    holiday is the one case it gets wrong: compared against it, every name
-    on Tuesday 8 Sep 2026 had "no bar for the session before" and the night
-    published nothing. A business day NO name printed is a closure, and the
-    frames are the evidence.
-
-    ONE name that printed on the arithmetic's date is the disproof, and it
-    is decisive: `downloaded` (every frame read, stale ones included,
-    defaulting to the voters) is searched first, because a name that stopped
-    printing ON that session still printed on it. Without that clause seven
-    names halted on a Tuesday outvoted five that traded it and the five
-    healthy names became holes.
-
-    Only when nothing printed does the vote decide. Each of `histories` --
-    the FRESH frames; a stale frame's newest bar is about an earlier week --
-    votes with its newest readable session before this one. With at least
-    `min_symbols` voters, and MORE THAN HALF of them on one business day
-    strictly EARLIER than the arithmetic's, that day is the answer. A
-    majority can only move the answer back and only onto a weekday, so no
-    phantom bar can manufacture a session; a split vote moves nothing; a
-    frame with one bar, or a NaT where its stamp belongs, does not vote.
-
-    `tally`, if given, receives `voters`, the `agreed` count of the winning
-    date and that `day`, so a report can say which condition was not met.
-    The cost: a genuine feed-wide dropped business day is read as a closure.
+    Agreement that an expected-open day is absent cannot prove a holiday.
+    A single-symbol scan gets the same adjacency as a full-universe scan.
     """
     want = previous_session(session)
     votes: dict[date, int] = {}
@@ -528,25 +506,16 @@ def observed_previous_session(histories: dict[str, pd.DataFrame], session: date,
         before = _bar_before_session(df, session)
         if before is not None:
             votes[before] = votes.get(before, 0) + 1
-    voters = sum(votes.values())
     day, count = max(votes.items(), key=lambda item: item[1]) if votes else (None, 0)
     if tally is not None:
-        tally.update({"voters": voters, "agreed": count, "day": day})
-    if any(_printed_on(df, want) for df in (downloaded or histories).values()):
-        return want, False
-    if not votes or voters < min_symbols:
-        # `not votes` guards the max() above when nothing voted at all.
-        return want, False
-    if count * 2 > voters and day < want and day.weekday() < 5:
-        return day, True
+        tally.update({"voters": sum(votes.values()), "agreed": count, "day": day})
     return want, False
 
 
 def drop_gapped(histories: dict[str, pd.DataFrame], session: date,
                 previous: date | None = None) -> tuple[dict[str, pd.DataFrame], dict[str, date | None]]:
     """Split fresh frames into those whose readable bar BEFORE the session is
-    `previous` (observed_previous_session()'s answer, or the arithmetic when
-    none is given) and those with a hole there, the latter with the bar they
+    `previous` (the exchange calendar's answer when none is given) and those with a hole there, the latter with the bar they
     have instead (their newest date when they have none before the session).
 
     Freshness checks only the newest bar. A halt or a dropped bar the session
@@ -557,8 +526,10 @@ def drop_gapped(histories: dict[str, pd.DataFrame], session: date,
     """
     ok: dict[str, pd.DataFrame] = {}
     gapped: dict[str, date | None] = {}
-    if previous is None:
-        previous = previous_session(session)
+    expected_previous = previous_session(session)
+    if previous is not None and previous != expected_previous:
+        raise ValueError("previous session must agree with the XNYS calendar")
+    previous = expected_previous
     for ticker, df in histories.items():
         before = _bar_before_session(df, session)
         if before is None:
@@ -576,10 +547,8 @@ def apply_session_rules(frames: dict[str, pd.DataFrame], session: date,
                         min_symbols: int = DEFAULT_MIN_SYMBOLS) -> dict[str, pd.DataFrame]:
     """The frames a scan of `session` may measure, with `stats` filled in.
 
-    The stale rule first, then the session before read off EVERY frame once
-    (a closure is a fact about the market, not about a batch), then the gap
-    rule against that answer. The voters are the fresh frames; the disproof
-    is every frame downloaded.
+    Freshness and adjacency are checked against XNYS expected dates. Bar
+    votes are diagnostics only: even unanimous missing bars cannot prove closure.
     """
     fresh, stale = drop_stale(frames, session)
     stats.stale = stale
@@ -592,12 +561,6 @@ def apply_session_rules(frames: dict[str, pd.DataFrame], session: date,
     before, observed = observed_previous_session(fresh, session, min_symbols,
                                                  downloaded=frames, tally=tally)
     printed = sum(1 for df in frames.values() if _printed_on(df, before))
-    if observed:
-        log.warning("The session before %s printed on no name: %d of %d fresh frames "
-                    "carry %s as the bar before it, so the scan reads %s as a market "
-                    "closure and measures against %s",
-                    session, tally.get("agreed"), len(fresh), before,
-                    previous_session(session), before)
     fresh, gapped = drop_gapped(fresh, session, before)
     stats.gapped = gapped
     stats.previous_session = before
@@ -632,35 +595,15 @@ def readable_pair(df: pd.DataFrame) -> bool:
 
 
 def session_calendar(frames: dict, min_fraction: float = 0.5) -> list[date]:
-    """The sessions these frames agree happened, oldest first.
+    """Expected exchange sessions across the frames' span, including holes.
 
-    One frame cannot say which sessions occurred: alone it can only count its
-    own bars, so a dropped bar or a full-day halt put the third session on
-    the fourth bar it had. Read across frames instead: a date is a session
-    when at least `min_fraction` of the frames that SPAN it (first bar on or
-    before it, last bar on or after, inclusive) carry a bar on it, so one
-    frame's hole removes nothing and one frame's phantom bar adds nothing.
-    Fewer than two usable frames is no calendar at all -- an empty list --
-    because one frame cannot vote against its own hole.
+    Frames bound the dates available for analysis; they never vote an expected
+    session out of the calendar. Missing bars remain missing observations.
+    ``min_fraction`` is retained for caller compatibility, not used as a vote.
     """
-    usable = [df for df in (frames or {}).values() if df is not None and len(df)]
-    if len(usable) < 2:
-        return []
-    carrying: dict[date, int] = {}
-    spans: list[tuple[date, date]] = []
-    for df in usable:
-        days = sorted({d for d in (_as_date(stamp) for stamp in df.index) if d is not None})
-        if not days:
-            continue
-        spans.append((days[0], days[-1]))
-        for day in days:
-            carrying[day] = carrying.get(day, 0) + 1
-    out: list[date] = []
-    for day in sorted(carrying):
-        spanning = sum(1 for lo, hi in spans if lo <= day <= hi)
-        if carrying[day] >= min_fraction * spanning:
-            out.append(day)
-    return out
+    days = [d for df in (frames or {}).values() if df is not None
+            for stamp in df.index if (d := _as_date(stamp)) is not None]
+    return sessions.dates(min(days), max(days)) if days else []
 
 
 # --------------------------------------------------------------- refusals ----

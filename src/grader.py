@@ -113,7 +113,7 @@ SCORE_SCHEMA = {
         "key_risk": {"type": "string", "description": "one sentence"},
         "entry_note": {"type": "string",
                        "description": ("one sentence: what would make you skip it at "
-                                       "tomorrow's open")},
+                                       "the next session's open")},
     },
     "required": ["score", "grade", "reason", "key_risk", "entry_note"],
     "additionalProperties": False,

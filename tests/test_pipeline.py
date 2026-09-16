@@ -92,7 +92,7 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert ticket["then"]["order_type"] == "stop" and ticket["then"]["stop_price"] == burst["plan"]["stop"]
     assert [row["day"] for row in burst["plan"]["exit_schedule"]][0] == 1
     assert burst["plan"]["exit_schedule"][0]["date"] == "2026-09-11"
-    assert data["cover"]["h1"] == "Trade tomorrow. 1 A-quality burst."
+    assert data["cover"]["h1"] == "Trade next session. 1 A-quality burst."
     assert data["cash_budget"]["slots_used"] == 1 and data["cash_budget"]["cut"] == []
     assert data["cash_budget"]["at_risk_usd"] == burst["plan"]["risk_usd"]
     assert run["graded"] == {"a_plus": 1, "a": 0, "b": 0, "c": 0, "skip": 0}
@@ -110,7 +110,7 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert [(p["ticker"], p["date"], p["kind"]) for p in picks] == [("AAA", SESSION, "burst"), ("COIL", SESSION, "anticipation")]
     assert picks[0]["entry_low"] < picks[0]["entry_ref"] < picks[0]["entry_high"] and picks[0]["targets"]["high"]
     assert (docs / pipeline.CHARTS_DIR_NAME / "AAA.png").exists()
-    assert len(fake_resend.sent) == 1 and "Trade tomorrow" in fake_resend.sent[0]["subject"]
+    assert len(fake_resend.sent) == 1 and "Trade next session" in fake_resend.sent[0]["subject"]
 
 
 def test_the_next_night_follows_the_pick_from_bars_alone(market, claude, fake_resend, tmp_path):
@@ -274,47 +274,32 @@ def test_an_email_failure_keeps_the_record_and_exits_three(market, claude, fake_
 
 
 # --------------------------------------------------------------- closed ---
-def test_a_closed_market_republishes_the_previous_sessions_plans_unchanged(market, claude, fake_resend, fake_alpaca, tmp_path):
-    """Night one publishes a trade for the 9th; the 10th is a holiday. The
-    closed night re-presents the 9th's tickets verbatim, walks its picks as
-    plans that have had no session yet, and records nothing new."""
-    from datetime import date
-    first, first_data, docs = evening(tmp_path, market, now=datetime(2026, 9, 9, 22, 30, tzinfo=timezone.utc))
-    assert first_data["trades"] == ["AAA"]
-    picks_before = (docs / record.PICKS_FILE).read_text()
-    fake_alpaca.close_session(date(2026, 9, 10))
-    rep, data, docs = evening(tmp_path, market)
-    assert rep.exit_code() == 0, rep.problems
-    run = data["run"]
-    assert run["session_state"] == "closed" and run["status"] == "closed"
-    assert run["expected_session"] == SESSION and run["session"] == "2026-09-09"
-    assert data["cover"]["h1"] == report.H1_CLOSED and "The plans from 2026-09-09 stand" in data["cover"]["dek"]
-    assert data["trades"] == ["AAA"] and [b["ticker"] for b in data["bursts"]] == [b["ticker"] for b in first_data["bursts"]]
-    assert data["bursts"][0]["plan"]["order_json"] == first_data["bursts"][0]["plan"]["order_json"]
-    assert data["watchlist"]["top"][0]["ticker"] == "COIL"
-    held = {p["ticker"]: p for p in data["open_plans"]}
-    assert held["AAA"]["status"] == "pending" and "No session since the 2026-09-09 pick" in held["AAA"]["instruction"]
-    assert (docs / record.PICKS_FILE).read_text() == picks_before
-    # the holiday is filed under the day nobody traded; the night before keeps its own row
-    assert [(n["session"], n["status"]) for n in data["nights"]] == [("2026-09-09", "ok"), ("2026-09-10", "closed")]
+def test_known_holiday_preserves_every_file_and_sends_no_duplicate_signals(market, claude, fake_resend, fake_alpaca, tmp_path):
+    first, data, docs = evening(tmp_path, market, now=datetime(2026, 9, 4, 22, 30, tzinfo=timezone.utc))
+    assert first.published and data["run"]["timing"]["applicable_session"] == "2026-09-08"
+    before = {p: p.read_bytes() for p in docs.rglob("*") if p.is_file()}
+    calls = (len(fake_alpaca.bar_requests), len(claude.calls), len(fake_resend.sent))
+    rep = pipeline.run_evening(docs=docs, now=datetime(2026, 9, 7, 22, 30, tzinfo=timezone.utc))
+    assert rep.status == "no_session" and rep.exit_code() == 0 and not rep.published
+    assert rep.calendar_outcome["most_recent_completed"] == "2026-09-04"
+    assert before == {p: p.read_bytes() for p in docs.rglob("*") if p.is_file()}
+    assert calls == (len(fake_alpaca.bar_requests), len(claude.calls), len(fake_resend.sent))
 
 
-def test_a_closed_first_night_has_nothing_to_carry_and_says_so(market, claude, fake_resend, fake_alpaca, tmp_path):
+def test_known_holiday_first_run_creates_no_publication(market, claude, fake_resend, fake_alpaca, tmp_path):
+    docs = tmp_path / "never_created"
+    rep = pipeline.run_evening(docs=docs, now=datetime(2026, 9, 7, 22, 30, tzinfo=timezone.utc))
+    assert rep.status == "no_session" and not docs.exists()
+    assert fake_alpaca.bar_requests == [] and claude.calls == [] and fake_resend.sent == []
+
+
+def test_expected_open_feed_absence_fails_without_republishing(market, claude, fake_resend, fake_alpaca, tmp_path):
     from datetime import date
     fake_alpaca.close_session(date(2026, 9, 10))
     rep, data, docs = evening(tmp_path, market)
-    assert rep.exit_code() == 0 and data["cover"]["h1"] == report.H1_CLOSED
-    assert data["bursts"] == [] and data["trades"] == [] and data["open_plans"] == []
-
-
-def test_a_closed_night_whose_email_failed_is_a_degraded_night_in_the_row(market, claude, fake_resend, fake_alpaca, tmp_path):
-    from datetime import date
-    fake_alpaca.close_session(date(2026, 9, 10))
-    fake_resend.raises = RuntimeError("refused")
-    rep, data, docs = evening(tmp_path, market)
-    assert rep.exit_code() == pipeline.EXIT_FAILED_AFTER_PUBLISH
-    assert data["run"]["status"] == "degraded"
-    assert data["nights"][-1] == {"session": SESSION, "status": "degraded", "published_at": data["generated"]}
+    assert rep.failed and not rep.published and not data
+    assert rep.input_coverage["acceptance"]["status"] == "fail"
+    assert rep.input_coverage["stale"] == rep.input_coverage["with_bars"]
 
 
 def test_an_a_plus_burst_the_account_cannot_size_is_cut_not_traded(market, claude, fake_resend, tmp_path, monkeypatch):
@@ -429,9 +414,9 @@ def test_session_state_reads_the_three_states_off_the_bars():
     assert pipeline.session_state({}, expected) == ("outage", 0.0)
     assert pipeline.session_state(frames(["2026-09-10"] * 5 + ["2026-09-09"] * 5), expected) == ("open", 0.5)
     assert pipeline.session_state(frames(["2026-09-10"] * 4 + ["2026-09-09"] * 6), expected)[0] == "outage"
-    assert pipeline.session_state(frames(["2026-09-09"] * 20 + ["2026-09-10"]), expected)[0] == "closed"    # 1 of 21 is under 5%
+    assert pipeline.session_state(frames(["2026-09-09"] * 20 + ["2026-09-10"]), expected)[0] == "outage"    # an expected session, even if almost every frame lacks it
     assert pipeline.session_state(frames(["2026-09-09"] * 19 + ["2026-09-10"] * 2), expected)[0] == "outage"  # 2 of 21 is not
-    assert pipeline.session_state(frames(["2026-09-09"] * 20), expected) == ("closed", 0.0)
+    assert pipeline.session_state(frames(["2026-09-09"] * 20), expected) == ("outage", 0.0)
     assert pipeline.session_state(frames(["2026-09-08"] * 20), expected)[0] == "outage"
 
 

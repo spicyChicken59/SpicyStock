@@ -32,7 +32,7 @@ his five-session hold. Every price a walk reads is the plan's own.
 """
 from __future__ import annotations
 
-import calendar
+from src import sessions as exchange_sessions
 import json
 import logging
 import math
@@ -373,6 +373,12 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
     if not bars:
         walk = plan.follow(pick, [], regime)
         return {**walk, **base, "day": 0}
+    expected = [str(d) for d in exchange_sessions.next_sessions(date.fromisoformat(pick["date"]), len(bars))]
+    actual = [b.get("date") for b in bars]
+    if actual != expected:
+        return _no_walk(base, pick, None, day=0, status=UNREADABLE, fill_note=None,
+                        instruction="Missing or non-session bars prevent a session-by-session walk; follow the original plan's stop and dated exit.",
+                        events=[], regime=regime)
     first = bars[0]
     if not (first["l"] <= min(first["o"], first["c"]) and max(first["o"], first["c"]) <= first["h"]):
         return _no_walk(base, pick, None, day=1, status=UNREADABLE, fill_note=None,
@@ -431,22 +437,9 @@ def r_multiple(row: dict, stop: float) -> float | None:
 
 # ------------------------------------------------------------- sessions ----
 def sessions_before(frames: dict[str, pd.DataFrame], session: str, n: int) -> list[str]:
-    """The ``n`` sessions before ``session`` (exclusive), oldest first: off
-    the frames' own calendar when they carry one, else weekdays."""
-    from src import market_data
+    """Expected XNYS sessions, whether or not the provider returned bars."""
     end = _parse_date(session)
-    if end is None:
-        return []
-    observed = [d for d in market_data.session_calendar(frames) if d < end] if frames else []
-    if len(observed) >= n:
-        return [d.isoformat() for d in observed[-n:]]
-    out: list[date] = []
-    d = end
-    while len(out) < n:
-        d = d - timedelta(days=1)
-        if d.weekday() < calendar.SATURDAY:
-            out.insert(0, d)
-    return [d.isoformat() for d in out]
+    return [str(d) for d in exchange_sessions.sessions_before(end, n)] if end else []
 
 
 def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime: str = "green") -> list[dict]:
@@ -456,7 +449,7 @@ def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime:
     night did not fetch is returned with no bars and says so."""
     from src import market_data
     window = set(sessions_before(frames, session, OPEN_PLAN_SESSIONS))
-    calendar_dates = [d.isoformat() for d in market_data.session_calendar(frames)] if frames else []
+    calendar_dates = [str(d) for d in exchange_sessions.dates(date.fromisoformat(min(window)), date.fromisoformat(session))] if window else []
     rows = []
     for pick in rec.get("picks", []):
         if pick["date"] not in window:

@@ -1,38 +1,8 @@
-"""When a published plan's entry window opens and when it is over.
+"""Plan entry policy applied to the versioned XNYS session schedule.
 
-The run serializes this once, into ``run.timing``, so the page never has to
-read a deadline out of an English instruction. Two facts about a record are
-different things and this module exists to keep them apart:
-
-* which session was MEASURED and when the record was PUBLISHED -- already in
-  ``run.session`` and ``run.published_at``, and the page's own staleness
-  arithmetic reads them;
-* which session the published plans are FOR, and the window inside it during
-  which the method's entry is scheduled -- this block, and nothing else.
-
-The applicable session is ``plan.next_sessions(session, 1)[0]``, the same
-call ``plan.dated_schedule()`` makes for day 1, so the timing block and every
-plan's dated schedule cannot disagree; ``tests/test_timing.py`` holds them
-equal. The instants are built with ``zoneinfo`` from the named policy times
-below, so a spring-forward or fall-back session is the tz database's answer
-and no UTC offset is ever written by hand.
-
-What this module does NOT know, it says, in ``limits``:
-
-``no_holiday_calendar``
-    Nothing in this repository is a market calendar -- ``clock.py`` says so of
-    its own arithmetic and ``plan.next_sessions()`` of its own. The applicable
-    session is therefore the next WEEKDAY, which a holiday moves. The window
-    is described as SCHEDULED for that date, never as open, and a reader is
-    told the date so the mistake is visible rather than hidden.
-
-``regular_hours_assumed``
-    The open and the cutoff are the regular session's. A shortened session
-    (the half days around Thanksgiving and Christmas) closes early; no early
-    close calendar exists here either, and the opening bell -- which is what
-    the entry window hangs off -- does not move on those days.
-
-Nothing here reads a provider, a calendar service or the network.
+The exchange owns dates and scheduled open/close. The strategy owns the
+entry-window duration, and the desk owns its preparation reminder. Legacy
+weekday bases/limits remain readable; new publications carry calendar evidence.
 """
 
 from __future__ import annotations
@@ -40,7 +10,8 @@ from __future__ import annotations
 from datetime import date, datetime, time as time_of_day, timedelta
 from typing import Any, Mapping
 
-from src.clock import MARKET_TZ, MARKET_TZ_NAME
+from src import sessions
+from src.sessions import MARKET_TZ, MARKET_TZ_NAME
 
 #: The regular session's opening bell in market time. The entry window hangs
 #: off it: ``plan.ENTRY_WINDOW_MINUTES`` after this instant the window is over.
@@ -57,21 +28,18 @@ REGULAR_CLOSE_ET = time_of_day(16, 0)
 #: ``cutoff_at``. The page used to hold this string and now prints this field.
 PREPARE_BEFORE_ET = time_of_day(9, 28)
 
-#: How the applicable session was chosen. ``weekday_after_session`` is the
-#: ordinary night; ``weekday_after_closed_session`` is the one holiday this
-#: repository does detect -- a night whose expected session printed no bars, so
-#: the plans that stood for it apply to the weekday after THAT. Named constants
-#: so a record written under a real calendar is told apart from one written here.
+#: Legacy bases remain valid when reading immutable historical publications.
 BASIS_WEEKDAY_AFTER = "weekday_after_session"
 BASIS_AFTER_CLOSED = "weekday_after_closed_session"
-BASES: tuple[str, ...] = (BASIS_WEEKDAY_AFTER, BASIS_AFTER_CLOSED)
+BASIS_EXCHANGE_AFTER = "exchange_session_after"
+BASES: tuple[str, ...] = (BASIS_WEEKDAY_AFTER, BASIS_AFTER_CLOSED, BASIS_EXCHANGE_AFTER)
 
 #: What the timing block cannot answer, in the record's own words. The page
 #: keeps one sentence per key and `tests/test_docs.py` holds the two lists
 #: equal, as it does the problem words and the no-ticket leads.
 LIMIT_NO_HOLIDAY_CALENDAR = "no_holiday_calendar"
 LIMIT_REGULAR_HOURS = "regular_hours_assumed"
-LIMITS: tuple[str, ...] = (LIMIT_NO_HOLIDAY_CALENDAR, LIMIT_REGULAR_HOURS)
+LIMITS: tuple[str, ...] = (LIMIT_NO_HOLIDAY_CALENDAR, LIMIT_REGULAR_HOURS, sessions.LIMIT_SCHEDULE_CHANGES)
 
 #: The four answers to "is the entry window applicable now?". `unknown` is for
 #: a record that carries no timing block at all -- every record published
@@ -110,12 +78,12 @@ def entry_window(session: date, window_minutes: int) -> tuple[datetime, datetime
     one it is."""
     if not isinstance(window_minutes, int) or window_minutes <= 0:
         raise ValueError(f"window_minutes must be a positive whole number, not {window_minutes!r}")
-    opens = at(session, REGULAR_OPEN_ET)
+    opens = sessions.hours(session)[0]
     return opens, opens + timedelta(minutes=window_minutes)
 
 
 def plan_timing(measured_session: date, applicable: date, *, window: str,
-                window_minutes: int, basis: str = BASIS_WEEKDAY_AFTER,
+                window_minutes: int, basis: str = BASIS_EXCHANGE_AFTER,
                 closed_session: date | None = None) -> dict[str, Any]:
     """The serialized block: which session the plans are for, and when its
     entry window opens and is over.
@@ -124,10 +92,7 @@ def plan_timing(measured_session: date, applicable: date, *, window: str,
     has already asked ``plan.next_sessions()`` for the dated schedule and the
     two must be the same date. It is checked against ``measured_session``
     instead of trusted: a plan cannot be for a session at or before the one it
-    was measured on. ``closed_session`` is the session that printed no bars on
-    a closed night -- the date the standing plans were dated for and which the
-    market did not hold -- so the page can name it rather than leave a plan's
-    own day 1 unexplained.
+    was measured on. ``closed_session`` is optional historical context, never inferred from missing bars. New scheduled non-session runs preserve the previous publication.
     """
     if applicable <= measured_session:
         raise ValueError(
@@ -136,7 +101,12 @@ def plan_timing(measured_session: date, applicable: date, *, window: str,
         )
     if basis not in BASES:
         raise ValueError(f"basis {basis!r} is not one of {BASES}")
+    sessions.require_session(measured_session)
+    sessions.require_session(applicable)
     opens, cutoff = entry_window(applicable, window_minutes)
+    _, closes, shortened = sessions.hours(applicable)
+    if cutoff > closes:
+        raise ValueError("entry cutoff must not be after the scheduled exchange close")
     return {
         "applicable_session": applicable.isoformat(),
         "measured_session": measured_session.isoformat(),
@@ -145,18 +115,19 @@ def plan_timing(measured_session: date, applicable: date, *, window: str,
         "opens_at": opens.isoformat(),
         "cutoff_at": cutoff.isoformat(),
         "prepare_by": at(applicable, PREPARE_BEFORE_ET).isoformat(),
-        "closes_at": at(applicable, REGULAR_CLOSE_ET).isoformat(),
+        "closes_at": closes.isoformat(),
+        "shortened": shortened,
+        "calendar": sessions.authority(),
         # the same two policy times as wall clock, so a reader comparing a DATE
         # it has (a saved setup's own session) needs no offset arithmetic of
         # its own: the browser reads `now` in market time and compares hours
-        "opens_et": REGULAR_OPEN_ET.isoformat(timespec="minutes"),
-        "cutoff_et": (datetime.combine(date(2000, 1, 1), REGULAR_OPEN_ET)
-                      + timedelta(minutes=window_minutes)).time().isoformat(timespec="minutes"),
+        "opens_et": opens.strftime("%H:%M"),
+        "cutoff_et": cutoff.strftime("%H:%M"),
         "prepare_by_et": PREPARE_BEFORE_ET.isoformat(timespec="minutes"),
         "window": window,
         "window_minutes": window_minutes,
         "basis": basis,
-        "limits": list(LIMITS),
+        "limits": [sessions.LIMIT_SCHEDULE_CHANGES],
     }
 
 

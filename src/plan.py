@@ -30,8 +30,8 @@ entry for the exit levels and the targets; it is an estimate, never a fill.
 """
 from __future__ import annotations
 
-import calendar
-from datetime import date, timedelta
+from src import sessions as exchange_sessions
+from datetime import date
 
 import math
 import os
@@ -671,21 +671,13 @@ def exit_schedule(entry_price: float, stop: float | None = None) -> list[dict[st
 
 
 def next_sessions(session: date, n: int) -> list[date]:
-    """The next ``n`` weekdays after ``session``. No holiday calendar: a
-    holiday shifts every later date by one, and the page says "day N" beside
-    each date so the day count is the authority."""
-    out: list[date] = []
-    d = session
-    while len(out) < n:
-        d = d + timedelta(days=1)
-        if d.weekday() < calendar.SATURDAY:
-            out.append(d)
-    return out
+    """Actual exchange sessions, strictly after the measured session."""
+    return exchange_sessions.next_sessions(session, n)
 
 
 def dated_schedule(p: Mapping[str, Any], session: date) -> list[dict[str, Any]]:
     """The hold as a dated timeline for a plan published after ``session``:
-    day 1 is the next weekday. Every price comes off the plan (``exits``,
+    day 1 is the next XNYS session. Every price comes off the plan (``exits``,
     ``entry_low``/``entry_high`` or ``trigger``/``limit``, ``stop``); the
     sentences are the exit rules in his order. The buy RANGE's top is the
     ticket's limit and the SKIP line is ``skip_if_open_above``, the day-2
@@ -1324,7 +1316,7 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
 
 def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
                 open_positions: int = 0) -> dict[str, Any]:
-    """What tomorrow's tickets would commit, in rank order, against the slot
+    """What next-session tickets would commit, in rank order, against the slot
     cap and the configured equity: a plan with no order takes no slot; a plan
     past the free slots or past the equity is listed under ``beyond`` with its
     reason. This is model allocation over configured sizing assumptions --
@@ -1386,7 +1378,7 @@ def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
         "committed_usd": committed, "at_risk_usd": at_risk, "equity": account.equity,
         "slots_used": used, "slots_max": account.max_open_positions, "open_positions": open_positions,
         "within": within, "beyond": beyond, "cut": cut, "skipped": skipped,
-        "sentence": (f"Model allocation: tomorrow's tickets would commit {_usd(committed)} of the configured "
+        "sentence": (f"Model allocation: next-session tickets would commit {_usd(committed)} of the configured "
                      f"{_usd(account.equity)}; {used} of {account.max_open_positions} slots{already}"),
     }
 

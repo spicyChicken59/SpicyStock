@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "a5a4fdb7ddef"
+  "rules_version": "eb6c9a6097b6"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -216,16 +216,517 @@
    "cutoff_at": "2026-09-11T10:00:00-04:00",
    "prepare_by": "2026-09-11T09:28:00-04:00",
    "closes_at": "2026-09-11T16:00:00-04:00",
+   "shortened": false,
+   "calendar": {
+    "version": 1,
+    "exchange": "XNYS",
+    "exchange_name": "New York Stock Exchange",
+    "library": "exchange_calendars",
+    "library_version": "4.13.2",
+    "timezone": "America/New_York",
+    "supported_start": "1990-01-01",
+    "supported_end": "2035-12-31",
+    "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+    "completion_buffer_minutes": 15,
+    "limits": [
+     "exchange_schedule_may_change"
+    ]
+   },
    "opens_et": "09:30",
    "cutoff_et": "10:00",
    "prepare_by_et": "09:28",
    "window": "first 30 minutes",
    "window_minutes": 30,
-   "basis": "weekday_after_session",
+   "basis": "exchange_session_after",
    "limits": [
-    "no_holiday_calendar",
-    "regular_hours_assumed"
+    "exchange_schedule_may_change"
    ]
+  },
+  "calendar": {
+   "version": 1,
+   "exchange": "XNYS",
+   "exchange_name": "New York Stock Exchange",
+   "library": "exchange_calendars",
+   "library_version": "4.13.2",
+   "timezone": "America/New_York",
+   "supported_start": "1990-01-01",
+   "supported_end": "2035-12-31",
+   "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+   "completion_buffer_minutes": 15,
+   "limits": [
+    "exchange_schedule_may_change"
+   ],
+   "measured_session": "2026-09-10",
+   "previous_session": "2026-09-09",
+   "applicable_session": "2026-09-11",
+   "measured": {
+    "session": "2026-09-10",
+    "opens_at": "2026-09-10T09:30:00-04:00",
+    "closes_at": "2026-09-10T16:00:00-04:00",
+    "completion_at": "2026-09-10T16:15:00-04:00",
+    "shortened": false
+   },
+   "applicable": {
+    "session": "2026-09-11",
+    "opens_at": "2026-09-11T09:30:00-04:00",
+    "closes_at": "2026-09-11T16:00:00-04:00",
+    "completion_at": "2026-09-11T16:15:00-04:00",
+    "shortened": false
+   },
+   "schedule": {
+    "start": "2026-07-27",
+    "through": "2026-10-25",
+    "sessions": [
+     {
+      "session": "2026-07-27",
+      "opens_at": "2026-07-27T09:30:00-04:00",
+      "closes_at": "2026-07-27T16:00:00-04:00",
+      "completion_at": "2026-07-27T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-28",
+      "opens_at": "2026-07-28T09:30:00-04:00",
+      "closes_at": "2026-07-28T16:00:00-04:00",
+      "completion_at": "2026-07-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-29",
+      "opens_at": "2026-07-29T09:30:00-04:00",
+      "closes_at": "2026-07-29T16:00:00-04:00",
+      "completion_at": "2026-07-29T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-30",
+      "opens_at": "2026-07-30T09:30:00-04:00",
+      "closes_at": "2026-07-30T16:00:00-04:00",
+      "completion_at": "2026-07-30T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-07-31",
+      "opens_at": "2026-07-31T09:30:00-04:00",
+      "closes_at": "2026-07-31T16:00:00-04:00",
+      "completion_at": "2026-07-31T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-03",
+      "opens_at": "2026-08-03T09:30:00-04:00",
+      "closes_at": "2026-08-03T16:00:00-04:00",
+      "completion_at": "2026-08-03T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-04",
+      "opens_at": "2026-08-04T09:30:00-04:00",
+      "closes_at": "2026-08-04T16:00:00-04:00",
+      "completion_at": "2026-08-04T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-05",
+      "opens_at": "2026-08-05T09:30:00-04:00",
+      "closes_at": "2026-08-05T16:00:00-04:00",
+      "completion_at": "2026-08-05T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-06",
+      "opens_at": "2026-08-06T09:30:00-04:00",
+      "closes_at": "2026-08-06T16:00:00-04:00",
+      "completion_at": "2026-08-06T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-07",
+      "opens_at": "2026-08-07T09:30:00-04:00",
+      "closes_at": "2026-08-07T16:00:00-04:00",
+      "completion_at": "2026-08-07T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-10",
+      "opens_at": "2026-08-10T09:30:00-04:00",
+      "closes_at": "2026-08-10T16:00:00-04:00",
+      "completion_at": "2026-08-10T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-11",
+      "opens_at": "2026-08-11T09:30:00-04:00",
+      "closes_at": "2026-08-11T16:00:00-04:00",
+      "completion_at": "2026-08-11T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-12",
+      "opens_at": "2026-08-12T09:30:00-04:00",
+      "closes_at": "2026-08-12T16:00:00-04:00",
+      "completion_at": "2026-08-12T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-13",
+      "opens_at": "2026-08-13T09:30:00-04:00",
+      "closes_at": "2026-08-13T16:00:00-04:00",
+      "completion_at": "2026-08-13T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-14",
+      "opens_at": "2026-08-14T09:30:00-04:00",
+      "closes_at": "2026-08-14T16:00:00-04:00",
+      "completion_at": "2026-08-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-17",
+      "opens_at": "2026-08-17T09:30:00-04:00",
+      "closes_at": "2026-08-17T16:00:00-04:00",
+      "completion_at": "2026-08-17T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-18",
+      "opens_at": "2026-08-18T09:30:00-04:00",
+      "closes_at": "2026-08-18T16:00:00-04:00",
+      "completion_at": "2026-08-18T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-19",
+      "opens_at": "2026-08-19T09:30:00-04:00",
+      "closes_at": "2026-08-19T16:00:00-04:00",
+      "completion_at": "2026-08-19T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-20",
+      "opens_at": "2026-08-20T09:30:00-04:00",
+      "closes_at": "2026-08-20T16:00:00-04:00",
+      "completion_at": "2026-08-20T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-21",
+      "opens_at": "2026-08-21T09:30:00-04:00",
+      "closes_at": "2026-08-21T16:00:00-04:00",
+      "completion_at": "2026-08-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-24",
+      "opens_at": "2026-08-24T09:30:00-04:00",
+      "closes_at": "2026-08-24T16:00:00-04:00",
+      "completion_at": "2026-08-24T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-25",
+      "opens_at": "2026-08-25T09:30:00-04:00",
+      "closes_at": "2026-08-25T16:00:00-04:00",
+      "completion_at": "2026-08-25T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-26",
+      "opens_at": "2026-08-26T09:30:00-04:00",
+      "closes_at": "2026-08-26T16:00:00-04:00",
+      "completion_at": "2026-08-26T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-27",
+      "opens_at": "2026-08-27T09:30:00-04:00",
+      "closes_at": "2026-08-27T16:00:00-04:00",
+      "completion_at": "2026-08-27T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-28",
+      "opens_at": "2026-08-28T09:30:00-04:00",
+      "closes_at": "2026-08-28T16:00:00-04:00",
+      "completion_at": "2026-08-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-08-31",
+      "opens_at": "2026-08-31T09:30:00-04:00",
+      "closes_at": "2026-08-31T16:00:00-04:00",
+      "completion_at": "2026-08-31T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-01",
+      "opens_at": "2026-09-01T09:30:00-04:00",
+      "closes_at": "2026-09-01T16:00:00-04:00",
+      "completion_at": "2026-09-01T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-02",
+      "opens_at": "2026-09-02T09:30:00-04:00",
+      "closes_at": "2026-09-02T16:00:00-04:00",
+      "completion_at": "2026-09-02T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-03",
+      "opens_at": "2026-09-03T09:30:00-04:00",
+      "closes_at": "2026-09-03T16:00:00-04:00",
+      "completion_at": "2026-09-03T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-04",
+      "opens_at": "2026-09-04T09:30:00-04:00",
+      "closes_at": "2026-09-04T16:00:00-04:00",
+      "completion_at": "2026-09-04T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-08",
+      "opens_at": "2026-09-08T09:30:00-04:00",
+      "closes_at": "2026-09-08T16:00:00-04:00",
+      "completion_at": "2026-09-08T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-09",
+      "opens_at": "2026-09-09T09:30:00-04:00",
+      "closes_at": "2026-09-09T16:00:00-04:00",
+      "completion_at": "2026-09-09T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-10",
+      "opens_at": "2026-09-10T09:30:00-04:00",
+      "closes_at": "2026-09-10T16:00:00-04:00",
+      "completion_at": "2026-09-10T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-11",
+      "opens_at": "2026-09-11T09:30:00-04:00",
+      "closes_at": "2026-09-11T16:00:00-04:00",
+      "completion_at": "2026-09-11T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-14",
+      "opens_at": "2026-09-14T09:30:00-04:00",
+      "closes_at": "2026-09-14T16:00:00-04:00",
+      "completion_at": "2026-09-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-15",
+      "opens_at": "2026-09-15T09:30:00-04:00",
+      "closes_at": "2026-09-15T16:00:00-04:00",
+      "completion_at": "2026-09-15T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-16",
+      "opens_at": "2026-09-16T09:30:00-04:00",
+      "closes_at": "2026-09-16T16:00:00-04:00",
+      "completion_at": "2026-09-16T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-17",
+      "opens_at": "2026-09-17T09:30:00-04:00",
+      "closes_at": "2026-09-17T16:00:00-04:00",
+      "completion_at": "2026-09-17T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-18",
+      "opens_at": "2026-09-18T09:30:00-04:00",
+      "closes_at": "2026-09-18T16:00:00-04:00",
+      "completion_at": "2026-09-18T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-21",
+      "opens_at": "2026-09-21T09:30:00-04:00",
+      "closes_at": "2026-09-21T16:00:00-04:00",
+      "completion_at": "2026-09-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-22",
+      "opens_at": "2026-09-22T09:30:00-04:00",
+      "closes_at": "2026-09-22T16:00:00-04:00",
+      "completion_at": "2026-09-22T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-23",
+      "opens_at": "2026-09-23T09:30:00-04:00",
+      "closes_at": "2026-09-23T16:00:00-04:00",
+      "completion_at": "2026-09-23T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-24",
+      "opens_at": "2026-09-24T09:30:00-04:00",
+      "closes_at": "2026-09-24T16:00:00-04:00",
+      "completion_at": "2026-09-24T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-25",
+      "opens_at": "2026-09-25T09:30:00-04:00",
+      "closes_at": "2026-09-25T16:00:00-04:00",
+      "completion_at": "2026-09-25T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-28",
+      "opens_at": "2026-09-28T09:30:00-04:00",
+      "closes_at": "2026-09-28T16:00:00-04:00",
+      "completion_at": "2026-09-28T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-29",
+      "opens_at": "2026-09-29T09:30:00-04:00",
+      "closes_at": "2026-09-29T16:00:00-04:00",
+      "completion_at": "2026-09-29T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-09-30",
+      "opens_at": "2026-09-30T09:30:00-04:00",
+      "closes_at": "2026-09-30T16:00:00-04:00",
+      "completion_at": "2026-09-30T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-01",
+      "opens_at": "2026-10-01T09:30:00-04:00",
+      "closes_at": "2026-10-01T16:00:00-04:00",
+      "completion_at": "2026-10-01T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-02",
+      "opens_at": "2026-10-02T09:30:00-04:00",
+      "closes_at": "2026-10-02T16:00:00-04:00",
+      "completion_at": "2026-10-02T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-05",
+      "opens_at": "2026-10-05T09:30:00-04:00",
+      "closes_at": "2026-10-05T16:00:00-04:00",
+      "completion_at": "2026-10-05T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-06",
+      "opens_at": "2026-10-06T09:30:00-04:00",
+      "closes_at": "2026-10-06T16:00:00-04:00",
+      "completion_at": "2026-10-06T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-07",
+      "opens_at": "2026-10-07T09:30:00-04:00",
+      "closes_at": "2026-10-07T16:00:00-04:00",
+      "completion_at": "2026-10-07T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-08",
+      "opens_at": "2026-10-08T09:30:00-04:00",
+      "closes_at": "2026-10-08T16:00:00-04:00",
+      "completion_at": "2026-10-08T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-09",
+      "opens_at": "2026-10-09T09:30:00-04:00",
+      "closes_at": "2026-10-09T16:00:00-04:00",
+      "completion_at": "2026-10-09T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-12",
+      "opens_at": "2026-10-12T09:30:00-04:00",
+      "closes_at": "2026-10-12T16:00:00-04:00",
+      "completion_at": "2026-10-12T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-13",
+      "opens_at": "2026-10-13T09:30:00-04:00",
+      "closes_at": "2026-10-13T16:00:00-04:00",
+      "completion_at": "2026-10-13T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-14",
+      "opens_at": "2026-10-14T09:30:00-04:00",
+      "closes_at": "2026-10-14T16:00:00-04:00",
+      "completion_at": "2026-10-14T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-15",
+      "opens_at": "2026-10-15T09:30:00-04:00",
+      "closes_at": "2026-10-15T16:00:00-04:00",
+      "completion_at": "2026-10-15T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-16",
+      "opens_at": "2026-10-16T09:30:00-04:00",
+      "closes_at": "2026-10-16T16:00:00-04:00",
+      "completion_at": "2026-10-16T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-19",
+      "opens_at": "2026-10-19T09:30:00-04:00",
+      "closes_at": "2026-10-19T16:00:00-04:00",
+      "completion_at": "2026-10-19T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-20",
+      "opens_at": "2026-10-20T09:30:00-04:00",
+      "closes_at": "2026-10-20T16:00:00-04:00",
+      "completion_at": "2026-10-20T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-21",
+      "opens_at": "2026-10-21T09:30:00-04:00",
+      "closes_at": "2026-10-21T16:00:00-04:00",
+      "completion_at": "2026-10-21T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-22",
+      "opens_at": "2026-10-22T09:30:00-04:00",
+      "closes_at": "2026-10-22T16:00:00-04:00",
+      "completion_at": "2026-10-22T16:15:00-04:00",
+      "shortened": false
+     },
+     {
+      "session": "2026-10-23",
+      "opens_at": "2026-10-23T09:30:00-04:00",
+      "closes_at": "2026-10-23T16:00:00-04:00",
+      "completion_at": "2026-10-23T16:15:00-04:00",
+      "shortened": false
+     }
+    ]
+   }
   },
   "sanitised": {
    "replaced": 0,
@@ -480,19 +981,32 @@
    "prepare_before_et": "09:28",
    "bases": [
     "weekday_after_session",
-    "weekday_after_closed_session"
+    "weekday_after_closed_session",
+    "exchange_session_after"
    ],
    "limits": [
     "no_holiday_calendar",
-    "regular_hours_assumed"
+    "regular_hours_assumed",
+    "exchange_schedule_may_change"
    ]
+  },
+  "calendar": {
+   "version": 1,
+   "exchange": "XNYS",
+   "library": "exchange_calendars",
+   "library_version": "4.13.2",
+   "timezone": "America/New_York",
+   "supported_start": "1990-01-01",
+   "supported_end": "2035-12-31",
+   "completion_buffer_minutes": 15,
+   "schedule_past_days": 45,
+   "schedule_future_days": 45
   },
   "pipeline": {
    "max_reads": 12,
    "fetch_budget_seconds": 900,
    "lookback_days": 260,
    "min_coverage_fraction": 0.5,
-   "closed_fraction": 0.05,
    "max_error_fraction": 0.05,
    "trade_grades": [
     "A+",
@@ -600,6 +1114,12 @@
    }
   },
   "history": [
+   {
+    "date": "2026-07-30",
+    "up4": 0,
+    "down4": 0,
+    "ratio_10d": null
+   },
    {
     "date": "2026-07-31",
     "up4": 0,
@@ -757,12 +1277,6 @@
     "ratio_10d": null
    },
    {
-    "date": "2026-09-07",
-    "up4": 0,
-    "down4": 0,
-    "ratio_10d": null
-   },
-   {
     "date": "2026-09-08",
     "up4": 0,
     "down4": 0,
@@ -843,7 +1357,7 @@
   "beyond": [],
   "cut": [],
   "skipped": [],
-  "sentence": "Model allocation: tomorrow's tickets would commit $0.00 of the configured $10,000.00; 2 of 4 slots (2 open model plans)"
+  "sentence": "Model allocation: next-session tickets would commit $0.00 of the configured $10,000.00; 2 of 4 slots (2 open model plans)"
  },
  "watchlist": {
   "top": [],
@@ -893,7 +1407,7 @@
   {
    "ticker": "VRT",
    "kind": "burst",
-   "picked": "2026-09-04",
+   "picked": "2026-09-03",
    "day": 2,
    "sessions": 4,
    "status": "stopped",
@@ -901,7 +1415,7 @@
    "events": [
     {
      "day": 1,
-     "date": "2026-09-07",
+     "date": "2026-09-04",
      "event": "stop_raised_to_entry_low",
      "price": 25.74
     },
@@ -943,7 +1457,7 @@
   {
    "ticker": "SMCI",
    "kind": "burst",
-   "picked": "2026-09-07",
+   "picked": "2026-09-04",
    "grade": "A",
    "stop": 24.84,
    "targets": {
@@ -1126,18 +1640,18 @@
  "closest_miss": null,
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
-  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.session_state and this, against the browser's clock in ET.",
+  "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all, with the calendar it could not read named in its limits. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",
   "breadth": "The Market Monitor for the session and the regime verdict with its reasons verbatim. The size multiplier is the regime's; the plans already carry it.",
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
-  "trades": "Tickers of the bursts to trade tomorrow, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
+  "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
-  "cash_budget": "Model allocation: what tomorrow's tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
+  "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the read threshold and the uncertain count by reason. Rates are over settled plans alone. The rules' record, not yours. Null until a plan has settled.",

@@ -178,62 +178,56 @@
     const p = {}; f.formatToParts(now).forEach((x) => { p[x.type] = x.value; });
     return { date: p.year + '-' + p.month + '-' + p.day, weekday: WD.indexOf(p.weekday), hour: (+p.hour) % 24, minute: +p.minute };
   }
-  const isWeekday = (dt) => dt.getUTCDay() !== 0 && dt.getUTCDay() !== 6;
-  function prevWeekday(iso) {
-    const dt = parseISO(iso);
-    do { dt.setUTCDate(dt.getUTCDate() - 1); } while (!isWeekday(dt));
-    return toISO(dt);
+  // Only the publication's versioned XNYS schedule answers session questions.
+  // Outside its bounded range, freshness is unknown; no weekday fallback.
+  function calendarOf(data) {
+    const c = ((data || {}).run || {}).calendar, q = c && c.schedule;
+    if (!c || c.exchange !== 'XNYS' || !c.library_version || !q || !Array.isArray(q.sessions)) return null;
+    const rows = q.sessions;
+    if (!rows.length || rows.some((r, i) => !r.session || !instant(r.opens_at) || !instant(r.closes_at) ||
+        !instant(r.completion_at) || !(instant(r.opens_at) < instant(r.closes_at)) ||
+        !(instant(r.closes_at) < instant(r.completion_at)) || (i && r.session <= rows[i - 1].session))) return null;
+    return { basis: c, start: q.start, through: q.through, rows: rows };
   }
-  // weekdays x with a < x <= b (0 when b <= a)
-  function weekdaysBetween(a, b) {
-    const da = parseISO(a), db = parseISO(b);
-    if (!da || !db || db <= da) return 0;
-    let n = 0; const dt = new Date(da.getTime());
-    while (dt < db) { dt.setUTCDate(dt.getUTCDate() + 1); if (isWeekday(dt)) n++; }
-    return n;
-  }
-  function weekdaysEnding(iso, n) {
-    const out = []; const dt = parseISO(iso);
-    while (out.length < n) { if (isWeekday(dt)) out.unshift(toISO(dt)); dt.setUTCDate(dt.getUTCDate() - 1); }
-    return out;
-  }
+  SCStock.calendarOf = calendarOf;
 
   // ---------------------------------------------------------------- status
-  // The one rule the page computes. `expected` is the last session that has
-  // CLOSED at `now` in ET: today's date on a weekday from 4:00 PM, otherwise
-  // the previous weekday. `behind` counts the weekdays between the session
-  // the record was published FOR and that. No holiday calendar: one session
-  // behind is ambiguous (closed or failed) and says so; two is never a
-  // closure, because no two US market holidays are adjacent.
   function status(data, now) {
     const run = (data && data.run) || {};
-    const et = etParts(now || new Date());
-    const weekday = et.weekday >= 1 && et.weekday <= 5;
-    const expected = weekday && et.hour >= 16 ? et.date : prevWeekday(et.date);
+    const at = now || new Date(), et = etParts(at), cal = calendarOf(data);
     const recordFor = run.expected_session || run.session || null;
-    const behind = recordFor ? weekdaysBetween(recordFor, expected) : 99;
-    // pending from the close until the 8:16 PM ET retry has had time to run
-    const pending = weekday && et.hour >= 16 && et.hour < PENDING_UNTIL_HOUR;
     const session = run.session || null, sessionWords = session ? dateWords(session) : 'no session';
+    if (run.status === 'failed' || !recordFor) return { expected: null, behind: null, session: session, state: 'failed', chip: 'no verdict', tone: 'danger', sentence: 'The run did not finish; nothing below is a verdict. Check the run log.' };
+    if (!cal || et.date < cal.start || et.date > cal.through || recordFor < cal.start || recordFor > cal.through) {
+      return { expected: null, behind: null, session: session, state: 'unknown', chip: 'calendar unavailable', tone: 'warn',
+        sentence: 'This record has no exchange-calendar evidence covering this date. Freshness is unknown; research only. Its original timing is preserved.' };
+    }
+    const completed = cal.rows.filter((r) => instant(r.completion_at) <= at);
+    const expected = completed.length ? completed[completed.length - 1].session : null;
+    if (!expected || recordFor > expected) return { expected: expected, behind: null, session: session, state: 'unknown', chip: 'session not completed', tone: 'warn',
+      sentence: 'The measured session is later than the calendar’s most recent completed session at this clock. Research only.' };
+    const behind = recordFor && expected ? cal.rows.filter((r) => r.session > recordFor && r.session <= expected).length : 99;
+    const today = cal.rows.find((r) => r.session === et.date);
+    const pending = today && instant(today.completion_at) <= at && et.hour < PENDING_UNTIL_HOUR;
     const base = { expected: expected, behind: behind, session: session };
     if (!recordFor || run.status === 'failed') {
       return Object.assign(base, { state: 'failed', chip: 'no verdict', tone: 'danger', sentence: 'The run did not finish; nothing below is a verdict. Check the run log.' });
     }
     if (behind >= 2) {
       return Object.assign(base, { state: 'stale2', chip: 'STALE · ' + behind + ' sessions behind', tone: 'danger', keepCase: true,
-        sentence: 'The run has not published for ' + behind + ' sessions. Something is broken — check the run log; nothing below is tomorrow’s plan.' });
+        sentence: 'The run has not published for ' + behind + ' sessions. Something is broken — check the run log; nothing below is a current plan.' });
     }
     if (behind === 1 && pending) {
       return Object.assign(base, { state: 'pending', chip: 'tonight’s run pending', tone: 'info',
-        sentence: 'Tonight’s run has not published yet. What is below is ' + sessionWords + '’s plan — do not act on it as tomorrow’s.' });
+        sentence: 'Tonight’s run has not published yet. What is below is ' + sessionWords + '’s plan — do not treat it as a new signal.' });
     }
     if (behind === 1) {
       return Object.assign(base, { state: 'stale1', chip: 'STALE · 1 session behind', tone: 'warn', keepCase: true,
-        sentence: 'No run published for ' + dateWords(expected) + '. Either the market was closed or the run failed — check the run log. Do not place these orders.' });
+        sentence: 'No run published for ' + dateWords(expected) + '. The calendar expected a session; check the run log. Do not place these orders.' });
     }
-    if (run.session_state === 'closed') {
+    if (!today && behind === 0 && run.status !== 'degraded') {
       return Object.assign(base, { state: 'closed', chip: 'market closed', tone: 'neutral',
-        sentence: sessionWords + '’s plans stand; the market was closed on ' + dateWords(recordFor) + '.' });
+        sentence: sessionWords + '’s plans stand; the market was closed on ' + dateWords(et.date) + ' on the recorded XNYS schedule. The next applicable session is ' + dateWords(cal.basis.applicable_session) + '.' });
     }
     if (run.status === 'degraded' || (run.problems && run.problems.length)) {
       const kinds = (run.problems || []).map((p) => p && p.kind).filter((k) => PROBLEMS[k]);
@@ -245,7 +239,7 @@
   SCStock.status = status;
   SCStock.PROBLEM_SENTENCES = PROBLEMS;
   // a page in one of these states offers no order: the tickets are withheld from the reader's hand
-  const BLOCKED = ['stale1', 'stale2', 'pending', 'failed'];
+  const BLOCKED = ['stale1', 'stale2', 'pending', 'failed', 'unknown'];
   const blocked = (st) => BLOCKED.indexOf(st.state) >= 0;
 
   // ---------------------------------------------------------------- the two clocks
@@ -267,8 +261,9 @@
   const PHASE_TONE = { upcoming: 'brand', open: 'good', ended: 'neutral', unknown: 'warn' };
   // one sentence per src/timing.py LIMITS key (tests/test_docs.py holds the two lists equal)
   const TIMING_LIMITS = {
-    no_holiday_calendar: 'SpicyStock carries no market-holiday calendar, so the applicable session is the next weekday: a holiday moves it, and the date is printed so the mistake is visible.',
-    regular_hours_assumed: 'The window is the regular session’s: a shortened session closes early and still opens at 9:30 AM ET.'
+    no_holiday_calendar: 'This historical record used weekday arithmetic without a holiday calendar; its original applicable date may be wrong.',
+    regular_hours_assumed: 'This historical record assumed regular hours; shortened-session hours were not established.',
+    exchange_schedule_may_change: 'Exchange schedules can change after publication; this record preserves the XNYS authority and version used.'
   };
 
   function instant(value) {
@@ -336,18 +331,6 @@
     if (t < tm.opens.getTime()) return 'upcoming';
     return t < tm.cutoff.getTime() ? 'open' : 'ended';
   }
-  // a session's phase from its DATE alone, for a saved setup whose own night
-  // is not the record on screen. No offset arithmetic: `now` is read in ET
-  // and compared as wall clock against the policy times the run serialized.
-  function phaseOfSession(iso, tm, now) {
-    if (!text(iso) || !tm || !tm.et || !tm.et.opens || !tm.et.cutoff) return 'unknown';
-    const et = etParts(now || new Date());
-    if (iso > et.date) return 'upcoming';
-    if (iso < et.date) return 'ended';
-    const mins = et.hour * 60 + et.minute, hm = (s) => (+s.slice(0, 2)) * 60 + (+s.slice(3, 5));
-    if (mins < hm(tm.et.opens)) return 'upcoming';
-    return mins < hm(tm.et.cutoff) ? 'open' : 'ended';
-  }
   const clockET = (hhmm, suffix) => { const m = /^(\d\d):(\d\d)$/.exec(String(hhmm || '')); if (!m) return null;
     const h = +m[1]; return ((h % 12) || 12) + ':' + m[2] + (suffix === false ? '' : (h < 12 ? ' AM' : ' PM') + ' ET'); };
   // "9:30-10:00 AM ET", the meridiem and the zone said once when both share them
@@ -400,7 +383,7 @@
     if (!st.sentence) { line.hidden = true; return; }
     const alarm = st.state !== 'closed';
     const block = el('div', { 'class': (alarm ? 'sc-notice' : 'sc-callout sc-callout--core') + ' ss-notice', role: alarm ? 'alert' : null });
-    block.appendChild(el('div', { 'class': alarm ? 'sc-eyebrow' : 'sc-callout__label', text: st.state === 'degraded' ? 'degraded' : st.state === 'closed' ? 'market closed' : st.state === 'pending' ? 'pending' : st.state === 'failed' ? 'no verdict' : 'stale' }));
+    block.appendChild(el('div', { 'class': alarm ? 'sc-eyebrow' : 'sc-callout__label', text: st.state === 'degraded' ? 'degraded' : st.state === 'closed' ? 'market closed' : st.state === 'pending' ? 'pending' : st.state === 'failed' ? 'no verdict' : st.state === 'unknown' ? 'calendar unavailable' : 'stale' }));
     if (st.state === 'degraded') {
       (st.problems && st.problems.length ? st.problems : [null]).forEach((k) => block.appendChild(el('p', { text: k ? PROBLEMS[k] : st.sentence })));
     } else {
@@ -544,12 +527,18 @@
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // what the record says about WHEN its plans apply, and what its calendar
     // could not read. Printed here rather than argued: the run wrote it.
+    const calendar = run.calendar;
+    line(calendar ? 'Exchange calendar: ' + calendar.exchange + ' (' + calendar.exchange_name + '), ' + calendar.library + ' ' + calendar.library_version +
+      '. Measured ' + calendar.measured_session + '; previous ' + calendar.previous_session + '; next applicable ' + calendar.applicable_session +
+      '. Completion policy: scheduled close plus ' + calendar.completion_buffer_minutes + ' minutes. Browser schedule ' + calendar.schedule.start + ' through ' + calendar.schedule.through + '.' :
+      'Exchange-calendar provenance is unknown for this historical record; its original timing limitations still apply.');
     const tm = av.timing;
     if (tm.known) {
       line('The plans are for ' + dateWords(tm.session) + ', whose scheduled entry window is ' + windowWords(tm) +
         ' (' + tm.window + '), have the orders ready by ' + clockET(tm.et.prepareBy) + '. Times are ' +
         ((run.timing || {}).timezone || 'America/New_York') + ', carried with their offsets so no clock here guesses one.' +
         (tm.closedSession ? ' The market was closed on ' + dateWords(tm.closedSession) + ', so the plans dated for it apply to this session instead.' : ''));
+      line('Scheduled exchange close: ' + ((run.timing || {}).closes_at || 'unknown') + ((run.timing || {}).shortened ? ' · shortened session.' : '.'));
       tm.limits.forEach((k) => line('Entry-timing limitation: ' + TIMING_LIMITS[k]));
     } else {
       line('This record does not say which session its plans are for' + (tm.present ? ' in a shape this page can read' : '') +
@@ -2244,6 +2233,7 @@
       evidence: followEvidenceOf(c, record),
       provenance: record.provenance || { session: run.session, published_at: run.published_at, run_id: run.run_id, rules_version: app.rules_version },
       snapshot: {
+        timing: run.timing || null, calendar: run.calendar ? { exchange: run.calendar.exchange, library: run.calendar.library, library_version: run.calendar.library_version, measured: run.calendar.measured, applicable: run.calendar.applicable } : null,
         input_basis: run.input_basis || null, universe: run.universe ? { source: run.universe.source, fetched_at: run.universe.fetched_at, identity: run.universe.identity, snapshot_relation: run.universe.snapshot_relation } : null,
         name: c.name || '', close: isNum(b.close) ? b.close : null, close_date: run.session || '', grade: c.grade || null, score: isNum(c.score) ? c.score : null,
         status: c.status, status_words: statusWords(c.status)[0], scan: b.scan || null, reader_reason: text((b.claude || {}).reason),
@@ -2670,17 +2660,10 @@
     open.addEventListener('click', () => { closeCompare(); navigate(savedHash(id)); }); box.appendChild(open);
     return box;
   }
-  // business days between two dates: the trail's own x axis, so a gap in the
-  // dots is a session nothing was observed for and adjacent dots are adjacent
-  // sessions. A market holiday reads as a gap, which overstates what is
-  // missing rather than hiding it.
-  function bdaysBetween(from, to) {
+  // Date spacing remains honest even for old saved records with no calendar.
+  function calendarDaysBetween(from, to) {
     const a = parseISO(from), b = parseISO(to);
-    if (!a || !b || b < a) return 0;
-    let n = 0;
-    const cur = new Date(a.getTime());
-    while (cur < b) { cur.setUTCDate(cur.getUTCDate() + 1); if (isWeekday(cur)) n++; }
-    return n;
+    return a && b && b >= a ? Math.round((b - a) / 86400000) : 0;
   }
   const TRAIL_W = 240, TRAIL_H = 46;
   // The observed closes as dots at their own dates, with the signal close as
@@ -2691,12 +2674,12 @@
     const obs = item.observations || [];
     if (!obs.length || !isNum(o.base)) return null;
     const first = o.baseDate, last = obs[obs.length - 1].date;
-    const span = Math.max(1, bdaysBetween(first, last));
+    const span = Math.max(1, calendarDaysBetween(first, last));
     const values = [o.base].concat(obs.map((x) => x.c));
     let lo = Math.min.apply(null, values), hi = Math.max.apply(null, values);
     const pad = (hi - lo) * 0.18 || Math.max(0.01, hi * 0.01);
     lo -= pad; hi += pad;
-    const x = (date) => 10 + bdaysBetween(first, date) / span * (TRAIL_W - 20);
+    const x = (date) => 10 + calendarDaysBetween(first, date) / span * (TRAIL_W - 20);
     const y = (v) => Math.round((TRAIL_H - 9 - (v - lo) / (hi - lo) * (TRAIL_H - 18)) * 10) / 10;
     const kids = [
       svg('line', { 'class': 'ss-trail__base', x1: 2, x2: TRAIL_W - 2, y1: y(o.base), y2: y(o.base) }),
@@ -2714,7 +2697,7 @@
       : plural(obs.length, 'observed close') + ' from ' + usd(obs[0].c) + ' on ' + dateWords(obs[0].date) + ' to ' + usd(obs[obs.length - 1].c) + ' on ' + dateWords(last) + ', against the ' + usd(o.base) + ' signal close.';
     const caption = obs.length === 1
       ? 'One observed close against the ' + usd(o.base) + ' signal close (dashed).'
-      : plural(obs.length, 'observed close') + ', ' + dateShort(obs[0].date) + ' to ' + dateShort(last) + ', against the ' + usd(o.base) + ' signal close (dashed). Sessions with no observation are left empty and the dots are not joined.';
+      : plural(obs.length, 'observed close') + ', ' + dateShort(obs[0].date) + ' to ' + dateShort(last) + ', against the ' + usd(o.base) + ' signal close (dashed). Calendar-date spacing; dates with no observation are left empty and the dots are not joined.';
     return el('figure', { 'class': 'ss-trail', 'data-points': String(obs.length) }, [
       svg('svg', { viewBox: '0 0 ' + TRAIL_W + ' ' + TRAIL_H, 'class': 'ss-trail__svg', role: 'img', 'aria-label': spoken, focusable: 'false' }, kids),
       el('figcaption', { 'class': 'sc-hint', text: caption })
@@ -2804,7 +2787,7 @@
     const notes = (st0.notes || []).filter((n) => n && n !== mig);
     const rest = notes.length ? notes : [st0.error && st0.error !== mig ? st0.error : ''];
     setFollowStatus([mig, st0.aside && rest.indexOf(st0.aside) < 0 ? st0.aside : ''].concat(rest).filter(Boolean).join(' '));
-    if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'No saved setups yet. Save a setup from Today’s scan, or find an earlier published signal above. No amount or purchase information is needed.' : 'Nothing can be followed in this browser.' })); return; }
+    if (!items.length) { list.appendChild(el('div', { 'class': 'ss-following__empty', text: st0.available ? 'No saved setups yet. Save a setup from Latest scan, or find an earlier published signal above. No amount or purchase information is needed.' : 'Nothing can be followed in this browser.' })); return; }
     items.slice().reverse().forEach((it) => list.appendChild(followedCard(it)));
   }
   // One refresh after any change to the shelf: the shelf itself, the jump
@@ -2993,6 +2976,7 @@
       close]));
     wrap.appendChild(el('p', { 'class': 'ss-saved__note', text: cap((text(snap.status_words) || 'no ticket')) + ' in the ' + dateWords(item.session) + ' record — a fact about that record, not a ticket available now.' }));
     wrap.appendChild(el('p', { 'class': 'sc-hint', 'data-saved-input-basis': '', text: 'Original bars: ' + barBasis({ input_basis: snap.input_basis }) + '. Directory snapshot: ' + ((snap.universe || {}).fetched_at || 'not recorded') + '; historical membership is not established.' }));
+    wrap.appendChild(el('p', { 'class': 'sc-hint', 'data-saved-timing': '', text: snap.calendar && snap.timing ? 'Original timing: ' + snap.timing.applicable_session + '; scheduled close ' + snap.timing.closes_at + '; ' + snap.calendar.exchange + ' / ' + snap.calendar.library + ' ' + snap.calendar.library_version + '. This saved evidence is not rewritten.' : 'Original exchange-calendar provenance is unknown; historical timing has not been recalculated.' }));
     wrap.appendChild(annotationForm(item));
     wrap.appendChild(savedSignalSection(item));
     wrap.appendChild(savedSinceSection(item));
@@ -3110,7 +3094,7 @@
     return el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
       el('div', { 'class': 'ss-decision__item', 'data-item': it[0] }, [el('h3', { 'class': 'sc-eyebrow', text: it[1] })].concat(it[2].filter(Boolean).map((p) => el('p', { text: p }))))));
   }
-  const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : 'stale';
+  const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : s.state === 'unknown' ? 'without calendar evidence' : 'stale';
   function openDisclosure(id) {
     const det = $(id); if (!det) return;
     det.open = true; scrollTo(det);
@@ -3379,7 +3363,7 @@
     $('orders-summary').textContent = forDay + ' · ' + (withOrders.length ? plural(withOrders.length, 'order') + (offered ? '' : ', ' + av.lead) : 'none');
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
-    budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: tomorrow’s tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
+    budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: next-session tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
     if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
     budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
     // the cut's own reason already opens with "ticket withheld" when the stop
@@ -3530,14 +3514,15 @@
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
     const end = (data.run || {}).expected_session || (data.run || {}).session;
-    const days = end ? weekdaysEnding(end, 14) : [];
+    const cal = calendarOf(data);
+    const days = cal && end ? cal.rows.filter((r) => r.session <= end).slice(-14).map((r) => r.session) : Object.keys(nights).sort().slice(-14);
     const counts = { ok: 0, degraded: 0, closed: 0, failed: 0, missing: 0 };
-    const list = el('ol', { 'class': 'ss-nights', id: 'nights', 'aria-label': 'The last fourteen evenings' }, days.map((iso) => {
+    const list = el('ol', { 'class': 'ss-nights', id: 'nights', 'aria-label': 'Recent recorded exchange sessions' }, days.map((iso) => {
       const nt = nights[iso], s = nt ? (counts[nt.status] !== undefined ? nt.status : 'ok') : 'missing';
       counts[s]++;
       return el('li', { 'class': 'ss-night is-' + s, 'data-session': iso, 'data-status': s, title: dateWords(iso) + ' · ' + s }, el('span', { 'class': 'sc-sr-only', text: dateWords(iso) + ' ' + s }));
     }));
-    card.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:16px', text: 'the last fourteen evenings' }));
+    card.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:16px', text: cal ? 'the last fourteen exchange sessions' : 'recorded nights · calendar unknown' }));
     card.appendChild(list);
     card.appendChild(el('div', { 'class': 'ss-nights-key' }, [
       el('span', null, [el('i', { 'class': 'ss-night is-ok' }), counts.ok + ' ok']),

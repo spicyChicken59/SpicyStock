@@ -260,7 +260,7 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
     const fOpts = { ticker: 'AAPL', card: true, futureSlots: 6, ma: [], burstIndex: s2.length - 1, gutterLabels: true };
     const now = SCStock.chartGeometry(s2, fOpts, 900, 380);
     const saved = SCStock.chartGeometry(s2, { ...fOpts, futureLabel: 'the session after →' }, 900, 380);
-    ok('the future gutter is named tomorrow by default', now.tomorrow && now.tomorrow.text === 'tomorrow →', JSON.stringify(now.tomorrow));
+    ok('the future gutter is named next session by default', now.tomorrow && now.tomorrow.text === 'next session →', JSON.stringify(now.tomorrow));
     // a longer label is placed by the same collision pass as the default, so
     // it moves within the plot rather than overlapping a level or leaving it
     ok('and an archived chart names it its own way, placed inside the plot',
@@ -269,8 +269,8 @@ const g360 = SCStock.chartGeometry(bars, options, 360, 320);
       && saved.tomorrow.x >= saved.plot.left && saved.tomorrow.x <= saved.plot.right + 1,
       JSON.stringify([saved.tomorrow, saved.plot]));
     ok('an empty or non-string label falls back to the default rather than printing nothing',
-      SCStock.chartGeometry(s2, { ...fOpts, futureLabel: '' }, 900, 380).tomorrow.text === 'tomorrow →'
-      && SCStock.chartGeometry(s2, { ...fOpts, futureLabel: 7 }, 900, 380).tomorrow.text === 'tomorrow →');
+      SCStock.chartGeometry(s2, { ...fOpts, futureLabel: '' }, 900, 380).tomorrow.text === 'next session →'
+      && SCStock.chartGeometry(s2, { ...fOpts, futureLabel: 7 }, 900, 380).tomorrow.text === 'next session →');
     ok('naming it moves no price and no label', JSON.stringify(saved.rightLabels) === JSON.stringify(now.rightLabels) && saved.domain.lo === now.domain.lo && saved.domain.hi === now.domain.hi);
   }
 

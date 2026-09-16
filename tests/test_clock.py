@@ -110,13 +110,12 @@ def test_the_two_clock_functions_can_never_disagree(day, hour):
     assert session_has_closed(now) == (current_session(now) == now.date())
 
 
-def test_a_trading_weekday_is_monday_to_friday_in_market_time():
+def test_legacy_trading_weekday_adapter_uses_exchange_membership():
     """Market time, not UTC: Friday 23:30 ET is Saturday in UTC and still a
-    trading weekday. Labor Day is a Monday and a weekday to this arithmetic;
-    the scan is what finds no bar for it."""
+    trading session date. Labor Day is a Monday but not an XNYS session."""
     assert is_trading_weekday(datetime(2026, 9, 5, 22, 16, tzinfo=timezone.utc)) is False   # Saturday
     assert is_trading_weekday(datetime(2026, 9, 6, 5, 34, tzinfo=timezone.utc)) is False    # Sunday
-    assert is_trading_weekday(datetime(2026, 9, 7, 22, 16, tzinfo=timezone.utc)) is True    # Labor Day
+    assert is_trading_weekday(datetime(2026, 9, 7, 22, 16, tzinfo=timezone.utc)) is False   # Labor Day
     assert is_trading_weekday(datetime(2026, 9, 5, 3, 30, tzinfo=timezone.utc)) is True     # Fri 23:30 ET
     assert session_has_closed(datetime(2026, 9, 5, 3, 30, tzinfo=timezone.utc)) is True
     assert session_has_closed(datetime(2026, 9, 5, 22, 16, tzinfo=timezone.utc)) is False
@@ -125,13 +124,12 @@ def test_a_trading_weekday_is_monday_to_friday_in_market_time():
 # --- the session before ----------------------------------------------------
 
 
-def test_previous_session_is_weekend_only_arithmetic_like_current_session():
+def test_previous_session_skips_weekends_and_exchange_holidays():
     assert previous_session(date(2026, 6, 24)) == date(2026, 6, 23)   # Wed -> Tue
-    assert previous_session(date(2026, 6, 22)) == date(2026, 6, 19)   # Mon -> Fri
-    assert previous_session(date(2026, 6, 20)) == date(2026, 6, 19)   # Sat -> Fri
-    assert previous_session(date(2026, 6, 21)) == date(2026, 6, 19)   # Sun -> Fri
-    assert previous_session(date(2026, 9, 8)) == date(2026, 9, 7), (
-        "Labor Day: the arithmetic does not know, which is why the scan reads the frames")
+    assert previous_session(date(2026, 6, 22)) == date(2026, 6, 18)   # Mon -> Fri
+    assert previous_session(date(2026, 6, 20)) == date(2026, 6, 18)   # Sat -> Fri
+    assert previous_session(date(2026, 6, 21)) == date(2026, 6, 18)   # Sun -> Fri
+    assert previous_session(date(2026, 9, 8)) == date(2026, 9, 4)  # Labor Day skipped
 
 
 # --- the pinned session ----------------------------------------------------

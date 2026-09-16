@@ -15,12 +15,11 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing, inputs
+from src import timing, inputs, sessions
 from src import universe
 from src import watchlist
 
@@ -32,7 +31,6 @@ FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
 MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publish (P)
-CLOSED_FRACTION = 0.05         # fewer names on the expected session than this is a closed market (P)
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
 SERIES_TOP = 24                # bursts, by rank, that carry a chart beside the trades and the cut names (plumbing)
@@ -51,14 +49,13 @@ DOCS_DIR = Path(__file__).resolve().parent.parent / "docs"
 CHARTS_DIR_NAME = "charts"
 DATA_FILE = "data.json"
 LIVE_FILE = "live.json"
-MARKET_TZ = ZoneInfo("America/New_York")
+MARKET_TZ = sessions.MARKET_TZ
 
 RULES = {
     "pipeline.max_reads": MAX_READS,
     "pipeline.fetch_budget_seconds": FETCH_BUDGET_SECONDS,
     "pipeline.lookback_days": LOOKBACK_DAYS,
     "pipeline.min_coverage_fraction": MIN_COVERAGE_FRACTION,
-    "pipeline.closed_fraction": CLOSED_FRACTION,
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
     "pipeline.yellow_grades": list(YELLOW_GRADES),
@@ -83,6 +80,8 @@ class RunReport:
     failure: str | None = None
 
     input_coverage: dict = field(default_factory=dict)
+    calendar_outcome: dict = field(default_factory=dict)
+    skipped: str | None = None
 
     def problem(self, kind: str, message: Any) -> None:
         self.problems.append(report.problem(self.stage, kind, message))
@@ -95,6 +94,8 @@ class RunReport:
 
     @property
     def status(self) -> str:
+        if self.skipped:
+            return self.skipped
         if self.failed and not self.published:
             return "failed"
         return "degraded" if self.problems or self.failed else "ok"
@@ -146,24 +147,21 @@ def preflight(run_type: str = "evening", dry_run: bool = False) -> None:
 # ---------------------------------------------------------------- session ---
 def expected_session(now: datetime | None = None) -> date:
     """The session tonight's run is expected to publish: a pin wins, else the
-    session the market clock says (today on a weekday, Friday on a weekend)."""
+    most recent completed XNYS session."""
     pinned = clock.pinned_session()
     return pinned if pinned else clock.current_session(now)
 
 
 def session_state(frames: dict[str, pd.DataFrame], expected: date) -> tuple[str, float]:
-    """'open', 'closed' or 'outage' from the bars alone, with the fraction of
-    answered frames whose newest bar is the expected session."""
+    """Calendar closure and bar coverage are independent facts."""
+    if not sessions.is_session(expected):
+        return "closed", 0.0
     if not frames:
         return "outage", 0.0
     newest = [market_data.last_bar_date(df) for df in frames.values()]
     have = sum(1 for d in newest if d == expected) / len(newest)
     if have >= MIN_COVERAGE_FRACTION:
         return "open", have
-    previous = clock.previous_session(expected)
-    carry_previous = sum(1 for d in newest if d == previous) / len(newest)
-    if have < CLOSED_FRACTION and carry_previous >= MIN_COVERAGE_FRACTION:
-        return "closed", have
     return "outage", have
 
 
@@ -545,7 +543,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -587,6 +585,22 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
     rep = RunReport()
     started = time.monotonic()
     rep.stage = "preflight"
+    now = now or datetime.now(timezone.utc)
+    try:
+        rep.calendar_outcome = sessions.run_decision(now, clock.pinned_session())
+    except ValueError as exc:
+        raise PreflightError(f"Session preflight: {exc}. Nothing has been spent.") from exc
+    if rep.calendar_outcome["outcome"] != "ready":
+        rep.skipped = rep.calendar_outcome["outcome"]
+        log.info("Calendar outcome: %s; previous publication unchanged; no new signals or email",
+                 json.dumps(rep.calendar_outcome, sort_keys=True))
+        return rep
+    try:
+        target = date.fromisoformat(rep.calendar_outcome["target_date"])
+        sessions.sessions_before(target, LOOKBACK_DAYS)
+        sessions.next_sessions(target, plan.FINAL_EXIT_DAY)
+    except ValueError as exc:
+        raise PreflightError(f"Session context: {exc}. Nothing has been spent.") from exc
     preflight("evening", dry_run)
     account = plan.Account.from_env()
     previous = load_previous(docs)
@@ -738,6 +752,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
             "timing": plan_timing(session, expected, closed),
+            "calendar": sessions.publication(session),
         }
         # a closed night is filed under the session that did not happen, so the
         # reliability row shows the holiday as closed and keeps the night before
@@ -826,29 +841,13 @@ def night_session(expected: date, session: date, closed: bool) -> str:
 
 
 def plan_timing(session: date, expected: date, closed: bool) -> dict:
-    """The night's ``run.timing``: which session tonight's plans are FOR and
-    when its entry window is scheduled.
-
-    On an open night the applicable session is ``plan.next_sessions(session,
-    1)[0]``, the very call ``plan.dated_schedule()`` makes for its day 1, so
-    the block and every plan's schedule name the same date by construction
-    rather than by agreement.
-
-    On a CLOSED night the run has the one piece of holiday knowledge this
-    repository ever gets: ``expected`` printed no bars, so it was not a
-    session. The plans that stood for it are dated for it and apply to the
-    weekday after it instead, which is what the block says -- with ``expected``
-    kept as ``closed_session`` so the page can explain the plan's own day 1
-    rather than contradict it.
-
-    It is written on every night, red and closed included: which session a
-    reader would act on is a fact about the record even when the record offers
-    nothing to do.
-    """
-    basis = timing.BASIS_AFTER_CLOSED if closed else timing.BASIS_WEEKDAY_AFTER
-    applicable = plan.next_sessions(expected if closed else session, 1)[0]
+    """The next actual session; a known closure never creates a new plan."""
+    if closed and sessions.is_session(expected):
+        raise ValueError(f"{expected} is an expected-open XNYS session, not a proven closure")
+    applicable = plan.next_sessions(session, 1)[0]
     return timing.plan_timing(session, applicable, window=plan.ENTRY_WINDOW,
-                              window_minutes=plan.ENTRY_WINDOW_MINUTES, basis=basis,
+                              window_minutes=plan.ENTRY_WINDOW_MINUTES,
+                              basis=timing.BASIS_EXCHANGE_AFTER,
                               closed_session=expected if closed else None)
 
 
@@ -965,6 +964,12 @@ def intraday_rows(data: dict, snaps: dict[str, dict]) -> list[dict]:
 def run_intraday(*, docs: Path = DOCS_DIR, now: datetime | None = None, client=None) -> RunReport:
     rep = RunReport()
     rep.stage = "preflight"
+    now = now or datetime.now(timezone.utc)
+    if not sessions.is_session(sessions.market_time(now).date()):
+        rep.calendar_outcome = sessions.run_decision(now, None)
+        rep.skipped = "no_session"
+        log.info("calendar outcome: %s; no snapshots or email", json.dumps(rep.calendar_outcome, sort_keys=True))
+        return rep
     preflight("intraday", dry_run=False)
     data = load_previous(docs)
     if not data:
@@ -1009,6 +1014,9 @@ def main(argv: list[str] | None = None) -> int:
     except PreflightError as exc:
         log.error("%s", exc)
         return EXIT_FAILED
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+            out.write(f"published={str(rep.published).lower()}\noutcome={rep.status}\n")
     code = rep.exit_code()
     log.info("exit %d (%s)", code, rep.status)
     return code

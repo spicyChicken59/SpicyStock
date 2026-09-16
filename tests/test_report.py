@@ -118,7 +118,7 @@ def _rendered(markup: str) -> str:
 # --- the cover ---------------------------------------------------------------------
 
 @pytest.mark.parametrize("label, run, breadth, trades, expected", [
-    ("green with trades", _run(), _breadth("green"), ["XYZ", "ABC"], "Trade tomorrow. 2 A-quality bursts."),
+    ("green with trades", _run(), _breadth("green"), ["XYZ", "ABC"], "Trade next session. 2 A-quality bursts."),
     ("yellow with trades", _run(), _breadth("yellow"), ["XYZ"], "Trade small. 1 A+ burst."),
     ("red", _run(), _breadth("red"), [], "Stand aside."),
     ("open, nothing qualifies", _run(), _breadth("green"), [], "Nothing qualifies. Keep cash."),
@@ -133,7 +133,7 @@ def test_the_cover_h1_takes_each_of_its_six_forms(label, run, breadth, trades, e
 def test_the_singular_form_is_used_for_one_trade_and_the_plural_for_more():
     one = cover(_run(), _breadth("green"), ["XYZ"], [_burst()], None)["h1"]
     two = cover(_run(), _breadth("yellow"), ["XYZ", "ABC"], [_burst(), _burst("ABC")], None)["h1"]
-    assert one == "Trade tomorrow. 1 A-quality burst."
+    assert one == "Trade next session. 1 A-quality burst."
     assert two == "Trade small. 2 A+ bursts."
 
 
@@ -176,7 +176,7 @@ def test_the_no_trade_dek_says_when_a_setup_qualified_and_its_ticket_did_not():
 
 
 @pytest.mark.parametrize("trades, label, target", [
-    (["XYZ"], "Tomorrow's orders", "#orders"),
+    (["XYZ"], "Next-session orders", "#orders"),
     ([], "Open model plans", "#hold"),
 ])
 def test_the_primary_action_points_at_the_orders_when_there_are_any(trades, label, target):
@@ -208,7 +208,7 @@ def test_every_cover_verb_is_one_the_vocabulary_names():
 def test_the_summary_is_one_sentence_from_the_published_numbers():
     assert summary(_burst()) == (
         "XYZ: +6.1% on 1.9× volume out of a 14-session base 6.2% deep. "
-        "Buy 12.34–12.71 tomorrow in the first 30 minutes, stop 11.62, aim 13.33–14.81 by day 5. "
+        "Buy 12.34–12.71 next session in the first 30 minutes, stop 11.62, aim 13.33–14.81 by day 5. "
         "A+ 8.6, 8 of 9 criteria."
     )
 
@@ -225,7 +225,7 @@ def test_the_summary_reads_the_shapes_the_plan_and_the_checklist_publish():
                      "final_exit_day": 5, "order_line": ORDER_LINE}
     assert summary(burst) == (
         "XYZ: +6.1% on 1.9× volume out of a 14-session base 6.2% deep. "
-        "Buy 12.34–12.71 tomorrow in the first 30 minutes, stop 11.62, aim 13.33–14.81 by day 5. "
+        "Buy 12.34–12.71 next session in the first 30 minutes, stop 11.62, aim 13.33–14.81 by day 5. "
         "A+ 8.6, 8 of 9 criteria."
     )
     del burst["plan"]["final_exit_day"]
@@ -313,7 +313,7 @@ def test_a_full_night_builds_with_the_schema_and_the_app_block():
     assert data["app"]["name"] == "SpicyStock" and data["app"]["version"] == "2.0"
     assert len(data["app"]["rules_version"]) == 12 and int(data["app"]["rules_version"], 16) >= 0
     assert data["generated"] == "2026-09-10T22:31:00Z"
-    assert data["trades"] == ["XYZ"] and data["cover"]["h1"] == "Trade tomorrow. 1 A-quality burst."
+    assert data["trades"] == ["XYZ"] and data["cover"]["h1"] == "Trade next session. 1 A-quality burst."
 
 
 def test_the_rules_version_moves_with_a_constant_and_not_with_key_order():
@@ -453,7 +453,7 @@ def test_contract_paths_names_every_path_with_arrays_as_brackets():
 # --- the digest ---------------------------------------------------------------------------------
 
 def test_the_subject_is_the_h1_and_the_session():
-    assert digest_subject(build(**_night())) == "Trade tomorrow. 1 A-quality burst. · 2026-09-10"
+    assert digest_subject(build(**_night())) == "Trade next session. 1 A-quality burst. · 2026-09-10"
 
 
 def test_the_digest_carries_the_order_line_the_plans_and_the_alerts():
@@ -510,7 +510,7 @@ def test_the_open_plan_chip_words_are_the_six_the_page_uses_and_an_unknown_one_i
 def test_the_digest_says_what_a_night_with_nothing_to_do_holds():
     data = build(**_night(trades=[], open_plans=[], watchlist={"top": [], "also_quiet": [], "counts": {}}))
     text = _rendered(digest_html(data))
-    assert "No orders for tomorrow." in text and "No open model plans." in text and "No anticipation names tonight." in text
+    assert "No orders for the next session." in text and "No open model plans." in text and "No anticipation names for this measured session." in text
     assert "SpicyStock does not know what you hold" in text and "What you hold" not in text
 
 
@@ -716,7 +716,7 @@ def test_the_digest_prints_an_uncertain_plan_and_a_withheld_ticket_in_the_pages_
                                         reason="ticket withheld: at the $12.71 limit the stop is 8.6% away"))
     night = _night(bursts=[_burst(), withheld, _miss()], trades=["XYZ"], beyond_cap=["WHD"], open_plans=[uncertain],
                    cash_budget={"committed_usd": 852, "slots_used": 2, "slots_max": 4,
-                                "sentence": "Model allocation: tomorrow's tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan)",
+                                "sentence": "Model allocation: next-session tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan)",
                                 "cut": [{"ticker": "WHD", "kind": "withheld", "reason": withheld["plan"]["reason"]}]})
     text = _rendered(digest_html(build(**night)))
     assert "UNCERTAIN" in text and uncertain["instruction"] in text
@@ -726,7 +726,7 @@ def test_the_digest_prints_an_uncertain_plan_and_a_withheld_ticket_in_the_pages_
     assert "No ticket for WHD" not in text
     assert text.count("ticket withheld: at the $12.71 limit") == 1, text
     assert "Beyond the slot cap" not in text
-    assert "Model allocation: tomorrow's tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan). Not a balance or buying power." in text
+    assert "Model allocation: next-session tickets would commit $852.00 of the configured $10,000.00; 2 of 4 slots (1 open model plan). Not a balance or buying power." in text
     assert "Open model plans" in text and "What you hold" not in text
 
 
