@@ -146,9 +146,9 @@ CONTRACT: dict[str, str] = {
     "open_plans": "Every published plan still inside its window, replayed to this session as a model: status "
                   "word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not "
                   "know what you hold: a plan you never took is a row to ignore.",
-    "scorecard": "The rules' record over the published plans as a model of their fills, always with n, the "
-                 "read threshold and the uncertain count by reason. Rates are over settled plans alone. The "
-                 "rules' record, not yours. Null until a plan has settled.",
+    "scorecard": "All retained published plans in the stated window, including pending and missing evidence. "
+                 "Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit "
+                 "denominator and minimum sample. Public model results, independent of personal selections.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
     "observations": "Public coverage of every published saveable signal, independent of local saves. "

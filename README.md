@@ -586,22 +586,40 @@ retention bounds, examples and measured impact. To verify a retained publication
 python tools/verify_provenance.py --record docs/data.json --picks docs/picks.json --objects docs/evidence
 ```
 
-**The scorecard is the rules' record, not yours.** Every pick is replayed
-from daily bars alone, as a model: a ticket is booked filled only at the
-next open, at or over its trigger and at or under its limit. A day that
-opened under the trigger and reached it later, an open above the limit or
-under the skip line that could still have filled a resting order, and a
-fill-day low at or under the stop are *uncertain*: no fill is booked, no R
-is scored, the plan keeps its slot in the model allocation, and the
-scorecard counts them by reason. The published stop is one R on the whole
-position; a half sold at +8% or at day 3 is "at least half" in whole shares
-(2 of 3, 1 of 1) and every sale is weighted by the shares it sold;
-everything settles by day 5.
+**The scorecard is the rules' record, not yours.** It counts every retained
+published Burst and Anticipation ticket from the prior 60 exchange sessions
+plus the current publication. Current plans await their first session. Missing
+or stale observations, uncertain fills, unreadable walks and unfilled orders
+stay in the total; none is silently converted to a loss, a win or zero R.
+Non-ticket setups and browser-local selections never enter that population.
+File-capacity and malformed-record limits are disclosed; this is not an
+unlimited inception-to-date record.
+
+The existing daily-bar replay is unchanged: a ticket is booked filled only at
+the next open, at or over its trigger and at or under its limit. Ambiguous
+trigger timing or fill/stop ordering remains uncertain. The published stop is
+one R on the whole position; a half sold at +8% or at day 3 is at least half in
+whole shares, and every sale is weighted by its quantity. With complete usable
+bars, everything settles by day 5. Missing evidence never establishes that exit.
+Only those five sessions feed the scorecard; later data gaps cannot erase its
+resolved result. A stop gap is modeled at the open, not at the stop price.
+
 It prints counts from the first night and rates only from twenty settled
-plans (an uncertain plan never counts toward that), and SPY over the same
-days is one comparison line beside it, not a benchmark. What it cannot
-see — a fill you never took, slippage, a stop that gapped — it says so
-under the tiles.
+plans. Wins, losses and breakeven reconcile to that explicit resolved denominator;
+mean and median R use the same plans. Breakeven is the existing R rounded to two
+decimals equalling zero. SPY is a percent-price comparison over matched entry/exit
+dates, with its own pair count, not portfolio performance or excess R. Small
+samples remain prominent, and twenty observations alone do not establish an edge.
+Fees, spread, tax, actual executions and subsequent split rebasing are not measured.
+
+[The scorecard contract](docs/scorecard-contract.md) documents all states,
+retention, price basis, regime, versioning and the offline analysis command.
+`tools/scorecard_analysis.py` uses the same replay and summary for complete
+partitions by original rules version, burst/dollar/both, grade, regime, kind and
+reader source. Exact original publication receipts establish attribution;
+missing metadata stays unknown. These partitions do not select a preferred
+strategy or change the aggregate. Legacy website summaries retain their recorded
+values and explicitly admit incomplete coverage accounting.
 
 ## What was cut, and why
 

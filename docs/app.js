@@ -3830,20 +3830,42 @@
   function renderRecord(data) {
     const sc = data.scorecard || {}, card = clear($('record-card'));
     const settled = isNum(sc.settled) ? sc.settled : 0, minRead = sc.min_read, readable = sc.readable === true;
+    const complete = sc.contract_version === 2, population = sc.population || {}, uncertain = sc.uncertain || 0;
     card.appendChild(el('div', { 'class': 'sc-card__head' }, [
-      el('div', null, [el('h3', { text: 'The scorecard' }), el('p', { 'class': 'sc-hint', text: 'a model of the published plans’ fills, the rules’ record and not yours: rates from ' + plain(minRead) + ' settled plans, an uncertain fill in no rate' + (readable ? '' : ' · ' + settled + ' settled so far, so nothing below is a rate yet') })]),
-      chip(readable ? 'readable' : 'not yet readable', readable ? 'good' : 'neutral')
+      el('div', null, [el('h3', { text: 'Published model plans' }), el('p', { 'class': 'sc-hint', text: 'Published Burst and Anticipation plans. Personal selections never change this population; these are not your trading results.' })]),
+      chip(readable ? 'readable' : 'not yet readable', readable ? 'neutral' : 'warn')
     ]));
-    const uncertain = isNum(sc.uncertain) ? sc.uncertain : 0;
-    card.appendChild(el('div', { 'class': 'sc-grid sc-grid--4' }, [
-      tile('plans', num(sc.plans), num(sc.settled) + ' settled · ' + num(uncertain) + ' uncertain · reads at ' + plain(minRead)),
-      tile('filled', num(sc.filled), 'at the next open, at or over the trigger and at or under the limit'),
-      tile('win rate', isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—', num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses, settled plans only'),
-      tile('avg R', isNum(sc.avg_r) ? (sc.avg_r > 0 ? '+' : '') + sc.avg_r.toFixed(2) : '—', 'sum R ' + (isNum(sc.sum_r) ? (sc.sum_r > 0 ? '+' : '') + sc.sum_r.toFixed(1) : '—') + ' · sales weighted by whole shares')
+    card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-sample': '', text: readable
+      ? num(settled) + ' settled plans in the rate denominator. Counts and modeled returns do not establish a trading edge.'
+      : 'Small sample: ' + num(settled) + ' settled plans. Rates remain hidden until ' + plain(minRead) + ' settle; that threshold alone does not establish a trading edge.' }));
+    if (!complete) card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-legacy': '', text: 'Legacy scorecard: missing-observation coverage was not recorded, so the measured-plan total may be incomplete.' }));
+    card.appendChild(el('dl', { 'class': 'sc-stat-strip sc-stat-strip--4 sc-stat-strip--instrument ss-scorecard-counts' }, [
+      stat(complete ? 'published plans' : 'measured plans', num(sc.plans), 'retained tickets'),
+      stat('resolved', num(sc.settled), 'scored result'),
+      stat('open', num(sc.open), complete ? 'current bars' : 'as recorded'),
+      stat('uncertain', num(uncertain), 'no rate')
     ]));
-    const reasons = (sc.uncertain_reasons || []).filter((r) => r && isNum(r.count) && r.words);
-    if (uncertain || reasons.length) card.appendChild(el('p', { 'class': 'sc-note', id: 'scorecard-uncertain', text: num(uncertain) + ' uncertain, in no rate: ' + (reasons.length ? reasons.map((r) => num(r.count) + ' ' + r.words).join('; ') : 'the bars could not establish the fill') + '.' }));
-    card.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over the same days: ' + pct(sc.spy_avg_pct, 2) + ' — one comparison line, not a benchmark. ' + (sc.note || '') }));
+    card.appendChild(el('p', { 'class': 'sc-note', text: num(sc.wins) + ' wins · ' + num(sc.losses) + ' losses · ' + (isNum(sc.breakeven) ? num(sc.breakeven) : 'unknown') + ' breakeven among resolved plans.' }));
+    card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-accounting': '', text:
+      num(sc.settled) + ' settled · ' + num(sc.open) + ' open · ' + num(uncertain) + ' uncertain · ' + num(sc.not_filled) + ' not filled · ' + num(sc.unreadable) + ' unreadable · ' + num(sc.unscored) + ' ended without a reconciled result' +
+      (complete ? ' · ' + num(sc.pending) + ' awaiting first session · ' + num(sc.unmeasured) + ' missing or stale observations. Every published plan is counted once.' : '. Pending and missing observations: unknown.') }));
+    const signedR = v => readable && isNum(v) ? (v > 0 ? '+' : '') + v.toFixed(2) : '—';
+    card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-rates': '' }, [
+      el('strong', { text: 'Win rate ' + (readable && isNum(sc.win_rate) ? (100 * sc.win_rate).toFixed(0) + '%' : '—') + ' · Mean R ' + signedR(sc.avg_r) + ' · Median R ' + signedR(sc.median_r) }),
+      el('br'), el('span', { text: num(sc.wins) + ' wins / ' + num(settled) + ' resolved plans, including breakeven. Mean and median use the same resolved plans.' })
+    ]));
+    const method = el('details', { 'class': 'sc-disclosure', 'data-scorecard-method': '' }, [el('summary', { text: 'Population and calculation' })]);
+    const reasons = (sc.uncertain_reasons || []).filter(r => r && isNum(r.count) && r.words);
+    if (uncertain || reasons.length) method.appendChild(el('p', { 'class': 'sc-note', id: 'scorecard-uncertain', text: num(uncertain) + ' uncertain, in no rate: ' + (reasons.length ? reasons.map(r => num(r.count) + ' ' + r.words).join('; ') : 'the bars could not establish the fill') + '.' }));
+    method.appendChild(el('p', { 'class': 'sc-note', text: complete
+      ? 'Signal sessions ' + population.from + ' through ' + population.through + ': the prior ' + plain(sc.sessions) + ' exchange sessions plus the current publication. ' + num(population.outside_window) + ' retained plans fall outside this window. New plans await their first session. Non-ticket setups and personal selections do not enter this population.'
+      : 'This publication predates complete population accounting. Its archived counts are preserved.' }));
+    if (population.at_capacity || population.problem) card.appendChild(el('p', { 'class': 'sc-note', 'data-scorecard-limit': '', text: 'Coverage limit: ' + (population.at_capacity ? 'the retained picks file is at capacity; earlier published plans may be absent. ' : '') + (population.problem || '') }));
+    const basis = sc.input_basis || {};
+    method.appendChild(el('p', { 'class': 'sc-note', text: 'Replay prices: ' + (basis.adjustment ? basis.adjustment + '-adjusted daily bars · ' + (basis.feed || 'feed unknown') : 'basis not recorded in this summary') + '. Frozen original levels may differ after a later split; no automatic rebasing is inferred. Replay rules: ' + (sc.replay_rules_version || 'unknown') + '. Original plan rules and scan routes require their own publication; they are not inferred from current rules.' }));
+    method.appendChild(el('p', { 'class': 'sc-note', text: 'SPY over matched entry-to-exit dates: ' + (readable ? pct(sc.spy_avg_pct, 2) : '—') + ' · ' + (isNum(sc.benchmark_pairs) ? num(sc.benchmark_pairs) + ' matched resolved plans' : 'pair count unknown') + '. A price comparison in percent, not portfolio performance or excess R. ' + (sc.note || '') }));
+    method.appendChild(el('p', { 'class': 'sc-note', text: 'No fees, spread, tax or actual execution are measured. An expired unfilled order is not filled; an ended walk without reconciled sales remains unscored. R = 0 after the recorded two-decimal rounding is breakeven.' }));
+    card.appendChild(method);
     // fourteen nights of reliability, from nights[]: ok, degraded, closed, missing
     const nights = {}; (data.nights || []).forEach((x) => { if (x && x.session) nights[x.session] = x; });
     const end = (data.run || {}).expected_session || (data.run || {}).session;

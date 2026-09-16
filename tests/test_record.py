@@ -517,7 +517,7 @@ def test_an_unfilled_ticket_counts_as_a_plan_but_not_a_fill_and_an_open_walk_is_
     frames["GAP"] = frame([PICK_DAY, ("2026-09-02", 103.0, 105.0, 102.5, 104.0)] + LATER[1:])   # over the limit all day
     frames["OPEN"] = frame([PICK_DAY] + LATER[:2])       # two sessions in: still held
     rec = record.append(record.empty(), "2026-09-01", [pick(ticker="GAP"), pick(ticker="OPEN")])
-    sc = record.scorecard(rec, frames, "2026-09-09")
+    sc = record.scorecard(rec, frames, "2026-09-03")
     assert sc["plans"] == 2 and sc["filled"] == 1 and sc["settled"] == 0 and sc["open"] == 1
     assert sc["not_filled"] == 1 and sc["uncertain"] == 0 and sc["uncertain_reasons"] == []
 
@@ -617,7 +617,8 @@ def test_every_upper_case_number_in_the_module_is_archived_in_rules():
             elif isinstance(value, ast.Attribute) and isinstance(getattr(record, node.targets[0].id), (int, float)):
                 numbers[node.targets[0].id] = getattr(record, node.targets[0].id)
     archived = set(record.RULES.values())
-    unarchived = {k: v for k, v in numbers.items() if v not in archived and k not in ("SCHEMA_VERSION",)}
+    # File/report schemas are identities, not trading thresholds.
+    unarchived = {k: v for k, v in numbers.items() if v not in archived and k not in ("SCHEMA_VERSION", "SCORECARD_VERSION")}
     assert not unarchived, unarchived
 
 

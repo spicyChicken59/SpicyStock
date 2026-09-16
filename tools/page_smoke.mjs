@@ -19,6 +19,7 @@
 import { createServer } from 'node:http';
 import { checkActionability } from './actionability_cases.mjs';
 import { checkFollowedPlan } from './followed_plan_cases.mjs';
+import { checkScorecard } from './scorecard_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -609,7 +610,7 @@ async function checkVariant(browser, base, variant, data) {
   check(`${variant} scorecard readable chip`, record.includes(sc.readable ? 'readable' : 'not yet readable'), 'chip');
   check(`${variant} scorecard settled count`, record.includes(`${sc.settled} settled`), record.slice(0, 300));
   check(`${variant} scorecard uncertain count`, record.includes(`${sc.uncertain} uncertain`), record.slice(0, 300));
-  if (sc.uncertain) for (const r of sc.uncertain_reasons) check(`${variant} scorecard uncertain reason ${r.kind}`, record.includes(`${r.count} ${r.words}`), r.kind);
+  if (sc.uncertain) for (const r of sc.uncertain_reasons) check(`${variant} scorecard uncertain reason ${r.kind}`, (await page.locator('#scorecard-uncertain').textContent()).includes(`${r.count} ${r.words}`), r.kind);
   if (sc.readable) check(`${variant} scorecard win rate`, record.includes((100 * sc.win_rate).toFixed(0) + '%'), record);
   else check(`${variant} scorecard prints no rate`, !/win rate\n\d+%/.test(record), record);
   eq(`${variant} fourteen nights`, await count(page, '#nights .ss-night'), 14);
@@ -3587,6 +3588,7 @@ async function main() {
     }
     if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
     if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
+    if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
     if (runs('provenance')) await checkPlanEvidence(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);
