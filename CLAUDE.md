@@ -218,7 +218,7 @@ everywhere (`volumeRatio()`: the row's own field, the scan's measurement
 for every burst since the dollar scan carried it; for a record from before
 that, run 46 and earlier, the checklist's two-place copy, said to be the
 checklist's in the measurements; else missing and said so, zero a value).
-My setups (`docs/app-follow.js`, payload version 3) is a peer destination to
+My setups (`docs/app-follow.js`, payload version 4) is a peer destination to
 Today’s scan (the existing Explore route), and a saved setup outlives the record it came from: one click
 freezes the setup's own snapshot, its suggested whole-share quantity AND
 the evidence the record carried for that signal -- the archived bars up to
@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1304 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1321 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2018,3 +2018,54 @@ focus only. DEFER following-plan observation/reconciliation, live qualifying-tic
 validation and profitability work. OMIT Fidelity connectivity, personal execution
 tracking, scoreboards, strategy changes and paid research. Next: final gates and
 one focused PR for review; do not merge or deploy.
+
+## Checkpoint, 16 Sep 2026 — overnight campaign, followed published plans
+
+Tahir explicitly authorized this sequential Stock-only campaign, including merge
+commits after exact-head Tests/Secret Scan, required local checks, material review,
+clean tree and mergeability all pass. This supersedes the earlier no-merge handoff.
+No paid/provider/model calls, scans, broker connections/orders, external messages,
+settings/secrets changes, shared-design writes or manual deployment dispatches.
+
+Milestone 1 PR #73 merged as `3f8d0f2dcd69cc7af8260b336afb5adbc6d3e417` after all
+local gates and exact-head CI passed. Origin/main matched its reviewed tree.
+Automatic publication and post-merge checks passed; public app.js returned HTTP
+200 and exactly matched that main. No production scan was dispatched.
+
+Milestone 2 branch `product/followed-plan` starts from that merge. The baseline
+browser journey proved the explicit selection control was absent. A ticket now
+permits I followed this plan, atomically saving the original and the browser-local
+selection timestamp. The recorded order and dated horizon are frozen; existing
+snapshot timing and evidence fields hold the original session and full plan/pick
+receipt. No trading level, fill, actual quantity or outcome is computed here.
+
+Following schema v4 preserves v1–v3 backups, original evidence, reference amounts,
+shares and unknown fields. Legacy taken annotations keep their old meaning and
+are never converted into selection or execution evidence. Original plan identity
+missing means exact model outcome unavailable. Removing selection keeps the save.
+A stale tab cannot resurrect a removal or silently select a different publication.
+
+Record replay now carries its existing persisted pick receipt into public model
+rows. Following joins only exact evidence/context/plan/pick identity plus signal
+kind/ticker/session. It caches a dated public outcome when loaded, never replaces
+it with an older publication, and retains it after the public five-session model
+window. A terminal state not loaded before that window ends remains unknown.
+Public observations continue independently, including missing/stale/horizon and
+price-basis caveats. Personal choices do not affect public population or scorecard.
+
+Focused validation: 143 record/provenance checks, 11 selection-store checks,
+90 continuity checks and 197 browser checks passed. Three meaningful mutations
+(identity, newer outcome, ticket-only selection) were killed with unaffected
+controls passing. The unchanged 4,000-character low-storage regression caught
+unnecessary duplicated plan fields; the compact chart-free save is 3,979 characters.
+Full verification and exact published head/PR are recorded in the PR closeout.
+Final material review also applies the receipt guard to native saves without a
+personal selection. Its mismatch mutation was killed with 11 independent store
+controls passing; the corrected focused browser run passes 198 checks.
+Only offline sequel fixtures gain outcome receipt fields; production data/picks,
+September 11/14 history, source objects and reaction rules remain unchanged.
+Installed/latest design v2.13.0, source 14a752d: 22/22 hashes intact, zero drift.
+
+Next: complete milestone 2 gates, open and merge only its accepted exact head,
+verify new main/publication, then complete milestone 3 using the existing public
+Record scorecard. No personal performance calculation or parallel outcome engine.

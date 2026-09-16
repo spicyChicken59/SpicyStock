@@ -384,6 +384,10 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
     base = {"ticker": pick["ticker"], "kind": pick.get("kind", "burst"), "picked": pick["date"],
             "grade": pick.get("grade"), "stop": pick["stop"], "targets": pick.get("targets"),
             "fill": None, "uncertainty": None, "sessions": len(bars)}
+    if pick.get("evidence_ref"):
+        # The public replay keeps the original plan identity. Personal browser
+        # selections can join it without changing this population or replay.
+        base["evidence_ref"] = dict(pick["evidence_ref"])
     if not bars:
         walk = plan.follow(pick, [], regime)
         return {**walk, **base, "day": 0}

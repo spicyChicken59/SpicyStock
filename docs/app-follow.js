@@ -7,6 +7,11 @@
    never a purchase price, an execution or a P&L. Nothing here reaches the
    record, the repository, the email or the model's scorecard.
 
+   v4 adds an explicit choice of a published plan, independently of saving or
+   legacy personal notes. Its timestamp proves only browser-local selection.
+   One dated public model outcome may be cached by exact plan receipt; it is
+   never a personal fill, position or result, and never changes the original.
+
      Mutators below return Promises and acquire the same origin-wide Web Lock.
      SCStock.follow.setDemo(bool)      -> demo follows live under their own key
      SCStock.follow.status()           -> {available, error, count, migration, notes}
@@ -17,6 +22,8 @@
      SCStock.follow.setShares(id, n)   -> {ok, item, error}   (n = null clears the override)
      SCStock.follow.observe(updates)   -> {ok, changed, added, revised, ignored, error}
      SCStock.follow.attachEvidence(id, ev) -> {ok, attached}  (once, never over an original)
+     SCStock.follow.commit('selectPlan', setup, expectedSaved) -> atomically save/select
+     SCStock.follow.commit('observePlans', updates) -> retain exact public outcomes
      SCStock.follow.identity(setup)    -> the id: kind, ticker, session, rules identity
      SCStock.follow.onChange(fn)       -> another tab wrote; fn() to re-read
 
@@ -43,7 +50,7 @@
 (function (w) {
   'use strict';
   const SCStock = w.SCStock = w.SCStock || {};
-  const VERSION = 3;
+  const VERSION = 4;
   const KEY = 'spicystock:following:v1';
   const DEMO_KEY = 'spicystock:following:demo:v1';
   //: the migrated-from payload, kept beside the store and never read back into it
@@ -68,6 +75,27 @@
   const text = (v) => (typeof v === 'string' ? v : '');
   const isDate = (v) => typeof v === 'string' && ISO.test(v);
   const num = (v) => (isNum(v) ? v : null);
+  const REF_FIELDS = ['id', 'context_sha256', 'plan_sha256', 'pick_sha256'];
+  function planReference(snapshot) {
+    const ref = (snapshot || {}).evidence_ref;
+    return ref && ref.version === 1 && REF_FIELDS.every(k => /^[a-f0-9]{64}$/.test(ref[k]))
+      ? Object.fromEntries(['version', ...REF_FIELDS].map(k => [k, ref[k]])) : null;
+  }
+  function sameReference(a, b) {
+    return !!(a && b && a.version === 1 && b.version === 1 && REF_FIELDS.every(k => a[k] === b[k]));
+  }
+  function selectedPlan(item) {
+    const s = item && item.plan_selection;
+    if (!s || s.version !== 1 || !Number.isFinite(Date.parse(s.selected_at)) || (item.snapshot || {}).status !== 'ticket') return null;
+    const ref = planReference(item.snapshot);
+    if (s.basis === 'published-receipt' ? !sameReference(s.reference, ref) : s.basis !== 'legacy-snapshot' || s.reference !== null) return null;
+    return s;
+  }
+  function matchesPlan(item, row) {
+    const s = selectedPlan(item);
+    return !!(s && s.reference && row && row.ticker === item.ticker && row.kind === item.kind && row.picked === item.session &&
+      sameReference(s.reference, row.evidence_ref));
+  }
 
   function storage() {
     try { return w.localStorage || null; } catch (e) { return null; }
@@ -239,7 +267,7 @@
     // the sentence lives on `migration` rather than in the notes, because the
     // notes are re-read off a store that is no longer the old one: a reader
     // who upgraded should still be told, on the render that follows
-    migration.note = problems.concat(items.length + ' saved setups were carried over with original evidence and reference shares unchanged. Optional USD amounts remain blank.').join(' ');
+    migration.note = problems.concat(items.length + ' saved setups were carried over with original evidence and reference shares unchanged. Existing notes and reference amounts keep their original meaning; no plan selection was inferred.').join(' ');
     problems.push(migration.note);
   }
   function write(items) {
@@ -275,7 +303,7 @@
       inTransaction = true;
       try {
         if (action === 'migrate') { read(); return { ok: !writeBlocked && !frozen }; }
-        const operations = { add, remove, setShares, setAnnotation, observe, attachEvidence };
+        const operations = { add, remove, setShares, setAnnotation, observe, attachEvidence, selectPlan, clearPlan, observePlans };
         if (!operations[action]) return { ok: false, error: 'Unknown saved setup action.' };
         return operations[action](...args);
       } finally { inTransaction = false; }
@@ -313,15 +341,20 @@
     const items = read(), id = identity(setup);
     const existing = items.find((it) => it.id === id);
     if (existing) return { ok: true, item: existing, existed: true };
-    const problems = [];
-    const item = coerceItem({
-      id: id, ticker: text(setup.ticker), kind: text(setup.kind) || 'setup', stage: text(setup.stage), session: setup.session,
+    const item = newItem(setup);
+    if (!item) return { ok: false, error: 'Nothing to follow: the setup has no symbol or a session this page can read.' };
+    return writeAdded(items, item);
+  }
+  function newItem(setup) {
+    return coerceItem({
+      id: identity(setup), ticker: text(setup.ticker), kind: text(setup.kind) || 'setup', stage: text(setup.stage), session: setup.session,
       rules_version: text(setup.rules_version), provenance: setup.provenance || null, saved_at: new Date().toISOString(),
       suggested_shares: setup.suggested_shares, reference_shares: null,
       snapshot: setup.snapshot && typeof setup.snapshot === 'object' ? setup.snapshot : {},
       evidence: setup.evidence || null, observations: setup.observations || [], demo: demo
-    }, problems);
-    if (!item) return { ok: false, error: 'Nothing to follow: the setup has no symbol or a session this page can read.' };
+    }, []);
+  }
+  function writeAdded(items, item) {
     let res = write(items.concat([item]));
     if (!res.ok && item.evidence) {
       // the chart is the large part; the setup is the point
@@ -330,6 +363,49 @@
       if (retry.ok) return { ok: true, item: lean, existed: false, evidenceDropped: true };
     }
     return res.ok ? { ok: true, item: item, existed: false } : { ok: false, error: res.error };
+  }
+  // One locked write saves and selects a published plan. A stale control for
+  // an existing item cannot resurrect an item removed by another tab.
+  function selectPlan(setup, expectedSaved) {
+    if (!setup || !text(setup.ticker) || !isDate(setup.session)) return {ok:false, error:'No recorded setup to select.'};
+    const items = read(), existing = items.find(it => it.id === (expectedSaved && setup.id ? setup.id : identity(setup)));
+    if (expectedSaved && !existing) return {ok:false, error:'That setup was removed. Reopen it before selecting a plan.'};
+    if (existing && !setup.id) {
+      const incoming = planReference(setup.snapshot), original = planReference(existing.snapshot);
+      const same = incoming || original ? sameReference(incoming, original)
+        : JSON.stringify((setup.snapshot || {}).published_plan || {}) === JSON.stringify(existing.snapshot.published_plan || {}) &&
+          text((setup.provenance || {}).published_at) === text((existing.provenance || {}).published_at);
+      if (!same) return {ok:false, error:'A different publication was saved in another tab. Open the saved original before selecting its plan.'};
+    }
+    const item = existing || newItem(setup), snap = item && item.snapshot;
+    if (!snap || snap.status !== 'ticket' || !((snap.published_plan || {}).order_json || text(snap.order_line) || text(snap.instruction)))
+      return {ok:false, error:'This setup has no published ticket to follow.'};
+    if (selectedPlan(item)) return {ok:true, item, existed:!!existing};
+    const reference = planReference(snap);
+    item.plan_selection = {version:1, selected_at:new Date().toISOString(),
+      basis:reference ? 'published-receipt' : 'legacy-snapshot', reference};
+    if (!existing) return writeAdded(items, item);
+    const res = write(items); return res.ok ? {ok:true, item, existed:true} : res;
+  }
+  function clearPlan(id) {
+    const items = read(), item = items.find(it => it.id === id);
+    if (!item) return {ok:false, error:'That setup was removed.'};
+    delete item.plan_selection; delete item.model_observation;
+    const res = write(items); return res.ok ? {ok:true, item} : res;
+  }
+  function observePlans(updates) {
+    const items = read(); let changed = false;
+    (Array.isArray(updates) ? updates : []).forEach(update => {
+      const item = items.find(it => it.id === update.id);
+      if (!item || !matchesPlan(item, update.row) || !isDate(update.from_session) || update.from_session < item.session ||
+          update.row.last_date != null && (!isDate(update.row.last_date) || update.row.last_date > update.from_session) || typeof update.row.status !== 'string') return;
+      const old = item.model_observation;
+      if (old && (old.from_session > update.from_session || old.from_session === update.from_session && text(old.published_at) > text(update.published_at))) return;
+      const next = {row:update.row, from_session:update.from_session, published_at:text(update.published_at), rules_version:text(update.rules_version)};
+      if (JSON.stringify(old) !== JSON.stringify(next)) {item.model_observation = next; changed = true;}
+    });
+    if (!changed) return {ok:true, changed:false};
+    const res = write(items); return res.ok ? {ok:true, changed:true} : res;
   }
   // A setup saved before this page saved charts carries none, because none
   // was saved then. One may be RECOVERED, and only from a record that IS this
@@ -439,6 +515,7 @@
     list: function () { return read(); },
     find: function (id) { return read().find((it) => it.id === id) || null; },
     commit: commit, parseAmount: parseAmount, setAnnotation: (...a) => commit('setAnnotation', ...a), pending: () => pendingWrite,
+    selectedPlan, matchesPlan, planReference, sameReference,
     add: (...a) => commit('add', ...a), remove: (...a) => commit('remove', ...a), setShares: (...a) => commit('setShares', ...a), observe: (...a) => commit('observe', ...a), attachEvidence: (...a) => commit('attachEvidence', ...a), identity: identity,
     onChange: function (fn) { if (typeof fn === 'function') listeners.push(fn); }
   };

@@ -190,6 +190,9 @@
    this page is here. Its phone layout -- the sentence releasing the row
    basis it would otherwise keep as a 260px height -- lives upstream too. */
 .ss-action { margin-top: var(--sc-s3); }
+.ss-plan-selection { flex-basis: 100%; margin-block: var(--sc-s2); }
+.ss-plan-selection p { margin: var(--sc-s1) 0 0; }
+.ss-plan-selection button { min-height: 44px; }
 .ss-action--burst { display: flex; flex-direction: column; align-items: stretch; gap: var(--sc-s2); }
 .ss-action--burst > p { flex: none; margin: 0; }
 .ss-action__head { display: flex; gap: var(--sc-s2); justify-content: space-between; align-items: center; flex-wrap: wrap; }

@@ -4904,7 +4904,14 @@
     "dollar_high": 150.45
    },
    "fill": "filled at the open, $124.21",
-   "uncertainty": null
+   "uncertainty": null,
+   "evidence_ref": {
+    "version": 1,
+    "id": "9883ec82500af184a1ea94075b5fd3df11f22a752bb2439bb45e9827476612b5",
+    "context_sha256": "550324b96cdbc2b3a71cc06a232c6a8ffe1fa0efb262853e9383943c2743838f",
+    "plan_sha256": "686ba26c906a6986d9cce5c0aec50f610f6c5d679505876387f3b8421db984ef",
+    "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
+   }
   },
   {
    "ticker": "COIL",
@@ -4946,7 +4953,14 @@
     "dollar_high": 135.61
    },
    "fill": "filled at the open, $111.58",
-   "uncertainty": null
+   "uncertainty": null,
+   "evidence_ref": {
+    "version": 1,
+    "id": "6926b765fc0a19532bcce7b79a07d92dfcc7feaab32cfdb65661360dade5ac74",
+    "context_sha256": "550324b96cdbc2b3a71cc06a232c6a8ffe1fa0efb262853e9383943c2743838f",
+    "plan_sha256": "02805406e094a6fe2efc60fcd35944fd6ce051fc0a8ebec74b704d75c24b9eb1",
+    "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
+   }
   }
  ],
  "scorecard": {

@@ -284,11 +284,24 @@ does not carry, falls back to Explore and says so.
    exact signal in this browser. Discovery’s **Saved in this scan** lens is
    only a subset; My setups includes every local save regardless of filters,
    grade or membership. Legacy Following links and saved identity links remain.
-   Optional **I took this setup** and **Reference amount (USD)** annotations
-   are local notes, never execution data. A marking timestamp is not a purchase
-   date. Amounts start unknown, use integer cents and clear back to unknown;
+   **I followed this plan** on a ticketed detail saves the original and records
+   a browser-local choice of that exact published plan. It freezes the recorded
+   order, dated session/horizon, evidence/plan/pick receipt and selection timestamp. It does not
+   establish an order, fill, actual quantity, sale or personal P&L. Original signal,
+   dated observed movement, coverage and the public model outcome remain separate.
+   Exact receipt matches join the existing Record replay; the newest loaded model
+   outcome is cached with its publication date, never replaced by an older record.
+   There is no client-side fill/outcome engine. Uncertain remains uncertain.
+   If the public five-session model window ends without an outcome loaded here,
+   the page says so; it never invents a terminal result. Price observations retain
+   their independent public horizon and basis caveats.
+   Legacy **I took this setup** notes remain editable only where already present;
+   migration never turns them into plan selection or execution evidence. Old saves
+   lacking complete plan receipts explicitly cannot join an exact model outcome.
+   Optional **Reference amount (USD)** remains a local note. A marking timestamp is
+   not a purchase date. Amounts start unknown, use integer cents and clear back to unknown;
    existing suggested/reference whole-share values retain their meanings.
-   Schema v3 migrates the existing Following key with preserved backups and
+   Schema v4 migrates the existing Following key with preserved backups and
    unknown fields. Page writes use Web Locks on HTTPS to serialize tabs;
    conflicts follow lock acquisition order and removed items are not resurrected
    by stale edits. Without Web Locks the saved list is readable but writes fail
@@ -533,8 +546,9 @@ compares what it reads back with the record it was handed — every stock in
 both stages, the search, the chooser and the rail on a phone, the keyboard,
 deep links and Back, the old anchors, unknown routes and symbols, rapid
 switching — then views the `full` record at three later instants for the
-stale states, drops fourteen fields in turn (a burst without bars must say
-*Chart unavailable*), and opens it once with no record at all.
+stale states, drops fourteen fields in turn (a burst without browser bars must
+offer its matching retained source or say *Chart unavailable*), and opens it
+once with no record at all.
 
 ## The record
 

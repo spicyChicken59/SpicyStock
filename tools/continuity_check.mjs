@@ -55,7 +55,9 @@ try{
  const atec=items.find(i=>i.ticker==='ATEC');click(w,'[data-open-saved]');await pause();
  const amount=w.document.querySelector('#setup-amount');check(amount.value==='','amount starts unknown');amount.value='1234.56';amount.dispatchEvent(new w.Event('input'));w.document.querySelector('.ss-annotation').dispatchEvent(new w.Event('submit',{cancelable:true}));await pause();
  check(w.SCStock.follow.find(items[1].id).annotation.reference_amount.minor_units===123456,'USD stored as integer cents, synthetic amount only');
- click(w,'#setup-taken');await pause();check(w.SCStock.follow.find(items[1].id).annotation.taken===true,'optional indication stored');
+ check(!w.document.querySelector('#setup-taken'),'new saves do not invite the legacy ambiguous indication');
+ await w.SCStock.follow.commit('setAnnotation',items[1].id,'taken',false);await route(w,'#/followed/'+encodeURIComponent(items[1].id));
+ click(w,'#setup-taken');await pause();check(w.SCStock.follow.find(items[1].id).annotation.taken===true,'legacy indication remains editable without migration to plan selection');
  click(w,'#saved-close');await pause();check(w.location.hash==='#/setups','close returns to actual saved destination');
  // Multiple tabs: nonconflicting edits and serialized conflicts never overwrite the other item.
  const tab=await open(records['2026-09-14'],shared);
@@ -94,7 +96,7 @@ try{
  const legacyHub=hub();const legacy=JSON.parse(JSON.stringify(f.list()[0]));legacy.suggested_shares=17;legacy.reference_shares=5;legacy.extension={keep:true};delete legacy.annotation;legacy.v=2;
  const old=JSON.stringify({version:2,items:[legacy],future_optional:'retain'});legacyHub.values.set(f.KEY,old);legacyHub.values.set(f.KEY+'.previous','earlier-v1-backup');
  const migrated=await open(records['2026-09-14'],legacyHub);const mf=migrated.w.SCStock.follow;await mf.commit('migrate');
- check(mf.VERSION===3&&JSON.parse(legacyHub.values.get(f.KEY)).version===3,'v2 migrated in place to v3');check(legacyHub.values.get(f.KEY+'.previous')==='earlier-v1-backup'&&legacyHub.values.get(f.KEY+'.previous.v2')===old,'both legacy backups retained');
+ check(mf.VERSION===4&&JSON.parse(legacyHub.values.get(f.KEY)).version===4,'v2 migrated in place to v4');check(legacyHub.values.get(f.KEY+'.previous')==='earlier-v1-backup'&&legacyHub.values.get(f.KEY+'.previous.v2')===old,'both legacy backups retained');
  await mf.commit('setAnnotation',legacy.id,'amount','1.23');const preserved=mf.find(legacy.id);check(preserved.suggested_shares===17&&preserved.reference_shares===5&&preserved.extension.keep,'share values and unknown fields unchanged');check(JSON.parse(legacyHub.values.get(f.KEY)).future_optional==='retain','unknown envelope fields unchanged');
  // Cross-tab refresh must retain unsaved input and focus.
  await route(migrated.w,'#/followed/'+encodeURIComponent(legacy.id));const draft=migrated.w.document.querySelector('#setup-amount');draft.value='44.77';draft.dispatchEvent(new migrated.w.Event('input'));draft.focus();
