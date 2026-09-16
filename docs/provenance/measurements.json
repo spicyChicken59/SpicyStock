@@ -7,8 +7,8 @@
       "gzip": 29416
     },
     "after": {
-      "raw": 270499,
-      "gzip": 46336
+      "raw": 270139,
+      "gzip": 45888
     }
   },
   "full_picks": {
@@ -44,7 +44,7 @@
     },
     "burst:DLLR": {
       "raw": 1834,
-      "gzip": 971
+      "gzip": 972
     },
     "anticipation:COIL": {
       "raw": 1340,
@@ -130,8 +130,8 @@
         "gzip": 5549
       },
       "after": {
-        "raw": 18520,
-        "gzip": 6524
+        "raw": 18176,
+        "gzip": 6175
       }
     },
     "COIL": {
@@ -205,21 +205,21 @@
     },
     "after": {
       "files": 9,
-      "raw": 182132,
-      "gzip_individual": 46949
+      "raw": 181788,
+      "gzip_individual": 46599
     }
   },
   "source_archive_full_fixture": {
     "objects": 9,
-    "stored_bytes": 21015,
-    "expanded_json_bytes": 76355,
+    "stored_bytes": 15956,
+    "expanded_json_bytes": 67365,
     "note": "separate lazy objects; fixture image is a fixed PNG double, not a real chart-size estimate"
   },
   "verification": {
     "candidates": 7,
-    "first_ms": 459.45,
-    "warm_mean_ms": 118.147,
-    "warm_p95_ms": 153.554,
+    "first_ms": 471.314,
+    "warm_mean_ms": 113.619,
+    "warm_p95_ms": 145.584,
     "samples": 20,
     "scope": "full chain, retained source/reader inputs and persisted picks"
   },

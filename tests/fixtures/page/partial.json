@@ -1553,7 +1553,7 @@
    "entry_ref": 25.8,
    "shares": 23,
    "current_stop": 24.77,
-   "last_close": 25.729101265240175,
+   "last_close": 25.72910127,
    "last_date": "2026-09-10",
    "unrealised_pct": null,
    "exit_price": null,
@@ -1600,7 +1600,7 @@
     "h": 25.9356,
     "l": 25.5761,
     "c": 25.7291,
-    "v": 2972280.5223,
+    "v": 2972281.0,
     "since": "2026-09-10",
     "history": [
      {
@@ -1609,7 +1609,7 @@
       "h": 25.9356,
       "l": 25.5761,
       "c": 25.7291,
-      "v": 2972280.5223,
+      "v": 2972281.0,
       "from_session": "2026-09-10",
       "source": "public observation history"
      }

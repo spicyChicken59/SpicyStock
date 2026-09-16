@@ -1906,3 +1906,10 @@ disclosures inspected, including red withholding. First full pass only exposed
 the obsolete three-path artifact assertion; it now requires evidence/history.
 Production records and all 1,408 historical files match the base byte-for-byte;
 all 22 design hashes match v2.13.0. Live provider/model/email calls: zero.
+
+CI passed all 1,266 tests and the page job, then exposed fixture-only raw-float
+drift from NumPy's vector/scalar exponential kernels. Disabling X86_V4/X86_V3
+locally reproduced the exact three differing source IDs. The synthetic provider
+now serves eight-decimal OHLC and whole-share volume before the pipeline reads
+it. Production hashing/inputs are unchanged. Both CPU dispatch paths regenerate
+the same fixtures and source objects. The correction belongs to the same PR #71.

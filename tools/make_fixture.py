@@ -79,6 +79,11 @@ FOLLOW_SESSION = date(2026, 9, 11)
 #: same session on later bars, which is a correction and not a new day
 REVISION_CENTS = 37
 SEED = 20260910
+# Synthetic provider inputs have a declared grid. NumPy's vector/scalar exp
+# kernels can differ by one binary64 bit; that was invisible in display series
+# but must not make these synthetic source receipts machine-dependent. Apply
+# this BEFORE the fake provider serves a frame, never in production hashing.
+FIXTURE_INPUT_DECIMALS = {"Open": 8, "High": 8, "Low": 8, "Close": 8, "Volume": 0}
 CLAUDE = {"A+": {"score": 9.3, "grade": "A+",
                  "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
                  "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
@@ -309,8 +314,8 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
         elif variant == "red":
             red_tape(frames, 6)
     for name, df in frames.items():
-        fake.add_history(name, df)
-    fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0))
+        fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS))
+    fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0).round(FIXTURE_INPUT_DECIMALS))
     return list(frames)
 
 
@@ -359,7 +364,7 @@ def run_variant(variant: str, docs: Path) -> dict:
     fake = FakeAlpaca()
     tickers = register(fake, variant)
     if variant in ("empty", "partial"):
-        quiet = make_ohlcv("flat", seed=SEED, days=280)
+        quiet = make_ohlcv("flat", seed=SEED, days=280).round(FIXTURE_INPUT_DECIMALS)
         for ticker in tickers:
             fake.add_history(ticker, quiet)
     docs.mkdir(parents=True, exist_ok=True)

@@ -88,6 +88,13 @@ the new publication and requires an explicit retention decision. Actual chart
 sizes vary; the fixture's fixed PNG double is not a production storage estimate.
 The evening artifact includes evidence and history. There are no new settings.
 
+Synthetic fixture providers use eight-decimal OHLC inputs and whole-share
+volumes **before** the production pipeline reads them. This removes one-bit
+NumPy scalar/vector exponential differences between CPUs. Production frames and
+canonical hashing do not apply this fixture-only grid. The CI drift was reproduced
+locally with `NPY_DISABLE_CPU_FEATURES=X86_V4,X86_V3`; both dispatch paths must
+pass `tools/make_fixture.py --check` against the same retained source objects.
+
 Picks v1 loads conservatively into v2, retaining every valid old row and extra
 field. Old rows have no evidence reference; none is invented. Unknown future
 schemas are refused rather than reinterpreted. Production data/picks and all
@@ -149,7 +156,9 @@ artifact-inventory assertion, which now requires the new retained inputs/history
 [Measurements](measurements.json) compare the same full fixture/picks and a new
 recovery snapshot against base `f744b88a6117b933310f370b8f9ab4cd1d03a3c8`.
 They include raw/gzip receipt and plan-reference sizes, retained source bytes and
-full offline verification runtime. No provider/model/email replay, deployment,
+full offline verification runtime. Whole-file totals also reflect the declared
+synthetic-provider grid; receipt/reference sizes isolate the evidence payload.
+No provider/model/email replay, deployment,
 portfolio integration or design-system change is involved. Design v2.13.0 stays
 vendored unchanged. Dollar-formula primary-source validation, live qualifying
 ticket evidence and empirical profitability remain deferred.
