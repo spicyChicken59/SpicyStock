@@ -1,3 +1,118 @@
+/* Read a retained provenance-v1 frame for a chart, only on explicit request.
+   This verifies source identity, not the full offline decision replay. The
+   canonical type of every frame value is float64 (including whole volumes),
+   as src/provenance.py source_object() records it. No strategy runs here. */
+(function (w) {
+  'use strict';
+  const api = w.SCStock = w.SCStock || {};
+  const MAX_BYTES = 256 * 1024, CHART_BARS = 120, CACHE_MAX = 64;
+  const HEX = /^[a-f0-9]{64}$/, COLUMNS = ['Open', 'High', 'Low', 'Close', 'Volume'];
+  const cache = new Map();
+  const fail = message => { throw new Error(message); };
+  function sourceReference(row, record) {
+    const e = row && row.evidence, run = record && record.run, app = record && record.app;
+    if (!e || !run || !app || !run.evidence) return null;
+    const s = e.source;
+    if (e.version !== 1 || run.evidence.version !== 1 || e.kind !== 'burst' || e.ticker !== row.ticker ||
+        e.session !== run.session || e.rules_version !== app.rules_version ||
+        !HEX.test(e.id) || !HEX.test(e.context_sha256) || e.context_sha256 !== run.evidence.context_sha256 ||
+        !s || !HEX.test(s.sha256) || !Number.isSafeInteger(s.rows) || s.rows < 2 || s.rows > MAX_BYTES ||
+        s.evaluated_session !== run.session || !run.calendar || s.previous_session !== run.calendar.previous_session) return null;
+    return { sha256: s.sha256, rows: s.rows, evaluated_session: s.evaluated_session, previous_session: s.previous_session };
+  }
+  // Python float.hex(), directly from the IEEE-754 bits, including signed zero
+  // and subnormals. Decimal text/rounding would change content identities.
+  function floatHex(value) {
+    const bits = new DataView(new ArrayBuffer(8)); bits.setFloat64(0, value);
+    const hi = bits.getUint32(0), lo = bits.getUint32(4), exp = (hi >>> 20) & 2047;
+    const fraction = (hi & 0xfffff).toString(16).padStart(5, '0') + lo.toString(16).padStart(8, '0');
+    const sign = hi >>> 31 ? '-' : '';
+    if (!exp && !(hi & 0xfffff) && !lo) return sign + '0x0.0p+0';
+    const power = exp ? exp - 1023 : -1022;
+    return sign + '0x' + (exp ? '1' : '0') + '.' + fraction + 'p' + (power >= 0 ? '+' : '') + power;
+  }
+  function canonicalFrame(frame) {
+    if (!frame || Object.keys(frame).sort().join(',') !== 'columns,dates,type,values,version' ||
+        frame.version !== 1 || frame.type !== 'frame' || JSON.stringify(frame.columns) !== JSON.stringify(COLUMNS) ||
+        !Array.isArray(frame.dates) || frame.dates.length < 2 || !Array.isArray(frame.values) || frame.values.length !== 5)
+      fail('Unsupported recorded source frame.');
+    const dates = frame.dates;
+    dates.forEach((date, i) => {
+      if (typeof date !== 'string' || !/^\d{4}-\d\d-\d\d$/.test(date) ||
+          !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date ||
+          (i && date <= dates[i - 1])) fail('Recorded source dates are invalid.');
+    });
+    const list = values => ['list', values], str = value => ['str', value];
+    const values = frame.values.map(column => {
+      if (!Array.isArray(column) || column.length !== dates.length) fail('Recorded source dimensions do not match.');
+      return list(column.map(value => {
+        if (value === null) return ['null'];
+        if (typeof value !== 'number' || !Number.isFinite(value)) fail('Recorded source contains an invalid number.');
+        return ['float', floatHex(value)];
+      }));
+    });
+    return JSON.stringify(['dict', [
+      ['columns', list(COLUMNS.map(str))], ['dates', list(dates.map(str))], ['type', str('frame')],
+      ['values', list(values)], ['version', ['int', '1']]
+    ]]);
+  }
+  async function boundedBytes(stream) {
+    if (!stream || !stream.getReader) fail('This browser cannot read recorded evidence safely.');
+    const reader = stream.getReader(), chunks = []; let length = 0;
+    try {
+      while (true) {
+        const { value, done } = await reader.read(); if (done) break;
+        length += value.byteLength;
+        if (length > MAX_BYTES) { await reader.cancel(); fail('Recorded source exceeds the supported size.'); }
+        chunks.push(value);
+      }
+    } finally { reader.releaseLock(); }
+    const bytes = new Uint8Array(length); let at = 0;
+    chunks.forEach(chunk => { bytes.set(chunk, at); at += chunk.byteLength; });
+    return bytes;
+  }
+  async function fetchFrame(key) {
+    if (!w.crypto || !w.crypto.subtle || !w.DecompressionStream) fail('This browser cannot verify recorded charts. The setup remains readable.');
+    const controller = new AbortController(), timer = w.setTimeout(() => controller.abort(), 12000);
+    try {
+      const response = await w.fetch('evidence/' + key + '.json.gz', {
+        credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal: controller.signal
+      });
+      if (!response.ok) fail('The retained source could not be loaded. This does not mean the stock has no data.');
+      if (Number(response.headers.get('content-length')) > MAX_BYTES) fail('Recorded source exceeds the supported size.');
+      let bytes = await boundedBytes(response.body);
+      // Hosts may serve .gz as a file or already decode Content-Encoding: gzip.
+      if (bytes[0] === 0x1f && bytes[1] === 0x8b)
+        bytes = await boundedBytes(new Blob([bytes]).stream().pipeThrough(new w.DecompressionStream('gzip')));
+      const frame = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+      const canonical = canonicalFrame(frame);
+      const hash = await w.crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
+      const actual = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+      if (actual !== key) fail('Recorded source failed its integrity check. No chart was drawn.');
+      return frame;
+    } finally { w.clearTimeout(timer); }
+  }
+  async function loadSourceChart(row, record) {
+    const ref = sourceReference(row, record);
+    if (!ref) fail('No matching retained source reference is recorded for this setup.');
+    if (!cache.has(ref.sha256)) {
+      if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
+      const request = fetchFrame(ref.sha256); cache.set(ref.sha256, request);
+      request.catch(() => { if (cache.get(ref.sha256) === request) cache.delete(ref.sha256); });
+    }
+    const frame = await cache.get(ref.sha256), dates = frame.dates;
+    if (dates.length !== ref.rows || dates[dates.length - 1] !== ref.evaluated_session || dates[dates.length - 2] !== ref.previous_session)
+      fail('Recorded source does not match this setup’s sessions or row count.');
+    const from = Math.max(0, dates.length - CHART_BARS);
+    return dates.slice(from).map((date, j) => {
+      const i = from + j, v = frame.values;
+      return { date, o: v[0][i], h: v[1][i], l: v[2][i], c: v[3][i], v: v[4][i] };
+    });
+  }
+  api.sourceReference = sourceReference;
+  api.loadSourceChart = loadSourceChart;
+})(window);
+
 /* SpicyStock — the page. Renders docs/data.json (schema_version 2) on the
    SpicyChicken system as one small application: Explore (the market in a
    line, then the stocks Setting up and the Bursts, one chosen stock at a
@@ -745,8 +860,9 @@
   // would otherwise carry a ticket out of a window that closed in between. So
   // the guard is asked again here, immediately before the write, and a refusal
   // replaces the button with its reason rather than copying anyway.
-  function copyButton(getText, pre, guard) {
-    const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: 'Copy', 'data-copy': '' });
+  function copyButton(getText, pre, guard, label) {
+    label = label || 'Copy';
+    const btn = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', text: label, 'data-copy': '' });
     btn.addEventListener('click', () => {
       const refusal = guard ? guard() : null;
       if (refusal) {
@@ -759,9 +875,9 @@
         return;
       }
       const text = getText();
-      const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1600); };
+      const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = label; }, 1600); };
       const fallback = () => {
-        try { const range = d.createRange(); range.selectNodeContents(pre); const sel = w.getSelection(); sel.removeAllRanges(); sel.addRange(range); btn.textContent = 'Selected — press Ctrl/Cmd+C'; setTimeout(() => { btn.textContent = 'Copy'; }, 2400); } catch (e) { /* nothing to do */ }
+        try { pre.hidden = false; const range = d.createRange(); range.selectNodeContents(pre); const sel = w.getSelection(); sel.removeAllRanges(); sel.addRange(range); btn.textContent = 'Selected — press Ctrl/Cmd+C'; setTimeout(() => { btn.textContent = label; }, 2400); } catch (e) { /* nothing to do */ }
       };
       if (w.navigator && w.navigator.clipboard && w.navigator.clipboard.writeText) w.navigator.clipboard.writeText(text).then(done, fallback);
       else fallback();
@@ -851,6 +967,9 @@
   }
   function chartOptionsFor(c, series, height) {
     const o = c.stage === 'bursts' ? burstChartOptions(c.row, series, height) : coilChartOptions(c.row, series, height);
+    // Focus may end before the signal: never label its last candle a burst.
+    if (c.stage === 'bursts') o.burstIndex = idxOf(series, signalDate(c));
+    if (series.length && c.series.length && series[series.length - 1].date !== c.series[c.series.length - 1].date) o.futureSlots = 0;
     o.mode = prefs.mode; o.closeLine = prefs.closeLine; o.gutterLabels = true; o.head = false;
     // "tomorrow" is only true of a chart drawn from tonight's record; a saved
     // setup's chart is of a night that has already had its next session
@@ -1591,6 +1710,17 @@
     return CHART_RANGES.find((r) => { const s = rangeSlice(c, r).series; return idxOf(s, item.from) >= 0 && idxOf(s, item.to) >= 0; }) || null;
   }
 
+  // Presentation only. Single-session evidence keeps at least 21 observations
+  // where available; a base/box gets context on both sides. No bars invented.
+  function focusSlice(c, item) {
+    const all = c.series, start = idxOf(all, item.from), end = idxOf(all, item.to);
+    if (start < 0 || end < start) return null;
+    const pad = Math.max(8, Math.round((end - start + 1) * 0.6));
+    let from = Math.max(0, start - pad), to = Math.min(all.length, end + pad + 1);
+    if (to - from < 21) { from = Math.max(0, Math.min(from, to - 21)); to = Math.min(all.length, Math.max(to, from + 21)); }
+    return { series: all.slice(from, to), range: 'focus', note: item.label.toLowerCase() + ' with nearby recorded sessions · temporary focus', fallback: false };
+  }
+
   const chartHeight = () => (narrow() ? 300 : 400);
   // the plan's levels in one line beside the chart, the aim named even when it sits outside the visible range
   function referenceLine(c, g) {
@@ -1614,7 +1744,7 @@
       mount.style.minHeight = '';
       mount.appendChild(el('div', { 'class': 'ss-chart-empty', 'data-chart': 'unavailable' }, [
         el('strong', { text: 'Chart unavailable. ' }),
-        'No daily bars are archived for ' + c.ticker + ' in tonight’s record' + (c.quiet ? ': it is on no list, so the run kept only its measures' : '') + '. The grade stands on the numbers; the conditions below carry them.'
+        'No usable browser bars or matching retained source reference are available for ' + c.ticker + ' in this record' + (c.quiet ? ': it is on no list, so the run kept only its measures' : '') + '. The grade stands on the numbers; the conditions below carry them.'
       ]));
       return null;
     }
@@ -1636,11 +1766,12 @@
   function chartPanel(c, opts) {
     opts = opts || {};
     const idp = opts.idPrefix || 'chart';
-    const run = current.run || {}, all = c.series, last = all.length ? all[all.length - 1] : null;
+    const record = opts.record || current, run = record.run || {};
+    let all = c.series, last = all.length ? all[all.length - 1] : null;
     // a saved setup brings the evidence the record carried the night it was
     // archived; a candidate of the loaded record has the run's own
-    const evid = c.evidence && c.evidence.length ? c.evidence : evidenceItems(c);
-    let live = null, host = null, chosen = null;
+    let evid = c.evidence && c.evidence.length ? c.evidence : evidenceItems(c);
+    let live = null, host = null, chosen = null, focused = null, disposed = false;
     const panelHeight = () => opts.height || chartHeight();
     const panel = el('figure', { 'class': 'ss-chart-panel', 'data-panel': idp, 'data-ticker': c.ticker, 'data-mode': prefs.mode, 'data-range': prefs.range });
     const legendBox = el('div', { 'class': 'ss-chart-panel__legend' });
@@ -1666,6 +1797,15 @@
       ]), tools
     ]));
     const mount = el('div', { 'class': 'ss-chart-mount', id: idp + '-mount' });
+    const focusBar = el('div', { 'class': 'ss-chart-focus', hidden: '' });
+    const focusLabel = el('span');
+    const restore = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-evidence-restore': '', 'aria-controls': idp + '-mount' });
+    restore.addEventListener('click', () => {
+      focused = null; applySlice(rangeSlice(c, prefs.range));
+      const back = explain.querySelector('[data-evidence-focus]') || rangeTabs.querySelector('[aria-pressed="true"]');
+      if (back) back.focus({ preventScroll: true });
+    });
+    focusBar.appendChild(focusLabel); focusBar.appendChild(restore); panel.appendChild(focusBar);
     panel.appendChild(mount);
     // the chart's own key sits with the chart; the evidence controls and the
     // one explanation come directly under it, and the disclosure sentences last
@@ -1674,11 +1814,17 @@
     const explain = el('div', { 'class': 'ss-evidence__explain', id: idp + '-evidence', role: 'status', 'aria-live': 'polite' });
     panel.appendChild(evidenceRow); panel.appendChild(explain);
     const rangeLine = el('p', { 'class': 'ss-chart-panel__range' }), refLine = el('p', { 'class': 'ss-chart-panel__refs', 'data-refs': '' });
+    const sourceLine = el('p', { 'data-chart-source': '' });
     panel.appendChild(el('figcaption', { 'class': 'sc-chart-caption' }, [
       rangeLine, refLine,
       // a saved setup says where ITS bars came from; a candidate of the loaded record says where tonight's did
-      el('p', { text: (text(c.barsNote) || (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No bars archived for ' + c.ticker)) + (c.row.chart ? ' · ' : '.') }, c.row.chart ? [el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: 'the chart the grader saw' })] : null)
+      sourceLine
     ]));
+    function drawSource() {
+      clear(sourceLine);
+      sourceLine.appendChild(d.createTextNode((text(c.barsNote) || (all.length ? 'Alpaca ' + String(run.feed || '').toUpperCase() + ' daily bars, drawn from the same numbers as the plan' : 'No browser bars included for ' + c.ticker)) + '.'));
+      if (c.row.chart) sourceLine.appendChild(el('a', { 'class': 'sc-link--quiet', href: c.row.chart, text: ' The chart the grader saw' }));
+    }
 
     // the marker in the CURRENT slice: the anchor is dates, so a range change
     // rebinds it and a range that does not hold it draws nothing at all
@@ -1705,6 +1851,15 @@
         el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', 'data-evidence-clear': '', text: 'Clear' })
       ]);
       head.querySelector('[data-evidence-clear]').addEventListener('click', () => { select(null); });
+      if (focusSlice(c, chosen)) {
+        const focus = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-evidence-focus': '',
+          'aria-pressed': focused && focused.key === chosen.key ? 'true' : 'false', 'aria-controls': idp + '-mount', text: 'Focus evidence' });
+        focus.addEventListener('click', () => {
+          focused = chosen; applySlice(focusSlice(c, chosen));
+          const button = explain.querySelector('[data-evidence-focus]'); if (button) button.focus({ preventScroll: true });
+        });
+        head.appendChild(focus);
+      }
       explain.appendChild(head);
       explain.appendChild(el('p', { 'class': 'ss-evidence__lede', text: chosen.lede }));
       explain.appendChild(el('p', { 'class': 'ss-evidence__measured' }, [el('span', { 'class': 'sc-eyebrow', text: 'measured' }), el('span', { text: chosen.measured })]));
@@ -1723,7 +1878,7 @@
         ]));
       });
       if (chosen.note) explain.appendChild(el('p', { 'class': 'sc-hint', text: chosen.note }));
-      if (!all.length) explain.appendChild(el('p', { 'class': 'sc-hint', 'data-anchor-state': 'no-bars', text: 'No bars are archived for ' + c.ticker + ' in tonight’s record, so this evidence has no chart to sit on. The numbers above are the record’s own.' }));
+      if (!all.length) explain.appendChild(el('p', { 'class': 'sc-hint', 'data-anchor-state': 'no-bars', text: 'No chart is loaded for ' + c.ticker + ', so this evidence has no chart to sit on. The numbers above are the record’s own.' }));
       else if (!inRange) {
         const r = rangeHolding(c, chosen);
         const p = el('p', { 'class': 'sc-hint', 'data-anchor-state': r ? 'out-of-range' : 'unanchored' }, [
@@ -1761,9 +1916,13 @@
       refLine.textContent = referenceLine(c, g);
       clear(legendBox); if (host && host.legend) legendBox.appendChild(host.legend());
       panel.setAttribute('data-mode', prefs.mode); panel.setAttribute('data-range', prefs.range);
+      panel.setAttribute('data-focus', focused ? focused.key : '');
+      focusBar.hidden = !focused;
+      focusLabel.textContent = focused ? 'Focused on ' + focused.label.toLowerCase() : '';
+      restore.textContent = 'Back to ' + RANGE_WORDS[prefs.range].toLowerCase();
       toggle.hidden = prefs.mode !== 'candles';
       modeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-mode') === prefs.mode ? 'true' : 'false'));
-      rangeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', t.getAttribute('data-range') === prefs.range ? 'true' : 'false'));
+      rangeTabs.querySelectorAll('.sc-tab').forEach((t) => t.setAttribute('aria-pressed', !focused && t.getAttribute('data-range') === prefs.range ? 'true' : 'false'));
       if (toggleInput.checked !== prefs.closeLine) toggleInput.checked = prefs.closeLine;
     }
     function setMode(m) {
@@ -1772,15 +1931,17 @@
       disclose(); drawExplain();
       if (typeof opts.onPrefs === 'function') opts.onPrefs('mode', m, handle);
     }
-    function setRange(r) {
-      prefs.range = r; savePrefs();
+    function applySlice(slice) {
       if (host) {
-        const slice = rangeSlice(c, r);
         live = { host: host, slice: slice };
         host.update(Object.assign({ series: slice.series }, chartOptionsFor(c, slice.series, panelHeight()), { highlight: markOf() }));
         host.setAttribute('data-sessions', String(slice.series.length)); host.setAttribute('data-range', slice.range);
       }
       disclose(); drawExplain();
+    }
+    function setRange(r) {
+      focused = null; prefs.range = r; savePrefs();
+      applySlice(rangeSlice(c, r));
       if (typeof opts.onPrefs === 'function') opts.onPrefs('range', r, handle);
     }
     function setCloseLine(on) {
@@ -1802,14 +1963,57 @@
     toggleInput.addEventListener('change', () => setCloseLine(toggleInput.checked));
     live = mountChart(mount, c, panelHeight());
     host = live ? live.host : null;
+    // Only the selected current candidate / explicitly opened comparison can
+    // request this. Saved originals and recovery snapshots keep their own bars.
+    if (!all.length && opts.recover && c.stage === 'bursts' && SCStock.sourceReference(c.row, record)) {
+      const empty = clear(mount), status = el('p', { role: 'status', 'aria-live': 'polite', 'data-chart-load-status': '',
+        text: 'This record kept its source evidence separately. Load its exact chart when you need it.' });
+      const load = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', 'data-load-chart': '', text: 'Load recorded chart' });
+      empty.appendChild(status); empty.appendChild(load); panel.setAttribute('data-chart-recovery', 'available');
+      load.addEventListener('click', async () => {
+        if (panel.getAttribute('data-chart-recovery') === 'loading') return;
+        // Keep a keyboard user's place while loading; aria-disabled plus this
+        // guard prevents duplicate work without blurring the focused button.
+        load.setAttribute('aria-disabled', 'true'); load.textContent = 'Loading recorded chart…';
+        panel.setAttribute('aria-busy', 'true'); panel.setAttribute('data-chart-recovery', 'loading');
+        status.textContent = 'Loading and verifying recorded source evidence…';
+        try {
+          const series = await SCStock.loadSourceChart(c.row, record);
+          if (disposed) return;
+          c.series = series; all = series; last = all[all.length - 1];
+          c.barsNote = 'Recorded source evidence · source hash verified · ' + barBasis(run) + ' · through ' + run.session + '. Chart displays up to 120 retained sessions; the original source values are preserved';
+          evid = evidenceItems(c);
+          const held = mount.contains(d.activeElement);
+          live = mountChart(mount, c, panelHeight()); host = live ? live.host : null;
+          panel.querySelectorAll('.sc-tab').forEach(button => { button.disabled = false; });
+          const id = panel.querySelector('.ss-chart-panel__id');
+          clear(id); id.appendChild(el('span', { 'class': 'sc-figure', text: c.ticker }));
+          id.appendChild(el('span', { 'class': 'ss-chart-panel__price', text: usd(last.c) }));
+          id.appendChild(el('span', { 'class': 'sc-hint', text: 'close ' + dateWords(last.date) }));
+          if (demo) id.appendChild(chip('demo data', 'warn'));
+          if (chosen) chosen = evid.find(item => item.key === chosen.key) || null;
+          buildEvidence(); disclose(); drawExplain(); drawSource();
+          panel.setAttribute('data-chart-recovery', 'loaded');
+          if (held) modeTabs.querySelector('[aria-pressed="true"]').focus({ preventScroll: true });
+          if (opts.onRecovery) opts.onRecovery();
+        } catch (error) {
+          if (disposed) return;
+          panel.setAttribute('data-chart-recovery', 'failed');
+          status.textContent = 'Chart unavailable. ' + (error && error.message || 'The retained source could not be verified.') + ' The setup, conditions and plan remain available.';
+          load.setAttribute('aria-disabled', 'false'); load.textContent = 'Retry recorded chart';
+        } finally { if (!disposed) panel.setAttribute('aria-busy', 'false'); }
+      });
+    }
     buildEvidence();
     disclose();
     drawExplain();
+    drawSource();
     const handle = {
       node: panel, ticker: c.ticker, candidate: c,
       // an owner driving several panels: apply the shared choice without
       // re-emitting it, so two panels cannot chase each other round
       applyPrefs: function () {
+        focused = null;
         if (!host) { disclose(); return; }
         const slice = rangeSlice(c, prefs.range);
         live = { host: host, slice: slice };
@@ -1819,7 +2023,7 @@
       },
       showEvidence: function (key) { if (evid.some((x) => x.key === key) && (!chosen || chosen.key !== key)) select(key); },
       anchors: function () { return evid.map((x) => x.key); },
-      dispose: function () { if (host && host.dispose) host.dispose(); host = null; live = null; }
+      dispose: function () { disposed = true; if (host && host.dispose) host.dispose(); host = null; live = null; }
     };
     return handle;
   }
@@ -1828,7 +2032,11 @@
   function disposeChart() { if (detailPanel) { detailPanel.dispose(); detailPanel = null; } }
   function detailChart(c) {
     disposeChart();
-    detailPanel = chartPanel(c, { idPrefix: 'chart' });
+    detailPanel = chartPanel(c, { idPrefix: 'chart', recover: true, record: current, onRecovery: () => {
+      repaint($('detail').querySelector('.ss-decision'), () => decisionSummary(c));
+      repaint($('disc-checklist'), () => discChecklist(c));
+      repaint($('disc-provenance'), () => discProvenance(c));
+    } });
     return detailPanel.node;
   }
   // a checklist tile and its evidence control are the same mechanism: one
@@ -2034,7 +2242,7 @@
     ]);
   }
   function compareSide(c, side, idp, height) {
-    const panel = chartPanel(c, { idPrefix: idp, tools: false, height: height });
+    const panel = chartPanel(c, { idPrefix: idp, tools: false, height: height, recover: true, record: current });
     comparePanels.push(panel);
     const box = el('section', { 'class': 'ss-compare__side', 'data-side': side, 'data-ticker': c.ticker, 'aria-label': c.ticker });
     box.appendChild(compareId(c, side));
@@ -2259,7 +2467,7 @@
       else if (cl.chart_seen === false) out.push('the chart reader answered without a chart');
       (q.vetoes || []).forEach((v) => out.push('veto: ' + (VETO_WORDS[v] || words(v))));
     } else out.push('anticipation names are measured, not graded: the record carries no pass or fail for a coil');
-    if (!(c.series || []).length) out.push('no daily bars were archived for it, so no chart was saved');
+    if (!(c.series || []).length) out.push('no browser bars were loaded for it, so no chart was saved');
     return out;
   }
 
@@ -3073,7 +3281,7 @@
       : [cap(sentence(c.reason))];
     const riskText = firstText(cl.key_risk, plan.stop_risk_reason, plan.hazards, plan.notes);
     const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
-      c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
+      c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function coilDecision(c) {
@@ -3089,7 +3297,7 @@
       : [cap(sentence(c.reason))];
     const riskText = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
     const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
-      c.series.length ? '' : 'No bars are archived for this name, so there is no chart to read.'];
+      c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function decisionSummary(c) {
@@ -3103,7 +3311,52 @@
     det.open = true; scrollTo(det);
     const s = det.querySelector('summary'); if (s) { s.tabIndex = 0; s.focus({ preventScroll: true }); }
   }
+  function burstActionArea(c) {
+    const offered = c.status === 'ticket' && av && av.offered, plan = c.plan || {}, tm = av.timing || {};
+    const box = el('section', { 'class': 'sc-actionbar ss-action ss-action--burst', 'aria-label': 'Entry for this setup',
+      'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status, 'data-window': av.phase });
+    const head = el('div', { 'class': 'ss-action__head' }, [
+      el('h3', { text: offered ? 'Conditional plan · ' + tm.session : 'No SpicyStock entry for this setup' }),
+      offered ? chip('stop-limit', 'good') : c.status === 'ticket' ? chip(av.lead, 'warn')
+        : statusWords(c.status)[0] !== 'no ticket' ? chip(...statusWords(c.status)) : null
+    ]);
+    box.appendChild(head);
+    if (offered) {
+      const order = plan.order_json;
+      const levels = el('dl', { 'class': 'ss-action__levels' });
+      [ ['Buy stop / trigger', 'trigger', usd(order.stop_price)], ['Limit', 'limit', usd(order.limit_price)],
+        ['Protective stop', 'stop', usd((order.then || {}).stop_price)], ['Suggested size', 'shares', num(order.quantity) + ' shares']
+      ].forEach(([label, key, value]) => levels.appendChild(el('div', null, [el('dt', { text: label }), el('dd', { 'data-plan-value': key, text: value })])));
+      box.appendChild(levels);
+      box.appendChild(el('p', { 'class': 'ss-action__terms', text: 'Entry window ' + windowWords(tm) + ' · DAY buy stop-limit, then OTO protective stop GTC. Suggested shares are model sizing. SpicyStock places and cancels nothing.' }));
+      const sizing = [];
+      if (text(plan.stop_risk_reason)) sizing.push(sentence(plan.stop_risk_reason));
+      if (plan.capped_by === 'position_cap') sizing.push('Suggested size is cut by the position cap.');
+      if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
+      if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
+      if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
+    } else {
+      box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? av.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
+    }
+    const controls = el('div', { 'class': 'ss-action__controls' });
+    if (offered) {
+      const pre = el('pre', { 'class': 'ss-order__pre', hidden: '', 'data-ticker': c.ticker, text: (ticket(plan.order_json) || []).join('\n') });
+      controls.appendChild(copyButton(() => pre.textContent, pre, copyGuard, 'Copy order'));
+      box.appendChild(pre);
+    }
+    const target = offered || c.status === 'ticket' ? 'disc-plan' : 'disc-checklist';
+    const details = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', 'data-open': target,
+      'aria-controls': target, 'aria-expanded': $(target) && $(target).open ? 'true' : 'false',
+      text: offered ? 'Plan details' : c.status === 'ticket' ? 'Inspect recorded plan' : 'Inspect conditions' });
+    details.addEventListener('click', () => { openDisclosure(target); details.setAttribute('aria-expanded', 'true'); });
+    controls.appendChild(details); box.appendChild(controls);
+    if (copyRefused && copyRefused.ticker === c.ticker)
+      box.appendChild(el('p', { 'class': 'ss-action__refused', 'data-copy-refused': '', role: 'alert', text: copyRefused.text }));
+    box.appendChild(followBlock(c));
+    return box;
+  }
   function actionArea(c) {
+    if (c.stage === 'bursts') return burstActionArea(c);
     const sw = statusWords(c.status), offered = !!(av && av.offered), plan = c.plan || {};
     const tm = (av || {}).timing || {}, ph = (av || {}).phase || 'unknown';
     const box = el('div', { 'class': 'sc-actionbar ss-action', 'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status,
@@ -3138,10 +3391,15 @@
     return box;
   }
   function disclosure(id, title, hint, kids) {
-    return el('details', { 'class': 'sc-disclosure', id: id }, [
+    const detail = el('details', { 'class': 'sc-disclosure', id: id }, [
       el('summary', null, [d.createTextNode(title), hint ? el('span', { 'class': 'sc-muted', text: ' · ' + hint }) : null]),
       el('div', { 'class': 'sc-disclosure__body' }, kids)
     ]);
+    detail.addEventListener('toggle', () => {
+      if (!detail.isConnected) return;
+      d.querySelectorAll('[data-open="' + id + '"][aria-expanded]').forEach(button => button.setAttribute('aria-expanded', detail.open ? 'true' : 'false'));
+    });
+    return detail;
   }
   function factList(pairs) {
     const dl = el('dl', { 'class': 'sc-facts' });
@@ -3237,6 +3495,7 @@
       return disclosure('disc-plan', 'Conditional plan, sizing and order', 'none', kids);
     }
     const offered = !!(av && av.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
+    if (c.stage === 'bursts' && withheld) kids.push(el('p', { 'class': 'sc-note', text: 'Recorded plan for inspection. No SpicyStock entry for this setup. ' + (c.status === 'ticket' ? av.reason : cap(sentence(noTicketWhy(c)))) }));
     if (c.stage === 'bursts') {
       kids.push(factList([
         ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
@@ -3320,7 +3579,7 @@
       } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; no usable chart-reader judgement' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
     kids.push(factList([
-      ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run), c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : 'none archived for this name'],
+      ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run), c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : SCStock.sourceReference(b, current) ? 'browser chart not loaded; matching retained source reference is available' : 'no usable chart source in this record'],
       ['rules', app.rules_version || '—', 'the digest of every strategy constant in this record'],
       ['run', (run.status || '—') + ' · ' + dateWords(run.session), 'published ' + timeET(run.published_at)],
       b.chart ? ['chart file', b.chart, 'the PNG the grader was shown, when the run rendered it'] : null
@@ -3339,9 +3598,10 @@
       if (!c) box.appendChild(detailEmpty(stage));
       else {
         box.appendChild(detailHead(c));
+        if (c.stage === 'bursts') box.appendChild(actionArea(c));
         box.appendChild(detailChart(c));
         box.appendChild(decisionSummary(c));
-        box.appendChild(actionArea(c));
+        if (c.stage !== 'bursts') box.appendChild(actionArea(c));
         box.appendChild(discChecklist(c));
         box.appendChild(discPlan(c));
         box.appendChild(discExits(c));

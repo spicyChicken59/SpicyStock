@@ -1,0 +1,95 @@
+{
+  "base": "964316f30a81035abf4dd5bd4be3ffbb2520a2fe",
+  "measurement": "offline pipeline fixture; gzip level 9, mtime 0; no live provider/model calls",
+  "payload": {
+    "docs/data.json": {
+      "before": {
+        "raw": 2962276,
+        "gzip": 264521
+      },
+      "after": {
+        "raw": 2962276,
+        "gzip": 264521
+      }
+    },
+    "docs/app.js": {
+      "before": {
+        "raw": 304559,
+        "gzip": 86922
+      },
+      "after": {
+        "raw": 322808,
+        "gzip": 92401
+      }
+    },
+    "docs/app-chart.js": {
+      "before": {
+        "raw": 73267,
+        "gzip": 20083
+      },
+      "after": {
+        "raw": 73267,
+        "gzip": 20083
+      }
+    },
+    "docs/app.css": {
+      "before": {
+        "raw": 59008,
+        "gzip": 12164
+      },
+      "after": {
+        "raw": 60608,
+        "gzip": 12439
+      }
+    }
+  },
+  "requests": {
+    "initialEvidenceRequests": 0,
+    "recoveredChartRequests": 1,
+    "chartHeights": {
+      "desktop": 400,
+      "mobile": 300
+    },
+    "publicationBytesAdded": 0,
+    "selectedMissingStockRequests": 0,
+    "repeatSelectionExtraRequests": 0,
+    "sourceGzipBytes": 8501,
+    "sourceRawBytes": 19862
+  },
+  "additional_retained_series_bytes": 0,
+  "additional_source_object_bytes": 0,
+  "additional_initial_asset_requests": 0,
+  "protected": {
+    "checked": 1497,
+    "changed": [],
+    "base": "964316f30a81035abf4dd5bd4be3ffbb2520a2fe"
+  },
+  "mutations": [
+    {
+      "mutation": "hash",
+      "killed": true,
+      "controls_pass": true
+    },
+    {
+      "mutation": "recorded_trigger",
+      "killed": true,
+      "controls_pass": true
+    },
+    {
+      "mutation": "ephemeral_focus",
+      "killed": true,
+      "controls_pass": true
+    }
+  ],
+  "legacy_snapshot": {
+    "bursts": 342,
+    "with_browser_series": 25,
+    "with_provenance_source": 0
+  },
+  "chart_drawing_height": {
+    "desktop_before": 400,
+    "desktop_after": 400,
+    "mobile_before": 300,
+    "mobile_after": 300
+  }
+}

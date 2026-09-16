@@ -146,7 +146,16 @@ does not carry, falls back to Explore and says so.
    pinned from the map without going back to the cards to find them again. On a four-hundred-burst night almost every point
    has a neighbour within a finger, so almost every tap asks: the cards, the
    search and the table are the one-step path to a stock you can name.
-3. **The chosen stock.** One chart panel with one header (the symbol, its
+3. **The chosen stock.** A Burst first answers whether SpicyStock offers an
+   entry for this exact setup. A usable published ticket shows its applicable
+   session, buy-stop trigger, stop-limit limit, protective stop and suggested
+   model shares directly, with **Copy order** and **Plan details**. It prints
+   the recorded order fields and keeps material sizing explanations. A setup
+   without a usable ticket says **No SpicyStock entry for this setup** and the
+   actual grade, planner, budget, breadth or timing/publication reason. Expired
+   plans remain inspectable as recorded history with no actionable levels or
+   copy button in this summary. No client-side trading levels are calculated.
+   Then one chart panel with one header (the symbol, its
    last close and session), the controls together above the plot, and every
    price label in a reserved right gutter with a leader back to its exact
    level: the last close, the stop, the trigger, the limit (the highest fill
@@ -167,12 +176,11 @@ does not carry, falls back to Explore and says so.
    candle; a name without archived bars says *Chart unavailable* and keeps
    its conditions. Four answers, each from the record's own sentences:
    *why this stock?*, *what would need to happen?*, *what invalidates it,
-   or makes me wait?*, *principal risk or limitation*. Then the action
-   area: the conditional ticket's order line with *View conditional plan*,
-   or the reason there is no ticket with *Inspect conditions* — never a buy
-   button. It is the design system's own action bar (`.sc-actionbar`): a
-   row on a desktop, and on a phone a stack whose button follows its
-   sentence directly. Under it four disclosures: the conditions (one tile per
+   or makes me wait?*, *principal risk or limitation*. Anticipation keeps its
+   existing action area below those answers. The Burst action summary uses
+   the shared `.sc-actionbar` with a compact four-field grid (two columns on
+   a phone); browse cards keep their compact form. Four disclosures follow:
+   the conditions (one tile per
    criterion with the measured value, his threshold and the verdict in
    words, then the base, the burst and the grade); the plan, sizing and
    order (the buy zone, whose top IS the ticket's own limit; the two skip
@@ -214,6 +222,24 @@ does not carry, falls back to Explore and says so.
    Evidence outside the range on screen is offered (*Show recorded range*)
    and never taken silently; a name with no archived bars keeps the words
    and says there is no chart to sit on.
+   **Focus evidence** explicitly frames the selected marker with nearby actual
+   sessions: at least 21 observations for a single session where available,
+   and context around a recorded base. **Back to setup range** (or the prior
+   60/120 range) restores the preference. Focus is temporary, keeps the marker
+   and plan levels, and never writes the saved Setup/60/120 preference.
+   Chart heights remain 400px desktop and 300px narrow/mobile.
+   A new provenance-enabled Burst without ordinary browser bars offers
+   **Load recorded chart**. Only that explicit press fetches its exact retained
+   source object, with bounded decompression, source-hash and reference checks.
+   It displays up to 120 sessions from that frame and identifies them as
+   recorded source evidence. No eager evidence requests, market providers,
+   later observations or fabricated bars are used. Failures leave the setup
+   usable and offer a retry; legacy missing sources remain unavailable.
+   Saved originals/history recovery keep their existing evidence. A chart loaded
+   before a new save can be saved with that original; loading never rewrites an
+   already saved chart. Compare can request a missing chart independently.
+   [The chart-source contract](docs/actionability/README.md) describes validation
+   and request/payload limits.
    A **Compare** toggle sits beside each card's selection button and in the
    chosen stock's own tool row — never inside either, so pinning neither
    chooses the stock nor follows it. Two pinned candidates of one stage and
@@ -533,7 +559,9 @@ The detail disclosure says **Evidence recorded** and whether a ticket existed;
 technical IDs stay inside a further disclosure. Local annotations do not alter it.
 
 Full frames and exact reader inputs are deduplicated under `docs/evidence/`,
-outside the initial page payload. Verification calls the existing strategy
+outside the initial page payload. The chart's optional source reader verifies
+one retained frame's identity; it does not replay the recommendation chain.
+Full verification calls the existing strategy
 functions offline; it never repairs evidence or requests providers/models.
 Schema-1 picks retain their original fields; September 11/14 histories are not
 rewritten. Missing legacy provenance is explicitly partial/unknown. See
