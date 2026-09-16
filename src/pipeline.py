@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing, inputs, sessions
+from src import timing, inputs, sessions, provenance
 from src import universe
 from src import watchlist
 
@@ -345,6 +345,7 @@ def scan_frames(frames: dict[str, pd.DataFrame], uni: universe.Universe,
         # The display row may retain finer provider precision; never substitute
         # those values for the ones that actually passed the scan.
         row["discovery"] = discovery.contract({**row, **(burst or {}), **(dollar or {})})
+        provenance.capture(row, df)
         bursts.append(row)
     tally["measured"] = measured
     if ledger is not None:
@@ -419,8 +420,10 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         extra = {"scan": b["scan"], "discovery": b["discovery"],
                  "flags": b["flags"], "gain_pct": b["gain_pct"],
                  "volume_vs_prior": b["volume_vs_prior"], "dollar_volume": b["dollar_volume"]}
+        metrics = quality.metrics_for_model(assessment, b["ticker"], b["close"], extra)
+        provenance.prepare_reader(b, metrics, chart_path, system_prompt)
         candidates.append({"ticker": b["ticker"],
-                           "metrics": quality.metrics_for_model(assessment, b["ticker"], b["close"], extra),
+                           "metrics": metrics,
                            "chart": chart_path})
     usage: dict = {}
     rows = grader.grade_all(candidates, system_prompt, MAX_READS, usage) if candidates else []
@@ -431,17 +434,18 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         if r is None:
             b["claude"] = None
             b["grade"] = b["grade_mechanical"]
+            provenance.seal_reader(b)
             continue
         prov = r.get("provenance", {})
         if prov.get("source") == grader.SOURCE_CLAUDE:
             done += 1
             claude_grade = r.get("grade")
-            clamped = claude_grade if GRADE_ORDER.get(claude_grade, 9) >= GRADE_ORDER.get(b["grade_mechanical"], 9) \
-                else b["grade_mechanical"]
+            clamped = grader.final_grade(b["grade_mechanical"], claude_grade)
             b["claude"] = {"agree": clamped == b["grade_mechanical"], "grade": clamped,
                            "score": r.get("score"), "reason": r.get("reason"), "key_risk": r.get("key_risk"),
                            "entry_note": r.get("entry_note"), "source": "claude",
                            "chart_seen": bool(prov.get("chart_seen")), "error": None}
+            b["claude"].update(returned_grade=claude_grade, model=prov.get("model"))
             b["grade"] = clamped
         else:
             unavailable += 1
@@ -450,7 +454,11 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
                            "chart_seen": False, "error": prov.get("error")}
             b["grade"] = b["grade_mechanical"]
         b["claude"]["request_text_sha256"] = prov.get("request_text_sha256")
+        b["claude"]["input"] = prov.get("input")
+        b["claude"]["attempts"] = prov.get("attempts", [])
+        b["claude"]["attempted_model"] = prov.get("attempted_model")
         b["claude"]["discovery_version"] = discovery.VERSION
+        provenance.seal_reader(b)
     if candidates and done == 0:
         rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names")
     elif unavailable:
@@ -472,21 +480,24 @@ def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: pla
     admitted = () if verdict == "red" else (YELLOW_GRADES if verdict == "yellow" else TRADE_GRADES)
     plans = []
     for b in bursts:
-        b.setdefault("plan", None)
+        b["plan"] = None
+        provenance.seal_plan(b, None, regime, session)
         if b["grade"] not in admitted or b["vetoes"]:
             continue
+        plan_inputs = dict(ticker=b["ticker"], close=b["close"], low=b["low"], high=b["high"],
+                           open_=b["open"], prev_close=b["prev_close"], gain_pct=b["gain_pct"] or 0.0,
+                           account=account.to_dict(), size_multiplier=multiplier,
+                           scan="dollar" if b["scan"] == "dollar" else "4pct", extension_pct=b.get("extension_pct"))
         try:
-            p = plan.burst_plan(ticker=b["ticker"], close=b["close"], low=b["low"], high=b["high"],
-                                open_=b["open"], prev_close=b["prev_close"], gain_pct=b["gain_pct"] or 0.0,
-                                account=account, size_multiplier=multiplier,
-                                scan="dollar" if b["scan"] == "dollar" else "4pct",
-                                extension_pct=b.get("extension_pct"))
+            p = plan.burst_plan(**{**plan_inputs, "account": account})
         except ValueError as exc:
             log.warning("no plan for %s: %s", b["ticker"], exc)
+            provenance.seal_plan(b, plan_inputs, regime, session, str(exc))
             continue
         if session is not None:
             p["exit_schedule"] = plan.dated_schedule(p, session)
         b["plan"] = p
+        provenance.seal_plan(b, plan_inputs, regime, session)
         plans.append(p)
     budget = plan.cash_budget(plans, account, open_positions=open_count)
     cut = {row["ticker"] for row in budget.get("cut", [])}
@@ -513,15 +524,17 @@ def make_watchlist(frames: dict[str, pd.DataFrame], account: plan.Account, regim
         df = frames.get(row["ticker"])
         lows = [float(x) for x in df["Low"].iloc[-plan.STOP_LOOKBACK_SESSIONS:]] if df is not None else []
         box = row.get("box") or {}
+        provenance.capture_watch(row, df)
+        plan_inputs = dict(ticker=row["ticker"], close=row["close"], box_high=box.get("high"), box_low=box.get("low"),
+                           lows_last3=lows, account=account.to_dict(), size_multiplier=multiplier)
         try:
-            row["plan"] = plan.anticipation_plan(ticker=row["ticker"], close=row["close"],
-                                                 box_high=box["high"], box_low=box["low"],
-                                                 lows_last3=lows, account=account,
-                                                 size_multiplier=multiplier)
+            row["plan"] = plan.anticipation_plan(**{**plan_inputs, "account": account})
             if session is not None:
                 row["plan"]["exit_schedule"] = plan.dated_schedule(row["plan"], session)
+            provenance.seal_plan(row, plan_inputs, regime, session)
         except (KeyError, ValueError) as exc:
             row["plan"] = None
+            provenance.seal_plan(row, plan_inputs, regime, session, str(exc))
             log.warning("no anticipation plan for %s: %s", row["ticker"], exc)
         if df is not None:
             row["series"] = series_of(df)
@@ -543,7 +556,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -695,6 +708,39 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         lists = (make_watchlist(fresh, account, regime, uni, session) if not closed
                  else {"top": [], "also_quiet": [], "counts": {}, "instruction": plan.ANTICIPATION_INSTRUCTION})
 
+        graded = {key: sum(1 for b in bursts if b["grade"] == g) for key, g in GRADE_KEYS.items()}
+        faults = inputs.faults(coverage)
+        if faults:
+            raise ValueError("; ".join(faults))
+        log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
+        elapsed = round(time.monotonic() - started, 1)
+        run_block = {
+            "session": session.isoformat(), "session_state": "closed" if closed else "open",
+            "expected_session": expected.isoformat(),
+            "status": run_status(rep, closed), "problems": list(rep.problems),
+            "dry_run": dry_run, "model": grader.MODEL, "feed": getattr(feed, "value", str(feed)),
+            "universe": universe.provenance(uni, expected),
+            "input_basis": {"provider": "Alpaca", "feed": stats.feed,
+                            "adjustment": market_data.BAR_ADJUSTMENT.value,
+                            "timeframe": "1Day", "expected_session": expected.isoformat(),
+                            "evaluated_session": session.isoformat()},
+            "coverage": coverage, "bursts": len(bursts), "graded": graded, "reads": reads,
+            "email": "skipped", "published_at": generated,
+            "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
+            "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
+            "rules_version": RULES_VERSION_NOTE, "type": "evening",
+            "timing": plan_timing(session, expected, closed),
+            "calendar": sessions.publication(session),
+        }
+        account_block = account.to_dict() | {"notes": plan.account_notes(account)}
+        rules_block = build_rules(uni)
+        evidence_context = {"run": run_block, "rules": rules_block,
+            "app": {"rules_version": report.rules_version(rules_block)}, "breadth": breadth_block,
+            "account": account_block, "cash_budget": budget, "trades": trades, "bursts": bursts, "watchlist": lists}
+        evidence_objects = provenance.finish(evidence_context, bursts)
+        evidence_objects.update(provenance.finish_watch(evidence_context, lists.get("top", [])))
+        lists["top"] = [_strip_private(r) for r in lists.get("top", [])]
+
         rep.stage = "record"
         if carried:
             # the previous session's tickets, verbatim; its picks are walked as
@@ -730,36 +776,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             published_bursts.append(row)
         if carried:
             published_bursts = published_carried
-        graded = {key: sum(1 for b in bursts if b["grade"] == g) for key, g in GRADE_KEYS.items()}
-        faults = inputs.faults(coverage)
-        if faults:
-            raise ValueError("; ".join(faults))
-        log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
-        elapsed = round(time.monotonic() - started, 1)
-        run_block = {
-            "session": session.isoformat(), "session_state": "closed" if closed else "open",
-            "expected_session": expected.isoformat(),
-            "status": run_status(rep, closed), "problems": list(rep.problems),
-            "dry_run": dry_run, "model": grader.MODEL, "feed": getattr(feed, "value", str(feed)),
-            "universe": universe.provenance(uni, expected),
-            "input_basis": {"provider": "Alpaca", "feed": stats.feed,
-                            "adjustment": market_data.BAR_ADJUSTMENT.value,
-                            "timeframe": "1Day", "expected_session": expected.isoformat(),
-                            "evaluated_session": session.isoformat()},
-            "coverage": coverage, "bursts": len(bursts), "graded": graded, "reads": reads,
-            "email": "skipped", "published_at": generated,
-            "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
-            "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),
-            "rules_version": RULES_VERSION_NOTE, "type": "evening",
-            "timing": plan_timing(session, expected, closed),
-            "calendar": sessions.publication(session),
-        }
         # a closed night is filed under the session that did not happen, so the
         # reliability row shows the holiday as closed and keeps the night before
         nights = record.nights(previous.get("nights"), {"session": night_session(expected, session, closed),
                                                         "status": run_status(rep, closed),
                                                         "published_at": generated})
-        account_block = account.to_dict() | {"notes": plan.account_notes(account)}
         public_signals = history.signals({"run": run_block, "app": {"rules_version": report.rules_version(build_rules(uni))},
                                           "bursts": published_bursts, "watchlist": lists})
         observed = observations(frames, previous,
@@ -769,9 +790,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         data = report.build(run_block, account_block, build_rules(uni), breadth_block, published_bursts,
                             trades, beyond_cap, budget, lists, open_plans, scorecard, nights, generated,
                             observations=observed)
-        report.write(data, docs / DATA_FILE)
-        if not dry_run:
-            record.save(rec, docs)
+        provenance.publish_bundle(data, rec, docs, evidence_objects, dry_run=dry_run)
         rep.published = True
         log.info("published %s: %s", session, data["cover"]["h1"])
 
@@ -862,7 +881,8 @@ def pick_of(p: dict, kind: str, grade: str, score) -> dict:
     """The slim pick the record keeps for a published plan: what the walk
     reads (the zone or the trigger, the stop, the shares) and what the page
     draws beside it (the targets, the ticket)."""
-    return {"ticker": p["ticker"], "kind": kind, "grade": grade, "score": score,
+    return {**({"evidence_ref": p["evidence_ref"]} if p.get("evidence_ref") else {}),
+            "ticker": p["ticker"], "kind": kind, "grade": grade, "score": score,
             "entry_ref": p["entry_ref"], "entry_low": p.get("entry_low"), "entry_high": p.get("entry_high"),
             # the ticket's limit and the outer threshold are two prices: the
             # walk fills against the limit (``entry_high``), and the skip

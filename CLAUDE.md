@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1209 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1266 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -1856,3 +1856,60 @@ so an unchanged holiday publication is not called tonight's run. Calendar/mobile
 entry-window browser checks passed 155/155 for that wording; docs checks passed 33/33. All 22 vendored design
 hashes still match v2.13.0. Production data.json, picks.json and history archives
 are unchanged. No live provider/model/email call, merge or deployment occurred.
+
+## Recommendation provenance — after #70
+
+Base `f744b88a6117b933310f370b8f9ab4cd1d03a3c8`; Astra only. The user's
+“Continue” authorized this focused Stock branch/edit/commit/push/PR session.
+No merge, deployment, paid/provider replay, secret/settings change or siblings.
+`src/provenance.py` v1 seals source/discovery/mechanical evidence at scanning,
+actual reader input/result at grading, and inputs/output at planning. It joins
+them to the run/input/calendar/rules/breadth/budget context and stable setup ID.
+Canonical typed JSON uses exact binary64 hex floats, ordered daily labels and
+the scanner/checklist's own normalized arrays, never rounded browser bars.
+Discovery v1 and existing quality/plan functions remain authoritative.
+
+New candidate, ticket, schema-2 model pick, recovery snapshot and saved original
+share evidence identity. Grade is distinct from regime/budget ticket permission.
+Fallback and unattempted readers contain no invented judgement. Anticipation
+plans have an explicit measured/not-graded path. Final planning clears provisional
+mechanical plans when the reader lowers quality below eligibility. Suggested
+shares remain model sizing; local user annotations never enter public evidence.
+
+`publish_bundle` verifies the actual serialized data/picks pair and retained
+inputs before installing it; contradictions fail closed. Source frames/prompts
+are compressed/deduplicated and exact chart images retained under docs/evidence.
+Object bound 256 KiB, archive 128 MiB; capacity exhaustion fails publication,
+without deleting originals. Ordinary installation failures roll back the pair;
+there is no crash-atomic filesystem transaction. Legacy schema-1 picks migrate
+without adding evidence; old publications report PARTIAL/unknown. Archived rules
+that differ require the matching implementation for full replay. September 11/14
+history and production records are never rewritten to fabricate provenance.
+
+Before code edits, eight contradiction protections failed while their actionable
+control passed. Seven later source-guard mutations were killed with two unaffected
+controls each. CLI and canonicalization: docs/provenance/README.md; measured sizes
+and runtime: docs/provenance/measurements.json. Initial browser requests added: 0.
+The user-facing change is one concise detail paragraph and collapsed technical
+reference. Design v2.13.0 remains unchanged. KEEP input truthfulness, calendar,
+split-adjusted bars, discovery, down-only grading, breadth/tickets and My setups.
+FIX the publication chain only. DEFER dollar-formula primary-source validation,
+live qualifying-ticket evidence and empirical edge. OMIT portfolio/brokerage,
+provenance dashboard and paid replay. Next: terminal verification and one PR;
+the PR records exact head and final results, and remains unmerged for review.
+
+Terminal local pass: 1,266 pytest cases (57 focused provenance cases), twelve
+generated JSON fixtures plus retained source objects current, 89 continuity,
+182 chart and 4,161 page checks. All PASS. Seven source mutations killed;
+fourteen unaffected controls PASS. Desktop and 390/320px dark/light evidence
+disclosures inspected, including red withholding. First full pass only exposed
+the obsolete three-path artifact assertion; it now requires evidence/history.
+Production records and all 1,408 historical files match the base byte-for-byte;
+all 22 design hashes match v2.13.0. Live provider/model/email calls: zero.
+
+CI passed all 1,266 tests and the page job, then exposed fixture-only raw-float
+drift from NumPy's vector/scalar exponential kernels. Disabling X86_V4/X86_V3
+locally reproduced the exact three differing source IDs. The synthetic provider
+now serves eight-decimal OHLC and whole-share volume before the pipeline reads
+it. Production hashing/inputs are unchanged. Both CPU dispatch paths regenerate
+the same fixtures and source objects. The correction belongs to the same PR #71.

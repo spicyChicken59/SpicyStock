@@ -710,6 +710,9 @@ def validate(data: dict) -> None:
         faults.append("_contract does not name exactly the top-level keys")
     if faults:
         raise ValueError("docs/data.json refused:\n  " + "\n  ".join(faults))
+    if run.get("evidence") or data.get("rules", {}).get("provenance"):
+        from src import provenance
+        provenance.require(data)
 
 
 def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dict], trades: list[str],
@@ -754,6 +757,9 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
 def write(data: dict, path: Path) -> None:
     """Write the file atomically: the bytes land in a sibling temp file and
     are renamed over the target, so a reader never sees a half-written one."""
+    if data.get("run", {}).get("evidence") or data.get("rules", {}).get("provenance"):
+        from src import provenance
+        provenance.require(data)
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     text = json.dumps(data, indent=1, sort_keys=False, ensure_ascii=False, allow_nan=False)

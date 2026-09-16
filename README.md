@@ -400,8 +400,11 @@ session. The run:
   as cut with the kind and the reason. An anticipation ticket is judged
   and sized at its limit the same way.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
-  scorecard are computed from it and the bars.
-- **publish** — `docs/data.json` is written and validated, then the email
+  scorecard are computed from it and the bars. Suggested shares are model
+  sizing, never shares bought. New plans carry a versioned evidence reference.
+- **publish** — source, discovery, checklist, reader, regime and plan evidence
+  must verify before the serialized data/picks pair replaces the previous
+  publication. Contradictions fail closed. Then the email
   goes out. The workflow commits `docs/` back on exit 0, 2 or 3 (never a
   rehearsal), and `publish-dashboard.yml` asks GitHub Pages for a build,
   because a token push does not trigger one. It then fetches every file the
@@ -514,9 +517,28 @@ fetched; missing frames retain dated real observations),
 `app`, and `_contract`, which names every top-level key in a sentence.
 `rules` is every module's constants nested by family, and `app.rules_version`
 is a digest of that block, so two records produced by different numbers can
-never be read as one. `docs/picks.json` is every published plan: ticker,
+never be read as one. `docs/picks.json` (schema 2 for new writes) is every published plan: ticker,
 session, kind, the entry zone or trigger, the stop, the shares, the targets,
 the ticket. It holds nothing about what anyone did with them.
+
+New candidates carry provenance v1: a stable evidence ID, exact source/read-view
+digests, discovery and mechanical-check digests, chart-reader input/result or
+explicit fallback, breadth eligibility and plan inputs/output. The same ID
+travels with tickets, persisted picks, immutable recovery and new saved originals.
+The detail disclosure says **Evidence recorded** and whether a ticket existed;
+technical IDs stay inside a further disclosure. Local annotations do not alter it.
+
+Full frames and exact reader inputs are deduplicated under `docs/evidence/`,
+outside the initial page payload. Verification calls the existing strategy
+functions offline; it never repairs evidence or requests providers/models.
+Schema-1 picks retain their original fields; September 11/14 histories are not
+rewritten. Missing legacy provenance is explicitly partial/unknown. See
+[the provenance contract](docs/provenance/README.md) for canonicalization,
+retention bounds, examples and measured impact. To verify a retained publication:
+
+```sh
+python tools/verify_provenance.py --record docs/data.json --picks docs/picks.json --objects docs/evidence
+```
 
 **The scorecard is the rules' record, not yours.** Every pick is replayed
 from daily bars alone, as a model: a ticket is booked filled only at the
@@ -589,6 +611,7 @@ not historical point-in-time universe or profitability evidence.
 
 ```
 src/            history.py (public recovery and coverage)
+                provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
@@ -596,9 +619,11 @@ src/            history.py (public recovery and coverage)
                 grader.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
+                history/ (recovery) · evidence/ (deduplicated source objects)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
+                verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
 .github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml
 ```

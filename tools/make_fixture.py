@@ -46,6 +46,7 @@ clone, so the page renders before the first real run replaces it.
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import shutil
@@ -78,6 +79,11 @@ FOLLOW_SESSION = date(2026, 9, 11)
 #: same session on later bars, which is a correction and not a new day
 REVISION_CENTS = 37
 SEED = 20260910
+# Synthetic provider inputs have a declared grid. NumPy's vector/scalar exp
+# kernels can differ by one binary64 bit; that was invisible in display series
+# but must not make these synthetic source receipts machine-dependent. Apply
+# this BEFORE the fake provider serves a frame, never in production hashing.
+FIXTURE_INPUT_DECIMALS = {"Open": 8, "High": 8, "Low": 8, "Close": 8, "Volume": 0}
 CLAUDE = {"A+": {"score": 9.3, "grade": "A+",
                  "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
                  "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
@@ -308,8 +314,8 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
         elif variant == "red":
             red_tape(frames, 6)
     for name, df in frames.items():
-        fake.add_history(name, df)
-    fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0))
+        fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS))
+    fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0).round(FIXTURE_INPUT_DECIMALS))
     return list(frames)
 
 
@@ -358,7 +364,7 @@ def run_variant(variant: str, docs: Path) -> dict:
     fake = FakeAlpaca()
     tickers = register(fake, variant)
     if variant in ("empty", "partial"):
-        quiet = make_ohlcv("flat", seed=SEED, days=280)
+        quiet = make_ohlcv("flat", seed=SEED, days=280).round(FIXTURE_INPUT_DECIMALS)
         for ticker in tickers:
             fake.add_history(ticker, quiet)
     docs.mkdir(parents=True, exist_ok=True)
@@ -394,12 +400,16 @@ def run_variant(variant: str, docs: Path) -> dict:
 
     if variant == "degraded":
         claude.raises = RuntimeError("upstream connect error")
-    real_render = charts.render_chart
-
     def render(ticker, df, out_dir, **kw):
         if variant == "degraded" and ticker == "AMD":
             raise RuntimeError("the renderer refused the frame")
-        return real_render(ticker, df, out_dir, **kw)
+        # Fixed PNG transport double: provenance records exact image bytes.
+        # Renderer/platform differences must not change synthetic evidence IDs;
+        # tests/test_charts.py exercises the actual renderer independently.
+        target = Path(out_dir) / f"{ticker}.png"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j8WQAAAAASUVORK5CYII="))
+        return str(target)
 
     env = {"ALPACA_API_KEY": "fixture", "ALPACA_SECRET_KEY": "fixture", "ANTHROPIC_API_KEY": "fixture",
            "SCAN_SEND_EMAIL": "false", "MPLBACKEND": "Agg", "CLAUDE_MODEL": "claude-sonnet-4-6"}
@@ -516,13 +526,18 @@ def expected_shape(variant: str, data: dict) -> None:
         assert problems == [], problems
 
 
-def build_all() -> dict[str, dict]:
+def build_all(evidence_objects=None) -> dict[str, dict]:
     out = {}
+    def retain(docs):
+        if evidence_objects is not None:
+            for path in (docs / "evidence").glob("*"):
+                evidence_objects[path.name] = path.read_bytes()
     for variant in VARIANTS:
         with tempfile.TemporaryDirectory() as tmp:
             docs = Path(tmp) / "docs"
             data = run_variant(variant, docs)
             expected_shape(variant, data)
+            retain(docs)
             out[variant] = data
             if variant == "full":
                 out["full-picks"] = {"fixture": "full", **json.loads((docs / record.PICKS_FILE).read_text())}
@@ -534,6 +549,7 @@ def build_all() -> dict[str, dict]:
                         shutil.copytree(docs, seq)
                         sdata = run_variant(sequel, seq)
                         expected_shape(sequel, sdata)
+                        retain(seq)
                         out[sequel] = sdata
     return out
 
@@ -548,9 +564,25 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--check", action="store_true", help="compare rather than write; exit 1 on a difference")
     args = p.parse_args(argv)
-    built = build_all()
+    objects = {}
+    built = build_all(objects)
     FIXTURES.mkdir(parents=True, exist_ok=True)
     stale = []
+    object_dir = FIXTURES.parent / "provenance" / "objects"
+    for name, raw in objects.items():
+        target = object_dir / name
+        if args.check:
+            if not target.exists() or target.read_bytes() != raw:
+                stale.append("provenance/objects/" + name)
+        else:
+            object_dir.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+    extras = [p for p in object_dir.glob("*") if p.name not in objects]
+    if args.check:
+        stale.extend("provenance/objects/" + p.name for p in extras)
+    else:
+        for path in extras:
+            path.unlink()
     for name, data in built.items():
         target = FIXTURES / f"{name}.json"
         text = json.dumps(data, indent=1, ensure_ascii=False, allow_nan=False) + "\n"
@@ -575,9 +607,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     for target, data in placeholders.items():
         current = json.loads(target.read_text()) if target.exists() else {}
-        if not target.exists() or current.get("fixture") == "full" or current.get("schema_version") != data.get("schema_version"):
+        if not target.exists() or current.get("fixture") == "full":
             target.write_text(json.dumps(data, indent=1, ensure_ascii=False, allow_nan=False) + "\n")
-            print(f"docs/{target.name} <- the full fixture (it still claimed to be one, or was not this schema)")
+            print(f"docs/{target.name} <- the full fixture (missing or already labelled a fixture)")
     for name in list(built):
         print(f"wrote tests/fixtures/page/{name}.json")
     return 0

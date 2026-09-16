@@ -166,6 +166,8 @@ jobs:
             docs/data.json
             docs/picks.json
             docs/charts/
+            docs/evidence/
+            docs/history/
           retention-days: 30
       - name: Report the pipeline's verdict
         # Exit 2 (degraded but published) is a warning, not a red run: a

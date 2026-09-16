@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "eb6c9a6097b6"
+  "rules_version": "a6354faa5da9"
  },
  "cover": {
   "h1": "Trade small. 1 A+ burst.",
@@ -728,6 +728,10 @@
     ]
    }
   },
+  "evidence": {
+   "version": 1,
+   "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70"
+  },
   "sanitised": {
    "replaced": 0,
    "paths": []
@@ -1001,6 +1005,33 @@
    "completion_buffer_minutes": 15,
    "schedule_past_days": 45,
    "schedule_future_days": 45
+  },
+  "provenance": {
+   "version": 1,
+   "canonicalization": "typed-json-f64hex-v1",
+   "grade_bands": [
+    [
+     9.0,
+     "A+"
+    ],
+    [
+     8.0,
+     "A"
+    ],
+    [
+     6.5,
+     "B"
+    ],
+    [
+     5.0,
+     "C"
+    ]
+   ],
+   "quality_gate_letters": [
+    "2",
+    "H"
+   ],
+   "quality_gate_cap": "B"
   },
   "pipeline": {
    "max_reads": 12,
@@ -1861,7 +1892,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "256c809020723fc6e2c97ddf53b8a362e179209e8512e971edf4dfca2d8d3949",
+     "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+     "plan_sha256": "d5843b731b0a170aebc993a662acad33a542e77ca54c5d097bbb9206f3f75638",
+     "pick_sha256": "01edb4cba4c2cef86223fb006fabd189bcd5aac5e19f87460a4bdc336a388db9"
+    }
    },
    "chart": "charts/AAPL.png",
    "claude": {
@@ -1874,10 +1912,90 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc",
+    "input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "676d7ac4d59cbd66c0ae2443a5cb8ae4c9ea1b8313ef7ff7ea66c108832b9911",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 1,
+   "evidence": {
+    "source": {
+     "sha256": "c1a3aa274768ca00d6b8a2a89a13c3eb8f695f2847654c53f7641c5273ccf1f8",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "b47557c499b8f18c07d7bf3d94ab154331104745805193339b368fa3634e7aad",
+     "quality_sha256": "b47557c499b8f18c07d7bf3d94ab154331104745805193339b368fa3634e7aad"
+    },
+    "facts_sha256": "ba6a154493cb9197aa56e8ed255d2257d2eb5a01408b7386f739f9b0e3845026",
+    "discovery_sha256": "7000541e4ef39d73ce8accee46db2511f070091bd35d3974828d23e010120274",
+    "quality_sha256": "750c78d48b7ab1fb6d227e5fdddc6189a5cd964b9af1f0e8639aa4ac311d075f",
+    "planning": {
+     "inputs": {
+      "ticker": "AAPL",
+      "close": 124.21,
+      "low": 118.35,
+      "high": 124.49,
+      "open_": 118.96,
+      "prev_close": 117.18,
+      "gain_pct": 6.0,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 0.5,
+      "scan": "4pct",
+      "extension_pct": 5.2
+     },
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "d5843b731b0a170aebc993a662acad33a542e77ca54c5d097bbb9206f3f75638",
+     "error": null,
+     "pick_sha256": "01edb4cba4c2cef86223fb006fabd189bcd5aac5e19f87460a4bdc336a388db9"
+    },
+    "reader_input": {
+     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc"
+    },
+    "reader_sha256": "06b6072c18a8afa2724b9203c52b78cb99b985d0fcd63ec3fb0145aa655efe81",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AAPL",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": true,
+     "reason": null,
+     "detail": null
+    },
+    "id": "256c809020723fc6e2c97ddf53b8a362e179209e8512e971edf4dfca2d8d3949"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -3305,7 +3423,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "8a09450876a698e40a1b5f9926fa23ffe3ecea320e6cb4242e2b9b1bfeaa2a93",
+     "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+     "plan_sha256": "739d551fe6aa662a9fb3fb3d0b3b565ea9a1263fb021f0af6b0f0aea1397bc8c",
+     "pick_sha256": "bbe4efd82b43a09258e98716e3ebc12baba12487ce88bfba6502b1ffafed56e0"
+    }
    },
    "chart": "charts/AMD.png",
    "claude": {
@@ -3318,10 +3443,90 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50",
+    "input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "d292334e957d3bb529f67ad0b34c7f9243f502f3eb748102e02a6178c371c210",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 2,
+   "evidence": {
+    "source": {
+     "sha256": "85916ca1ec419bc8c881604d62c78b7c5b36b0a1230ce38911f5603ba2b9c589",
+     "rows": 109,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "93d4cb5c6177824272204ebd75709c39f3270e755b34ddf157ba2790f197b4c0",
+     "quality_sha256": "93d4cb5c6177824272204ebd75709c39f3270e755b34ddf157ba2790f197b4c0"
+    },
+    "facts_sha256": "0fa3fb937f969a3888eaaf9a17dd10b04430e756fd9bb76308a24f8bb1ec10cb",
+    "discovery_sha256": "50d2f2c37b0a0422cf6c737c55e1245119278fd53bebc4985ac329aab7f87f1f",
+    "quality_sha256": "8b2421270c4a1a7fe655964f8695ab62dbc8c097ab9093398769e40d77b78768",
+    "planning": {
+     "inputs": {
+      "ticker": "AMD",
+      "close": 123.27,
+      "low": 123.1,
+      "high": 123.28,
+      "open_": 123.12,
+      "prev_close": 117.18,
+      "gain_pct": 5.2,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 0.5,
+      "scan": "4pct",
+      "extension_pct": 4.9
+     },
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "739d551fe6aa662a9fb3fb3d0b3b565ea9a1263fb021f0af6b0f0aea1397bc8c",
+     "error": null,
+     "pick_sha256": "bbe4efd82b43a09258e98716e3ebc12baba12487ce88bfba6502b1ffafed56e0"
+    },
+    "reader_input": {
+     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50"
+    },
+    "reader_sha256": "4dafe2506bb8831b431f8abae7fda4de6cde6d63e5738d6dca5b29414b3b49cf",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "AMD",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": false,
+     "reason": "slot_cap",
+     "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
+    },
+    "id": "8a09450876a698e40a1b5f9926fa23ffe3ecea320e6cb4242e2b9b1bfeaa2a93"
+   },
    "series": [
     {
      "date": "2026-04-07",
@@ -4718,7 +4923,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "b869c0933a195b691a02f2db9ab40beab60feaebdf6b3d0ade7aca1968f81092",
+     "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+     "plan_sha256": "a7c28ed55abd1ce32445f03cc864d1b5ea872eda8c7a2fa33ac490ac90a086e8",
+     "pick_sha256": "199c3bd0df4ee20c095d4806d14a77900c6e7fd487e45536e53d353d1ba007a2"
+    }
    },
    "chart": "charts/NVDA.png",
    "claude": {
@@ -4731,10 +4943,90 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0",
+    "input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b781bfc4378c9233b5380c4aef4129099c7e49f667423fede1a8d0141658ff3c",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 3,
+   "evidence": {
+    "source": {
+     "sha256": "d9b0808f2bb1e9e10151b897f578f30f8b88ee1643f4b5709a57460b5489aa75",
+     "rows": 114,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "b7c5a328526263c8854a744f77a915338db5e6e4c0b23d3658a35dc1661340cd",
+     "quality_sha256": "b7c5a328526263c8854a744f77a915338db5e6e4c0b23d3658a35dc1661340cd"
+    },
+    "facts_sha256": "216983b43ab624e36bafffe8133dab8d62c881a1d789efb6f8cd2117c694bec4",
+    "discovery_sha256": "0beb04596622067df5a879cd8139cbbb7110e36223c0a5ec2be4c6605d88990e",
+    "quality_sha256": "12279adfeccce3d20926714b5fecba487e61446cafd75bc760482ddd2c0a204c",
+    "planning": {
+     "inputs": {
+      "ticker": "NVDA",
+      "close": 126.88,
+      "low": 123.0,
+      "high": 127.57,
+      "open_": 123.46,
+      "prev_close": 118.14,
+      "gain_pct": 7.4,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 0.5,
+      "scan": "4pct",
+      "extension_pct": 6.8
+     },
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "a7c28ed55abd1ce32445f03cc864d1b5ea872eda8c7a2fa33ac490ac90a086e8",
+     "error": null,
+     "pick_sha256": "199c3bd0df4ee20c095d4806d14a77900c6e7fd487e45536e53d353d1ba007a2"
+    },
+    "reader_input": {
+     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0"
+    },
+    "reader_sha256": "cf223b1bd12954f0300c5c419e741dacbe986aed60006b4d502c7e01d121b56b",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "NVDA",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": false,
+     "reason": "slot_cap",
+     "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
+    },
+    "id": "b869c0933a195b691a02f2db9ab40beab60feaebdf6b3d0ade7aca1968f81092"
+   },
    "series": [
     {
      "date": "2026-03-30",
@@ -6150,7 +6442,14 @@
       "key": "day5_exit",
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
-    ]
+    ],
+    "evidence_ref": {
+     "version": 1,
+     "id": "11ac959ad6c0423d6e713a463de0264c3de6ccc8d4d4b897ec3c192a328bdcdd",
+     "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+     "plan_sha256": "f3b6b5675fc855647cec97110fddf6d8b43871384b9eb55a404b49753448c713",
+     "pick_sha256": "422fd1758a4423f2078425b78b61817f94057e341bada74e8d72189d520b8c3f"
+    }
    },
    "chart": "charts/TSLA.png",
    "claude": {
@@ -6163,10 +6462,90 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "A+",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a",
+    "input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "131b2f290a18b050b7c8d4d0fb6adf93d8bd74744a85b0bc9e841e3d4c334a5a",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 4,
+   "evidence": {
+    "source": {
+     "sha256": "8438005e1a7c625bbf821d2580f5114b616147f9b2e7fd1489a635406c75cbfe",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "212f90fa84ef25791c977c8db7b5768aa071fdafee05989d7a4614615745f23f",
+     "quality_sha256": "212f90fa84ef25791c977c8db7b5768aa071fdafee05989d7a4614615745f23f"
+    },
+    "facts_sha256": "baf6c38eb2a9fb59026da7ac124dd98403dafbd1b6001d4cc79a26feec3625fb",
+    "discovery_sha256": "d79879c8006ffce98161cff0a21272603526596b0e56e2f51dd21ca55eb43747",
+    "quality_sha256": "c7074aa4ee1a9e15aa7a777620c34f1fdb725848ac32d7214bccd8c8b901b239",
+    "planning": {
+     "inputs": {
+      "ticker": "TSLA",
+      "close": 124.21,
+      "low": 113.59,
+      "high": 124.77,
+      "open_": 114.71,
+      "prev_close": 117.18,
+      "gain_pct": 6.0,
+      "account": {
+       "equity": 10000.0,
+       "risk_pct": 0.5,
+       "max_position_pct": 25.0,
+       "max_open_positions": 4
+      },
+      "size_multiplier": 0.5,
+      "scan": "4pct",
+      "extension_pct": 5.2
+     },
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "f3b6b5675fc855647cec97110fddf6d8b43871384b9eb55a404b49753448c713",
+     "error": null,
+     "pick_sha256": "422fd1758a4423f2078425b78b61817f94057e341bada74e8d72189d520b8c3f"
+    },
+    "reader_input": {
+     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a"
+    },
+    "reader_sha256": "f1e4ecbe60d8e1ce4a18813b29ffd1852fed2210f88864463cc9086592b5a5ef",
+    "reader_source": "claude",
+    "final_grade": "A+",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "TSLA",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "A+",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": false,
+     "reason": "withheld",
+     "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
+    },
+    "id": "11ac959ad6c0423d6e713a463de0264c3de6ccc8d4d4b897ec3c192a328bdcdd"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -7359,10 +7738,73 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e",
+    "input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "484f0223512bf62211784fe5bba700478d82e14da8275586eb17da9e870eac00",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 5,
+   "evidence": {
+    "source": {
+     "sha256": "f106909bff8ee9f502f1647e96d7b61b338694c962bbe7b6462d536b6b8174af",
+     "rows": 113,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "92a644587e1627af2bfd9d534f70fce517e55109f2c4db9b6ed09b21898c51d0",
+     "quality_sha256": "92a644587e1627af2bfd9d534f70fce517e55109f2c4db9b6ed09b21898c51d0"
+    },
+    "facts_sha256": "626d682ebca4fbb17022a9256ac021ce814c1f2972caef3b6362e911f5803033",
+    "discovery_sha256": "286f3831af5d6601843a6e76c93884a44ee7a686ba8efa7f7e8cb4d6fde7db03",
+    "quality_sha256": "061ce857a3eaad29e6275c4642c75fac57c7841dd65de1ab69e4ac09c940fc9f",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e"
+    },
+    "reader_sha256": "b883ee677051854bd70412eb3cd1c3468147d6ad4917b954eeb9ae0472bf08b7",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "PLUG",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "C",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "98ebe030093933847a1d9ecbedbc7074169a87bdfd4f8190cc03455f9b4435d8"
+   },
    "series": [
     {
      "date": "2026-03-31",
@@ -8555,10 +8997,73 @@
     "source": "claude",
     "chart_seen": true,
     "error": null,
+    "returned_grade": "C",
+    "model": "claude-sonnet-4-6",
     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4",
+    "input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
+    },
+    "attempts": [
+     {
+      "request_sha256": "b8c54ea7db218277df44b0802d615369015a0d3e5c310e3a7526461de142dcc5",
+      "correction": false,
+      "outcome": "model"
+     }
+    ],
+    "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
    "rank": 6,
+   "evidence": {
+    "source": {
+     "sha256": "48b11dcb993276043b03a80e1bff670217a7ef8d97e28b7ca5c6b725270936ff",
+     "rows": 280,
+     "evaluated_session": "2026-09-10",
+     "previous_session": "2026-09-09",
+     "scan_sha256": "7033501bbf9230305a59423a97880916c27e7a0cddea4a508cb488d8e235cb78",
+     "quality_sha256": "7033501bbf9230305a59423a97880916c27e7a0cddea4a508cb488d8e235cb78"
+    },
+    "facts_sha256": "8ad16256c53135bf989a97e5f6ffe2a97a5025498d3e4580f55f39e52aeff69b",
+    "discovery_sha256": "c85a3177f9f59bd26aad09d67da51a53d476437bc7ac3140cc3213a6be1c778a",
+    "quality_sha256": "ab7b4ee41775df078d62097a1642a32aa57169efaaffceca50ab9b0f5e9b39b9",
+    "planning": {
+     "inputs": null,
+     "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+     "session": "2026-09-10",
+     "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+     "error": null,
+     "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
+    },
+    "reader_input": {
+     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
+     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
+     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
+     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4"
+    },
+    "reader_sha256": "d82356e712628efe24f5e25644e7d17084fe3b65e5fadc0ae5ff9ef687785208",
+    "reader_source": "claude",
+    "final_grade": "C",
+    "version": 1,
+    "kind": "burst",
+    "ticker": "DLLR",
+    "session": "2026-09-10",
+    "rules_version": "a6354faa5da9",
+    "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+    "gate": {
+     "regime": "yellow",
+     "final_grade": "C",
+     "allowed_grades": [
+      "A+"
+     ],
+     "ticket": false,
+     "reason": "regime_gate",
+     "detail": null
+    },
+    "id": "b2b6fc814a226a103c80072dcf4a6a58bf5a8bfc6aa826518e48252176b9dc5d"
+   },
    "series": [
     {
      "date": "2026-03-20",
@@ -8566,7 +9071,7 @@
      "h": 75.832,
      "l": 75.0851,
      "c": 75.478,
-     "v": 1916687.3141
+     "v": 1916687.0
     },
     {
      "date": "2026-03-23",
@@ -8574,7 +9079,7 @@
      "h": 76.5265,
      "l": 75.3605,
      "c": 75.6564,
-     "v": 3192069.2155
+     "v": 3192069.0
     },
     {
      "date": "2026-03-24",
@@ -8582,7 +9087,7 @@
      "h": 76.098,
      "l": 74.7894,
      "c": 75.5667,
-     "v": 3393949.5655
+     "v": 3393950.0
     },
     {
      "date": "2026-03-25",
@@ -8590,7 +9095,7 @@
      "h": 76.2807,
      "l": 75.1654,
      "c": 75.6423,
-     "v": 2842004.9015
+     "v": 2842005.0
     },
     {
      "date": "2026-03-26",
@@ -8598,7 +9103,7 @@
      "h": 76.9805,
      "l": 75.9033,
      "c": 76.2125,
-     "v": 4055607.6738
+     "v": 4055608.0
     },
     {
      "date": "2026-03-27",
@@ -8606,7 +9111,7 @@
      "h": 76.9946,
      "l": 75.6055,
      "c": 76.0548,
-     "v": 2226211.6427
+     "v": 2226212.0
     },
     {
      "date": "2026-03-30",
@@ -8614,7 +9119,7 @@
      "h": 75.922,
      "l": 74.5049,
      "c": 75.3362,
-     "v": 3699019.5729
+     "v": 3699020.0
     },
     {
      "date": "2026-03-31",
@@ -8622,7 +9127,7 @@
      "h": 75.1195,
      "l": 74.4163,
      "c": 74.6026,
-     "v": 3010829.4085
+     "v": 3010829.0
     },
     {
      "date": "2026-04-01",
@@ -8630,7 +9135,7 @@
      "h": 74.0793,
      "l": 73.6776,
      "c": 73.8724,
-     "v": 2642503.6691
+     "v": 2642504.0
     },
     {
      "date": "2026-04-02",
@@ -8638,7 +9143,7 @@
      "h": 74.8613,
      "l": 73.2371,
      "c": 74.2094,
-     "v": 2584255.47
+     "v": 2584255.0
     },
     {
      "date": "2026-04-06",
@@ -8646,7 +9151,7 @@
      "h": 74.5831,
      "l": 73.6323,
      "c": 74.2652,
-     "v": 3384413.5185
+     "v": 3384414.0
     },
     {
      "date": "2026-04-07",
@@ -8654,7 +9159,7 @@
      "h": 76.5158,
      "l": 74.8464,
      "c": 75.4416,
-     "v": 2865196.1744
+     "v": 2865196.0
     },
     {
      "date": "2026-04-08",
@@ -8662,7 +9167,7 @@
      "h": 76.9256,
      "l": 75.9794,
      "c": 76.4295,
-     "v": 3967420.6238
+     "v": 3967421.0
     },
     {
      "date": "2026-04-09",
@@ -8670,7 +9175,7 @@
      "h": 77.8897,
      "l": 76.8537,
      "c": 77.3915,
-     "v": 3839000.9984
+     "v": 3839001.0
     },
     {
      "date": "2026-04-10",
@@ -8678,7 +9183,7 @@
      "h": 77.6426,
      "l": 76.246,
      "c": 77.0535,
-     "v": 2816513.453
+     "v": 2816513.0
     },
     {
      "date": "2026-04-13",
@@ -8686,7 +9191,7 @@
      "h": 77.3516,
      "l": 76.1392,
      "c": 76.8995,
-     "v": 2620439.3206
+     "v": 2620439.0
     },
     {
      "date": "2026-04-14",
@@ -8694,7 +9199,7 @@
      "h": 77.3006,
      "l": 76.2629,
      "c": 76.7223,
-     "v": 5466356.4012
+     "v": 5466356.0
     },
     {
      "date": "2026-04-15",
@@ -8702,7 +9207,7 @@
      "h": 78.7099,
      "l": 77.4991,
      "c": 78.1187,
-     "v": 2564926.2717
+     "v": 2564926.0
     },
     {
      "date": "2026-04-16",
@@ -8710,7 +9215,7 @@
      "h": 78.2173,
      "l": 77.5033,
      "c": 77.7948,
-     "v": 2877798.3222
+     "v": 2877798.0
     },
     {
      "date": "2026-04-17",
@@ -8718,7 +9223,7 @@
      "h": 78.2707,
      "l": 77.1945,
      "c": 77.8477,
-     "v": 3069962.7202
+     "v": 3069963.0
     },
     {
      "date": "2026-04-20",
@@ -8726,7 +9231,7 @@
      "h": 77.8297,
      "l": 76.507,
      "c": 77.406,
-     "v": 2231468.2853
+     "v": 2231468.0
     },
     {
      "date": "2026-04-21",
@@ -8734,7 +9239,7 @@
      "h": 78.6804,
      "l": 77.2166,
      "c": 78.1233,
-     "v": 2643036.4833
+     "v": 2643036.0
     },
     {
      "date": "2026-04-22",
@@ -8742,7 +9247,7 @@
      "h": 79.5924,
      "l": 79.0677,
      "c": 79.3329,
-     "v": 3140658.2703
+     "v": 3140658.0
     },
     {
      "date": "2026-04-23",
@@ -8750,7 +9255,7 @@
      "h": 79.0268,
      "l": 77.6852,
      "c": 78.0788,
-     "v": 3480910.3345
+     "v": 3480910.0
     },
     {
      "date": "2026-04-24",
@@ -8758,7 +9263,7 @@
      "h": 79.1189,
      "l": 78.0715,
      "c": 78.4456,
-     "v": 2132138.604
+     "v": 2132139.0
     },
     {
      "date": "2026-04-27",
@@ -8766,7 +9271,7 @@
      "h": 79.7096,
      "l": 78.4666,
      "c": 78.8044,
-     "v": 3679345.1884
+     "v": 3679345.0
     },
     {
      "date": "2026-04-28",
@@ -8774,7 +9279,7 @@
      "h": 77.8966,
      "l": 76.8619,
      "c": 77.426,
-     "v": 3204220.3556
+     "v": 3204220.0
     },
     {
      "date": "2026-04-29",
@@ -8782,7 +9287,7 @@
      "h": 77.9549,
      "l": 76.2631,
      "c": 77.3446,
-     "v": 4516421.3597
+     "v": 4516421.0
     },
     {
      "date": "2026-04-30",
@@ -8790,7 +9295,7 @@
      "h": 76.5601,
      "l": 75.1466,
      "c": 75.6191,
-     "v": 2721290.1207
+     "v": 2721290.0
     },
     {
      "date": "2026-05-01",
@@ -8798,7 +9303,7 @@
      "h": 76.2523,
      "l": 75.0027,
      "c": 75.825,
-     "v": 2623737.1683
+     "v": 2623737.0
     },
     {
      "date": "2026-05-04",
@@ -8806,7 +9311,7 @@
      "h": 76.6166,
      "l": 75.2874,
      "c": 75.8686,
-     "v": 3416903.1135
+     "v": 3416903.0
     },
     {
      "date": "2026-05-05",
@@ -8814,7 +9319,7 @@
      "h": 75.2011,
      "l": 73.8907,
      "c": 74.6052,
-     "v": 2975764.3858
+     "v": 2975764.0
     },
     {
      "date": "2026-05-06",
@@ -8822,7 +9327,7 @@
      "h": 76.8222,
      "l": 75.6775,
      "c": 76.2264,
-     "v": 3028276.8364
+     "v": 3028277.0
     },
     {
      "date": "2026-05-07",
@@ -8830,7 +9335,7 @@
      "h": 74.9819,
      "l": 73.8076,
      "c": 74.3444,
-     "v": 3210722.3314
+     "v": 3210722.0
     },
     {
      "date": "2026-05-08",
@@ -8838,7 +9343,7 @@
      "h": 75.552,
      "l": 73.9139,
      "c": 74.919,
-     "v": 3260407.3384
+     "v": 3260407.0
     },
     {
      "date": "2026-05-11",
@@ -8846,7 +9351,7 @@
      "h": 76.7331,
      "l": 75.478,
      "c": 75.9034,
-     "v": 3740534.514
+     "v": 3740535.0
     },
     {
      "date": "2026-05-12",
@@ -8854,7 +9359,7 @@
      "h": 77.1082,
      "l": 75.3406,
      "c": 76.2438,
-     "v": 3460702.5927
+     "v": 3460703.0
     },
     {
      "date": "2026-05-13",
@@ -8862,7 +9367,7 @@
      "h": 77.1854,
      "l": 75.9832,
      "c": 76.5171,
-     "v": 3188357.5075
+     "v": 3188358.0
     },
     {
      "date": "2026-05-14",
@@ -8870,7 +9375,7 @@
      "h": 77.4973,
      "l": 76.6069,
      "c": 77.0308,
-     "v": 2120402.9928
+     "v": 2120403.0
     },
     {
      "date": "2026-05-15",
@@ -8878,7 +9383,7 @@
      "h": 76.1481,
      "l": 74.6992,
      "c": 75.6444,
-     "v": 2823366.0843
+     "v": 2823366.0
     },
     {
      "date": "2026-05-18",
@@ -8886,7 +9391,7 @@
      "h": 77.0776,
      "l": 75.9252,
      "c": 76.3842,
-     "v": 2872022.5387
+     "v": 2872023.0
     },
     {
      "date": "2026-05-19",
@@ -8894,7 +9399,7 @@
      "h": 76.5023,
      "l": 76.0314,
      "c": 76.2522,
-     "v": 3619846.0462
+     "v": 3619846.0
     },
     {
      "date": "2026-05-20",
@@ -8902,7 +9407,7 @@
      "h": 77.6685,
      "l": 76.8235,
      "c": 77.2257,
-     "v": 2305399.7468
+     "v": 2305400.0
     },
     {
      "date": "2026-05-21",
@@ -8910,7 +9415,7 @@
      "h": 77.7033,
      "l": 76.6759,
      "c": 77.3093,
-     "v": 3376813.0515
+     "v": 3376813.0
     },
     {
      "date": "2026-05-22",
@@ -8918,7 +9423,7 @@
      "h": 77.1581,
      "l": 75.8536,
      "c": 76.6111,
-     "v": 2728066.7495
+     "v": 2728067.0
     },
     {
      "date": "2026-05-26",
@@ -8926,7 +9431,7 @@
      "h": 75.6678,
      "l": 74.4825,
      "c": 74.8946,
-     "v": 3337563.044
+     "v": 3337563.0
     },
     {
      "date": "2026-05-27",
@@ -8934,7 +9439,7 @@
      "h": 75.5902,
      "l": 74.4854,
      "c": 75.0596,
-     "v": 1908473.932
+     "v": 1908474.0
     },
     {
      "date": "2026-05-28",
@@ -8942,7 +9447,7 @@
      "h": 76.2298,
      "l": 75.7779,
      "c": 75.8623,
-     "v": 2974109.4353
+     "v": 2974109.0
     },
     {
      "date": "2026-05-29",
@@ -8950,7 +9455,7 @@
      "h": 76.7627,
      "l": 75.3744,
      "c": 75.9005,
-     "v": 3399200.6084
+     "v": 3399201.0
     },
     {
      "date": "2026-06-01",
@@ -8958,7 +9463,7 @@
      "h": 75.423,
      "l": 74.1702,
      "c": 74.5394,
-     "v": 3055035.5361
+     "v": 3055036.0
     },
     {
      "date": "2026-06-02",
@@ -8966,7 +9471,7 @@
      "h": 73.5426,
      "l": 72.2548,
      "c": 73.0789,
-     "v": 3875977.1022
+     "v": 3875977.0
     },
     {
      "date": "2026-06-03",
@@ -8974,7 +9479,7 @@
      "h": 72.3521,
      "l": 71.3696,
      "c": 71.9636,
-     "v": 2585143.4686
+     "v": 2585143.0
     },
     {
      "date": "2026-06-04",
@@ -8982,7 +9487,7 @@
      "h": 72.5804,
      "l": 71.6934,
      "c": 72.1513,
-     "v": 3923381.8314
+     "v": 3923382.0
     },
     {
      "date": "2026-06-05",
@@ -8990,7 +9495,7 @@
      "h": 72.5055,
      "l": 70.9317,
      "c": 72.0008,
-     "v": 2865524.1336
+     "v": 2865524.0
     },
     {
      "date": "2026-06-08",
@@ -8998,7 +9503,7 @@
      "h": 71.9987,
      "l": 70.8703,
      "c": 71.1087,
-     "v": 2658311.4072
+     "v": 2658311.0
     },
     {
      "date": "2026-06-09",
@@ -9006,7 +9511,7 @@
      "h": 71.6955,
      "l": 70.3207,
      "c": 71.0957,
-     "v": 3039078.1115
+     "v": 3039078.0
     },
     {
      "date": "2026-06-10",
@@ -9014,7 +9519,7 @@
      "h": 72.0361,
      "l": 69.9553,
      "c": 71.3224,
-     "v": 3224009.5419
+     "v": 3224010.0
     },
     {
      "date": "2026-06-11",
@@ -9022,7 +9527,7 @@
      "h": 71.6094,
      "l": 70.8462,
      "c": 70.9485,
-     "v": 3354643.3415
+     "v": 3354643.0
     },
     {
      "date": "2026-06-12",
@@ -9030,7 +9535,7 @@
      "h": 71.285,
      "l": 70.2727,
      "c": 70.7175,
-     "v": 2271733.8048
+     "v": 2271734.0
     },
     {
      "date": "2026-06-15",
@@ -9038,7 +9543,7 @@
      "h": 71.4749,
      "l": 70.0142,
      "c": 70.5134,
-     "v": 4910025.4059
+     "v": 4910025.0
     },
     {
      "date": "2026-06-16",
@@ -9046,7 +9551,7 @@
      "h": 70.7201,
      "l": 69.7381,
      "c": 70.3669,
-     "v": 2754890.9094
+     "v": 2754891.0
     },
     {
      "date": "2026-06-17",
@@ -9054,7 +9559,7 @@
      "h": 68.9458,
      "l": 68.226,
      "c": 68.874,
-     "v": 3782477.1832
+     "v": 3782477.0
     },
     {
      "date": "2026-06-18",
@@ -9062,7 +9567,7 @@
      "h": 68.8953,
      "l": 67.4485,
      "c": 68.406,
-     "v": 2305108.2719
+     "v": 2305108.0
     },
     {
      "date": "2026-06-22",
@@ -9070,7 +9575,7 @@
      "h": 67.8503,
      "l": 67.4744,
      "c": 67.5935,
-     "v": 2632794.1928
+     "v": 2632794.0
     },
     {
      "date": "2026-06-23",
@@ -9078,7 +9583,7 @@
      "h": 68.0214,
      "l": 67.297,
      "c": 67.6429,
-     "v": 3207244.4358
+     "v": 3207244.0
     },
     {
      "date": "2026-06-24",
@@ -9086,7 +9591,7 @@
      "h": 68.8136,
      "l": 68.0837,
      "c": 68.5559,
-     "v": 3740631.9656
+     "v": 3740632.0
     },
     {
      "date": "2026-06-25",
@@ -9094,7 +9599,7 @@
      "h": 68.2951,
      "l": 67.3421,
      "c": 67.7585,
-     "v": 2930097.8154
+     "v": 2930098.0
     },
     {
      "date": "2026-06-26",
@@ -9102,7 +9607,7 @@
      "h": 68.7981,
      "l": 68.124,
      "c": 68.3022,
-     "v": 2070605.7221
+     "v": 2070606.0
     },
     {
      "date": "2026-06-29",
@@ -9110,7 +9615,7 @@
      "h": 69.7117,
      "l": 68.8198,
      "c": 69.2703,
-     "v": 2158253.6805
+     "v": 2158254.0
     },
     {
      "date": "2026-06-30",
@@ -9118,7 +9623,7 @@
      "h": 71.1082,
      "l": 70.017,
      "c": 70.37,
-     "v": 2912096.5924
+     "v": 2912097.0
     },
     {
      "date": "2026-07-01",
@@ -9126,7 +9631,7 @@
      "h": 70.295,
      "l": 68.8416,
      "c": 69.3795,
-     "v": 3934913.1615
+     "v": 3934913.0
     },
     {
      "date": "2026-07-02",
@@ -9134,7 +9639,7 @@
      "h": 69.4647,
      "l": 68.1036,
      "c": 68.7581,
-     "v": 2771425.3205
+     "v": 2771425.0
     },
     {
      "date": "2026-07-06",
@@ -9142,7 +9647,7 @@
      "h": 68.7743,
      "l": 67.5906,
      "c": 68.0248,
-     "v": 3197836.5128
+     "v": 3197837.0
     },
     {
      "date": "2026-07-07",
@@ -9150,7 +9655,7 @@
      "h": 69.5036,
      "l": 68.782,
      "c": 68.912,
-     "v": 3308426.5956
+     "v": 3308427.0
     },
     {
      "date": "2026-07-08",
@@ -9158,7 +9663,7 @@
      "h": 69.3142,
      "l": 68.3403,
      "c": 68.836,
-     "v": 3356679.6518
+     "v": 3356680.0
     },
     {
      "date": "2026-07-09",
@@ -9166,7 +9671,7 @@
      "h": 69.7765,
      "l": 68.5783,
      "c": 69.3343,
-     "v": 2560147.1412
+     "v": 2560147.0
     },
     {
      "date": "2026-07-10",
@@ -9174,7 +9679,7 @@
      "h": 69.8025,
      "l": 68.375,
      "c": 68.8623,
-     "v": 3788722.9734
+     "v": 3788723.0
     },
     {
      "date": "2026-07-13",
@@ -9182,7 +9687,7 @@
      "h": 69.3218,
      "l": 68.6062,
      "c": 68.9713,
-     "v": 2835587.9204
+     "v": 2835588.0
     },
     {
      "date": "2026-07-14",
@@ -9190,7 +9695,7 @@
      "h": 68.6567,
      "l": 67.0278,
      "c": 67.9179,
-     "v": 2998646.9227
+     "v": 2998647.0
     },
     {
      "date": "2026-07-15",
@@ -9198,7 +9703,7 @@
      "h": 68.9731,
      "l": 67.8689,
      "c": 68.4691,
-     "v": 3200206.0457
+     "v": 3200206.0
     },
     {
      "date": "2026-07-16",
@@ -9206,7 +9711,7 @@
      "h": 69.7321,
      "l": 68.7975,
      "c": 69.2687,
-     "v": 2820849.2927
+     "v": 2820849.0
     },
     {
      "date": "2026-07-17",
@@ -9214,7 +9719,7 @@
      "h": 70.1503,
      "l": 69.2108,
      "c": 69.6083,
-     "v": 2491506.3011
+     "v": 2491506.0
     },
     {
      "date": "2026-07-20",
@@ -9222,7 +9727,7 @@
      "h": 70.2192,
      "l": 68.9584,
      "c": 69.6867,
-     "v": 2516224.1615
+     "v": 2516224.0
     },
     {
      "date": "2026-07-21",
@@ -9230,7 +9735,7 @@
      "h": 69.1445,
      "l": 67.9804,
      "c": 68.8814,
-     "v": 3575056.6732
+     "v": 3575057.0
     },
     {
      "date": "2026-07-22",
@@ -9238,7 +9743,7 @@
      "h": 70.2884,
      "l": 69.2145,
      "c": 69.6087,
-     "v": 3341209.8802
+     "v": 3341210.0
     },
     {
      "date": "2026-07-23",
@@ -9246,7 +9751,7 @@
      "h": 69.9264,
      "l": 69.0502,
      "c": 69.4607,
-     "v": 3191403.9516
+     "v": 3191404.0
     },
     {
      "date": "2026-07-24",
@@ -9254,7 +9759,7 @@
      "h": 70.1015,
      "l": 69.4289,
      "c": 69.7101,
-     "v": 4199377.6419
+     "v": 4199378.0
     },
     {
      "date": "2026-07-27",
@@ -9262,7 +9767,7 @@
      "h": 71.2531,
      "l": 70.0223,
      "c": 70.4402,
-     "v": 4267074.5902
+     "v": 4267075.0
     },
     {
      "date": "2026-07-28",
@@ -9270,7 +9775,7 @@
      "h": 70.3594,
      "l": 69.1253,
      "c": 69.5973,
-     "v": 2699294.3144
+     "v": 2699294.0
     },
     {
      "date": "2026-07-29",
@@ -9278,7 +9783,7 @@
      "h": 70.1999,
      "l": 69.0674,
      "c": 69.561,
-     "v": 3539112.9985
+     "v": 3539113.0
     },
     {
      "date": "2026-07-30",
@@ -9286,7 +9791,7 @@
      "h": 70.2827,
      "l": 68.8048,
      "c": 69.74,
-     "v": 3710116.475
+     "v": 3710116.0
     },
     {
      "date": "2026-07-31",
@@ -9294,7 +9799,7 @@
      "h": 70.5135,
      "l": 69.1992,
      "c": 69.958,
-     "v": 2162092.3993
+     "v": 2162092.0
     },
     {
      "date": "2026-08-03",
@@ -9302,7 +9807,7 @@
      "h": 70.0603,
      "l": 69.4827,
      "c": 69.7642,
-     "v": 3695491.6241
+     "v": 3695492.0
     },
     {
      "date": "2026-08-04",
@@ -9310,7 +9815,7 @@
      "h": 70.036,
      "l": 68.5363,
      "c": 69.0689,
-     "v": 2914511.1984
+     "v": 2914511.0
     },
     {
      "date": "2026-08-05",
@@ -9318,7 +9823,7 @@
      "h": 68.3922,
      "l": 67.5313,
      "c": 67.9578,
-     "v": 3004804.7576
+     "v": 3004805.0
     },
     {
      "date": "2026-08-06",
@@ -9326,7 +9831,7 @@
      "h": 68.1909,
      "l": 67.4961,
      "c": 67.6118,
-     "v": 3726541.6676
+     "v": 3726542.0
     },
     {
      "date": "2026-08-07",
@@ -9334,7 +9839,7 @@
      "h": 69.2163,
      "l": 67.8331,
      "c": 68.614,
-     "v": 4100151.2302
+     "v": 4100151.0
     },
     {
      "date": "2026-08-10",
@@ -9342,7 +9847,7 @@
      "h": 67.9861,
      "l": 66.983,
      "c": 67.3964,
-     "v": 1962336.646
+     "v": 1962337.0
     },
     {
      "date": "2026-08-11",
@@ -9350,7 +9855,7 @@
      "h": 67.1866,
      "l": 66.6282,
      "c": 66.9868,
-     "v": 4270998.4807
+     "v": 4270998.0
     },
     {
      "date": "2026-08-12",
@@ -9358,7 +9863,7 @@
      "h": 68.8306,
      "l": 67.7366,
      "c": 68.1447,
-     "v": 2965051.9067
+     "v": 2965052.0
     },
     {
      "date": "2026-08-13",
@@ -9366,7 +9871,7 @@
      "h": 69.1192,
      "l": 67.9764,
      "c": 68.6385,
-     "v": 2910769.6873
+     "v": 2910770.0
     },
     {
      "date": "2026-08-14",
@@ -9374,7 +9879,7 @@
      "h": 68.7925,
      "l": 68.2047,
      "c": 68.4424,
-     "v": 2845964.517
+     "v": 2845965.0
     },
     {
      "date": "2026-08-17",
@@ -9382,7 +9887,7 @@
      "h": 69.1183,
      "l": 68.0479,
      "c": 68.6544,
-     "v": 2673471.2404
+     "v": 2673471.0
     },
     {
      "date": "2026-08-18",
@@ -9390,7 +9895,7 @@
      "h": 69.6375,
      "l": 68.4647,
      "c": 69.1888,
-     "v": 2479601.5581
+     "v": 2479602.0
     },
     {
      "date": "2026-08-19",
@@ -9398,7 +9903,7 @@
      "h": 70.2961,
      "l": 68.8531,
      "c": 69.4191,
-     "v": 2818283.2016
+     "v": 2818283.0
     },
     {
      "date": "2026-08-20",
@@ -9406,7 +9911,7 @@
      "h": 70.2604,
      "l": 69.5193,
      "c": 69.9898,
-     "v": 4287878.7942
+     "v": 4287879.0
     },
     {
      "date": "2026-08-21",
@@ -9414,7 +9919,7 @@
      "h": 71.4642,
      "l": 70.4414,
      "c": 71.1203,
-     "v": 2341826.639
+     "v": 2341827.0
     },
     {
      "date": "2026-08-24",
@@ -9422,7 +9927,7 @@
      "h": 72.5113,
      "l": 71.1147,
      "c": 72.0459,
-     "v": 3322798.2496
+     "v": 3322798.0
     },
     {
      "date": "2026-08-25",
@@ -9430,7 +9935,7 @@
      "h": 71.128,
      "l": 70.1968,
      "c": 70.6128,
-     "v": 2367428.061
+     "v": 2367428.0
     },
     {
      "date": "2026-08-26",
@@ -9438,7 +9943,7 @@
      "h": 71.498,
      "l": 70.0505,
      "c": 71.128,
-     "v": 2725210.2416
+     "v": 2725210.0
     },
     {
      "date": "2026-08-27",
@@ -9446,7 +9951,7 @@
      "h": 72.176,
      "l": 70.7507,
      "c": 71.3352,
-     "v": 2811169.7823
+     "v": 2811170.0
     },
     {
      "date": "2026-08-28",
@@ -9454,7 +9959,7 @@
      "h": 70.6953,
      "l": 69.2073,
      "c": 69.9037,
-     "v": 2805380.6782
+     "v": 2805381.0
     },
     {
      "date": "2026-08-31",
@@ -9462,7 +9967,7 @@
      "h": 69.6408,
      "l": 68.8746,
      "c": 69.2692,
-     "v": 3307728.0774
+     "v": 3307728.0
     },
     {
      "date": "2026-09-01",
@@ -9470,7 +9975,7 @@
      "h": 70.9192,
      "l": 70.0626,
      "c": 70.583,
-     "v": 2965112.597
+     "v": 2965113.0
     },
     {
      "date": "2026-09-02",
@@ -9478,7 +9983,7 @@
      "h": 70.6171,
      "l": 69.8511,
      "c": 70.2322,
-     "v": 2703625.3325
+     "v": 2703625.0
     },
     {
      "date": "2026-09-03",
@@ -9486,7 +9991,7 @@
      "h": 71.5832,
      "l": 70.294,
      "c": 71.1214,
-     "v": 2419549.3477
+     "v": 2419549.0
     },
     {
      "date": "2026-09-04",
@@ -9494,7 +9999,7 @@
      "h": 72.2322,
      "l": 71.8045,
      "c": 72.0889,
-     "v": 3530846.8429
+     "v": 3530847.0
     },
     {
      "date": "2026-09-08",
@@ -9502,7 +10007,7 @@
      "h": 73.444,
      "l": 72.4181,
      "c": 73.1977,
-     "v": 2659089.6725
+     "v": 2659090.0
     },
     {
      "date": "2026-09-09",
@@ -9510,7 +10015,7 @@
      "h": 72.4419,
      "l": 70.8769,
      "c": 71.4989,
-     "v": 3216486.7484
+     "v": 3216487.0
     },
     {
      "date": "2026-09-10",
@@ -9843,7 +10348,14 @@
        "key": "day5_exit",
        "instruction": "at the day 5 close: exit the remainder into strength."
       }
-     ]
+     ],
+     "evidence_ref": {
+      "version": 1,
+      "id": "c6f3fe2c7e8d1159954f3b79cb675c0155488e8a35be0ff7eace69aaf0ac8b7a",
+      "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+      "plan_sha256": "12870ca8bcc0357bbe05c46008d771ff86ec4e971f17513f8d35ba8ae4593de4",
+      "pick_sha256": "24140d9aed7d92a5c3bccd8a45272dc3ba228caa158668ca6130bc42865cf00e"
+     }
     },
     "series": [
      {
@@ -10806,7 +11318,60 @@
       "c": 110.0,
       "v": 120000.0
      }
-    ]
+    ],
+    "evidence": {
+     "source": {
+      "sha256": "f220d97c23dec26541c2f2c3e7e1743a0c215de6da5ad27f7bad2353b8da5e46",
+      "rows": 300,
+      "evaluated_session": "2026-09-10",
+      "previous_session": "2026-09-09",
+      "watch_sha256": "40d672ebfe83c186a52f0126bb95fd6cd31a82eda2874193047260d8c927798b"
+     },
+     "measurements_sha256": "053a46dbe0dfb74fd3b623a7709ea50bf0fa639922d0c4213be9d0803a6dd478",
+     "mechanical": "not_applicable",
+     "reader": "not_graded",
+     "reason": "anticipation watchlist: measured, not reaction-graded",
+     "planning": {
+      "inputs": {
+       "ticker": "COIL",
+       "close": 110.0,
+       "box_high": 110.5,
+       "box_low": 109.5,
+       "lows_last3": [
+        109.5,
+        109.5,
+        109.5
+       ],
+       "account": {
+        "equity": 10000.0,
+        "risk_pct": 0.5,
+        "max_position_pct": 25.0,
+        "max_open_positions": 4
+       },
+       "size_multiplier": 0.5
+      },
+      "regime_sha256": "372c39e6158fea3b856f0f8ee7c455d83ee2d42dc11066c2de7e0118412fd31b",
+      "session": "2026-09-10",
+      "output_sha256": "12870ca8bcc0357bbe05c46008d771ff86ec4e971f17513f8d35ba8ae4593de4",
+      "error": null,
+      "pick_sha256": "24140d9aed7d92a5c3bccd8a45272dc3ba228caa158668ca6130bc42865cf00e"
+     },
+     "version": 1,
+     "kind": "anticipation",
+     "ticker": "COIL",
+     "session": "2026-09-10",
+     "rules_version": "a6354faa5da9",
+     "context_sha256": "20a24c5ece20a418a3563ca403ac15c359442aeed19034132db4ce90028aac70",
+     "gate": {
+      "regime": "yellow",
+      "final_grade": "watch",
+      "allowed_grades": null,
+      "ticket": true,
+      "reason": null,
+      "detail": null
+     },
+     "id": "c6f3fe2c7e8d1159954f3b79cb675c0155488e8a35be0ff7eace69aaf0ac8b7a"
+    }
    }
   ],
   "also_quiet": [],
@@ -11125,7 +11690,7 @@
     "h": 25.96,
     "l": 25.49,
     "c": 25.75,
-    "v": 2528350.3248,
+    "v": 2528350.0,
     "since": "2026-09-10",
     "history": [
      {
@@ -11134,7 +11699,7 @@
       "h": 25.96,
       "l": 25.49,
       "c": 25.75,
-      "v": 2528350.3248,
+      "v": 2528350.0,
       "from_session": "2026-09-10",
       "source": "public observation history"
      }
@@ -11188,7 +11753,7 @@
     "h": 24.85,
     "l": 24.51,
     "c": 24.71,
-    "v": 2582444.0691,
+    "v": 2582444.0,
     "since": "2026-09-10",
     "history": [
      {
@@ -11197,7 +11762,7 @@
       "h": 24.85,
       "l": 24.51,
       "c": 24.71,
-      "v": 2582444.0691,
+      "v": 2582444.0,
       "from_session": "2026-09-10",
       "source": "public observation history"
      }
@@ -11230,7 +11795,7 @@
     "h": 198.3,
     "l": 197.5,
     "c": 198.0,
-    "v": 2880229.583,
+    "v": 2880230.0,
     "since": "2026-09-10",
     "history": [
      {
@@ -11239,7 +11804,7 @@
       "h": 198.3,
       "l": 197.5,
       "c": 198.0,
-      "v": 2880229.583,
+      "v": 2880230.0,
       "from_session": "2026-09-10",
       "source": "public observation history"
      }
@@ -11247,53 +11812,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:eb6c9a6097b6": {
+   "burst:AAPL:2026-09-10:a6354faa5da9": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:eb6c9a6097b6": {
+   "burst:AMD:2026-09-10:a6354faa5da9": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:eb6c9a6097b6": {
+   "burst:NVDA:2026-09-10:a6354faa5da9": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:eb6c9a6097b6": {
+   "burst:TSLA:2026-09-10:a6354faa5da9": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:eb6c9a6097b6": {
+   "burst:PLUG:2026-09-10:a6354faa5da9": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:eb6c9a6097b6": {
+   "burst:DLLR:2026-09-10:a6354faa5da9": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:eb6c9a6097b6": {
+   "anticipation:COIL:2026-09-10:a6354faa5da9": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "eb6c9a6097b6",
+    "rules_version": "a6354faa5da9",
     "coverage": "observed"
    }
   },

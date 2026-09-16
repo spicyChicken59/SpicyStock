@@ -81,12 +81,12 @@ def test_the_pipeline_step_captures_its_code_and_the_verdict_step_raises_it_last
     assert f'if [ "$code" = "{pipeline.EXIT_DEGRADED}" ]' in verdict and "::warning::" in verdict and "exit $code" in verdict
 
 
-def test_the_artifact_keeps_the_record_the_picks_and_the_charts():
+def test_the_artifact_keeps_records_charts_and_retained_evidence():
     wf = load("evening.yml")
     art = steps(wf, "scan")["Keep the run's artifacts"]
     assert art["if"].startswith("(success() || failure())")
     assert "!= 'no_session'" in art["if"] and "!= 'session_incomplete'" in art["if"]
-    assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/picks.json", "docs/charts/"}
+    assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
 def test_the_evening_job_can_write_and_runs_alone():

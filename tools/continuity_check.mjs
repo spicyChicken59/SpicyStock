@@ -107,6 +107,22 @@ try{
  // Unknown ticker never becomes a fabricated recommendation.
  await route(w,'#/setups');w.document.querySelector('#history-ticker').value='ZZZZZZ';w.document.querySelector('#history-search').dispatchEvent(new w.Event('submit',{cancelable:true}));await pause();
  check(!w.document.querySelector('[data-history-save]')&&w.document.querySelector('#history-results').textContent.includes('No retained published original'),'unknown original unavailable');
+ // Newly published references freeze with originals; annotations stay private.
+ const fresh=JSON.parse(await readFile(path.join(ROOT,'tests/fixtures/page/full.json'),'utf8'));
+ const newTab=await open(fresh);await route(newTab.w,'#/explore/bursts/AAPL');
+ click(newTab.w,'#detail [data-follow-action="add"]');await pause();
+ const saved=newTab.w.SCStock.follow.list().find(i=>i.ticker==='AAPL');
+ const publicIdentity=fresh.bursts.find(b=>b.ticker==='AAPL').evidence.id;
+ check(saved.snapshot.evidence_ref.id===publicIdentity,'new saved original retains exact public evidence identity');
+ const savedReference=JSON.stringify(saved.snapshot.evidence_ref), publicBytes=JSON.stringify(fresh);
+ await newTab.w.SCStock.follow.commit('setAnnotation',saved.id,'taken',true);
+ await newTab.w.SCStock.follow.commit('setAnnotation',saved.id,'amount','123.45');
+ check(JSON.stringify(newTab.w.SCStock.follow.find(saved.id).snapshot.evidence_ref)===savedReference,'private annotations cannot alter evidence reference');
+ check(JSON.stringify(fresh)===publicBytes,'private annotations never change publication');
+ const revised=JSON.parse(await readFile(path.join(ROOT,'tests/fixtures/page/revised.json'),'utf8'));
+ await render(newTab.w,revised);
+ check(JSON.stringify(newTab.w.SCStock.follow.find(saved.id).snapshot.evidence_ref)===savedReference,'later publication retains original evidence reference');
+ newTab.close();
  check(errors.length===0,'no DOM runtime errors: '+errors.join(';'));
  console.log(JSON.stringify({status:'PASS: offline DOM/store checks; not browser/layout acceptance',checks,requests:shared.requests.filter(u=>u.includes('history/'))}));
  }
