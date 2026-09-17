@@ -22,12 +22,12 @@ regexTarget = "secret"
 regexes = ['''^[a-z]+[a-z0-9]*(_[a-z0-9]+)+$''']
 paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|docs/history/[a-f0-9]{40}/(record|(burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json|tests/fixtures/page/[a-z]+\.json)$''']
 
-# PR #68's byte-identical historical context fixture repeats two public
+# PR #68 and #76's byte-identical historical context fixtures repeat two public
 # breadth identifiers already present in the allowed recovery original.
 # Keep the original bytes; disposition only these two values at this path.
 [[rules.allowlists]]
-description = "Two public breadth identifiers in the immutable grading context fixture"
+description = "Two public breadth identifiers in the immutable grading context fixtures"
 condition = "AND"
 regexTarget = "secret"
 regexes = ['''^(down25_quarter|pct_above_40ma)$''']
-paths = ['''^tests/fixtures/grading/record\.json$''']
+paths = ['''^tests/fixtures/grading/(record\.json|reader-commentary/record\.json)$''']

@@ -3442,10 +3442,10 @@ async function checkReaderCommentary(browser, base) {
     const name = `retained JRSH ${width}/${theme}`;
     const why = await text(page, '#detail [data-item="why"]');
     check(name + ' primary explanation uses recorded grades', why.includes('checklist A; published C') && !why.includes(rows[0].claude.reason));
-    await page.locator('#disc-provenance summary').focus();
+    await page.locator('#disc-provenance > summary').focus();
     await page.keyboard.press('Enter');
     check(name + ' keyboard opens provenance', await page.locator('#disc-provenance').evaluate(el => el.open));
-    const focus = await page.locator('#disc-provenance summary').evaluate(el => ({ active: document.activeElement === el, outline: getComputedStyle(el).outlineStyle }));
+    const focus = await page.locator('#disc-provenance > summary').evaluate(el => ({ active: document.activeElement === el, outline: getComputedStyle(el).outlineStyle }));
     check(name + ' keyboard focus is visible', focus.active && !['none', 'hidden'].includes(focus.outline), focus);
     const prov = await text(page, '#disc-provenance');
     check(name + ' original commentary is qualified before raw text', prov.includes('Recorded checklist criteria govern thresholds') && prov.indexOf('commentary is unverified') >= 0 && prov.indexOf('commentary is unverified') < prov.indexOf(rows[0].claude.reason));
@@ -3459,7 +3459,7 @@ async function checkReaderCommentary(browser, base) {
     }
     await go(page, '#/explore/bursts/JKHY');
     check(name + ' unreviewed Dollar-only control has red no-entry reason', (await text(page, '#detail [data-no-entry-reason]')).includes('breadth is red'));
-    await page.locator('#disc-provenance summary').click();
+    await page.locator('#disc-provenance > summary').click();
     const unreviewed = await text(page, '#disc-provenance');
     check(name + ' unreviewed control does not invent reader commentary', unreviewed.includes('checklist alone') && !unreviewed.includes('commentary is unverified'));
     eq(name + ' runtime errors', errors.slice(), []);

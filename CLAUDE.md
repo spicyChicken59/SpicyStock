@@ -2188,3 +2188,24 @@ visual inspection must be reported separately after execution. Fixture tickets
 are never production tickets; local plan selection is not an order or fill.
 No provider/model call, brokerage action, schedule change, message, deployment
 change, shared-system write or empirical profitability claim was made.
+
+PR #76 was opened at `e1d75891a12d37510c1d65ea175ee34a79c4b237` with tree
+`2279300390abb40ccad163bfb6dbcf5e18ba12a6`, byte-identical to the locally
+verified commit. Shell push lacked authentication; the connected GitHub API
+published that verified tree. The original local commit remains on a local
+branch. Exact-head CI Python and fixture/clean-tree checks passed. Secret scan
+identified the same two public breadth-rule identifiers already allowed in
+PR #68's retained context fixture. Its existing exact-value/path exception was
+extended only to `tests/fixtures/grading/reader-commentary/record.json`.
+Gitleaks 8.24.3 reproduced the original two findings, passed the corrected
+path, still rejected a synthetic credential at that allowed path, and still
+rejected those identifiers at an unrelated path. No detector/file exclusion,
+GitHub settings or secrets were changed. The publication and archive verifier
+were also rerun on the PR head: both PASS, 308 checked, no missing layers.
+
+The first page CI job passed 127 DOM/store and 182 chart checks, then reached
+the new retained-reader case and stopped because its test locator selected
+both the outer Provenance summary and the nested technical-reference summary.
+The regression now selects the direct child summary. This was a test-harness
+strict-selector error, not a second product defect; the application tree is
+unchanged. Final CI and visual results belong to the subsequent PR head.
