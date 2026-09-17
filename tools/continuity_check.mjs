@@ -32,7 +32,7 @@ async function open(data, shared=hub()) {
  w.SCStock={now:'2026-09-14T23:00:00Z'};
  for(const f of ['docs/design-system/sc-charts.js','docs/app-chart.js','docs/app-map.js','docs/app-follow.js','docs/app.js']) w.eval(await source(f));
  await pause();await pause();
- check(!!w.SCStock.model,'app loaded with the real published record');
+ check(!!w.SCStock.model,'app loaded with the real published record: '+errors.join(';'));
  return {w,dom,shared,errors,close(){shared.windows=shared.windows.filter(x=>x!==w);dom.window.close();}};
 }
 function click(w,selector){const node=w.document.querySelector(selector);check(!!node,'control exists: '+selector);node.click();return node;}
@@ -125,6 +125,51 @@ try{
  await render(newTab.w,revised);
  check(JSON.stringify(newTab.w.SCStock.follow.find(saved.id).snapshot.evidence_ref)===savedReference,'later publication retains original evidence reference');
  newTab.close();
+ // Retained production excerpt: presentation only, not a new scan or a
+ // complete publication replay. These exact bytes outlive rolling history.
+ const readerDir=path.join(ROOT,'tests/fixtures/grading/reader-commentary');
+ const readerContext=JSON.parse(await readFile(path.join(readerDir,'record.json'),'utf8'));
+ const jrsh=JSON.parse(await readFile(path.join(readerDir,'burst-JRSH.json'),'utf8')).row;
+ const jkhy=JSON.parse(await readFile(path.join(readerDir,'burst-JKHY.json'),'utf8')).row;
+ const excerpt={schema_version:2,...readerContext,bursts:[jrsh,jkhy],watchlist:{top:[],also_quiet:[]}};
+ const readerTab=await open(excerpt),rw=readerTab.w;
+ const rt=selector=>rw.document.querySelector(selector)?.textContent||'';
+ const authority=node=>/commentary is unverified/.test(node)&&/Recorded checklist criteria govern thresholds/.test(node);
+ await route(rw,'#/explore/bursts/JRSH');
+ const threshold=jrsh.quality.checks.find(c=>c.key==='consolidation').threshold;
+ check(jrsh.grade_mechanical==='A'&&jrsh.grade==='C'&&threshold.includes('giveback <= 0.25'),'retained JRSH has the real A-to-C result and A+ criterion');
+ check(jrsh.claude.reason.includes('The base giveback of 0.34 is right at the A+ ceiling'),'retained response includes the real threshold-prose mismatch');
+ check(!rt('#detail [data-item="why"]').includes(jrsh.claude.reason),'raw JRSH rationale is not the primary verified explanation');
+ check(rt('#detail [data-item="why"]').includes('checklist A; published C'),'primary explanation reports the recorded grade outcome');
+ const prov=rw.document.querySelector('#disc-provenance');
+ check(authority(prov.textContent),'original commentary is explicitly subordinate to recorded criteria');
+ check(prov.textContent.indexOf('commentary is unverified')<prov.textContent.indexOf(jrsh.claude.reason),'authority notice precedes the raw explanation');
+ for(const field of ['reason','key_risk','entry_note'])check(prov.textContent.includes(jrsh.claude[field]),'original reader '+field+' remains inspectable verbatim');
+ check(rt('#detail [data-item="risk"]').includes('Unverified chart-reader commentary: '+jrsh.claude.key_risk),'risk summary labels the model opinion');
+ click(rw,'#detail [data-pin]');await route(rw,'#/explore/bursts/JKHY');click(rw,'#detail [data-pin]');click(rw,'#compare-open');
+ check(rt('#compare').includes('Unverified chart-reader commentary: '+jrsh.claude.key_risk),'comparison labels the same model opinion');click(rw,'#compare-close');
+ check(rt('#disc-provenance').includes('checklist alone')&&!authority(rt('#disc-provenance')),'real unreviewed JKHY remains checklist-only');
+ await route(rw,'#/explore/bursts/JRSH');click(rw,'#detail [data-follow-action="add"]');await pause();
+ const original=rw.SCStock.follow.list().find(i=>i.ticker==='JRSH');
+ check(original.snapshot.reader_reason===jrsh.claude.reason&&original.snapshot.evidence_ref.id===jrsh.evidence.id,'save preserves raw commentary and the exact receipt');
+ await route(rw,'#/followed/'+encodeURIComponent(original.id));
+ check(authority(rt('#saved'))&&rt('#saved').includes('Original chart reader: '+jrsh.claude.reason),'saved original retains the authority boundary');
+ const readerReload=await open(excerpt,readerTab.shared);
+ await route(readerReload.w,'#/followed/'+encodeURIComponent(original.id));
+ check(authority(readerReload.w.document.querySelector('#saved').textContent),'reload/deep-link retains the authority boundary');readerReload.close();
+ check(JSON.stringify(rw.SCStock.data)===JSON.stringify(excerpt),'presentation never rewrites the publication or receipt');
+ check(readerTab.errors.length===0,'reader presentation has no DOM runtime errors');readerTab.close();
+ for(const variant of ['full','notrade','degraded']){
+   const data=JSON.parse(await readFile(path.join(ROOT,'tests/fixtures/page/'+variant+'.json'),'utf8'));
+   const tab=await open(data);await route(tab.w,'#/explore/bursts/AAPL');
+   const b=data.bursts.find(b=>b.ticker==='AAPL'),detail=tab.w.document.querySelector('#detail');
+   if(b.claude.source==='claude'){
+     check(detail.querySelector('[data-item="why"]').textContent.includes('checklist '+b.grade_mechanical+'; published '+b.grade),'valid '+variant+' control preserves recorded grade outcome');
+     check(!detail.querySelector('[data-item="why"]').textContent.includes(b.claude.reason),'valid '+variant+' control uses the same authority boundary');
+     check(authority(detail.querySelector('#disc-provenance').textContent)&&detail.querySelector('#disc-provenance').textContent.includes(b.claude.reason),'valid '+variant+' commentary stays available unchanged');
+   }else check(detail.querySelector('#disc-provenance').textContent.includes('checklist alone')&&!authority(detail.querySelector('#disc-provenance').textContent),'unavailable reader control does not invent a commentary');
+   check(JSON.stringify(tab.w.SCStock.data)===JSON.stringify(data),'valid '+variant+' control never rewrites the record');tab.close();
+ }
  check(errors.length===0,'no DOM runtime errors: '+errors.join(';'));
  console.log(JSON.stringify({status:'PASS: offline DOM/store checks; not browser/layout acceptance',checks,requests:shared.requests.filter(u=>u.includes('history/'))}));
  }
