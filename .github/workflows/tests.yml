@@ -58,6 +58,7 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           set -o pipefail
+          node tools/continuity_check.mjs
           node tools/chart_check.mjs
           node tools/page_smoke.mjs --shots /tmp/shots
       - uses: actions/upload-artifact@v4

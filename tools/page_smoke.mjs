@@ -217,7 +217,12 @@ async function checkDetail(page, variant, b, data, blocked) {
   const q = b.quality, miss = q.checks.find((c) => !c.pass);
   check(`${variant} ${b.ticker} why: counts the checks`, why.includes(`of ${q.checks.length} checks pass (${q.passes} of the ${q.of} letters)`), why);
   if (miss) check(`${variant} ${b.ticker} why: names the miss`, why.includes(miss.label), miss.label);
-  if (b.claude && b.claude.source === 'claude') check(`${variant} ${b.ticker} why: the chart reader`, why.includes(b.claude.reason), 'reason');
+  if (b.claude && b.claude.source === 'claude') {
+    check(`${variant} ${b.ticker} why: recorded grade outcome`, why.includes('checklist ' + b.grade_mechanical + '; published ' + b.grade), why);
+    check(`${variant} ${b.ticker} why: commentary stays in Provenance`, !why.includes(b.claude.reason), why);
+    const provenance = await text(page, '#disc-provenance');
+    check(`${variant} ${b.ticker} reader authority`, provenance.includes('commentary is unverified') && provenance.includes('Recorded checklist criteria govern thresholds'), provenance);
+  }
   const need = await text(page, '#detail .ss-decision__item[data-item="need"]');
   const entry = b.plan ? (b.plan.exit_schedule || []).find((s) => s.key === 'entry' || s.day === 1) : null;
   if (entry) check(`${variant} ${b.ticker} need: the day-1 instruction`, need.toLowerCase().includes(entry.instruction.slice(1, 60).toLowerCase()), need);
@@ -226,7 +231,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   if (b.plan && b.plan.pre_open_check) check(`${variant} ${b.ticker} wait: the pre-open check`, wait.toLowerCase().includes(b.plan.pre_open_check.slice(1, 60).toLowerCase()), wait);
   if (b.plan) check(`${variant} ${b.ticker} wait: the stop`, wait.includes(usd(b.plan.stop)), wait);
   const risk = await text(page, '#detail .ss-decision__item[data-item="risk"]');
-  if (b.claude && b.claude.key_risk) check(`${variant} ${b.ticker} risk: the key risk`, risk.includes(b.claude.key_risk.replace(/\.$/, '')), risk);
+  if (b.claude && b.claude.key_risk) check(`${variant} ${b.ticker} risk: attributed commentary`, risk.includes('Unverified chart-reader commentary: ' + b.claude.key_risk.replace(/\.$/, '')), risk);
   if (!(b.series || []).length) check(`${variant} ${b.ticker} risk: names the missing bars`, risk.includes('No bars are archived'), risk);
   // the action area: a ticket, or the reason there is none; never "buy now"
   const action = await text(page, '#detail .ss-action');
@@ -3420,6 +3425,48 @@ async function checkRefresh(browser, base, full) {
   }
 }
 
+async function checkReaderCommentary(browser, base) {
+  console.log('-- retained reader commentary (local presentation excerpt, not live publication acceptance)');
+  const dir = path.join(ROOT, 'tests/fixtures/grading/reader-commentary');
+  const contextRecord = JSON.parse(await readFile(path.join(dir, 'record.json'), 'utf8'));
+  const rows = await Promise.all(['JRSH', 'JKHY'].map(async ticker => JSON.parse(await readFile(path.join(dir, `burst-${ticker}.json`), 'utf8')).row));
+  const record = { schema_version: 2, ...contextRecord, bursts: rows, watchlist: { top: [], also_quiet: [] } };
+  for (const width of [1280, 390, 320]) for (const theme of ['dark', 'light']) {
+    const requests = [];
+    const { context, page, errors } = await open(browser, base, '/reader-excerpt.json', '2026-09-16T22:30:00Z', width, {
+      theme, hash: '#/explore/bursts/JRSH', beforeLoad: async page => {
+        page.on('request', r => { if (r.url().includes('/evidence/')) requests.push(r.url()); });
+        await page.route('**/reader-excerpt.json', route => route.fulfill({ json: record }));
+      }
+    });
+    const name = `retained JRSH ${width}/${theme}`;
+    const why = await text(page, '#detail [data-item="why"]');
+    check(name + ' primary explanation uses recorded grades', why.includes('checklist A; published C') && !why.includes(rows[0].claude.reason));
+    await page.locator('#disc-provenance > summary').focus();
+    await page.keyboard.press('Enter');
+    check(name + ' keyboard opens provenance', await page.locator('#disc-provenance').evaluate(el => el.open));
+    const focus = await page.locator('#disc-provenance > summary').evaluate(el => ({ active: document.activeElement === el, outline: getComputedStyle(el).outlineStyle }));
+    check(name + ' keyboard focus is visible', focus.active && !['none', 'hidden'].includes(focus.outline), focus);
+    const prov = await text(page, '#disc-provenance');
+    check(name + ' original commentary is qualified before raw text', prov.includes('Recorded checklist criteria govern thresholds') && prov.indexOf('commentary is unverified') >= 0 && prov.indexOf('commentary is unverified') < prov.indexOf(rows[0].claude.reason));
+    for (const field of ['reason', 'key_risk', 'entry_note']) check(name + ' preserves ' + field, prov.includes(rows[0].claude[field]));
+    check(name + ' fits viewport', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    eq(name + ' zero initial evidence requests', requests, []);
+    if (shotsDir) {
+      await mkdir(shotsDir, { recursive: true });
+      await page.locator('#detail .ss-decision').screenshot({ path: path.join(shotsDir, `reader-JRSH-decision-${width}-${theme}.png`) });
+      await page.locator('#disc-provenance').screenshot({ path: path.join(shotsDir, `reader-JRSH-provenance-${width}-${theme}.png`) });
+    }
+    await go(page, '#/explore/bursts/JKHY');
+    check(name + ' unreviewed Dollar-only control has red no-entry reason', (await text(page, '#detail [data-no-entry-reason]')).includes('breadth is red'));
+    await page.locator('#disc-provenance > summary').click();
+    const unreviewed = await text(page, '#disc-provenance');
+    check(name + ' unreviewed control does not invent reader commentary', unreviewed.includes('checklist alone') && !unreviewed.includes('commentary is unverified'));
+    eq(name + ' runtime errors', errors.slice(), []);
+    await context.close();
+  }
+}
+
 async function checkGradingHistory(browser, base) {
   console.log('-- grading history');
   const dir = path.join(ROOT, 'tests', 'fixtures', 'grading');
@@ -3450,6 +3497,8 @@ async function checkGradingHistory(browser, base) {
       const preview = await text(page, '#history-results');
       check(`${ticker} ${width}/${theme} original reason is visibly historical`,
         preview.includes('Historical research only.') && preview.includes('Original chart reader: ' + original.claude.reason));
+      check(`${ticker} ${width}/${theme} original commentary has no rule authority`,
+        preview.includes('commentary is unverified') && preview.includes('Recorded checklist criteria govern thresholds'));
       check(`${ticker} ${width}/${theme} exact session, scan, source and unchanged grade`,
         preview.includes('2026-09-14') && preview.includes('scan dollar') && preview.includes(id) &&
         preview.includes('Published grade: ' + original.grade));
@@ -3607,6 +3656,7 @@ async function main() {
     if (runs('ticket')) await checkTicketPrices(browser, base, full);
     if (runs('states')) await checkStates(browser, base, full);
     if (runs('grading')) await checkGradingHistory(browser, base);
+    if (runs('reader')) await checkReaderCommentary(browser, base);
     if (runs('inputs')) await checkInputCoverage(browser, base);
   } finally {
     await browser.close();

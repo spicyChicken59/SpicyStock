@@ -2131,3 +2131,81 @@ Next: complete exact-head gates, merge only the accepted PR, verify new main
 and automatic publication, then report completion of the three received
 milestones. The supplied campaign message ended mid-milestone 3 at “Personal”;
 no additional milestones or missing instructions were invented.
+
+## September 17 — first scheduled post-release acceptance correction
+
+Tahir authorized repository edits, branch/push and one correction PR in this
+execution session. No merge is authorized. Scope is SpicyStock only; siblings
+and the shared design system remain read-only.
+
+Pinned acceptance publication is `580805487b22006c6f2fa35490c3edc8a5760d73`,
+parented by engineering merge #75, `7859ae081a1cbb12ef4c2f949ee0e699df893bc8`.
+Remote main still matched that publication and no PRs were open before this
+branch. Run `35157356943`, attempt 1, is the ordinary scheduled evening run:
+GitHub success, pipeline exit 2/degraded. The actual Pages URL from deployment
+metadata is `https://spicychicken59.github.io/SpicyStock/`. Read-only HTTP checks
+matched the pinned data, picks, app and HTML bytes. No scan was regenerated.
+
+The actual offline verifier returned PASS for both `--record docs/data.json`
+and `--archive docs/history/9dfc2d51aef7d0adf723428931c61cc83824fa71`, with
+`--picks docs/picks.json --objects docs/evidence`: 308 candidates checked,
+no breaks and no missing layers. This owning-function replay does not certify
+reader prose. No real ticket exists in this publication or retained archives.
+
+JRSH reproduces the explanatory mismatch: raw reader prose calls 0.34 the A+
+giveback ceiling; the recorded criterion is ordinary <=0.34, A+ <=0.25.
+`burstDecision()` now reports recorded checklist/grade facts, while
+`discProvenance()` retains the raw commentary under an explicit authority note.
+Risk summaries/comparison and saved/recovered originals carry that same
+boundary. No NLP checker, ticker exception, grade change or reader replay.
+JRSH remains mechanical A, published C; no original receipt or generated file
+is rewritten. Byte-for-byte JRSH/JKHY regression copies live under
+`tests/fixtures/grading/reader-commentary/` with their source and hashes.
+
+The legacy verifier regression incorrectly read today's production file and
+assumed it was legacy. It now uses existing fixed September 11/14 originals,
+asserting PARTIAL/missing legacy evidence and no mutation for record and archive.
+README was updated; .env.example was reviewed and needs no change.
+
+Before/after execution: the new JRSH regression fails on the original primary
+explanation, then passes after the boundary fix. Removing the risk attribution
+in an in-memory mutant fails the risk assertion; an unrelated deliberately
+wrong no-entry sentence leaves these controls passing. No mutant touched the
+working tree. Full local pytest: 1,333 passed; fixture check: 12 current;
+continuity DOM/store: 127 passed; geometry-only chart check: 112 passed. A
+separate deterministic harness over the exact pinned full publication passes
+32 checks, including all nine red-gated As, JKHY Dollar-only admission,
+MANH retained-source recovery/cache reuse, and authentic older VICR chart
+unavailability. Zero initial evidence requests; explicit MANH recovery fetched
+one 5,250-byte source object and reused it without another request.
+
+Local browser/visual acceptance remains BLOCKED: the interactive browser
+capabilities could not establish a fresh profile or required viewports, and the
+repository test runner's Chromium download timed out. No real profile was
+mutated. New browser regressions are queued for normal PR CI, with retained
+excerpt screenshots in both themes at 1280/390/320. CI results and any actual
+visual inspection must be reported separately after execution. Fixture tickets
+are never production tickets; local plan selection is not an order or fill.
+No provider/model call, brokerage action, schedule change, message, deployment
+change, shared-system write or empirical profitability claim was made.
+
+PR #76 was opened at `e1d75891a12d37510c1d65ea175ee34a79c4b237` with tree
+`2279300390abb40ccad163bfb6dbcf5e18ba12a6`, byte-identical to the locally
+verified commit. Shell push lacked authentication; the connected GitHub API
+published that verified tree. The original local commit remains on a local
+branch. Exact-head CI Python and fixture/clean-tree checks passed. Secret scan
+identified the same two public breadth-rule identifiers already allowed in
+PR #68's retained context fixture. Its existing exact-value/path exception was
+extended only to `tests/fixtures/grading/reader-commentary/record.json`.
+Gitleaks 8.24.3 reproduced the original two findings, passed the corrected
+path, still rejected a synthetic credential at that allowed path, and still
+rejected those identifiers at an unrelated path. No detector/file exclusion,
+GitHub settings or secrets were changed. The publication and archive verifier
+were also rerun on the PR head: both PASS, 308 checked, no missing layers.
+
+The first page CI job passed 127 DOM/store and 182 chart checks, then reached
+the new retained-reader case and stopped because its test locator selected
+both the outer Provenance summary and the nested technical-reference summary.
+The regression now selects the direct child summary. This was a test-harness
+strict-selector error, not a second product defect; the application tree is
+unchanged. Final CI and visual results belong to the subsequent PR head.

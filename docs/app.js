@@ -2175,7 +2175,7 @@
     const vr = burst ? volumeRatio(b) : null;
     const trig = burst ? plan.entry_ref : plan.trigger, lim = burst ? plan.entry_high : plan.limit;
     const why = burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c);
-    const concern = firstText(burst ? cl.key_risk : '', plan.stop_risk_reason, plan.hazards, plan.notes);
+    const concern = firstText(burst ? readerRisk(cl) : '', plan.stop_risk_reason, plan.hazards, plan.notes);
     return {
       grade: c.grade ? c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : '') : null,
       provenance: burst ? (cl.source === 'claude' ? 'chart reader' + (cl.agree === false ? ', lowered the grade' : cl.agree === true ? ', agreed' : '') + (cl.chart_seen === false ? ' · numbers only, no chart' : '') : 'checklist alone') : 'measured, not graded',
@@ -2855,7 +2855,7 @@
             const preview = el('div', { 'class': 'ss-history__preview' });
             preview.appendChild(el('p', { text: 'Original status: ' + statusWords(c.status)[0] + '. ' + c.reason + '. Signal close ' + usd(c.row.close) + ' on ' + source.session + '. Historical research only.' }));
             preview.appendChild(el('p', { text: setup.snapshot.summary }));
-            if (setup.snapshot.reader_reason) preview.appendChild(el('p', { 'class': 'sc-hint', text: 'Original chart reader: ' + setup.snapshot.reader_reason }));
+            if (setup.snapshot.reader_reason) preview.appendChild(originalReader(setup.snapshot.reader_reason));
             if (recoveryPanel) recoveryPanel.dispose();
             if (c.series.length) { recoveryPanel = chartPanel(c, { idPrefix: 'recovery', height: 280 }); preview.appendChild(recoveryPanel.node); }
             else preview.appendChild(el('p', { text: 'Original chart unavailable in this archived record. No later chart is substituted.' }));
@@ -3151,7 +3151,7 @@
     savedFacts(item).forEach((r) => dl.appendChild(el('div', null, [el('dt', { text: r[0] }),
       typeof r[1] === 'string' ? el('dd', { text: r[1] }) : el('dd', null, r[1])])));
     box.appendChild(dl);
-    if (snap.reader_reason) box.appendChild(el('p', { 'class': 'sc-hint', text: 'Original chart reader: ' + snap.reader_reason }));
+    if (snap.reader_reason) box.appendChild(originalReader(snap.reader_reason));
     if (text(snap.summary)) box.appendChild(el('p', { 'class': 'ss-saved__quote' }, [el('span', { 'class': 'sc-eyebrow', text: 'the record said' }), ' “' + snap.summary + '”']));
     if (text(snap.withheld_reason)) box.appendChild(el('p', { 'class': 'ss-saved__quote', 'data-saved-reason': '' }, [el('span', { 'class': 'sc-eyebrow', text: 'no ticket, because' }), ' ' + cap(sentence(snap.withheld_reason))]));
     const lim = (snap.limitations || []).slice();
@@ -3330,13 +3330,22 @@
     return s && text(s.instruction) ? cap(sentence(s.instruction)) : '';
   }
   function firstText() { for (let i = 0; i < arguments.length; i++) { const v = arguments[i]; if (typeof v === 'string' && v.trim()) return v; if (Array.isArray(v) && v.length && typeof v[0] === 'string' && v[0].trim()) return v[0]; } return ''; }
+  function readerAuthority() {
+    return el('p', { 'class': 'sc-hint', text: 'Original chart-reader commentary is unverified. Recorded checklist criteria govern thresholds; only the published plan defines order terms.' });
+  }
+  function originalReader(reason) {
+    return el('div', null, [readerAuthority(), el('p', { 'class': 'sc-hint', text: 'Original chart reader: ' + reason })]);
+  }
+  function readerRisk(cl) {
+    return cl && cl.source === 'claude' && text(cl.key_risk) ? 'Unverified chart-reader commentary: ' + cl.key_risk : '';
+  }
   function burstDecision(c) {
     const b = c.row, plan = c.plan || {}, q = b.quality || {}, cl = b.claude || {}, checks = q.checks || [];
     const passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
     const summary = sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, '')));
     const why = [summary || 'No summary was recorded for this burst.',
       checks.length ? passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? '; the miss is ‘' + (miss.label || words(miss.key) || 'a check') + '’ (' + (miss.display || '—') + ').' : '; nothing missed.') : '',
-      cl.source === 'claude' && text(cl.reason) ? 'The chart reader: ' + sentence(cl.reason) : ''];
+      cl.source === 'claude' ? 'Recorded grade: checklist ' + (b.grade_mechanical || 'not recorded') + '; published ' + (b.grade || 'not recorded') + '. Original reader commentary is in Provenance.' : ''];
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
@@ -3344,7 +3353,7 @@
     const wait = c.plan
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
-    const riskText = firstText(cl.key_risk, plan.stop_risk_reason, plan.hazards, plan.notes);
+    const riskText = firstText(readerRisk(cl), plan.stop_risk_reason, plan.hazards, plan.notes);
     const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
       c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
@@ -3636,6 +3645,7 @@
         kids.push(el('div', { 'class': 'sc-insight' }, [
           el('div', { 'class': 'sc-eyebrow', text: (demo ? 'simulated chart-reader reply (fixture)' : 'claude read the chart') + (cl.agree === false ? ' · lowered the grade' : cl.agree === true ? ' · agreed' : '') }),
           demo ? el('p', { 'class': 'sc-hint', text: 'Sample data: this reply is scripted by the test doubles, not a live analysis of a real chart.' }) : null,
+          readerAuthority(),
           el('p', { text: cl.reason || '' }),
           text(cl.key_risk) ? el('p', null, [el('strong', { text: 'Key risk: ' }), cl.key_risk]) : null,
           text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,

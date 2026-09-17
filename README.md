@@ -423,6 +423,12 @@ session. The run:
   and user text; transport, cache prefix and down-only clamping remain intact.
   See `tests/fixtures/grading/history-audit.json` for the bounded, manually
   reviewed historical audit. Old published reasons and grades are unchanged.
+  The page's primary explanation reports the recorded checklist and grade
+  outcome. Original reader reason, risk and entry commentary remain inspectable
+  in Provenance and are labelled unverified; recorded checklist criteria govern
+  thresholds and only the published plan defines order terms. Saved and recovered
+  originals carry the same qualification. This presentation boundary does not
+  fact-check arbitrary prose, regrade a result or rewrite a historical receipt.
 - **plan** — every A-quality burst gets a plan sized from the configured
   account (default $10,000, 0.5% risk, 25% cap, four slots). Four prices it
   keeps apart, because they are four rules: the **trigger**, a buy stop at

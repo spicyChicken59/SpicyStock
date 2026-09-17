@@ -4,6 +4,7 @@ The initial eight protections were executed against f744b88 before the fix:
 all eight failed because the contradictory night still published.
 """
 from copy import deepcopy
+import gzip
 import json
 from pathlib import Path
 
@@ -209,16 +210,23 @@ def test_changed_source_archive_fails_without_repair(tmp_path):
     assert any("source object digest" in x for x in result["breaks"]), result
 
 
-def test_legacy_records_are_explicitly_unknown_and_unchanged():
+def test_legacy_records_are_explicitly_unknown_and_unchanged(tmp_path):
     from src import provenance
-    data = json.loads((ROOT / "docs/data.json").read_bytes())
+    data = json.loads(gzip.decompress(
+        (ROOT / "tests/fixtures/continuity/2026-09-11.json.gz").read_bytes()))
     before = deepcopy(data)
     result = provenance.verify(data)
     assert result["status"] == "PARTIAL" and "legacy" in result["missing"][0]
     assert data == before
     from tools.verify_provenance import archived
-    old = next(p.parent for p in (ROOT / "docs/history").glob("*/record.json"))
-    assert provenance.verify(archived(old))["status"] == "PARTIAL"
+    # Retained legacy originals, independent of the rolling public archive.
+    for name in ("record.json", "burst-CACI.json", "burst-ROKU.json"):
+        (tmp_path / name).write_bytes((ROOT / "tests/fixtures/grading" / name).read_bytes())
+    old = archived(tmp_path)
+    before = deepcopy(old)
+    result = provenance.verify(old)
+    assert result["status"] == "PARTIAL" and "legacy" in result["missing"][0]
+    assert old == before
 
 
 def test_new_recovery_snapshot_and_saved_plan_share_identity(market, claude, fake_resend, tmp_path):
