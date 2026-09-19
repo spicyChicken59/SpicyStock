@@ -32,13 +32,15 @@
     "quality.a_plus_max_volume_rank": 3, "quality.volume_rank_sessions": 60, "quality.min_a_plus_letters": 4,
     "breadth.yellow_ratio_10d": 2.0, "breadth.red_ratio_10d": 1.0, "breadth.red_ratio_5d": 0.5,
     "breadth.down4_alarm": 700, "breadth.reference_universe": 6500, "breadth.up50_month_hot": 20,
+    "breadth.burst_pct": 4.0, "breadth.quarter_move_pct": 25.0, "breadth.month_move_pct": 25.0, "breadth.month_big_move_pct": 50.0,
+    "breadth.ratio_short_sessions": 5, "breadth.ratio_long_sessions": 10,
     "plan.default_equity": 10000, "plan.default_risk_pct": 0.5,
     "plan.default_max_position_pct": 25, "plan.default_max_open_positions": 4,
     "plan.max_stop_pct": 4.0, "plan.ideal_stop_pct": 2.0, "plan.stop_risk_multiplier": 0.5,
     "plan.entry_below_pct": 2.0, "plan.entry_above_pct": 4.0, "plan.entry_window_minutes": 30,
     "plan.sell_half_pct": 8.0, "plan.abnormal_day_pct": 10.0, "plan.gap_exit_pct": 20.0,
     "plan.trail_cents": 0.25, "plan.trail_cents_max": 0.50,
-    "plan.sell_half_day": 3, "plan.no_progress_day": 3, "plan.trail_from_day": 3,
+    "plan.entry_day": 1, "plan.sell_half_day": 3, "plan.no_progress_day": 3, "plan.trail_from_day": 3,
     "plan.final_exit_day": 5, "plan.no_breakeven_before_day": 5,
     "plan.gain_ceiling_pct": 15.0, "plan.extension_hazard_pct": 20.0, "plan.extension_sessions": 20,
     "plan.target_low_pct": 8.0, "plan.target_high_pct": 20.0,
@@ -105,6 +107,9 @@
   const g = (v) => String(v);                                        // 4.0 -> 4, 0.40 -> 0.4, 1.04 -> 1.04
   const cents = (v) => String(Math.round(v * 100));
   const riskUsd = N('plan.default_equity') * N('plan.default_risk_pct') / 100;
+  const FOUR = g(N('breadth.burst_pct')) + '%';   // the scan's own name: the 4% scan, a 4% day, up and down 4%
+  const LONG = N('breadth.ratio_long_sessions') + '-day', SHORT = N('breadth.ratio_short_sessions') + '-day';
+  const trailDays = 'ays ' + (N('plan.trail_from_day') + 1) + '–' + N('plan.final_exit_day');
 
   // ---- the steps -----------------------------------------------------------------
   // reveal: bars drawn live (the rest are ghosts) · marks: annotations on ·
@@ -129,14 +134,14 @@
       text: 'The move into the base went in a line: an efficiency ratio of at least ' + g(N('quality.min_er'))
         + ' or an R² of at least ' + g(N('quality.min_r2')) + ' (both for A+). A choppy leg is a veto, not a deduction. '
         + 'And the burst must be the move’s first or second breakout: at most ' + N('quality.max_prior_breakouts')
-        + ' earlier 4% day since the move began (none for A+).',
+        + ' earlier ' + FOUR + ' day since the move began (none for A+).',
       facts: ['here: ER ' + X.er + ', R² ' + X.r2 + ', over ' + X.leg_sessions + ' sessions gaining ' + pct(X.leg_gain_pct, 1),
-        'earlier 4% days in this move: ' + X.breakouts_in_move],
+        'earlier ' + FOUR + ' days in this move: ' + X.breakouts_in_move],
       who: 'the ER formula B (2009), the veto B (2011), the thresholds P; Y B (2LYNCH), where the move starts P' },
     { id: 'base', label: 'C · the base', module: 'quality', reveal: BURST, marks: ['leg', 'base'], days: 0,
       title: 'C · the base',
       text: N('quality.base_min') + '–' + N('quality.base_max') + ' sessions, at most ' + N('quality.max_breakdowns')
-        + ' 4% breakdown, giving back no more than ' + share(N('quality.max_giveback')) + ' of the leg, its daily ranges no wider than '
+        + ' ' + FOUR + ' breakdown, giving back no more than ' + share(N('quality.max_giveback')) + ' of the leg, its daily ranges no wider than '
         + g(N('quality.max_tightness')) + '× the norm before it. A+ needs no breakdown, no burst inside it, giveback under '
         + share(N('quality.a_plus_max_giveback')) + ', ranges under ' + g(N('quality.a_plus_max_tightness'))
         + '×, and volume under both the leg’s and the ' + N('quality.volume_avg_sessions')
@@ -157,10 +162,10 @@
       who: '2 B (2LYNCH); the three-up veto B and V; ' + g(N('quality.narrow_range_pct')) + '% V; the median P' },
     { id: 'signal', label: 'the signal', module: 'scans', reveal: BURST + 1, marks: ['burst'], days: 0,
       title: 'The signal · the scan fires',
-      text: 'The 4% burst scan: a close at least ' + g(N('scans.burst_ratio')) + '× the previous close, on more volume than the '
+      text: 'The ' + FOUR + ' burst scan: a close at least ' + g(N('scans.burst_ratio')) + '× the previous close, on more volume than the '
         + 'previous session and at least ' + num(N('scans.min_volume')) + ' shares. The Dollar scan is a second door: a close at least '
         + usd(N('scans.dollar_move')) + ' over the same day’s open on more than ' + num(N('scans.min_volume'))
-        + ' shares, which can admit a day under +4%. On the bar itself: H, the close in the top '
+        + ' shares, which can admit a day under +' + FOUR + '. On the bar itself: H, the close in the top '
         + share(1 - N('quality.min_close_pos')) + ' of the range and above the open (A+: the top '
         + share(1 - N('quality.a_plus_close_pos')) + '); RE, a range wider than any of the prior ' + N('quality.re_window')
         + ' sessions (A+: ' + N('quality.re_window_long') + '); VOL, above yesterday’s (A+: one of the top '
@@ -172,17 +177,18 @@
       'score ' + X.score.toFixed(1) + ' of 10 with ' + X.a_plus_letters + ' checks at their A+ standard: ' + X.grade
         + ' (A+ from ' + BANDS['A+'].toFixed(1) + ' with at least ' + N('quality.min_a_plus_letters')
         + ', A from ' + BANDS.A.toFixed(1) + '; the chart reader may only lower a grade)'],
-      who: 'both scans PRIMARY (4% May 2015, Dollar July 2017); H and RE V; the outright rule and the weights P' },
+      who: 'both scans PRIMARY (' + FOUR + ' May 2015, Dollar July 2017); H and RE V; the outright rule and the weights P' },
     { id: 'breadth', label: 'Market Monitor', module: 'breadth', reveal: BURST + 1, marks: ['burst'], days: 0,
       title: 'Market Monitor · the gate',
       text: 'Before any plan is written the market is read from Bonde’s Telechart counts over the measured universe: '
-        + 'names up and down 4% on the day, up 25% in a quarter, up 25% and 50% in a month. The 10-day ratio of 4% ups '
-        + 'to 4% downs sets the regime, and the regime sets the size or refuses the night.',
-      facts: [{ chip: ['green', 'good'], text: '10-day ratio at or over ' + g(N('breadth.yellow_ratio_10d')) + ': full size' },
+        + 'names up and down ' + FOUR + ' on the day, up ' + g(N('breadth.quarter_move_pct')) + '% in a quarter, up '
+        + g(N('breadth.month_move_pct')) + '% and ' + g(N('breadth.month_big_move_pct')) + '% in a month. The ' + LONG
+        + ' ratio of ' + FOUR + ' ups to ' + FOUR + ' downs sets the regime, and the regime sets the size or refuses the night.',
+      facts: [{ chip: ['green', 'good'], text: LONG + ' ratio at or over ' + g(N('breadth.yellow_ratio_10d')) + ': full size' },
         { chip: ['yellow', 'warn'], text: 'under ' + g(N('breadth.yellow_ratio_10d')) + ', or more than ' + N('breadth.up50_month_hot')
-          + ' names up 50% in a month: half size, A+ only' },
-        { chip: ['red', 'danger'], text: '10-day ratio under ' + g(N('breadth.red_ratio_10d')) + ', ' + num(N('breadth.down4_alarm'))
-          + '+ names down 4% today, or a 5-day ratio under ' + g(N('breadth.red_ratio_5d'))
+          + ' names up ' + g(N('breadth.month_big_move_pct')) + '% in a month: half size, A+ only' },
+        { chip: ['red', 'danger'], text: LONG + ' ratio under ' + g(N('breadth.red_ratio_10d')) + ', ' + num(N('breadth.down4_alarm'))
+          + '+ names down ' + FOUR + ' today, or a ' + SHORT + ' ratio under ' + g(N('breadth.red_ratio_5d'))
           + ' with more down than up: no new longs, no plans' },
         'counts are scaled to the measured universe against his ' + num(N('breadth.reference_universe'))],
       who: 'the formulas B; the thresholds B, scaled to this universe P' },
@@ -202,8 +208,8 @@
         + usd(X.day2_spent_above) + ' (+' + g(N('plan.entry_above_pct')) + '%, day 2 already spent); the entry is the first '
         + N('plan.entry_window_minutes') + ' minutes'],
       who: 'the stop and the sizing B; the ' + g(N('plan.max_stop_pct')) + '% line B; the limit rule, the halving and the zone P' },
-    { id: 'fill', label: 'day 1', module: 'record', reveal: BURST + 2, marks: ['plan', 'fill', 'half', 'stop'], days: 1,
-      title: 'Day 1 · filled at the open',
+    { id: 'fill', label: 'day ' + N('plan.entry_day'), module: 'record', reveal: BURST + 2, marks: ['plan', 'fill', 'half', 'stop'], days: 1,
+      title: 'Day ' + N('plan.entry_day') + ' · filled at the open',
       text: 'An open at or over the buy stop and at or under the limit fills at the open: the one fill a daily bar can establish. '
         + 'If the price reaches +' + g(N('plan.sell_half_pct')) + '% on the entry day or the next, sell half and raise the stop to '
         + cents(N('plan.trail_cents')) + '–' + cents(N('plan.trail_cents_max')) + ' cents under that day’s high. A close '
@@ -213,16 +219,16 @@
         + '% (' + usd(X.sell_half_price) + '): ' + X.sell_half_shares + ' of ' + X.shares + ' sold, the stop raised to '
         + usd(X.stop_after_day1)],
       who: 'the exits B (2018); the fill rule P' },
-    { id: 'third', label: 'day 3', module: 'plan', reveal: BURST + 4, marks: ['half', 'stop'], days: 3,
-      title: 'Day 3 · the close',
+    { id: 'third', label: 'day ' + N('plan.sell_half_day'), module: 'plan', reveal: BURST + 4, marks: ['half', 'stop'], days: 3,
+      title: 'Day ' + N('plan.sell_half_day') + ' · the close',
       text: 'If half is still held at day ' + N('plan.sell_half_day') + '’s close, sell at least half then, in whole shares. A close '
         + 'at or under the entry on day ' + N('plan.no_progress_day') + ' is no follow-through: out entirely. From day '
         + N('plan.trail_from_day') + ' the stop trails each day’s low and never moves down. There is no break-even move before day '
         + N('plan.no_breakeven_before_day') + '.',
-      facts: ['here: half was sold on day 1, so day 3 sells nothing; the stop trails to ' + usd(X.stop_day3)],
+      facts: ['here: half was sold on day ' + N('plan.entry_day') + ', so day ' + N('plan.sell_half_day') + ' sells nothing; the stop trails to ' + usd(X.stop_day3)],
       who: 'the exits B; the trail P (a reading of “after 3rd day keep moving stop to low of day”); no break-even E' },
-    { id: 'trail', label: 'days 4–5', module: 'plan', reveal: BARS.length, marks: ['half', 'stop', 'exit'], days: 5,
-      title: 'Days 4–5 · trail, then out',
+    { id: 'trail', label: 'd' + trailDays, module: 'plan', reveal: BARS.length, marks: ['half', 'stop', 'exit'], days: 5,
+      title: 'D' + trailDays + ' · trail, then out',
       text: 'The stop follows each day’s low. Day ' + N('plan.final_exit_day') + ' is the exit, at the close, whatever the price is '
         + 'doing. Two hazards halve the size and never veto: a burst day of ' + g(N('plan.gain_ceiling_pct'))
         + '% or more, and a close ' + g(N('plan.extension_hazard_pct')) + '% over its ' + N('plan.extension_sessions')

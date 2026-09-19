@@ -73,14 +73,13 @@ def test_the_walkthrough_quotes_the_graders_bands_and_the_regimes_words():
 def test_the_walkthrough_quotes_no_number_it_does_not_name():
     """A bare strategy number in a caption would escape the test above. The
     captions are built from N('...'), EXAMPLE and BANDS; the digits that may
-    appear as literals are the ones that are not rules: the scan's own 4% and
-    the counts the Market Monitor is named for, a step number, a year, a
-    date, and the ten points of the score."""
+    appear as literals are the ones that are not rules: a year, 2LYNCH and
+    the checklist's letter 2, the ten points the six weights sum to, the
+    plan's own day2_spent_above field, and one quoted "3rd"."""
     captions = SOURCE.split("const STEPS = [", 1)[1].split("// the stop in force", 1)[0]
     literal = re.findall(r"'[^']*'", captions)
     rule_key = re.compile(r"^'(universe|scans|quality|breadth|plan|record)\.[a-z0-9_]+'$")
-    allowed = re.compile(r"4%|25%|50%|10-day|5-day|20 days|of 10|2LYNCH|20(09|11|14|16|18)|2015|2017|3rd|R²|"
-                         r"\d+-session|[Dd]ays? [1-5](–[1-5])?\b|\bD[1-5]\b|\b2 (and|B|·)|the ten|\bten\b")
+    allowed = re.compile(r"of 10|2LYNCH|20(09|11|14|16|18)|2015|2017|3rd|R²|\b2 (and|B|·)|day 2 already spent")
     stray = [chunk for chunk in literal if not rule_key.match(chunk) and re.search(r"\d", allowed.sub("", chunk))]
     assert not stray, stray
     # the guard can fail: the source line that once read "the 15% hazard E"
