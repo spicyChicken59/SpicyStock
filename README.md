@@ -431,6 +431,8 @@ session. The run:
   adjustment and expected/evaluated sessions; recovery copies the original run.
   Older records without these fields remain explicitly unknown on the page.
   See `docs/input-truthfulness/README.md` for conservation equations and offline impact.
+  The [September 18 stale-input investigation](docs/input-truthfulness/2026-09-18-stale-inputs.md)
+  pins retained evidence and separates the missing-bar symptom from unresolved causes.
   Method shows the ledger concisely, and incomplete empty results are qualified
   beside the verdict and empty-state text.
 - **breadth** — the Market Monitor columns and the regime: green (full

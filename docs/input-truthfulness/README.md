@@ -126,3 +126,11 @@ browser-local annotations. FIX this input boundary only. DEFER holiday timing,
 full measurement-to-publication provenance, dollar-formula primary-source work,
 real qualifying-ticket evidence and profitability. OMIT paid/provider replay,
 manual deployment, secret changes, repository settings and sibling changes.
+
+## September 18 retained stale-input investigation
+
+The [dated report and primary-source index](2026-09-18-stale-inputs.md) reconcile
+4,774/4,793 ready stocks, preserve the eight-name sample and 11 unidentified
+members, and distinguish classifier behavior from unresolved provider causes.
+The [offline results](2026-09-18-stale-inputs-results.json) pin original evidence
+hashes. Production selection, coverage and historical records are unchanged.

@@ -1,0 +1,247 @@
+{
+  "integrity": "PASS",
+  "conservation_and_selection_replay": "PASS",
+  "artifact_entries": 3687,
+  "artifact_inventory": {
+    "charts": 12,
+    "data.json": 1,
+    "evidence": 1134,
+    "history": 2539,
+    "picks.json": 1
+  },
+  "member_manifest_sha256": "6b2011747a0f5b6f91712130c7254fbec65fc657c3e6d0c7e9aa8cc713c89270",
+  "data_sha256": "aae64bbd1be0c0126f9c24c6ad5b4b5be1434a51e7351e5085c2f00862215567",
+  "record_sha256": "f97c1cf83e120e8d694e4bcbc704744cebbadccd76f2bdea93f785564847ef80",
+  "directory_gzip_sha256": "a58e9d566751bb95a600d0fc723746fa04ddad719e9c51f34c09b5790bd30df9",
+  "directory_canonical_sha256": "c091d29f6be7b2833cc3b017b655470ebd187507ab59adde597e450d8d20488f",
+  "input_basis": {
+    "provider": "Alpaca",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Day",
+    "expected_session": "2026-09-18",
+    "evaluated_session": "2026-09-18"
+  },
+  "coverage": {
+    "version": 1,
+    "intended": 4794,
+    "requested": 4794,
+    "with_bars": 4794,
+    "no_bars": 0,
+    "dropped": 0,
+    "unfetched_budget": 0,
+    "unfetched_failure": 0,
+    "refused": 0,
+    "stale": 19,
+    "gapped": 0,
+    "unreadable": 0,
+    "on_session": 4775,
+    "session_ready": 4775,
+    "benchmark_ready": 1,
+    "scan_ready": 3731,
+    "price_excluded": 1043,
+    "not_scanned_closed": 0,
+    "measured": 3731,
+    "scan_errors": 0,
+    "scan_unattempted": 0,
+    "quality_success": 360,
+    "quality_errors": 0,
+    "matched": {
+      "burst": 78,
+      "dollar": 218,
+      "both": 64,
+      "neither": 3371
+    },
+    "errors": 0,
+    "duplicate_symbols": 0,
+    "duplicate_bars": 0,
+    "returned_bars": 1343073,
+    "batch_attempts": 48,
+    "intended_identity": "7a482668c029577e",
+    "benchmark_added": 1,
+    "acceptance": {
+      "status": "degraded",
+      "denominator": "intended stocks, excluding benchmark",
+      "intended_stocks": 4793,
+      "ready_stocks": 4774,
+      "fraction": 0.9960358856665972,
+      "minimum_fraction": 0.5,
+      "complete_evaluation": true,
+      "complete_intended": false,
+      "capacity_excluded": 0
+    },
+    "sessions": {
+      "expected": "2026-09-18",
+      "evaluated": "2026-09-18",
+      "expected_present": 4775,
+      "latest_bar_dates": {
+        "2026-09-17": 19,
+        "2026-09-18": 4775
+      },
+      "previous": "2026-09-17",
+      "previous_observed": false,
+      "previous_printed": 4794,
+      "closure_voters": 4775,
+      "closure_agreed": 4775
+    },
+    "reasons": {
+      "no_bars": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "dropped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "unfetched_budget": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "stale": {
+        "count": 19,
+        "identity": "c0c17644c58c108f",
+        "sample": [
+          "ANTA",
+          "BKHA",
+          "BLIV",
+          "BMHL",
+          "EGHA",
+          "GDEV",
+          "HCMA",
+          "INTJ"
+        ]
+      },
+      "gapped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "unreadable": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "duplicate_repaired": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "refused": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "unfetched_failure": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "price_excluded": {
+        "count": 1043,
+        "identity": "0a313b76149585cb",
+        "sample": [
+          "AAME",
+          "ABAT",
+          "ABLV",
+          "ABOS",
+          "ABTS",
+          "ABVC",
+          "ACCL",
+          "ACH"
+        ]
+      }
+    }
+  },
+  "reads": {
+    "requested": 12,
+    "done": 12,
+    "unavailable_reason": null
+  },
+  "sample_directory_rows": [
+    {
+      "symbol": "ANTA",
+      "name": "Antalpha Platform Holding Company Class A Ordinary Shares",
+      "country": "Singapore",
+      "sector": "Finance",
+      "industry": "Investment Bankers/Brokers/Service",
+      "lastsale": "$3.31",
+      "volume": "426"
+    },
+    {
+      "symbol": "BKHA",
+      "name": "Black Hawk Acquisition Corporation Class A Ordinary Shares",
+      "country": "United States",
+      "sector": "Health Care",
+      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
+      "lastsale": "$11.99",
+      "volume": "162"
+    },
+    {
+      "symbol": "BLIV",
+      "name": "BeLive Holdings Ordinary Share",
+      "country": "Singapore",
+      "sector": "Technology",
+      "industry": "EDP Services",
+      "lastsale": "$2.21",
+      "volume": "91"
+    },
+    {
+      "symbol": "BMHL",
+      "name": "Bluemount Holdings Limited Class B Ordinary Shares",
+      "country": "Hong Kong",
+      "sector": "Finance",
+      "industry": "Finance: Consumer Services",
+      "lastsale": "$5.53",
+      "volume": "794"
+    },
+    {
+      "symbol": "EGHA",
+      "name": "EGH Acquisition Corp. Class A Ordinary Shares",
+      "country": "United States",
+      "sector": "Finance",
+      "industry": "Finance/Investors Services",
+      "lastsale": "$10.40",
+      "volume": "132"
+    },
+    {
+      "symbol": "GDEV",
+      "name": "GDEV Inc. Ordinary Shares",
+      "country": "Cyprus",
+      "sector": "Technology",
+      "industry": "EDP Services",
+      "lastsale": "$11.47",
+      "volume": "749"
+    },
+    {
+      "symbol": "HCMA",
+      "name": "HCM III Acquisition Corp. Class A Ordinary Share",
+      "country": "United States",
+      "sector": "Consumer Discretionary",
+      "industry": "Hotels/Resorts",
+      "lastsale": "$10.32",
+      "volume": "127"
+    },
+    {
+      "symbol": "INTJ",
+      "name": "Intelligent Group Limited Class A Ordinary Shares ",
+      "country": "Hong Kong",
+      "sector": "Consumer Discretionary",
+      "industry": "Professional Services",
+      "lastsale": "$2.66",
+      "volume": "181"
+    }
+  ],
+  "counterfactual_industry_only_fixture": {
+    "BKHA": "blank check company",
+    "EGHA": "blank check company",
+    "HCMA": "blank check company"
+  },
+  "sample_catalog_entries": 0,
+  "full_stale_membership_recovery": "BLOCKED",
+  "unidentified_stale_members": 11,
+  "provider_cause": "BLOCKED",
+  "limit": "Dates and counts are retained observations; original stale frames and HTTP pages are absent. The fixture establishes classifier behavior, not provider behavior."
+}
