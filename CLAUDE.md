@@ -108,7 +108,11 @@ card per stock, one stock in focus with its recorded entry decision, chart,
 four decision answers and four disclosures; a Burst's compact action grid
 precedes its chart, while anticipation keeps its existing action position), Record, Market and Method,
 with the tickets and the scan as disclosures under the workspace and one
-next action under every view.
+next action under every view. Method opens on the walkthrough
+(`docs/app-method.js`, `SCStock.walkthrough`): one synthetic burst in eleven
+steps, every number a caption quotes named in its `RULES` and held to the
+modules, its example ticket and five-session replay re-derived by
+`tests/test_walkthrough.py`; it reads no record and decides nothing.
 
 **A record carries two facts about time and the page keeps them apart**,
 because freshness is not permission. `status()` is publication: is this the
@@ -2508,3 +2512,72 @@ research, Windows publication portability and production artifact verification
 model execution, directory refresh, manual dispatch/publication, secrets/settings
 changes, sibling work and merge. Next action: guidance reviews the scoped PR
 with exact-head Tests and Secret Scan; builder stops without merging.
+
+## Checkpoint, 19 Sep 2026 — the method, one burst at a time
+
+**Revision.** Branch `claude/fervent-dirac-9digzt` from `main` at `27b2b49`
+(the merge of #81). Tahir uploaded a standalone HTML explainer of the method
+that had finally made it click for him and asked for it on the site; it is
+integrated into the Method view, on the page's own design system, rather
+than linked as a page off it. `docs/data.json`, `docs/picks.json`, the
+history, the evidence objects and the vendored design system are untouched;
+nothing under `src/` changed; no run, mail, merge or deployment.
+
+**The explanation was checked against the code before it was kept, and
+three things it said are not what this build does.** Its "Day 1" was the
+burst day, so its day 3 and day 5 sat one session early: the record numbers
+the fill day as day 1 (`plan.ENTRY_DAY`) and everything from it. It sold
+"half more" at day 3's close after a +8% half: `plan.follow()` sells the
+day-3 half only when the +8% half was not sold, then the remainder on day 5.
+And its buy zone was the retired −2%..+4% ceiling: the limit is
+`plan.burst_limit()`'s stop-constrained price, +4% is the extension
+threshold, and at that limit every ticket's stop sits 3.99% under it, so the
+risk is halved on every one (all four fixture tickets carry `risk_halved`;
+the walkthrough says so). Its synthetic bars were redrawn so
+`quality.assess()` reads the drawn base as the base — the highest high of
+the 40 sessions before the burst opens it, so a base that makes its high
+late is two sessions long — and finds no earlier 4% day in the move; the
+code grades them A+, 10 of 10.
+
+**What was built.** `docs/app-method.js` (`SCStock.walkthrough`): eleven
+steps over one 27-bar synthetic series, the chart drawn in px at its own
+column's width on the page's tone slots, gutter labels spread by
+`SC.spreadLabels`, a table twin, keyboard, Play with a test-injected
+interval, reduced motion honoured. `RULES` names every number a caption
+quotes for its constant, `BARS` and `EXAMPLE` are JSON, and
+`tests/test_walkthrough.py` holds `RULES` to `src/` and re-derives `EXAMPLE`
+— scan, checklist, `burst_plan()`, `pick_of()`, `replay()`, `r_multiple()` —
+so the page prints what the code writes (+3.04R, settled on day 5). A
+literal guard refuses a digit in a caption that is not a year, 2LYNCH, the
+score's ten points, the plan's own day-2 field, "3rd" or the letter 2.
+`#/method/walkthrough` keeps its path; the card stands on the no-record
+page; README's layout is held to every `docs/app-*.js`.
+
+**Measured** (offline, this sandbox): 1378 tests (8 new); 12 fixtures
+current; continuity 127; chart check 182/182; the walkthrough suite 106/106
+with `--shots`; the suites that visit Method 1075/1075. **Seven mutants,
+all dead, a control green in both harnesses:** a drifted rule, a drifted R,
+a bar out of place, a bare 4% in a caption, a reveal that ignores the step,
+the day-2 line printed as the limit, Next never refused. The bare-4% mutant
+SURVIVED the first guard, which allowed "4%" anywhere for the scan's own
+name: the scan's 4%, the Market Monitor's 25% and 50%, its 5- and 10-day
+ratios and the entry day are quoted from the modules now and that
+allowance is gone. gitleaks 8.24.3 over the new files: no leaks.
+
+**The screenshots found what the checks had not.** The chart was drawn at
+the mount's width — the whole card — and scaled into its 3fr column: tiny
+candles and 6px labels at 1280 while every assertion passed. It measures its
+own column now, and a check holds the drawn width to it. Then, each found by
+looking: labels past the gutter (the gutter is sized from its longest
+label), the burst word on D1, "2 · N" over the base's label, two sale pills
+on each other (the words moved to the gutter), and a phone's "burst" against
+"hold" (two axis rows under 560px). Twenty-two step screenshots at 1280 and
+390 and two at 320, both themes, were looked at.
+
+**Keep / fix / defer / omit.** Keep: the walkthrough reads no record and
+decides nothing; every number it prints is the module's. Fix if it bites:
+the score's "of 10" is the one number a caption carries that no single
+constant names (the six weights sum to it). Defer to Astra: unchanged.
+Omit: a walkthrough over a real burst from the record. **Not claimable:**
+a live fetch, Resend, Pages, and CI on this branch until the pull request
+runs.
