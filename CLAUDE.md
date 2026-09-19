@@ -2342,7 +2342,7 @@ is unchanged. Its failure was reproduced before correction (1,332/1,333 pass).
 
 ## September 19 — first-visit comprehension campaign
 
-The second slice starts from actual accepted main `d273256f5fbfde826a76eb596eb756fe7e67f59f`, the normal merge of #78. Its reviewed head was `13d527be5aedbd7b73ca7a5045b658e39315f8aa`; Tests 35431463638 and Secret Scan 35431463692 PASS. Automatic publication 35431920098 and Pages 35431927661 PASS. Continuation began 08:06:36 UTC, accounting for approximately 48 prior minutes; original deadline/quota remain unverified.
+Readability starts from #78 merge `d273256f5fbfde826a76eb596eb756fe7e67f59f`, head `13d527be5aedbd7b73ca7a5045b658e39315f8aa`. Tests 35431463638, Secret Scan 35431463692, publication 35431920098 and Pages 35431927661 PASS. Continuation began 08:06:36 UTC, retaining 48 prior minutes; deadline/quota unverified.
 
 The first screen explains purpose, order, population/session and snapshot/account boundaries. Conditions show a plain question, local verdict, observed measurements and periods, this record’s ordinary rule, and method rationale. A+ requirements, precision, formulas and attribution remain inspectable. Unknown rule formats remain uninterpreted. UNMEASURED/PARTIAL display accurately; scores stay unchanged. Discovery, grade and ticket differ. Waiting has a next action; missing risk narrative never means no risk.
 
@@ -2376,6 +2376,8 @@ Semantic-colour inventory (existing palette retained):
 
 FAIL before: independent rendered-only review could not reconcile passing linearity or failing base from truncated values, and found ambiguous purpose/marks. PASS after: all eight questions were answerable; follow-up resolved misleading risk wording. These are simulated agent reviews; actual human validation NOT RUN. Screenshots cover 1440/1280/960/820/768/721/390/320, both themes; keyboard, touch, reduced motion and enlarged text are exercised. Phone future-window detail still needs scrolling; dense chart values remain available in its table.
 
-PASS: 1,333 Python tests; 12 fixtures; 127 continuity checks; 182 chart checks; 7,531 browser checks. PASS failure controls: wrong period/threshold rejected, unrelated change accepted. Exact-head release evidence follows in the PR.
+PASS local: 1,333 Python tests; 12 fixtures; 127 continuity checks; 182 chart checks; 7,531 browser checks. PASS failure controls: wrong period/threshold rejected, unrelated change accepted. Exact-head release evidence follows in the PR.
 
-All 22 installed v2.13.0 hashes and 2,583 protected files are unchanged. README is updated; .env.example needs no configuration change. Repository contracts and the secondary field guide ground explanations without profitability claims. Stale-security diagnosis remains deferred. No scan, paid call or manual deployment occurred. Final release identifiers belong in the PR and evidence report.
+FAIL initial #79 CI: 7,530/7,531 browser checks; first card exceeded desktop viewport by 13px. Compact selection status removes duplicate counts/filter text; ticket warnings and notices remain. The unchanged first-screen gate must pass before merge.
+
+All 22 v2.13.0 hashes and 2,583 protected files remain unchanged. README is updated; .env.example unchanged. Contracts and the secondary guide ground explanations. Stale-security diagnosis stays deferred. No scan, paid call or manual deployment. Final release identifiers: PR and evidence report.

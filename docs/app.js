@@ -1651,14 +1651,15 @@
     // rebuild under the reader would take the open replace-prompt with it.
     if (trayKey !== trayState()) renderTray();
     syncPins();
-    // the lens, the subset and the stage total in one sentence; on a page that
-    // offers no order, a recorded ticket is named as the record's, not as one
+    // The title and pressed filter already name the population and lens.
+    // Keep selection position compact; a ticket's unavailable status remains
+    // explicit here because a recorded ticket is not an offered order.
     const lensLine = lens === 'all' ? '' : ' · ' + LENS_WORDS[lens] + ' lens' + (lens === 'ticket' && av && !av.offered ? ', as the record wrote them — ' + av.lead + ', so no order is offered' : '');
     let status;
     if (!list.length) status = 'Nothing in ' + STAGE_NAME[stage] + ' tonight.';
     else if (!inLens.length) status = 'No ' + (stage === 'bursts' ? 'burst' : 'setup') + ' matches the ' + LENS_WORDS[lens] + ' lens; ' + plural(list.length, 'stock') + ' in ' + STAGE_NAME[stage] + '.';
     else if (q) status = shown.length + ' of ' + inLens.length + ' match ‘' + q + '’' + (shown.length ? '; Enter chooses the first.' : '.') + lensLine;
-    else if (sel) status = sel.ticker + ' · ' + (shown.indexOf(sel) + 1) + ' of ' + shown.length + ' shown, ' + list.length + ' in ' + STAGE_NAME[stage] + lensLine + (sortOf(stage) === 'rank' ? '' : ' · sorted by ' + SORT_WORDS[sortOf(stage)]) + '.';
+    else if (sel) status = sel.ticker + ' · ' + (shown.indexOf(sel) + 1) + ' of ' + shown.length + ' shown' + (lens === 'ticket' ? lensLine : '') + (sortOf(stage) === 'rank' ? '' : ' · sorted by ' + SORT_WORDS[sortOf(stage)]) + '.';
     else status = '';
     $('picks-status').textContent = (state.notice ? state.notice + ' ' : '') + status;
     // Selection, search, filter and sort changes reveal the selected card.
