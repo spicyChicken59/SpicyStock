@@ -846,6 +846,12 @@ async function checkMobile(browser, base, data) {
     ({ text: e.innerText.replace(/\s+/g, ' ').trim(), drawn: e.getClientRects().length > 0 })));
   eq('the phone and the desktop stage cards carry the same ticket counts', phoneStages, deskStages);
   const bar = await d('#market-bar'), st = await d('#stages'), firstPick = await d('#pick-list .ss-pick'), chart = await d('#chart-mount');
+  // Capture the page before any detail-targeting action, including enough
+  // row geometry to distinguish font wrapping from a changed page offset.
+  console.log('  desktop first-screen geometry:', JSON.stringify({ bar, stages: st, firstPick,
+    rows: await desk.page.locator('.ss-picks__head > *').evaluateAll(es => es.filter(e => e.getClientRects().length).map(e => {
+      const r = e.getBoundingClientRect(); return { text: e.innerText, y: r.y, height: r.height, width: r.width };
+    })) }));
   check('desktop: the market bar, the stages and the first stock are in the first screen', bar && st && firstPick && bar.y >= 0 && st.y + st.height <= 900 && firstPick.y + firstPick.height <= 900, JSON.stringify([bar, st, firstPick]));
   const levelsBox = await desk.page.locator('#detail .ss-action__levels').boundingBox();
   check('desktop: the recorded action levels fit in the first screen', levelsBox && levelsBox.y + levelsBox.height <= 900, JSON.stringify(levelsBox));

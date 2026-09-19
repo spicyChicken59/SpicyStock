@@ -2378,6 +2378,6 @@ FAIL before: independent rendered-only review could not reconcile passing linear
 
 PASS local: 1,333 Python tests; 12 fixtures; 127 continuity checks; 182 chart checks; 7,531 browser checks. PASS failure controls: wrong period/threshold rejected, unrelated change accepted. Exact-head release evidence follows in the PR.
 
-FAIL initial #79 CI: 7,530/7,531 browser checks; first card exceeded desktop viewport by 13px. Compact selection status removes duplicate counts/filter text; ticket warnings and notices remain. The unchanged first-screen gate must pass before merge.
+FAIL two #79 CI runs: 7,530/7,531 checks; first card 13px below viewport. Compact status left CI geometry unchanged. Cards workspace gap: 24→8px; type/controls/warnings unchanged. The first-screen limit remains 900px and must pass before merge.
 
 All 22 v2.13.0 hashes and 2,583 protected files remain unchanged. README is updated; .env.example unchanged. Contracts and the secondary guide ground explanations. Stale-security diagnosis stays deferred. No scan, paid call or manual deployment. Final release identifiers: PR and evidence report.
