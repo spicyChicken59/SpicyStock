@@ -194,8 +194,11 @@ does not carry, falls back to Explore and says so.
    the shared `.sc-actionbar` with a compact four-field grid (two columns on
    a phone); browse cards keep their compact form. Four disclosures follow:
    the conditions (one tile per
-   criterion with the measured value, his threshold and the verdict in
-   words, then the base, the burst and the grade); the plan, sizing and
+   criterion with a plain question, local verdict, observed value and reference
+   period, this record’s ordinary rule, and method rationale; separate A+
+   criteria, formulas and original fields remain in an accessible disclosure.
+   Unknown rule formats retain their recorded wording without inferred meaning.
+   Then the base, the burst and the grade); the plan, sizing and
    order (the buy zone, whose top IS the ticket's own limit; the two skip
    lines, of which the upper one is the +4% day-2 threshold and not the
    limit; the stop and its basis; the shares sized at the limit — the
@@ -227,11 +230,10 @@ does not carry, falls back to Explore and says so.
    verdict in words (*pass*, *partial*, *fail*, *not measured*). The marker
    is a position and nothing else: it widens no scale, moves no level and
    moves no label, so turning it on leaves every price where it was. The
-   checklist tiles the record dated are the same mechanism — pressing
-   *consolidation quality* marks the base, pressing *higher volume* marks
-   the burst day — and a check the record carries no date range for
+   checklist criteria the record dated offer separate **Show Base/Burst/Prior
+   evidence** buttons using the same mechanism — and a check the record carries no date range for
    (linearity, the trend's age, the run of up days) stays a tile and is
-   never made clickable rather than a region being invented for it.
+   given an honest unavailable explanation instead of an invented region.
    Evidence outside the range on screen is offered (*Show recorded range*)
    and never taken silently; a name with no archived bars keeps the words
    and says there is no chart to sit on.
@@ -292,9 +294,26 @@ does not carry, falls back to Explore and says so.
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
-6. **Method.** Published run (coverage, grades, reads, delivery, timing,
-   the run log), how to read the page, and the configured sizing
-   assumptions every ticket was computed from.
+6. **Method: How to read SpicyStock.** The reading journey and concise definitions
+   precede the original scan summary, full publication details and configured
+   sizing assumptions. Nearby help opens on hover, keyboard focus or deliberate
+   tap; its interactive disclosure supports Close/Escape and viewport placement,
+   including Compare and enlarged text. `#/method/<topic>` routes open the
+   relevant definition; **Back to what I was reading** restores selection,
+   browsing positions and an open comparison. Route, record and selection changes
+   dismiss stale help. Help is never nested inside an interactive stock card.
+   The compact first screen names the purpose, first action, measured population
+   and dated snapshot, and says the site neither places trades nor knows holdings.
+   Discovery, weighted grade, published ticket and current entry availability are
+   distinct. Pass/fail/partial/veto/not measured are local checklist verdicts;
+   market regime, publication status, timing, saved confirmation and model outcomes
+   retain their own words and palette. Candle direction is close versus open;
+   headline gain is versus previous close. Map volume uses the existing compressed
+   scale, with an explicit unequal-distance warning and selected-symbol exception.
+   `app-reading.js` formats recognised recorded expressions and provides reusable
+   definitions; it never scores, changes a plan or applies current defaults to an
+   older record. Primary rules, later changes, secondary interpretations and
+   implementation proxies remain attributed in the existing source documents.
 7. **My setups.** A prominent peer to **Latest scan**, reachable even when
    empty. **Save setup** on cards, details and comparison entries freezes the
    exact signal in this browser. Discovery’s **Saved in this scan** lens is
@@ -336,8 +355,9 @@ does not carry, falls back to Explore and says so.
    *demo* chip on a followed card, and a chart-reader reply labelled
    simulated. Demo follows are kept under their own browser key.
 9. **The next action**, under every view, and it names the session rather
-   than saying *tomorrow*: *Plan for Mon 14 Sep: place the N orders in
-   Fidelity before 9:28 AM ET* before the window, *The entry window for Mon
+   than saying *tomorrow*: *Review N conditional tickets for Mon 14 Sep*
+   before the window, with preparation and protective-stop terms conditional on
+   the reader choosing to follow a plan, *The entry window for Mon
    14 Sep is in progress* inside it (with the last observed data timestamp
    kept in view, and live trigger and fill conditions said to be unverified
    here), *The entry window for Mon 14 Sep has ended* after it — where the
@@ -531,6 +551,7 @@ pip install -r requirements-dev.txt
 pytest tests/ -q                            # every boundary is a double
 node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
+node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
@@ -703,7 +724,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
-docs/           index.html · app.js · app.css · app-chart.js · app-map.js · app-follow.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 history/ (recovery) · evidence/ (deduplicated source objects)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)

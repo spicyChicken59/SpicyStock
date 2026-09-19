@@ -19,6 +19,7 @@
 import { createServer } from 'node:http';
 import { checkActionability } from './actionability_cases.mjs';
 import { checkEvidenceFocus } from './evidence_focus_cases.mjs';
+import { checkReading } from './reading_cases.mjs';
 import { checkExplorePanes } from './explore_pane_cases.mjs';
 import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { checkScorecard } from './scorecard_cases.mjs';
@@ -217,7 +218,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   const summary = (b.summary || '').replace(/^[A-Z0-9.\-]+:\s*/, '').split(/(?<=[.!?])\s/)[0];
   check(`${variant} ${b.ticker} why: the summary`, why.includes(summary), summary);
   const q = b.quality, miss = q.checks.find((c) => !c.pass);
-  check(`${variant} ${b.ticker} why: counts the checks`, why.includes(`of ${q.checks.length} checks pass (${q.passes} of the ${q.of} letters)`), why);
+  check(`${variant} ${b.ticker} why: counts the checks`, why.includes(`of ${q.checks.length} recorded criteria pass`), why);
   if (miss) check(`${variant} ${b.ticker} why: names the miss`, why.includes(miss.label), miss.label);
   if (b.claude && b.claude.source === 'claude') {
     check(`${variant} ${b.ticker} why: recorded grade outcome`, why.includes('checklist ' + b.grade_mechanical + '; published ' + b.grade), why);
@@ -228,7 +229,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   const need = await text(page, '#detail .ss-decision__item[data-item="need"]');
   const entry = b.plan ? (b.plan.exit_schedule || []).find((s) => s.key === 'entry' || s.day === 1) : null;
   if (entry) check(`${variant} ${b.ticker} need: the day-1 instruction`, need.toLowerCase().includes(entry.instruction.slice(1, 60).toLowerCase()), need);
-  if (status !== 'ticket') check(`${variant} ${b.ticker} need: says no ticket`, /No ticket tonight|Nothing:/.test(need), need);
+  if (status !== 'ticket') check(`${variant} ${b.ticker} need: says no ticket`, /No ticket tonight|This record offers no entry:/.test(need), need);
   const wait = await text(page, '#detail .ss-decision__item[data-item="wait"]');
   if (b.plan && b.plan.pre_open_check) check(`${variant} ${b.ticker} wait: the pre-open check`, wait.toLowerCase().includes(b.plan.pre_open_check.slice(1, 60).toLowerCase()), wait);
   if (b.plan) check(`${variant} ${b.ticker} wait: the stop`, wait.includes(usd(b.plan.stop)), wait);
@@ -262,7 +263,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   // the conditions: one tile per criterion, the verdict in words
   const tiles = await page.locator('#disc-checklist .ss-checks .sc-signal').evaluateAll((els) => els.map((e) => [e.dataset.check, e.dataset.verdict]));
   eq(`${variant} ${b.ticker} one tile per check`, tiles.map((t) => t[0]), q.checks.map((c) => c.key));
-  const want = q.checks.map((c) => (q.vetoes.includes('up_days') && c.key === 'two_days') || (q.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : 'fail'));
+  const want = q.checks.map((c) => (q.vetoes.includes('up_days') && c.key === 'two_days') || (q.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (String(c.status).toLowerCase() === 'unmeasured' ? 'not measured' : c.partial || c.marginal || String(c.status).toLowerCase() === 'partial' ? 'partial' : 'fail'));
   eq(`${variant} ${b.ticker} tile verdicts`, tiles.map((t) => t[1]), want);
   const conditions = await text(page, '#disc-checklist');
   check(`${variant} ${b.ticker} conditions carry the gain and the volume`, conditions.includes(`+${b.gain_pct.toFixed(1)}%`) && conditions.includes(times(ratioOf(b)) + '× volume'), conditions.slice(0, 200));
@@ -332,7 +333,7 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
   } else eq(`${variant} ${r.ticker} chart unavailable state`, await count(page, '#detail [data-chart="unavailable"]'), 1);
   eq(`${variant} ${r.ticker} four decision items`, await count(page, '#detail .ss-decision__item'), 4);
   const why = await text(page, '#detail .ss-decision__item[data-item="why"]');
-  check(`${variant} ${r.ticker} why: the coil's measures`, why.includes(`${r.quiet_days} quiet days`) && why.includes(`${r.range_pct}% range`), why);
+  check(`${variant} ${r.ticker} why: the coil's measures`, why.includes(`${r.quiet_days} narrow-range days`) && why.includes(`${r.range_pct}% range`), why);
   const conditions = await text(page, '#disc-checklist');
   if (r.box) check(`${variant} ${r.ticker} conditions carry the box`, conditions.includes(`${r.box.sessions} sessions`), conditions.slice(0, 200));
   const action = await text(page, '#detail .ss-action'), ticketAttr = await page.locator('#detail .ss-action').getAttribute('data-ticket');
@@ -378,7 +379,8 @@ async function checkVariant(browser, base, variant, data) {
 
   // the market bar: the verdict, the regime, the session, the record's own call to action
   eq(`${variant} h1`, await text(page, '#cover-h1'), data.cover.h1);
-  eq(`${variant} dek`, await text(page, '#cover-dek'), data.cover.dek);
+  check(`${variant} scan scope uses this record`, (await text(page, '#cover-dek')).includes('Found ' + run.bursts + ' burst candidates'));
+  check(`${variant} original summary remains inspectable`, (await page.locator('#cover-original').textContent()).includes(data.cover.dek));
   eq(`${variant} title`, await page.title(), 'SpicyStock · ' + data.cover.h1);
   eq(`${variant} action`, await text(page, '#cover-action'), data.cover.action_label);
   const target = data.cover.action_target;
@@ -564,7 +566,7 @@ async function checkVariant(browser, base, variant, data) {
     for (const b of data.bursts) {
       const row = page.locator(`#burst-${b.ticker}`);
       const cells = await row.locator('td .sc-signal__label').allInnerTexts();
-      const want = b.quality.checks.map((c) => (b.quality.vetoes.includes('up_days') && c.key === 'two_days') || (b.quality.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : c.marginal ? 'partial' : 'fail'));
+      const want = b.quality.checks.map((c) => (b.quality.vetoes.includes('up_days') && c.key === 'two_days') || (b.quality.vetoes.includes('not_linear') && c.key === 'linearity') ? 'veto' : c.pass ? (c.marginal ? 'partial' : 'pass') : (String(c.status).toLowerCase() === 'unmeasured' ? 'not measured' : c.marginal ? 'partial' : 'fail'));
       eq(`${variant} ${b.ticker} matrix verdicts`, cells.map((t) => t.split(' · ')[0]), want);
       const grade = await row.locator('.sc-signal-matrix__value').innerText();
       check(`${variant} ${b.ticker} matrix grade`, grade.includes(b.grade), grade);
@@ -700,8 +702,8 @@ async function checkVariant(browser, base, variant, data) {
   const next = await text(page, '#next-h3'), forDay = dateWords(data.run.timing.applicable_session);
   if (variant === 'closed') check(`${variant} next: plans unchanged`, next.startsWith('Plans unchanged'), next);
   else if (data.breadth.regime.verdict === 'red') check(`${variant} next: no new longs`, next.startsWith('No new longs'), next);
-  else if (withOrders.length) check(`${variant} next: place N orders, for a named session`,
-    next === `Plan for ${forDay}: place the ${withOrders.length} order${withOrders.length === 1 ? '' : 's'} in Fidelity before 9:28 AM ET. Exits first.`, next);
+  else if (withOrders.length) check(`${variant} next: review conditional tickets, for a named session`,
+    next === `Review ${withOrders.length} conditional ticket${withOrders.length === 1 ? '' : 's'} for ${forDay}.`, next);
   else check(`${variant} next: nothing new, for a named session`, /^Nothing/.test(next) && next.includes(forDay), next);
   check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
     `${next} @ window ${await attr(page, 'html', 'data-ss-window')}`);
@@ -1083,7 +1085,7 @@ async function checkFollowing(browser, base, data) {
 
 const SENTENCES = {
   universe_cached: 'The stock directory could not ',
-  coverage_thin: 'Part of the universe was not r',
+  coverage_thin: 'Some intended stocks lack usable session bars',
   claude_unavailable: 'No usable chart-reader judgement',
   claude_partial: 'Chart-reader judgements were accepted',
   chart_missing: 'A chart did not render; the gr',
@@ -1169,7 +1171,7 @@ async function checkStates(browser, base, data) {
         await page.click('#discover .sc-tab[data-discover="cards"]'); await page.waitForTimeout(150);
         await openAll(page, 'details');
         const r = await readings(page, first.ticker);
-        check('the card, the detail line and the scan table print the checklist’s copy', r.card.includes('vol ' + q.toFixed(1) + '×') && r.sub.includes('on ' + q.toFixed(1) + '× volume') && r.table.includes(q.toFixed(1) + '× vol'), [r.card, r.sub, r.table]);
+        check('the card, the detail line and the scan table print the checklist’s copy', r.card.includes('vol ' + q.toFixed(1) + '×') && r.sub.includes('on ' + q.toFixed(1) + '× prior-session volume') && r.table.includes(q.toFixed(1) + '× vol'), [r.card, r.sub, r.table]);
         check('the measurements say the ratio was read from the checklist', r.facts.includes(q.toFixed(1) + '× volume') && r.facts.includes('read from the checklist'), r.facts.slice(0, 300));
         eq('the chart’s burst label carries the checklist’s copy', r.labels, [(Math.round(q * 10) / 10) + '× vol']);
       }
@@ -1770,7 +1772,7 @@ async function checkVolumeReadings(browser, base, data) {
     await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
     await openAll(m.page, 'details');
     const r = await readings(m.page, first.ticker);
-    check(`${name}: the card, the detail line and the scan table say the ratio is missing`, r.card.includes('vol —') && r.sub.includes('on —× volume') && r.table.includes('—× vol'), [r.card, r.sub, r.table]);
+    check(`${name}: the card, the detail line and the scan table say the ratio is missing`, r.card.includes('vol —') && r.sub.includes('on —× prior-session volume') && r.table.includes('—× vol'), [r.card, r.sub, r.table]);
     check(`${name}: the measurements say the ratio was not recorded`, r.facts.includes('—× volume') && r.facts.includes('volume ratio not recorded'), r.facts.slice(0, 300));
     eq(`${name}: the chart’s burst label carries no ratio`, r.labels, []);
     eq(`${name}: page errors`, m.errors, []);
@@ -1787,7 +1789,7 @@ async function checkVolumeReadings(browser, base, data) {
     await m.page.click('#discover .sc-tab[data-discover="cards"]'); await m.page.waitForTimeout(150);
     await openAll(m.page, 'details');
     const r = await readings(m.page, first.ticker);
-    check('a zero ratio prints as 0.0×, never as missing', r.card.includes('vol 0.0×') && r.sub.includes('on 0.0× volume') && r.table.includes('0.0× vol') && r.facts.includes('0.0× volume') && !r.facts.includes('not recorded') && !r.facts.includes('read from the checklist'), [r.card, r.sub, r.table]);
+    check('a zero ratio prints as 0.0×, never as missing', r.card.includes('vol 0.0×') && r.sub.includes('on 0.0× prior-session volume') && r.table.includes('0.0× vol') && r.facts.includes('0.0× volume') && !r.facts.includes('not recorded') && !r.facts.includes('read from the checklist'), [r.card, r.sub, r.table]);
     eq('the chart’s burst label carries the zero', r.labels, ['0× vol']);
     eq('zero ratio page errors', m.errors, []);
     await m.close();
@@ -1802,7 +1804,7 @@ async function checkVolumeReadings(browser, base, data) {
     await openAll(m.page, 'details');
     const r = await readings(m.page, first.ticker);
     check('the measurements print the row’s own ratio and the checklist’s disagreeing copy beside it', r.facts.includes(own.toFixed(1) + '× volume') && r.facts.includes('the checklist’s block says ' + other.toFixed(2) + '× volume'), r.facts.slice(0, 300));
-    check('the card and the detail line print the row’s own ratio', r.card.includes('vol ' + own.toFixed(1) + '×') && r.sub.includes('on ' + own.toFixed(1) + '× volume'), [r.card, r.sub]);
+    check('the card and the detail line print the row’s own ratio', r.card.includes('vol ' + own.toFixed(1) + '×') && r.sub.includes('on ' + own.toFixed(1) + '× prior-session volume'), [r.card, r.sub]);
     eq('disagreeing copy page errors', m.errors, []);
     await m.close();
   }
@@ -2704,6 +2706,7 @@ async function checkEvidence(browser, base, data) {
   eq('Base marks exactly the archived base dates', await markOf(page), `${b.quality.base.start}/${b.quality.base.end}`);
   eq('the marker is drawn once', await count(page, '#chart-mount .sc-chart__evidence-band'), 1);
   eq('marking a date range moves no price', await levels(page), geomBefore);
+  await page.locator('#detail .ss-evidence__check details > summary').first().click();
   const explain = await text(page, '#detail .ss-evidence__explain');
   check('the explanation names the dates it marked', explain.includes(dateWords(b.quality.base.start)) && explain.includes(dateWords(b.quality.base.end)), explain.slice(0, 160));
   check('and prints the recorded measurement', explain.includes(`${b.quality.base.sessions} sessions`) && explain.includes(usd(b.quality.base.low) + '–' + usd(b.quality.base.high)), explain.slice(0, 300));
@@ -2735,13 +2738,13 @@ async function checkEvidence(browser, base, data) {
   // else the checklist measures -- the prior leg's linearity, the trend's age,
   // the run of up days -- has numbers and no dates, so ALL of those must stay
   // tiles: naming one of them here would leave the others free to be drawn.
-  const tileTag = (want) => page.locator('#detail .ss-checks [data-check]').evaluateAll((e, w) => e.filter((x) => (x.tagName === 'BUTTON') === w).map((x) => x.dataset.check).sort(), want);
+  const tileTag = (want) => page.locator('#detail .ss-checks [data-check]').evaluateAll((e, w) => e.filter((x) => !!x.querySelector('[data-check-action]') === w).map((x) => x.dataset.check).sort(), want);
   eq('exactly the checks the record dates are ways onto the chart', await tileTag(true), ['close_near_high', 'consolidation', 'narrow_or_negative', 'range_expansion', 'volume']);
   eq('and every undated one stays a tile', await tileTag(false), ['linearity', 'two_days', 'young_trend']);
-  await page.click('#detail .ss-checks [data-check="consolidation"]'); await page.waitForTimeout(350);
+  await page.click('#detail .ss-checks [data-check-action="consolidation"]'); await page.waitForTimeout(350);
   eq('the tile marks the base through the one mechanism', await markOf(page), `${b.quality.base.start}/${b.quality.base.end}`);
   eq('and the evidence control shows as pressed', await page.locator('#detail .ss-evidence [data-anchor="base"]').getAttribute('aria-pressed'), 'true');
-  await page.click('#detail .ss-checks [data-check="volume"]'); await page.waitForTimeout(300);
+  await page.click('#detail .ss-checks [data-check-action="volume"]'); await page.waitForTimeout(300);
   eq('a burst-day check marks the burst day', await markOf(page), session);
 
   // choosing another stock rebinds: nothing of the last one survives
@@ -3524,9 +3527,13 @@ async function checkInputCoverage(browser, base) {
       const cov = data.run.coverage, a = cov.acceptance;
       const coverText = await said(page, '#cover-dek');
       check(variant + ' ' + width + ': honest empty headline', (await said(page, '#cover-h1')).includes(variant === 'partial' ? 'evaluated subset' : 'Nothing qualifies'));
-      check(variant + ' ' + width + ': coverage beside verdict', coverText.includes(variant === 'partial' ? a.ready_stocks + ' of ' + a.intended_stocks : 'All ' + a.intended_stocks + ' intended stocks'), coverText);
+      check(variant + ' ' + width + ': coverage beside verdict', coverText.includes(a.ready_stocks + ' of ' + a.intended_stocks + ' intended stocks'), coverText);
       if (variant === 'partial') {
-        check('unfetched count and benchmark scope are visible beside empty verdict', coverText.includes(cov.unfetched_budget + ' fetch names were never attempted') && coverText.includes('fetch counts include the benchmark'));
+        await go(page, '#/method');
+        await page.locator('#cover-record > summary').click();
+        const coverage = await said(page, '#cover-coverage');
+        check('full coverage counts and scope remain inspectable in Method', coverage.includes(cov.unfetched_budget + ' fetch names were never attempted') && coverage.includes('fetch counts include the benchmark'));
+        check('incomplete-input meaning stays visible', coverText.includes('Incomplete coverage.') && (await said(page, '#status-line')).includes('Missing inputs are unknown'));
         check('empty workspace retains coverage warning', (await said(page, '[data-empty=bursts]')).includes('Incomplete input coverage'));
         check('next-action message retains coverage warning', (await said(page, '#next-p')).includes('Incomplete input coverage'));
       }
@@ -3639,6 +3646,7 @@ async function main() {
     }
     if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
     if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
+    if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
     if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
     if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});

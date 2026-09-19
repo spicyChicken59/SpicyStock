@@ -300,7 +300,13 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         sentence = json.loads(re.search(rf"    {kind}: (\"[^\n]+\"),?\n", page).group(1))
         head = re.search(rf"{kind}: '([^']+)'", smoke).group(1)
         assert sentence.startswith(head), (kind, sentence, head)
-        assert report.PROBLEM_SENTENCES[kind] == sentence, kind
+        if kind == "coverage_thin":
+            # The page no longer guesses why a frame was missing or stale.
+            # The producer's archived sentence remains inspectable unchanged.
+            assert "lack usable session bars" in sentence and "Missing inputs are unknown, not measured non-matches" in sentence
+            assert "ran out of time" not in sentence and "answered late" not in sentence
+        else:
+            assert report.PROBLEM_SENTENCES[kind] == sentence, kind
 
 
 def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():

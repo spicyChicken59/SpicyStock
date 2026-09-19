@@ -212,7 +212,7 @@ if (process.argv.includes('--dom')) {
     w.scrollTo = () => {}; w.HTMLElement.prototype.scrollIntoView = () => {};
     w.SCStock = { now: '2026-09-18T23:00:00Z' };
     w.fetch = async url => ({ ok: !String(url).includes('github'), text: async () => JSON.stringify(focusRecord(shell)), json: async () => ({}) });
-    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app.js']) {
+    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app-reading.js', 'docs/app.js']) {
       const override = file === 'docs/app.js' && process.argv.includes('--app') ? process.argv[process.argv.indexOf('--app') + 1] : null;
       w.eval(await readFile(override || path.join(ROOT, file), 'utf8'));
     }

@@ -2339,3 +2339,43 @@ fixture omitted `now`, so the correct non-session early return left no live
 file. The test now supplies its intended September 11 session, matching the
 neighboring test. This repairs the test fixture only; calendar/production code
 is unchanged. Its failure was reproduced before correction (1,332/1,333 pass).
+
+## September 19 — first-visit comprehension campaign
+
+The second slice starts from actual accepted main `d273256f5fbfde826a76eb596eb756fe7e67f59f`, the normal merge of #78. Its reviewed head was `13d527be5aedbd7b73ca7a5045b658e39315f8aa`; Tests 35431463638 and Secret Scan 35431463692 PASS. Automatic publication 35431920098 and Pages 35431927661 PASS. Continuation began 08:06:36 UTC, accounting for approximately 48 prior minutes; original deadline/quota remain unverified.
+
+The first screen explains purpose, order, population/session and snapshot/account boundaries. Conditions show a plain question, local verdict, observed measurements and periods, this record’s ordinary rule, and method rationale. A+ requirements, precision, formulas and attribution remain inspectable. Unknown rule formats remain uninterpreted. UNMEASURED/PARTIAL display accurately; scores stay unchanged. Discovery, grade and ticket differ. Waiting has a next action; missing risk narrative never means no risk.
+
+Hover/focus/tap disclosures support Close/Escape, viewport placement and Method routes. Return restores stock, scrolling and Compare. Dated evidence, Focus/Restore, chooser, Map and saves remain intact. Captions distinguish candle direction, prior-close gain, evidence, plan levels and volume references. Compressed Map distances and selection overriding source fill are explicit.
+
+Section-purpose inventory:
+
+| Section | Reader’s question | Basis | Useful action | Visible / optional |
+|---|---|---|---|---|
+| Latest scan | What was found, when? | Own session and coverage | Check context | Counts/date / full ledger |
+| Market | What is permitted? | Recorded breadth/regime | Respect entry filter | Regime / fired rules |
+| Candidates | Why included/graded? | Discovery/checklist | Choose evidence | Status / admission formula |
+| Selected stock | Evidence, permission, invalidation? | Checks/plan/timing | Inspect, plan or wait | Action / conditions/provenance |
+| Compare | Which differences matter? | Same-record fields | Choose what to inspect | Differences / full setup |
+| My setups | What was saved/observed? | Browser snapshot/later records | Revisit | Save state / dated observations |
+| Record | What did the model do? | Public bar-based replay | Inspect assumptions | Outcomes / accounting detail |
+| Method | How do I read this? | Definitions/source contracts | Verify and return | Journey / anchored rules |
+
+Semantic-colour inventory (existing palette retained):
+
+| Family | Authority and meaning | Does not establish |
+|---|---|---|
+| Market | Recorded regime: sizing/refusal | Stock permission |
+| Checklist | Recorded pass/partial/fail/veto/unknown | Profit or whole-setup approval |
+| Publication | Session/input status | Open entry window |
+| Timing | Dated permitted interval | Valid ticket/fill |
+| Ticket | Published terms plus availability | Submission/execution |
+| Chart/Map | Direction, evidence, levels, source/selection | Forecast or grade |
+| Saved | Browser write confirmation | Stock assessment |
+| Model outcome | Recorded replay state | Personal holdings/instruction |
+
+FAIL before: independent rendered-only review could not reconcile passing linearity or failing base from truncated values, and found ambiguous purpose/marks. PASS after: all eight questions were answerable; follow-up resolved misleading risk wording. These are simulated agent reviews; actual human validation NOT RUN. Screenshots cover 1440/1280/960/820/768/721/390/320, both themes; keyboard, touch, reduced motion and enlarged text are exercised. Phone future-window detail still needs scrolling; dense chart values remain available in its table.
+
+PASS: 1,333 Python tests; 12 fixtures; 127 continuity checks; 182 chart checks; 7,531 browser checks. PASS failure controls: wrong period/threshold rejected, unrelated change accepted. Exact-head release evidence follows in the PR.
+
+All 22 installed v2.13.0 hashes and 2,583 protected files are unchanged. README is updated; .env.example needs no configuration change. Repository contracts and the secondary field guide ground explanations without profitability claims. Stale-security diagnosis remains deferred. No scan, paid call or manual deployment occurred. Final release identifiers belong in the PR and evidence report.

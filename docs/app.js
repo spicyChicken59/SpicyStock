@@ -161,7 +161,7 @@
   // recorded never reaches the page.
   const PROBLEMS = {
     universe_cached: "The stock directory could not be refreshed; tonight's universe is the cached one.",
-    coverage_thin: "Part of the universe was not read: the bars fetch ran out of time or names answered late.",
+    coverage_thin: "Some intended stocks lack usable session bars. Missing inputs are unknown, not measured non-matches.",
     claude_unavailable: "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
     claude_partial: "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     chart_missing: "A chart did not render; the grade stands on the numbers.",
@@ -285,6 +285,36 @@
   const empty = (text) => el('p', { 'class': 'sc-empty', text: text });
   function clear(node) { while (node && node.firstChild) node.removeChild(node.firstChild); return node; }
   const $ = (id) => d.getElementById(id);
+  const reading = SCStock.reading;
+  let readingReturn = null;
+  const helpUI = reading.helpSystem((topic, from) => openReading(topic, from));
+  const help = (topic, label) => helpUI.button(topic, label);
+  function openReading(topic, from) {
+    if (state.view !== 'method') {
+      readingReturn = { hash: w.location.hash, view: state.view, record: current,
+        page: w.scrollY, detail: $('detail').scrollTop, list: $('pick-list').scrollTop,
+        rail: $('pick-list').scrollLeft, focus: from, topic,
+        compare: $('compare').open, compareTop: $('compare').scrollTop };
+      if ($('compare').open) { closeCompare(); afterCompareClose(); }
+    }
+    $('method-return').hidden = !readingReturn;
+    navigate('#/method/' + topic);
+  }
+  function restoreReading(canon) {
+    const back = readingReturn;
+    if (!back || back.record !== current || canon !== back.hash) return;
+    readingReturn = null; $('method-return').hidden = true;
+    w.requestAnimationFrame(() => {
+      $('detail').scrollTop = back.detail; $('pick-list').scrollTop = back.list; $('pick-list').scrollLeft = back.rail;
+      if (back.compare) { openCompare(); $('compare').scrollTop = back.compareTop; }
+      w.scrollTo(0, back.page);
+      const focus = back.focus && back.focus.isConnected ? back.focus
+        : (back.compare ? $('compare') : d).querySelector('[data-help-topic="' + back.topic + '"]');
+      // Return to the task without immediately reopening the dismissed help.
+      if (focus) { focus.focus({ preventScroll: true }); helpUI.dismiss(false); }
+    });
+  }
+  $('method-return').addEventListener('click', () => { if (readingReturn) navigate(readingReturn.hash); });
   const by = (list, key) => { const m = {}; (list || []).forEach((x) => { if (x && x.ticker) m[x.ticker] = x; }); return m; };
   const narrow = () => !!(w.matchMedia && w.matchMedia('(max-width: 720px)').matches);
 
@@ -530,8 +560,13 @@
     $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
       (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
-    const warning = inputWarning(run), dek = cover.dek || '';
-    $('cover-dek').textContent = dek + (warning && !dek.includes(warning) ? ' ' + warning : '');
+    const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {};
+    $('cover-dek').textContent = 'Found ' + num(run.bursts) + ' burst candidates. ' +
+      (cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars.' +
+        (a.status !== 'ok' ? ' Incomplete coverage.' : '') +
+        (cov.stale ? ' ' + num(cov.stale) + ' fetched frames were stale.' : '') : warning);
+    $('cover-original').textContent = 'Original published summary: ' + (cover.dek || 'not recorded');
+    $('cover-coverage').textContent = warning || 'The record reports complete input coverage.';
     const facts = clear($('market-facts'));
     // the chip sits beside the LABEL, not after the value: it qualifies that
     // fact and says so by where it is, and the fact is two rows rather than
@@ -546,6 +581,7 @@
     const regimeLine = clear($('cover-regime'));
     regimeLine.appendChild(chip((reg.verdict || 'unknown').toUpperCase(), REGIME_TONE[reg.verdict] || 'neutral', true));
     regimeLine.appendChild(el('span', { text: sizeWords + (isNum(b.ratio_10d) ? ' · 10-day ratio ' + plain(b.ratio_10d) : '') }));
+    regimeLine.appendChild(help('market', 'Market'));
     // The two facts, apart. "data through" is what was measured and when it
     // was published; the publication chip belongs HERE and covers this line
     // alone. "plan for" is the session the plans are for and where its entry
@@ -555,11 +591,13 @@
     const tm = av.timing;
     fact('plan for', [el('span', { text: tm.known ? dateWords(tm.session) + ' · window ' + windowWords(tm) : 'not recorded' })],
       'plan', chip(tm.known ? 'entry window ' + PHASE_WORDS[av.phase] : 'entry timing unavailable', tm.known ? PHASE_TONE[av.phase] : 'warn'));
+    $('cover-coverage').appendChild(help('data', 'Session & coverage'));
+    $('cover-coverage').appendChild(help('window', 'Entry timing'));
     renderRefresh();
     const notice = $('demo-notice');
     if (notice) {
       clear(notice);
-      if (demo) notice.appendChild(el('div', { 'class': 'sc-notice ss-demo', role: 'note' }, [el('span', { 'class': 'sc-eyebrow', text: 'sample data · fixture ' + String(data.fixture) }), el('p', { text: 'Do not trade sample data: this record is a pipeline-written fixture over a synthetic market; its bursts, coils, plans and chart-reader replies are test doubles.' })]));
+      if (demo) notice.appendChild(el('div', { 'class': 'sc-notice ss-demo', role: 'note' }, [el('p', { text: 'Do not trade sample data · offline fixture ' + String(data.fixture) + '.' })]));
       notice.hidden = !demo;
     }
     // the record's own call to action (Tomorrow's orders / Open model plans),
@@ -666,11 +704,21 @@
       meta.appendChild(li);
     } else meta.appendChild(el('li', null, [el('a', { href: RUNS_URL, target: '_blank', rel: 'noopener', text: 'The evening runs on GitHub' })]));
     const body = clear($('method-body'));
-    body.appendChild(el('p', { text: 'SpicyStock implements Pradeep Bonde’s momentum burst method with explicit assumptions. Reaction discovery has two routes: 4% breakout or Dollar breakout. A Dollar candidate can qualify below +4%; A-quality is judged after discovery, and breadth and entry rules separately decide whether a ticket is available. It is not a proven edge and it knows nothing about what you hold.' }));
-    body.appendChild(el('p', { text: 'Setting up is the anticipation list: quiet, coiled names inside established momentum, with a buy stop a few cents over the box. Bursts are the range-expansion days the scan found on the session, graded on Bonde’s checklist; a grade, a plan and a ticket are three different things, and the page says which a stock has. Every ticket is sized at its limit, the highest fill it permits, so the fixed quantity keeps the risk budget, the position cap and his 4% stop line at every fill it can take; a stop past that line at the limit withholds the ticket and keeps the setup.' }));
-    body.appendChild(el('p', { text: 'The Record is a model: a fill is booked only at the next open inside the ticket, the published stop is one R, sales are whole shares, and a fill the daily bars cannot establish is uncertain and scored nowhere. Paper prices, published daily bars, no slippage. Not investment advice.' }));
-    body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'the rulebook the chart reader follows (knowledge/strategy.md)' })]));
+    body.appendChild(el('p', { text: reading.terms.journey[1] }));
+    body.appendChild(el('p', { text: 'Discovery uses this record’s 4% breakout or Dollar breakout rules. A Dollar candidate can qualify below +4%; A-quality is judged after discovery. A grade is a weighted assessment, not a probability or an executable order. A published ticket still needs valid publication, a permitted market regime and an unexpired entry window.' }));
+    body.appendChild(el('p', { text: 'Read colours locally: a passing criterion, a favourable market filter, a saved confirmation and a positive model outcome mean different things. None establishes that a stock is profitable or that a trade was placed. The definitions below explain each context.' }));
+    body.appendChild(el('p', { 'class': 'sc-hint', text: 'SpicyStock implements the momentum-burst method with explicit choices. Some rules are primary-source formulas; others are later changes, community interpretations or implementation proxies. Rationale describes the method, not evidence of predictive accuracy.' }));
+    body.appendChild(el('p', null, [el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Whose number each rule is (knowledge/method.md)' }), d.createTextNode(' · '), el('a', { href: RULEBOOK_URL, target: '_blank', rel: 'noopener', text: 'The detailed rulebook (knowledge/strategy.md)' })]));
     body.appendChild(el('p', { 'class': 'sc-hint' }, [el('a', { href: DISCOVERY_SOURCES_URL, target: '_blank', rel: 'noopener', text: 'Current discovery sources' }), d.createTextNode(': primary 4% formula dated May 21, 2015; primary Dollar formula dated July 13, 2017. Precision and universe filters are SpicyStock choices. Historical records keep their recorded rules.')]));
+    const topics = clear($('method-topics'));
+    Object.entries(reading.terms).forEach(([key, term]) => {
+      topics.appendChild(el('details', { 'class': 'ss-method-topic', id: 'read-' + key }, [
+        el('summary', { text: term[0] }), el('p', { text: term[1] }),
+        el('p', null, el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Rule authorship and source notes' }))
+      ]));
+    });
+    clear($('saved-help')).appendChild(help('saved', 'What saving means'));
+    clear($('outcome-help')).appendChild(help('outcomes', 'HOLD, STOPPED & R'));
     const notes = clear($('account-notes'));
     (acct.notes || []).forEach((n) => notes.appendChild(el('li', { text: n })));
     if (!(acct.notes || []).length) notes.appendChild(el('li', { text: 'No sizing notes were recorded.' }));
@@ -690,7 +738,7 @@
     deck.appendChild(stat('up 4% today', num(b.up4), delta(b.up4, prev.up4) + (isNum(b.universe) && b.universe && isNum(b.up4) ? ' · ' + (100 * b.up4 / b.universe).toFixed(1) + '% of ' + num(b.universe) : '')));
     deck.appendChild(stat('down 4% today', num(b.down4), delta(b.down4, prev.down4)));
     deck.appendChild(stat('5-day ratio', plain(b.ratio_5d), num(b.up4_5d) + ' up ÷ ' + num(b.down4_5d) + ' down, last 5 sessions'));
-    deck.appendChild(stat('10-day ratio', plain(b.ratio_10d), 'Bonde’s line is ' + plain(line) + '. ' + (isNum(b.ratio_10d) && isNum(line) ? (b.ratio_10d >= line ? 'Above it.' : 'Below it.') : ''), true));
+    deck.appendChild(stat('10-day ratio', plain(b.ratio_10d), 'Recorded filter line: ' + plain(line) + '. ' + (isNum(b.ratio_10d) && isNum(line) ? (b.ratio_10d >= line ? 'Above it.' : 'Below it.') : ''), true));
 
     const regime = clear($('regime'));
     const verdict = reg.verdict || 'unknown';
@@ -699,6 +747,7 @@
     regime.appendChild(el('div', { 'class': 'sc-callout__label', text: 'regime' }));
     regime.appendChild(el('div', { 'class': 'sc-callout__figure' }, [chip(verdict.toUpperCase(), REGIME_TONE[verdict] || 'neutral', true), el('span', { text: sizeWords })]));
     regime.appendChild(el('ul', null, (reg.reasons || []).map((r) => el('li', { text: r }))));
+    regime.appendChild(help('market', 'How to read this filter'));
 
     renderRatioChart(data);
 
@@ -1209,7 +1258,7 @@
       return s || sentence(c.reason) || 'No summary recorded.';
     }
     const r = c.row, box = r.box || {};
-    return (r.setups && r.setups.length ? r.setups.join(', ') + ' · ' : '') + (c.quiet ? 'also quiet · ' : '') + plain(r.quiet_days) + ' quiet days' + (isNum(box.low) && isNum(box.high) ? ' · box ' + usd(box.low) + '–' + usd(box.high) : '');
+    return (r.setups && r.setups.length ? r.setups.join(', ') + ' · ' : '') + (c.quiet ? 'also quiet · ' : '') + plain(r.quiet_days) + ' narrow-range days' + (isNum(box.low) && isNum(box.high) ? ' · box ' + usd(box.low) + '–' + usd(box.high) : '');
   }
 
   // ---------------------------------------------------------------- state and routes
@@ -1261,6 +1310,7 @@
       if (parts[0] === 'followed') return parts.length === 2 ? { followed: parts[1], keepView: true } : { view: 'explore', unknown: '#' + hash };
       if (parts[0] === 'following') return { view: 'setups' };
       if (VIEWS.indexOf(parts[0]) < 0) return { view: 'explore', unknown: '#' + hash };
+      if (parts[0] === 'method' && parts.length === 2 && reading.terms[parts[1]]) return { view: 'method', topic: parts[1], anchor: 'read-' + parts[1] };
       if (parts[0] !== 'explore') return parts.length > 1 ? { view: parts[0], unknown: '#' + hash } : { view: parts[0] };
       const out = { view: 'explore' };
       if (parts.length > 1) { if (STAGES.indexOf(parts[1]) < 0) return { view: 'explore', unknown: '#' + hash }; out.stage = parts[1]; }
@@ -1312,12 +1362,14 @@
   }
   const savedHash = (id) => '#/followed/' + encodeURIComponent(id);
   function applyRoute(route, first) {
+    helpUI.dismiss(false);
     const previousView = state.view;
+    if (route.followed && readingReturn && w.location.hash === readingReturn.hash) state.view = readingReturn.view;
     state.view = route.keepView && VIEWS.indexOf(state.view) >= 0 ? state.view : (VIEWS.indexOf(route.view) >= 0 ? route.view : 'explore');
     if (!model) { showView(false); if (route.followed) openSaved(route.followed, true); return; }
     state.notice = route.unknown ? 'There is no ' + route.unknown + ' on this page; showing ' + (route.view === 'explore' ? 'Explore' : cap(route.view)) + '.' : pendingNotice;
     pendingNotice = '';
-    let canon = '#/' + state.view;
+    let canon = '#/' + state.view + (route.topic ? '/' + route.topic : '');
     if (state.view === 'explore') {
       let stage = route.stage || state.stage || model.defaultStage;
       const wasOn = state.selected[stage];   // before the route moves it: what the reader was already looking at
@@ -1369,7 +1421,12 @@
     if (!route.followed) lastHash = canon;
     if (route.followed) openSaved(route.followed, first); else closeSaved();
     if (route.open) { const det = $(route.open); if (det) det.open = true; }
+    if (route.topic) {
+      const target = $('read-' + route.topic);
+      if (target) { target.open = true; if (!first) target.querySelector('summary').focus({ preventScroll: true }); }
+    }
     if (route.open || route.anchor) { const target = $(route.anchor || route.open); if (target) scrollTo(target); }
+    if (previousView === 'method' && state.view !== 'method') restoreReading(canon);
   }
   function showView(scrollTop) {
     d.querySelectorAll('.ss-view').forEach((sec) => { sec.hidden = sec.getAttribute('data-view') !== state.view; });
@@ -1640,10 +1697,10 @@
     chips.push(chip(sw[0], sw[1]));
     if (c.stage === 'setting-up') (b.setups || []).forEach((s) => chips.push(chip(String(s), 'neutral', true)));
     c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
-    const last = c.series.length ? c.series[c.series.length - 1].date : run.session;
+    const last = run.session || null;
     const sub = c.stage === 'bursts'
-      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + volumeTimes(b) + '× volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
-      : (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + plain(b.quiet_days) + ' quiet days · ' + plain(b.range_pct) + '% range' + (c.quiet ? ' · also quiet' : ' · rank ' + plain(c.rank));
+      ? (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + pct(b.gain_pct) + ' on ' + volumeTimes(b) + '× prior-session volume' + (b.scan && b.scan !== 'burst' ? ' · ' + words(b.scan) + ' scan' : '') + ' · rank ' + plain(c.rank)
+      : (c.name ? c.name + ' · ' : '') + usd(b.close) + ' · ' + plain(b.quiet_days) + ' narrow-range days · ' + plain(b.range_pct) + '% range' + (c.quiet ? ' · also quiet' : ' · rank ' + plain(c.rank));
     const back = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm ss-detail__back', type: 'button', text: '↑ all stocks' });
     back.addEventListener('click', () => { scrollTo($('stages')); const sel = $('pick-list').querySelector('.ss-pick[aria-pressed="true"]'); if (sel) sel.focus({ preventScroll: true }); else $('search').focus({ preventScroll: true }); });
     return el('header', { 'class': 'ss-detail__head' }, [
@@ -1683,12 +1740,7 @@
   const vetoedCheck = (key, vetoes) => (key === 'two_days' && vetoes.indexOf('up_days') >= 0) || (key === 'linearity' && vetoes.indexOf('not_linear') >= 0);
   // the four words the checklist's own fields spell, plus the veto: one place,
   // read by the tiles, the scan cells and the evidence panel alike
-  function checkVerdict(chk, vetoed) {
-    if (vetoed) return 'veto';
-    if (!chk) return 'not measured';
-    if (chk.pass) return chk.marginal ? 'partial' : 'pass';
-    return chk.status === 'unmeasured' ? 'not measured' : 'fail';
-  }
+  function checkVerdict(chk, vetoed) { return reading.verdict(chk, vetoed); }
   const VERDICT_TONE = { pass: 'good', partial: 'warn', fail: 'danger', veto: 'danger', 'not measured': 'neutral' };
   // the signal session: the session the record was PUBLISHED FOR, never the
   // last bar in the frame -- a later observation appended to the series would
@@ -1851,6 +1903,8 @@
     // the chart's own key sits with the chart; the evidence controls and the
     // one explanation come directly under it, and the disclosure sentences last
     panel.appendChild(legendBox);
+    const chartReading = el('p', { 'data-chart-reading': '' });
+    panel.appendChild(el('div', { 'class': 'ss-chart-reading' }, [chartReading, help('chart', 'Read this chart')]));
     const evidenceRow = el('div', { 'class': 'ss-evidence', 'data-evidence-row': idp });
     const explain = el('div', { 'class': 'ss-evidence__explain', id: idp + '-evidence', role: 'status', 'aria-live': 'polite' });
     panel.appendChild(evidenceRow); panel.appendChild(explain);
@@ -1913,18 +1967,10 @@
       explain.appendChild(el('p', { 'class': 'ss-evidence__lede', text: chosen.lede }));
       explain.appendChild(el('p', { 'class': 'ss-evidence__measured' }, [el('span', { 'class': 'sc-eyebrow', text: 'measured' }), el('span', { text: chosen.measured })]));
       (chosen.rows || []).forEach((r) => {
-        const tone = VERDICT_TONE[r.verdict] || 'neutral';
+        const content = checkReading(r.check, record.rules);
         explain.appendChild(el('div', { 'class': 'ss-evidence__check', 'data-check': r.key, 'data-verdict': r.verdict }, [
-          el('div', { 'class': 'ss-evidence__check-head' }, [
-            el('strong', { text: r.check ? (r.check.label || words(r.key)) : words(r.key) }), chip(r.verdict, tone)]),
-          r.check && text(r.check.display)
-            ? el('p', { 'class': 'ss-evidence__value', text: r.check.display })
-            : el('p', { 'class': 'ss-evidence__value' }, [unreported('not measured in this record')]),
-          r.check && text(r.check.threshold)
-            ? el('p', { 'class': 'ss-evidence__threshold', text: 'his threshold: ' + r.check.threshold })
-            : el('p', { 'class': 'ss-evidence__threshold' }, [unreported('no threshold archived')]),
-          r.check && text(r.check.note) ? el('p', { 'class': 'ss-evidence__note', text: r.check.note }) : null
-        ]));
+          el('div', { 'class': 'ss-evidence__check-head' }, [el('strong', { text: content.info.title }), chip(r.verdict, VERDICT_TONE[r.verdict] || 'neutral')])
+        ].concat(content.nodes)));
       });
       if (chosen.note) explain.appendChild(el('p', { 'class': 'sc-hint', text: chosen.note }));
       if (!all.length) explain.appendChild(el('p', { 'class': 'sc-hint', 'data-anchor-state': 'no-bars', text: 'No chart is loaded for ' + c.ticker + ', so this evidence has no chart to sit on. The numbers above are the record’s own.' }));
@@ -1964,6 +2010,11 @@
       rangeLine.textContent = series.length ? 'Showing ' + plural(series.length, 'session') + ', ' + dateShort(series[0].date) + ' – ' + dateShort(series[series.length - 1].date) + ' ' + String(series[series.length - 1].date).slice(0, 4) + ' · ' + live.slice.note + '.' : '';
       refLine.textContent = referenceLine(c, g);
       clear(legendBox); if (host && host.legend) legendBox.appendChild(host.legend());
+      chartReading.textContent = (prefs.mode === 'line' ? 'Line joins recorded closes. ' :
+        prefs.mode === 'candles' ? 'Hollow green: close ≥ open. Filled red: close < open. Body = open–close; wick = low–high. ' :
+        'Hollow = close ≥ open; filled = close < open. Blue up, gray down; the signal candle and volume bar stay blue regardless of direction, not a passing verdict. ') +
+        'Sessions × dollars; volume bars = shares. Plan levels are conditional, not forecasts.' +
+        (prefs.mode === 'setup' && g && g.volAvg && g.volAvg.last ? ' “avg 20d” uses 20 plotted sessions including each current bar; it is not the checklist’s prior-volume comparison.' : '');
       panel.setAttribute('data-mode', prefs.mode); panel.setAttribute('data-range', prefs.range);
       panel.setAttribute('data-focus', focused ? focused.key : '');
       focusBar.hidden = !focused;
@@ -2248,7 +2299,7 @@
     const rows = [
       ['grade', 'grade'], ['provenance', 'graded by'],
       ['gain', burst ? 'session gain' : 'change today'],
-      ['volume', burst ? 'volume vs previous session' : 'volume vs its average'],
+      ['volume', burst ? 'volume vs previous session' : 'volume: recent ' + plain(((current.rules || {}).watchlist || {}).vol_dry_recent_sessions) + '-session average / ' + plain(((current.rules || {}).watchlist || {}).vol_dry_base_sessions) + '-session average'],
       ['base', burst ? 'base' : 'box'],
       ['trigger', 'trigger (buy stop)'], ['limit', 'ticket limit'], ['stop', 'stop'], ['stopPct', 'published stop distance'],
       ['why', 'main qualifying reason'], ['concern', 'principal concern'], ['ticket', 'ticket']
@@ -2326,6 +2377,7 @@
       el('div', { 'class': 'sc-field sc-field--group' }, [el('span', { 'class': 'sc-field__label', id: 'compare-range-label', text: 'range' }), rangeTabs]),
       el('div', { 'class': 'sc-field sc-field--group ss-compare__ab-field' }, [el('span', { 'class': 'sc-field__label', id: 'compare-ab-label', text: 'chart' }), abTabs])
     ]);
+    wrap.appendChild(el('div', { 'class': 'ss-section-help' }, [el('p', { 'class': 'sc-hint', text: 'Compare recorded differences to choose what to inspect. Marked rows are differences, not recommendations; each chart has its own scale.' }), help('compare', 'Read this comparison')]));
     wrap.appendChild(tools);
     const height = narrow() ? 280 : 340;
     // the phone shows one chart at a time, so both identities ride above it
@@ -3389,28 +3441,39 @@
   function readerRisk(cl) {
     return cl && cl.source === 'claude' && text(cl.key_risk) ? 'Unverified chart-reader commentary: ' + cl.key_risk : '';
   }
+  function discoveryReason(b) {
+    const rec = b.discovery || {}, m = rec.measurements || {}, rules = rec.applicable_rules || {};
+    if (rec.version !== 1 || !Array.isArray(rec.admitted_by)) return 'Discovery: ' + (b.scan ? words(b.scan) + ' scan' : 'route not recorded') + '. The detailed admission record is unavailable; the grade and ticket are separate.';
+    const facts = rec.admitted_by.map(key => {
+      const r = rules[key] || {};
+      if (key === 'dollar' && isNum(r.min_move) && isNum(r.min_volume_exclusive)) return 'Dollar discovery: close − open was ' + usd(m.dollar_move) + ' (recorded rule ≥ ' + usd(r.min_move) + '); volume ' + num(m.volume) + ' shares (rule > ' + num(r.min_volume_exclusive) + ').';
+      if (key === 'burst' && isNum(r.min_ratio) && isNum(r.min_volume) && r.volume_above_prior === true) return '4% breakout discovery: close ' + usd(m.close) + ' vs prior close ' + usd(m.prev_close) + ' (recorded ratio ≥ ' + String(r.min_ratio) + '); volume ' + num(m.volume) + ' vs ' + num(m.prev_volume) + ' prior-session shares, with a ' + num(r.min_volume) + '-share minimum.';
+      return 'Discovery route ' + key + ': recorded rule format is not recognised; inspect the original source.';
+    });
+    return facts.join(' ');
+  }
   function burstDecision(c) {
     const b = c.row, plan = c.plan || {}, q = b.quality || {}, cl = b.claude || {}, checks = q.checks || [];
-    const passes = checks.filter((x) => x && x.pass).length, miss = checks.find((x) => x && !x.pass);
+    const passes = checks.filter((x) => checkVerdict(x) === 'pass').length, miss = checks.find((x) => x && checkVerdict(x) !== 'pass');
     const summary = sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, '')));
-    const why = [summary || 'No summary was recorded for this burst.',
-      checks.length ? passes + ' of ' + checks.length + ' checks pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters)' + (miss ? '; the miss is ‘' + (miss.label || words(miss.key) || 'a check') + '’ (' + (miss.display || '—') + ').' : '; nothing missed.') : '',
+    const why = [discoveryReason(b), summary || 'No summary was recorded for this burst.',
+      checks.length ? passes + ' of ' + checks.length + ' recorded criteria pass.' + (miss ? ' Inspect ' + (miss.label || words(miss.key) || 'the non-passing criterion') + ' below for its observed value, rule and local verdict.' : ' Each pass applies only to its own criterion.') : '',
       cl.source === 'claude' ? 'Recorded grade: checklist ' + (b.grade_mechanical || 'not recorded') + '; published ' + (b.grade || 'not recorded') + '. Original reader commentary is in Provenance.' : ''];
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
-      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Nothing: ' + sentence(c.reason)];
+      : [c.plan ? noTicketLead(c) + ' The setup would need: ' + (entry || 'an entry the plan does not spell out.') : 'Wait for a new published plan. This record offers no entry: ' + sentence(c.reason)];
     const wait = c.plan
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
     const riskText = firstText(readerRisk(cl), plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'No separate stock-risk narrative was recorded. This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.'),
       c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function coilDecision(c) {
     const r = c.row, plan = c.plan || {}, box = r.box || {}, wl = current.watchlist || {};
-    const why = [(r.setups && r.setups.length ? r.setups.join(', ') + ': ' : '') + plain(r.quiet_days) + ' quiet days, ' + plain(r.range_pct) + '% range' + (isNum(box.sessions) ? ', a box of ' + plain(box.sessions) + ' sessions between ' + usd(box.low) + ' and ' + usd(box.high) : '') + (r.vol_dry ? ', volume dry' : '') + '.',
+    const why = [(r.setups && r.setups.length ? r.setups.join(', ') + ': ' : '') + plain(r.quiet_days) + ' narrow-range days, ' + plain(r.range_pct) + '% range' + (isNum(box.sessions) ? ', a box of ' + plain(box.sessions) + ' sessions between ' + usd(box.low) + ' and ' + usd(box.high) : '') + (r.vol_dry ? ', volume dry' : '') + '.',
       c.quiet ? 'Also quiet: quiet inside momentum, on no list tonight.' : ''];
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
@@ -3420,14 +3483,17 @@
       ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
     const riskText = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'None recorded beyond the method’s own: paper prices, published daily bars, no slippage.'),
+    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'No separate stock-risk narrative was recorded. This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.'),
       c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function decisionSummary(c) {
     const items = c.stage === 'bursts' ? burstDecision(c) : coilDecision(c);
-    return el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
+    const section = el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
       el('div', { 'class': 'ss-decision__item', 'data-item': it[0] }, [el('h3', { 'class': 'sc-eyebrow', text: it[1] })].concat(it[2].filter(Boolean).map((p) => el('p', { text: p }))))));
+    section.querySelector('[data-item="why"]').appendChild(el('p', { id: 'candidate-guide', 'class': 'ss-reading-order' }, [
+      d.createTextNode('Being listed or A-graded does not mean a ticket is available. '), help('discovery', 'Why listed?'), help('grade', 'Grade') ]));
+    return section;
   }
   const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : s.state === 'unknown' ? 'without calendar evidence' : 'stale';
   function openDisclosure(id) {
@@ -3441,6 +3507,7 @@
       'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status, 'data-window': av.phase });
     const head = el('div', { 'class': 'ss-action__head' }, [
       el('h3', { text: offered ? 'Conditional plan · ' + tm.session : 'No SpicyStock entry for this setup' }),
+      help('ticket', 'Plan & ticket'),
       offered ? chip('stop-limit', 'good') : c.status === 'ticket' ? chip(av.lead, 'warn')
         : statusWords(c.status)[0] !== 'no ticket' ? chip(...statusWords(c.status)) : null
     ]);
@@ -3537,26 +3604,42 @@
   // A check with no recorded dates stays a tile and is never made clickable --
   // and `offered` is THIS stock's own anchors, because a class of check the
   // record usually dates is not a promise that this record dated this one.
+  function checkReading(chk, rules) {
+    const info = reading.explain(chk, (rules || {}).quality);
+    const raw = el('details', { 'class': 'ss-check__raw' }, [
+      el('summary', { text: 'A+ criteria, formulas & recorded source' }),
+      el('p', { text: info.plus || 'No recognised A+ interpretation for this record.' }),
+      el('p', { text: 'Recorded A+ flag: ' + (!chk || typeof chk.a_plus !== 'boolean' ? 'not recorded' : chk.a_plus ? 'met' : 'not met') + '. This is separate from the ordinary criterion.' }),
+      el('p', { text: 'Original criterion: ' + (chk && chk.threshold || 'not recorded') }),
+      el('p', { text: 'Original measurements: ' + (chk && chk.display || 'not recorded') }),
+      chk && chk.note ? el('p', { text: 'Recorded note: ' + chk.note }) : null,
+      el('pre', { text: JSON.stringify(chk && chk.values || {}, null, 2) }),
+      el('p', { text: 'Observed values, verdict and A+ flag are recorded fields. The explanation and method rationale are reader guidance; no verdict is recomputed here.' }),
+      el('a', { href: METHOD_URL, target: '_blank', rel: 'noopener', text: 'Rule authorship and formulas' })
+    ]);
+    return { info, nodes: [
+      el('p', { 'class': 'ss-check__observed' }, [el('strong', { text: 'Observed: ' }), info.observed]),
+      el('p', { 'class': 'ss-check__rule' }, [el('strong', { text: 'Recorded rule: ' }), info.rule]),
+      el('p', { 'class': 'ss-check__why', text: 'Why checked: ' + info.why }), raw
+    ] };
+  }
   function checkTile(chk, vetoed, offered) {
     const word = checkVerdict(chk, vetoed), tone = VERDICT_SIGNAL[word], glyph = VERDICT_GLYPH[word];
-    const display = chk ? String(chk.display || '') : '', threshold = chk ? String(chk.threshold || '') : '';
     const key = chk && CHECK_ANCHOR[chk.key] ? CHECK_ANCHOR[chk.key] : null;
     const anchor = key && offered && offered[key] ? key : null;
-    const attrs = { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : '') + (anchor ? ' ss-check--anchored' : ''),
-      'data-check': chk ? chk.key : null, 'data-verdict': word, 'data-anchor': anchor,
-      title: chk ? [display, threshold ? 'threshold: ' + threshold : '', chk.note].filter(Boolean).join('\n') : null };
-    const kids = [
-      el('span', { 'class': 'ss-check__label', text: chk ? (chk.label || words(chk.key)) : '—' }),
-      el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
-      el('span', { 'class': 'sc-signal__label', text: word + (display ? ' · ' + display.split(' ')[0] : '') }),
-      chk ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 64 ? threshold.slice(0, 62).replace(/\s+\S*$/, '') + '…' : threshold }) : null,
-      anchor ? el('span', { 'class': 'ss-check__show', text: 'show the ' + ANCHOR_WORDS[anchor].toLowerCase() + ' on the chart' }) : null
-    ];
-    if (!anchor) return el('div', attrs, kids);
-    attrs.type = 'button';
-    const btn = el('button', attrs, kids);
-    btn.addEventListener('click', () => showEvidenceFromCheck(chk.key));
-    return btn;
+    const content = checkReading(chk, current.rules);
+    const tile = el('div', { 'class': 'ss-check sc-signal' + (tone ? ' sc-signal--' + tone : ''),
+      'data-check': chk ? chk.key : null, 'data-verdict': word }, [
+      el('div', { 'class': 'ss-check__head' }, [el('h4', { text: content.info.title }),
+        chip(glyph + ' ' + word, VERDICT_TONE[word] || 'neutral')])
+    ].concat(content.nodes));
+    if (anchor) {
+      const button = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm ss-check__show',
+        'data-check-action': chk.key, 'data-anchor': anchor, text: 'Show ' + ANCHOR_WORDS[anchor] + ' evidence' });
+      button.addEventListener('click', () => showEvidenceFromCheck(chk.key));
+      tile.appendChild(button);
+    } else tile.appendChild(el('p', { 'class': 'ss-check__unavailable', text: 'Chart evidence unavailable: no dated anchor was recorded for this criterion.' }));
+    return tile;
   }
   // the coil's own dated evidence, on the same one mechanism as the tiles
   function boxValue(box) {
@@ -3576,8 +3659,8 @@
     const kids = [];
     if (c.stage === 'bursts') {
       const b = c.row, q = b.quality || {}, base = q.base || {}, checks = q.checks || [], vetoes = q.vetoes || [];
-      const passes = checks.filter((x) => x && x.pass).length;
-      kids.push(el('p', { 'class': 'sc-hint', text: checks.length ? 'Bonde’s ' + checks.length + ' A-quality criteria: the verdict in words, the measured value, his threshold. ' + passes + ' of ' + checks.length + ' pass (' + plain(q.passes) + ' of the ' + plain(q.of) + ' letters).' : 'No checklist was archived for this burst.' }));
+      const passes = checks.filter((x) => checkVerdict(x) === 'pass').length;
+      kids.push(el('div', { 'class': 'ss-section-help' }, [el('p', { 'class': 'sc-hint', text: checks.length ? passes + ' of ' + checks.length + ' recorded criteria pass. A pass applies to one item; a fail is a weakness, an explicit veto refuses the setup, and not measured stays unknown. Values may be rounded; the stored verdict governs.' : 'No checklist was archived for this burst.' }), help('checklist', 'How verdicts work')]));
       // the anchors THIS stock's record actually carries, so a tile is a way
       // onto the chart only where there is something for it to mark
       const offered = {}; evidenceItems(c).forEach((it) => { offered[it.key] = true; });
@@ -3597,14 +3680,16 @@
       ]));
       if (q.notes && q.notes.length) kids.push(el('ul', { 'class': 'ss-notes' }, q.notes.map((n) => el('li', { text: n }))));
     } else {
-      const r = c.row, box = r.box || {}, wl = current.watchlist || {};
-      kids.push(el('p', { 'class': 'sc-hint', text: c.quiet ? 'Quiet inside momentum, on no list tonight: the measures the scan kept.' : 'The anticipation scans’ measures for this coil; the plan reads the box.' }));
+      const r = c.row, box = r.box || {}, wl = current.watchlist || {}, rules = current.rules || {}, wr = rules.watchlist || {}, ar = rules.anticipation || {};
+      kids.push(el('div', { 'class': 'ss-section-help' }, [el('p', { 'class': 'sc-hint', text: 'Setting up means a quieter candidate within established momentum. These are recorded measurements, not burst-checklist pass/fail grades.' }), help('anticipation', 'Setting up')]));
       kids.push(factList([
         ['setups', (r.setups || []).length ? r.setups.join(', ') : '—', (r.reasons_failed || []).length ? 'not: ' + r.reasons_failed.join(', ') : ''],
-        ['quiet', plain(r.quiet_days) + ' days', isNum(r.narrow_range_days) ? plain(r.narrow_range_days) + ' narrow-range days' + (r.tight_today ? ' · tight today' : '') : ''],
-        ['range', plain(r.range_pct) + '%', (isNum(r.range_recent_pct) ? 'recent ' + plain(r.range_recent_pct) + '%' : '') + (isNum(r.range_base_pct) ? ' · base ' + plain(r.range_base_pct) + '%' : '') + (isNum(r.adr20_pct) ? ' · 20-day ADR ' + plain(r.adr20_pct) + '%' : '')],
+        ['quiet session', isNum(r.pct_change_today) ? String(r.pct_change_today) + '% vs previous close' : 'not measured', isNum((rules.quiet || {}).max_abs_pct) ? 'Recorded quiet rule: absolute close change ≤ ' + String(rules.quiet.max_abs_pct) + '%; separate from the narrow-range count below.' : 'Quiet threshold not recorded.'],
+        ['narrow-range days', plain(r.quiet_days) + ' days', isNum(ar.narrow_lookback) && isNum(ar.range_norm_sessions) ? 'Count in the last ' + ar.narrow_lookback + ' sessions whose range percentage was below the median of the ' + ar.range_norm_sessions + ' sessions before that window.' : 'Comparison period not recorded.'],
+        ['range', plain(r.range_pct) + '% of the session close', 'Range = (high − low) ÷ close. Recent ' + plain(wr.compress_recent_sessions) + '-session mean ' + plain(r.range_recent_pct) + '%; preceding ' + plain(wr.compress_base_sessions) + '-session mean ' + plain(r.range_base_pct) + '%. Prior ' + plain(wr.adr_sessions) + '-session average daily range (ADR): ' + plain(r.adr20_pct) + '%.'],
+        ['tight today', typeof r.tight_today === 'boolean' ? (r.tight_today ? 'yes' : 'no') : 'not measured', isNum(wr.tight_fraction_exclusive) ? 'Range below ' + String(wr.tight_fraction_exclusive) + '× the prior ' + plain(wr.adr_sessions) + '-session ADR; recorded limit ' + plain(r.tight_limit_pct) + '%.' : 'Tightness criterion not recorded.'],
         ['the box', boxValue(box), box.start && box.end ? dateShort(box.start) + ' to ' + dateShort(box.end) + (isNum(box.spread) ? ' · spread ' + plain(box.spread) + '%' : '') : ''],
-        ['volume', isNum(r.volume_ratio) ? r.volume_ratio.toFixed(2) + '× its average' : '—', r.vol_dry ? 'dry' : ''],
+        ['volume', isNum(r.volume_ratio) ? String(r.volume_ratio) + '×' : 'not measured', 'Average of the recent ' + plain(wr.vol_dry_recent_sessions) + ' sessions ÷ average of the last ' + plain(wr.vol_dry_base_sessions) + '; both include the measured session. Dry means this ratio is below 1.'],
         ['momentum', isNum(r.ti65) ? 'TI65 ' + r.ti65.toFixed(3) : (isNum(r.extension) ? 'extension ' + r.extension.toFixed(2) : '—'), (isNum(r.up_run) ? plain(r.up_run) + ' up days in a row' : '') + (isNum(r.breakdowns) ? ' · ' + plural(r.breakdowns, 'breakdown') : '')],
         ['close', usd(r.close), isNum(r.pct_change_today) ? pct(r.pct_change_today) + ' today' : '']
       ]));
@@ -3613,7 +3698,7 @@
     return disclosure('disc-checklist', 'Conditions and measurements', c.stage === 'bursts' ? 'the checklist' : 'the coil', kids);
   }
   function discPlan(c) {
-    const plan = c.plan, acct = current.account || {}, rules = (current.rules || {}).plan || {}, kids = [];
+    const plan = c.plan, acct = current.account || {}, rules = (current.rules || {}).plan || {}, kids = [el('div', { 'class': 'ss-section-help' }, [help('trigger', 'Trigger, limit & stop'), help('size', 'Model size')])];
     if (!plan) {
       kids.push(el('p', { 'class': 'sc-hint', text: 'No plan: ' + sentence(c.reason) + (c.stage === 'bursts' ? ' A grade, a plan and a ticket are three different things; this burst has the first.' : '') }));
       return disclosure('disc-plan', 'Conditional plan, sizing and order', 'none', kids);
@@ -3718,6 +3803,7 @@
     const changed = box.getAttribute('data-selected') !== (c ? c.id : '');
     const heldStep = box.contains(d.activeElement) ? d.activeElement.getAttribute('data-step') : null;
     if (state.detailKey !== key) {
+      helpUI.dismiss(false);
       const top = box.scrollTop, opened = Array.from(box.querySelectorAll('details[open][id]')).map(n => n.id);
       state.detailKey = key;
       disposeChart();
@@ -3803,31 +3889,29 @@
 
   // ---------------------------------------------------------------- the scan, as a disclosure
   function signalCell(c, vetoed) {
-    const tone = vetoed ? 'blocked' : !c ? null : c.pass ? (c.marginal ? 'caution' : 'good') : 'blocked';
-    const glyph = vetoed ? '✕' : !c ? '—' : c.pass ? (c.marginal ? '~' : '✓') : '✕';
-    const word = vetoed ? 'veto' : !c ? 'not measured' : c.pass ? (c.marginal ? 'partial' : 'pass') : (c.status === 'unmeasured' ? 'not measured' : c.marginal ? 'partial' : 'fail');
-    const primary = c ? String(c.display || '').split(' ')[0] : '', threshold = c ? String(c.threshold || '') : '';
-    const cell = el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : ''), title: c ? [c.display, threshold ? 'threshold: ' + threshold : '', c.note].filter(Boolean).join('\n') : null }, [
-      el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: glyph }),
-      el('span', { 'class': 'sc-signal__label', text: word + (primary ? ' · ' + primary : '') }),
-      c ? el('span', { 'class': 'sc-signal__note', text: threshold.length > 42 ? threshold.slice(0, 40).replace(/\s+\S*$/, '') + '…' : threshold }) : null
-    ]);
-    return el('td', null, cell);
+    const word = checkVerdict(c, vetoed), tone = VERDICT_SIGNAL[word];
+    const info = reading.explain(c, (current.rules || {}).quality);
+    return el('td', null, [el('span', { 'class': 'sc-signal' + (tone ? ' sc-signal--' + tone : '') }, [
+      el('span', { 'class': 'sc-signal__glyph', 'aria-hidden': 'true', text: VERDICT_GLYPH[word] }),
+      el('span', { 'class': 'sc-signal__label', text: word })]),
+      el('details', { 'class': 'ss-signal-detail' }, [el('summary', { text: 'Read evidence' }),
+        el('p', { text: 'Observed: ' + info.observed }), el('p', { text: 'Recorded rule: ' + info.rule }),
+        el('p', { text: 'Original: ' + (c && c.display || 'not measured') + '. ' + (c && c.threshold || 'No rule recorded.') })])]);
   }
   function renderScan(data) {
     const bursts = (data.bursts || []).filter((b) => b && b.ticker), trades = data.trades || [], body = clear($('scan-body')), run = data.run || {};
     const nCriteria = bursts.length && bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     $('scan-summary').textContent = 'Everything the scan found · ' + (bursts.length ? plural(bursts.length, 'burst') : 'no burst');
-    $('scan-lede').textContent = 'Every burst against Bonde’s ' + nCriteria + ' A-quality criteria: the measured value, his threshold, and the verdict in words. A name opens its card above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
+    $('scan-lede').textContent = 'Every burst against its ' + nCriteria + ' recorded criteria. Read evidence for the observed value and rule; a name opens the full explanation above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
     const cm = data.closest_miss;
     if (cm && cm.sentence && !trades.length) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
     if (!bursts.length) { body.appendChild(empty('The scan found no burst.')); return; }
     const keys = Object.keys(CRITERIA_SHORT);
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
-    body.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Hover a tile for every measurement, his full threshold and the note.' }));
+    body.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Open Read evidence for the full measurements and recorded rule; select the stock for its rationale and source notes.' }));
     const scroll = el('div', { 'class': 'sc-table-scroll', 'data-sc-matrix-nav': '', tabindex: '0', role: 'region', 'aria-label': 'Every burst against the ' + nCriteria + ' criteria', 'aria-describedby': 'scan-help' });
     const table = el('table', { 'class': 'sc-table sc-signal-matrix', id: 'scan-table' });
-    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Bursts found on ' + (run.session || '') + ' compared on Bonde’s ' + nCriteria + ' A-quality criteria. Green passes, amber is marginal, red fails or is vetoed, neutral was not measured.' }));
+    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Bursts found on ' + (run.session || '') + ' compared on this record’s ' + nCriteria + ' A-quality criteria. Green passes, amber is marginal, red fails or is vetoed, neutral was not measured.' }));
     const sortBtn = el('button', { 'class': 'sc-table__sort', type: 'button', text: 'grade · score' });
     const sortTh = el('th', { scope: 'col', 'class': 'is-sortable', 'aria-sort': 'descending' }, sortBtn);
     table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'burst' })].concat(keys.map((k) => el('th', { scope: 'col', 'data-sc-label': CRITERIA_SHORT[k], text: labels[k] || words(k) }))).concat([sortTh]))));
@@ -3865,7 +3949,7 @@
     sort();
     scroll.appendChild(table);
     body.appendChild(scroll);
-    body.appendChild(el('p', { 'class': 'sc-hint', text: 'Green = passes his threshold. Amber = partial. Red = fails, or vetoed outright. A+ and A need the close near the high and no two up days in a row; the grade word is the verdict, the score its rank.' }));
+    body.appendChild(el('p', { 'class': 'sc-hint', text: 'Checklist only: green/pass meets that item’s recorded criterion; amber/partial is intermediate; red/fail is a weakness and red/veto an outright refusal. Not measured is unknown. None of these colours establishes a ticket, a fill or a profitable outcome.' }));
   }
 
   // ---------------------------------------------------------------- the record view
@@ -4001,21 +4085,21 @@
     const by_ = tm.prepareBy ? timeET(tm.prepareBy.toISOString()) : ORDERS_BY;
     // the record's own safeguards first, with the window's state beside them
     if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', 'The market was closed on ' + dateWords(tm.closedSession || s.expected) + ', so the plans dated for it had no session. ' + line, 'closed'];
-    if (red) return ['No new longs. Work the exits in the open model plans.', 'Breadth is red: tighten the stops and sell into strength. ' + line, 'red'];
+    if (red) return ['No new longs.' + (open ? ' Review the open public-model plans.' : ' Wait for the next published scan.'), 'The recorded market filter refuses new entries. ' + (open ? 'Open model plans keep their recorded exit rules; they do not establish what you hold. ' : 'There are no open public-model plans in this record. ') + line, 'red'];
     if (ph === 'unknown') return ['Entry timing unavailable — research only.', line + ' Read the setups and the evidence; do not place an order from a page that cannot date it.', 'stale'];
     if (ph === 'ended') {
       return orders
         ? ['The entry window for ' + day + ' has ended.', 'The ' + plural(orders, 'ticket') + ' the record published for it ' + (orders === 1 ? 'stays' : 'stay') + ' readable as history, and ' + (orders === 1 ? 'is' : 'are') + ' no longer offered to place. ' + cancelLine(), 'ended']
-        : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. Work the exits in the open model plans and wait for the next run.', 'ended'];
+        : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. ' + (open ? 'Review the open public-model plans and wait for the next run.' : 'Wait for the next published scan.'), 'ended'];
     }
     if (ph === 'open') {
       return orders
-        ? ['The entry window for ' + day + ' is in progress.', 'Place the ' + plural(orders, 'order') + ' on their own terms, exits first, and cancel any that has not filled by the end of the ' + window + '. ' + line, 'orders']
+        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No burst qualified with a ticket. ' + line, 'quiet'];
     }
-    if (orders) return ['Plan for ' + day + ': place the ' + plural(orders, 'order') + ' in Fidelity before ' + by_ + '. Exits first.', 'Attach each sell stop the moment its buy fills, and cancel any order that has not filled by the end of the ' + window + '. ' + line, 'orders'];
-    if (open) return ['Nothing new to place for ' + day + '. Work the exits in the open model plans.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
-    return ['Nothing to place for ' + day + '. Keep cash.', 'No burst qualified and nothing is held. Come back after the next run. ' + line, 'quiet'];
+    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Attach its protective stop after a fill; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
+    if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
+    return ['No new entry offered for ' + day + '.', 'No burst qualified and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }
   function renderNext(data, s) {
     const n = nextAction(data, s);
@@ -4415,6 +4499,8 @@
 
   // ---------------------------------------------------------------- render
   function render(data, now, keep) {
+    helpUI.dismiss(false);
+    if (current !== data) { readingReturn = null; $('method-return').hidden = true; }
     current = data; SCStock.data = data;
     demo = !!data.fixture;
     d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
