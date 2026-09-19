@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1337 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1368 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2444,3 +2444,62 @@ FAIL first Linux PR run 35467846396 at head
 was the handoff's current suite count (1,333 versus 1,337 after four added tests).
 The current count is corrected to 1,337; the count assertion is unchanged.
 Final exact-head gates remain recorded in the PR.
+
+## September 19 — bounded input-exception evidence retention
+
+Repository: spicyChicken59/SpicyStock. Base main is
+`2b44d227829e6859d7f65358534022fa8cc8553a`, tree
+`72071ad648b3183fbe63c19a3bd927b10ac1c04e`. Before edits, post-merge Tests
+35468881024 was rechecked completed/success; main had not advanced, zero PRs
+were open, and no input-exception-evidence branch existed. Work is on
+`reliability/input-exception-evidence`. The user reserves independent review
+and normal merge for guidance. Effort settings were not changed; their value
+and remaining quota remain unverified. No new campaign budget was inferred.
+
+The dedicated input diagnostic captures after existing session classification
+and before price/coverage refusal, scans, grading or publication. It retains
+complete exception and intended memberships, original ledger identities,
+benchmark distinction, actual checkout/run/attempt/session context, and bounded
+normalized observations. Eight tail rows plus expected/prior anchors permit at
+most ten rows per symbol, with a global 80,010-row payload limit; membership is
+never sampled away. Missing, null, nonfinite, absent-field and unreadable states
+remain distinct. No arbitrary exception text, clients or account/environment
+objects are serialized. Supplied fetch arguments are explicit and reconstructed
+windows are labelled. A directory is copied byte-for-byte only when actually
+used and matching the universe's capture time and canonical hash.
+
+The existing evening workflow gains one separate 30-day diagnostic upload,
+using only this invocation's emitted path. Its old artifact name, paths and ZIP
+root remain unchanged. Cron, inputs, permissions, retries, persistence and
+publication guards are untouched. Known skipped/preflight runs produce no
+snapshot; failures before completed classification remain unavailable. Capture
+failure is separately logged/reported and changes no existing error, retry,
+coverage, trading decision or exit code. Process termination before output-path
+emission can still prevent upload; no durability beyond that boundary is claimed.
+
+PASS failing-before control: the unmodified base publishes the synthetic
+19-stale cohort with eight public names, then fails specifically on its missing
+diagnostic. The implementation retains every name and available observation.
+These names are not the historical missing eleven. Focused tests cover refusal
+after earlier successes, never-attempted tails, each input category, timestamp
+precision, row bounds, overlapping duplicates, used-directory bytes, sentinel
+exclusion, tampering, identity mismatch, consecutive runs and writer failure.
+Frozen clocks compare enabled/disabled publication bytes and all coverage/call/
+exit behavior. Candidate comparisons include prepared records, picks, objects,
+plans, grades and rule digests; normal Linux CI also requires publication.
+
+The deterministic extreme fixture fills 80,010 rows across 8,001 exceptions:
+approximately 45.56 MB JSON / 0.40 MB gzip, plus at most 10 MiB directory.
+Real compressed size is not predicted. Full local/CI outcomes and exact head
+are recorded in the PR. Local Windows reproduces the accepted source-object
+open-temporary rename defect; no portability repair or gate weakening is included.
+README and .env.example are updated only for the new output, with no new variable.
+
+KEEP compact coverage, unknown provider causes, historical pins, strategy and
+all accepted website/design behavior. FIX NOW future loss of complete exception
+membership and bounded observations. DEFER classification correction, transport
+research, Windows publication portability and production artifact verification
+(NOT RUN until an existing authorized run produces it). OMIT provider/scanner/
+model execution, directory refresh, manual dispatch/publication, secrets/settings
+changes, sibling work and merge. Next action: guidance reviews the scoped PR
+with exact-head Tests and Secret Scan; builder stops without merging.

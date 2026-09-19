@@ -89,6 +89,22 @@ def test_the_artifact_keeps_records_charts_and_retained_evidence():
     assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
+def test_input_diagnostics_upload_separately_only_from_this_invocation():
+    wf = load("evening.yml")
+    current = steps(wf, "scan")
+    legacy = current["Keep the run's artifacts"]
+    diagnostic = current["Keep input exception diagnostics"]
+    assert diagnostic["if"] == "(success() || failure()) && steps.guard.outputs.go == 'true' && steps.pipeline.outputs.input_diagnostics != ''"
+    assert diagnostic["uses"] == "actions/upload-artifact@v4"
+    assert diagnostic["with"] == {"name": "input-exceptions-${{ github.run_id }}-${{ github.run_attempt }}",
+                                  "path": "${{ steps.pipeline.outputs.input_diagnostics }}/",
+                                  "if-no-files-found": "error", "retention-days": 30}
+    assert legacy["with"]["retention-days"] == 30
+    assert legacy["with"]["name"] == "${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) || ((steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id)) }}"
+    # The legacy upload's common ancestor is still docs/, so its ZIP root is unchanged.
+    assert all(path.startswith("docs/") for path in legacy["with"]["path"].split())
+
+
 def test_the_evening_job_can_write_and_runs_alone():
     wf = load("evening.yml")
     assert wf["permissions"] == {"contents": "write", "actions": "read"}

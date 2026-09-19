@@ -37,6 +37,7 @@ nohup.out
 # clears the 2LYNCH gate.
 /results/
 /charts/
+/input-diagnostics/
 
 # The charts the pipeline really writes today (src/pipeline.py's CHARTS_DIR).
 # NOT covered by /charts/ above — that rule is anchored to the repo root, and

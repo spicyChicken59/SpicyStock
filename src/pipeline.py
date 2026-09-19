@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing, inputs, sessions, provenance
+from src import timing, inputs, sessions, provenance, input_diagnostics
 from src import universe
 from src import watchlist
 
@@ -80,6 +80,7 @@ class RunReport:
     failure: str | None = None
 
     input_coverage: dict = field(default_factory=dict)
+    input_diagnostic: dict = field(default_factory=lambda: {"status": "not_attempted", "path": None})
     calendar_outcome: dict = field(default_factory=dict)
     skipped: str | None = None
 
@@ -634,6 +635,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         expected = expected_session(now)
         client = market_data.get_clients()
         feed = market_data.feed_from_env()
+        rep.input_diagnostic = {"status": "unavailable_before_classification", "path": None}
         try:
             frames, stats, fetch_seconds = fetch_universe(client, symbols, expected, feed, rep,
                                                           budget_seconds=fetch_budget, now=now)
@@ -641,6 +643,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             ready = market_data.apply_session_rules(exc.frames, expected, exc.download_stats)
             rep.input_coverage = inputs.build(uni, symbols, exc.frames, exc.download_stats, ready,
                 expected, expected, closed=False, minimum=MIN_COVERAGE_FRACTION, benchmark=BENCHMARK_SYMBOL)
+            rep.input_diagnostic = input_diagnostics.capture(
+                docs=docs, uni=uni, symbols=symbols, frames=exc.frames, stats=exc.download_stats,
+                ready=ready, coverage=rep.input_coverage, expected=expected, session=expected,
+                now=now, lookback=LOOKBACK_DAYS, chunk_size=FETCH_CHUNK, budget=fetch_budget, refused=True)
             inputs.evaluated(rep.input_coverage)
             log.info("Refused fetch input coverage: %s", json.dumps(rep.input_coverage, sort_keys=True))
             raise
@@ -653,6 +659,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         ready = market_data.apply_session_rules(frames, session, stats)
         coverage = inputs.build(uni, symbols, frames, stats, ready, expected, session,
                                 closed=closed, minimum=MIN_COVERAGE_FRACTION, benchmark=BENCHMARK_SYMBOL)
+        rep.input_diagnostic = input_diagnostics.capture(
+            docs=docs, uni=uni, symbols=symbols, frames=frames, stats=stats, ready=ready,
+            coverage=coverage, expected=expected, session=session, now=now,
+            lookback=LOOKBACK_DAYS, chunk_size=FETCH_CHUNK, budget=fetch_budget)
         fresh, price_excluded = universe.session_eligible(ready, uni, exempt=(BENCHMARK_SYMBOL,)) if not closed else ({}, {})
         coverage["price_excluded"] = len(price_excluded)
         coverage["reasons"]["price_excluded"] = universe.population(price_excluded)
@@ -1039,6 +1049,9 @@ def main(argv: list[str] | None = None) -> int:
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as out:
             out.write(f"published={str(rep.published).lower()}\noutcome={rep.status}\n")
+            if args.run_type == "evening":
+                out.write(f"input_diagnostics={rep.input_diagnostic['path'] or ''}\n"
+                          f"input_diagnostic_status={rep.input_diagnostic['status']}\n")
     code = rep.exit_code()
     log.info("exit %d (%s)", code, rep.status)
     return code

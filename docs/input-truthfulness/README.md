@@ -134,3 +134,141 @@ The [dated report and primary-source index](2026-09-18-stale-inputs.md) reconcil
 members, and distinguish classifier behavior from unresolved provider causes.
 The [offline results](2026-09-18-stale-inputs-results.json) pin original evidence
 hashes. Production selection, coverage and historical records are unchanged.
+
+## Input-exception artifact v1
+
+The retention milestone starts from `2b44d227829e6859d7f65358534022fa8cc8553a`
+(tree `72071ad648b3183fbe63c19a3bd927b10ac1c04e`). Existing post-merge Tests
+[35468881024](https://github.com/spicyChicken59/SpicyStock/actions/runs/35468881024)
+passed before implementation. Main had not advanced; no open PR or duplicate
+assignment branch was present. No check or evening workflow was dispatched.
+
+`src/input_diagnostics.py` captures already available frames/stats immediately
+after session classification, before price eligibility, coverage refusal, scans,
+grading or publication. The permanent-refusal path captures the same boundary
+from the exception's exposed earlier successful batches and complete unrequested
+tail. It does not intercept SDK transport or recover partial response pages.
+
+The existing evening workflow uploads `input-exceptions-<run-id>-<attempt>`
+separately for 30 days. Its root contains `input-exceptions.json` and, only when
+verified as actually used, the existing `universe-directory.json.gz` bytes.
+The original evening artifact's name, paths, retention and ZIP root are unchanged.
+No schedule, dispatch input, permissions, retry, persistence or publication guard
+changes. Upload runs on success/failure only when this invocation returned an
+artifact path. Diagnostics cannot reach the `git add docs` persistence step.
+
+Local paths are `<docs-parent>/input-diagnostics/<run-or-local>-<attempt-or-unknown>-<unique-invocation>/`.
+Tests and fixture generators use temporary output trees. There is no reused
+`latest` file: healthy runs get their own record with empty exception membership;
+known non-session/incomplete-session and preflight exits produce no snapshot and
+attempt no fetch. `RunReport.input_diagnostic` distinguishes `not_attempted`,
+`unavailable_before_classification`, `retained`, and `failed`. A classification
+that never completed cannot supply a complete snapshot. A process killed before
+the pipeline returns may have local files but no emitted upload path.
+
+The versioned JSON contains:
+
+- Allowlisted run ID, attempt, unique invocation, actual checkout revision read
+  with Git, and separately the workflow revision. Unavailable identifiers stay
+  null. Capture time is UTC; expected/evaluated/prior sessions are explicit.
+- Complete intended, intended-stock, original universe, returned and ready
+  memberships, each with the existing count/sample/identity convention. SPY's
+  benchmark role is explicit. Universe source kind, capture timestamp, selection
+  identity and canonical directory hash preserve the selection basis.
+- Complete stale, gapped, unreadable, no-bar, failed-after-retry (`dropped`),
+  permanently refused, budget-unrequested and failure-unrequested lists.
+  Repaired duplicates remain overlapping diagnostics with extra-row counts;
+  discarded duplicate copies are unavailable. A repair reported during an
+  interrupted batch need not imply an exposed completed frame.
+- Only input-boundary counts: intended/requested/returned, exception categories,
+  on-session/ready/benchmark and transport diagnostics. `evaluation=not_started`
+  excludes final scan, quality, grade and plan counters. The validator compares
+  these unchanged boundaries and membership digests with an optional final
+  public ledger; later price exclusions and measurement outcomes are not claimed
+  to have occurred at capture time.
+- Feed, split adjustment, daily timeframe, full symbol argument order, session,
+  lookback, supplied `now`, chunk and budget arguments. The start/end window is
+  explicitly **reconstructed from application arguments, not an observed wire
+  request**. SDK attempt count is not HTTP request/page count; no wire count is
+  invented. Default SDK batch size is labelled as a default.
+
+### Observation bounds and meaning
+
+Only exception/duplicate symbols carry observations. Each available frame keeps
+the last eight positions plus the last expected-session and prior-session
+positions if outside that tail: at most ten rows. Original frame order is kept.
+If several timestamps share an anchor date, its present/retained counts expose
+omissions. Dated anchors have priority if the global 80,010-row budget binds.
+Every affected name remains listed, including explicit selections larger than
+the ordinary 8,000-stock directory capacity; only bar payloads are bounded, never
+membership. Omitted row counts, per-symbol partial flags and a payload summary
+make truncation explicit. A missing frame has no observations and never becomes
+an all-zero bar. Healthy returned frames are enumerated but not archived here.
+
+OHLCV plus available `vwap`/`trade_count` are the only value fields, with meanings
+included. Timestamps retain timezone and nanosecond precision; finite numeric
+scalars are not rounded. Column-wise access preserves integer volume precision.
+Null, pandas missing, NaN, positive/negative infinity, invalid values, absent
+fields, NaT and unreadable timestamps have distinct states. Arbitrary invalid
+strings/objects are labelled rather than serialized; their original text is not
+retained. Extra columns, frame attributes, labels, clients, environment dumps,
+headers, accounts, recipients and exception text are excluded.
+
+These are **application-normalized observations**: sorted, de-duplicated,
+renamed frames after the existing all-null-row removal. Original raw HTTP pages,
+condition-coded trades, SDK-internal partial pages and provider entity mappings
+remain unavailable. Observed absence does not identify a provider cause.
+
+An existing directory is copied only for a directory-backed run when both its
+capture timestamp and canonical field hash match the run's universe. Its bytes
+and SHA-256 are preserved; mismatched/unavailable files are labelled. Seed and
+explicit runs never attach a leftover cache. The existing 10 MiB compressed and
+expanded directory limits apply. No directory refresh is added.
+
+Serialization and writes are isolated from acceptance and retry machinery.
+Temporary files close before atomic replacement. Failure logs the separate
+`input_diagnostic_capture_failed` outcome without exception text, returns no
+upload path, and leaves the existing coverage, original error and exit code
+unchanged. Partial failed packages cannot be mistaken for a prior successful run.
+
+### Offline verification and readiness
+
+After extracting one artifact, use the run's independently observed identity:
+
+```text
+python tools/verify_input_diagnostics.py /path/to/extracted-artifact --run-id RUN_ID --attempt ATTEMPT --revision EXECUTION_SHA
+```
+
+Optionally add `--publication /path/to/same-run/data.json`. Complete memberships,
+digests, disjoint accounting, overlapping repairs, observation counts and
+directory bytes are validated. A changed membership or mismatched run/attempt/
+revision is rejected. SHA-256 checks integrity, not authenticity against an
+attacker able to rewrite both the file and its digest; compare the independently
+expected Actions identity. The verifier reads files only.
+
+`tests/test_input_retention.py` drives the unchanged transport/session/pipeline
+through existing provider doubles. The nineteen-stale fixture failed on the
+unmodified release base specifically because the diagnostic file was absent;
+with capture it preserves all 19 names/observations while the public sample
+remains eight and coverage remains degraded. These synthetic names do not fill
+the eleven unknown historical identities. Frozen-clock enabled/disabled tests
+compare publication bytes, coverage, calls and exit codes; the candidate test
+also compares full prepared publications, picks, source objects, plans, grades
+and rule digests. Linux additionally verifies successful candidate publication;
+Windows exposes the previously documented source-object rename failure.
+
+`python tools/input_diagnostic_size.py` builds an extreme deterministic fixture:
+8,001 affected symbols, all 80,010 allowed rows, seven populated numeric fields,
+nanosecond timestamps, and 260-row input frames. It uses intentionally invalid
+prices and out-of-window dates to fill every payload slot, not provider evidence.
+The raw JSON is approximately **45.56 MB**, deterministic gzip approximately
+**0.40 MB**, plus at most **10 MiB** for an optional already-used directory.
+Tests enforce ceilings of 60 MiB JSON and 2 MiB gzip for that fixture. Repeated
+values compress unusually well; ZIP size for a real run is not predicted.
+Membership metadata scales with explicit population size; the row ceiling is
+global even beyond the ordinary directory population.
+
+Software/fixture readiness and exact-head CI results belong in the PR and latest
+CLAUDE.md checkpoint. **Production artifact verification: NOT RUN.** Only an
+existing authorized evening run after normal guidance review/merge can establish
+that. The historical report, source pins and original evidence remain unchanged.
