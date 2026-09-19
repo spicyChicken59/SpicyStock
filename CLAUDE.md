@@ -2303,3 +2303,33 @@ grades, Following and scorecard semantics. Coverage stays deferred: the retained
 record's 4774/4793 ready stocks and 19 stale inputs are unchanged. No new scan,
 provider/model call, broker action, external message, setting, schedule, shared
 design write or manual deployment. Stop at one evidence-backed reviewable PR.
+
+## September 19 — website comprehension campaign, #78 responsive acceptance
+
+Tahir supersedes the earlier single-PR stop: normal Stock-only campaign merges
+and their established automatic publication are authorized, with exact-head
+Tests/Secret Scan and actual review requirements; no bypasses or manual deploys.
+Continuation began at 08:06:36 UTC. No original five-hour campaign deadline could
+be verified; the previous bounded #78 task ran approximately 48 minutes. Keep
+that completed work and reserve the final integration hour rather than claiming
+a fresh five-hour window. The user makes first-visit comprehension the priority.
+
+A frozen-main CSS comparison proves the constrained header predates #78. At
+721/768px the AAPL fixture identity's grid column is 0px on main and on #78;
+at 820px it is 46.86px on main and 23.86px on #78. A pane container query stacks
+identity, badges and navigation without changing the page breakpoint or font
+size. Corrected widths at 721/768/820/960 are 310/357/409/549px; header heights
+188.19/167.39/140.39/143.47px. The prior #78 heights were 376.16/376.16/376.16/
+132.06px: the 960px header intentionally takes an extra short row to provide
+readable width. Constrained ticket levels use two columns as on phones.
+
+PASS focused normal-origin Chromium: 548 pane checks, including new readable
+identity-width and bounded-header checks at 721/768/820/960 in both themes.
+Screenshots inspected: 721 dark and 960 light viewport Cards plus AAPL's ticket
+at both widths; source comparison and measurements are in campaign evidence.
+This preserves native pane scrolling, the phone rail/chooser and full-width Map.
+Full final-tree and exact-head CI results are recorded on #78 before merge.
+
+No strategy, production evidence, chart geometry, saved semantics or shared
+v2.13.0 design files change. README is updated; .env.example reviewed with no
+changed configuration. Next slice must branch from the actual accepted main.

@@ -102,7 +102,10 @@ does not carry, falls back to Explore and says so.
    Previous/Next and Back reveal the selected card only when needed, without
    snapping back during browse-only focus movement. The surrounding page remains
    scrollable, Map stays full width, and phones retain the horizontal rail,
-   chooser and stacked details. Scroll positions are not persisted.
+   chooser and stacked details. Scroll positions are not persisted. When the
+   detail pane is constrained, identity, badges and navigation use separate
+   rows. The pane's own width controls this, so tools cannot squeeze the summary
+   into a sliver. Narrow panes also keep ticket levels in two columns.
    A **lens** narrows the stage, each option a question asked of a field the
    run wrote and each wearing the count it will show: *A-quality* (the A and
    A+ grades this record archived), *All bursts*, *With ticket* (a ticket

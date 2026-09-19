@@ -38,6 +38,8 @@ async function bounds(page) {
       documentWidth: document.documentElement.scrollWidth,
       picks: rect(document.querySelector('#picks')), list: rect(document.querySelector('#pick-list')),
       detail: rect(document.querySelector('#detail')), identity: rect(document.querySelector('#detail-h2')),
+      header: rect(document.querySelector('.ss-detail__head')),
+      identityBlock: rect(document.querySelector('.ss-detail__head > div:first-child')),
       search: rect(document.querySelector('#search')), lens: rect(document.querySelector('#lens')),
       primary: rect(document.querySelector('#detail .ss-action--burst') || document.querySelector('#detail .ss-detail__sub')),
       focused: rect(document.activeElement), selectedCard: rect(document.querySelector('#pick-list [aria-pressed="true"]')),
@@ -251,13 +253,16 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
   }
   // Fresh contexts: deep-link discovery, mobile rail/chooser and both mode
   // boundaries. A page viewport shot is used throughout, never a component shot.
-  for (const width of [960, 720, 390, 320]) for (const theme of ['dark', 'light']) {
+  for (const width of [960, 820, 768, 721, 720, 390, 320]) for (const theme of ['dark', 'light']) {
     const tag = `${width}-${theme}`, session = await launch(width, 900, theme, 'bursts', 'TESTB040'), { page } = session;
     await align(page); await settle(page);
     let b = await bounds(page);
     if (width > 720) {
       await visibleSelected(page, tag + ' fresh deep link');
       check(tag + ': intermediate desktop keeps matching panes', near(b.picks.bottom, b.detail.bottom), b);
+      check(tag + ': badges and controls leave readable identity width',
+        b.identityBlock.clientWidth >= Math.min(300, b.header.clientWidth) - 2, b);
+      check(tag + ': constrained header wraps into intentional rows', b.header.height < 270, b);
     } else {
       check(tag + ': mobile keeps a horizontal card rail', b.list.scrollWidth > b.list.clientWidth && b.list.scrollHeight <= b.list.clientHeight + 2, b);
       check(tag + ': mobile details stay in the stacked page flow', b.detail.top >= b.picks.bottom && b.detail.scrollHeight <= b.detail.clientHeight + 2, b);
