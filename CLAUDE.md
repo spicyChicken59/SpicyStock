@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1333 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1337 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2438,3 +2438,9 @@ and cosmetic coverage repairs. README is updated; .env.example reviewed and
 unchanged. No scan, directory refresh, application model call, manual publication,
 schedule, secret or shared-design change occurred. Exact next action: guidance
 reviews this evidence PR and its checks; builder stops without merging.
+
+FAIL first Linux PR run 35467846396 at head
+`3d81fec5459f49795982b5b2dd73697105ad7a66`: 1,336 passed; the sole failure
+was the handoff's current suite count (1,333 versus 1,337 after four added tests).
+The current count is corrected to 1,337; the count assertion is unchanged.
+Final exact-head gates remain recorded in the PR.
