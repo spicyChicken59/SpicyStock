@@ -4122,7 +4122,10 @@
     w.addEventListener('focus', () => reclock());
     w.addEventListener('pageshow', () => reclock());
     const input = $('search');
-    input.addEventListener('input', () => setQuery(input.value.trim().toUpperCase()));
+    input.addEventListener('input', () => {
+      state.query = input.value.trim().toUpperCase();
+      if (model && state.view === 'explore') { renderPicks(); renderDetail(); }
+    });
     $('search-form').addEventListener('submit', (e) => { e.preventDefault(); if (!model) return; const q = input.value.trim().toUpperCase(); if (q) resolveSearch(q); });
     $('pick-list').addEventListener('keydown', (e) => {
       const picks = Array.from($('pick-list').querySelectorAll('.ss-pick')), i = picks.indexOf(d.activeElement);
