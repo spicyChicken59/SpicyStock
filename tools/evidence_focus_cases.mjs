@@ -24,7 +24,7 @@ function focusRecord(shell, rows = excerpt.bursts) {
 // container, changed state attribute or highlight opacity cannot pass this.
 async function geometry(page) {
   return page.locator(HOST).evaluate(host => {
-    const g = host.geometry(), svg = host.querySelector('svg.sc-chart__svg');
+    const g = host.geometry(), svg = host.querySelector('.sc-chart__stage > svg');
     const matrix = svg.getScreenCTM(), rect = svg.getBoundingClientRect();
     const pixel = (x, y) => new DOMPoint(x, y).matrixTransform(matrix);
     const candles = [...svg.querySelectorAll('.sc-chart__candle')].map(node => {
@@ -211,6 +211,7 @@ if (process.argv.includes('--dom')) {
     await new Promise(resolve => setTimeout(resolve, 80));
     const d = w.document, host = d.querySelector(HOST);
     if (!host) throw new Error('Actual app failed to mount ' + row.ticker);
+    if (!host.querySelector('.sc-chart__stage > svg')) throw new Error('Actual chart SVG not found');
     d.querySelector(PANEL + ' [data-anchor="base"]').click();
     const before = host.geometry();
     d.querySelector(PANEL + ' [data-evidence-focus]').click();
