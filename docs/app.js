@@ -1710,14 +1710,19 @@
     return CHART_RANGES.find((r) => { const s = rangeSlice(c, r).series; return idxOf(s, item.from) >= 0 && idxOf(s, item.to) >= 0; }) || null;
   }
 
-  // Presentation only. Single-session evidence keeps at least 21 observations
-  // where available; a base/box gets context on both sides. No bars invented.
+  // Presentation only: compact context around the whole evidence, independent
+  // of Setup's broad padding. Expand evenly to 21 real observations where
+  // available, shifting at a series boundary. No bars invented.
   function focusSlice(c, item) {
     const all = c.series, start = idxOf(all, item.from), end = idxOf(all, item.to);
     if (start < 0 || end < start) return null;
-    const pad = Math.max(8, Math.round((end - start + 1) * 0.6));
+    const pad = 3;
     let from = Math.max(0, start - pad), to = Math.min(all.length, end + pad + 1);
-    if (to - from < 21) { from = Math.max(0, Math.min(from, to - 21)); to = Math.min(all.length, Math.max(to, from + 21)); }
+    if (to - from < 21) {
+      from = Math.max(0, from - Math.ceil((21 - (to - from)) / 2));
+      to = Math.min(all.length, Math.max(to, from + 21));
+      from = Math.max(0, Math.min(from, to - 21));
+    }
     return { series: all.slice(from, to), range: 'focus', note: item.label.toLowerCase() + ' with nearby recorded sessions · temporary focus', fallback: false };
   }
 
@@ -1772,7 +1777,8 @@
     // archived; a candidate of the loaded record has the run's own
     let evid = c.evidence && c.evidence.length ? c.evidence : evidenceItems(c);
     let live = null, host = null, chosen = null, focused = null, disposed = false;
-    const panelHeight = () => opts.height || chartHeight();
+    const normalHeight = () => opts.height || chartHeight();
+    const panelHeight = () => focused && focused.magnify ? Math.round(normalHeight() * 1.3) : normalHeight();
     const panel = el('figure', { 'class': 'ss-chart-panel', 'data-panel': idp, 'data-ticker': c.ticker, 'data-mode': prefs.mode, 'data-range': prefs.range });
     const legendBox = el('div', { 'class': 'ss-chart-panel__legend' });
     const modeTabs = el('div', { 'class': 'sc-tabs', role: 'group', 'aria-labelledby': idp + '-view-label' });
@@ -1855,7 +1861,15 @@
         const focus = el('button', { 'class': 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-evidence-focus': '',
           'aria-pressed': focused && focused.key === chosen.key ? 'true' : 'false', 'aria-controls': idp + '-mount', text: 'Focus evidence' });
         focus.addEventListener('click', () => {
-          focused = chosen; applySlice(focusSlice(c, chosen));
+          const slice = focusSlice(c, chosen), normal = rangeSlice(c, prefs.range);
+          const height = normalHeight(), width = host.geometry().width;
+          const before = SCStock.chartGeometry(normal.series, chartOptionsFor(c, normal.series, height), width, height);
+          const after = SCStock.chartGeometry(slice.series, chartOptionsFor(c, slice.series, height), width, height);
+          // The observation floor or a long base can prevent horizontal zoom.
+          // Enlarge the actual SVG plot, keeping every price/level in its domain.
+          // Always compare with the normal range, so repeats cannot compound.
+          focused = Object.assign({}, chosen, { magnify: after.slot < before.slot * 1.25 });
+          applySlice(slice);
           const button = explain.querySelector('[data-evidence-focus]'); if (button) button.focus({ preventScroll: true });
         });
         head.appendChild(focus);
