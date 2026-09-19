@@ -423,6 +423,15 @@ session. The run:
   quality outcomes; each reason carries a bounded sample and membership digest.
   Below-threshold failures retain their population on `RunReport.input_coverage`
   and in the run log, leaving the last published record intact.
+  A separate **input-exceptions** artifact retains every exception name and
+  bounded normalized observations before coverage refusal, scans or grading.
+  Its run/session/revision identity, complete intended membership and input
+  counts reconcile with the compact ledger. Files live under the gitignored
+  `input-diagnostics/`, outside `docs/`; the existing evening artifact is unchanged.
+  These are input-stage observations, not final measurement counts or raw
+  provider evidence. Missing frames stay missing. Capture failures are logged
+  separately and do not alter publication decisions or exit codes. See the
+  [format and offline verifier](docs/input-truthfulness/README.md#input-exception-artifact-v1).
   `run.universe` records the source, capture timestamp, snapshot hash, selection
   identity, exclusions and the snapshot date's relation to the scan session.
   A contemporary or cached directory never proves historical point-in-time
@@ -722,6 +731,7 @@ not historical point-in-time universe or profitability evidence.
 src/            history.py (public recovery and coverage)
                 provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
+                input_diagnostics.py (run-scoped exception membership and observations)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)

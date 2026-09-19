@@ -169,6 +169,14 @@ jobs:
             docs/evidence/
             docs/history/
           retention-days: 30
+      - name: Keep input exception diagnostics
+        if: (success() || failure()) && steps.guard.outputs.go == 'true' && steps.pipeline.outputs.input_diagnostics != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: input-exceptions-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.pipeline.outputs.input_diagnostics }}/
+          if-no-files-found: error
+          retention-days: 30
       - name: Report the pipeline's verdict
         # Exit 2 (degraded but published) is a warning, not a red run: a
         # degraded night that published is a night that worked, and a week of
