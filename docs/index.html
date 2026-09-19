@@ -22,6 +22,7 @@
 <script src="app-chart.js"></script>
 <script src="app-map.js"></script>
 <script src="app-follow.js"></script>
+<script src="app-reading.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -57,6 +58,10 @@
 
   <!-- 01 · Explore: the market in one line, then the stocks -->
   <section class="ss-view" id="view-explore" data-view="explore" aria-labelledby="cover-h1">
+    <div class="ss-orientation" aria-label="About SpicyStock">
+      <p><strong>Review short-term momentum setups.</strong> First check market/data, then choose a stock: inspect evidence → conditional plan or wait.</p>
+      <p class="ss-orientation__boundary">Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.</p>
+    </div>
     <div class="sc-card ss-market" id="market-bar">
       <div class="ss-market__verdict">
         <div class="sc-eyebrow" id="cover-eyebrow">spicystock · evening run</div>
@@ -128,6 +133,7 @@
         <div>
           <h1 id="following-h3">My setups</h1>
           <p class="sc-hint" id="following-hint">Saved in this browser only. Setups stay here when the scan changes. No cross-device sync. Published price movement is research, not personal P&amp;L.</p>
+          <div id="saved-help"></div>
         </div>
         <span id="following-count"></span>
       </div>
@@ -142,8 +148,9 @@
     <header class="sc-chapter">
       <span class="sc-chapter__index" aria-hidden="true">02</span>
       <div class="sc-chapter__body">
-        <h2 id="record-h2">The rules' record</h2>
+        <h2 id="record-h2">Public-model outcomes</h2>
         <p>What the published plans did, as a model from daily bars: a fill only at the next open inside the ticket, the published stop as one R, whole-share sales. An implementation of the method with explicit assumptions (the archived rules), not a brokerage record and not proof of an edge — the rules' record, not yours.</p>
+        <div id="outcome-help"></div>
       </div>
     </header>
     <div class="sc-card" id="record-card"></div>
@@ -163,8 +170,8 @@
     <header class="sc-chapter">
       <span class="sc-chapter__index" aria-hidden="true">03</span>
       <div class="sc-chapter__body">
-        <h2 id="breadth-h2">Is it a night to trade?</h2>
-        <p>Bonde's Market Monitor, computed over usable fetched stock frames for the measured session.</p>
+        <h2 id="breadth-h2">What does the market filter permit?</h2>
+        <p>Recorded market participation across usable stock frames. This filter sets model sizing or refuses new longs; it cannot override a stock’s missing evidence, unavailable ticket or expired entry window.</p>
       </div>
     </header>
     <dl class="sc-stat-strip sc-stat-strip--4 sc-stat-strip--instrument" id="breadth-deck" aria-label="Breadth for the measured session"></dl>
@@ -178,18 +185,21 @@
     <header class="sc-chapter">
       <span class="sc-chapter__index" aria-hidden="true">04</span>
       <div class="sc-chapter__body">
-        <h2 id="method-h2">Method and run details</h2>
-        <p>Whose number each rule is, what the published run read, and the sizing assumptions every ticket was computed from.</p>
+        <h2 id="method-h2">How to read SpicyStock</h2>
+        <p>Follow the report, interpret a local status, then inspect the recorded rules and sources.</p>
       </div>
     </header>
+    <button type="button" class="sc-btn sc-btn--secondary ss-method-return" id="method-return" hidden>Back to what I was reading</button>
+    <div class="sc-card" id="method-card" aria-labelledby="method-h3">
+      <div class="sc-card__head"><div><h3 id="method-h3">From discovery to a conditional plan</h3></div></div>
+      <div class="sc-doc sc-doc--flat" id="method-body"></div>
+      <details class="sc-disclosure" id="cover-record"><summary>Original scan summary and coverage</summary><div class="sc-card__body"><p id="cover-original"></p><p id="cover-coverage"></p></div></details>
+      <div class="ss-method-topics" id="method-topics"></div>
+    </div>
     <div class="sc-card" id="run-details" aria-labelledby="run-h3">
       <div class="sc-card__head"><div><h3 id="run-h3">Published run</h3><p class="sc-hint">Coverage, grading and delivery, as the run recorded them.</p></div></div>
       <dl class="sc-stat-strip sc-stat-strip--instrument ss-strip" id="run-strip" aria-label="Published run"></dl>
       <ul class="ss-notes" id="run-meta"></ul>
-    </div>
-    <div class="sc-card" id="method-card" aria-labelledby="method-h3">
-      <div class="sc-card__head"><div><h3 id="method-h3">How to read this page</h3></div></div>
-      <div class="sc-doc sc-doc--flat" id="method-body"></div>
     </div>
     <div class="sc-card" id="account-card" aria-labelledby="account-h3">
       <div class="sc-card__head"><div><h3 id="account-h3">The configured sizing assumptions</h3><p class="sc-hint">Not a balance, settled cash or buying power: the inputs every plan is sized from.</p></div></div>

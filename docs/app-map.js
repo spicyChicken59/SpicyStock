@@ -121,7 +121,7 @@
         + ' · ' + plotted.length + ' plotted' + (missing.length ? ' · ' + missing.length + ' without a measurement' : '') })
     ]);
     const surface = el('div', { 'class': 'ss-map__surface', role: 'group', 'aria-label': 'Bursts by the session’s gain and its volume relative to the previous session' });
-    const legend = el('div', { 'class': 'ss-map__legend', 'aria-hidden': 'true' }, [
+    const legend = el('div', { 'class': 'ss-map__legend', 'aria-label': 'Point source symbols' }, [
       el('span', { text: '● chart reader' }), el('span', { text: '○ checklist alone' }),
       points.some((p) => p.source !== 'claude' && p.source !== 'checklist') ? el('span', { text: '◌ source not recorded' }) : null
     ]);
@@ -132,6 +132,7 @@
     const controlHost = el('div', { 'class': 'ss-map__control' });
     const selectionRow = el('div', { 'class': 'ss-map__selection-row' }, [selection, nearbyBtn, controlHost]);
     const note = el('p', { 'class': 'ss-map__note', text: 'Each point is a recorded burst. Position is a measurement on the recorded session — the close against the previous close, the volume against the previous session — not a predicted return. ' + SCALE_WORDS + (missing.length ? ' ' + missing.length + ' burst' + (missing.length === 1 ? ' lacks' : 's lack') + ' a complete measurement and stay listed below.' : '') });
+    note.appendChild(w.document.createTextNode(' Equal vertical pixel distances are not equal ratio differences. Accent fill and outline identify the selected stock, overriding its source symbol; the source label still applies. This is selection, not a better grade.'));
     host.appendChild(head); host.appendChild(surface); host.appendChild(legend); host.appendChild(selectionRow); host.appendChild(note);
 
     // the bursts without a point, each a way into its card

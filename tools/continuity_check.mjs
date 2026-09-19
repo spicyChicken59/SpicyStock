@@ -30,7 +30,7 @@ async function open(data, shared=hub()) {
  return {ok:true,status:200,text:async()=>body.toString(),json:async()=>JSON.parse(body),arrayBuffer:async()=>body.buffer.slice(body.byteOffset,body.byteOffset+body.byteLength)};
  };
  w.SCStock={now:'2026-09-14T23:00:00Z'};
- for(const f of ['docs/design-system/sc-charts.js','docs/app-chart.js','docs/app-map.js','docs/app-follow.js','docs/app.js']) w.eval(await source(f));
+ for(const f of ['docs/design-system/sc-charts.js','docs/app-chart.js','docs/app-map.js','docs/app-follow.js','docs/app-reading.js','docs/app.js']) { if(baseline && f==='docs/app-reading.js') continue; w.eval(await source(f)); }
  await pause();await pause();
  check(!!w.SCStock.model,'app loaded with the real published record: '+errors.join(';'));
  return {w,dom,shared,errors,close(){shared.windows=shared.windows.filter(x=>x!==w);dom.window.close();}};

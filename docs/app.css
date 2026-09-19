@@ -1,4 +1,4 @@
-/* SpicyStock — page styles on top of the SpicyChicken system (sc.css 2.10.0).
+/* SpicyStock — page styles on top of the SpicyChicken system (sc.css 2.13.0).
    Semantic tokens only; every class here is ss-* and composes sc-* components.
    Nothing in this file names a colour, a threshold or a strategy number. */
 
@@ -18,7 +18,8 @@
 .ss-notice { margin-top: var(--sc-s3); }
 .ss-notice p { margin: 4px 0 0; }
 .ss-notice p:first-of-type { margin-top: 0; }
-.ss-view { margin-top: var(--sc-s3); }
+.ss-view { margin-top: var(--sc-s2); }
+.sc-wrap--wide.ss-page { padding-block-start: var(--sc-s2); }
 /* On a phone the masthead already costs three rows; 56px of page padding and
    view margin on top of it pushed the verdict to a third of the screen. */
 @media (max-width: 720px) {
@@ -135,7 +136,7 @@
    stays outside the native list scroller; the whole detail scrolls as one.
    Screen-only rules leave Map, the phone rail and printed details in flow. */
 @media screen and (min-width: 721px) {
-  .ss-workspace[data-discover="cards"] { height: max(440px, calc(100dvh - 112px)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .ss-workspace[data-discover="cards"] { height: max(440px, calc(100dvh - 112px)); grid-template-rows: minmax(0, 1fr); align-items: stretch; margin-top: var(--sc-s1); }
   .ss-workspace[data-discover="cards"] .ss-picks { display: flex; flex-direction: column; min-height: 0; }
   .ss-workspace[data-discover="cards"] .ss-picks__head { flex: 0 0 auto; padding-inline: 4px; gap: var(--sc-s0) var(--sc-s1); margin-bottom: var(--sc-s1); }
   .ss-workspace[data-discover="cards"] .ss-picks__head > .ss-lens { flex: 1 1 100%; }
@@ -730,3 +731,59 @@
 
 /* Reuse the shared count strip at a compact scale, including two columns on phones. */
 .ss-scorecard-counts { --sc-stat-pad: var(--sc-s2); --sc-stat-size: 30px; }
+
+/* Local reading guidance uses the installed palette and existing controls. */
+.ss-orientation { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(230px, 1fr); gap: 8px 24px; margin: 0 0 var(--sc-s2); font-size: 14px; line-height: 1.5; }
+.ss-orientation p { margin: 0; }
+.ss-orientation strong { color: var(--sc-heading); }
+.ss-orientation__boundary { color: var(--sc-text-2); align-self: center; }
+.ss-reading-order { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: var(--sc-text-2); }
+.ss-reading-order a { white-space: nowrap; }
+.ss-help { display: inline-flex; align-items: center; padding: 3px 5px; min-height: 28px; border: 0; border-radius: var(--sc-r-sm); background: transparent; color: var(--sc-brand); font: 600 12px/1.5 var(--sc-font-body); text-align: left; cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
+.ss-help:hover { background: var(--sc-brand-fill); }
+.ss-help:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 2px; }
+.ss-help-popover { position: fixed; inset: auto; margin: 0; width: min(360px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow: auto; padding: 16px; border: 1px solid var(--sc-border-control); border-radius: var(--sc-r-lg); background: var(--sc-surface); color: var(--sc-text); box-shadow: var(--sc-shadow); font: 400 14px/1.55 var(--sc-font-body); z-index: 100; }
+.ss-help-popover__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; color: var(--sc-heading); }
+.ss-help-popover p { margin: 10px 0; }
+.ss-help-popover a { color: var(--sc-brand); }
+.ss-section-help { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 12px; }
+.ss-section-help p { margin: 0; flex: 1 1 230px; }
+.ss-checks { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.ss-checks .ss-check.sc-signal { display: flex; flex-direction: column; align-items: stretch; gap: 9px; padding: 14px; min-width: 0; text-align: left; color: var(--sc-text); background: var(--sc-surface); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); font: 400 14px/1.5 var(--sc-font-body); }
+.ss-check__head { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.ss-check__head h4 { flex: 1 1 170px; margin: 0; font: 650 15px/1.4 var(--sc-font-body); color: var(--sc-heading); }
+.ss-check p { margin: 0; }
+.ss-check__why { color: var(--sc-text-2); }
+.ss-check__raw { margin: 0; font-size: 13px; color: var(--sc-text-2); }
+.ss-check__raw summary { cursor: pointer; color: var(--sc-brand); }
+.ss-check__raw p { margin-top: 8px; overflow-wrap: anywhere; }
+.ss-check__raw pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.5 var(--sc-font-mono); }
+.ss-check .ss-check__show { align-self: flex-start; margin-top: auto; }
+.ss-check__unavailable { font-size: 12px; color: var(--sc-text-2); }
+.ss-signal-detail { padding: 8px; font: 12px/1.5 var(--sc-font-body); white-space: normal; }
+.ss-signal-detail summary { cursor: pointer; color: var(--sc-brand); }
+.ss-signal-detail p { min-width: 180px; max-width: 290px; margin: 6px 0; overflow-wrap: anywhere; }
+.ss-chart-reading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin-top: 8px; font: 400 12px/1.5 var(--sc-font-body); color: var(--sc-text-2); }
+.ss-chart-reading p { margin: 0; flex: 1 1 260px; }
+.ss-method-topics { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 10px; margin-top: 18px; align-items: start; }
+.ss-method-topic { padding: 12px 14px; border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); font-size: 14px; line-height: 1.6; }
+.ss-method-topic summary { cursor: pointer; font-weight: 600; color: var(--sc-heading); }
+.ss-method-topic p { margin: 10px 0 0; }
+.ss-method-topic:target, .ss-method-topic:focus-within { border-color: var(--sc-brand); }
+.ss-method-return { margin-bottom: 16px; }
+@media (max-width: 720px) {
+  .ss-orientation { grid-template-columns: 1fr; gap: 5px; font-size: 13px; }
+  .ss-help { min-height: 36px; }
+}
+
+/* Long disclosure hints must wrap at enlarged text sizes. */
+.ss-detail > .sc-disclosure > summary { flex-wrap: wrap; }
+
+/* Keep the compact reading guidance beside the existing working surface. */
+.ss-view > .ss-band { margin-top: 12px; }
+@media (max-width: 720px) {
+  .ss-page > .ss-view { margin-top: var(--sc-s1); }
+  .ss-market { gap: var(--sc-s1); padding: 14px; }
+  .ss-orientation { margin-bottom: 8px; gap: 0; }
+  .ss-workspace { margin-top: 12px; }
+}
