@@ -23,6 +23,7 @@
 <script src="app-map.js"></script>
 <script src="app-follow.js"></script>
 <script src="app-reading.js"></script>
+<script src="app-method.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -190,6 +191,23 @@
       </div>
     </header>
     <button type="button" class="sc-btn sc-btn--secondary ss-method-return" id="method-return" hidden>Back to what I was reading</button>
+    <!-- the method itself, walked once over a synthetic series (docs/app-method.js); reads no record -->
+    <div class="sc-card ss-walk-card" id="walkthrough" aria-labelledby="walkthrough-h3">
+      <div class="sc-card__head"><div><h3 id="walkthrough-h3">The method, one burst at a time</h3><p class="sc-hint">Bonde’s momentum burst as SpicyStock runs it, on one synthetic series: a range-expansion day out of a quiet base, a plan written before the open, and a five-session hold with the exits decided in advance. Every step says whose number it is.</p></div></div>
+      <div id="walkthrough-mount"></div>
+      <dl class="ss-walk__marks" aria-label="Whose number is it">
+        <dt>B</dt><dd>Bonde’s own words or formula.</dd>
+        <dt>V</dt><dd>His 2018 video, one machine transcription, corroborated by an independent port.</dd>
+        <dt>P</dt><dd>This repo’s provisional proxy, with no source number behind it.</dd>
+        <dt>E</dt><dd>Third-party evidence.</dd>
+      </dl>
+      <details class="sc-disclosure" id="walkthrough-evidence"><summary>What the evidence says, and whose numbers these are</summary>
+        <div class="sc-card__body">
+          <p>The one pre-registered test of mechanised 2LYNCH gates (n = 10,947) found that the gates remove the losing half and do not find the winning half. The raw 4% scan has no median edge at 20 days, and a burst day of 15% or more is the worst cell of all. The edge, if there is one, sits in the low-of-day stop and the exit ladder, not in selection.</p>
+          <p class="sc-hint">The bars are synthetic and the numbers are this build’s rules, each held to the module that reads it; the record on screen archives its own under the rules digest printed under Published run, and an older record keeps the rules it was made under. The example ticket and its replay are what the plan and record modules write for these bars, not an observed trade.</p>
+        </div>
+      </details>
+    </div>
     <div class="sc-card" id="method-card" aria-labelledby="method-h3">
       <div class="sc-card__head"><div><h3 id="method-h3">From discovery to a conditional plan</h3></div></div>
       <div class="sc-doc sc-doc--flat" id="method-body"></div>

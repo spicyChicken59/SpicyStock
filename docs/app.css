@@ -787,3 +787,65 @@
   .ss-orientation { margin-bottom: 8px; gap: 0; }
   .ss-workspace { margin-top: 12px; }
 }
+
+/* ---- Method: the walkthrough (docs/app-method.js) ------------------------ */
+/* One synthetic chart beside its step list and caption; on a phone they stack.
+   Every mark carries a tone SLOT through --sc-tone and the sheet keeps the
+   declaration, so a theme flip re-resolves it with no script. */
+.ss-walk { display: grid; grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr); grid-template-areas: 'stage index' 'caption index'; gap: var(--sc-s3) var(--sc-s4); align-items: start; margin-top: var(--sc-s2); }
+.ss-walk__stage { grid-area: stage; min-width: 0; border-radius: var(--sc-r-sm); }
+.ss-walk__stage:focus { outline: none; }
+.ss-walk__stage:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 4px; }
+.ss-walk__modules { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 var(--sc-s2); padding: 0; list-style: none; }
+.ss-walk__chart { position: relative; min-height: 200px; }
+.ss-walk__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ss-walk__svg text { font: 500 10.5px var(--sc-font-mono); fill: var(--sc-text-2); }
+.ss-walk__axis { fill: var(--sc-text-3); }
+.ss-walk__grid { stroke: var(--sc-chart-grid); }
+.ss-walk__wick { stroke: var(--sc-tone, var(--sc-chart-context)); stroke-width: 1.2; }
+.ss-walk__candle { stroke: var(--sc-tone, var(--sc-chart-context)); stroke-width: 1.3; fill: none; }
+.ss-walk__candle.is-filled { fill: var(--sc-tone, var(--sc-chart-context)); }
+.ss-walk__vol { fill: var(--sc-tone, var(--sc-chart-context)); fill-opacity: .5; }
+.ss-walk__bar { opacity: 1; transition: opacity var(--sc-motion-enter) var(--sc-ease); }
+.ss-walk__bar.is-ghost { opacity: .3; }
+.ss-walk__mark { opacity: 0; pointer-events: none; transition: opacity var(--sc-motion-enter) var(--sc-ease); }
+.ss-walk__mark.is-on { opacity: 1; }
+.ss-walk__line { fill: none; stroke: var(--sc-tone, var(--sc-chart-context)); stroke-width: 1.5; }
+.ss-walk__line--dashed { stroke-dasharray: 4 3; }
+.ss-walk__line--dotted { stroke-dasharray: 1 3; }
+.ss-walk__box { fill: var(--sc-tone, var(--sc-chart-context)); fill-opacity: .16; stroke: var(--sc-tone, var(--sc-chart-context)); stroke-width: 1.3; stroke-dasharray: 4 3; }
+.ss-walk__band { fill: var(--sc-tone, var(--sc-chart-context)); fill-opacity: .16; stroke: none; }
+.ss-walk__ring { fill: none; stroke: var(--sc-tone, var(--sc-chart-context)); stroke-width: 1.5; }
+.ss-walk__flag { fill: var(--sc-tone, var(--sc-accent)); }
+.ss-walk__dot { fill: var(--sc-tone, var(--sc-chart-emphasis)); stroke: var(--sc-surface); stroke-width: 1.5; }
+.ss-walk__path { fill: none; stroke: var(--sc-tone, var(--sc-danger)); stroke-width: 1.6; stroke-linejoin: round; }
+.ss-walk__pill { fill: var(--sc-raised); stroke: var(--sc-border-strong); stroke-width: 1; }
+.ss-walk__pill-text { font-weight: 600; fill: var(--sc-heading); }
+.ss-walk__leader { fill: none; stroke: var(--sc-tone, var(--sc-border-strong)); stroke-width: 1; }
+.ss-walk__gutter-text { fill: var(--sc-heading); }
+.ss-walk__controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sc-s1) var(--sc-s2); margin-top: var(--sc-s2); }
+.ss-walk__count { margin-left: auto; font: 500 11px/1 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-walk__side { grid-area: index; min-width: 0; }
+.ss-walk__index { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ss-walk__index .sc-tab { width: 100%; display: flex; align-items: baseline; gap: 8px; text-align: left; }
+.ss-walk__n { flex: 0 0 1.5em; color: var(--sc-text-3); font: 600 11px/1 var(--sc-font-mono); }
+.sc-tab[aria-current="step"] .ss-walk__n { color: inherit; opacity: .8; }
+.ss-walk__caption { grid-area: caption; min-width: 0; padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-walk__caption h4 { margin: 4px 0 6px; font-size: var(--sc-text-lg); line-height: var(--sc-lh-heading); color: var(--sc-heading); }
+.ss-walk__caption > p { margin: 0; max-width: 62ch; }
+.ss-walk__facts { margin: var(--sc-s2) 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.ss-walk__facts li { position: relative; padding-left: 14px; font: 500 12px/1.55 var(--sc-font-mono); color: var(--sc-text-2); overflow-wrap: anywhere; }
+.ss-walk__facts li::before { content: '·'; position: absolute; left: 2px; color: var(--sc-text-3); }
+.ss-walk__facts .sc-chip { margin-right: 6px; }
+.ss-walk__who { margin-top: var(--sc-s2); }
+.ss-walk__marks { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: var(--sc-s3) 0 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-walk__marks dt { font: 600 11px/1.7 var(--sc-font-mono); color: var(--sc-heading); }
+.ss-walk__marks dd { margin: 0; }
+.ss-walk-card .sc-details { margin-top: var(--sc-s2); }
+@media (max-width: 960px) {
+  .ss-walk { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'stage' 'index' 'caption'; }
+  .ss-walk__index { flex-direction: row; flex-wrap: wrap; }
+  .ss-walk__index .sc-tab { width: auto; }
+}
+@media (pointer: coarse) { .ss-walk__controls .sc-btn, .ss-walk__index .sc-tab { min-height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .ss-walk__bar, .ss-walk__mark { transition: none; } }

@@ -1311,6 +1311,8 @@
       if (parts[0] === 'following') return { view: 'setups' };
       if (VIEWS.indexOf(parts[0]) < 0) return { view: 'explore', unknown: '#' + hash };
       if (parts[0] === 'method' && parts.length === 2 && reading.terms[parts[1]]) return { view: 'method', topic: parts[1], anchor: 'read-' + parts[1] };
+      // the walkthrough keeps its own path, as a reading topic does, so a bookmark reloads to it
+      if (parts[0] === 'method' && parts.length === 2 && parts[1] === 'walkthrough') return { view: 'method', topic: 'walkthrough', anchor: 'walkthrough' };
       if (parts[0] !== 'explore') return parts.length > 1 ? { view: parts[0], unknown: '#' + hash } : { view: parts[0] };
       const out = { view: 'explore' };
       if (parts.length > 1) { if (STAGES.indexOf(parts[1]) < 0) return { view: 'explore', unknown: '#' + hash }; out.stage = parts[1]; }
@@ -4599,6 +4601,10 @@
     loadLens();
     loadDiscover();
     wire();
+    // The method walkthrough (docs/app-method.js) reads no record: it is
+    // mounted once, here, so it stands on the no-record page too. The
+    // interval override is a test's, injected the way `now` and `dataUrl` are.
+    if (SCStock.walkthrough && $('walkthrough-mount')) SCStock.walkthrough.mount($('walkthrough-mount'), { interval: SCStock.walkthroughInterval });
     const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
     w.fetch(src, { cache: 'no-store' })
       .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.text(); })

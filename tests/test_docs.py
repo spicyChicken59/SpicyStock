@@ -107,6 +107,10 @@ def test_the_readme_layout_names_files_that_exist():
     names = re.findall(r"[\w.-]+\.(?:py|json|js|css|html|md|yml)", block)
     missing = [n for n in names if not list(ROOT.rglob(n))]
     assert not missing, missing
+    # and the reverse for the page's own modules: a docs/app-*.js the layout
+    # does not name is a module that shipped undocumented
+    for module in (ROOT / "docs").glob("app*.js"):
+        assert module.name in block, f"README's layout does not name docs/{module.name}"
     assert set(re.findall(r"(\w+)\.py", block.split("src/")[1].split("docs/")[0])) == \
         {p.stem for p in (ROOT / "src").glob("*.py") if p.stem != "__init__"}
 
@@ -286,6 +290,14 @@ def test_the_rulebook_bands_are_the_graders():
 def test_the_method_file_names_every_module_that_holds_a_rule():
     for module in ("universe", "scans", "quality", "breadth", "watchlist", "plan", "record"):
         assert f"src/{module}.py" in METHOD, module
+
+
+def test_the_walkthroughs_evidence_line_is_the_method_files():
+    """The one number the walkthrough's evidence paragraph carries is the
+    study's sample, and knowledge/method.md is where it is sourced."""
+    page = (ROOT / "docs" / "index.html").read_text()
+    assert "n = 10,947" in page and "n=10,947" in METHOD
+    assert "gates remove the losing half" in page and "remove the losing half" in METHOD
 
 
 def test_the_workflow_inventory_the_readme_names_is_the_one_that_exists():
