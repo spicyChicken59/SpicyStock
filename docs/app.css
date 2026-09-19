@@ -137,7 +137,7 @@
 @media screen and (min-width: 721px) {
   .ss-workspace[data-discover="cards"] { height: max(440px, calc(100dvh - 112px)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
   .ss-workspace[data-discover="cards"] .ss-picks { display: flex; flex-direction: column; min-height: 0; }
-  .ss-workspace[data-discover="cards"] .ss-picks__head { flex: 0 0 auto; padding-inline: 4px; }
+  .ss-workspace[data-discover="cards"] .ss-picks__head { flex: 0 0 auto; padding-inline: 4px; gap: var(--sc-s0) var(--sc-s1); margin-bottom: var(--sc-s1); }
   .ss-workspace[data-discover="cards"] .ss-picks__head > .ss-lens { flex: 1 1 100%; }
   .ss-workspace[data-discover="cards"] .ss-picks__list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px; scroll-padding-block: 4px; }
   .ss-workspace[data-discover="cards"] .ss-pick-item { flex: 0 0 auto; }

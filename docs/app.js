@@ -1341,6 +1341,9 @@
       // jumped out of the Following lens the moment the last setup left it.
       const named = route.ticker ? model.byId[stage + ':' + route.ticker] : null;
       const asked = named && named.id !== wasOn ? named : null;
+      // A named route (including Back) must be discoverable even when the
+      // previous stock was being searched. Typing alone keeps its selection.
+      if (asked && !matches(asked, state.query)) { state.query = ''; $('search').value = ''; }
       if (asked && !lensPass(asked, lensOf(stage))) {
         const was = lensOf(stage);
         setLens(stage, 'all', false);
@@ -1410,7 +1413,7 @@
 
   // ---------------------------------------------------------------- Explore: the stocks in a stage
   const matches = (c, q) => !q || c.ticker.indexOf(q) >= 0 || (c.name && c.name.toUpperCase().indexOf(q) >= 0);
-  function setQuery(q) { state.query = q; $('search').value = q; if (model && state.view === 'explore') renderPicks(); }
+  function setQuery(q) { state.query = q; $('search').value = q; if (model && state.view === 'explore') { renderPicks(); renderDetail(); } }
   function pickItem(c) {
     const sw = statusWords(c.status);
     const btn = el('button', { 'class': 'ss-pick', type: 'button', 'data-id': c.id, 'data-ticker': c.ticker, 'data-status': c.status, 'data-rank': String(c.rank), 'aria-pressed': 'false', 'aria-controls': 'detail', tabindex: '-1' }, [
@@ -4119,7 +4122,7 @@
     w.addEventListener('focus', () => reclock());
     w.addEventListener('pageshow', () => reclock());
     const input = $('search');
-    input.addEventListener('input', () => { state.query = input.value.trim().toUpperCase(); if (model && state.view === 'explore') renderPicks(); });
+    input.addEventListener('input', () => setQuery(input.value.trim().toUpperCase()));
     $('search-form').addEventListener('submit', (e) => { e.preventDefault(); if (!model) return; const q = input.value.trim().toUpperCase(); if (q) resolveSearch(q); });
     $('pick-list').addEventListener('keydown', (e) => {
       const picks = Array.from($('pick-list').querySelectorAll('.ss-pick')), i = picks.indexOf(d.activeElement);
@@ -4151,6 +4154,7 @@
       if (mq.addEventListener) mq.addEventListener('change', onBreak);
       else if (mq.addListener) mq.addListener(onBreak);
     }
+    w.addEventListener('resize', () => { if (model && state.view === 'explore') revealSelectedPick(); });
     // the comparison sheet: one teardown whichever way it was dismissed --
     // the Close button, Escape, or a press on the backdrop
     const cmp = $('compare');

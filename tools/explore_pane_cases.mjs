@@ -50,8 +50,11 @@ const inside = (r, parent, height, pad = 0) => r && parent && r.top >= Math.max(
 
 export async function checkExplorePanes({ browser, base, data, open, check, eq, shotsDir }) {
   console.log('-- Explore panes: labelled offline candidates, normal-origin native scrolling');
+  const report = check;
+  check = (name, ok, detail) => report(name, ok, detail && typeof detail === 'object' ? JSON.stringify(detail) : detail);
   const record = paneRecord(data), metrics = { evidenceKind: 'in-memory expansion of tests/fixtures/page/full.json; normal-origin Chromium; no live-site claim', journeys: [] };
   if (shotsDir) await mkdir(shotsDir, { recursive: true });
+  const saveMetrics = async () => { if (shotsDir) await writeFile(path.join(shotsDir, 'explore-pane-metrics.json'), JSON.stringify(metrics, null, 2) + '\n'); };
   const launch = (width, height, theme, stage = 'bursts', ticker = stage === 'bursts' ? 'AAPL' : 'COIL') => open(browser, base,
     '/tests/fixtures/page/full.json', '2026-09-10T22:31:00Z', width,
     { height, theme, lens: 'all', hash: '#/explore/' + stage + '/' + ticker, reducedMotion: 'reduce',
@@ -80,10 +83,24 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     await cards(page).last().click(); await settle(page);
     const same = await bounds(page);
     check(tag + ': selecting the same stock preserves detail scroll', near(same.detail.scrollTop, deep.detail.scrollTop), { deep, same });
-    await cards(page).nth(total - 2).click(); await settle(page);
+    // Browse to a fully visible different card first. Clicking a clipped card
+    // can legitimately need a nearest-position adjustment; this case isolates
+    // the promise to preserve a list position that already exposes the target.
+    await page.mouse.move(same.list.left + 60, same.list.top + 60);
+    await page.mouse.wheel(0, -650); await settle(page);
+    const beforeChoice = await bounds(page);
+    const other = await cards(page).evaluateAll(nodes => {
+      const list = document.querySelector('#pick-list').getBoundingClientRect();
+      return nodes.find(n => { const r = n.closest('.ss-pick-item').getBoundingClientRect();
+        return n.getAttribute('aria-pressed') !== 'true' && r.top >= list.top + 4 && r.bottom <= list.bottom - 4;
+      })?.dataset.ticker;
+    });
+    check(tag + ': browsing exposes a different complete card', !!other);
+    if (other) await page.locator('#pick-list .ss-pick[data-ticker="' + other + '"]').click();
+    await settle(page);
     const changed = await bounds(page);
     check(tag + ': a different stock reveals identity and resets only detail', changed.detail.scrollTop === 0 && inside(changed.identity, changed.detail, height)
-      && near(changed.list.scrollTop, same.list.scrollTop) && near(changed.pageY, same.pageY), { same, changed });
+      && near(changed.list.scrollTop, beforeChoice.list.scrollTop) && near(changed.pageY, beforeChoice.pageY), { beforeChoice, changed });
     await go(page, stage, prefix + (stage === 'bursts' ? '038' : '016'));
     eq(tag + ': missing chart has a readable unavailable state', await page.locator('#detail [data-chart="unavailable"]').count(), 1);
     await cards(page).last().click(); await settle(page);
@@ -114,6 +131,8 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
       await search.fill(query); await settle(page);
       eq(tag + ': search population ' + query, await cards(page).count(), count);
       eq(tag + ': filtering does not select', await selected(page), prior);
+      eq(tag + ': Previous/Next cannot leave a search hiding the current stock',
+        await page.locator('#detail [data-step]').evaluateAll(nodes => nodes.every(n => n.disabled)), true);
       const b = await bounds(page);
       check(tag + ': short/single/empty panes retain matching boundaries', near(b.picks.bottom, b.detail.bottom) && near(b.picks.height, late.picks.height), b);
     }
@@ -124,6 +143,10 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     eq(tag + ': Back restores the previous selection', await selected(page), prior);
     await visibleSelected(page, tag + ' Back');
     await go(page, stage, second); await visibleSelected(page, tag + ' Deep link');
+    await search.fill(prefix + '001'); await settle(page);
+    await page.goBack(); await settle(page);
+    eq(tag + ': Back clears only a search hiding its named stock', await search.inputValue(), '');
+    await visibleSelected(page, tag + ' Back through a filter');
     await page.locator('#lens [data-lens="following"]').click(); await settle(page);
     eq(tag + ': empty lens keeps all candidates in the underlying stage', await cards(page).count(), 0);
     eq(tag + ': empty lens explains the missing selection', await page.locator('#detail [data-detail="lens"]').count(), 1);
@@ -183,7 +206,7 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     let entered = false;
     for (let i = 0; i < 8; i++) { await page.keyboard.press('Tab'); if (await page.evaluate(() => document.querySelector('#detail').contains(document.activeElement))) { entered = true; break; } }
     check(tag + ': keyboard can leave the final card tools and enter detail', entered);
-    metrics.journeys.push({ tag: tag + '-interactions', deep, same, changed, browsing, rerender, focused, restored, bottom, held });
+    metrics.journeys.push({ tag: tag + '-interactions', deep, same, beforeChoice, changed, browsing, rerender, focused, restored, bottom, held });
   };
 
   for (const [width, height] of [[1440, 1000], [1280, 800]]) for (const stage of ['bursts', 'setting-up']) for (const theme of ['dark', 'light']) {
@@ -221,6 +244,7 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     check(tag + ': End and Enter leave the page at the workspace', near(late.pageY, initial.pageY), { initial, end, late });
     check(tag + ': no document horizontal overflow', late.documentWidth <= width, late);
     metrics.journeys.push({ tag, total, initial, wheel, end, late });
+    await saveMetrics();
     if (theme === 'dark' && initial.list.scrollHeight > initial.list.clientHeight + 500) await interactions(page, stage, tag, late, total);
     eq(tag + ': no unexpected browser errors', [...session.errors], []);
     await session.context.close();
@@ -278,5 +302,5 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
   }
   eq('resize: no unexpected browser errors', [...resized.errors], []);
   await resized.context.close();
-  if (shotsDir) await writeFile(path.join(shotsDir, 'explore-pane-metrics.json'), JSON.stringify(metrics, null, 2) + '\n');
+  await saveMetrics();
 }

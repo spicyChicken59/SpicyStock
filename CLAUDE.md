@@ -2284,9 +2284,18 @@ The chart renderer, focusSlice/chartPanel and #77 geometry are unchanged.
 PASS local offline gates before implementation: 1,333 Python, 12 fixtures,
 127 continuity and 112 geometry-only checks. PASS continuity after implementation.
 BLOCKED local real browser: Chromium is absent and its download times out.
-NOT RUN fixed browser acceptance at this checkpoint; automatic PR CI owns the
-full normal-origin gate, measured viewport evidence and screenshot inspection.
-Final exact-head results and any corrections will be recorded here and in #78.
+FAIL first corrected browser run `35417985180`, head
+`6f993cbdbd29cbb91b087c23a623a8b5e1bcf3f3`: 7301/7304 page checks pass. All core
+pane journeys and #77 regressions pass. Remaining findings: height-only resizing
+can clip the selected card; the fixed filters push the first card below the
+existing first-screen gate; one test clicks a partially clipped preceding card
+and incorrectly expects no nearest-position adjustment. The corrected journey
+first browses to a fully visible different card before measuring preservation.
+The correction reveals selection on viewport resize and tightens only header
+gaps. Named Back/deep links clear an incompatible search, and live search updates
+the existing stepper without selecting or rebuilding the chart. These also have
+explicit browser checks. PASS this head's Python/fixture/clean-tree, continuity,
+182 chart checks and Secret Scan. Final exact-head results remain in #78.
 README is updated; .env.example reviewed with no environment change needed.
 
 KEEP all production data, history, receipts, source evidence, rules, plans,
