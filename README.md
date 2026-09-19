@@ -93,6 +93,16 @@ does not carry, falls back to Explore and says so.
    Bursts when the scan found any, Setting up otherwise, and a chosen stage
    is never switched away from: an empty one says why it is empty. Each
    stage remembers its last chosen stock.
+   Desktop **Cards** uses two matching, viewport-height panes. Search, counts,
+   filters and sorting stay above the scrolling card list; the selected stock's
+   full details scroll alongside it, including the normal-size chart and every
+   disclosure. Wheel scrolling stays in its pane. Arrow/Home/End move card focus;
+   Enter selects. A different stock starts at its identity; selecting the same
+   stock or repainting it keeps the reader's detail position. Selection, search,
+   Previous/Next and Back reveal the selected card only when needed, without
+   snapping back during browse-only focus movement. The surrounding page remains
+   scrollable, Map stays full width, and phones retain the horizontal rail,
+   chooser and stacked details. Scroll positions are not persisted.
    A **lens** narrows the stage, each option a question asked of a field the
    run wrote and each wearing the count it will show: *A-quality* (the A and
    A+ grades this record archived), *All bursts*, *With ticket* (a ticket

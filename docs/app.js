@@ -1220,7 +1220,7 @@
   // history entry) so what is bookmarked is what is shown. The old
   // one-page anchors (#hold, #orders, #trade-X, #burst-X, #closest-miss,
   // #scan-details, #also-quiet) still land where they used to.
-  const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, detailKey: null, gesture: false,
+  const state = { view: 'explore', stage: null, selected: { bursts: null, 'setting-up': null }, query: '', range: 60, notice: '', picksKey: null, pickContext: null, detailKey: null, gesture: false,
     lens: { bursts: null, 'setting-up': null }, sort: 'rank', pins: [], pinAsk: null };
   let current = null, model = null, st = null, pendingNotice = '', pendingFocus = '', chooserOpener = null;
   //: the shared action-availability answer, recomputed on every render and on
@@ -1287,6 +1287,29 @@
   SCStock.navigate = navigate;
   const reducedMotion = () => !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const scrollTo = (node) => { if (node && node.scrollIntoView) node.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }); };
+  const desktopCards = () => !narrow() && $('workspace').getAttribute('data-discover') === 'cards';
+  // Reveal only within the owning scroller. scrollIntoView also moves the
+  // document, which used to send the neighboring stock out of sight.
+  function revealWithin(node, host, horizontal) {
+    if (!node || !host || !host.clientHeight) return;
+    const r = node.getBoundingClientRect(), box = host.getBoundingClientRect();
+    const start = horizontal ? r.left : r.top, end = horizontal ? r.right : r.bottom;
+    const low = (horizontal ? box.left + host.clientLeft : box.top + host.clientTop) + 4;
+    const high = low + (horizontal ? host.clientWidth : host.clientHeight) - 8;
+    const delta = start < low ? start - low : end > high ? Math.min(end - high, start - low) : 0;
+    if (horizontal) host.scrollLeft += delta; else host.scrollTop += delta;
+  }
+  function revealPick(node) {
+    if ($('workspace').getAttribute('data-discover') !== 'cards') return;
+    revealWithin(node && (node.closest('.ss-pick-item') || node), $('pick-list'), narrow());
+  }
+  function revealSelectedPick() { revealPick($('pick-list').querySelector('.ss-pick[aria-pressed="true"]')); }
+  function syncPaneMode() {
+    const pane = desktopCards(), list = $('pick-list'), detail = $('detail');
+    detail.tabIndex = pane ? 0 : -1;
+    if (!pane) detail.scrollTop = 0;
+    if (narrow()) list.scrollTop = 0; else list.scrollLeft = 0;
+  }
   const savedHash = (id) => '#/followed/' + encodeURIComponent(id);
   function applyRoute(route, first) {
     const previousView = state.view;
@@ -1441,18 +1464,16 @@
     });
     return box;
   }
-  // Where the lens row lives. On a desktop it rides in the stage band, in the
-  // space beside the two cards, so narrowing a stage costs the chart nothing
-  // of the first screen. On a phone that band is already two stacked cards
-  // and the one thing that must stay above the fold is the search, so the
-  // lens goes under it, with the list it narrows.
-  const lensHome = () => (narrow() ? (($('picks') || {}).querySelector ? $('picks').querySelector('.ss-picks__head') : null) : $('stage-band'));
+  // Cards keeps the filters beside its search while the candidates scroll.
+  // Desktop Map keeps the original full-width composition and stage band.
+  const lensHome = () => (narrow() || state.stage !== 'bursts' || discover !== 'map' ? $('picks').querySelector('.ss-picks__head') : $('stage-band'));
   function renderLens(stage) {
     const host = $('lens');
     if (!host) return;
+    const held = host.contains(d.activeElement) ? focusKey(d.activeElement) : null;
     const home = lensHome();
     if (home && host.parentNode !== home) {
-      if (narrow()) home.insertBefore(host, $('picks-status'));
+      if (home !== $('stage-band')) home.insertBefore(host, $('picks-status'));
       else home.appendChild(host);
     }
     clear(host);
@@ -1472,6 +1493,8 @@
       });
       host.appendChild(reset);
     }
+    const back = held && host.querySelector(held);
+    if (back) back.focus({ preventScroll: true });
   }
   // a lens with nothing in it says which lens, why, and offers one way out
   function emptyLens(stage, lens) {
@@ -1546,18 +1569,22 @@
     // the stage's own total stays beside the subset, always
     $('picks-h2').textContent = STAGE_NAME[stage].toLowerCase() + ' · ' + shown.length + ' of ' + list.length;
     if (state.picksKey !== key) {
+      const top = host.scrollTop, left = host.scrollLeft;
+      const held = host.contains(d.activeElement) ? focusKey(d.activeElement) : null;
       clear(host);
       if (!list.length) host.appendChild(emptyStage(stage));
       else if (!inLens.length) host.appendChild(emptyLens(stage, lens));
       else if (!shown.length) host.appendChild(noMatch(stage, q));
       else shown.forEach((c) => host.appendChild(pickItem(c)));
       state.picksKey = key;
+      host.scrollTop = top; host.scrollLeft = left;
+      const back = held && host.querySelector(held);
+      if (back) back.focus({ preventScroll: true });
     }
     const sel = model.byId[state.selected[stage]];
     let seenSelected = false;
     host.querySelectorAll('.ss-pick').forEach((b) => { const on = !!sel && b.getAttribute('data-id') === sel.id; b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on) seenSelected = true; });
     if (!seenSelected) { const firstPick = host.querySelector('.ss-pick'); if (firstPick) firstPick.tabIndex = 0; }
-    if (sel && state.gesture && narrow()) { const b = host.querySelector('.ss-pick[aria-pressed="true"]'); if (b && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }); }
     // Which pins the lens hides is a reading of the CURRENT lens, so the tray
     // cannot be left behind by a change to it. It is redrawn only when what it
     // SHOWS has changed, because this runs on every search keystroke and a
@@ -1574,6 +1601,11 @@
     else if (sel) status = sel.ticker + ' · ' + (shown.indexOf(sel) + 1) + ' of ' + shown.length + ' shown, ' + list.length + ' in ' + STAGE_NAME[stage] + lensLine + (sortOf(stage) === 'rank' ? '' : ' · sorted by ' + SORT_WORDS[sortOf(stage)]) + '.';
     else status = '';
     $('picks-status').textContent = (state.notice ? state.notice + ' ' : '') + status;
+    // Selection, search, filter and sort changes reveal the selected card.
+    // Invalidating/repainting the same list must not undo intentional browsing.
+    const context = key + '|' + (sel ? sel.id : '');
+    if (state.pickContext !== context) revealSelectedPick();
+    state.pickContext = context;
   }
   function resolveSearch(q) {
     const stage = state.stage, here = model.stages[stage], hereMatch = here.filter((c) => matches(c, q));
@@ -2414,7 +2446,7 @@
     if (!ctl.childElementCount) {
       [['cards', 'Cards'], ['map', 'Map']].forEach((pair) => {
         const t = el('button', { 'class': 'sc-tab', type: 'button', 'data-discover': pair[0], 'aria-pressed': 'false', text: pair[1] });
-        t.addEventListener('click', () => { discover = pair[0]; saveDiscover(); renderDiscover(state.stage); if (discover === 'map' && mapView) mapView.focusSelected(); });
+        t.addEventListener('click', () => { discover = pair[0]; saveDiscover(); renderLens(state.stage); renderDiscover(state.stage); revealSelectedPick(); if (discover === 'map' && mapView) mapView.focusSelected(); });
         ctl.appendChild(t);
       });
     }
@@ -2422,6 +2454,7 @@
     const mapMode = stage === 'bursts' && discover === 'map';
     ws.setAttribute('data-discover', mapMode ? 'map' : 'cards');
     if (mapMode) mountMap(); else unmountMap();
+    syncPaneMode();
   }
 
   // ---------------------------------------------------------------- Following: a saved setup, in this browser
@@ -3679,7 +3712,10 @@
   function renderDetail() {
     const stage = state.stage, c = model.byId[state.selected[stage]], box = $('detail');
     const key = c ? c.id : 'none:' + stage;
+    const changed = box.getAttribute('data-selected') !== (c ? c.id : '');
+    const heldStep = box.contains(d.activeElement) ? d.activeElement.getAttribute('data-step') : null;
     if (state.detailKey !== key) {
+      const top = box.scrollTop, opened = Array.from(box.querySelectorAll('details[open][id]')).map(n => n.id);
       state.detailKey = key;
       disposeChart();
       clear(box);
@@ -3699,14 +3735,22 @@
       box.classList.remove('is-fresh');
       void box.offsetWidth;
       box.classList.add('is-fresh');
+      if (!changed) opened.forEach(id => { const node = $(id); if (node && box.contains(node)) node.open = true; });
+      box.scrollTop = changed ? 0 : top;
     }
     // the stepper counts the CURRENT visible list, so a lens or a search that
     // changed without changing the stock still says where this stock sits
     const tools = box.querySelector('.ss-detail__tools');
     if (tools && c) tools.parentNode.replaceChild(detailTools(c), tools);
     syncPins();
-    if (pendingFocus === 'detail') { pendingFocus = ''; box.focus({ preventScroll: true }); scrollTo(box); }
+    if (heldStep) { const back = box.querySelector('[data-step="' + heldStep + '"]:not(:disabled)') || box; back.focus({ preventScroll: true }); }
+    if (pendingFocus === 'detail') {
+      pendingFocus = ''; box.focus({ preventScroll: true });
+      const rect = box.getBoundingClientRect();
+      if (!desktopCards() || rect.top < 0 || rect.top >= w.innerHeight) scrollTo(box);
+    }
     else if (state.gesture && narrow() && c) scrollTo(box);
+    else if (changed && state.gesture && desktopCards() && box.getBoundingClientRect().top < 0) scrollTo(box);
     state.gesture = false;
   }
 
@@ -4087,7 +4131,11 @@
       else if (e.key === 'End') j = picks.length - 1;
       else return;
       e.preventDefault();
-      picks[j].focus();
+      picks[j].focus({ preventScroll: true });
+      revealPick(picks[j]);
+    });
+    $('detail').addEventListener('focusin', (e) => {
+      if (desktopCards() && e.target !== $('detail')) revealWithin(e.target, $('detail'), false);
     });
     $('choose-open').addEventListener('click', openChooser);
     const dlg = $('chooser'), cs = $('chooser-search');
@@ -4095,10 +4143,11 @@
     cs.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const first = $('chooser-list').querySelector('.ss-chooser__item'); if (first) first.click(); } });
     dlg.addEventListener('close', () => { if (dlg.returnValue !== 'chosen') { const back = chooserOpener && chooserOpener.focus ? chooserOpener : $('choose-open'); back.focus(); } chooserOpener = null; });
     dlg.addEventListener('click', (e) => { if (e.target === dlg && dlg.close) dlg.close('backdrop'); });
-    // the lens row changes home at the phone breakpoint; nothing else moves
+    // CSS owns pane sizing. Clear the old axis and reveal the chosen card once
+    // at a breakpoint, never continuously during the reader's browsing.
     if (w.matchMedia) {
       const mq = w.matchMedia('(max-width: 720px)');
-      const onBreak = () => { if (model && state.view === 'explore') renderLens(state.stage); };
+      const onBreak = () => { if (model && state.view === 'explore') { renderLens(state.stage); syncPaneMode(); revealSelectedPick(); } };
       if (mq.addEventListener) mq.addEventListener('change', onBreak);
       else if (mq.addListener) mq.addListener(onBreak);
     }
@@ -4204,7 +4253,7 @@
     }
     return next;
   }
-  const FOCUS_KEYS = ['data-open', 'data-copy', 'data-follow', 'data-open-saved', 'data-pin', 'data-go'];
+  const FOCUS_KEYS = ['data-open', 'data-copy', 'data-follow', 'data-open-saved', 'data-pin', 'data-go', 'data-id', 'data-lens', 'data-sort'];
   function focusKey(node) {
     if (!node || !node.getAttribute) return null;
     for (let i = 0; i < FOCUS_KEYS.length; i++) {
@@ -4376,7 +4425,7 @@
     unmountMap();
     closeCompare();
     disposeCompare();
-    state.stage = null; state.selected = { bursts: null, 'setting-up': null }; state.query = ''; state.picksKey = null; state.detailKey = null; state.notice = '';
+    state.stage = null; state.selected = { bursts: null, 'setting-up': null }; state.query = ''; state.picksKey = null; state.pickContext = null; state.detailKey = null; state.notice = '';
     // a comparison belongs to one published record: a new one clears it, and
     // the lens the reader chose is re-read against the record now on screen
     state.pins = []; state.pinAsk = null;
