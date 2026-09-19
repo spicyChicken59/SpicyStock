@@ -2209,3 +2209,42 @@ both the outer Provenance summary and the nested technical-reference summary.
 The regression now selects the direct child summary. This was a test-harness
 strict-selector error, not a second product defect; the application tree is
 unchanged. Final CI and visual results belong to the subsequent PR head.
+
+## September 19 — bounded evidence focus correction, PR #77
+
+Tahir authorized one Stock-only correctness PR, without merge or manual
+deployment. Both the supplied baseline and inspected origin/main were
+`8387ccedae22fbf30ddebdb6f52e1e42326a7ec5`; no intervening commits or open PRs.
+The clean checkout preserves #73–#76. Coverage work remains deferred.
+
+New source-attributed BPOP/BNY chart excerpts reproduce the acceptance failure
+without mutable production data. On untouched application code, geometry-only
+tests FAIL at 1440/390: BPOP stays at 36 observations and 1.000x magnification;
+BNY expands 17 to 21 with 0.852x candle spacing and unchanged price scale.
+The initial normal-browser test had an incorrect SVG selector; that test-only
+error was corrected before judging the baseline browser results. The corrected
+baseline CI head is `794b08f15be48e93be8954cfe2ba21c0f1780bad`.
+
+`focusSlice()` now keeps three context observations on available sides of the
+whole selected evidence, expanding evenly to 21 where available. If the normal
+range comparison cannot deliver useful horizontal spacing, the actual SVG is
+temporarily drawn 30% taller. Each Focus compares to the normal range rather
+than the previous focus. Selection, stored preferences, normal layout, exact
+recorded prices and the date-specific burst guard are unchanged. No renderer,
+CSS or shared-design modification was needed. README reflects this behavior;
+`.env.example` was reviewed and needs no change.
+
+Local geometry results PASS: BPOP 36 to 26 observations, 1.3125x spacing;
+BNY 17 to 21, 1.3345x desktop and 1.35x mobile price scale. Reverting compact
+padding or temporary height is caught independently; an unrelated wrong
+no-entry sentence leaves the focus controls passing. Local offline gates PASS:
+1,333 Python tests, 12 fixtures, 127 continuity and 112 geometry checks.
+All 3,844 protected files and all 22 design v2.13.0 hashes match the base.
+
+Local Chromium remains BLOCKED by its download timeout. Normal automatic PR CI
+owns the full browser gates, 84 pinned-evidence journeys and boundary cases,
+actual SVG measurements, screenshots, keyboard, Restore and localStorage/reload
+acceptance. Their results and visual inspection are recorded in the PR closeout
+and evidence checkpoint; the geometry results above are not visual acceptance.
+The report shell and altered boundary targets are explicitly offline fixtures,
+not new production evidence, provider validation or a trading-edge claim.

@@ -223,11 +223,14 @@ does not carry, falls back to Explore and says so.
    and never taken silently; a name with no archived bars keeps the words
    and says there is no chart to sit on.
    **Focus evidence** explicitly frames the selected marker with nearby actual
-   sessions: at least 21 observations for a single session where available,
-   and context around a recorded base. **Back to setup range** (or the prior
-   60/120 range) restores the preference. Focus is temporary, keeps the marker
-   and plan levels, and never writes the saved Setup/60/120 preference.
-   Chart heights remain 400px desktop and 300px narrow/mobile.
+   sessions: three context observations on available sides of the whole
+   evidence, expanded to at least 21 actual observations where available.
+   If that floor or a long base prevents useful horizontal zoom, Focus draws
+   the plot 30% taller while retaining its recorded prices and plan levels.
+   **Back to setup range** (or the prior 60/120 range) restores the exact normal
+   date window and geometry. Normal chart heights remain 400px desktop and
+   300px narrow/mobile. Focus never writes the saved Setup/60/120 preference;
+   repeats do not compound, and another marker requires an explicit Focus.
    A new provenance-enabled Burst without ordinary browser bars offers
    **Load recorded chart**. Only that explicit press fetches its exact retained
    source object, with bounded decompression, source-hash and reference checks.

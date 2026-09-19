@@ -26,10 +26,11 @@ async function geometry(page) {
   return page.locator(HOST).evaluate(host => {
     const g = host.geometry(), svg = host.querySelector('.sc-chart__stage > svg');
     const matrix = svg.getScreenCTM(), rect = svg.getBoundingClientRect();
+    const rounded = n => Math.round(n * 1e6) / 1e6;
     const pixel = (x, y) => new DOMPoint(x, y).matrixTransform(matrix);
     const candles = [...svg.querySelectorAll('.sc-chart__candle')].map(node => {
       const box = node.getBBox(), p = pixel(box.x + box.width / 2, box.y);
-      return { x: p.x - rect.x, y: p.y - rect.y, w: box.width * matrix.a, h: box.height * matrix.d };
+      return { x: rounded(p.x - rect.x), y: rounded(p.y - rect.y), w: rounded(box.width * matrix.a), h: rounded(box.height * matrix.d) };
     }).sort((a, b) => a.x - b.x);
     const edges = [...svg.querySelectorAll('.sc-chart__evidence-edge')].map(node =>
       [node.dataset.edge, pixel(0, Number(node.getAttribute('y1'))).y - rect.y]);
@@ -102,6 +103,10 @@ export async function checkEvidenceFocus({ browser, base, data, open, check, eq,
         check(name + ': explicit focus magnifies evidence by at least 25%', Math.max(horizontal, vertical) >= 1.25,
           { horizontal, vertical, before: before.measured.dates.length, after: after.measured.dates.length });
         check(name + ': focus holds at least 21 actual observations', after.measured.dates.length >= 21);
+        check(name + ': selected price bounds remain visible at their actual levels', after.evidence.scale > 0
+          && after.measured.domain.lo < after.evidence.low && after.measured.domain.hi > after.evidence.high);
+        if (row.ticker === 'BPOP' && range === 'setup' && key === 'base')
+          check(name + ': recent base uses a tighter window than Setup', after.measured.dates.length < before.measured.dates.length);
         eq(name + ': focus preserves the selected dates and prices',
           [after.evidence.from, after.evidence.to, after.evidence.low, after.evidence.high],
           [before.evidence.from, before.evidence.to, before.evidence.low, before.evidence.high]);
@@ -207,7 +212,10 @@ if (process.argv.includes('--dom')) {
     w.scrollTo = () => {}; w.HTMLElement.prototype.scrollIntoView = () => {};
     w.SCStock = { now: '2026-09-18T23:00:00Z' };
     w.fetch = async url => ({ ok: !String(url).includes('github'), text: async () => JSON.stringify(focusRecord(shell)), json: async () => ({}) });
-    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app.js']) w.eval(await readFile(path.join(ROOT, file), 'utf8'));
+    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app.js']) {
+      const override = file === 'docs/app.js' && process.argv.includes('--app') ? process.argv[process.argv.indexOf('--app') + 1] : null;
+      w.eval(await readFile(override || path.join(ROOT, file), 'utf8'));
+    }
     await new Promise(resolve => setTimeout(resolve, 80));
     const d = w.document, host = d.querySelector(HOST);
     if (!host) throw new Error('Actual app failed to mount ' + row.ticker);
@@ -218,7 +226,7 @@ if (process.argv.includes('--dom')) {
     const after = host.geometry();
     const horizontal = after.slot / before.slot;
     const vertical = (after.plot.height / (after.domain.hi - after.domain.lo)) / (before.plot.height / (before.domain.hi - before.domain.lo));
-    const pass = Math.max(horizontal, vertical) >= 1.25;
+    const pass = Math.max(horizontal, vertical) >= 1.25 && (row.ticker !== 'BPOP' || after.n < before.n);
     console.log(JSON.stringify({ status: pass ? 'PASS' : 'FAIL', kind: 'geometry-only', ticker: row.ticker, width, before: before.n, after: after.n, horizontal, vertical }));
     if (!pass) failures++;
     dom.window.close();
