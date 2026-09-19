@@ -2555,7 +2555,8 @@ page; README's layout is held to every `docs/app-*.js`.
 
 **Measured** (offline, this sandbox): 1378 tests (8 new); 12 fixtures
 current; continuity 127; chart check 182/182; the walkthrough suite 106/106
-with `--shots`; the suites that visit Method 1075/1075. **Seven mutants,
+with `--shots`; the suites that visit Method 1075/1075; the full smoke
+7637/7637 with `--shots`. **Seven mutants,
 all dead, a control green in both harnesses:** a drifted rule, a drifted R,
 a bar out of place, a bare 4% in a caption, a reveal that ignores the step,
 the day-2 line printed as the limit, Next never refused. The bare-4% mutant
