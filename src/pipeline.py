@@ -1049,7 +1049,7 @@ def main(argv: list[str] | None = None) -> int:
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a") as out:
             out.write(f"published={str(rep.published).lower()}\noutcome={rep.status}\n")
-            if args.run_type == "evening":
+            if args.run_type == "evening" and rep.input_diagnostic["status"] != "not_attempted":
                 out.write(f"input_diagnostics={rep.input_diagnostic['path'] or ''}\n"
                           f"input_diagnostic_status={rep.input_diagnostic['status']}\n")
     code = rep.exit_code()

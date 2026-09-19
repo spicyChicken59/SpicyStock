@@ -440,3 +440,14 @@ def test_atomic_write_closes_file_before_replacement_and_removes_temporary(tmp_p
     diag._atomic_write(target, b"first")
     diag._atomic_write(target, b"second")
     assert target.read_bytes() == b"second" and list(tmp_path.iterdir()) == [target]
+
+
+@pytest.mark.parametrize("status,path", [("retained", "/tmp/this-invocation"), ("failed", None)])
+def test_cli_emits_only_current_diagnostic_path_on_failure(status, path, monkeypatch, tmp_path):
+    output = tmp_path / "outputs"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+    rep = pipeline.RunReport(failed=True, input_diagnostic={"status": status, "path": path})
+    monkeypatch.setattr(pipeline, "run_evening", lambda **kw: rep)
+    assert pipeline.main(["evening"]) == 1
+    assert output.read_text() == ("published=false\noutcome=failed\n"
+                                  f"input_diagnostics={path or ''}\ninput_diagnostic_status={status}\n")

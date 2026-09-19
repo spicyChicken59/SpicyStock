@@ -731,6 +731,7 @@ not historical point-in-time universe or profitability evidence.
 src/            history.py (public recovery and coverage)
                 provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
+                input_diagnostics.py (run-scoped exception membership and observations)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)

@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1368 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1370 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2455,6 +2455,11 @@ were open, and no input-exception-evidence branch existed. Work is on
 `reliability/input-exception-evidence`. The user reserves independent review
 and normal merge for guidance. Effort settings were not changed; their value
 and remaining quota remain unverified. No new campaign budget was inferred.
+
+The first full local suite found the new module missing from README's enforced
+inventory and extra CLI fields on skipped/mocked runs. Both are corrected:
+the inventory names the module and not-attempted runs retain the old exact CLI
+output. Explicit tests cover artifact outputs on retained/failed capture paths.
 
 The dedicated input diagnostic captures after existing session classification
 and before price/coverage refusal, scans, grading or publication. It retains
