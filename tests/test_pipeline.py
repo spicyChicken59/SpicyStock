@@ -479,16 +479,18 @@ def test_the_intraday_check_reads_the_previous_evenings_names_and_mails_only_a_c
 
 def test_the_intraday_check_stays_silent_without_a_confirmed_break_and_fails_without_a_record(market, claude, fake_resend, tmp_path):
     evening(tmp_path, market)
+    # A real session is part of this fixture; the wall clock may be a weekend.
+    now = datetime(2026, 9, 11, 13, 45, tzinfo=timezone.utc)
     sent_before = len(fake_resend.sent)
     client = FakeSnapshotClient({"COIL": {"last": 1.0, "open": 1.0, "high": 1.0, "low": 1.0, "volume": None,
                                           "prev_close": 100.0, "prev_volume": None}})
-    rep = pipeline.run_intraday(docs=tmp_path / "docs", client=client)
+    rep = pipeline.run_intraday(docs=tmp_path / "docs", client=client, now=now)
     assert rep.exit_code() == 0 and len(fake_resend.sent) == sent_before
     rows = json.loads((tmp_path / "docs" / pipeline.LIVE_FILE).read_text())["rows"]
     assert {r["ticker"]: r["volume_state"] for r in rows}["COIL"] == "unknown"
     empty = tmp_path / "nothing"
     empty.mkdir()
-    rep = pipeline.run_intraday(docs=empty, client=client)
+    rep = pipeline.run_intraday(docs=empty, client=client, now=now)
     assert rep.exit_code() == pipeline.EXIT_FAILED and "nothing to check" in rep.failure
 
 

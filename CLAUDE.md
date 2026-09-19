@@ -2333,3 +2333,9 @@ Full final-tree and exact-head CI results are recorded on #78 before merge.
 No strategy, production evidence, chart geometry, saved semantics or shared
 v2.13.0 design files change. README is updated; .env.example reviewed with no
 changed configuration. Next slice must branch from the actual accepted main.
+
+FAIL local Python on the continuation's Saturday clock: one existing intraday
+fixture omitted `now`, so the correct non-session early return left no live
+file. The test now supplies its intended September 11 session, matching the
+neighboring test. This repairs the test fixture only; calendar/production code
+is unchanged. Its failure was reproduced before correction (1,332/1,333 pass).
