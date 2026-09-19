@@ -18,6 +18,7 @@
    Needs playwright (npm install --no-save playwright) and its chromium. */
 import { createServer } from 'node:http';
 import { checkActionability } from './actionability_cases.mjs';
+import { checkEvidenceFocus } from './evidence_focus_cases.mjs';
 import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { checkScorecard } from './scorecard_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
@@ -3636,6 +3637,7 @@ async function main() {
       await checkVariant(browser, base, v, data);
     }
     if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+    if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
     if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
