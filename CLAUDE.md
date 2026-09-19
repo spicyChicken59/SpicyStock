@@ -272,7 +272,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1333 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1337 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2381,3 +2381,66 @@ PASS local: 1,333 Python tests; 12 fixtures; 127 continuity checks; 182 chart ch
 FAIL two #79 CI runs: 7,530/7,531 checks; first card 13px below viewport. Compact status left CI geometry unchanged. Cards workspace gap: 24→8px; type/controls/warnings unchanged. The first-screen limit remains 900px and must pass before merge.
 
 All 22 v2.13.0 hashes and 2,583 protected files remain unchanged. README is updated; .env.example unchanged. Contracts and the secondary guide ground explanations. Stale-security diagnosis stays deferred. No scan, paid call or manual deployment. Final release identifiers: PR and evidence report.
+
+## September 19 — September 18 stale-input investigation
+
+Repository: spicyChicken59/SpicyStock. Investigation branch:
+`investigation/stale-inputs-20260918`, based on verified main
+`3f4b3312c136104f0c187dd495e4c8e035bd48e1` (tree
+`c1a4b329eca236b60cbf896403278c2f5e765eab`). This is one evidence-focused
+PR; its exact head and standard check results are recorded in the PR description.
+Tahir authorized this bounded builder investigation and expressly reserved
+merge for independent guidance review. No campaign or effort-setting change
+is implied; the selected effort and remaining quota were not independently
+verified.
+
+The [dated report](docs/input-truthfulness/2026-09-18-stale-inputs.md) pins
+run 35401227388, artifact 10570901548, actual ingestion checkout
+`ebcdea34464b9090e7734ca543be8733d39fc20a`, publication
+`8387ccedae22fbf30ddebdb6f52e1e42326a7ec5`, and original data.json SHA-256
+`aae64bbd1be0c0126f9c24c6ad5b4b5be1434a51e7351e5085c2f00862215567`.
+PASS original-byte identity and before/after evidence integrity. The history
+identifier is a Git blob identity, not an execution commit; its record.json is
+a context subset. The ZIP contains 3,687 entries. The directory is retained
+separately in the publication commit and exactly reproduces all 4,793 intended
+stocks and their recorded selection identity.
+
+Retained logs/ledger establish that 19 normalized frames ended September 17
+and were withheld for September 18. Coverage remains degraded: 4,774/4,793
+intended stocks ready; 3,731/3,731 scan-ready stocks measured; 12/12 reader
+calls recorded complete. PASS conservation. Only ANTA, BKHA, BLIV, BMHL, EGHA,
+GDEV, HCMA and INTJ are individually identified. BLOCKED recovery of the other
+11: the bounded sample/digest cannot supply their names. Original stale frames,
+HTTP pages and provider entity mappings were not retained.
+
+The eight-row table separates dated issuer/exchange disclosures from directory
+metadata and provider documentation. BKHA, EGHA and HCMA expose an exact-label
+classification limitation: retained operating-industry labels admit them,
+while dated filings describe blank-check companies. A copied-row fixture
+reproduces the distinction. This is not proof of the missing-bar cause or
+complete September 18 security status. Every sampled provider cause remains
+unresolved; no legitimate absence, halt or mapping failure is asserted as fact.
+
+PASS 210 local diagnostic/universe/market-data tests, including deliberate
+incorrect-input controls. FAIL existing input/pipeline suites: 25 failed,
+49 passed because Windows fixture publication replaces a still-open temporary
+file; downstream records are then absent. No production correction or test
+weakening is included. Full Linux PR checks were NOT RUN at checkpoint commit;
+their exact-head outcome belongs in the PR. Local package differences and
+commands are recorded. Browser/visual/human checks are NOT RUN locally.
+
+KEEP original records, unknowns, denominators, completed website behavior and
+installed shared design v2.13.0. FIX NOW the evidence gap in the handoff through
+this report and reproducible read-only diagnostic. DEFER any dated shell-policy
+correction, Windows portability fix or newly authorized provider investigation.
+OMIT guessed stale members, inferred provider causes, retroactive exclusions
+and cosmetic coverage repairs. README is updated; .env.example reviewed and
+unchanged. No scan, directory refresh, application model call, manual publication,
+schedule, secret or shared-design change occurred. Exact next action: guidance
+reviews this evidence PR and its checks; builder stops without merging.
+
+FAIL first Linux PR run 35467846396 at head
+`3d81fec5459f49795982b5b2dd73697105ad7a66`: 1,336 passed; the sole failure
+was the handoff's current suite count (1,333 versus 1,337 after four added tests).
+The current count is corrected to 1,337; the count assertion is unchanged.
+Final exact-head gates remain recorded in the PR.
