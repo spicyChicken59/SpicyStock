@@ -2248,3 +2248,94 @@ acceptance. Their results and visual inspection are recorded in the PR closeout
 and evidence checkpoint; the geometry results above are not visual acceptance.
 The report shell and altered boundary targets are explicitly offline fixtures,
 not new production evidence, provider validation or a trading-edge claim.
+
+## September 19 — bounded Explore pane scrolling, PR #78
+
+Tahir authorized one Stock-only frontend correction PR, not a merge or manual
+deployment. Supplied baseline and actual starting origin/main both matched
+`9ebf27ca42845d2892fc5868a80a253b1ceadccd`, the merge of accepted #77. No open PRs
+or intervening commits existed. Existing clean checkouts were preserved; work
+uses `fix/explore-pane-scrolling`. No AGENTS.md applies. Shared design remains
+v2.13.0 at `14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c`; siblings are read-only.
+
+FAIL before: the regression-only head `124ce78af4671a46a8f0a1d91579a171b4a3ed90`
+leaves application code untouched. Automatic Tests `35417284346` ran fresh
+normal-origin Chromium contexts. Its 72 failures cover both stages, both themes,
+1440x1000 and 1280x800; all pre-existing browser checks pass (6888/6960 total).
+The offline full.json fixture is expanded only in memory with labelled TESTB/
+TESTS candidates (46/19 totals). This is not a production publication or the
+retained 360-Burst guidance record. In the dark 1440 viewport, Bursts has a
+10,550px list; wheel leaves list.scrollTop at 0 and moves pageY 502 to 1152.
+End/Enter selects TESTB040 at pageY 10608 with detail.top -10089.52px. Setting up
+has a 3,335px list and detail.top -2891.52px after selecting TESTS018. The
+1280 viewport reproduces both. Page-viewport screenshots were captured before
+any operation targeting the detail and inspected: the neighboring area is empty.
+Artifact `10576691414`, ZIP SHA-256
+`51b0a566016afc9f052a82a95ffbe6c246b47fb0b44c3cf6a7a28fa67929bd0a`.
+
+The fix bounds desktop Cards only: fixed header/filters, native list overflow,
+matching full-detail overflow, unshrunk cards and normal chart heights. Scoped
+nearest scrolling reveals focus/selection without moving the document; a stock
+change resets detail only, while rerenders preserve reading/browsing positions.
+Previous/Next retains keyboard focus. Mode/breakpoint changes clear the obsolete
+scroll axis. Mobile rail and full-width Map remain their existing compositions.
+The chart renderer, focusSlice/chartPanel and #77 geometry are unchanged.
+
+PASS local offline gates before implementation: 1,333 Python, 12 fixtures,
+127 continuity and 112 geometry-only checks. PASS continuity after implementation.
+BLOCKED local real browser: Chromium is absent and its download times out.
+FAIL first corrected browser run `35417985180`, head
+`6f993cbdbd29cbb91b087c23a623a8b5e1bcf3f3`: 7301/7304 page checks pass. All core
+pane journeys and #77 regressions pass. Remaining findings: height-only resizing
+can clip the selected card; the fixed filters push the first card below the
+existing first-screen gate; one test clicks a partially clipped preceding card
+and incorrectly expects no nearest-position adjustment. The corrected journey
+first browses to a fully visible different card before measuring preservation.
+The correction reveals selection on viewport resize and tightens only header
+gaps. Named Back/deep links clear an incompatible search, and live search updates
+the existing stepper without selecting or rebuilding the chart. These also have
+explicit browser checks. PASS this head's Python/fixture/clean-tree, continuity,
+182 chart checks and Secret Scan. Final exact-head results remain in #78.
+README is updated; .env.example reviewed with no environment change needed.
+
+KEEP all production data, history, receipts, source evidence, rules, plans,
+grades, Following and scorecard semantics. Coverage stays deferred: the retained
+record's 4774/4793 ready stocks and 19 stale inputs are unchanged. No new scan,
+provider/model call, broker action, external message, setting, schedule, shared
+design write or manual deployment. Stop at one evidence-backed reviewable PR.
+
+## September 19 — website comprehension campaign, #78 responsive acceptance
+
+Tahir supersedes the earlier single-PR stop: normal Stock-only campaign merges
+and their established automatic publication are authorized, with exact-head
+Tests/Secret Scan and actual review requirements; no bypasses or manual deploys.
+Continuation began at 08:06:36 UTC. No original five-hour campaign deadline could
+be verified; the previous bounded #78 task ran approximately 48 minutes. Keep
+that completed work and reserve the final integration hour rather than claiming
+a fresh five-hour window. The user makes first-visit comprehension the priority.
+
+A frozen-main CSS comparison proves the constrained header predates #78. At
+721/768px the AAPL fixture identity's grid column is 0px on main and on #78;
+at 820px it is 46.86px on main and 23.86px on #78. A pane container query stacks
+identity, badges and navigation without changing the page breakpoint or font
+size. Corrected widths at 721/768/820/960 are 310/357/409/549px; header heights
+188.19/167.39/140.39/143.47px. The prior #78 heights were 376.16/376.16/376.16/
+132.06px: the 960px header intentionally takes an extra short row to provide
+readable width. Constrained ticket levels use two columns as on phones.
+
+PASS focused normal-origin Chromium: 548 pane checks, including new readable
+identity-width and bounded-header checks at 721/768/820/960 in both themes.
+Screenshots inspected: 721 dark and 960 light viewport Cards plus AAPL's ticket
+at both widths; source comparison and measurements are in campaign evidence.
+This preserves native pane scrolling, the phone rail/chooser and full-width Map.
+Full final-tree and exact-head CI results are recorded on #78 before merge.
+
+No strategy, production evidence, chart geometry, saved semantics or shared
+v2.13.0 design files change. README is updated; .env.example reviewed with no
+changed configuration. Next slice must branch from the actual accepted main.
+
+FAIL local Python on the continuation's Saturday clock: one existing intraday
+fixture omitted `now`, so the correct non-session early return left no live
+file. The test now supplies its intended September 11 session, matching the
+neighboring test. This repairs the test fixture only; calendar/production code
+is unchanged. Its failure was reproduced before correction (1,332/1,333 pass).

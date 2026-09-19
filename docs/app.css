@@ -131,8 +131,23 @@
 .ss-picks__empty { padding: var(--sc-s3); border: 1px dashed var(--sc-border-strong); border-radius: var(--sc-r-md); color: var(--sc-text-2); font-size: var(--sc-text-sm); }
 .ss-picks__empty .sc-btn { margin-top: var(--sc-s2); }
 
+/* Cards is a bounded reading workspace, not a page-height list. The header
+   stays outside the native list scroller; the whole detail scrolls as one.
+   Screen-only rules leave Map, the phone rail and printed details in flow. */
+@media screen and (min-width: 721px) {
+  .ss-workspace[data-discover="cards"] { height: max(440px, calc(100dvh - 112px)); grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+  .ss-workspace[data-discover="cards"] .ss-picks { display: flex; flex-direction: column; min-height: 0; }
+  .ss-workspace[data-discover="cards"] .ss-picks__head { flex: 0 0 auto; padding-inline: 4px; gap: var(--sc-s0) var(--sc-s1); margin-bottom: var(--sc-s1); }
+  .ss-workspace[data-discover="cards"] .ss-picks__head > .ss-lens { flex: 1 1 100%; }
+  .ss-workspace[data-discover="cards"] .ss-picks__list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px; scroll-padding-block: 4px; }
+  .ss-workspace[data-discover="cards"] .ss-pick-item { flex: 0 0 auto; }
+  .ss-workspace[data-discover="cards"] .ss-detail { min-height: 0; overflow-y: auto; padding: 4px; scroll-padding-block: 4px; }
+  .ss-workspace[data-discover="cards"] :is(.ss-picks__list, .ss-detail) { scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+  .ss-workspace[data-discover="cards"] .ss-detail:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: -2px; }
+}
+
 /* the detail */
-.ss-detail { min-width: 0; }
+.ss-detail { min-width: 0; container: stock-detail / inline-size; }
 .ss-detail:focus { outline: none; }
 .ss-detail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sc-s2) var(--sc-s3); flex-wrap: wrap; }
 /* Above the phone breakpoint the head is a two-column grid: the identity on
@@ -144,6 +159,13 @@
   .ss-detail__head > div:first-child { grid-area: id; }
   .ss-detail__chips { grid-area: chips; align-self: start; }
   .ss-detail__tools { grid-area: tools; justify-content: flex-end; align-self: start; }
+  /* The pane, rather than the viewport, determines whether two columns fit.
+     Keep the identity readable before allocating space to badges and tools. */
+  @container stock-detail (max-width: 680px) {
+    .ss-detail__head { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'id' 'chips' 'tools'; gap: var(--sc-s1); }
+    .ss-detail__head > .ss-detail__chips,
+    .ss-detail__head > .ss-detail__tools { justify-content: flex-start; }
+  }
 }
 .ss-detail__h2 { margin: 2px 0 0; font: 700 clamp(26px, 3vw, 34px)/1.1 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
 .ss-detail__sub { margin: 4px 0 0; }
@@ -200,6 +222,9 @@
 .ss-action__levels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sc-s2); margin: 0; }
 .ss-action__levels dt { font: 500 10px/1.5 var(--sc-font-mono); color: var(--sc-text-2); text-transform: uppercase; }
 .ss-action__levels dd { margin: 2px 0 0; font: 700 var(--sc-text-lg)/1.4 var(--sc-font-body); color: var(--sc-heading); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+@container stock-detail (max-width: 500px) {
+  .ss-action__levels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .ss-action__controls { display: flex; flex-wrap: wrap; gap: var(--sc-s2); }
 .ss-action--burst .ss-action__sizing { font-size: var(--sc-text-sm); color: var(--sc-text-2); }
 .ss-chart-focus { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sc-s2); margin-top: var(--sc-s2); font-size: var(--sc-text-sm); }
@@ -242,7 +267,7 @@
   .ss-picks__head { margin-bottom: var(--sc-s1); }
   .ss-choose { display: inline-flex; }
   .ss-search { flex: 1 1 140px; }
-  .ss-picks__list { flex-direction: row; overflow-x: auto; scroll-snap-type: x proximity; padding: 2px 2px var(--sc-s2); gap: var(--sc-s2); -webkit-overflow-scrolling: touch; }
+  .ss-picks__list { flex-direction: row; overflow-x: auto; scroll-snap-type: x proximity; scroll-padding-inline: 4px; padding: 4px 4px var(--sc-s2); gap: var(--sc-s2); -webkit-overflow-scrolling: touch; }
   .ss-pick-item { flex: 0 0 min(72vw, 280px); scroll-snap-align: start; }
   .ss-pick__reason { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .ss-detail { margin-top: var(--sc-s2); }
@@ -422,13 +447,10 @@
 .ss-map__empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: var(--sc-s4); text-align: center; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
 .ss-map__empty strong { color: var(--sc-heading); font-size: var(--sc-text-lg); }
 
-/* ---- the lens row: narrowing a stage, with the counts in the control -----------------
-   Measured at 1280x900: four captioned controls stacked in the 300px rail
-   cost the chart 120px of the first screen, and a full-width row of their own
-   cost it 44. The two stage cards need about half the band's width, so on a
-   desktop the lens rides in the space beside them and costs nothing; on a
-   phone it goes under the search, in the rail head (docs/app.js lensHome()). */
+/* ---- the lens row: counts and filters stay with the Cards header; desktop
+   Map retains its original stage-band placement (docs/app.js lensHome()). */
 .ss-band { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }
+.ss-band > .ss-stages:only-child { grid-column: 1 / -1; }
 .ss-stages { margin-top: 0; }
 .ss-view > .ss-band { margin-top: var(--sc-s3); }
 .ss-lens { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sc-s1) var(--sc-s3); min-width: 0; }
