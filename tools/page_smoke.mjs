@@ -23,6 +23,7 @@ import { checkReading } from './reading_cases.mjs';
 import { checkExplorePanes } from './explore_pane_cases.mjs';
 import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { checkScorecard } from './scorecard_cases.mjs';
+import { checkWalkthrough } from './walkthrough_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -46,7 +47,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -3656,6 +3657,7 @@ async function main() {
     if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
     if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
     if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
+    if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
     if (runs('calendar')) await checkExchangeCalendar(browser, base);
     if (runs('provenance')) await checkPlanEvidence(browser, base);
     if (runs('mobile')) await checkMobile(browser, base, full);

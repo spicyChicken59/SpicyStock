@@ -294,7 +294,18 @@ does not carry, falls back to Explore and says so.
    40-day average, the 10-day ratio over the last thirty sessions with his
    line drawn on it, and the regime verdict with every rule that fired.
    Thresholds are scaled to the measured universe against his ~6,500.
-6. **Method: How to read SpicyStock.** The reading journey and concise definitions
+6. **Method: How to read SpicyStock.** The view opens on **The method, one burst at a time**
+   (`docs/app-method.js`): an animated walkthrough of Bonde’s burst over one
+   synthetic series, eleven steps from the thesis to the record — the
+   leg, the base, the day before, the signal, the Market Monitor, the plan, the
+   fill, the day-3 close, the trail and the exit, the replay — each captioned
+   with this build’s numbers and whose number each is. Every number it prints
+   is named for the constant it quotes and held to `src/` by
+   `tests/test_walkthrough.py`, which also re-derives the example ticket and its
+   five-session replay through `plan.burst_plan()` and `record.replay()`, so the
+   walkthrough prints what the code writes. It reads no record and stands on
+   the no-record page; `#/method/walkthrough` deep-links to it; the bars have a
+   table twin. Then the reading journey and concise definitions
    precede the original scan summary, full publication details and configured
    sizing assumptions. Nearby help opens on hover, keyboard focus or deliberate
    tap; its interactive disclosure supports Close/Escape and viewport placement,
@@ -736,7 +747,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · charts.py · record.py · report.py
-docs/           index.html · app.js · app.css · app-reading.js · app-chart.js · app-map.js · app-follow.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 history/ (recovery) · evidence/ (deduplicated source objects)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
