@@ -71,6 +71,14 @@ new receipt is a pre-publication hard failure; it preserves the prior public pai
 Ordinary rename failures roll the pair back. This is not a crash-atomic multi-file
 filesystem transaction: interruption between renames remains a recovery concern.
 
+`write_objects()` writes and closes each staging file before atomic replacement,
+including on Windows. Failure cleanup also runs after closure. If unlinking the
+staging file fails, the original write/replace error is re-raised; publication
+still fails and an unreferenced temporary file may remain. Successfully installed
+objects from earlier in the batch can also remain, but no public record is
+installed until all required evidence writes succeed. Content identities,
+serialization/compression settings and retention bounds are unchanged.
+
 The candidate carries the receipt once. Its plan and schema-2 pick carry compact
 references with the same ID/context/plan/pick digests. New history snapshots retain
 the original receipt, account/context and candidate order; catalog entries carry

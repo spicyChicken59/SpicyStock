@@ -254,8 +254,13 @@ remains eight and coverage remains degraded. These synthetic names do not fill
 the eleven unknown historical identities. Frozen-clock enabled/disabled tests
 compare publication bytes, coverage, calls and exit codes; the candidate test
 also compares full prepared publications, picks, source objects, plans, grades
-and rule digests. Linux additionally verifies successful candidate publication;
-Windows exposes the previously documented source-object rename failure.
+and rule digests. At the retention milestone, Windows exposed the source-object
+rename failure documented in the dated CLAUDE.md checkpoints. The subsequent
+Windows publication correction closes source-object staging handles before
+replacement and cleanup. The candidate regression now requires successful
+publication on every platform, with the real writer and no Windows exception.
+Current native Windows and exact-head Linux results are recorded in the latest
+handoff and its PR; the historical failures remain part of the evidence.
 
 `python tools/input_diagnostic_size.py` builds an extreme deterministic fixture:
 8,001 affected symbols, all 80,010 allowed rows, seven populated numeric fields,

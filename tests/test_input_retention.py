@@ -348,13 +348,8 @@ def test_candidate_publication_plans_grades_and_rules_are_identical(
     assert len(captured) == 2 and captured[0] == captured[1]
     assert captured[0][0]["bursts"][0]["grade"] == "A+" and captured[0][0]["trades"] == ["AAA"]
     assert outcomes[0] == outcomes[1] and outcomes[1][2:4] == (1, 1)
-    # The release runner is Linux. Windows' already-reproduced source-object
-    # rename defect remains visible here; comparison above still tests all
-    # prepared records/receipts and grading calls without replacing that writer.
-    if __import__("os").name != "nt":
-        assert outcomes[1][0] == 0 and set(outcomes[1][4]) >= {"data.json", "picks.json"}
-    else:
-        assert outcomes[1][0] == 1 and "WinError 32" in rep.failure
+    assert rep.published, rep.failure
+    assert outcomes[1][0] == 0 and set(outcomes[1][4]) >= {"data.json", "picks.json"}
 
 
 def test_verifier_rejects_wrong_external_identity_and_publication(tmp_path, capsys):
