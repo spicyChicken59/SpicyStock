@@ -511,7 +511,9 @@ session. The run:
   sizing, never shares bought. New plans carry a versioned evidence reference.
 - **publish** — source, discovery, checklist, reader, regime and plan evidence
   must verify before the serialized data/picks pair replaces the previous
-  publication. Contradictions fail closed. Then the email
+  publication. Source-object staging handles close before installation, including
+  on Windows; a required evidence write failure withholds publication.
+  Contradictions fail closed. Then the email
   goes out. The workflow commits `docs/` back on exit 0, 2 or 3 (never a
   rehearsal), and `publish-dashboard.yml` asks GitHub Pages for a build,
   because a token push does not trigger one. It then fetches every file the

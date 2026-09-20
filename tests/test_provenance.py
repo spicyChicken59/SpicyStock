@@ -398,3 +398,186 @@ def test_source_retention_fails_closed_before_replacing_publication(failure, tmp
         provenance.publish_bundle(d, p, tmp_path, objects)
     assert (tmp_path / "data.json").read_bytes() == b"previous data"
     assert (tmp_path / "picks.json").read_bytes() == b"previous picks"
+
+
+@pytest.mark.parametrize("binary", [False, True], ids=["json-gzip", "binary"])
+def test_object_writes_round_trip_repeat_and_reject_corruption(binary, tmp_path, monkeypatch):
+    import hashlib
+    from src import provenance
+    obj = b"\x89PNG\r\n\x1a\n\x00fixture" if binary else {"text": "café", "values": [None, 1, 1.25]}
+    key = hashlib.sha256(obj).hexdigest() if binary else provenance.digest(obj)
+    path = tmp_path / (key + (".png" if binary else ".json.gz"))
+    provenance.write_objects({key: obj}, tmp_path)
+    expected = obj if binary else gzip.compress(json.dumps(
+        obj, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode(), mtime=0)
+    assert path.read_bytes() == expected
+    assert provenance._object(tmp_path, key, binary) == obj
+    assert list(tmp_path.iterdir()) == [path]
+
+    def no_rewrite(**kwargs):
+        pytest.fail("a verified existing object must not be rewritten")
+    monkeypatch.setattr(provenance.tempfile, "NamedTemporaryFile", no_rewrite)
+    provenance.write_objects({key: obj}, tmp_path)
+    assert path.read_bytes() == expected
+    corrupt = b"changed" if binary else gzip.compress(b'{}', mtime=0)
+    path.write_bytes(corrupt)
+    with pytest.raises(ValueError, match="digest mismatch"):
+        provenance.write_objects({key: obj}, tmp_path)
+    assert path.read_bytes() == corrupt
+
+
+@pytest.mark.parametrize("binary", [False, True], ids=["json-gzip", "binary"])
+def test_object_replacement_requires_closed_staging_handle(binary, tmp_path, monkeypatch):
+    import hashlib
+    from src import provenance
+    original_temp, original_replace = provenance.tempfile.NamedTemporaryFile, provenance.os.replace
+    handles, installed = [], []
+    def track_temp(**kwargs):
+        handle = original_temp(**kwargs)
+        handles.append(handle)
+        return handle
+    def replace(source, destination):
+        assert handles and all(h.closed for h in handles), "replacement saw an open staging handle"
+        installed.append(Path(destination))
+        return original_replace(source, destination)
+    monkeypatch.setattr(provenance.tempfile, "NamedTemporaryFile", track_temp)
+    monkeypatch.setattr(provenance.os, "replace", replace)
+    obj = b"binary fixture" if binary else {"text": "normalized evidence"}
+    key = hashlib.sha256(obj).hexdigest() if binary else provenance.digest(obj)
+    provenance.write_objects({key: obj}, tmp_path)
+    assert len(installed) == 1 and provenance._object(tmp_path, key, binary) == obj
+    assert all(h.closed and not Path(h.name).exists() for h in handles)
+
+
+@pytest.mark.parametrize("failure", ["write", "flush", "replace"])
+@pytest.mark.parametrize("cleanup_fails", [False, True])
+def test_object_failure_closes_before_cleanup_and_preserves_original_error(
+        failure, cleanup_fails, tmp_path, monkeypatch):
+    from contextlib import contextmanager
+    from src import provenance
+    original_temp, original_unlink = provenance.tempfile.NamedTemporaryFile, Path.unlink
+    original_error = OSError("original " + failure + " failure")
+    cleanup_error = PermissionError("secondary cleanup failure")
+    handles, cleaned = [], []
+
+    class FaultyFile:
+        def __init__(self, handle):
+            self.handle, self.name = handle, handle.name
+        def write(self, raw):
+            self.handle.write(raw[:1] if failure == "write" else raw)
+            if failure == "write":
+                raise original_error
+        def flush(self):
+            self.handle.flush()
+            if failure == "flush":
+                raise original_error
+
+    @contextmanager
+    def stage(**kwargs):
+        with original_temp(**kwargs) as handle:
+            handles.append(handle)
+            yield FaultyFile(handle)
+
+    def replace(*args):
+        assert failure == "replace" and all(h.closed for h in handles)
+        raise original_error
+
+    def unlink(path, *args, **kwargs):
+        if handles and path == Path(handles[-1].name):
+            assert all(h.closed for h in handles), "cleanup saw an open staging handle"
+            cleaned.append(path)
+            if cleanup_fails:
+                raise cleanup_error
+        return original_unlink(path, *args, **kwargs)
+
+    monkeypatch.setattr(provenance.tempfile, "NamedTemporaryFile", stage)
+    monkeypatch.setattr(provenance.os, "replace", replace)
+    monkeypatch.setattr(Path, "unlink", unlink)
+    obj = {"text": "required evidence"}
+    key = provenance.digest(obj)
+    with pytest.raises(OSError) as caught:
+        provenance.write_objects({key: obj}, tmp_path)
+    assert caught.value is original_error
+    assert len(handles) == len(cleaned) == 1 and handles[0].closed
+    assert not (tmp_path / (key + ".json.gz")).exists()
+    assert list(tmp_path.iterdir()) == (cleaned if cleanup_fails else [])
+
+
+def test_staging_creation_failure_is_preserved(tmp_path, monkeypatch):
+    from src import provenance
+    error = OSError("staging creation failed")
+    def fail(**kwargs):
+        raise error
+    monkeypatch.setattr(provenance.tempfile, "NamedTemporaryFile", fail)
+    obj = {"text": "required evidence"}
+    with pytest.raises(OSError) as caught:
+        provenance.write_objects({provenance.digest(obj): obj}, tmp_path)
+    assert caught.value is error and not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("previous", [False, True], ids=["first-publication", "replacement"])
+@pytest.mark.parametrize("failure", ["evidence", "picks.json", "data.json", None],
+                         ids=["evidence-failure", "picks-failure", "data-failure", "success"])
+def test_real_evidence_writer_preserves_publication_order_and_rollback(
+        previous, failure, tmp_path, monkeypatch):
+    from src import provenance
+    data, picks = fixture(), fixture("full-picks")
+    picks.pop("fixture")  # Fixture label is not part of the persisted picks schema.
+    objects = {p.name.split('.')[0]: p.read_bytes() if p.suffix == '.png'
+               else json.loads(gzip.decompress(p.read_bytes())) for p in OBJECTS.iterdir()}
+    old = {name: ("previous " + name).encode() for name in ("data.json", "picks.json")}
+    if previous:
+        for name, raw in old.items():
+            (tmp_path / name).write_bytes(raw)
+    original_replace = provenance.os.replace
+    installs, failed = [], []
+    error = OSError("required installation failed")
+    def replace(source, destination):
+        destination = Path(destination)
+        if destination.parent not in (tmp_path, tmp_path / provenance.OBJECT_DIR):
+            return original_replace(source, destination)
+        label = "evidence" if destination.parent.name == provenance.OBJECT_DIR else destination.name
+        if label in ("picks.json", "data.json"):
+            assert provenance.verify(data, picks, tmp_path / provenance.OBJECT_DIR)["status"] == "PASS"
+        # Fail after one successful object, exercising partial object installation.
+        if label == failure and not failed and (label != "evidence" or installs):
+            failed.append(label)
+            raise error
+        result = original_replace(source, destination)
+        installs.append(label)
+        return result
+    monkeypatch.setattr(provenance.os, "replace", replace)
+    if failure:
+        with pytest.raises(OSError) as caught:
+            provenance.publish_bundle(data, picks, tmp_path, objects)
+        assert caught.value is error and failed == [failure]
+        for name, raw in old.items():
+            assert (tmp_path / name).read_bytes() == raw if previous else not (tmp_path / name).exists()
+        if failure == "evidence":
+            assert installs == ["evidence"]
+    else:
+        provenance.publish_bundle(data, picks, tmp_path, objects)
+        assert installs[-2:] == ["picks.json", "data.json"]
+        assert all(label == "evidence" for label in installs[:-2])
+        assert json.loads((tmp_path / "data.json").read_bytes()) == data
+        assert json.loads((tmp_path / "picks.json").read_bytes()) == picks
+    assert not list(tmp_path.glob(".publication-*"))
+    assert all(p.suffix in (".gz", ".png") for p in (tmp_path / provenance.OBJECT_DIR).iterdir())
+
+
+def test_required_evidence_install_failure_keeps_pipeline_unpublished(
+        market, claude, fake_resend, tmp_path, monkeypatch):
+    from src import provenance
+    original_replace = provenance.os.replace
+    attempted = []
+    def replace(source, destination):
+        if Path(destination).parent.name == provenance.OBJECT_DIR:
+            attempted.append(Path(destination))
+            raise OSError("required evidence installation failed")
+        return original_replace(source, destination)
+    monkeypatch.setattr(provenance.os, "replace", replace)
+    rep, data, docs = evening(tmp_path, market)
+    assert attempted and not rep.published and rep.exit_code() == pipeline.EXIT_FAILED
+    assert "required evidence installation failed" in rep.failure
+    assert data is None and not (docs / record.PICKS_FILE).exists()
+    assert not list((docs / provenance.OBJECT_DIR).iterdir())

@@ -572,14 +572,20 @@ def write_objects(objects, directory):
         raise ValueError("evidence archive capacity exceeded; publication withheld")
     directory.mkdir(parents=True, exist_ok=True)
     for path, raw in prepared.items():
-        with tempfile.NamedTemporaryFile(dir=directory, delete=False) as staged:
-            temporary = Path(staged.name)
-            try:
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=directory, delete=False) as staged:
+                temporary = Path(staged.name)
                 staged.write(raw)
                 staged.flush()
-                os.replace(temporary, path)
-            finally:
-                temporary.unlink(missing_ok=True)
+            os.replace(temporary, path)  # Windows requires the staging handle closed.
+        except BaseException:
+            if temporary is not None:
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError:
+                    pass  # Preserve the original failure; publication must still fail.
+            raise
 
 
 def publish_bundle(data, rec, docs, objects, *, dry_run=False):

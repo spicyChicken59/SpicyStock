@@ -74,8 +74,10 @@ CI holds the committed fixtures to it.
   minutes behind the clock, proven on the first live run; `delayed_sip` is
   refused by the bars endpoint and accepted by the snapshot endpoint the
   intraday check uses.
-- **The interpreter is part of the environment.** This sandbox runs Python
-  3.11 and pandas 3.0.5; CI runs 3.12. A generated artifact is only as
+- **The interpreter is part of the environment.** Historical Linux sandbox
+  measurements used Python 3.11 and pandas 3.0.5; CI runs 3.12. Record the actual
+  runtime with each checkpoint (the Windows correction below uses 3.12.14).
+  A generated artifact is only as
   reproducible as its arithmetic (`math.fsum`, rounding once).
 - **Playwright's Chromium is installed globally beside node**;
   `tools/chart_check.mjs` and `tools/page_smoke.mjs` find it there or on
@@ -276,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1378 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1398 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2582,3 +2584,63 @@ constant names (the six weights sum to it). Defer to Astra: unchanged.
 Omit: a walkthrough over a real burst from the record. **Not claimable:**
 a live fetch, Resend, Pages, and CI on this branch until the pull request
 runs.
+
+## Checkpoint, 19 Sep 2026 — native Windows evidence publication
+
+**Reconciled scope.** Base `a4cfa62cb0ba7530f859e28e4ebd9b3d0a116665`,
+tree `eec3e0fcf6f71cfb6abdb7e5e58d3667769dadcd`; branch
+`fix/windows-evidence-publication`. Remote main matched guidance, #81 and #82
+were merged, and there were zero open PRs or existing Windows-fix branches.
+The local retention branch was clean; no unpublished Windows fix was found.
+This is the publication correction, not a second retention or animation PR.
+Final head and normal exact-head CI results belong in its PR, not old #81.
+
+**FAIL before / PASS after, newly executed on native Windows.** Windows 11
+build 26200, AMD64, Python 3.12.14; pytest 9.1.1, pandas 3.0.6, NumPy 2.5.3,
+alpaca-py 0.44.0, exchange_calendars 4.13.2, matplotlib 3.11.2, anthropic 1.7.0.
+The unchanged base's actionable-publication test fails at publish with WinError
+32, while the unrelated retained-regime/reader control passes. An isolated base
+archive with the new tests has ten lifecycle/real-object failures and that same
+green control. The strengthened candidate test also fails on the unchanged
+source, then passes with the real corrected writer. This is native execution,
+not a Linux simulation or a historical report.
+
+**Correction.** Only `provenance.write_objects()` changes production behavior:
+write/flush, exit the temporary-file context, then replace. Cleanup runs after
+closure and a cleanup OSError cannot replace the original failure. Every failure
+still propagates; required evidence must finish before either public record is
+installed. Failed cleanup may leave an unreferenced staging file; earlier
+successful objects may remain. Content addresses, validation, canonicalization,
+JSON/gzip settings, bounds and ordinary public-pair rollback are unchanged.
+The input-retention candidate test now requires exit zero and real data/picks on
+every platform. Twenty added cases cover JSON/gzip and binary objects, repeat
+writes, corruption, closed handles, write/flush/replace/creation failures,
+secondary cleanup failures, installation ordering, rollback and pipeline refusal.
+
+**PASS:** 361 focused provenance/publication/input/pipeline/retention/walkthrough
+tests; full `python -m pytest tests/ -q`: 1,398 passed in 87.79 seconds. The same
+runtime, frozen clocks and provider/model doubles produce identical complete
+prepared records, picks and four source objects before/after, including plans,
+grades, coverage, receipts and rules. The snapshot comparison retains both
+diagnostics-enabled/disabled runs. No live external boundary was used.
+
+**FAIL, bounded platform limitation:** native `tools/make_fixture.py --check`
+now reaches comparison but finds 24 gzip objects whose sole differing byte is
+the OS header (offset 9: committed Linux 3, native Windows 10). **PASS:** a
+separate executed content audit finds all 12 JSON fixtures equal, the binary
+object identical, and every gzip's expanded bytes and all other compressed
+bytes identical. This does not relabel the strict check PASS. Compression and
+fixtures were not changed; the unchanged Linux exact-byte CI gate is required.
+
+**KEEP** #73–#82, the eleven-step animation and its rule/example tests, degraded
+coverage and unmeasured stale inputs. Design manifest v2.13.0 at
+`14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c`: all 22 committed hashes match,
+zero repository drift (the Windows checkout applies ordinary Git CRLF conversion
+to text files). Production/history/evidence, fixtures, strategy, transport and
+workflows have no diff. README and provenance/input docs describe the correction;
+`.env.example` was reviewed and remains accurate without changes.
+**FIX NOW** this handle lifecycle only. **DEFER** platform-independent gzip
+container bytes and #81 production artifact verification (**NOT RUN**; existing
+authorized evening execution only). **OMIT** live scanner/provider/model calls,
+dispatches, production publication, settings changes, sibling work and merge.
+Guidance independently reviews the scoped PR and retains merge authority.
