@@ -27,7 +27,7 @@ import logging
 import os
 from pathlib import Path
 
-from src import discovery
+from src import discovery, reader_authority
 
 log = logging.getLogger(__name__)
 
@@ -111,11 +111,21 @@ SCORE_SCHEMA = {
                    "description": ("one paragraph of at most three sentences, plain "
                                    "English, naming the single most decisive factor")},
         "key_risk": {"type": "string", "description": "one sentence"},
+        "findings": {"type": "array", "description": "source-grounded findings, or [] when confirming",
+                     "items": {"type": "object", "properties": {
+                         "criterion": {"type": "string", "enum": list(reader_authority.CRITERIA)},
+                         "source": {"type": "string"},
+                         "evidence": {"type": "array", "items": {"type": "object", "properties": {
+                             "path": {"type": "string"}, "value": {"type": ["string", "number", "boolean", "null"]}},
+                             "required": ["path", "value"], "additionalProperties": False}},
+                         "observation": {"type": "string", "enum": [v for vs in reader_authority.OBSERVATIONS.values() for v in vs]}},
+                         "required": ["criterion", "source", "evidence", "observation"],
+                         "additionalProperties": False}},
         "entry_note": {"type": "string",
                        "description": ("one sentence: what would make you skip it at "
                                        "the next session's open")},
     },
-    "required": ["score", "grade", "reason", "key_risk", "entry_note"],
+    "required": ["score", "grade", "reason", "key_risk", "entry_note", "findings"],
     "additionalProperties": False,
 }
 
@@ -211,6 +221,7 @@ def user_text(metrics: dict) -> str:
         "Grade this momentum burst candidate strictly according to the "
         "strategy rules in your instructions.\n\n"
         + discovery.instruction(block) +
+        (reader_authority.instruction() if "quality_grade" in metrics else "") +
         f"METRICS:\n{json.dumps(metrics, indent=2, sort_keys=True, default=str)}\n\n"
         "Respond with ONLY a JSON object, no markdown fences, in this exact shape:\n"
         f"{_reply_shape()}"
@@ -320,6 +331,7 @@ def _validated(obj: dict) -> dict:
         "reason": str(obj.get("reason", "")).strip(),
         "key_risk": str(obj.get("key_risk", "")).strip(),
         "entry_note": str(obj.get("entry_note", "")).strip(),
+        "findings": obj.get("findings", []),
     }
 
 
@@ -446,12 +458,19 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
                     for key, value in cache_usage(resp).items():
                         usage[key] = usage.get(key, 0) + value
                 raise DiscoveryConflict("inapplicable discovery rule in " + ", ".join(conflicts))
+            try:
+                reader_authority.validate(parsed, metrics, chart_seen=chart_seen)
+            except reader_authority.ReaderAuthorityError:
+                if usage is not None:
+                    for key, value in cache_usage(resp).items():
+                        usage[key] = usage.get(key, 0) + value
+                raise
         except Exception as e:  # noqa: BLE001 -- narrowed by the retry and provenance below
             attempt_evidence.update(outcome="rejected", error=_error_text(e))
             last_error = e
             log.warning("Claude grading attempt %d/%d failed for %s: %s",
                         attempt, attempts, ticker, _error_text(e))
-            if isinstance(e, DiscoveryConflict) or is_fatal_auth_failure(_error_text(e)):
+            if isinstance(e, (DiscoveryConflict, reader_authority.ReaderAuthorityError)) or is_fatal_auth_failure(_error_text(e)):
                 break  # neither an admission conflict nor a rejected key merits a retry
             if isinstance(e, ScoreFormatError):
                 # Ask again, differently. A transport error keeps the
@@ -474,7 +493,7 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
         return parsed
 
     log.error("Claude grading failed for %s after %d attempts (%s) -- checklist fallback",
-              ticker, attempts, _error_text(last_error))
+              ticker, len(attempts_evidence), _error_text(last_error))
     fallback = _fallback(metrics, _error_text(last_error))
     fallback["provenance"]["request_text_sha256"] = text_hash
     fallback["provenance"].update(input=input_evidence, attempts=attempts_evidence, attempted_model=kwargs["model"])

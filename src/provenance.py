@@ -21,7 +21,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from src import discovery, grader, plan, quality, scans, watchlist, sessions, inputs
+from src import discovery, grader, plan, quality, reader_authority, scans, watchlist, sessions, inputs
 
 VERSION = 1
 OBJECT_DIR = "evidence"
@@ -314,6 +314,11 @@ def _check_reader(row, e, compatible=True):
         return
     grade = row["grade_mechanical"]
     if cl and cl["source"] == grader.SOURCE_CLAUDE:
+        _same(cl.get("authority_version"), reader_authority.VERSION, "reader authority version mismatch")
+        checks = {c["letter"]: {"status": c["status"], "values": c["values"]} for c in row["quality"]["checks"]}
+        reader_authority.validate({**cl, "grade": grader.grade_for(cl["score"])},
+            {"quality_grade": grade, "reader_evidence": {"version": reader_authority.VERSION, "checks": checks}},
+            chart_seen=bool(cl.get("chart_seen")))
         returned = grader.grade_for(cl["score"])
         _same(returned, cl["returned_grade"], "reader score/returned grade disagreement")
         grade = grader.final_grade(grade, returned)
@@ -457,7 +462,7 @@ archive. Integrity-only callers explicitly disable the source replay requirement
         from src.report import rules_version, timing_faults
         _same(rules_version(data["rules"]), data["app"]["rules_version"], "rules identity mismatch")
         mismatches = []
-        for rules in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, sessions.RULES, RULES):
+        for rules in (scans.RULES, discovery.RULES, reader_authority.RULES, quality.RULES, plan.RULES, watchlist.RULES, sessions.RULES, RULES):
             for key, value in rules.items():
                 family, _, name = key.partition(".")
                 if digest(data["rules"].get(family, {}).get(name)) != digest(value):

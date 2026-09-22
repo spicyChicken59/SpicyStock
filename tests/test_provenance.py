@@ -281,7 +281,8 @@ def test_yellow_withholds_a_even_when_mechanical_is_a_plus(market, claude, fake_
         value["regime"].update(verdict="yellow", size_multiplier=0.5)
         return value
     monkeypatch.setattr(pipeline.breadth, "snapshot", yellow)
-    claude.set_payload({"score": 8.3, "grade": "A", "reason": "orderly but imperfect base", "key_risk": "gap", "entry_note": "watch"})
+    from tests.test_reader_authority import finding
+    claude.set_payload({"score": 8.3, "grade": "A", "reason": "orderly but imperfect base", "key_risk": "gap", "entry_note": "watch", "findings": [finding()]})
     rep, data, docs = evening(tmp_path, market)
     assert rep.published, rep.failure
     b = data["bursts"][0]
@@ -307,8 +308,9 @@ def test_discovery_contradiction_is_archived_as_fallback(market, claude, fake_al
 @pytest.mark.parametrize("grade,score", [("B", 7.2), ("C", 5.2), ("skip", 3.2)])
 def test_reader_lowering_removes_the_provisional_ticket(grade, score, market, claude, fake_resend, tmp_path):
     from src import provenance
+    from tests.test_reader_authority import finding
     claude.set_payload({"score": score, "grade": grade, "reason": "The prior base is visually uneven.",
-                        "key_risk": "gap", "entry_note": "watch"})
+                        "key_risk": "gap", "entry_note": "watch", "findings": [finding()]})
     rep, data, docs = evening(tmp_path, market)
     assert rep.published, rep.failure
     b = data["bursts"][0]

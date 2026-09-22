@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger
+from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe
 from src import watchlist
 
@@ -448,6 +448,7 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
                            "entry_note": r.get("entry_note"), "source": "claude",
                            "chart_seen": bool(prov.get("chart_seen")), "error": None}
             b["claude"].update(returned_grade=claude_grade, model=prov.get("model"))
+            b["claude"].update(findings=r.get("findings", []), authority_version=reader_authority.VERSION)
             b["grade"] = clamped
         else:
             unavailable += 1
@@ -558,7 +559,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,

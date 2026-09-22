@@ -483,7 +483,13 @@ session. The run:
   can still be lowered for independent chart/checklist evidence. Recognized
   contradictory replies are rejected whole into mechanical fallback without
   a retry; their score and explanation are not published as chart judgement.
-  This narrow text guard is not a semantic correctness guarantee. The reader
+  Reader authority v1 additionally requires a permitted criterion/source/observation
+  and exact citations to structured checklist evidence for any downgrade. Missing,
+  unknown, contradictory or unauthorized evidence rejects the whole judgement
+  without retry and leaves the mechanical grade standing with degraded status.
+  Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
+  use measurements. Subjective chart truth and free commentary remain unverified.
+  See [the 108-decision audit](docs/input-truthfulness/2026-09-22-reader-downgrade-audit.md). The reader
   result archives the discovery version and a SHA-256 of the initial system
   and user text; transport, cache prefix and down-only clamping remain intact.
   See `tests/fixtures/grading/history-audit.json` for the bounded, manually
@@ -756,7 +762,7 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · charts.py · record.py · report.py
+                grader.py · reader_authority.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 history/ (recovery) · evidence/ (deduplicated source objects)
