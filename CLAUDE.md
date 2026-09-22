@@ -2770,3 +2770,63 @@ KEEP truthful unknown/degraded accounting and all accepted behavior. FIX NOW
 only publication-time evidence retention. DEFER provider investigation, retuning,
 profitability and human usability. OMIT gallery, personal execution/portfolio,
 new provider/model calls, dispatch/rerun, email, manual publication and merge.
+
+## Checkpoint, 22 Sep 2026 — reader downgrade source fidelity (#86)
+
+Exact base/main: `2d790e1f95a8df746d9e7cb7870d16444462725d`, merge of #85.
+Main and zero open SpicyStock PRs were verified before branching; main was
+rechecked unchanged. Exact reviewed implementation head:
+`4d3dcec413bb8f7b01669dae355d43d3eae92f5e`, tree
+`674e7e4680a94ec12468ea7ce4fcdd2dc1b34e1f`. This checkpoint-only descendant
+records the handoff; its exact submitted head and automatic CI results are
+pinned in PR #86. Branch `fix/reader-source-authority`. Astra implemented;
+Guidance owns independent review and normal clean merge. The selected effort
+was preserved without guessing its value or quota.
+
+The dated reader audit reconstructs all **108 completed real v2 reads**, twelve
+per publication across nine retained September 11–21 revisions, including
+individual evidence records for all **14 mechanical A+ assessments**. Repeated
+publications remain distinct. All were red, without plans/tickets. No outcomes
+were used. The explicit 395-claim inventory has 209 SUPPORTED, 54 PARTIALLY
+SUPPORTED, six UNSUPPORTED, 71 CONTRADICTED and 55 UNVERIFIABLE claims; these are
+claim labels, not an overall reader score. Sixty-one responses contain an
+unsupported/contradicted claim, often alongside a supported independent concern.
+Seven lack a fully supported adverse claim in the inventory; missing charts or
+subjective shape uncertainty prevent declaring every such downgrade wrong.
+
+Historically, the first four prompts imposed universal 4% despite their own
+independent Dollar scan. #68 corrected that wording/tripwire; #72 corrected
+primary attribution; #73 added replay evidence. False measurements and no-vote
+notes persisted afterward. Current main's guard catches four of the fourteen
+A+ historical replies, but its score parser did not require a source-grounded
+finding. That current authority defect is reproduced, not inferred from the
+absence of final A+. The supplied field guide supports interpretation without
+superseding the repository's dated primary/source hierarchy.
+
+Reader authority v1 permits named existing qualitative concepts and actual
+FAIL/PARTIAL checks, requiring exact factual citations and charts for visual
+findings. Equivalent JSON numeric notation remains valid; unknowns cannot be
+negative evidence. Invalid authority rejects the whole result without retry
+into existing degraded mechanical fallback. Findings/version are retained and
+verified. Subjective visual truth remains unverified. The reader stays down-only;
+mechanical scoring and thresholds are unchanged. Prompt contradictions about a
+numerical extension vote and universally drawn plan lines are corrected.
+
+**PASS:** 1,449 offline pytest tests on Python 3.12.14; eleven fixture variants;
+127 continuity, 182 chart and 7,637 page checks with desktop/mobile screenshots
+inspected. **FAIL before / PASS after:** eleven intended failures on untouched
+base, three unaffected controls, all fourteen passing after correction, including
+retained WBD/PTGX inputs. **PASS:** all 3,547 historical mechanical/reader
+reconciliations and 1,871 later source replays. **BLOCKED:** complete pre-Sep-16
+frames/charts were not retained. **PASS:** implementation-head Secret Scan.
+**NOT RUN:** final descendant CI at checkpoint writing; exact-head results belong
+in PR #86 before handoff. Fresh model/provider execution, scans, dispatch/rerun,
+directory refresh, email and publication are **NOT RUN**.
+
+KEEP deterministic evidence, unknowns, history, #85 ledger, mechanical rules,
+website/mobile/chart/Focus and shared design. FIX NOW only reader/source authority.
+DEFER consolidation source fidelity, provider investigation, live coverage,
+profitability and retuning. OMIT outcomes, historical regrading, A+ manufacturing,
+ticker exceptions, UI additions, brokerage and siblings. Exact next action:
+finish automatic checks on PR #86's submitted head, then stop for Guidance's
+independent review; do not merge or start another milestone.
