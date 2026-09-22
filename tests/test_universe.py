@@ -21,6 +21,9 @@ from src import universe as universe
 
 NOW = datetime(2026, 9, 11, 1, tzinfo=timezone.utc)
 REAL_SEED = Path(__file__).resolve().parent.parent / "data" / "symbols.txt"
+RETAINED_SAMPLE = json.loads((REAL_SEED.parent.parent / "docs" / "input-truthfulness" /
+                             "2026-09-18-stale-inputs-results.json").read_text())["sample_directory_rows"]
+ACQUISITION_ROWS = [row for row in RETAINED_SAMPLE if row["symbol"] in {"BKHA", "EGHA", "HCMA"}]
 
 
 def sym(i: int) -> str:
@@ -321,6 +324,72 @@ def test_a_plain_us_common_stock_is_admitted_with_no_flag():
     symbols, names, flags, counts = universe.admit([company("ACME", name="Acme Corp. Class A Common Stock")], [])
     assert symbols == ["ACME"] and names == {"ACME": "Acme Corp. Class A Common Stock"}
     assert flags == {"ACME": set()} and counts == {"listed": 1, "admitted": 1}
+
+
+@pytest.mark.parametrize("row", ACQUISITION_ROWS, ids=lambda row: row["symbol"])
+def test_retained_acquisition_corporations_with_operating_industries_are_excluded(row):
+    """Copied directory evidence establishes classification, never a bar cause."""
+    assert row["industry"].lower() != "blank checks" and row["sector"]
+    assert row["symbol"] not in universe.read_seed(REAL_SEED)
+    assert universe.classify(row, set()) == "blank check company"
+    assert universe.admit([row], [])[0] == []
+
+
+@pytest.mark.parametrize("name", [
+    "Ares Acquisition Corporation III Class A Ordinary Shares",
+    "Hall Chadwick Acquisition Corp Class A Ordinary Shares",
+    "Proem Acquisition Corp I Ordinary Shares",
+    "Inflection Point Acquisition Corp. V Class A Ordinary Shares",
+    "EGH Acquisition Corp. Class A Ordinary Shares".lower(),
+    "Example Acquisition Corporation Class A Common Stock",
+])
+def test_acquisition_legal_forms_and_retained_numbered_suffixes(name):
+    assert universe.classify(company(name=name), set()) == "blank check company"
+
+
+@pytest.mark.parametrize("name", [
+    "Example Capital Corporation Class A Common Stock",
+    "Example Holdings Inc. Common Stock",
+    "Example Investment Corporation Common Stock",
+    "Data Acquisition Systems Corporation Class A Common Stock",
+    "Acquisition Technologies Inc. Common Stock",
+    "Example Acquisition Holdings Inc. Class A Common Stock",
+    "Example Acquisition Corporate Services Inc. Common Stock",
+    "Example Acquisition Corp. Services Inc. Common Stock",
+    "Example Reacquisition Corporation Common Stock",
+    "Example Acquisition Corporation Solutions Class A Ordinary Shares",
+])
+def test_generic_acquisition_capital_holdings_and_investment_names_stay_admitted(name):
+    row = company(name=name)
+    assert universe.classify(row, set()) is None
+    assert universe.admit([row], [])[0] == ["NEW"]
+
+
+@pytest.mark.parametrize("row", ACQUISITION_ROWS, ids=lambda row: row["symbol"])
+def test_seed_override_keeps_a_retained_acquisition_company(row):
+    symbol = row["symbol"]
+    assert universe.classify(row, {symbol}) is None
+    symbols, names, flags, _ = universe.admit([row], [symbol])
+    assert symbols == [symbol] and names == {symbol: row["name"]}
+    assert flags == {symbol: universe.flags_for(row)}
+
+
+def test_acquisition_exclusions_seed_overrides_duplicates_and_capacity_conserve(monkeypatch):
+    monkeypatch.setattr(universe, "MAX_DISCOVERY", 2)
+    bkha = next(row for row in ACQUISITION_ROWS if row["symbol"] == "BKHA")
+    rows = ACQUISITION_ROWS + [bkha, company("AAA"), company("BBB"), company("CCC")]
+    ledger = {}
+    symbols, _, _, counts = universe.admit(rows, ["BKHA", "EXTRA"], ledger=ledger)
+    assert symbols == ["BKHA", "EXTRA"]
+    assert ledger["listed"] == 7 and ledger["duplicate_rows"] == 1
+    assert ledger["security_admitted"] == 3 and ledger["security_excluded"] == 3
+    assert ledger["exclusions"] == {"blank check company": universe.population(["BKHA", "EGHA", "HCMA"])}
+    assert ledger["seed_overrides"] == universe.population(["BKHA"])
+    assert ledger["seed_added"] == universe.population(["EXTRA"])
+    assert ledger["before_capacity"] == 5
+    assert ledger["capacity_excluded"] == universe.population(["AAA", "BBB", "CCC"])
+    assert counts["blank check company"] == 2 and counts[universe.SEED_EXCEPTION] == 2
+    assert universe.selection_faults(ledger) == []
 
 
 @pytest.mark.parametrize("values", [

@@ -1,4 +1,5 @@
 """Input populations, tested with real scanning and offline transports only."""
+import json
 from datetime import date
 
 import pandas as pd
@@ -6,7 +7,7 @@ import pytest
 
 from src import market_data, pipeline, scans, universe
 from tests.test_pipeline import market, claude, evening, EVENING  # noqa: F401
-from tests.test_universe import company
+from tests.test_universe import ACQUISITION_ROWS, company
 
 
 def breakout(close=10.5, volume=150_000):
@@ -110,6 +111,42 @@ def test_capacity_and_seed_exceptions_reconcile_even_with_duplicate_and_invalid_
     assert universe.selection_faults(selection) == []
     selection['capacity_excluded']['count'] = 2
     assert universe.selection_faults(selection)
+
+
+@pytest.mark.parametrize("include_acquisitions", [False, True], ids=["operating-control", "acquisition-exclusions"])
+def test_directory_classification_precedes_fetch_without_hiding_missing_inputs(
+        market, claude, fake_resend, fake_alpaca, tmp_path, monkeypatch, include_acquisitions):
+    from src import inputs
+
+    operating = market + ["STALE", "NOBAR"]
+    rows = [company(symbol) for symbol in operating]
+    if include_acquisitions:
+        rows += ACQUISITION_ROWS
+    fake_alpaca.add_history("STALE", breakout(), stale_sessions=1)
+    monkeypatch.setattr(universe, "read_seed", lambda: [])
+    monkeypatch.setattr(universe, "_directory", lambda *a: (rows, universe.SOURCE_LIVE, EVENING))
+    monkeypatch.delenv("SCAN_UNIVERSE", raising=False)
+    rep = pipeline.run_evening(docs=tmp_path / "docs", now=EVENING, dry_run=True)
+    assert rep.published and rep.exit_code() == pipeline.EXIT_DEGRADED, rep.failure
+    data = json.loads((tmp_path / "docs" / pipeline.DATA_FILE).read_text())
+    requested = {s for request in fake_alpaca.bar_requests for s in request.symbol_or_symbols}
+    assert requested == set(operating) | {"SPY"}
+    run = data["run"]
+    selection, cov = run["universe"]["selection"], run["coverage"]
+    assert run["universe"]["size"] == len(operating)
+    assert selection["intended"] == len(operating)
+    assert selection["exclusions"] == (
+        {"blank check company": universe.population(["BKHA", "EGHA", "HCMA"])}
+        if include_acquisitions else {})
+    assert cov["reasons"]["stale"] == universe.population(["STALE"])
+    assert cov["reasons"]["no_bars"] == universe.population(["NOBAR"])
+    assert cov["intended"] == cov["requested"] == len(operating) + 1
+    assert cov["stale"] == cov["no_bars"] == 1
+    assert cov["measured"] == len(market)
+    assert sum(cov["matched"].values()) == len(market)
+    assert cov["acceptance"]["status"] == "degraded"
+    assert inputs.record_faults(run) == []
+    assert fake_resend.sent == []
 
 
 def mixed_population():

@@ -88,6 +88,14 @@ _REJECT = re.compile(r"\b(depositary|depository|ADR|ADS|preferred|preference|war
 #: "Common Shares of Beneficial Interest", which `_NAME` alone reads as common
 #: stock. Refused; 25 previously admitted names on the 10 Sep 2026 directory.
 _BENEFICIAL = re.compile(r"\bshares of beneficial interest\b", re.I)
+#: Retained BKHA/EGHA/HCMA rows have operating-industry labels despite explicit
+#: acquisition-corporation legal names. Match only Corp[.] / Corporation at
+#: the end of the issuer name, optionally numbered as in the retained directory,
+#: followed by a common/ordinary-share label. Generic acquisition, capital,
+#: investment and holdings words are not a security classification.
+_ACQUISITION_CORPORATION = re.compile(
+    r"\bacquisition\s+corp(?:oration)?\.?(?:\s+[IVX]+)?\s+"
+    r"(?:class\s+[ABC]\s+)?(?:common\s+stock|ordinary\s+shares?)\s*$", re.I)
 _BIOTECH = re.compile(r"biotech|pharma|medicinal", re.I)
 UNITED_STATES = "United States"
 HEALTH_CARE_SECTOR = "Health Care"
@@ -315,8 +323,9 @@ def classify(row: dict, seeds: set[str]) -> str | None:
     """The reason a directory row is refused, or None when it is admitted.
 
     A seed name bypasses every rule below by design: the file is the owner's
-    reviewed list. A row whose sector or industry is blank is refused as
-    unknown because the blank-check rule cannot be applied to it -- on the
+    reviewed list. Exact blank-check industry labels and narrowly identifiable
+    acquisition-corporation legal names are refused. A row whose sector or
+    industry is blank remains unknown under the existing precedence -- on the
     10 Sep 2026 directory 67 of the 102 such rows were acquisition shells
     by name.
     """
@@ -331,7 +340,7 @@ def classify(row: dict, seeds: set[str]) -> str | None:
     sector, industry = row.get("sector"), row.get("industry")
     if not sector or not industry:
         return "unknown industry"
-    if str(industry).lower() == BLANK_CHECK_INDUSTRY:
+    if str(industry).lower() == BLANK_CHECK_INDUSTRY or _ACQUISITION_CORPORATION.search(name):
         return "blank check company"
     return None
 
