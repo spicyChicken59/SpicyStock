@@ -752,6 +752,7 @@ src/            history.py (public recovery and coverage)
                 provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 input_diagnostics.py (run-scoped exception membership and observations)
+                quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
@@ -759,6 +760,7 @@ src/            history.py (public recovery and coverage)
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 history/ (recovery) · evidence/ (deduplicated source objects)
+                quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
@@ -779,3 +781,24 @@ publications. Both carry ATEC's original chart and neither carries VICR's.
 `npm ci && npm run test:continuity` runs offline DOM/store regressions. This
 is not browser or layout acceptance; use the existing Playwright checks too.
 The original two records are gzip fixtures under `tests/fixtures/continuity/`.
+
+## Retained quality evidence
+
+The [22 September quality audit](docs/input-truthfulness/2026-09-22-retained-quality-audit.md)
+distinguishes input reliability, mechanical/final grades and model outcomes.
+Future real publications append compact immutable facts under
+`docs/quality-ledger/v1/`, named by the original publication SHA-256. Original
+rules, denominators, UNKNOWN fields, complete exception membership, grading
+facts and per-plan scorecard observations survive recovery expiry. This ledger
+does not participate in trading decisions or change the existing reliability row.
+It retains no raw bars or personal execution. Existing Git persistence includes
+it; no new workflow or dashboard is required.
+
+Each deterministic gzip entry is limited to 8 MiB expanded; the archive is
+limited to 128 MiB compressed and 4,096 entries, without eviction or historical
+rewrites. Capture failures leave decisions/publication/exit codes unchanged and
+emit `quality_ledger_capture_failed`, RunReport status and an attempted-capture
+`quality_ledger_status` output. Interrupted, failed or skipped runs can lack an
+entry; ledger membership is not proof that every attempted run was captured.
+No historical backfill is performed. Capacity and future schema changes require
+an explicit retention decision, preserving old entries and their rule basis.

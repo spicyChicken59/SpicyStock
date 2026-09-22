@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
-from src import timing, inputs, sessions, provenance, input_diagnostics
+from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger
 from src import universe
 from src import watchlist
 
@@ -81,6 +81,7 @@ class RunReport:
 
     input_coverage: dict = field(default_factory=dict)
     input_diagnostic: dict = field(default_factory=lambda: {"status": "not_attempted", "path": None})
+    quality_ledger: dict = field(default_factory=lambda: {"status": "not_attempted", "path": None})
     calendar_outcome: dict = field(default_factory=dict)
     skipped: str | None = None
 
@@ -820,12 +821,14 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 report.write(data, docs / DATA_FILE)
                 if not data.get("fixture"):
                     history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
+                rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
                 rep.fail(exc)
                 return rep
         restamp(data, rep, closed)
         report.write(data, docs / DATA_FILE)
         if not data.get("fixture"):
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
+        rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
         return rep
     except PreflightError:
         raise
@@ -1052,6 +1055,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.run_type == "evening" and rep.input_diagnostic["status"] != "not_attempted":
                 out.write(f"input_diagnostics={rep.input_diagnostic['path'] or ''}\n"
                           f"input_diagnostic_status={rep.input_diagnostic['status']}\n")
+            if args.run_type == "evening":
+                if rep.quality_ledger['status'] != 'not_attempted':
+                    out.write(f"quality_ledger_status={rep.quality_ledger['status']}\n")
     code = rep.exit_code()
     log.info("exit %d (%s)", code, rep.status)
     return code
