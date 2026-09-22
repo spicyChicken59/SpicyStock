@@ -1,5 +1,10 @@
 # Input truthfulness milestone
 
+For the later retained production audit and prospective evidence ledger, see
+[22 September 2026: input quality and A+](2026-09-22-retained-quality-audit.md).
+Its derived inventory separates legacy/modern populations and UNKNOWN fields;
+the new ledger preserves publication facts without modifying this input contract.
+
 Base: `7e6d056672079e2ac46b6e5a84ae9589f1648e80` (merged PR #68).
 Scope: universe selection, bar-input populations, publication acceptance and
 input basis. Discovery contract v1, grading, annotations, ticket/breadth rules

@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1423 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1435 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2709,3 +2709,64 @@ suppression, generic shell heuristics, live calls, directory refresh, workflow
 dispatch/rerun, email, publication, settings/schedule changes and merge.
 Exact next action: guidance independently reviews the focused PR and its
 completed exact-head checks; Astra stops without merging or another milestone.
+
+## Checkpoint, 22 Sep 2026 — retained quality and A+ evidence
+
+Base/main verified `09acc0429b5a85e0ac74b8eadda3af564134744c` (merged #84),
+unchanged again before PR preparation. Branch `reliability/retained-quality-ledger`.
+Astra preserved the selected effort setting without guessing value/quota; owns
+implementation and one unmerged PR. Guidance owns independent review and merge.
+The final review head and exact-head CI results are pinned in the PR description.
+
+**Audit:** `docs/input-truthfulness/2026-09-22-retained-quality-audit.md`, derived
+JSON inventory, compressed candidate matrix and verification results. Full-history
+Git inventory finds 13 legacy and nine v2 real snapshots. Nine v2 records on seven
+sessions (Sep 11–21) contain 3,547 reaction rows: zero final A+, 14 mechanical A+
+assessments (nine date/ticker pairs), all lowered by the historical reader.
+Latest-per-session: 2,766 rows, nine mechanical and zero final A+. Legacy's 27
+scored rows are skip under their own bands; its literal A+ labels are empty bands.
+Source hierarchy and DERIVED thresholds remain explicit; no strategy is retuned.
+
+**PASS retained/offline:** all nine original v2 publication/grade contracts;
+five full-source replays (1,871 reaction/anticipation candidates); two original
+September 21 input artifacts with complete identical 20-name stale memberships,
+checksums, ledger/directory/run binding. Four older v2 full-frame replays and
+cross-day complete exception membership are BLOCKED. Modern input readiness is
+99.50–99.60%, repeatedly degraded (five publications/four sessions), not equivalent
+to workflow failure. No post-#84 real run exists; 4,763/4,780 ready after removing
+16 names is only the retained-directory counterfactual. Provider causes and
+systematic operating-stock missingness remain BLOCKED. All nine original v2 picks
+files are empty: no settled-plan or grade-stratified performance sample exists.
+
+**Verified defect / single correction:** nights stores only session/status/time,
+20 sessions and same-session replacement; recovery expires after 21 days and
+omits per-plan scorecard observations. `quality_ledger.py` captures immutable
+versioned gzip snapshots after final publication, using the publication's
+original rules/basis/denominators, full exception membership, mechanical checks,
+reader/final grade/plan/ticket gates and computed model scorecard rows. No raw
+bars, personal execution or historical backfill. Existing git-add-docs persistence
+includes it; no workflow or settings change. Null remains UNKNOWN. Entries are
+bounded (8 MiB expanded each; 128 MiB compressed archive; 4,096 entries), never
+evicted/regraded/overwritten. Failed capture is explicit in RunReport/log/output
+and cannot change publication/decisions/external calls/exit codes. Interrupted or
+unpublished runs are not asserted complete by this publication ledger.
+
+**FAIL before / PASS after:** the final regression on extracted untouched base
+fails for absent ledger evidence; the actionable A+ ticket control passes.
+The fixed suite verifies survival across recovery expiry and same-session revisions,
+complete exception membership beyond public samples, original grades on outcome
+rows, immutable/bounded writes, failure paths, exact public/source bytes and
+external-call/exit/status controls. Full normal offline pytest: 1,435 passed
+(latest local results and exact-head checks are pinned in the PR); all 12 fixtures current. Initial documentation/output-contract
+failures were corrected without weakening tests. Dependencies came from existing
+cached packages after automatic review rejected an install attempt; no registry
+workaround or new live boundary was used. New local browser work NOT RUN because
+UI is unchanged; exact-head CI includes the normal page and Secret Scan gates.
+
+README and input-truthfulness docs describe retention; `.env.example` reviewed,
+no configuration changes. Historical data/picks/history/evidence, strategy,
+fixtures, shared design, mobile/chart/Focus code and siblings have no changes.
+KEEP truthful unknown/degraded accounting and all accepted behavior. FIX NOW
+only publication-time evidence retention. DEFER provider investigation, retuning,
+profitability and human usability. OMIT gallery, personal execution/portfolio,
+new provider/model calls, dispatch/rerun, email, manual publication and merge.

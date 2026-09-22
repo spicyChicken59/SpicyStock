@@ -1,0 +1,456 @@
+{
+  "v2": [
+    {
+      "source": "7380a97605c7f16eb902421486c491a95b957cd7",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "BLOCKED",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 400,
+      "reader_errors": [],
+      "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+    },
+    {
+      "source": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "BLOCKED",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 401,
+      "reader_errors": [],
+      "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+    },
+    {
+      "source": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "BLOCKED",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 558,
+      "reader_errors": [],
+      "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+    },
+    {
+      "source": "442db489342660d7588d16dcc18e6c126187c1e6",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "BLOCKED",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 342,
+      "reader_errors": [],
+      "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+    },
+    {
+      "source": "580805487b22006c6f2fa35490c3edc8a5760d73",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "PASS",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 303,
+      "reader_errors": [],
+      "provenance": {
+        "status": "PASS",
+        "breaks": [],
+        "missing": []
+      },
+      "source_checked": 308
+    },
+    {
+      "source": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "PASS",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 420,
+      "reader_errors": [],
+      "provenance": {
+        "status": "PASS",
+        "breaks": [],
+        "missing": []
+      },
+      "source_checked": 425
+    },
+    {
+      "source": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "PASS",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 360,
+      "reader_errors": [],
+      "provenance": {
+        "status": "PASS",
+        "breaks": [],
+        "missing": []
+      },
+      "source_checked": 365
+    },
+    {
+      "source": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "PASS",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 381,
+      "reader_errors": [],
+      "provenance": {
+        "status": "PASS",
+        "breaks": [],
+        "missing": []
+      },
+      "source_checked": 386
+    },
+    {
+      "source": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+      "publication_shape": "PASS",
+      "mechanical_algebra": "PASS",
+      "source_replay": "PASS",
+      "reader_down_only": "PASS",
+      "mechanical_errors": [],
+      "assessed": 382,
+      "reader_errors": [],
+      "provenance": {
+        "status": "PASS",
+        "breaks": [],
+        "missing": []
+      },
+      "source_checked": 387
+    }
+  ],
+  "diagnostics": [
+    {
+      "run_id": "35669619745",
+      "artifact_id": 10670249042,
+      "publication_commit": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+      "expected_run": {
+        "attempt": "1",
+        "execution_revision": "89d31535fe1684711fb6c15e8541b573b1963f03",
+        "workflow_revision": "89d31535fe1684711fb6c15e8541b573b1963f03",
+        "invocation": "5c7a74f79b134a1db45274e65959f273",
+        "run_id": "35669619745"
+      },
+      "validation": "PASS",
+      "identity_limit": "run/attempt/revision checked against GitHub metadata; invocation comes from retained artifact, not independent authentication",
+      "archive_sha256": "c377435f9b7c15f9522713d107ae0376773b15cdcdd9dbd7024e893c8caec0fe",
+      "record_sha256": "909bca2650e50d92f72cd4008dae94453cca5aecb5ba8643b514ee63d37f6d69",
+      "directory": {
+        "bytes": 203743,
+        "canonical_fields_sha256": "ea65b214c0f62f749e01007316c13496092c6e2c4f051a3364e449e46a800505",
+        "file": "universe-directory.json.gz",
+        "sha256": "c019703155cb042872245ea2d3ed7721028964828405e3568bd6b17cb0c68923",
+        "status": "retained"
+      },
+      "exceptions": {
+        "dropped": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "gapped": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "no_bars": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "refused": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "stale": {
+          "count": 20,
+          "identity": "8cdba4864809b3e7",
+          "symbols": [
+            "ATXG",
+            "AUBN",
+            "BEBE",
+            "BKHA",
+            "BMHL",
+            "ELLO",
+            "FSEA",
+            "GIGM",
+            "IOR",
+            "KTWO",
+            "LBTYB",
+            "MDRR",
+            "MGYR",
+            "NCEW",
+            "PFAI",
+            "ROMA",
+            "SENEB",
+            "TRSG",
+            "WSTN",
+            "YHGJ"
+          ]
+        },
+        "unfetched_budget": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "unfetched_failure": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "unreadable": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        }
+      }
+    },
+    {
+      "run_id": "35673429253",
+      "artifact_id": 10672540296,
+      "publication_commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+      "expected_run": {
+        "attempt": "1",
+        "execution_revision": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+        "workflow_revision": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+        "invocation": "74d9bfd1a8324939908d550c536e84c1",
+        "run_id": "35673429253"
+      },
+      "validation": "PASS",
+      "identity_limit": "run/attempt/revision checked against GitHub metadata; invocation comes from retained artifact, not independent authentication",
+      "archive_sha256": "3276af2587add25752dfb050489aeeda774077b1549360557239b5f6648d5a77",
+      "record_sha256": "281c2a17dedddd7476b5bf9df3730e61d342b08875f60ede4e9ef0369ef48cae",
+      "directory": {
+        "bytes": 203742,
+        "canonical_fields_sha256": "ea65b214c0f62f749e01007316c13496092c6e2c4f051a3364e449e46a800505",
+        "file": "universe-directory.json.gz",
+        "sha256": "b9f52226e0ad33d77240c6821d5053a5d902af011f3c1cdf04becee9a800ecc4",
+        "status": "retained"
+      },
+      "exceptions": {
+        "dropped": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "gapped": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "no_bars": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "refused": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "stale": {
+          "count": 20,
+          "identity": "8cdba4864809b3e7",
+          "symbols": [
+            "ATXG",
+            "AUBN",
+            "BEBE",
+            "BKHA",
+            "BMHL",
+            "ELLO",
+            "FSEA",
+            "GIGM",
+            "IOR",
+            "KTWO",
+            "LBTYB",
+            "MDRR",
+            "MGYR",
+            "NCEW",
+            "PFAI",
+            "ROMA",
+            "SENEB",
+            "TRSG",
+            "WSTN",
+            "YHGJ"
+          ]
+        },
+        "unfetched_budget": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "unfetched_failure": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        },
+        "unreadable": {
+          "count": 0,
+          "identity": "e3b0c44298fc1c14",
+          "symbols": []
+        }
+      }
+    }
+  ],
+  "reported_historical_execution": [
+    {
+      "id": 34647793285,
+      "head_sha": "74bff884dcc1ee4d9c835d4e1560b1dc0ddeff87",
+      "path": ".github/workflows/evening.yml",
+      "event": "workflow_dispatch",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-11T21:07:36Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/34647793285"
+    },
+    {
+      "id": 34653694658,
+      "head_sha": "7380a97605c7f16eb902421486c491a95b957cd7",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-11T22:22:16Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/34653694658"
+    },
+    {
+      "id": 34903940252,
+      "head_sha": "3d60ae15b9f615f6364358affb944a67e869e566",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-14T22:24:24Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/34903940252"
+    },
+    {
+      "id": 35030668710,
+      "head_sha": "0233b309a43d3c3f64d30ee974d2be15d1fcea28",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-15T22:22:53Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35030668710"
+    },
+    {
+      "id": 35157356943,
+      "head_sha": "7859ae081a1cbb12ef4c2f949ee0e699df893bc8",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-16T22:22:30Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35157356943"
+    },
+    {
+      "id": 35281605621,
+      "head_sha": "bd34b8b65cbeb0951a659f4002734170e43c26a5",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-17T22:21:28Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35281605621"
+    },
+    {
+      "id": 35401227388,
+      "head_sha": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-18T22:22:06Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35401227388"
+    },
+    {
+      "id": 35669619745,
+      "head_sha": "89d31535fe1684711fb6c15e8541b573b1963f03",
+      "path": ".github/workflows/evening.yml",
+      "event": "workflow_dispatch",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-21T23:53:57Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35669619745"
+    },
+    {
+      "id": 35673429253,
+      "head_sha": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+      "path": ".github/workflows/evening.yml",
+      "event": "schedule",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-22T00:48:11Z",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/35673429253"
+    }
+  ],
+  "universe_counterfactual": {
+    "basis": "Deterministic classification of retained September 21 directory; not a new production run or provider observation",
+    "before_intended": 4796,
+    "after_intended": 4780,
+    "newly_excluded": [
+      "AAC",
+      "BKHA",
+      "EGHA",
+      "EMIS",
+      "EVAC",
+      "HCAC",
+      "HCMA",
+      "IPEX",
+      "KTWO",
+      "MCGA",
+      "MTAL",
+      "PAAC",
+      "SIMA",
+      "SOUL",
+      "VACI",
+      "WSTN"
+    ],
+    "count_delta": {
+      "admitted": -16,
+      "blank check company": 16
+    },
+    "before_identity": "cb87e6a42a1e01e0",
+    "after_identity": "03203b6a9c4be6e1",
+    "conservation": "PASS",
+    "removed_stale": [
+      "BKHA",
+      "KTWO",
+      "WSTN"
+    ],
+    "removed_ready": [
+      "AAC",
+      "EGHA",
+      "EMIS",
+      "EVAC",
+      "HCAC",
+      "HCMA",
+      "IPEX",
+      "MCGA",
+      "MTAL",
+      "PAAC",
+      "SIMA",
+      "SOUL",
+      "VACI"
+    ],
+    "counterfactual_ready": 4763,
+    "counterfactual_stale": 17,
+    "counterfactual_fraction": 0.9964435146443514
+  }
+}
