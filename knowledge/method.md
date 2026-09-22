@@ -64,6 +64,18 @@ A or A+ requires 2 and H to pass outright (P, from Bonde's emphasis). A name
 that meets everything but H is an anticipation setup, not a rejection (B,
 bootcamp notes). Bonde publishes no pass count; the score weights are (P).
 
+## Reader authority (`src/reader_authority.py`)
+
+The mechanical checklist is unchanged. The reader may confirm or lower its
+judgement using the chart-review concepts in `strategy.md` or an actual
+recorded FAIL/PARTIAL. The named criterion/source/observation identifiers,
+structured evidence citations, and whole-response rejection are DERIVED (P)
+implementation boundaries. They are not new source thresholds. Discovery
+routes, measured facts and unknowns cannot be redefined. Visual proxies can
+miss a qualitative defect; the reader can still name that defect with the
+chart present. Code validates authority and cited facts, not subjective visual
+truth. Free commentary does not create order terms or an executable rule.
+
 ## Market Monitor (`src/breadth.py`)
 
 His Telechart v12.4 formulas (B): up/down 4% with `V >= 100000 and V > V1`;

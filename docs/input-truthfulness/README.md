@@ -1,5 +1,9 @@
 # Input truthfulness milestone
 
+[22 September 2026: reader downgrade/source authority](2026-09-22-reader-downgrade-audit.md)
+audits all 108 retained completed reads and individually records all 14 mechanical
+A+ assessments. Historical decisions remain unchanged.
+
 For the later retained production audit and prospective evidence ledger, see
 [22 September 2026: input quality and A+](2026-09-22-retained-quality-audit.md).
 Its derived inventory separates legacy/modern populations and UNKNOWN fields;

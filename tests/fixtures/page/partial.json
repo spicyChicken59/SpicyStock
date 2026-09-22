@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "a6354faa5da9"
+  "rules_version": "9c917b84c825"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -745,7 +745,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "0b7bf88a9f51e108bbe9d8e7c3256ecf16b73f95c5aab708b5218ecf9edd8b88"
+   "context_sha256": "1fe27f5cbde9d2e57e6cc2c5882fdb807be21959671721c16393abc95fbb1754"
   },
   "sanitised": {
    "replaced": 0,
@@ -836,7 +836,8 @@
    "price_decimals": 2
   },
   "grading": {
-   "discovery_version": 1
+   "discovery_version": 1,
+   "reader_authority_version": 1
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1613,7 +1614,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "a6354faa5da9"
+  "replay_rules_version": "9c917b84c825"
  },
  "observations": {
   "as_of": "2026-09-10",

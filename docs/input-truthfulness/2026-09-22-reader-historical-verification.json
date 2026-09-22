@@ -1,0 +1,126 @@
+[
+  {
+    "source": "7380a97605c7f16eb902421486c491a95b957cd7",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "BLOCKED",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 400,
+    "reader_errors": [],
+    "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+  },
+  {
+    "source": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "BLOCKED",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 401,
+    "reader_errors": [],
+    "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+  },
+  {
+    "source": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "BLOCKED",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 558,
+    "reader_errors": [],
+    "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+  },
+  {
+    "source": "442db489342660d7588d16dcc18e6c126187c1e6",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "BLOCKED",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 342,
+    "reader_errors": [],
+    "source_limit": "Pre-provenance: complete exact source frames not retained for all candidates."
+  },
+  {
+    "source": "580805487b22006c6f2fa35490c3edc8a5760d73",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "PASS",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 303,
+    "reader_errors": [],
+    "provenance": {
+      "status": "PASS",
+      "breaks": [],
+      "missing": []
+    },
+    "source_checked": 308
+  },
+  {
+    "source": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "PASS",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 420,
+    "reader_errors": [],
+    "provenance": {
+      "status": "PASS",
+      "breaks": [],
+      "missing": []
+    },
+    "source_checked": 425
+  },
+  {
+    "source": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "PASS",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 360,
+    "reader_errors": [],
+    "provenance": {
+      "status": "PASS",
+      "breaks": [],
+      "missing": []
+    },
+    "source_checked": 365
+  },
+  {
+    "source": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "PASS",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 381,
+    "reader_errors": [],
+    "provenance": {
+      "status": "PASS",
+      "breaks": [],
+      "missing": []
+    },
+    "source_checked": 386
+  },
+  {
+    "source": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+    "publication_shape": "PASS",
+    "mechanical_algebra": "PASS",
+    "source_replay": "PASS",
+    "reader_down_only": "PASS",
+    "mechanical_errors": [],
+    "assessed": 382,
+    "reader_errors": [],
+    "provenance": {
+      "status": "PASS",
+      "breaks": [],
+      "missing": []
+    },
+    "source_checked": 387
+  }
+]

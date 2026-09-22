@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "a6354faa5da9"
+  "rules_version": "9c917b84c825"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -730,7 +730,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c"
+   "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763"
   },
   "sanitised": {
    "replaced": 0,
@@ -821,7 +821,8 @@
    "price_decimals": 2
   },
   "grading": {
-   "discovery_version": 1
+   "discovery_version": 1,
+   "reader_authority_version": 1
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1661,15 +1662,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "PASS"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "56ae6854f5ac734b0bad7d6390ed9d6a317066cde5c7f90c0d5ffdf5086ebeb2",
     "input": {
-     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "676d7ac4d59cbd66c0ae2443a5cb8ae4c9ea1b8313ef7ff7ea66c108832b9911",
+      "request_sha256": "a13052c35fa1247b016b05a8812887a4a8a6b98d246bfa62285a98bbd2f299aa",
       "correction": false,
       "outcome": "model"
      }
@@ -1699,21 +1714,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "cb86076c2fd05fbe4fc6febef80e6dc484cc4613b7516b287d15ec586cd1ad6c",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "a087a2e6e0ca238ff4160a05d2bb7895e37c4ace2a8b5e47ac4b5549580fbafc"
+     "request_text_sha256": "56ae6854f5ac734b0bad7d6390ed9d6a317066cde5c7f90c0d5ffdf5086ebeb2"
     },
-    "reader_sha256": "462af6cebbfae2cc16bed7aa4c0c36c32af31221024e0baeef5124080a91e937",
+    "reader_sha256": "0f6ffbbcc3bf843f6bba56b4fee5d48a867002ba4e32a43319593ce1f94d8d3e",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -1725,7 +1740,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "9d9bbf52a581d6f59e50b86ee40552bf1351e69ff92eb975744fd58bb2a0daad"
+    "id": "9de94f4a553497f5022867065c8634db8fa32fcf3066a75026136b6bc2b4edc9"
    },
    "series": [
     {
@@ -2920,15 +2935,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "PASS"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "cd2d621d15462f10464483551a262486eb5f7644a9580c889a5a530a811ca65e",
     "input": {
-     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "d292334e957d3bb529f67ad0b34c7f9243f502f3eb748102e02a6178c371c210",
+      "request_sha256": "737ca78844b01fab53cdf2fddbad7a17c77489ce0d5858781ef3f9aca901f483",
       "correction": false,
       "outcome": "model"
      }
@@ -2958,21 +2987,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "b7d14e21377fb8f910a2d717a1a5fc808dc2e829476b33726b1a73b2a49bc0fc",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "2972eece4d7b0dfa92b4537d0fae810d918b1b596ae9cf1dec6b95d3107c5c50"
+     "request_text_sha256": "cd2d621d15462f10464483551a262486eb5f7644a9580c889a5a530a811ca65e"
     },
-    "reader_sha256": "e4f4d0aaf2e15e724b6e421a73e1c5762d77305c3e346c0de06ec9a49e21a47d",
+    "reader_sha256": "377fd90139f818abbbd6fe50360f2d7278df3c754e3cff5654cfd88498c6d96b",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -2984,7 +3013,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "6b7f1c9f45453f5a23bccb52fd309445dcb8fa0e4b778b5badc7adc8771c38ef"
+    "id": "34848e23e4a2646219add270eedb1b0d613181a8ffd0dbb79bbe4d6394cb4be1"
    },
    "series": [
     {
@@ -4147,15 +4176,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "PASS"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "01a85adab9851749931a61303a16fc07376be7666914af0ff4e59baeb7100a04",
     "input": {
-     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "b781bfc4378c9233b5380c4aef4129099c7e49f667423fede1a8d0141658ff3c",
+      "request_sha256": "4c7b852c58c5c891945156007e0b7cb0b85c9d24658f44031b4dc0283449d840",
       "correction": false,
       "outcome": "model"
      }
@@ -4185,21 +4228,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "09888796664dbea765737df56873001f93f79966c0cdee359634de4374ffa829",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "4927c7cf6994afda66dafda7fda2a7670ac875daa1561d9f7fb0a62e005e3cb0"
+     "request_text_sha256": "01a85adab9851749931a61303a16fc07376be7666914af0ff4e59baeb7100a04"
     },
-    "reader_sha256": "e23f79b83e966d84a7d74a2fd5ea05ba156e2d288cd9cab2579684c8faffc9a1",
+    "reader_sha256": "f54e582770de50cfb1836832701d8385fce82b2385b740d6371b79a81b4156ed",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -4211,7 +4254,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "c05c1467422635fb0999e095443790b88629e06ee0410d33fb544581b3f3db81"
+    "id": "5964497d6457ca4d58f66798ce2b6c0c4221415a040e160f50faf5fd2e00ca61"
    },
    "series": [
     {
@@ -5414,15 +5457,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "PASS"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "e9089b3073560ab10582a7c7f3af25c3385c0a32fbbe2ebde385e79a288c6040",
     "input": {
-     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "131b2f290a18b050b7c8d4d0fb6adf93d8bd74744a85b0bc9e841e3d4c334a5a",
+      "request_sha256": "2f3911e870f94b77283251324884b4a7f4515fbfbeb711b4a426c4d7060de799",
       "correction": false,
       "outcome": "model"
      }
@@ -5452,21 +5509,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "14e80eb0eaebea1b799b6fc3d976825e5b869d2e0c9452410ddc01be8effadfc",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "559713981becc5827e69bba60baeb12f9e99eaef737836dd139d4ffd28c6d64a"
+     "request_text_sha256": "e9089b3073560ab10582a7c7f3af25c3385c0a32fbbe2ebde385e79a288c6040"
     },
-    "reader_sha256": "4542676a9a796da47f3c31d778279c0578d52bbcd0e14ac725a5bb21e51f2b89",
+    "reader_sha256": "73b5553eb01949348a0a9ad4bca3ee59116ceb34dba979816b73153160253631",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -5478,7 +5535,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "4096cbf006042dd09d24d8f843432f948081297b6864becbf3f417f04035a863"
+    "id": "6ff69f1eac5acaf3b389f27c79afed73c815288b5070d021aca268534328a5e9"
    },
    "series": [
     {
@@ -6674,15 +6731,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "PASS"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "7894af4516287f4eaf214eeae47b370a2cf793b9e16caacf86332ce7e8fdcf66",
     "input": {
-     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "484f0223512bf62211784fe5bba700478d82e14da8275586eb17da9e870eac00",
+      "request_sha256": "e7817607815ebae589144baa8c8add2af7b7c22f14d3f9f554bd2cdd77cd3229",
       "correction": false,
       "outcome": "model"
      }
@@ -6712,21 +6783,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "a007ecf4a92591f5102d728a7730dcdfaf6977903f4bda0a8cebe2c34ce0197b",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "e3eefe0388a17e43081a5d602ae4021c770845f01b42941dd9394e4407553e5e"
+     "request_text_sha256": "7894af4516287f4eaf214eeae47b370a2cf793b9e16caacf86332ce7e8fdcf66"
     },
-    "reader_sha256": "b883ee677051854bd70412eb3cd1c3468147d6ad4917b954eeb9ae0472bf08b7",
+    "reader_sha256": "ed0a8c102421c4958b41a00c78795efe600a4b6ffd1e613599c080575eddcdea",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -6738,7 +6809,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "19adc8ca9f12dc6320c450489d5065f33b81d61ba6a9aadd63593d5fd24e4753"
+    "id": "7ca2d975aae03d5e2c5494267d7ffebe92a4e94d41cb966fef5a3bdf6d05e8a8"
    },
    "series": [
     {
@@ -7934,15 +8005,29 @@
     "error": null,
     "returned_grade": "C",
     "model": "claude-sonnet-4-6",
-    "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4",
+    "findings": [
+     {
+      "criterion": "base_shape",
+      "source": "strategy.chart.base",
+      "evidence": [
+       {
+        "path": "checks.C.status",
+        "value": "FAIL"
+       }
+      ],
+      "observation": "wide_overlapping_bars"
+     }
+    ],
+    "authority_version": 1,
+    "request_text_sha256": "4603a64b6255b23f1c75e9f43bc5d052d383cd893f1cb094ed88e82d12dde3e4",
     "input": {
-     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "b8c54ea7db218277df44b0802d615369015a0d3e5c310e3a7526461de142dcc5",
+      "request_sha256": "6f643a171c6cb912385a397ab1c050245d9de281d3abfeb8377e6f16ae671cbe",
       "correction": false,
       "outcome": "model"
      }
@@ -7972,21 +8057,21 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "bf2cc9825aef24f21a6baa2a773b0b8998128624f7fc29e26e7bad3b4fbb1ed0",
-     "system_object": "9a8a7bcacc0282018d4dbca77e9cc44b64d2ee6c15c1394fcbbca0234e37fe61",
-     "system_sha256": "3f7375ef17b3f31accc5eae936e2800609a0d07a269b7f0ab09aa284ec291f25",
+     "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
+     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "3f53088f12f6807b5ea2fdf8d938c72b8d82b79b6a5510cb68b0b9a140267cf4"
+     "request_text_sha256": "4603a64b6255b23f1c75e9f43bc5d052d383cd893f1cb094ed88e82d12dde3e4"
     },
-    "reader_sha256": "d82356e712628efe24f5e25644e7d17084fe3b65e5fadc0ae5ff9ef687785208",
+    "reader_sha256": "704ce7191f50a65328000f905b2c3c4bfee64807dd2bab8836d7040bea580de6",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "a6354faa5da9",
-    "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+    "rules_version": "9c917b84c825",
+    "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
     "gate": {
      "regime": "green",
      "final_grade": "C",
@@ -7998,7 +8083,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "193a3d87e74a4fa495ba5aad3794040715930de7e774fd88fdd47f58fac6fa32"
+    "id": "7147404cb1ff1015a39b54020c799dc432d79de834a4923dfd339326849c2092"
    },
    "series": [
     {
@@ -9244,8 +9329,8 @@
      ],
      "evidence_ref": {
       "version": 1,
-      "id": "2d42547e61af744f505d08f437862e1f814dffbadaa10e74283f6ca21a953249",
-      "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+      "id": "1dc4f1c9390d0545f5be99ff77c42e2b314286a3a5ff9d4f049c53530413de77",
+      "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
       "plan_sha256": "02805406e094a6fe2efc60fcd35944fd6ce051fc0a8ebec74b704d75c24b9eb1",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -10253,8 +10338,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "a6354faa5da9",
-     "context_sha256": "46098338a1ceaca839770d9298b5b6792d09d3b621314b283d2d0c2ee0040a8c",
+     "rules_version": "9c917b84c825",
+     "context_sha256": "cf9918a703cdf141de4f5b5f115526264a612ba177ee377612c31ed4547f0763",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -10263,7 +10348,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "2d42547e61af744f505d08f437862e1f814dffbadaa10e74283f6ca21a953249"
+     "id": "1dc4f1c9390d0545f5be99ff77c42e2b314286a3a5ff9d4f049c53530413de77"
     }
    }
   ],
@@ -10512,7 +10597,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "a6354faa5da9"
+  "replay_rules_version": "9c917b84c825"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -10730,53 +10815,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:a6354faa5da9": {
+   "burst:AAPL:2026-09-10:9c917b84c825": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:a6354faa5da9": {
+   "burst:AMD:2026-09-10:9c917b84c825": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:a6354faa5da9": {
+   "burst:NVDA:2026-09-10:9c917b84c825": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:a6354faa5da9": {
+   "burst:TSLA:2026-09-10:9c917b84c825": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:a6354faa5da9": {
+   "burst:PLUG:2026-09-10:9c917b84c825": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:a6354faa5da9": {
+   "burst:DLLR:2026-09-10:9c917b84c825": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:a6354faa5da9": {
+   "anticipation:COIL:2026-09-10:9c917b84c825": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "a6354faa5da9",
+    "rules_version": "9c917b84c825",
     "coverage": "observed"
    }
   },

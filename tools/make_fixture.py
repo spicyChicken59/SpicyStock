@@ -375,10 +375,13 @@ def run_variant(variant: str, docs: Path) -> dict:
     claude = type("FixtureClaude", (FakeAnthropic,), {"calls": [], "payload": {}, "raw": None, "raises": None})
 
     def answer(metrics: dict) -> dict:
+        from tests.test_reader_authority import finding
         grade = metrics.get("quality_grade")
-        if variant == "notrade":
-            return CLAUDE["C"]
-        return CLAUDE.get(grade, CLAUDE["C"])
+        if variant == "notrade" or grade not in ("A+", "A"):
+            # Scripted subjective judgement, not a claim a real model saw it.
+            status = metrics["reader_evidence"]["checks"]["C"]["status"]
+            return {**CLAUDE["C"], "findings": [finding(evidence=[{"path": "checks.C.status", "value": status}])]}
+        return {**CLAUDE.get(grade, CLAUDE["C"]), "findings": []}
 
     class Messages:
         def __init__(self, owner):

@@ -170,7 +170,7 @@ def test_a_structured_output_model_gets_the_schema_and_no_temperature():
     kwargs = request_kwargs("sys", [{"type": "text", "text": "t"}], model="claude-opus-5")
     fmt = kwargs["output_config"]["format"]
     assert fmt["type"] == "json_schema"
-    assert fmt["schema"]["required"] == ["score", "grade", "reason", "key_risk", "entry_note"]
+    assert fmt["schema"]["required"] == ["score", "grade", "reason", "key_risk", "entry_note", "findings"]
     assert fmt["schema"]["properties"]["grade"]["enum"] == list(GRADES)
     assert fmt["schema"]["additionalProperties"] is False
     assert "extra_body" not in kwargs
@@ -640,7 +640,7 @@ def test_a_grade_made_without_the_chart_says_so_and_attaches_nothing(claude):
 
 def test_a_row_carries_exactly_the_published_keys(claude):
     result = grade_candidate("AAA", metrics(), None, SYSTEM)
-    assert set(result) == {"grade", "score", "reason", "key_risk", "entry_note", "provenance"}
+    assert set(result) == {"grade", "score", "reason", "key_risk", "entry_note", "findings", "provenance"}
     assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256", "input", "attempts", "attempted_model"}
 
 

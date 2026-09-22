@@ -966,6 +966,7 @@ def metrics_for_model(assessment: Assessment, ticker: str, close: float,
     """A flat, sorted-key dict for src.grader.user_text: every check as one
     line, the vetoes, the notes and the base/leg summaries. ``extra`` is
     merged last, so a caller's key wins."""
+    from src import reader_authority
     metrics = {
         "ticker": ticker,
         "close": close,
@@ -974,6 +975,7 @@ def metrics_for_model(assessment: Assessment, ticker: str, close: float,
         "quality_passes": f"{assessment.passes}/{assessment.of}",
         "quality_a_plus_checks": assessment.a_plus_count,
         "checklist": [c.line() for c in assessment.checks],
+        "reader_evidence": reader_authority.evidence(assessment.checks),
         "vetoes": list(assessment.vetoes),
         "notes": list(assessment.notes),
         "reclass": assessment.reclass,

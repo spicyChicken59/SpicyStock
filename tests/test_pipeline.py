@@ -169,7 +169,8 @@ def test_claude_down_grades_by_the_checklist_alone_and_degrades_the_run(market, 
 
 
 def test_claude_may_lower_a_grade_and_never_raise_it(market, claude, fake_resend, tmp_path):
-    claude.set_payload({**CLAUDE_A_PLUS, "score": 5.5, "grade": "C"})
+    from tests.test_reader_authority import finding
+    claude.set_payload({**CLAUDE_A_PLUS, "score": 5.5, "grade": "C", "findings": [finding()]})
     rep, data, docs = evening(tmp_path, market)
     burst = data["bursts"][0]
     assert burst["quality"]["grade"] == "A+" and burst["grade"] == "C" and burst["claude"]["agree"] is False
