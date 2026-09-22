@@ -2644,3 +2644,68 @@ container bytes and #81 production artifact verification (**NOT RUN**; existing
 authorized evening execution only). **OMIT** live scanner/provider/model calls,
 dispatches, production publication, settings changes, sibling work and merge.
 Guidance independently reviews the scoped PR and retains merge authority.
+
+## Checkpoint, 22 Sep 2026 — bounded acquisition-corporation classification
+
+**Revision and authority.** Exact base:
+`49e2724c94b60963d914d55a2bf98598ac6507ad`; branch:
+`fix/blank-check-universe-classification`; implementation/tested source head:
+`4b4639c406494736ea437b0ad8e48990febbc101`. The connected GitHub app
+published the identical tested tree after the CLI lacked write credentials.
+This documentation-only child adds the checkpoint. The final review head including this note, and its
+completed required check runs, are pinned in the PR description rather than
+claimed as a self-referential commit hash. Main matched the supplied base,
+with zero open PRs before work. Astra owns implementation and one PR only;
+guidance retains independent review and merge. The selected effort setting
+was preserved; no value or quota was guessed.
+
+**Exact changed files:** `src/universe.py`, `tests/test_universe.py`,
+`tests/test_inputs.py`, `tools/check_blank_check_universe.py`,
+`docs/input-truthfulness/2026-09-22-blank-check-classification.md`,
+`README.md`, and `CLAUDE.md`. All other tracked files match the base.
+README is accurate for the new rule; `.env.example` was reviewed and needs
+no change because configuration is unchanged.
+
+**Correction.** The classifier depended too heavily on Nasdaq's exact
+`blank checks` industry label. It now also recognizes bounded Acquisition
+Corp[.]/Corporation legal endings, an optional retained Roman-number suffix,
+and a terminal common/ordinary-share label. The existing `blank check company`
+family records exclusions before fetch. Generic acquisition/capital/holdings/
+investment words do not exclude companies. Seed overrides and unknown-industry
+precedence remain unchanged. No manual rules_version change: the existing
+membership identity automatically changes its digest when the population changes.
+
+**FAIL before / PASS after.** HEAD was the exact base and the production-source
+diff was empty when the new regression produced 11 expected failures and
+108 passes. Retained BKHA/EGHA/HCMA rows were admitted and reached mocked bar
+requests. The identical selection passes all 119 checks after correction.
+Operating Class A shares, generic-name controls, exact blank-check industry,
+seed behavior, foreign/biotech warnings and missing-input behavior stay green.
+The new ledger case conserves duplicates, security exclusions, seed overrides/
+additions and capacity. Disabling only the old industry rule in memory leaves
+the three name regressions green and fails its two industry controls.
+
+**Executed verification.** Linux Python 3.12.14, pytest 9.1.1, pandas 3.0.6,
+NumPy 2.5.3, exchange_calendars 4.13.2: 229 focused universe/diagnostic/input/
+pipeline tests passed; full normal pytest: 1,423 passed; all 12 fixtures remain
+current; diff whitespace check passed. Initial SDK tests needed sandbox-only
+`socksio`, then passed without repository dependency changes. Browser and secret
+gates remain required on the final PR head; their outcomes belong in that PR.
+
+**Sweep and limits.** All 13 retained directory snapshots produce the same
+16 new exclusions: AAC, BKHA, EGHA, EMIS, EVAC, HCAC, HCMA, IPEX, KTWO, MCGA,
+MTAL, PAAC, SIMA, SOUL, VACI, WSTN. Every name was inspected and is tabulated
+in the dated report. No ambiguous operating name, seed loss, other membership
+loss or accounting fault remains. Latest comparison: 4,796 → 4,780; the
+September 18 eight-row sample loses only BKHA/EGHA/HCMA. This establishes no
+historical missing-bar cause. September 18/21 publications remain unchanged;
+remaining stale/unavailable inputs stay unknown and unmeasured, with truthful
+degraded coverage. No live provider/model/scan/publication action occurred.
+
+**KEEP** historical records, input accounting, strategy, warnings and existing
+website/design behavior. **FIX NOW** this narrow classifier hole only.
+**DEFER** provider causes and broader security-master work. **OMIT** stale-bar
+suppression, generic shell heuristics, live calls, directory refresh, workflow
+dispatch/rerun, email, publication, settings/schedule changes and merge.
+Exact next action: guidance independently reviews the focused PR and its
+completed exact-head checks; Astra stops without merging or another milestone.
