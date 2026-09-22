@@ -403,7 +403,14 @@ that runs only if `docs/data.json` does not already carry tonight's
 session. The run:
 
 - **universe** — Nasdaq's security-name and industry classifier approximates
-  common stock; it is not exact TC2000 membership. Directory price and volume
+  common stock; it is not exact TC2000 membership. Blank-check exclusions use
+  the exact industry label or a narrowly bounded `Acquisition Corp[.]` /
+  `Acquisition Corporation` legal name, optionally numbered, immediately
+  followed by a common/ordinary-share label. Generic acquisition, capital,
+  investment and holdings words do not exclude a company. The
+  [retained-directory correction](docs/input-truthfulness/2026-09-22-blank-check-classification.md)
+  documents every newly excluded name; it does not explain absent provider bars
+  or revise the September 18/21 publications. Directory price and volume
   never gate discovery. Biotech and foreign domicile remain flags. The
   seven-day cache and 228-name seed fallback remain explicit. Seeds can bypass
   classification; overrides and additions are counted. The 8,000-name capacity
