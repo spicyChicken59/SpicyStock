@@ -1,4 +1,7 @@
-"""Bonde's A-quality checklist: 2LYNCH with his letters and his numbers.
+"""SpicyStock's deterministic approximation of Bonde's 2LYNCH checklist.
+
+Letters and qualitative concepts are his; historical components and DERIVED
+measurements are distinguished in knowledge/consolidation-quality.md for C.
 
 One symbol's daily frame in (DatetimeIndex oldest first, Open/High/Low/Close/
 Volume, NaNs allowed) and the position of the burst bar being judged; one
@@ -36,7 +39,8 @@ from src.grader import GRADE_BANDS, SKIP, grade_for
 # leg_high = the highest High over the BASE_SEARCH_SESSIONS before the burst,
 # the session before the burst excluded so the base is never empty; the base
 # runs from the session after it through the session before the burst.
-# DERIVED: his lengths are "3 to 20" (2014), "3 to 10" (2015), "5-40" (2018).
+# DERIVED segmentation, not a source formula. Reaction lengths: 3-20 (2014),
+# 5-40 (2018); 3-10 (2015) is ANTICIPATION, not a replacement reaction rule.
 BASE_SEARCH_SESSIONS = 40
 # The leg starts at the lowest close in the LEG_SEARCH_SESSIONS before the
 # base begins. DERIVED from his 60-day efficiency-ratio window (2009).
@@ -87,17 +91,18 @@ NARROW_RANGE_PCT = 2.0
 NARROW_NORM_SESSIONS = 20
 
 # --------------------------------------------- C: consolidation quality ----
-# "The stock will have 3 to 20 days consolidation" -- VERBATIM, 2014. A base
-# of PARTIAL_BASE_MIN, or longer than BASE_MAX inside the search window, is
-# a partial: "5-40" (2018) and "3 to 10" (2015) are both his.
+# Selected PRIMARY length: 3-20 (2014). PARTIAL at two or 21-39 sessions is
+# SpicyStock DERIVED policy, not a Bonde partial grade or a faithful execution
+# of the distinct 2018 reaction / 2015 anticipation variants. See C contract.
 BASE_MIN = 3
 BASE_MAX = 20
 PARTIAL_BASE_MIN = 2
 # "no more than one 4% b/d in consolidation" -- VERBATIM, 2LYNCH; the 2014
 # ideal "did not have a 4% breakdown" is the A+.
 MAX_BREAKDOWNS = 1
-# Depth: the webinar's "not more than 1/3 of the first leg" (secondary), the
-# unsourced "upper third" for A+. Low confidence; no Bonde number.
+# DERIVED depth: older attribution names an unidentified secondary webinar
+# port for one-third; no exact primary cutoff was verified. The quarter is
+# a stricter product flag, not an arithmetic reading of "upper third".
 MAX_GIVEBACK = 0.34
 A_PLUS_MAX_GIVEBACK = 0.25
 # Tightness: base range over the range of the sessions before it. The
@@ -106,9 +111,9 @@ A_PLUS_MAX_GIVEBACK = 0.25
 MAX_TIGHTNESS = 1.0
 A_PLUS_MAX_TIGHTNESS = 0.70
 TIGHTNESS_NORM_SESSIONS = 60
-# "volume during consolidation should be preferably orderly and lower"
-# (2016): the A+ asks the base's mean volume under the leg's and under the
-# VOLUME_AVG_SESSIONS average ending the session before the burst.
+# Orderly volume (PRIMARY 2014), low volume (LATER BONDE 2020). DERIVED A+
+# requires the base mean below both the leg mean and this prior-session mean;
+# ordinary C does not require lower volume. The latter window overlaps base.
 VOLUME_AVG_SESSIONS = 50
 
 # ------------------------------------------------- H: close near the high ----

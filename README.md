@@ -471,7 +471,11 @@ session. The run:
   prior leg, **Y** a young trend, **N** a narrow or negative prior day,
   **C** a tight base with at most one 4% breakdown, **H** a close near the
   high, plus range expansion and volume. A run of three up closes or a
-  non-linear leg is a veto. A+ and A need 2 and H.
+  non-linear leg is a veto. A+ and A need 2 and H. The dated
+  [consolidation source contract](knowledge/consolidation-quality.md) separates
+  Bonde's historical variants from DERIVED segmentation, ratios and C A+ policy.
+  The [retained C audit](docs/input-truthfulness/2026-09-22-consolidation-source-fidelity.md)
+  reproduces the measurements and their sensitivity without retuning thresholds.
 - **grade** — Claude reads the chart and the numbers for up to twelve
   bursts by mechanical grade and may only LOWER a grade, never raise it;
   the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
