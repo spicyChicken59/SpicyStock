@@ -72,7 +72,11 @@ def test_source_grounded_visual_downgrade_control_survives(claude, tmp_path):
     before = deepcopy(assessment.to_dict())
     chart = tmp_path / "synthetic.png"
     chart.write_bytes(b"synthetic chart transport")
-    response(claude, [finding()])
+    # Equivalent JSON numeric notation is not a false factual disagreement.
+    sessions = metrics["reader_evidence"]["checks"]["C"]["values"]["base_sessions"]
+    response(claude, [finding(evidence=[
+        {"path": "checks.C.status", "value": "PASS"},
+        {"path": "checks.C.values.base_sessions", "value": float(sessions)}])])
     result = grader.grade_candidate("SYN", metrics, str(chart), "scripted contract")
     assert result["provenance"]["source"] == grader.SOURCE_CLAUDE
     assert grader.final_grade(assessment.grade, result["grade"]) == "B"

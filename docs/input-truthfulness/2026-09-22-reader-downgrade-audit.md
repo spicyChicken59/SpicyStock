@@ -86,7 +86,11 @@ The reader was told to start from the mechanical grade, confirm or lower, never
 raise, and name an independent chart/measurement flaw. Score bands were A+ ≥9,
 A ≥8, B ≥6.5, C ≥5, otherwise skip. The parser derived the returned grade from
 the score; pipeline used the worse of that grade and the mechanical grade.
-Neither reader score nor prose recalculated the mechanical assessment. RE/VOL
+Neither reader score nor prose recalculated the mechanical assessment. The
+prose says one grade for one clear visual flaw, while the base paragraph allows
+B or skip and severe plan-invalidating flaws allow skip. This is not a complete
+severity schedule; no exact correct historical score is inferred from a claim
+count or a silently reconciled reading of those instructions. RE/VOL
 are extra checks contributing to the A+ tally, not the six weighted 2LYNCH
 letters: a ten-point mechanical assessment can legitimately have RE/VOL failures.
 
@@ -288,8 +292,9 @@ not retuned from these examples.
 | Full normal pytest / grader-quality-pipeline-provenance coverage | PASS | 1,449 tests, Python 3.12.14; one dependency deprecation warning. All mechanical quality AST outside `metrics_for_model` is identical to base. |
 | Fixture regeneration and reproducibility | PASS | All eleven synthetic page fixtures reproduce; existing grade/ticket assertions are retained. Real publications, picks, source objects and quality ledger are unchanged. |
 | Local continuity and chart gates | PASS | 127 DOM/store checks and 182 chart checks; offline cached dependencies. Desktop ticket and mobile evidence screenshots inspected. |
-| Local page smoke | NOT RUN | Final browser run pending. |
-| Secret Scan / exact-head CI | NOT RUN | Results will be pinned to the submitted PR head, never claimed from another revision. |
+| Local page smoke | PASS | 7,637 checks with screenshots, using the repository-pinned Playwright 1.56.1 and jsdom 30.0.1 from offline cache. |
+| Implementation-head Secret Scan | PASS | Runs 35690926882 and 35691013697 at `a1e03a3b6fb145086186ecc2831488d820c20d25`. |
+| Final submitted-head Tests and Secret Scan | NOT RUN | Final results are pinned in PR #86 after the handoff commit; earlier runs are not substituted. |
 | Fresh model/provider run, scan, directory refresh, dispatch, email or publication | NOT RUN | Excluded by milestone. |
 
 Reproduce the derived inventory and appendix from the unchanged Git evidence:

@@ -6,6 +6,7 @@ and citation requirements are DERIVED SpicyStock choices, not Bonde thresholds.
 from __future__ import annotations
 from copy import deepcopy
 import json
+import math
 
 VERSION = 1
 MAX_FINDINGS = 8
@@ -98,8 +99,13 @@ def validate(reply, metrics, *, chart_seen):
                 check = block["checks"][parts[1]]
             except (KeyError, TypeError) as exc:
                 raise ReaderAuthorityError("unknown evidence path") from exc
-            # Typed JSON equality: True is not 1, null is not failure.
-            if json.dumps(actual, sort_keys=True, allow_nan=False) != json.dumps(citation["value"], sort_keys=True, allow_nan=False):
+            quoted = citation['value']
+            # JSON numbers 1 and 1.0 express the same fact; True and 1 do
+            # not. No string coercion, rounding or nonfinite evidence.
+            if (not isinstance(quoted, (str, int, float, bool, type(None)))
+                    or isinstance(quoted, float) and not math.isfinite(quoted)):
+                raise ReaderAuthorityError("invalid evidence value")
+            if actual != quoted or isinstance(actual, bool) != isinstance(quoted, bool):
                 raise ReaderAuthorityError("citation contradicts deterministic evidence")
             if actual is None or check["status"] == "UNMEASURED":
                 raise ReaderAuthorityError("unknown evidence cannot support a defect")
