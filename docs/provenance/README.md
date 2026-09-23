@@ -56,6 +56,13 @@ Reader requests retain their existing transport/retry policy: exact request
 kwargs include the chart bytes, metrics, system text and retry correction when
 applicable. The retained image is the one actually prepared/read, which can show
 a provisional mechanical plan before a reader lowers its grade. No call is replayed.
+Prospective attempts also retain exact returned text before parser/authority
+validation, including rejected and truncated replies, with a text digest, byte
+count, stop reason and message ID. The 64 KiB text bound records an explicit
+`omitted_oversize` gap; transport failures have no response object. These diagnostic
+attempts are sealed with the reader result and copied into the quality ledger.
+They never give a fallback a model score or grade. September 22 attempts predate
+this retention and cannot supply their discarded response text or findings.
 
 Top anticipation plans follow their actual measured path, with mechanical
 `not_applicable`, reader `not_graded`, grade `watch` and no invented reaction

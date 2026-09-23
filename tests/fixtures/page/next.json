@@ -1905,7 +1905,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "790c13356b015ff36b155db7c45dfe20c5678b0a467fd31b7c5d1012be0714b3",
+     "id": "67fcd60cbaa959b9434926a98e38550a2b5f5b0a71c05081b51c7f51a4d533f0",
      "context_sha256": "0d527beffad0ad84bb6ec57ab8bbc9ed1dec1e5b0df647e98ef9972f0fe4eddd",
      "plan_sha256": "91d552c55cfd64438b6a723aa30ee4a08474cc6e4fca00d2efcc4475319d8f0d",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
@@ -1926,17 +1926,25 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "bda31c222d8f7ff814a4011fff01675589e739d2bf88cc24e7244ef06c615587",
+    "request_text_sha256": "8f0f04d90ff15ef3c4b7d74d93e0259de3d14b881ba57af51ced89fb0a332bb5",
     "input": {
      "metrics_sha256": "e8d18818870b920b98e222a633488ec65caa29760934d5f48f7ef154ea6e6077",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "4b44f6a68ab9354b91f4be6b5d095ee889d4b5d8e83ebfc28553218f850c4b7b",
+      "request_sha256": "00142aeb0230465aafeddc503d7e61ee215195cf82da00a540e058f901e2a5f7",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 8.4, \"grade\": \"A\", \"reason\": \"The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.\", \"key_risk\": \"A weak open would put the entry under the burst bar's midpoint.\", \"entry_note\": \"Buy only inside the zone in the first thirty minutes.\", \"findings\": []}",
+       "text_sha256": "cdcaf57fe25e28814a922c9d5e7142b827f43a22e2301fe983031b1795fb62eb",
+       "bytes": 328,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -1982,12 +1990,12 @@
     },
     "reader_input": {
      "metrics_sha256": "e8d18818870b920b98e222a633488ec65caa29760934d5f48f7ef154ea6e6077",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "bda31c222d8f7ff814a4011fff01675589e739d2bf88cc24e7244ef06c615587"
+     "request_text_sha256": "8f0f04d90ff15ef3c4b7d74d93e0259de3d14b881ba57af51ced89fb0a332bb5"
     },
-    "reader_sha256": "f3ec387aeefe4d7ca9926854a05bf964443923d087cd2ee1dae161b89c290021",
+    "reader_sha256": "388024e544fce703ba37d9ddcd77d6c43e2cb5816a6a590da675d1404c3cf4da",
     "reader_source": "claude",
     "final_grade": "A",
     "version": 1,
@@ -2007,7 +2015,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "790c13356b015ff36b155db7c45dfe20c5678b0a467fd31b7c5d1012be0714b3"
+    "id": "67fcd60cbaa959b9434926a98e38550a2b5f5b0a71c05081b51c7f51a4d533f0"
    },
    "series": [
     {
@@ -3457,7 +3465,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "ef5f9acaedc5cae7730ecf05b0302f3203fb09c22c5e27adbd1e279c0423db19",
+     "id": "4cfb2d54fc623f2c193fdda9eee97f02305acde7d6fa6fc58933213bd4b11c79",
      "context_sha256": "0d527beffad0ad84bb6ec57ab8bbc9ed1dec1e5b0df647e98ef9972f0fe4eddd",
      "plan_sha256": "fc600bc49d71a9de423f2c378315e02cff1477898fb38a468fffcb4fc70f009f",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
@@ -3478,17 +3486,25 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "fbd9bc5a0f5713222b9bbfac993e9c81c0590fbe3fffa7b7e132ae2e6d2b7c11",
+    "request_text_sha256": "201725b59053e53c21939f765f258be5123290d3e9af8f6f38740d3a860957a0",
     "input": {
      "metrics_sha256": "1fc1ec68d1d9c459c18be1347c791b873ee9af8eb88c2be6b7dd1768e262c3a6",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "23997738ac6b77dfea7bf486bca3ab19e79d03ec608f3bd01aef5288a59630ff",
+      "request_sha256": "8507909c3e6c33ddb711e8acd59b9f3ca422354b4a95da08d2faed2aa35fb9b5",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 8.4, \"grade\": \"A\", \"reason\": \"The base is orderly and the burst is real, but the close sits inside the top fifth of the range rather than at the high.\", \"key_risk\": \"A weak open would put the entry under the burst bar's midpoint.\", \"entry_note\": \"Buy only inside the zone in the first thirty minutes.\", \"findings\": []}",
+       "text_sha256": "cdcaf57fe25e28814a922c9d5e7142b827f43a22e2301fe983031b1795fb62eb",
+       "bytes": 328,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -3534,12 +3550,12 @@
     },
     "reader_input": {
      "metrics_sha256": "1fc1ec68d1d9c459c18be1347c791b873ee9af8eb88c2be6b7dd1768e262c3a6",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "fbd9bc5a0f5713222b9bbfac993e9c81c0590fbe3fffa7b7e132ae2e6d2b7c11"
+     "request_text_sha256": "201725b59053e53c21939f765f258be5123290d3e9af8f6f38740d3a860957a0"
     },
-    "reader_sha256": "1b299a8293a458d6941fb26bace7b27b337c3743cc4676f893f48337cec6ec0a",
+    "reader_sha256": "f3aba929e849baabe540967b397e54e5dd493628613281171ec8d42128341a45",
     "reader_source": "claude",
     "final_grade": "A",
     "version": 1,
@@ -3559,7 +3575,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out"
     },
-    "id": "ef5f9acaedc5cae7730ecf05b0302f3203fb09c22c5e27adbd1e279c0423db19"
+    "id": "4cfb2d54fc623f2c193fdda9eee97f02305acde7d6fa6fc58933213bd4b11c79"
    },
    "series": [
     {
@@ -4912,7 +4928,7 @@
    "uncertainty": null,
    "evidence_ref": {
     "version": 1,
-    "id": "aa3d4a7373b1e18ad21beac04055b8cd2acf768e283e9c33c793f9e60b37981e",
+    "id": "ae5e2c0bc4fc41450172b3ce95f9424836ac4c43ad34b032f0c5e9134f7ffbb1",
     "context_sha256": "eaa675b353890c2140e4b5bd8caca198dcdb7472eddcf389cb939f76c71124d4",
     "plan_sha256": "686ba26c906a6986d9cce5c0aec50f610f6c5d679505876387f3b8421db984ef",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"

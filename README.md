@@ -493,6 +493,16 @@ session. The run:
   without retry and leaves the mechanical grade standing with degraded status.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
+  Every model receives the same nested findings schema in text; supported models
+  also receive it through structured output. Findings and citations remain closed
+  objects. Returned text is retained before parsing/authority checks in each
+  attempt, with its SHA-256, byte count, stop reason and message ID. Text above
+  64 KiB is explicitly omitted with its digest and size retained. Rejected text is
+  diagnostic evidence, never an accepted judgement, and the quality ledger retains
+  those attempts unchanged. Authority failures still do not retry; only parser
+  failures receive the existing format-correction retry. The September 22 replies
+  were discarded before this correction, so their exact fields and semantic
+  authority cannot be recovered; see [the incident audit](docs/input-truthfulness/2026-09-23-reader-authority-production-compatibility.md).
   See [the 108-decision audit](docs/input-truthfulness/2026-09-22-reader-downgrade-audit.md). The reader
   result archives the discovery version and a SHA-256 of the initial system
   and user text; transport, cache prefix and down-only clamping remain intact.

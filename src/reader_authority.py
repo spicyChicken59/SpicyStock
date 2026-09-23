@@ -33,6 +33,24 @@ OBSERVATIONS = {
     "event_structure": ("apparent_catalyst_gap", "apparent_halt_or_split"),
 }
 
+# One nested shape for both model families and the validator's closed fields.
+# Contextual authority (criterion/source pairing, paths and actual values) is
+# still checked below; schema conformance alone never grants a downgrade.
+FINDINGS_SCHEMA = {
+    "type": "array", "description": f"source-grounded findings, or [] when confirming; at most {MAX_FINDINGS}",
+    "items": {"type": "object", "properties": {
+        "criterion": {"type": "string", "enum": list(CRITERIA)},
+        "source": {"type": "string", "enum": [source for source, _ in CRITERIA.values()]},
+        "evidence": {"type": "array", "description": f"1 to {MAX_CITATIONS} exact citations",
+                     "items": {"type": "object", "properties": {
+                         "path": {"type": "string"},
+                         "value": {"type": ["string", "number", "boolean", "null"]}},
+                         "required": ["path", "value"], "additionalProperties": False}},
+        "observation": {"type": "string", "enum": [v for vs in OBSERVATIONS.values() for v in vs]}},
+        "required": ["criterion", "source", "evidence", "observation"],
+        "additionalProperties": False},
+}
+
 class ReaderAuthorityError(ValueError):
     """A response has no authority to change the mechanical judgement."""
 
@@ -66,7 +84,7 @@ def validate(reply, metrics, *, chart_seen):
     if findings and (not isinstance(block, dict) or block.get("version") != VERSION):
         raise ReaderAuthorityError("missing reader evidence contract")
     for finding in findings:
-        if not isinstance(finding, dict) or set(finding) != {"criterion", "source", "evidence", "observation"}:
+        if not isinstance(finding, dict) or set(finding) != set(FINDINGS_SCHEMA["items"]["required"]):
             raise ReaderAuthorityError("finding has missing or unauthorized fields")
         criterion = finding["criterion"]
         if not isinstance(criterion, str) or criterion not in CRITERIA:
@@ -84,7 +102,8 @@ def validate(reply, metrics, *, chart_seen):
             raise ReaderAuthorityError("finding lacks bounded evidence citations")
         defect = False
         for citation in citations:
-            if not isinstance(citation, dict) or set(citation) != {"path", "value"}:
+            if not isinstance(citation, dict) or set(citation) != set(
+                    FINDINGS_SCHEMA["items"]["properties"]["evidence"]["items"]["required"]):
                 raise ReaderAuthorityError("invalid evidence citation")
             path = citation["path"]
             parts = path.split(".") if isinstance(path, str) else []
@@ -127,4 +146,11 @@ def instruction():
             "bars/region seen in the reason; a passing proxy does not forbid a qualitative flaw. "
             "Unknown is not failure. No discovery requirement, outcome note, new numeric "
             "cutoff, or changed deterministic fact is an authorized finding. "
-            "Use [] when confirming without a defect.\n\n")
+            "Use [] when confirming without a defect. Each finding and citation must have "
+            "exactly the required fields below, with no extra fields. The evidence path is "
+            "a dot-separated string relative to reader_evidence (no reader_evidence prefix); "
+            "evidence is an array of path/value objects, even for one citation. Observation "
+            "is the identifier, not prose; put chart bars/region and explanation in reason. "
+            "JSON numbers 1 and 1.0 are equivalent; strings and booleans are not numbers. "
+            "Null and UNMEASURED cannot support an adverse finding.\n"
+            "FINDINGS JSON SCHEMA:\n" + json.dumps(FINDINGS_SCHEMA, sort_keys=True) + "\n\n")
