@@ -120,3 +120,34 @@ def test_public_method_and_readme_do_not_assert_a_universal_four_percent_day():
     method = (ROOT / "knowledge/method.md").read_text()
     assert "[source contract](reaction-discovery.md)" in method
     assert "2015/2017" not in method  # those printed burst volume operators differ
+
+
+def test_reader_c_does_not_attribute_derived_cutoffs_or_a_plus_volume_to_ordinary_c():
+    """The reader must not turn an A+ preference into an ordinary C defect.
+
+    Runtime controls live in test_quality: an above-average-volume base can
+    PASS C, and the quarter/third cutoffs have distinct, unchanged boundaries.
+    This pins the instruction the reader actually receives, not a spare doc.
+    """
+    strategy = (ROOT / "knowledge/strategy.md").read_text()
+    c = " ".join(strategy.split("- **C** —", 1)[1].split("- **H**", 1)[0].split())
+    assert "DERIVED" in c, "the reader still presents exact C proxies as Bonde's rules"
+    assert "ordinary C does not require lower volume" in c
+    assert "2014" in c and "2020" in c, "selected historical components must be explicit"
+
+
+def test_consolidation_contract_keeps_historical_variants_separate():
+    text = (ROOT / "knowledge/consolidation-quality.md").read_text()
+    references = dict(re.findall(r"^\[([^]]+)\]: (https://\S+)$", text, re.M))
+    assert references["P14a"] == "https://stockbee.blogspot.com/2014/01/how-to-identify-good-momentum-burst-and.html"
+    assert references["L15"] == "https://stockbee.blogspot.com/2015/02/how-to-find-anticipation-setups.html"
+    assert references["L18"] == "https://stockbee.blogspot.com/2018/01/what-to-look-for-in-good-4-or-bo.html"
+    assert references["L20"] == "https://stockbee.blogspot.com/2020/12/how-to-make-money-using-setups-detailed.html"
+    for attribution in (
+        "| 3–20 | PRIMARY", "| 3–10 | LATER BONDE", "| 5–40 | LATER BONDE",
+        "| Two sessions / 21–39 | DERIVED", "| Giveback | DERIVED",
+        "| Tightness | DERIVED", "| Volume ratios | DERIVED",
+    ):
+        assert attribution in text
+    assert "consolidation-quality.md" in (ROOT / "knowledge/method.md").read_text()
+    assert "consolidation-quality.md" in (ROOT / "README.md").read_text()

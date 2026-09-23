@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1449 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1451 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2830,3 +2830,68 @@ profitability and retuning. OMIT outcomes, historical regrading, A+ manufacturin
 ticker exceptions, UI additions, brokerage and siblings. Exact next action:
 finish automatic checks on PR #86's submitted head, then stop for Guidance's
 independent review; do not merge or start another milestone.
+
+## Checkpoint, 22 Sep 2026 — consolidation source fidelity
+
+Exact base/main: `6533e616bd14ebfebeeccb4c9b1b0d463b47dbb4`, tree
+`e711c3bd8bb7b11dda69b61e93208a455dc5584c`, the reviewed #86 merge. Main and
+zero open PRs were verified before branching and rechecked unchanged before
+submission. Branch `audit/consolidation-source-fidelity`. Exact tested
+implementation head: `014f2132c3b65cb39f374af576b8a3e8524b49f3`, tree
+`4dd6b120c8c8991dabab0b7523fcd87c131c170e`. This checkpoint-only descendant's
+exact submitted head and automatic checks are pinned in the one focused PR.
+Astra owns implementation; Guidance owns independent review and normal clean
+merge. The selected effort setting was preserved without guessing its value.
+
+The dated consolidation audit reconstructs all 3,547 real reaction assessments
+across nine retained publications, with a separate 2,766-row latest-per-session
+view, 35 reproducibly selected source-frame cases, overlap matrices, exact
+histograms and explicitly offline counterfactuals. All 1,846 available reaction
+frames replay exactly; original-source provenance verifies 1,871 later rows
+including anticipation. Earlier 1,701 complete frames are unavailable; their
+stored checks reconcile, not raw bars. No subsequent returns were used.
+
+Source hierarchy distinguishes directly inspected Bonde text from later
+variants, community/secondary interpretations, DERIVED policy and retained
+observations. The supplied field guide is secondary. Selected reaction length
+3–20 is primary 2014; 3–10 is 2015 anticipation; 5–40 is a distinct 2018 reaction
+variant with zero breakdowns. Maximum one breakdown is later 2020. Base/leg
+segmentation, partial grades, exact giveback/tightness, volume means and the C
+A+ conjunction are DERIVED. No inspected primary exact third/quarter giveback
+or tightness ratio was verified. Unavailable X text and unreviewed video audio
+remain explicit limits.
+
+Giveback exceeds 0.34 in 2,877 rows, overlapping long bases and breakdowns.
+One-session anchor stress changes C in 158/1,846 frames; a defined recent-local-
+peak counterfactual changes 148. These demonstrate sensitivity, not erroneous
+base prevalence. CTAS has a plausible shorter pause inside its 33-session box;
+IDT's recent higher high produces two sessions. No source-labelled human
+boundary benchmark establishes a replacement. No numerical correction is
+warranted by this evidence.
+
+The verified current defect is attribution: the reader instruction presented
+DERIVED giveback as Bonde's rule and lower volume as ordinary C, although it
+only gates C A+. Corrected prompt, source comments and dated source contract
+separate those facts and historical scopes. Executable quality AST, constants,
+rules digest and #86 authority remain unchanged. Before/after C stays
+304 PASS / 67 PARTIAL / 3,176 FAIL / zero UNMEASURED, with 32 C A+ flags.
+Mechanical grades stay A+ 14 / A 415 / B 860 / C 645 / skip 1,613; no changed
+candidates. Historical publications are untouched.
+
+**FAIL before / PASS after:** attribution regression, with eleven unaffected
+arithmetic controls. **PASS:** 332 focused tests; 1,451 full pytest tests on
+Python 3.12.14; all 12 regenerated fixture files current; retained replays and
+unchanged historical bytes. Fixture differences are prompt-derived identities.
+README and `.env.example` reviewed. **BLOCKED:** earlier raw frames and a human
+source-labelled segmentation benchmark. **NOT RUN:** local UI rerun, fresh
+provider/model calls, live scan, refresh, email, manual publication, dispatch
+or rerun. Exact-head CI/Secret Scan are **NOT RUN** at checkpoint writing;
+their automatic results must be pinned in the PR before handoff.
+
+KEEP #86 authority, #85 ledger, truthful unknowns, history, mechanical rules,
+website/mobile/chart/Focus and shared design. FIX NOW attribution only. DEFER
+provider/live coverage, labelled segmentation research, profitability and
+broader retuning. OMIT A+ manufacturing, future-return tuning, historical
+regrading, ticker exceptions, UI/portfolio/brokerage and siblings. Exact next
+action: finish automatic checks on the submitted PR head, stop for Guidance's
+independent review, and do not merge or start another strategy component.

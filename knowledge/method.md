@@ -8,6 +8,9 @@ For reaction discovery, the directly inspected, dated
 [source contract](reaction-discovery.md) supersedes this file's older broad
 attributions. Its PRIMARY / LATER BONDE / COMMUNITY / IMPLEMENTATION labels
 keep formula authorship separate from the repository's operational choices.
+For C, the dated [consolidation source contract](consolidation-quality.md)
+supersedes the older broad attributions and records the selected historical
+components, segmentation, rounding and A+ policy separately.
 
 Marks: **(B)** Bonde's own words or formula · **(V)** his 2018 video, one
 machine transcription, corroborated by an independent port · **(P)** this
@@ -55,7 +58,7 @@ warning, not a filter Bonde applies).
 | L | prior leg linear: efficiency ratio ≥ 0.40 or R² ≥ 0.55; failure is a veto | ER formula (B) 2009; veto (B) 2011; thresholds (P) |
 | Y | first or second breakout of the move | (B) 2LYNCH; the "start of the move" definition is (P) |
 | N | prior day negative OR its range under 2% of price | (B) "narrow or negative"; 2% (V) |
-| C | base 3–20 sessions, ≤ 1 breakdown, gave back ≤ ⅓ of the leg, bars tighter than the norm; A+ needs 0 breakdowns, 0 bursts inside, ≤ ¼, lower volume | 3–20 (B) 2014; ≤ 1 (B) 2LYNCH; ⅓ (P, one webinar port); tightness (P) |
+| C | selected 3–20 sessions, ≤ 1 price-only 4% down day, giveback ≤ 0.34, tightness ≤ 1.0; A+ additionally requires 0 down/up 4% days, giveback ≤ 0.25, tightness ≤ 0.70 and both volume ratios < 1 | Length PRIMARY 2014; down-day allowance LATER BONDE 2020; base/leg boundaries, partial treatment, exact ratios and composite A+ are DERIVED (P). Ordinary C does not require lower volume. See the dated C contract. |
 | H | closed within 20% of the high and above the open | (V) "within 20% of high"; C>O (V) |
 | RE | today's range ≥ every range of the prior 5 (A+: 10) sessions | (B) "bigger than the last 5 to 10 days bars"; ratio (P) |
 | VOL | volume above yesterday (scan); rank in the last 60; +CV: a base over ~21 sessions needs 1.5× the 50-day average | (B); +CV (E, two secondary sources) |
@@ -141,6 +144,11 @@ On September 16, 2026, public Bonde blog text was directly retrieved for the
 reaction source contract. Its evidence register records exactly what was
 inspected and what remains unavailable; it does not re-certify unrelated
 quality, breadth or plan attributions above.
+On September 22, 2026, the consolidation contract separately inspected the
+2014, 2015, 2017, 2018 and 2020 blog text. In particular, 3–10 belongs to
+anticipation; the 2018 reaction window is 5–40 with no 4% breakdowns. These
+are not interchangeable versions of the selected C rule. No primary exact
+one-third/quarter giveback or tightness-ratio formula was verified.
 
 ## The record (`src/record.py`)
 

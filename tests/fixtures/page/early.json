@@ -1879,7 +1879,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "31855682af0e16a6ab76974925a94b490c27995ce33188715e48e378b0cfa0e6",
+     "id": "05378db1c26f20f8b9c506f9fb93d0f2532166a63701b6a2d8f5b393a0968f66",
      "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
      "plan_sha256": "4282191d82332377f91420af914315320c7d41e604329ddf944adde58a1e19af",
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
@@ -1900,15 +1900,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "56ae6854f5ac734b0bad7d6390ed9d6a317066cde5c7f90c0d5ffdf5086ebeb2",
+    "request_text_sha256": "2e4a5dc751b271a7099eca6e4f1ce65f113ac1ad16ab01b4fb24ddd3e7bccf19",
     "input": {
      "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "a13052c35fa1247b016b05a8812887a4a8a6b98d246bfa62285a98bbd2f299aa",
+      "request_sha256": "86676ed006fb6259aa7d904a993b95ad1f7f68f4a11b0cd3dba2f346daa45951",
       "correction": false,
       "outcome": "model"
      }
@@ -1956,12 +1956,12 @@
     },
     "reader_input": {
      "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "56ae6854f5ac734b0bad7d6390ed9d6a317066cde5c7f90c0d5ffdf5086ebeb2"
+     "request_text_sha256": "2e4a5dc751b271a7099eca6e4f1ce65f113ac1ad16ab01b4fb24ddd3e7bccf19"
     },
-    "reader_sha256": "fd43130d9dd365ad72e5498bcc83d71672f8caa3307bb7aac123667baf205e06",
+    "reader_sha256": "c99ecb6b3e5f38bf49af004ba4e1b03fa8ce67d6a6a86e8e6c7eb63d75401433",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -1981,7 +1981,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "31855682af0e16a6ab76974925a94b490c27995ce33188715e48e378b0cfa0e6"
+    "id": "05378db1c26f20f8b9c506f9fb93d0f2532166a63701b6a2d8f5b393a0968f66"
    },
    "series": [
     {
@@ -3413,7 +3413,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "f70a4ac2dcc915f6e28cfc34d4605f3c05e11467692b1c8ee5c5c54b187ff241",
+     "id": "f240bbf8c839786c966b112908dc37d1bbcb8b8d2f314127c7d2697555b3c3fe",
      "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
      "plan_sha256": "bbc98ec48ce75a14da63b6c012e6ef4cd0b0488308f80d1fef519837e768327b",
      "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
@@ -3434,15 +3434,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "cd2d621d15462f10464483551a262486eb5f7644a9580c889a5a530a811ca65e",
+    "request_text_sha256": "da25ed2d74bac7b0b81aa564df1153eb1105e428985b83801640027f256de278",
     "input": {
      "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "737ca78844b01fab53cdf2fddbad7a17c77489ce0d5858781ef3f9aca901f483",
+      "request_sha256": "294c7873128feede3d858f2fb913171bb7eead9cb504c0c1941f7ebd67645196",
       "correction": false,
       "outcome": "model"
      }
@@ -3490,12 +3490,12 @@
     },
     "reader_input": {
      "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "cd2d621d15462f10464483551a262486eb5f7644a9580c889a5a530a811ca65e"
+     "request_text_sha256": "da25ed2d74bac7b0b81aa564df1153eb1105e428985b83801640027f256de278"
     },
-    "reader_sha256": "f9f8379f67bef30881ebeaf9522981553e75f5014672db81c8b58bfce8d8c5ae",
+    "reader_sha256": "1000dfa95a42eed68a5b1a0cbab79c6306837c5cee4e3b5d065874021f35178c",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -3515,7 +3515,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "f70a4ac2dcc915f6e28cfc34d4605f3c05e11467692b1c8ee5c5c54b187ff241"
+    "id": "f240bbf8c839786c966b112908dc37d1bbcb8b8d2f314127c7d2697555b3c3fe"
    },
    "series": [
     {
@@ -4916,7 +4916,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "b79bbee2f566b38357d0f5cce492cf731c0f4d4e527a688e38ec47956e257faa",
+     "id": "f0b9ec7aa28b52f979b47592bccb46fa4d3173e982d3a089b57048d766c6ddab",
      "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
      "plan_sha256": "0020910720711d10a8f02d00e0e350ecc58c538f01a125c273c71d5604a0c137",
      "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
@@ -4937,15 +4937,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "01a85adab9851749931a61303a16fc07376be7666914af0ff4e59baeb7100a04",
+    "request_text_sha256": "71fa57bc5c23f383b7d8ee55319664e04ef40e31eb7aee36184101e36cddb4ca",
     "input": {
      "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "4c7b852c58c5c891945156007e0b7cb0b85c9d24658f44031b4dc0283449d840",
+      "request_sha256": "553957ab7c90176fe12cd53470bb81e3a0ae7a150466d2601627140a3519f4fc",
       "correction": false,
       "outcome": "model"
      }
@@ -4993,12 +4993,12 @@
     },
     "reader_input": {
      "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "01a85adab9851749931a61303a16fc07376be7666914af0ff4e59baeb7100a04"
+     "request_text_sha256": "71fa57bc5c23f383b7d8ee55319664e04ef40e31eb7aee36184101e36cddb4ca"
     },
-    "reader_sha256": "6fc308170716a61472afed57707ba4f52a8319b4d2b2f606ffcf7416eb7848f0",
+    "reader_sha256": "ca88809c194add343a84bba2a5eea70dc1aed1a1fa551d763eb076eaf6220754",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -5018,7 +5018,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "b79bbee2f566b38357d0f5cce492cf731c0f4d4e527a688e38ec47956e257faa"
+    "id": "f0b9ec7aa28b52f979b47592bccb46fa4d3173e982d3a089b57048d766c6ddab"
    },
    "series": [
     {
@@ -6438,7 +6438,7 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "39360f1fea19db0fa8ca8b1bedc03b46dbfb186d5f09102d07696dd66eababa6",
+     "id": "ba9f06886b9c7323cc7cbdec925af89289003d23f0dbe6facacefd0dbf6e99f6",
      "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
      "plan_sha256": "9192db9138653e4f17f4627722ac9569c0417fd966e2254b9ac3deec57e45cc7",
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
@@ -6459,15 +6459,15 @@
     "model": "claude-sonnet-4-6",
     "findings": [],
     "authority_version": 1,
-    "request_text_sha256": "e9089b3073560ab10582a7c7f3af25c3385c0a32fbbe2ebde385e79a288c6040",
+    "request_text_sha256": "243dac834f53a3c4f92ab2850d69f38a386ed99ef50b0bd2be45fa1cbc53cc36",
     "input": {
      "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "2f3911e870f94b77283251324884b4a7f4515fbfbeb711b4a426c4d7060de799",
+      "request_sha256": "f082dcecd1cc0e796686226ac4b3323f5f76bdb656421fe916fc7ab7a6ef1394",
       "correction": false,
       "outcome": "model"
      }
@@ -6515,12 +6515,12 @@
     },
     "reader_input": {
      "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "e9089b3073560ab10582a7c7f3af25c3385c0a32fbbe2ebde385e79a288c6040"
+     "request_text_sha256": "243dac834f53a3c4f92ab2850d69f38a386ed99ef50b0bd2be45fa1cbc53cc36"
     },
-    "reader_sha256": "0fdd32dccf6cec66294e46fadafb29d4bb2e0c162779c2b3f020aa89b50c8bd6",
+    "reader_sha256": "5b2117984bb7ddbdefe6c592e466275a1a72fbe0c07e8ab4671a6828a6bab34e",
     "reader_source": "claude",
     "final_grade": "A+",
     "version": 1,
@@ -6540,7 +6540,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "39360f1fea19db0fa8ca8b1bedc03b46dbfb186d5f09102d07696dd66eababa6"
+    "id": "ba9f06886b9c7323cc7cbdec925af89289003d23f0dbe6facacefd0dbf6e99f6"
    },
    "series": [
     {
@@ -7750,15 +7750,15 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "7894af4516287f4eaf214eeae47b370a2cf793b9e16caacf86332ce7e8fdcf66",
+    "request_text_sha256": "a863165b7cf1a720378c24838e3e57fb9ae4cfc5578b05a60aeb3776acbc1bd3",
     "input": {
      "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "e7817607815ebae589144baa8c8add2af7b7c22f14d3f9f554bd2cdd77cd3229",
+      "request_sha256": "937beff02863370c7b58bd1b906b0da6d15a8615b27fe0b7d5d7975fe7756e90",
       "correction": false,
       "outcome": "model"
      }
@@ -7789,12 +7789,12 @@
     },
     "reader_input": {
      "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "7894af4516287f4eaf214eeae47b370a2cf793b9e16caacf86332ce7e8fdcf66"
+     "request_text_sha256": "a863165b7cf1a720378c24838e3e57fb9ae4cfc5578b05a60aeb3776acbc1bd3"
     },
-    "reader_sha256": "ed0a8c102421c4958b41a00c78795efe600a4b6ffd1e613599c080575eddcdea",
+    "reader_sha256": "0a772d7c7e2dd78f8499abc2187614d41b95c7dba8a7dae4b3e9505d168dd793",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -7814,7 +7814,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "859c66dffe141db43100293fb8d1c9a3cf8829f1aa726b7de087230614c1446d"
+    "id": "05ff33f64bb92c965bbc5d111bd60d2137541b4c6cc3693d7d06e968a120b1bb"
    },
    "series": [
     {
@@ -9024,15 +9024,15 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "4603a64b6255b23f1c75e9f43bc5d052d383cd893f1cb094ed88e82d12dde3e4",
+    "request_text_sha256": "4a23ee524aae311c9e46e251df2397c8d91daa37d30be012aa142b19077eb9d5",
     "input": {
      "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "6f643a171c6cb912385a397ab1c050245d9de281d3abfeb8377e6f16ae671cbe",
+      "request_sha256": "d81ba6668f1dbec415625fad35c50842cb7c81bac63b151040d469927b53db34",
       "correction": false,
       "outcome": "model"
      }
@@ -9063,12 +9063,12 @@
     },
     "reader_input": {
      "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
-     "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07",
+     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
+     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "4603a64b6255b23f1c75e9f43bc5d052d383cd893f1cb094ed88e82d12dde3e4"
+     "request_text_sha256": "4a23ee524aae311c9e46e251df2397c8d91daa37d30be012aa142b19077eb9d5"
     },
-    "reader_sha256": "704ce7191f50a65328000f905b2c3c4bfee64807dd2bab8836d7040bea580de6",
+    "reader_sha256": "69e5f599f37f0745431dbffd2fd6a7ae9d16c75a56b8853c7afcbb3c83664011",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -9088,7 +9088,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "868db04880a8aabadc8c3e06f3f5a389594b0a7b2bd4b61685f4cf3dcb7851bc"
+    "id": "bdde35c43898a3f0ec7f28b3c3d345596a5a63dbe58ac142fde0a4604029052e"
    },
    "series": [
     {
