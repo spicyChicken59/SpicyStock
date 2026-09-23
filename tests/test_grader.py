@@ -622,7 +622,10 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     from src.provenance import digest
     assert prov["input"]["chart_sha256"] == hashlib.sha256(Path(chart).read_bytes()).hexdigest()
     assert prov["input"]["metrics_sha256"] == digest(metrics())
-    assert prov["attempts"] == [{"request_sha256": digest(claude.calls[0]), "correction": False, "outcome": "model"}]
+    raw = json.dumps(REPLY)
+    assert prov["attempts"] == [{"request_sha256": digest(claude.calls[0]), "correction": False, "outcome": "model",
+        "response": {"text": raw, "text_sha256": hashlib.sha256(raw.encode()).hexdigest(),
+                     "bytes": len(raw.encode()), "retention": "complete", "stop_reason": "end_turn", "message_id": None}}]
     assert prov["attempted_model"] == prov["model"]
     blocks = claude.calls[0]["messages"][0]["content"]
     images = [b for b in blocks if b["type"] == "image"]

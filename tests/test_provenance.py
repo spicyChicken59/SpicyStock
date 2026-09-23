@@ -65,6 +65,31 @@ def test_control_actionable_publication(market, claude, fake_resend, tmp_path):
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"]
 
 
+def test_rejected_response_survives_publication_and_ledger(market, claude, fake_resend, tmp_path):
+    """The Sep 22 evidence-loss defect, exercised with explicitly scripted text."""
+    from src import provenance
+    from tests.test_reader_authority import finding
+    raw = json.dumps({"score": 6.5, "grade": "B", "reason": "scripted",
+                      "findings": [finding(unsupported_limit=1.5)]}, indent=2)
+    claude.set_raw(raw)
+    rep, data, docs = evening(tmp_path, market)
+    assert rep.published and rep.status == "degraded"
+    assert len(claude.calls) == 1
+    row = next(r for r in data["bursts"] if r["ticker"] == "AAA")
+    assert row["grade"] == row["grade_mechanical"] == "A+"
+    assert row["score"] == row["quality"]["score"]
+    assert row["claude"]["source"] == "fallback" and row["claude"]["score"] is None
+    assert row["claude"]["attempts"][0]["response"]["text"] == raw
+    ledger_file, = (docs / 'quality-ledger/v1').glob('*.json.gz')
+    saved = json.loads(gzip.decompress(ledger_file.read_bytes()))
+    candidate = next(r for r in saved["signal"]["candidates"] if r["ticker"] == "AAA")
+    assert candidate["reader"] == row["claude"]
+    assert provenance.verify(data, objects=docs / "evidence")["status"] == "PASS"
+    row["claude"]["attempts"][0]["response"]["text"] = "changed"
+    result = provenance.verify(data, objects=docs / "evidence")
+    assert result["status"] == "FAIL" and "reader result digest" in str(result["breaks"])
+
+
 ROOT = Path(__file__).resolve().parents[1]
 OBJECTS = ROOT / "tests/fixtures/provenance/objects"
 

@@ -1676,17 +1676,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "2e4a5dc751b271a7099eca6e4f1ce65f113ac1ad16ab01b4fb24ddd3e7bccf19",
+    "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32",
     "input": {
      "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "86676ed006fb6259aa7d904a993b95ad1f7f68f4a11b0cd3dba2f346daa45951",
+      "request_sha256": "3625ae811f9ee2fc6daad4d613f9c81b94af3912c9ca77c0e43d246dd3bdc240",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -1715,12 +1723,12 @@
     },
     "reader_input": {
      "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "2e4a5dc751b271a7099eca6e4f1ce65f113ac1ad16ab01b4fb24ddd3e7bccf19"
+     "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32"
     },
-    "reader_sha256": "4430c6a6201e760be446bf22689223ec2b5a0e1caebbd61dda7445bab433bfbb",
+    "reader_sha256": "9df8be8c491d323fa20da8612e4460b269e769185725361731a2ddf6f3478134",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -1740,7 +1748,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "7cc16729e15ddc4a6e43121f041150c76ef39f542e27154def7e029d105f06c4"
+    "id": "ab3980b4424f255dd2bc014c3e39f0eca8788f8b6b3e8c9891a98c24b961fdeb"
    },
    "series": [
     {
@@ -2949,17 +2957,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "da25ed2d74bac7b0b81aa564df1153eb1105e428985b83801640027f256de278",
+    "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8",
     "input": {
      "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "294c7873128feede3d858f2fb913171bb7eead9cb504c0c1941f7ebd67645196",
+      "request_sha256": "f27dcd12fd812d7002bf349794f6f1126a6bfaef7c8c54baf990c095f5090cac",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -2988,12 +3004,12 @@
     },
     "reader_input": {
      "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "da25ed2d74bac7b0b81aa564df1153eb1105e428985b83801640027f256de278"
+     "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8"
     },
-    "reader_sha256": "48192e49a0d3199e616a29c9bbe540ad2d549093e455f54c275c0287b67447a3",
+    "reader_sha256": "21cbdfa3b7e253df26ea97298d200b909ad735e7f04a92530bb5911e5978c3be",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -3013,7 +3029,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "902e7b06294005188e0433eba4c4de60ee801054b863204d1f341436fc96f8da"
+    "id": "21e64c376e3e71af8b5dd94b4032ecdaf9152cc409aff0f0f908cfa41ee57a6e"
    },
    "series": [
     {
@@ -4190,17 +4206,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "71fa57bc5c23f383b7d8ee55319664e04ef40e31eb7aee36184101e36cddb4ca",
+    "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490",
     "input": {
      "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "553957ab7c90176fe12cd53470bb81e3a0ae7a150466d2601627140a3519f4fc",
+      "request_sha256": "c6047c304f5fba54f297ef97f7a007516fa2b074f852ffc21971c368bcfbcacc",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -4229,12 +4253,12 @@
     },
     "reader_input": {
      "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "71fa57bc5c23f383b7d8ee55319664e04ef40e31eb7aee36184101e36cddb4ca"
+     "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490"
     },
-    "reader_sha256": "48e85805b3f41d038fff8cf1d4d951bfea68c52e3fdbb7bd59344f7434bc828b",
+    "reader_sha256": "4e8cc1333fda7d667d4d141de6c3548f6fe9edc7c5018b2e713562cf7d5283fd",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -4254,7 +4278,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "b9d890457917d8749fbb842a3428f81c8a10aafa75085919fc3a24131277f0c9"
+    "id": "5bc6063449cdf3d03dc582869123dcfe3973c051718915cbaf27fa148c4addb3"
    },
    "series": [
     {
@@ -5471,17 +5495,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "243dac834f53a3c4f92ab2850d69f38a386ed99ef50b0bd2be45fa1cbc53cc36",
+    "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8",
     "input": {
      "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "f082dcecd1cc0e796686226ac4b3323f5f76bdb656421fe916fc7ab7a6ef1394",
+      "request_sha256": "29542fa67a95204b57faefad212f1d0d2e7853d47b60f690cc4b0855c3582f6b",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -5510,12 +5542,12 @@
     },
     "reader_input": {
      "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "243dac834f53a3c4f92ab2850d69f38a386ed99ef50b0bd2be45fa1cbc53cc36"
+     "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8"
     },
-    "reader_sha256": "d92d5f0f12edc9d8724c070442aa30eb6bbc83887f558683275229e725a8e906",
+    "reader_sha256": "242ff8efcdfa580ff96ca9ff407d0201007c68ec675d00be0bc35033831d6620",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -5535,7 +5567,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "4ae569773c37260ad8e35feb9b7d4f8f01cc2b2dfce7737889b085959080bca6"
+    "id": "6f44abd39fc085fb2cbe5ba61c8d6698abb8daeedc3ee15b9b481a5ce318a390"
    },
    "series": [
     {
@@ -6745,17 +6777,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "a863165b7cf1a720378c24838e3e57fb9ae4cfc5578b05a60aeb3776acbc1bd3",
+    "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7",
     "input": {
      "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "937beff02863370c7b58bd1b906b0da6d15a8615b27fe0b7d5d7975fe7756e90",
+      "request_sha256": "5d555fe6e01200899e6079967fb0b50bb51de28f966dc988e2dfc39fd97fa89d",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -6784,12 +6824,12 @@
     },
     "reader_input": {
      "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "a863165b7cf1a720378c24838e3e57fb9ae4cfc5578b05a60aeb3776acbc1bd3"
+     "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7"
     },
-    "reader_sha256": "0a772d7c7e2dd78f8499abc2187614d41b95c7dba8a7dae4b3e9505d168dd793",
+    "reader_sha256": "4279039d62f5fc7f7530b2172fe490ee7b3a7fb6e13b3126eac0c76b1a95352c",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -6809,7 +6849,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "7b64e8c7d604f66d3faf1db6b3c2b877ab04f1835d9828a5db9a51ea3100ec95"
+    "id": "edf63bfae3ceb41d08f7a1fa862b037a23768a9341aa800d2489d57bb8e63cd0"
    },
    "series": [
     {
@@ -8019,17 +8059,25 @@
      }
     ],
     "authority_version": 1,
-    "request_text_sha256": "4a23ee524aae311c9e46e251df2397c8d91daa37d30be012aa142b19077eb9d5",
+    "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f",
     "input": {
      "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "d81ba6668f1dbec415625fad35c50842cb7c81bac63b151040d469927b53db34",
+      "request_sha256": "8640bc06d99de72a70dc08f89ec22adc0cd2d02ea65555c829c10fcfbb27a737",
       "correction": false,
-      "outcome": "model"
+      "outcome": "model",
+      "response": {
+       "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}], \"observation\": \"wide_overlapping_bars\"}]}",
+       "text_sha256": "ff6fc926b5e83c22b23d94a43d12433c01b8fe5a70827b1a4cf3429d0ac00add",
+       "bytes": 414,
+       "retention": "complete",
+       "stop_reason": null,
+       "message_id": null
+      }
      }
     ],
     "attempted_model": "claude-sonnet-4-6",
@@ -8058,12 +8106,12 @@
     },
     "reader_input": {
      "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_object": "0d4b910cf1ac6ade11c9bc75137a5111199330bdbe5b1ac31b1a70444cdcbdca",
-     "system_sha256": "f40099d947fd2def71ba5a88ea100387d1e0004dba6aa68fdc8cce841a48dc32",
+     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
+     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "4a23ee524aae311c9e46e251df2397c8d91daa37d30be012aa142b19077eb9d5"
+     "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f"
     },
-    "reader_sha256": "69e5f599f37f0745431dbffd2fd6a7ae9d16c75a56b8853c7afcbb3c83664011",
+    "reader_sha256": "b5d51230350fcffc8f8f1fce40c1b18d2b533afcb04b47c02484d67e7daefc69",
     "reader_source": "claude",
     "final_grade": "C",
     "version": 1,
@@ -8083,7 +8131,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "cdd1efa94cdefa75001b62fdc317993a8f8a5dcadf55551e270bf60cecaaad04"
+    "id": "ab8e145dd78e4b260856585bcf1ef59ca4cd0d0d0e0cb0d2c133a758c104fc29"
    },
    "series": [
     {

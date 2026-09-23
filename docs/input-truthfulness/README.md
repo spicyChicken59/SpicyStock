@@ -1,5 +1,10 @@
 # Input truthfulness milestone
 
+[23 September 2026: production reader compatibility](2026-09-23-reader-authority-production-compatibility.md)
+reconstructs all twelve September 22 request/fallback identities. Raw replies
+were discarded, so finding-level classification remains BLOCKED. The bounded
+prospective correction exposes the exact nested schema and retains returned text.
+
 [22 September 2026: reader downgrade/source authority](2026-09-22-reader-downgrade-audit.md)
 audits all 108 retained completed reads and individually records all 14 mechanical
 A+ assessments. Historical decisions remain unchanged.

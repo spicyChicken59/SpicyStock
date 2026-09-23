@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1451 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1466 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -2895,3 +2895,62 @@ broader retuning. OMIT A+ manufacturing, future-return tuning, historical
 regrading, ticker exceptions, UI/portfolio/brokerage and siblings. Exact next
 action: finish automatic checks on the submitted PR head, stop for Guidance's
 independent review, and do not merge or start another strategy component.
+
+## Checkpoint, 23 Sep 2026 — production reader contract and retained failures
+
+Verified starting main: `897f507aa2a85f4493c7cc742661d06a1a8ba6f8`, the #87
+merge over the real September 22 publication. Main was rechecked unchanged and
+zero open PRs were verified before submission. Branch:
+`fix/reader-production-compatibility`. Astra owns this implementation and one
+unmerged PR; Guidance owns independent review and merge. The selected effort
+setting was preserved without guessing its value or quota. The exact submitted
+head and completed automatic check links belong in the PR description.
+
+**PASS — real evidence and reconstruction.** Run `35802203679`, attempt 1,
+executed `6533e616bd14ebfebeeccb4c9b1b0d463b47dbb4` and published
+`e2dee988ad5d36876b7c73090502720e995c65f4`. Both original artifact ZIP hashes
+match GitHub metadata. All twelve prepared metrics/system/chart/request identities
+reconstruct exactly using the original implementation. IOSP, KYMR, HSIC, IDCC,
+CLMB, CRVL, MEDP, NEM, PYPD, WPM, AG and AIT each had one authority rejection
+and retained their mechanical grade through labelled fallback. The real input
+ledger reconciles 4,763/4,778 ready stocks, 15 stale and 513 quality successes.
+
+**BLOCKED — response-level closeout.** The grader discarded all twelve raw
+responses, parsed scores and findings. The ledger faithfully retained the
+incomplete attempts supplied to it. The shared field-set/type error cannot
+distinguish missing keys, extra keys or a non-object finding, or establish
+semantic authority. Neither artifact, history, evidence objects nor job logs
+recover these replies. The dated report and twelve-candidate inventory explicitly
+preserve unknowns. No real response is claimed newly accepted or semantically
+rejected after correction; historical replay and full milestone acceptance remain
+blocked. New model execution would not recover missing historical text.
+
+**Correction.** One nested findings schema now supplies the default-model text
+instruction, structured-output schema and validator's closed key sets. The
+rulebook names the exact shape. Returned text is captured before parsing and
+authority checking, with digest, byte count, stop reason and message ID; a
+64 KiB bound reports oversize omission explicitly. Existing publication sealing
+and ledger copying preserve rejected attempts automatically. No semantic
+allowlist, normalization, retry, budget, mechanical score, strategy threshold,
+plan rule or #87 source attribution changes. Unknowns and contradictions remain
+inadmissible; visual findings need charts; final grades remain down-only.
+
+**FAIL before / PASS after:** untouched starting source produces eleven intended
+failures and three unaffected passes; the same corrected selection passes all
+fourteen. Independent in-memory isolation checks pass. **PASS:** 216 focused
+tests, full normal pytest 1,466 tests, all twelve fixtures current, 127 continuity,
+182 chart and 7,637 page checks; desktop/mobile screenshots inspected.
+Original-code verification passes all 518 September 22 receipts. All 6,133
+Git-retained artifact files are byte-identical; all 46 synthetic candidate
+decisions/plans are unchanged. Runtime is Linux Python 3.12.14. **NOT RUN at
+checkpoint creation:** exact-head CI/Secret Scan; their final results must be
+pinned in the PR before handoff.
+
+README, provenance/input docs and the environment template were reviewed.
+**KEEP** #84–#87, ledger, historical records and truthful degraded fallback.
+**FIX NOW** the explicit contract and proven response-evidence loss.
+**DEFER** historical semantic closeout, provider causes, labelled C segmentation
+and profitability. **OMIT** authority weakening, invented replies, regrading,
+tuning, UI/design/sibling changes, fresh model/provider/scan/publication actions,
+dispatch/rerun, refresh, email and merge. Stop with one focused PR for Guidance;
+do not represent the unavailable historical-response gate as passed.

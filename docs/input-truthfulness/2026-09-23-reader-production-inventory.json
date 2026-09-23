@@ -1,0 +1,2682 @@
+{
+  "attempt": 1,
+  "coverage": {
+    "acceptance": {
+      "capacity_excluded": 0,
+      "complete_evaluation": true,
+      "complete_intended": false,
+      "denominator": "intended stocks, excluding benchmark",
+      "fraction": 0.9968606111343659,
+      "intended_stocks": 4778,
+      "minimum_fraction": 0.5,
+      "ready_stocks": 4763,
+      "status": "degraded"
+    },
+    "batch_attempts": 48,
+    "benchmark_added": 1,
+    "benchmark_ready": 1,
+    "dropped": 0,
+    "duplicate_bars": 0,
+    "duplicate_symbols": 0,
+    "errors": 0,
+    "gapped": 0,
+    "intended": 4779,
+    "intended_identity": "11e4270206d91037",
+    "matched": {
+      "both": 98,
+      "burst": 108,
+      "dollar": 307,
+      "neither": 3213
+    },
+    "measured": 3726,
+    "no_bars": 0,
+    "not_scanned_closed": 0,
+    "on_session": 4764,
+    "price_excluded": 1037,
+    "quality_errors": 0,
+    "quality_success": 513,
+    "reasons": {
+      "dropped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "duplicate_repaired": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "gapped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "no_bars": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "price_excluded": {
+        "count": 1037,
+        "identity": "4f39a1aacdc49771",
+        "sample": [
+          "AAME",
+          "ABAT",
+          "ABLV",
+          "ABOS",
+          "ABTS",
+          "ABVC",
+          "ACCL",
+          "ACH"
+        ]
+      },
+      "refused": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "stale": {
+        "count": 15,
+        "identity": "3c2cfe18a8850fad",
+        "sample": [
+          "BEBE",
+          "BLIV",
+          "BMHL",
+          "BRID",
+          "DIT",
+          "INLX",
+          "MAYS",
+          "MTR"
+        ]
+      },
+      "unfetched_budget": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "unfetched_failure": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      },
+      "unreadable": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "sample": []
+      }
+    },
+    "refused": 0,
+    "requested": 4779,
+    "returned_bars": 1330713,
+    "scan_errors": 0,
+    "scan_ready": 3726,
+    "scan_unattempted": 0,
+    "session_ready": 4764,
+    "sessions": {
+      "closure_agreed": 4764,
+      "closure_voters": 4764,
+      "evaluated": "2026-09-22",
+      "expected": "2026-09-22",
+      "expected_present": 4764,
+      "latest_bar_dates": {
+        "2026-09-21": 15,
+        "2026-09-22": 4764
+      },
+      "previous": "2026-09-21",
+      "previous_observed": false,
+      "previous_printed": 4779
+    },
+    "stale": 15,
+    "unfetched_budget": 0,
+    "unfetched_failure": 0,
+    "unreadable": 0,
+    "version": 1,
+    "with_bars": 4779
+  },
+  "decisions": [
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A+",
+      "findings": null,
+      "mechanical_grade": "A+",
+      "mechanical_score": 10.0,
+      "metrics": {
+        "base": "length=15 high=96.68 low=91.0",
+        "burst": {
+          "bar_range_pct": 4.0,
+          "close_pos": 0.92,
+          "gain_pct": 3.8,
+          "gap_pct": 1.0,
+          "volume_rank_60": 3,
+          "volume_vs_avg50": 2.02,
+          "volume_vs_prior": 2.32
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-0.63 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.29 r2=0.73 leg_sessions=60 leg_gain_pct=18.3 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=1 sessions_since_move_start=52 gain_since_move_start_pct=19.0 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=-0.63 prior_range_pct=1.1 negative=True narrow=True median_range_pct=2.0 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=15 breakdowns=0 bursts_in_base=0 giveback=0.33 tightness=0.95 base_volume_vs_leg=1.05 base_volume_vs_avg=1.08 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.92 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: PASS -- vs_prior_5=1.25 vs_prior_10=1.03 bar_range_pct=4.0 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+          "VOL: PASS -- volume_vs_prior=2.32 volume_vs_avg50=2.02 volume_rank_60=3 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 96.08,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 96.08,
+            "dollar_move": 2.56,
+            "gain_pct": 3.8,
+            "open": 93.52,
+            "prev_close": 92.56,
+            "prev_volume": 150522,
+            "volume": 349896,
+            "volume_vs_prior": 2.3246
+          },
+          "version": 1
+        },
+        "dollar_volume": 33618007.68,
+        "flags": [],
+        "gain_pct": 3.8,
+        "leg": "length=60 gain_pct=18.3 er=0.29 r2=0.73",
+        "notes": [
+          "extension: close 2.6% vs its 20-SMA, 1.4% over 20 sessions",
+          "prior breakouts worked 1 of 1 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 5,
+        "quality_grade": "A+",
+        "quality_passes": "6/6",
+        "quality_score": 10.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -0.63,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 15,
+                "base_volume_vs_avg": 1.08,
+                "base_volume_vs_leg": 1.05,
+                "breakdowns": 0,
+                "bursts_in_base": 0,
+                "giveback": 0.33,
+                "tightness": 0.95
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.92
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.29,
+                "leg_gain_pct": 18.3,
+                "leg_sessions": 60,
+                "r2": 0.73
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 2.0,
+                "narrow": true,
+                "negative": true,
+                "prior_day_pct": -0.63,
+                "prior_range_pct": 1.1
+              }
+            },
+            "RE": {
+              "status": "PASS",
+              "values": {
+                "bar_range_pct": 4.0,
+                "vs_prior_10": 1.03,
+                "vs_prior_5": 1.25
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 3,
+                "volume_vs_avg50": 2.02,
+                "volume_vs_prior": 2.32
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 1,
+                "gain_since_move_start_pct": 19.0,
+                "sessions_since_move_start": 52
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "IOSP",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 2.3246
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "4e2bab4500b4200c5088571788a100da5798df97f173f7c9bfacc0d387a84aab"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "39195490bbb9762e9ee3f88c7d5a132561a921cdf07e52c5a1c8279c5958560f",
+          "metrics_sha256": "d8da0a6f9fd564835d2d2b44376bf8d0f8fac8056135ca3bd8be9d0be2b9c068",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "1837a4c9d2914cee882cc50da590ff8944c5c849c49378baf4987271ee3fc3f3",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "39195490bbb9762e9ee3f88c7d5a132561a921cdf07e52c5a1c8279c5958560f",
+        "metrics_sha256": "d8da0a6f9fd564835d2d2b44376bf8d0f8fac8056135ca3bd8be9d0be2b9c068",
+        "request_text_sha256": "1837a4c9d2914cee882cc50da590ff8944c5c849c49378baf4987271ee3fc3f3",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "IOSP",
+      "user_text_sha256": "a8101493ea8b2db656eb80a64f1e4be1c3c736b9adcf05636ab42791be14b27c"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A+",
+      "findings": null,
+      "mechanical_grade": "A+",
+      "mechanical_score": 10.0,
+      "metrics": {
+        "base": "length=18 high=127.85 low=110.29",
+        "burst": {
+          "bar_range_pct": 3.7,
+          "close_pos": 0.93,
+          "gain_pct": 3.73,
+          "gap_pct": 1.2,
+          "volume_rank_60": 15,
+          "volume_vs_avg50": 1.18,
+          "volume_vs_prior": 1.22
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-0.07 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.34 r2=0.58 leg_sessions=59 leg_gain_pct=77.6 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=0 sessions_since_move_start=5 gain_since_move_start_pct=7.9 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=-0.07 prior_range_pct=2.5 negative=True narrow=False median_range_pct=4.0 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=18 breakdowns=1 bursts_in_base=0 giveback=0.3 tightness=0.75 base_volume_vs_leg=0.8 base_volume_vs_avg=1.06 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.93 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.95 vs_prior_10=0.57 bar_range_pct=3.7 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: PASS -- volume_vs_prior=1.22 volume_vs_avg50=1.18 volume_rank_60=15 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 122.06,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 122.06,
+            "dollar_move": 3.03,
+            "gain_pct": 3.73,
+            "open": 119.03,
+            "prev_close": 117.67,
+            "prev_volume": 636964,
+            "volume": 779447,
+            "volume_vs_prior": 1.2237
+          },
+          "version": 1
+        },
+        "dollar_volume": 95139300.82,
+        "flags": [
+          "biotech"
+        ],
+        "gain_pct": 3.73,
+        "leg": "length=59 gain_pct=77.6 er=0.34 r2=0.58",
+        "notes": [
+          "extension: close 3.2% vs its 20-SMA, 0.8% over 20 sessions",
+          "prior breakouts worked 2 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 4,
+        "quality_grade": "A+",
+        "quality_passes": "6/6",
+        "quality_score": 10.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -0.07,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 18,
+                "base_volume_vs_avg": 1.06,
+                "base_volume_vs_leg": 0.8,
+                "breakdowns": 1,
+                "bursts_in_base": 0,
+                "giveback": 0.3,
+                "tightness": 0.75
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.93
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.34,
+                "leg_gain_pct": 77.6,
+                "leg_sessions": 59,
+                "r2": 0.58
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 4.0,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -0.07,
+                "prior_range_pct": 2.5
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 3.7,
+                "vs_prior_10": 0.57,
+                "vs_prior_5": 0.95
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 15,
+                "volume_vs_avg50": 1.18,
+                "volume_vs_prior": 1.22
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 0,
+                "gain_since_move_start_pct": 7.9,
+                "sessions_since_move_start": 5
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "KYMR",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.2237
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "fc95dc0c4c5c2a9996c3324e45554c440457cf30eeec0ee26e93f3e9c866b3fe"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "c727d149d278b00c6b796443ae30044715ad6e861f8a0f77a2ec3ede862b2aef",
+          "metrics_sha256": "cc64cd8d0a706a16b62dc5dd9eb5e6b5f90c4b639902a709a3e4051d690602b4",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "25e2f6a98dc64e0a4d0e539bf6f8cd08ea972e80df6bead47aa2a6e2febd2a36",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "c727d149d278b00c6b796443ae30044715ad6e861f8a0f77a2ec3ede862b2aef",
+        "metrics_sha256": "cc64cd8d0a706a16b62dc5dd9eb5e6b5f90c4b639902a709a3e4051d690602b4",
+        "request_text_sha256": "25e2f6a98dc64e0a4d0e539bf6f8cd08ea972e80df6bead47aa2a6e2febd2a36",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "KYMR",
+      "user_text_sha256": "d9578be5370598666faa55457aa7b3f8c1bb0a015f4067b943a1b37462284fc2"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A+",
+      "findings": null,
+      "mechanical_grade": "A+",
+      "mechanical_score": 9.0,
+      "metrics": {
+        "base": "length=33 high=92.18 low=84.15",
+        "burst": {
+          "bar_range_pct": 2.4,
+          "close_pos": 0.9,
+          "gain_pct": 2.62,
+          "gap_pct": 0.9,
+          "volume_rank_60": 37,
+          "volume_vs_avg50": 0.89,
+          "volume_vs_prior": 0.79
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=1 prior_day_pct=0.42 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.4 r2=0.88 leg_sessions=59 leg_gain_pct=29.2 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=0 sessions_since_move_start=2 gain_since_move_start_pct=3.1 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=0.42 prior_range_pct=1.6 negative=False narrow=True median_range_pct=1.8 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PARTIAL -- base_sessions=33 breakdowns=0 bursts_in_base=0 giveback=0.34 tightness=0.83 base_volume_vs_leg=0.71 base_volume_vs_avg=0.88 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average) -- base of 33 sessions is outside Bonde's 3-20",
+          "H: PASS -- close_pos=0.9 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.69 vs_prior_10=0.69 bar_range_pct=2.4 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: FAIL -- volume_vs_prior=0.79 volume_vs_avg50=0.89 volume_rank_60=37 cv_required=True vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average -- base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show"
+        ],
+        "close": 87.43,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 87.43,
+            "dollar_move": 1.5,
+            "gain_pct": 2.62,
+            "open": 85.93,
+            "prev_close": 85.2,
+            "prev_volume": 1347692,
+            "volume": 1070618,
+            "volume_vs_prior": 0.7944
+          },
+          "version": 1
+        },
+        "dollar_volume": 93604131.74,
+        "flags": [
+          "biotech"
+        ],
+        "gain_pct": 2.62,
+        "leg": "length=59 gain_pct=29.2 er=0.4 r2=0.88",
+        "notes": [
+          "extension: close -1.1% vs its 20-SMA, -2.3% over 20 sessions"
+        ],
+        "quality_a_plus_checks": 4,
+        "quality_grade": "A+",
+        "quality_passes": "5/6",
+        "quality_score": 9.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": 0.42,
+                "up_closes": 1,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PARTIAL",
+              "values": {
+                "base_sessions": 33,
+                "base_volume_vs_avg": 0.88,
+                "base_volume_vs_leg": 0.71,
+                "breakdowns": 0,
+                "bursts_in_base": 0,
+                "giveback": 0.34,
+                "tightness": 0.83
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.9
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.4,
+                "leg_gain_pct": 29.2,
+                "leg_sessions": 59,
+                "r2": 0.88
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 1.8,
+                "narrow": true,
+                "negative": false,
+                "prior_day_pct": 0.42,
+                "prior_range_pct": 1.6
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 2.4,
+                "vs_prior_10": 0.69,
+                "vs_prior_5": 0.69
+              }
+            },
+            "VOL": {
+              "status": "FAIL",
+              "values": {
+                "cv_required": true,
+                "volume_rank_60": 37,
+                "volume_vs_avg50": 0.89,
+                "volume_vs_prior": 0.79
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 0,
+                "gain_since_move_start_pct": 3.1,
+                "sessions_since_move_start": 2
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "HSIC",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 0.7944
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "4dab41235b5a41ce8bde8f101b8132c8c8791cb13cffa12333772e555d79ed8b"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "5ea935b4273788c5d32df09b4ffe4d0ae6fce45842f9fee5966efc35a5fa01e0",
+          "metrics_sha256": "d1fa7b71f067df27985a1b207f5a04f963ad4abebaf465f246bc6066868d7633",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "a4ac9210037bc9d8a2d3e1b62d6c8b0743f0365982bc6e37cdac79fc47330b4d",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "5ea935b4273788c5d32df09b4ffe4d0ae6fce45842f9fee5966efc35a5fa01e0",
+        "metrics_sha256": "d1fa7b71f067df27985a1b207f5a04f963ad4abebaf465f246bc6066868d7633",
+        "request_text_sha256": "a4ac9210037bc9d8a2d3e1b62d6c8b0743f0365982bc6e37cdac79fc47330b4d",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "HSIC",
+      "user_text_sha256": "ea23e6d0b028d6a7c72516b7505f83e785aa766b52653b5714a4ffdd12db5cb8"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 10.0,
+      "metrics": {
+        "base": "length=6 high=355.68 low=321.43",
+        "burst": {
+          "bar_range_pct": 3.9,
+          "close_pos": 0.8,
+          "gain_pct": 2.16,
+          "gap_pct": 1.3,
+          "volume_rank_60": 16,
+          "volume_vs_avg50": 1.16,
+          "volume_vs_prior": 0.99
+        },
+        "checklist": [
+          "2: PASS -- up_run=1 up_closes=2 prior_day_pct=1.13 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.42 r2=0.48 leg_sessions=36 leg_gain_pct=36.7 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=0 sessions_since_move_start=42 gain_since_move_start_pct=30.3 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=1.13 prior_range_pct=1.5 negative=False narrow=True median_range_pct=3.2 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=6 breakdowns=1 bursts_in_base=0 giveback=0.34 tightness=0.89 base_volume_vs_leg=1.38 base_volume_vs_avg=1.28 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.8 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.85 vs_prior_10=0.85 bar_range_pct=3.9 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: FAIL -- volume_vs_prior=0.99 volume_vs_avg50=1.16 volume_rank_60=16 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average -- volume did not exceed the prior session's"
+        ],
+        "close": 333.76,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 333.76,
+            "dollar_move": 2.65,
+            "gain_pct": 2.16,
+            "open": 331.11,
+            "prev_close": 326.7,
+            "prev_volume": 272884,
+            "volume": 270529,
+            "volume_vs_prior": 0.9914
+          },
+          "version": 1
+        },
+        "dollar_volume": 90291759.04,
+        "flags": [],
+        "gain_pct": 2.16,
+        "leg": "length=36 gain_pct=36.7 er=0.42 r2=0.48",
+        "notes": [
+          "extension: close -0.3% vs its 20-SMA, -2.1% over 20 sessions",
+          "prior breakouts worked 3 of 3 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 1,
+        "quality_grade": "A",
+        "quality_passes": "6/6",
+        "quality_score": 10.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": 1.13,
+                "up_closes": 2,
+                "up_run": 1
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 6,
+                "base_volume_vs_avg": 1.28,
+                "base_volume_vs_leg": 1.38,
+                "breakdowns": 1,
+                "bursts_in_base": 0,
+                "giveback": 0.34,
+                "tightness": 0.89
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.8
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.42,
+                "leg_gain_pct": 36.7,
+                "leg_sessions": 36,
+                "r2": 0.48
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 3.2,
+                "narrow": true,
+                "negative": false,
+                "prior_day_pct": 1.13,
+                "prior_range_pct": 1.5
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 3.9,
+                "vs_prior_10": 0.85,
+                "vs_prior_5": 0.85
+              }
+            },
+            "VOL": {
+              "status": "FAIL",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 16,
+                "volume_vs_avg50": 1.16,
+                "volume_vs_prior": 0.99
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 0,
+                "gain_since_move_start_pct": 30.3,
+                "sessions_since_move_start": 42
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "IDCC",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 0.9914
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "f9e88ff34897ffe0e19a25a4209262bcaf0a6fff63adae744e7fc55fdbe19bbf"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "ea29e8f14b0526bc87595272d0d271419ce5909e828c24feb388143215f536c8",
+          "metrics_sha256": "ed6a1efc257e06e59fd37829e9ff97c808686d5add19ade220e6279074a3fa24",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "b60fb6736d5501e829204c2af2da0e8db4843a7a84fbeb2e2d870f35a16790e3",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "ea29e8f14b0526bc87595272d0d271419ce5909e828c24feb388143215f536c8",
+        "metrics_sha256": "ed6a1efc257e06e59fd37829e9ff97c808686d5add19ade220e6279074a3fa24",
+        "request_text_sha256": "b60fb6736d5501e829204c2af2da0e8db4843a7a84fbeb2e2d870f35a16790e3",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "IDCC",
+      "user_text_sha256": "eec4af00b4ba8920df3c8453cd2447f334d31fa9d180489d8610633fb1859d80"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=16 high=29.38 low=26.64",
+        "burst": {
+          "bar_range_pct": 6.9,
+          "close_pos": 0.96,
+          "gain_pct": 7.84,
+          "gap_pct": 1.3,
+          "volume_rank_60": 8,
+          "volume_vs_avg50": 1.63,
+          "volume_vs_prior": 1.78
+        },
+        "checklist": [
+          "2: PASS -- up_run=1 up_closes=2 prior_day_pct=2.37 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.32 r2=0.82 leg_sessions=48 leg_gain_pct=36.1 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=0 sessions_since_move_start=8 gain_since_move_start_pct=14.6 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: FAIL -- prior_day_pct=2.37 prior_range_pct=4.8 negative=False narrow=False median_range_pct=4.0 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range) -- the session before the burst was up and not narrow",
+          "C: PASS -- base_sessions=16 breakdowns=1 bursts_in_base=0 giveback=0.31 tightness=0.74 base_volume_vs_leg=0.69 base_volume_vs_avg=0.81 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.96 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: PASS -- vs_prior_5=1.44 vs_prior_10=1.44 bar_range_pct=6.9 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+          "VOL: PASS -- volume_vs_prior=1.78 volume_vs_avg50=1.63 volume_rank_60=8 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 30.8,
+        "discovery": {
+          "admitted_by": [
+            "burst",
+            "dollar"
+          ],
+          "applicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            },
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {},
+          "measurements": {
+            "close": 30.8,
+            "dollar_move": 1.88,
+            "gain_pct": 7.84,
+            "open": 28.92,
+            "prev_close": 28.56,
+            "prev_volume": 126814,
+            "volume": 226163,
+            "volume_vs_prior": 1.7834
+          },
+          "version": 1
+        },
+        "dollar_volume": 6965820,
+        "flags": [],
+        "gain_pct": 7.84,
+        "leg": "length=48 gain_pct=36.1 er=0.32 r2=0.82",
+        "notes": [
+          "extension: close 9.4% vs its 20-SMA, 12.2% over 20 sessions",
+          "prior breakouts worked 1 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 3,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": 2.37,
+                "up_closes": 2,
+                "up_run": 1
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 16,
+                "base_volume_vs_avg": 0.81,
+                "base_volume_vs_leg": 0.69,
+                "breakdowns": 1,
+                "bursts_in_base": 0,
+                "giveback": 0.31,
+                "tightness": 0.74
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.96
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.32,
+                "leg_gain_pct": 36.1,
+                "leg_sessions": 48,
+                "r2": 0.82
+              }
+            },
+            "N": {
+              "status": "FAIL",
+              "values": {
+                "median_range_pct": 4.0,
+                "narrow": false,
+                "negative": false,
+                "prior_day_pct": 2.37,
+                "prior_range_pct": 4.8
+              }
+            },
+            "RE": {
+              "status": "PASS",
+              "values": {
+                "bar_range_pct": 6.9,
+                "vs_prior_10": 1.44,
+                "vs_prior_5": 1.44
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 8,
+                "volume_vs_avg50": 1.63,
+                "volume_vs_prior": 1.78
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 0,
+                "gain_since_move_start_pct": 14.6,
+                "sessions_since_move_start": 8
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "both",
+        "ticker": "CLMB",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.7834
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "3c1f439c2748a664f2ca469335bab0ca79694bbc31519abd76d3156161d889f0"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "030856bcd7d2a5364c74df48ec0c3252ddced2c54f6ae6728619855c462be890",
+          "metrics_sha256": "2595f845626cebbc0c5b11b1912a218faae1c3f86fef5751ab7edd3e087246e1",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "962fd3de13fb44a701d3cd6cc93cc2ea7cea9b86adc45a1b81eb649102214562",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "030856bcd7d2a5364c74df48ec0c3252ddced2c54f6ae6728619855c462be890",
+        "metrics_sha256": "2595f845626cebbc0c5b11b1912a218faae1c3f86fef5751ab7edd3e087246e1",
+        "request_text_sha256": "962fd3de13fb44a701d3cd6cc93cc2ea7cea9b86adc45a1b81eb649102214562",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "CLMB",
+      "user_text_sha256": "d3bcfe39336a798b9c5298a4f9a124214ee1e8616b22cb042177f7557e722d14"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=4 high=73.0 low=69.15",
+        "burst": {
+          "bar_range_pct": 3.1,
+          "close_pos": 0.84,
+          "gain_pct": 2.45,
+          "gap_pct": 0.4,
+          "volume_rank_60": 7,
+          "volume_vs_avg50": 1.33,
+          "volume_vs_prior": 1.45
+        },
+        "checklist": [
+          "2: PASS -- up_run=1 up_closes=2 prior_day_pct=1.64 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.24 r2=0.56 leg_sessions=60 leg_gain_pct=24.4 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=1 sessions_since_move_start=43 gain_since_move_start_pct=24.7 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: FAIL -- prior_day_pct=1.64 prior_range_pct=2.0 negative=False narrow=False median_range_pct=2.8 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range) -- the session before the burst was up and not narrow",
+          "C: PASS -- base_sessions=4 breakdowns=0 bursts_in_base=0 giveback=0.25 tightness=0.68 base_volume_vs_leg=1.28 base_volume_vs_avg=1.34 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.84 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.84 vs_prior_10=0.78 bar_range_pct=3.1 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: PASS -- volume_vs_prior=1.45 volume_vs_avg50=1.33 volume_rank_60=7 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 73.59,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 73.59,
+            "dollar_move": 1.5,
+            "gain_pct": 2.45,
+            "open": 72.09,
+            "prev_close": 71.83,
+            "prev_volume": 170433,
+            "volume": 247079,
+            "volume_vs_prior": 1.4497
+          },
+          "version": 1
+        },
+        "dollar_volume": 18182543.61,
+        "flags": [],
+        "gain_pct": 2.45,
+        "leg": "length=60 gain_pct=24.4 er=0.24 r2=0.56",
+        "notes": [
+          "extension: close 5.3% vs its 20-SMA, 3.3% over 20 sessions",
+          "prior breakouts worked 1 of 3 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 0,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": 1.64,
+                "up_closes": 2,
+                "up_run": 1
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 4,
+                "base_volume_vs_avg": 1.34,
+                "base_volume_vs_leg": 1.28,
+                "breakdowns": 0,
+                "bursts_in_base": 0,
+                "giveback": 0.25,
+                "tightness": 0.68
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.84
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.24,
+                "leg_gain_pct": 24.4,
+                "leg_sessions": 60,
+                "r2": 0.56
+              }
+            },
+            "N": {
+              "status": "FAIL",
+              "values": {
+                "median_range_pct": 2.8,
+                "narrow": false,
+                "negative": false,
+                "prior_day_pct": 1.64,
+                "prior_range_pct": 2.0
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 3.1,
+                "vs_prior_10": 0.78,
+                "vs_prior_5": 0.84
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 7,
+                "volume_vs_avg50": 1.33,
+                "volume_vs_prior": 1.45
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 1,
+                "gain_since_move_start_pct": 24.7,
+                "sessions_since_move_start": 43
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "CRVL",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.4497
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "2697869c8c4f6a54e852e11fcbb8587f8c11c7ad8cfcb7e637718d7aa9139e76"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "14e4ade849451275ccaa0dee7b2db9ab05f8b394a22a80665e6c06981742cea8",
+          "metrics_sha256": "3c6cfec0efdffc00014afd893d6e551a0a6350ba67780bc8a8b2147247b16121",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "bebd74c1efb0fb504a9f49d52abae4f810551ab19e719d34d90c62206751b180",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "14e4ade849451275ccaa0dee7b2db9ab05f8b394a22a80665e6c06981742cea8",
+        "metrics_sha256": "3c6cfec0efdffc00014afd893d6e551a0a6350ba67780bc8a8b2147247b16121",
+        "request_text_sha256": "bebd74c1efb0fb504a9f49d52abae4f810551ab19e719d34d90c62206751b180",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "CRVL",
+      "user_text_sha256": "0fb4c729e50c405a6a5e381b4e1dbb9a399bfd78ec57d8bc47be6142d366b71b"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=20 high=629.69 low=577.64",
+        "burst": {
+          "bar_range_pct": 2.1,
+          "close_pos": 0.81,
+          "gain_pct": 0.96,
+          "gap_pct": 0.0,
+          "volume_rank_60": 18,
+          "volume_vs_avg50": 1.1,
+          "volume_vs_prior": 1.62
+        },
+        "checklist": [
+          "2: PASS -- up_run=1 up_closes=1 prior_day_pct=1.94 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.33 r2=0.86 leg_sessions=57 leg_gain_pct=39.3 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=1 sessions_since_move_start=60 gain_since_move_start_pct=19.6 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: FAIL -- prior_day_pct=1.94 prior_range_pct=2.2 negative=False narrow=False median_range_pct=2.0 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range) -- the session before the burst was up and not narrow",
+          "C: PASS -- base_sessions=20 breakdowns=0 bursts_in_base=1 giveback=0.27 tightness=0.65 base_volume_vs_leg=0.7 base_volume_vs_avg=0.79 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.81 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.45 vs_prior_10=0.45 bar_range_pct=2.1 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: PASS -- volume_vs_prior=1.62 volume_vs_avg50=1.1 volume_rank_60=18 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 630.19,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 630.19,
+            "dollar_move": 6.17,
+            "gain_pct": 0.96,
+            "open": 624.02,
+            "prev_close": 624.2,
+            "prev_volume": 188359,
+            "volume": 304334,
+            "volume_vs_prior": 1.6157
+          },
+          "version": 1
+        },
+        "dollar_volume": 191788243.46,
+        "flags": [
+          "biotech"
+        ],
+        "gain_pct": 0.96,
+        "leg": "length=57 gain_pct=39.3 er=0.33 r2=0.86",
+        "notes": [
+          "extension: close 4.5% vs its 20-SMA, 1.6% over 20 sessions",
+          "prior breakouts worked 0 of 2 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 0,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": 1.94,
+                "up_closes": 1,
+                "up_run": 1
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 20,
+                "base_volume_vs_avg": 0.79,
+                "base_volume_vs_leg": 0.7,
+                "breakdowns": 0,
+                "bursts_in_base": 1,
+                "giveback": 0.27,
+                "tightness": 0.65
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.81
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.33,
+                "leg_gain_pct": 39.3,
+                "leg_sessions": 57,
+                "r2": 0.86
+              }
+            },
+            "N": {
+              "status": "FAIL",
+              "values": {
+                "median_range_pct": 2.0,
+                "narrow": false,
+                "negative": false,
+                "prior_day_pct": 1.94,
+                "prior_range_pct": 2.2
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 2.1,
+                "vs_prior_10": 0.45,
+                "vs_prior_5": 0.45
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 18,
+                "volume_vs_avg50": 1.1,
+                "volume_vs_prior": 1.62
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 1,
+                "gain_since_move_start_pct": 19.6,
+                "sessions_since_move_start": 60
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "MEDP",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.6157
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "b1a7d14364ad7ac0a70089ba726481d9119263d6b4111a5579312cecbd1b1f45"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "286d517d5a1d4a37c6c9ee7ffc7e3e1381a428675fc7433ff6f81c56d59bb282",
+          "metrics_sha256": "220c8a7d1f91f041a216d8c6e405084834fd94c68b433833e93b0042a369d92f",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "6186134163d09b8e0b98ca6882b46eaf03a3297ef1bf7e2fcdada922f44c237e",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "286d517d5a1d4a37c6c9ee7ffc7e3e1381a428675fc7433ff6f81c56d59bb282",
+        "metrics_sha256": "220c8a7d1f91f041a216d8c6e405084834fd94c68b433833e93b0042a369d92f",
+        "request_text_sha256": "6186134163d09b8e0b98ca6882b46eaf03a3297ef1bf7e2fcdada922f44c237e",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "MEDP",
+      "user_text_sha256": "62b9141c6b57c45ef851b5169a80333a0db561fab1288cdcc76cb703ea6ba530"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=18 high=135.29 low=120.0",
+        "burst": {
+          "bar_range_pct": 3.9,
+          "close_pos": 0.83,
+          "gain_pct": 3.42,
+          "gap_pct": 0.1,
+          "volume_rank_60": 55,
+          "volume_vs_avg50": 0.68,
+          "volume_vs_prior": 0.95
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-0.29 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.61 r2=0.91 leg_sessions=27 leg_gain_pct=51.5 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: FAIL -- breakouts_in_move=3 sessions_since_move_start=45 gain_since_move_start_pct=42.7 vs prior breakouts since the move started <= 1 (0 for A+) -- today would be breakout 4 of this move",
+          "N: PASS -- prior_day_pct=-0.29 prior_range_pct=2.6 negative=True narrow=False median_range_pct=2.7 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=18 breakdowns=0 bursts_in_base=1 giveback=0.33 tightness=0.87 base_volume_vs_leg=1.11 base_volume_vs_avg=1.06 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.83 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.8 vs_prior_10=0.8 bar_range_pct=3.9 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: FAIL -- volume_vs_prior=0.95 volume_vs_avg50=0.68 volume_rank_60=55 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average -- volume did not exceed the prior session's"
+        ],
+        "close": 127.26,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 127.26,
+            "dollar_move": 4.03,
+            "gain_pct": 3.42,
+            "open": 123.23,
+            "prev_close": 123.05,
+            "prev_volume": 5652317,
+            "volume": 5396141,
+            "volume_vs_prior": 0.9547
+          },
+          "version": 1
+        },
+        "dollar_volume": 686712903.66,
+        "flags": [],
+        "gain_pct": 3.42,
+        "leg": "length=27 gain_pct=51.5 er=0.61 r2=0.91",
+        "notes": [
+          "extension: close 0.4% vs its 20-SMA, -3.5% over 20 sessions",
+          "prior breakouts worked 3 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 3,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -0.29,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 18,
+                "base_volume_vs_avg": 1.06,
+                "base_volume_vs_leg": 1.11,
+                "breakdowns": 0,
+                "bursts_in_base": 1,
+                "giveback": 0.33,
+                "tightness": 0.87
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.83
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.61,
+                "leg_gain_pct": 51.5,
+                "leg_sessions": 27,
+                "r2": 0.91
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 2.7,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -0.29,
+                "prior_range_pct": 2.6
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 3.9,
+                "vs_prior_10": 0.8,
+                "vs_prior_5": 0.8
+              }
+            },
+            "VOL": {
+              "status": "FAIL",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 55,
+                "volume_vs_avg50": 0.68,
+                "volume_vs_prior": 0.95
+              }
+            },
+            "Y": {
+              "status": "FAIL",
+              "values": {
+                "breakouts_in_move": 3,
+                "gain_since_move_start_pct": 42.7,
+                "sessions_since_move_start": 45
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "NEM",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 0.9547
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "616ee231f4738ec702085b7aeb3d3f32e5d74773c3131bd361fa42545402a097"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "4a68cf5bef93822dd7720306db882b4643fa333cdf4154836637aa118ee5b958",
+          "metrics_sha256": "31aee6559cdbd1a65e2e174ad3108c8df03e6562ad11e506926c9e1f8ae93d9d",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "1a9df68112c00a5bc744c8192018d3ae69dc7eb16dfb8c408cae5a8ab10b3a0f",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "4a68cf5bef93822dd7720306db882b4643fa333cdf4154836637aa118ee5b958",
+        "metrics_sha256": "31aee6559cdbd1a65e2e174ad3108c8df03e6562ad11e506926c9e1f8ae93d9d",
+        "request_text_sha256": "1a9df68112c00a5bc744c8192018d3ae69dc7eb16dfb8c408cae5a8ab10b3a0f",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "NEM",
+      "user_text_sha256": "2c6b420033f5a5b1f2588f8f112e09581d8fc00a53acd38538b96aea482d0225"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=9 high=5.56 low=5.0",
+        "burst": {
+          "bar_range_pct": 5.0,
+          "close_pos": 0.96,
+          "gain_pct": 5.42,
+          "gap_pct": 0.4,
+          "volume_rank_60": 39,
+          "volume_vs_avg50": 0.64,
+          "volume_vs_prior": 3.12
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-0.77 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.4 r2=0.88 leg_sessions=35 leg_gain_pct=42.5 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: FAIL -- breakouts_in_move=2 sessions_since_move_start=44 gain_since_move_start_pct=45.7 vs prior breakouts since the move started <= 1 (0 for A+) -- today would be breakout 3 of this move",
+          "N: PASS -- prior_day_pct=-0.77 prior_range_pct=4.3 negative=True narrow=False median_range_pct=4.2 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=9 breakdowns=0 bursts_in_base=0 giveback=0.29 tightness=0.73 base_volume_vs_leg=0.43 base_volume_vs_avg=0.48 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.96 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.81 vs_prior_10=0.81 bar_range_pct=5.0 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: PASS -- volume_vs_prior=3.12 volume_vs_avg50=0.64 volume_rank_60=39 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 5.45,
+        "discovery": {
+          "admitted_by": [
+            "burst"
+          ],
+          "applicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "inapplicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "measurements": {
+            "close": 5.45,
+            "dollar_move": null,
+            "gain_pct": 5.42,
+            "open": 5.19,
+            "prev_close": 5.17,
+            "prev_volume": 40654,
+            "volume": 127019,
+            "volume_vs_prior": 3.1244
+          },
+          "version": 1
+        },
+        "dollar_volume": 692254,
+        "flags": [
+          "biotech",
+          "foreign"
+        ],
+        "gain_pct": 5.42,
+        "leg": "length=35 gain_pct=42.5 er=0.4 r2=0.88",
+        "notes": [
+          "extension: close 4.6% vs its 20-SMA, 9.2% over 20 sessions",
+          "prior breakouts worked 2 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 3,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -0.77,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 9,
+                "base_volume_vs_avg": 0.48,
+                "base_volume_vs_leg": 0.43,
+                "breakdowns": 0,
+                "bursts_in_base": 0,
+                "giveback": 0.29,
+                "tightness": 0.73
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.96
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.4,
+                "leg_gain_pct": 42.5,
+                "leg_sessions": 35,
+                "r2": 0.88
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 4.2,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -0.77,
+                "prior_range_pct": 4.3
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 5.0,
+                "vs_prior_10": 0.81,
+                "vs_prior_5": 0.81
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 39,
+                "volume_vs_avg50": 0.64,
+                "volume_vs_prior": 3.12
+              }
+            },
+            "Y": {
+              "status": "FAIL",
+              "values": {
+                "breakouts_in_move": 2,
+                "gain_since_move_start_pct": 45.7,
+                "sessions_since_move_start": 44
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "burst",
+        "ticker": "PYPD",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 3.1244
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "69bc2066375af03a544c2630f23e2b31a4dafd83087242d69b32253bd950840e"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "8a35722c96811b1608f4ae36095ec1e121df570bbe464a9679b7b48c2b877768",
+          "metrics_sha256": "6fa5238084e82902debd594f97566998aa105a1bc4547e5e98130ac6045ac75b",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "a8f2c71d91f50a173cb3bdc11ef280398ea396c619b1a6d2e72e0ca009a45442",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "8a35722c96811b1608f4ae36095ec1e121df570bbe464a9679b7b48c2b877768",
+        "metrics_sha256": "6fa5238084e82902debd594f97566998aa105a1bc4547e5e98130ac6045ac75b",
+        "request_text_sha256": "a8f2c71d91f50a173cb3bdc11ef280398ea396c619b1a6d2e72e0ca009a45442",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "PYPD",
+      "user_text_sha256": "1ffeaf6a97f3d76accda4faa8d45d46ac4a25dde5296e490f7903892edf5fffa"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.5,
+      "metrics": {
+        "base": "length=18 high=163.9 low=144.03",
+        "burst": {
+          "bar_range_pct": 4.7,
+          "close_pos": 0.84,
+          "gain_pct": 4.16,
+          "gap_pct": 0.3,
+          "volume_rank_60": 15,
+          "volume_vs_avg50": 1.11,
+          "volume_vs_prior": 1.53
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-2.22 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.65 r2=0.9 leg_sessions=27 leg_gain_pct=58.3 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: FAIL -- breakouts_in_move=3 sessions_since_move_start=45 gain_since_move_start_pct=48.7 vs prior breakouts since the move started <= 1 (0 for A+) -- today would be breakout 4 of this move",
+          "N: PASS -- prior_day_pct=-2.22 prior_range_pct=4.0 negative=True narrow=False median_range_pct=2.7 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: PASS -- base_sessions=18 breakdowns=1 bursts_in_base=1 giveback=0.33 tightness=0.91 base_volume_vs_leg=0.85 base_volume_vs_avg=0.92 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average)",
+          "H: PASS -- close_pos=0.84 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.76 vs_prior_10=0.76 bar_range_pct=4.7 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: PASS -- volume_vs_prior=1.53 volume_vs_avg50=1.11 volume_rank_60=15 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average"
+        ],
+        "close": 153.81,
+        "discovery": {
+          "admitted_by": [
+            "burst",
+            "dollar"
+          ],
+          "applicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            },
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {},
+          "measurements": {
+            "close": 153.81,
+            "dollar_move": 5.71,
+            "gain_pct": 4.16,
+            "open": 148.1,
+            "prev_close": 147.66,
+            "prev_volume": 1456485,
+            "volume": 2224190,
+            "volume_vs_prior": 1.5271
+          },
+          "version": 1
+        },
+        "dollar_volume": 342102664,
+        "flags": [
+          "foreign"
+        ],
+        "gain_pct": 4.16,
+        "leg": "length=27 gain_pct=58.3 er=0.65 r2=0.9",
+        "notes": [
+          "extension: close 0.6% vs its 20-SMA, -4.0% over 20 sessions",
+          "prior breakouts worked 3 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 2,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.5,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -2.22,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "PASS",
+              "values": {
+                "base_sessions": 18,
+                "base_volume_vs_avg": 0.92,
+                "base_volume_vs_leg": 0.85,
+                "breakdowns": 1,
+                "bursts_in_base": 1,
+                "giveback": 0.33,
+                "tightness": 0.91
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.84
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.65,
+                "leg_gain_pct": 58.3,
+                "leg_sessions": 27,
+                "r2": 0.9
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 2.7,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -2.22,
+                "prior_range_pct": 4.0
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 4.7,
+                "vs_prior_10": 0.76,
+                "vs_prior_5": 0.76
+              }
+            },
+            "VOL": {
+              "status": "PASS",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 15,
+                "volume_vs_avg50": 1.11,
+                "volume_vs_prior": 1.53
+              }
+            },
+            "Y": {
+              "status": "FAIL",
+              "values": {
+                "breakouts_in_move": 3,
+                "gain_since_move_start_pct": 48.7,
+                "sessions_since_move_start": 45
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "both",
+        "ticker": "WPM",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.5271
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "441d4d7a8c223e6fdf54f9abbf7a6b7461f24520dccd5413b400327da85774c4"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "a38f28924dd9e9bebe29bb06040c9f546357f3175cd471497360d2715234e5b5",
+          "metrics_sha256": "29c90d68fd2e7288139d26c40fb1b5c55b227fa7e0c82ffb6339d9ce5fe4005d",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "6d058e369dfc7db419382a6b8d6dbf4ce01db352964b7736d5f85387ade49330",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "a38f28924dd9e9bebe29bb06040c9f546357f3175cd471497360d2715234e5b5",
+        "metrics_sha256": "29c90d68fd2e7288139d26c40fb1b5c55b227fa7e0c82ffb6339d9ce5fe4005d",
+        "request_text_sha256": "6d058e369dfc7db419382a6b8d6dbf4ce01db352964b7736d5f85387ade49330",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "WPM",
+      "user_text_sha256": "f087fe53799897d786bd9643f7c38cd3dee0c25bc00ee1f4db070e6f8c3e6703"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.0,
+      "metrics": {
+        "base": "length=15 high=22.19 low=17.93",
+        "burst": {
+          "bar_range_pct": 6.0,
+          "close_pos": 0.89,
+          "gain_pct": 5.23,
+          "gap_pct": 0.3,
+          "volume_rank_60": 25,
+          "volume_vs_avg50": 1.0,
+          "volume_vs_prior": 0.95
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-2.67 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.46 r2=0.85 leg_sessions=21 leg_gain_pct=38.1 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=1 sessions_since_move_start=36 gain_since_move_start_pct=35.2 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=-2.67 prior_range_pct=5.5 negative=True narrow=False median_range_pct=4.0 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: FAIL -- base_sessions=15 breakdowns=1 bursts_in_base=2 giveback=0.57 tightness=0.83 base_volume_vs_leg=0.89 base_volume_vs_avg=0.92 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average) -- the base gave back 0.57 of the leg",
+          "H: PASS -- close_pos=0.89 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: FAIL -- vs_prior_5=0.88 vs_prior_10=0.88 bar_range_pct=6.0 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10) -- the burst bar is not the widest of the last five",
+          "VOL: FAIL -- volume_vs_prior=0.95 volume_vs_avg50=1.0 volume_rank_60=25 cv_required=False vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average -- volume did not exceed the prior session's"
+        ],
+        "close": 20.32,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 20.32,
+            "dollar_move": 0.95,
+            "gain_pct": 5.23,
+            "open": 19.37,
+            "prev_close": 19.31,
+            "prev_volume": 10498680,
+            "volume": 10018134,
+            "volume_vs_prior": 0.9542
+          },
+          "version": 1
+        },
+        "dollar_volume": 203568482.88,
+        "flags": [
+          "foreign"
+        ],
+        "gain_pct": 5.23,
+        "leg": "length=21 gain_pct=38.1 er=0.46 r2=0.85",
+        "notes": [
+          "extension: close 0.3% vs its 20-SMA, -2.4% over 20 sessions",
+          "prior breakouts worked 2 of 4 (closed higher 3 sessions later, last 4 in 60 sessions)"
+        ],
+        "quality_a_plus_checks": 2,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -2.67,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "FAIL",
+              "values": {
+                "base_sessions": 15,
+                "base_volume_vs_avg": 0.92,
+                "base_volume_vs_leg": 0.89,
+                "breakdowns": 1,
+                "bursts_in_base": 2,
+                "giveback": 0.57,
+                "tightness": 0.83
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.89
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.46,
+                "leg_gain_pct": 38.1,
+                "leg_sessions": 21,
+                "r2": 0.85
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 4.0,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -2.67,
+                "prior_range_pct": 5.5
+              }
+            },
+            "RE": {
+              "status": "FAIL",
+              "values": {
+                "bar_range_pct": 6.0,
+                "vs_prior_10": 0.88,
+                "vs_prior_5": 0.88
+              }
+            },
+            "VOL": {
+              "status": "FAIL",
+              "values": {
+                "cv_required": false,
+                "volume_rank_60": 25,
+                "volume_vs_avg50": 1.0,
+                "volume_vs_prior": 0.95
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 1,
+                "gain_since_move_start_pct": 35.2,
+                "sessions_since_move_start": 36
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "AG",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 0.9542
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "6c9621fa85937ce8f8d065bdc2453343bd1214e1ccb25d3f6998e61747454cbf"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "1f000457eb80f888fd7004ec7696cd0ef99f8fb2e3306e2b38432dfc3ab59ad2",
+          "metrics_sha256": "802738b0d6c8cb976b69b873286f12f249d4fbd839ba4cc88a7bade1b0adcfa3",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "b4b5aa9f5bcbdd01a385cefaee50beab047181830666c24f4c38a24c3d7d9281",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "1f000457eb80f888fd7004ec7696cd0ef99f8fb2e3306e2b38432dfc3ab59ad2",
+        "metrics_sha256": "802738b0d6c8cb976b69b873286f12f249d4fbd839ba4cc88a7bade1b0adcfa3",
+        "request_text_sha256": "b4b5aa9f5bcbdd01a385cefaee50beab047181830666c24f4c38a24c3d7d9281",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "AG",
+      "user_text_sha256": "1815e4f1ab02a08029b8e8cd6a03a9e9d67c5240f3e7343c9371c0c22cd43025"
+    },
+    {
+      "fallback_transport": {
+        "entry_note": "",
+        "grade": "ungraded",
+        "key_risk": "not AI-reviewed",
+        "provenance": {
+          "chart_seen": false,
+          "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+          "model": null,
+          "source": "fallback"
+        },
+        "reason": "AI unavailable; checklist not measured.",
+        "score": 0.0
+      },
+      "final_grade": "A",
+      "findings": null,
+      "mechanical_grade": "A",
+      "mechanical_score": 8.0,
+      "metrics": {
+        "base": "length=26 high=374.8 low=312.25",
+        "burst": {
+          "bar_range_pct": 3.1,
+          "close_pos": 0.96,
+          "gain_pct": 2.93,
+          "gap_pct": 1.0,
+          "volume_rank_60": 10,
+          "volume_vs_avg50": 1.24,
+          "volume_vs_prior": 1.2
+        },
+        "checklist": [
+          "2: PASS -- up_run=0 up_closes=0 prior_day_pct=-0.45 vs up_run <= 1, counting days above +1.0%; veto at 3+ up closes of any size",
+          "L: PASS -- er=0.26 r2=0.74 leg_sessions=52 leg_gain_pct=18.8 vs ER >= 0.4 or R2 >= 0.55 (both for A+); failing is a veto",
+          "Y: PASS -- breakouts_in_move=0 sessions_since_move_start=4 gain_since_move_start_pct=4.7 vs prior breakouts since the move started <= 1 (0 for A+)",
+          "N: PASS -- prior_day_pct=-0.45 prior_range_pct=3.1 negative=True narrow=False median_range_pct=2.2 vs prior day negative or range < 2.0% (A+: negative and under its 20-session median range)",
+          "C: FAIL -- base_sessions=26 breakdowns=1 bursts_in_base=0 giveback=0.8 tightness=0.97 base_volume_vs_leg=1.08 base_volume_vs_avg=1.05 vs base 3-20 sessions, breakdowns <= 1, giveback <= 0.34, tightness <= 1.0 (A+: 0 breakdowns, 0 bursts inside, giveback <= 0.25, tightness <= 0.7, base volume under the leg's and the 50-session average) -- base of 26 sessions is outside Bonde's 3-20; the base gave back 0.8 of the leg",
+          "H: PASS -- close_pos=0.96 close_above_open=True vs close_pos >= 0.8 and close > open (A+ >= 0.9; partial from 0.7)",
+          "RE: PASS -- vs_prior_5=1.0 vs_prior_10=1.0 bar_range_pct=3.1 vs today's range over the largest of the prior 5 >= 1.0 (A+: also over the prior 10)",
+          "VOL: FAIL -- volume_vs_prior=1.2 volume_vs_avg50=1.24 volume_rank_60=10 cv_required=True vs volume > prior session (A+: rank <= 3 of the last 60); a base over 21 sessions also needs >= 1.5x the 50-session average -- base over 21 sessions: +CV applies, volume must be >= 1.5x average and a catalyst is needed, which bars cannot show"
+        ],
+        "close": 329.79,
+        "discovery": {
+          "admitted_by": [
+            "dollar"
+          ],
+          "applicable_rules": {
+            "dollar": {
+              "min_move": 0.9,
+              "min_volume_exclusive": 100000
+            }
+          },
+          "inapplicable_rules": {
+            "burst": {
+              "min_ratio": 1.04,
+              "min_volume": 100000,
+              "volume_above_prior": true
+            }
+          },
+          "measurements": {
+            "close": 329.79,
+            "dollar_move": 6.17,
+            "gain_pct": 2.93,
+            "open": 323.62,
+            "prev_close": 320.39,
+            "prev_volume": 299227,
+            "volume": 358473,
+            "volume_vs_prior": 1.198
+          },
+          "version": 1
+        },
+        "dollar_volume": 118220810.67,
+        "flags": [],
+        "gain_pct": 2.93,
+        "leg": "length=52 gain_pct=18.8 er=0.26 r2=0.74",
+        "notes": [
+          "extension: close 1.8% vs its 20-SMA, -2.6% over 20 sessions"
+        ],
+        "quality_a_plus_checks": 4,
+        "quality_grade": "A",
+        "quality_passes": "5/6",
+        "quality_score": 8.0,
+        "reader_evidence": {
+          "checks": {
+            "2": {
+              "status": "PASS",
+              "values": {
+                "prior_day_pct": -0.45,
+                "up_closes": 0,
+                "up_run": 0
+              }
+            },
+            "C": {
+              "status": "FAIL",
+              "values": {
+                "base_sessions": 26,
+                "base_volume_vs_avg": 1.05,
+                "base_volume_vs_leg": 1.08,
+                "breakdowns": 1,
+                "bursts_in_base": 0,
+                "giveback": 0.8,
+                "tightness": 0.97
+              }
+            },
+            "H": {
+              "status": "PASS",
+              "values": {
+                "close_above_open": true,
+                "close_pos": 0.96
+              }
+            },
+            "L": {
+              "status": "PASS",
+              "values": {
+                "er": 0.26,
+                "leg_gain_pct": 18.8,
+                "leg_sessions": 52,
+                "r2": 0.74
+              }
+            },
+            "N": {
+              "status": "PASS",
+              "values": {
+                "median_range_pct": 2.2,
+                "narrow": false,
+                "negative": true,
+                "prior_day_pct": -0.45,
+                "prior_range_pct": 3.1
+              }
+            },
+            "RE": {
+              "status": "PASS",
+              "values": {
+                "bar_range_pct": 3.1,
+                "vs_prior_10": 1.0,
+                "vs_prior_5": 1.0
+              }
+            },
+            "VOL": {
+              "status": "FAIL",
+              "values": {
+                "cv_required": true,
+                "volume_rank_60": 10,
+                "volume_vs_avg50": 1.24,
+                "volume_vs_prior": 1.2
+              }
+            },
+            "Y": {
+              "status": "PASS",
+              "values": {
+                "breakouts_in_move": 0,
+                "gain_since_move_start_pct": 4.7,
+                "sessions_since_move_start": 4
+              }
+            }
+          },
+          "version": 1
+        },
+        "reclass": null,
+        "scan": "dollar",
+        "ticker": "AIT",
+        "unreadable": null,
+        "vetoes": [],
+        "volume_vs_prior": 1.198
+      },
+      "otherwise_valid_finding": null,
+      "parsed_grade": null,
+      "parsed_score": null,
+      "raw_response": null,
+      "raw_response_sha256": null,
+      "reader": {
+        "agree": null,
+        "attempted_model": "claude-sonnet-4-6",
+        "attempts": [
+          {
+            "correction": false,
+            "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+            "outcome": "rejected",
+            "request_sha256": "100c19f84050839320718679338b05390e32322eb29a857368e2910e33cdb157"
+          }
+        ],
+        "chart_seen": false,
+        "discovery_version": 1,
+        "entry_note": null,
+        "error": "src.ReaderAuthorityError: finding has missing or unauthorized fields",
+        "grade": null,
+        "input": {
+          "chart_sha256": "1bdf532f57c8f1bc0e261aad416ed73efbe55a42cba158496c7f1059591bd655",
+          "metrics_sha256": "430cc8c6b8f45d0a3175061ebf21a2d2026583f8c08d59765c0a306c87e626bd",
+          "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+        },
+        "key_risk": null,
+        "reason": null,
+        "request_text_sha256": "4c54d310cc810c4f8bdcd6fe875d92a2c451a99bb1bfc16d9b3618bf040f3fbe",
+        "score": null,
+        "source": "fallback"
+      },
+      "reader_input": {
+        "chart_sha256": "1bdf532f57c8f1bc0e261aad416ed73efbe55a42cba158496c7f1059591bd655",
+        "metrics_sha256": "430cc8c6b8f45d0a3175061ebf21a2d2026583f8c08d59765c0a306c87e626bd",
+        "request_text_sha256": "4c54d310cc810c4f8bdcd6fe875d92a2c451a99bb1bfc16d9b3618bf040f3fbe",
+        "system_object": "74f8f55c9fb3eea195cece6c651edfc4a64bde9ce0c8cbb09995ba2dd1ab2d53",
+        "system_sha256": "65e7e197aa48872a6bb60de56b0d5b9dc972031acec576c9503c758a7b062f07"
+      },
+      "request_reconstruction": "PASS",
+      "response_reconstruction": "BLOCKED",
+      "semantic_authority": null,
+      "structural_subclass": null,
+      "ticker": "AIT",
+      "user_text_sha256": "1925b5a6887f3a85dc8fe2a5776237fbd3f11318e6bede75a2115e49da0eff2c"
+    }
+  ],
+  "evidence_kind": "real production records plus deterministic offline request reconstruction",
+  "execution_revision": "6533e616bd14ebfebeeccb4c9b1b0d463b47dbb4",
+  "ledger_path": "docs/quality-ledger/v1/507127d7a6e07f2d1120290c96cd717e1ef72529be8053218d317bb9b9ee3c36.json.gz",
+  "ledger_sha256": "330f71b1d836bd65201151d3dd86061d531b16a01aa6493d60f2b9cd2eeb5a41",
+  "limits": [
+    "No raw response, response digest, parsed score/grade or findings were retained.",
+    "The shared error cannot distinguish a non-object finding from missing/extra fields.",
+    "No real response acceptance or semantic finding classification can be replayed."
+  ],
+  "publication_commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+  "publication_sha256": "507127d7a6e07f2d1120290c96cd717e1ef72529be8053218d317bb9b9ee3c36",
+  "run": "35802203679",
+  "session": "2026-09-22"
+}

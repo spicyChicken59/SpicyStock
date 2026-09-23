@@ -117,12 +117,17 @@ requirements are SpicyStock DERIVED implementation choices, not new Bonde rules.
 corresponding chart-review concepts in this document. An apparent event is a
 visual warning, not a verified earnings, halt or split claim.
 
-A lower grade requires at least one structured `finding`: an authorized
+A lower grade requires at least one object in `findings`: an authorized
 criterion/source/observation and citations copied exactly from the supplied
 evidence. A measured defect needs an actual FAIL or PARTIAL; a visual finding
 needs the chart and a reason identifying the bars or region. Free prose does
 not create additional decision authority. If you cannot support a defect, keep
 the mechanical grade and return an empty findings list. Unknown stays unknown.
+Each finding has exactly `criterion`, `source`, `evidence`, and `observation`;
+no optional or extra fields. `evidence` is an array of objects with exactly
+`path` (a dot-separated path relative to `reader_evidence`) and `value` (the
+actual JSON scalar). `observation` is an allowed identifier, with the visual
+explanation in `reason`. Follow the generated FINDINGS JSON SCHEMA in the request.
 
 Start from the mechanical grade in the block. Keep it if the chart agrees.
 Lower it by one grade for one clear visual flaw, to "skip" for a flaw that

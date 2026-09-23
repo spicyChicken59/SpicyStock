@@ -44,6 +44,10 @@ MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
 #: DETECTED (see _reply_text) rather than parsed.
 MAX_TOKENS = 4096
 
+# Diagnostic retention only, not a scoring or API budget. Retain text before
+# parsing/authority rejection; oversize text keeps its identity and explicit gap.
+MAX_RESPONSE_BYTES = 64 * 1024
+
 #: Without these the SDK waits ten minutes per read and retries twice inside
 #: each application attempt: six wire requests for one candidate.
 GRADING_IO_TIMEOUT_SECONDS = 30.0
@@ -111,16 +115,7 @@ SCORE_SCHEMA = {
                    "description": ("one paragraph of at most three sentences, plain "
                                    "English, naming the single most decisive factor")},
         "key_risk": {"type": "string", "description": "one sentence"},
-        "findings": {"type": "array", "description": "source-grounded findings, or [] when confirming",
-                     "items": {"type": "object", "properties": {
-                         "criterion": {"type": "string", "enum": list(reader_authority.CRITERIA)},
-                         "source": {"type": "string"},
-                         "evidence": {"type": "array", "items": {"type": "object", "properties": {
-                             "path": {"type": "string"}, "value": {"type": ["string", "number", "boolean", "null"]}},
-                             "required": ["path", "value"], "additionalProperties": False}},
-                         "observation": {"type": "string", "enum": [v for vs in reader_authority.OBSERVATIONS.values() for v in vs]}},
-                         "required": ["criterion", "source", "evidence", "observation"],
-                         "additionalProperties": False}},
+        "findings": reader_authority.FINDINGS_SCHEMA,
         "entry_note": {"type": "string",
                        "description": ("one sentence: what would make you skip it at "
                                        "the next session's open")},
@@ -342,6 +337,23 @@ def _reply_text(resp) -> str:
     return "".join(b.text for b in resp.content if b.type == "text")
 
 
+def _response_evidence(resp) -> dict:
+    """Exact returned text, including malformed/truncated/rejected replies.
+
+    No hidden thinking, request headers or credentials are retained. Parsed
+    findings are reconstructible from the unchanged text, never repaired here.
+    This diagnostic object has no decision authority; fallback stays ungraded.
+    """
+    text = "".join(b.text for b in resp.content if b.type == "text")
+    raw = text.encode("utf-8")
+    complete = len(raw) <= MAX_RESPONSE_BYTES
+    return {"text": text if complete else None,
+            "text_sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+            "retention": "complete" if complete else "omitted_oversize",
+            "stop_reason": getattr(resp, "stop_reason", None),
+            "message_id": getattr(resp, "id", None)}
+
+
 # -------------------------------------------------------------- fallback ----
 def _band_floor(grade: str) -> float:
     return next(floor for floor, name in GRADE_BANDS if name == grade)
@@ -449,6 +461,7 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
         attempts_evidence.append(attempt_evidence)
         try:
             resp = _client().messages.create(**kwargs)
+            attempt_evidence["response"] = _response_evidence(resp)
             parsed = _validated(_extract_json(_reply_text(resp)))
             conflicts = discovery.conflicting_fields(discovery.for_metrics(metrics), parsed)
             if conflicts:
