@@ -2290,7 +2290,7 @@
       stopPct: isNum(plan.stop_pct) ? plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price || lim) + ' limit' : null,
       why: why || null,
       concern: stockRisk(c),
-      screening: screeningWarnings(c).join(' ') || null,
+      screening: screeningWarnings(c, true).join(' ') || null,
       ticket: c.status === 'ticket'
         ? (av && !av.offered ? 'recorded for ' + dateWords(av.timing.session) + ', ' + av.lead + ' — ' + (text(plan.order_line) || 'a ticket in the record')
           : (text(plan.order_line) || 'a ticket in the record'))
@@ -3448,10 +3448,14 @@
   // stock-specific assessment. The publication does not carry each candidate's
   // directory row: explain the broad flag's scope without guessing its basis
   // from a ticker/name or borrowing a newer directory snapshot.
-  function screeningWarnings(c) {
+  function screeningWarnings(c, compact) {
     const warnings = [];
-    if (c.flags.includes('biotech')) warnings.push('Broad healthcare screening warning. This flag can come from the Health Care sector or biotech, pharma or medicinal industry text; exact basis unavailable in this publication. It does not establish a biotechnology company classification or an assessed biotechnology-specific event risk.');
-    if (c.flags.includes('foreign')) warnings.push('Domicile screening warning. This flag can mean a non-US or unstated directory country; exact basis unavailable in this publication. It does not establish a foreign domicile or a stock-specific risk assessment.');
+    if (c.flags.includes('biotech')) warnings.push(compact
+      ? 'Broad healthcare flag; exact basis unavailable. It does not establish a biotechnology company or biotechnology-specific event risk.'
+      : 'Broad healthcare screening warning. This flag can come from the Health Care sector or biotech, pharma or medicinal industry text; exact basis unavailable in this publication. It does not establish a biotechnology company classification or an assessed biotechnology-specific event risk.');
+    if (c.flags.includes('foreign')) warnings.push(compact
+      ? 'Domicile flag; exact basis unavailable. It does not establish a foreign domicile or stock-specific risk.'
+      : 'Domicile screening warning. This flag can mean a non-US or unstated directory country; exact basis unavailable in this publication. It does not establish a foreign domicile or a stock-specific risk assessment.');
     return warnings;
   }
   function stockRisk(c) {

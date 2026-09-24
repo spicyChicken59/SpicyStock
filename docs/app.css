@@ -589,7 +589,8 @@
 @media (max-width: 720px) {
   .ss-compare { width: 100vw; max-width: 100vw; max-height: 100vh; border-radius: 0; border: 0; }
   .ss-compare__table { table-layout: fixed; }
-  .ss-compare__table th[scope="row"] { width: 28%; white-space: normal; }
+  .ss-compare__table thead th:first-child { width: 20%; }
+  .ss-compare__table th[scope="row"] { white-space: normal; }
   .ss-compare__wrap { padding: var(--sc-s2); gap: var(--sc-s2); }
   .ss-compare__ab-field { display: flex; }
   .ss-compare__panels { grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }
