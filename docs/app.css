@@ -206,6 +206,8 @@
 .ss-decision__item h3 { margin: 0 0 4px; }
 .ss-decision__item p { margin: 0; color: var(--sc-text); font-size: var(--sc-text-sm); line-height: 1.55; }
 .ss-decision__item p + p { margin-top: 4px; }
+.ss-screening-warnings { margin-top: var(--sc-s2); padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-screening-warnings h4 { margin: 0 0 4px; }
 @media (max-width: 900px) { .ss-decision { grid-template-columns: minmax(0, 1fr); } }
 
 /* the action area: the conditional plan, or the reason there is none.
@@ -573,7 +575,7 @@
 .ss-compare__facts { border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); background: var(--sc-surface); }
 .ss-compare__table th[scope="row"] { color: var(--sc-text-2); font: 500 11px/1.5 var(--sc-font-mono); white-space: nowrap; }
 .ss-compare__table thead th { font-size: 12px; }
-.ss-compare__table td { color: var(--sc-text); vertical-align: top; }
+.ss-compare__table td { color: var(--sc-text); vertical-align: top; overflow-wrap: anywhere; }
 /* ADAPTER, deliberate and minimal. v2.13.0 ships this exact declaration block
    -- byte for byte -- but scopes it to `.sc-signal-matrix`, and this table is
    a plain `.sc-table`. Wearing the matrix to inherit one rule would drag in
@@ -586,6 +588,8 @@
 .ss-compare__table tr[data-differs="true"] th[scope="row"] { box-shadow: inset 2px 0 0 var(--sc-accent); padding-left: 10px; color: var(--sc-heading); }
 @media (max-width: 720px) {
   .ss-compare { width: 100vw; max-width: 100vw; max-height: 100vh; border-radius: 0; border: 0; }
+  .ss-compare__table { table-layout: fixed; }
+  .ss-compare__table th[scope="row"] { width: 28%; white-space: normal; }
   .ss-compare__wrap { padding: var(--sc-s2); gap: var(--sc-s2); }
   .ss-compare__ab-field { display: flex; }
   .ss-compare__panels { grid-template-columns: minmax(0, 1fr); gap: var(--sc-s2); }

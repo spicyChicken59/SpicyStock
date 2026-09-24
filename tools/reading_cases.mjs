@@ -134,7 +134,7 @@ export async function checkReading({ browser, base, data, open, check, eq, shots
   check('passing linearity shows BOTH observations and the OR rule', linear.includes('ER) 0.23') && linear.includes('R²) 0.8') && linear.includes('ER ≥ 0.4 OR R² ≥ 0.55'));
   eq('stored pass is not inferred from the first measurement', await e.page.locator(tile('linearity')).getAttribute('data-verdict'), 'pass');
   check('green criterion cannot create a ticket', (await txt(e.page, '#detail .ss-action')).includes('No SpicyStock entry'));
-  check('absent risk narrative does not promise no risk', (await txt(e.page, '[data-item="risk"]')).includes('No separate stock-risk narrative was recorded') && (await txt(e.page, '[data-item="risk"]')).includes('does not mean no risk'));
+  check('absent risk narrative does not promise no risk', (await txt(e.page, '[data-item="risk"]')).includes('Stock-specific risk unavailable: no accepted reader or plan risk was recorded') && (await txt(e.page, '[data-item="risk"]')).includes('does not mean no risk'));
   check('waiting reason supplies a next review action', (await txt(e.page, '[data-item="need"]')).includes('Wait for a new published plan'));
   const negative = await txt(e.page, tile('narrow_or_negative'));
   check('a negative prior day can pass with an explicit comparison', negative.includes('-0.29%') && negative.includes('Prior close below its previous close OR range < 2%'));
