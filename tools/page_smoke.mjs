@@ -1689,7 +1689,6 @@ async function checkFollowStates(browser, base, full, next) {
       const withChart = JSON.stringify(original).length, withoutChart = JSON.stringify(lean).length;
       const quota = Math.floor((withChart + withoutChart) / 2);
       const snapshot = original.items[0].snapshot;
-      await window.SCStock.follow.commit('remove', original.items[0].id);
       window.__setItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function (k, v) {
         if (/following/.test(k) && String(v).length > quota) { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; }
@@ -1698,6 +1697,7 @@ async function checkFollowStates(browser, base, full, next) {
       return { withChart, withoutChart, quota, snapshot };
     }, FOLLOW_KEY);
     check('quota admits setup and refuses its chart', capacity.withoutChart < capacity.quota && capacity.quota < capacity.withChart);
+    await page.click('#detail .ss-follow button[data-follow-action="remove"]');
     await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(300);
     eq('a store with no room still saves the setup', await attr(page, '#detail .ss-follow', 'data-follow'), 'following');
     eq('without its chart', await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].evidence, FOLLOW_KEY), null);
