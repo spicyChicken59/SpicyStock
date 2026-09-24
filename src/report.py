@@ -78,6 +78,7 @@ H1_TRADE = "Trade next session. {n} A-quality {noun}."
 H1_TRADE_SMALL = "Trade small. {n} A+ {noun}."
 H1_STAND_ASIDE = "Stand aside."
 H1_KEEP_CASH = "Nothing qualifies. Keep cash."
+H1_READER_WAIT = "No new burst tickets. Reader review incomplete."
 H1_CLOSED = "Market closed. Plans unchanged."
 H1_FAILED = "No verdict for {expected}."
 
@@ -111,7 +112,7 @@ CONTRACT: dict[str, str] = {
                  "run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
     "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the "
            "rules block, so two nights under different constants never read as one screener.",
-    "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label "
+    "cover": "The night's verdict as sentences: h1, dek, the primary action's label "
              "and anchor, and the verb. Composed from the numbers below; never edited by hand.",
     "run": "The run that produced this file: session, session_state, expected_session, status "
            "(ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the "
@@ -310,6 +311,11 @@ def breadth_sentence(breadth: Any) -> str:
     return " ".join(parts)
 
 
+def reader_pending(bursts):
+    return [b for b in bursts if isinstance(b, dict) and b.get("grade") in ("A+", "A")
+            and b.get("reader_coverage") in ("fallback", "not_selected_budget", "unknown")]
+
+
 def no_trade_sentence(bursts: Any, closest_miss: Any) -> str:
     """"14 bursts found, none A-quality. The closest miss is below." -- or,
     when a burst qualified and its ticket did not, "14 bursts found, 2 with
@@ -318,9 +324,13 @@ def no_trade_sentence(bursts: Any, closest_miss: Any) -> str:
     only); its ticket was withheld by the stop rule, or cut."""
     rows = bursts if isinstance(bursts, list) else []
     n = len(rows)
+    pending = len(reader_pending(rows))
     planned = sum(1 for b in rows if isinstance(b, dict) and isinstance(b.get("plan"), dict))
     if n == 0:
         head = "No bursts found."
+    elif pending:
+        head = (f"{n} {_plural(n, 'burst')} found; {pending} with mechanical A+/A grades lack accepted reader review. "
+                "They remain visible for research, without new plans or tickets. Missing review is not a measured setup failure.")
     elif planned:
         head = (f"{n} {_plural(n, 'burst')} found, {planned} with a qualifying setup and no ticket "
                 f"(withheld by the stop rule at the limit, or cut); each card says why.")
@@ -337,7 +347,7 @@ def _cover(h1: str, dek: str, action: tuple[str, str], verb: str) -> dict:
 
 def cover(run: dict, breadth: dict | None, trades: list, bursts: list,
           closest_miss: dict | None) -> dict:
-    """The h1, dek, primary action and verb for the night -- six h1 forms.
+    """The h1, dek, primary action and verb for the night.
 
     Precedence is the order a reader needs it: a run with no verdict, then a
     closed market, then a red regime (which empties the trade list whatever
@@ -375,6 +385,8 @@ def cover(run: dict, breadth: dict | None, trades: list, bursts: list,
                       ORDERS_ACTION, "trade small")
     if n:
         return result(H1_TRADE.format(n=n, noun=_plural(n, "burst")), sentence, ORDERS_ACTION, "trade")
+    if reader_pending(bursts):
+        return result(H1_READER_WAIT, no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
     if (run.get("coverage") or {}).get("acceptance", {}).get("status") == "degraded":
         return result("No qualifying tickets in the evaluated subset.", no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
     return result(H1_KEEP_CASH, no_trade_sentence(bursts, closest_miss), HOLD_ACTION, "keep cash")
@@ -475,6 +487,8 @@ def _base_depth_pct(burst: dict, quality: dict) -> float | None:
 def miss_reason(burst: dict) -> str | None:
     """Why a burst is not a trade, off its own quality block: the stated
     reason, else its vetoes, else the first failing check's label."""
+    if reader_pending([burst]) and not burst.get("plan"):
+        return "accepted reader review missing; mechanical grade retained for research, not a measured setup failure"
     quality = burst.get("quality") if isinstance(burst.get("quality"), dict) else {}
     stated = _text(_first(quality.get("why"), quality.get("first_fail")))
     if stated:

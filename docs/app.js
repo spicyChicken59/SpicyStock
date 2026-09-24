@@ -1076,8 +1076,27 @@
   // own. Nothing here scans, grades, sizes or fetches.
   const STATUS_WORDS = {
     ticket: ['ticket', 'good'], vetoed: ['vetoed', 'danger'], below_grade: ['no ticket', 'neutral'], not_admitted: ['no ticket', 'neutral'],
-    no_plan: ['no ticket', 'neutral'], no_order: ['no order', 'neutral'], watch: ['watch', 'neutral']
+    no_plan: ['no ticket', 'neutral'], no_order: ['no order', 'neutral'], watch: ['watch', 'neutral'],
+    reader_required: ['research only', 'neutral']
   };
+  function readerCoverage(b) {
+    const cl = b.claude || {}, recorded = b.reader_coverage;
+    const accepted = cl.source === 'claude' && ['A+', 'A', 'B', 'C', 'skip'].includes(b.grade) && cl.grade === b.grade && !cl.error;
+    if (accepted) return { state: 'accepted', label: 'Reader reviewed',
+      detail: 'Mechanical grade ' + (b.grade_mechanical || 'unknown') + '; reader-reviewed final grade ' + (b.grade || 'unknown') + '. Accepted review still needs market permission and the existing plan rules; it does not guarantee a ticket.' };
+    const policy = ' Research only: an accepted reader review is required before a new burst plan. Missing review is not a measured setup failure.';
+    if (recorded === 'fallback' || cl.source === 'fallback') return { state: 'fallback', label: 'Reader fallback',
+      detail: 'Graded by the checklist alone; no usable chart-reader judgement. Selected for review, but the result was rejected or unavailable.' + policy };
+    if (recorded === 'not_selected_budget' || cl.source === 'not_graded') return { state: 'not_selected_budget', label: 'Not reviewed · call budget',
+      detail: 'Not selected within the reader call budget. The grade is mechanical only; reader judgement remains unknown.' + policy };
+    return { state: 'unknown', label: b.claude === null ? 'Not reviewed' : 'Reader coverage unknown',
+      detail: 'Graded by the checklist alone; no accepted reader review is recorded. The reason for missing coverage is not recorded; reader judgement remains unknown.' + policy };
+  }
+  function readerChip(b) {
+    const coverage = readerCoverage(b), node = chip(coverage.label, 'neutral');
+    node.setAttribute('data-reader-coverage', coverage.state);
+    return node;
+  }
   function statusWords(status) {
     if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
     return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
@@ -1138,6 +1157,7 @@
       }
       else if (verdict === 'yellow' && yellowGrades.indexOf(b.grade) < 0) { status = 'not_admitted'; reason = 'a yellow night admits ' + yellowGrades.join('/') + ' only'; }
       else if (reg.size_multiplier === 0 || verdict === 'red') { status = 'no_new_longs'; reason = 'no new longs: breadth is ' + (verdict || 'red'); }
+      else if (!plan && readerCoverage(b).state !== 'accepted') { status = 'reader_required'; reason = readerCoverage(b).label + ': accepted review required before a new plan. Mechanical evidence remains available for research.'; }
       else if (!plan) { status = 'no_plan'; reason = 'the run wrote no plan for this burst'; }
       else { status = 'no_order'; reason = plan.reason || 'no order was written for this plan'; }
       const flags = (b.flags || []).slice();
@@ -1479,6 +1499,7 @@
       el('span', { 'class': 'ss-pick__row' }, [
         el('span', { 'class': 'ss-pick__ticker sc-case', text: c.ticker }),
         c.grade ? chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true) : null,
+        c.stage === 'bursts' && readerCoverage(c.row).state !== 'accepted' ? readerChip(c.row) : null,
         chip(sw[0], sw[1])
       ]),
       el('span', { 'class': 'ss-pick__reason', text: pickReason(c) }),
@@ -1697,6 +1718,7 @@
   function detailHead(c) {
     const b = c.row, run = current.run || {}, sw = statusWords(c.status), chips = [];
     if (c.grade) chips.push(chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true));
+    if (c.stage === 'bursts') chips.push(readerChip(b));
     chips.push(chip(sw[0], sw[1]));
     if (c.stage === 'setting-up') (b.setups || []).forEach((s) => chips.push(chip(String(s), 'neutral', true)));
     c.flags.forEach((f) => chips.push(chip(FLAG_WORDS[f] || words(f), 'warn')));
@@ -2280,7 +2302,7 @@
     const why = burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c);
     return {
       grade: c.grade ? c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : '') : null,
-      provenance: burst ? (cl.source === 'claude' ? 'chart reader' + (cl.agree === false ? ', lowered the grade' : cl.agree === true ? ', agreed' : '') + (cl.chart_seen === false ? ' · numbers only, no chart' : '') : 'checklist alone') : 'measured, not graded',
+      provenance: burst ? readerCoverage(b).label + ' · mechanical ' + (b.grade_mechanical || 'unknown') + (readerCoverage(b).state === 'accepted' ? '; reviewed final ' + b.grade : '; reader judgement unknown') : 'measured, not graded',
       gain: burst ? (isNum(b.gain_pct) ? pct(b.gain_pct) : null) : (isNum(b.pct_change_today) ? pct(b.pct_change_today) : null),
       volume: burst ? (vr.value === null ? null : vr.value.toFixed(1) + '×' + (vr.source === 'checklist' ? ' (the checklist’s copy)' : '')) : (isNum(b.volume_ratio) ? b.volume_ratio.toFixed(2) + '×' : null),
       base: text(base.start) && text(base.end) ? (isNum(base.sessions) ? plain(base.sessions) + ' sessions' : 'sessions not recorded') + ' · ' + usd(base.low) + '–' + usd(base.high) + (burst && isNum(base.depth_pct) ? ' · ' + plain(base.depth_pct) + '% deep' : '') + ' · ' + dateShort(base.start) + '–' + dateShort(base.end) : null,
@@ -2571,7 +2593,7 @@
   function savedLimitations(c) {
     const out = [], b = c.row || {}, cl = b.claude || {}, q = b.quality || {};
     if (c.stage === 'bursts') {
-      if (cl.source !== 'claude') out.push('graded by the checklist alone; the chart reader did not answer for this name');
+      if (readerCoverage(b).state !== 'accepted') out.push(readerCoverage(b).detail);
       else if (cl.chart_seen === false) out.push('the chart reader answered without a chart');
       (q.vetoes || []).forEach((v) => out.push('veto: ' + (VETO_WORDS[v] || words(v))));
     } else out.push('anticipation names are measured, not graded: the record carries no pass or fail for a coil');
@@ -3489,7 +3511,7 @@
     const summary = sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, '')));
     const why = [discoveryReason(b), summary || 'No summary was recorded for this burst.',
       checks.length ? passes + ' of ' + checks.length + ' recorded criteria pass.' + (miss ? ' Inspect ' + (miss.label || words(miss.key) || 'the non-passing criterion') + ' below for its observed value, rule and local verdict.' : ' Each pass applies only to its own criterion.') : '',
-      cl.source === 'claude' ? 'Recorded grade: checklist ' + (b.grade_mechanical || 'not recorded') + '; published ' + (b.grade || 'not recorded') + '. Original reader commentary is in Provenance.' : ''];
+      readerCoverage(b).detail];
     const entry = entryInstruction(plan);
     const need = c.status === 'ticket'
       ? [entry || (text(plan.order_line) ? sentence(plan.order_line) : 'The plan carries no entry instruction.')]
@@ -3801,6 +3823,7 @@
   }
   function discProvenance(c) {
     const b = c.row, run = current.run || {}, app = current.app || {}, cl = b.claude || null, kids = [];
+    if (c.stage === 'bursts') kids.push(el('p', { 'class': 'sc-hint', 'data-reader-explanation': '', text: readerCoverage(b).detail }));
     const ev = b.evidence;
     kids.push(el('p', { 'class': 'sc-hint', 'data-plan-evidence': '', text: ev
       ? 'Evidence recorded · ' + dateWords(ev.session) + ' · ' + barBasis(run) + '. ' + (ev.gate.ticket ? 'A conditional ticket was published.' : 'No ticket: ' + String(ev.gate.reason || 'withheld').replace(/_/g, ' ') + '.')
@@ -3821,7 +3844,7 @@
           text(cl.entry_note) ? el('p', null, [el('strong', { text: 'At the open: ' }), cl.entry_note]) : null,
           el('p', { 'class': 'sc-hint', text: 'Model grade ' + (cl.returned_grade || cl.grade || '—') + (isNum(cl.score) ? ' · ' + cl.score.toFixed(1) : '') + (cl.chart_seen === false ? ' · read from the numbers alone, no chart' : '') })
         ]));
-      } else kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Graded by the checklist alone; no usable chart-reader judgement' + (cl && text(cl.error) ? ' (' + cl.error + ')' : '') + '.' }));
+      } else if (cl && text(cl.error)) kids.push(el('p', { 'class': 'sc-hint ss-nomodel', text: 'Recorded reader error: ' + cl.error }));
     } else kids.push(el('p', { 'class': 'sc-hint', text: 'Anticipation names are measured, not graded: no chart reader, no letters.' }));
     kids.push(factList([
       ['bars', 'Alpaca ' + String(run.feed || '').toUpperCase() + ', daily, ' + barBasis(run), c.series.length ? plural(c.series.length, 'session') + ' archived through ' + dateWords(c.series[c.series.length - 1].date) : SCStock.sourceReference(b, current) ? 'browser chart not loaded; matching retained source reference is available' : 'no usable chart source in this record'],
@@ -3830,7 +3853,7 @@
       b.chart ? ['chart file', b.chart, 'the PNG the grader was shown, when the run rendered it'] : null
     ]));
     if (b.chart) kids.push(el('p', null, [el('a', { 'class': 'sc-link--quiet', href: b.chart, text: 'open the chart the grader saw' })]));
-    return disclosure('disc-provenance', 'Provenance and the chart reader', c.stage === 'bursts' ? (cl && cl.source === 'claude' ? 'model read' : 'checklist alone') : 'measured', kids);
+    return disclosure('disc-provenance', 'Provenance and the chart reader', c.stage === 'bursts' ? readerCoverage(b).label : 'measured', kids);
   }
   function renderDetail() {
     const stage = state.stage, c = model.byId[state.selected[stage]], box = $('detail');
@@ -3966,7 +3989,7 @@
       const gradeNote = vetoes.length ? 'veto · ' + vetoes.map((v) => VETO_WORDS[v] || words(v)).join(', ') : q.reclass ? 'reclassified · ' + words(q.reclass) : miss ? 'first miss · ' + (miss.label || words(miss.key) || 'a check') : 'nothing missed';
       const gradeTone = b.grade === 'A+' || b.grade === 'A' ? 'brand' : 'neutral';
       tr.appendChild(el('td', { 'class': 'sc-signal-matrix__value' }, [chip((b.grade || '—') + (isNum(b.score) ? ' · ' + b.score.toFixed(1) : ''), gradeTone, true),
-        el('span', { 'class': 'ss-grade-note', text: gradeNote + (b.claude && b.claude.source === 'claude' && b.claude.agree === false ? ' · Claude lowered it' : '') + (isTrade ? ' · trade' : '') })]));
+        el('span', { 'class': 'ss-grade-note', text: readerCoverage(b).label + ' · ' + gradeNote + (b.claude && b.claude.source === 'claude' && b.claude.agree === false ? ' · Claude lowered it' : '') + (isTrade ? ' · trade' : '') })]));
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -4127,6 +4150,9 @@
         ? ['The entry window for ' + day + ' has ended.', 'The ' + plural(orders, 'ticket') + ' the record published for it ' + (orders === 1 ? 'stays' : 'stay') + ' readable as history, and ' + (orders === 1 ? 'is' : 'are') + ' no longer offered to place. ' + cancelLine(), 'ended']
         : ['The entry window for ' + day + ' has ended.', 'Nothing new was offered for it. ' + (open ? 'Review the open public-model plans and wait for the next run.' : 'Wait for the next published scan.'), 'ended'];
     }
+    const waitingForReader = (data.bursts || []).some(b => ['A+', 'A'].includes(b.grade) && readerCoverage(b).state !== 'accepted');
+    if (!orders && waitingForReader) return ['No new burst ticket for ' + day + '.',
+      'Mechanical A+/A candidates remain research only while accepted reader review is missing. This does not establish a setup failure. ' + (open ? 'Existing open model plans keep their recorded instructions. ' : '') + line, 'quiet'];
     if (ph === 'open') {
       return orders
         ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']

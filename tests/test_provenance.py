@@ -112,13 +112,14 @@ def test_retained_fixture_chain(name):
 def test_regime_and_reader_decisions_are_distinct_from_quality():
     red, yellow, lower, down = [fixture(n) for n in ("red", "yellow", "notrade", "degraded")]
     a = next(b for b in red["bursts"] if b["grade"] == "A+")
-    assert a["evidence"]["gate"] == {"regime": "red", "final_grade": "A+", "allowed_grades": [], "ticket": False, "reason": "regime_gate", "detail": None}
+    assert a["evidence"]["gate"] == {"reader_coverage": "accepted", "regime": "red", "final_grade": "A+", "allowed_grades": [], "ticket": False, "reason": "regime_gate", "detail": None}
     assert a["plan"] is None and not red["trades"]
     assert yellow["trades"]
     assert all(b["evidence"]["gate"]["allowed_grades"] == ["A+"] for b in yellow["bursts"])
     assert all(b["grade"] == "A+" for b in yellow["bursts"] if b["evidence"]["gate"]["ticket"])
     assert any(b["grade_mechanical"] == "A+" and b["grade"] == "C" and b["claude"]["returned_grade"] == "C" for b in lower["bursts"])
     for b in down["bursts"]:
+        assert b["reader_coverage"] == "fallback" and b["plan"] is None
         assert b["grade"] == b["grade_mechanical"]
         assert b["claude"]["source"] == "fallback"
         assert b["claude"]["score"] is None and b["claude"]["reason"] is None

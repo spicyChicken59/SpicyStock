@@ -489,8 +489,13 @@ session. The run:
 - **grade** — Claude reads the chart and the numbers for up to twelve
   bursts by mechanical grade and may only LOWER a grade, never raise it;
   the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
-  key, leaves the checklist's grade standing and marks the night
-  `claude_unavailable`. Each reaction row archives a versioned `discovery`
+  key, leaves the checklist's grade standing for research and marks the night
+  `claude_unavailable`. Every new reaction row records `reader_coverage`:
+  `accepted`, `fallback` (selected but no accepted result), or
+  `not_selected_budget`; missing legacy evidence remains `unknown`.
+  Rejected/unavailable fallback and budget exclusions are not reader approval
+  and do not measure a bad setup. Neither may enter final burst planning.
+  Each reaction row archives a versioned `discovery`
   block from those same scan rules and measurements: `burst`, `dollar` or
   both, with applicable and explicitly inapplicable rules kept apart. A
   dollar-only candidate does not require a +4% close-to-close gain. Quality
@@ -524,7 +529,11 @@ session. The run:
   thresholds and only the published plan defines order terms. Saved and recovered
   originals carry the same qualification. This presentation boundary does not
   fact-check arbitrary prose, regrade a result or rewrite a historical receipt.
-- **plan** — every A-quality burst gets a plan sized from the configured
+- **plan** — an accepted reader review is required in addition to the existing
+  grade, veto and market gates: GREEN admits final A+/A, YELLOW only final A+,
+  RED none. The versioned `pipeline.reader_policy` records this requirement;
+  the decision receipt records coverage separately from market permission and
+  ticket status. An admitted burst gets a plan sized from the configured
   account (default $10,000, 0.5% risk, 25% cap, four slots). Four prices it
   keeps apart, because they are four rules: the **trigger**, a buy stop at
   the burst close; the ticket's **limit** (`plan.burst_limit`), the day-2
@@ -786,7 +795,7 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · reader_authority.py · charts.py · record.py · report.py
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 history/ (recovery) · evidence/ (deduplicated source objects)

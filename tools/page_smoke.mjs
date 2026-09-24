@@ -25,6 +25,7 @@ import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { checkScorecard } from './scorecard_cases.mjs';
 import { checkWalkthrough } from './walkthrough_cases.mjs';
 import { checkRiskAttribution } from './risk_attribution_cases.mjs';
+import { checkReaderCoverage } from './reader_coverage_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -172,6 +173,7 @@ function burstStatus(b, data) {
   if ((b.quality.vetoes || []).length) return 'vetoed';
   if (!TRADE_GRADES.includes(b.grade)) return 'below_grade';
   if (data.breadth.regime.verdict === 'red') return 'no_new_longs';
+  if (!b.plan && b.reader_coverage && b.reader_coverage !== 'accepted') return 'reader_required';
   return b.plan ? 'no_order' : 'no_plan';
 }
 function coilStatus(r) {
@@ -223,7 +225,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   check(`${variant} ${b.ticker} why: counts the checks`, why.includes(`of ${q.checks.length} recorded criteria pass`), why);
   if (miss) check(`${variant} ${b.ticker} why: names the miss`, why.includes(miss.label), miss.label);
   if (b.claude && b.claude.source === 'claude') {
-    check(`${variant} ${b.ticker} why: recorded grade outcome`, why.includes('checklist ' + b.grade_mechanical + '; published ' + b.grade), why);
+    check(`${variant} ${b.ticker} why: recorded grade outcome`, why.includes('Mechanical grade ' + b.grade_mechanical + '; reader-reviewed final grade ' + b.grade), why);
     check(`${variant} ${b.ticker} why: commentary stays in Provenance`, !why.includes(b.claude.reason), why);
     const provenance = await text(page, '#disc-provenance');
     check(`${variant} ${b.ticker} reader authority`, provenance.includes('commentary is unverified') && provenance.includes('Recorded checklist criteria govern thresholds'), provenance);
@@ -706,7 +708,7 @@ async function checkVariant(browser, base, variant, data) {
   else if (data.breadth.regime.verdict === 'red') check(`${variant} next: no new longs`, next.startsWith('No new longs'), next);
   else if (withOrders.length) check(`${variant} next: review conditional tickets, for a named session`,
     next === `Review ${withOrders.length} conditional ticket${withOrders.length === 1 ? '' : 's'} for ${forDay}.`, next);
-  else check(`${variant} next: nothing new, for a named session`, /^Nothing/.test(next) && next.includes(forDay), next);
+  else check(`${variant} next: nothing new, for a named session`, /^(Nothing|No new burst ticket)/.test(next) && next.includes(forDay), next);
   check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
     `${next} @ window ${await attr(page, 'html', 'data-ss-window')}`);
 
@@ -1677,17 +1679,29 @@ async function checkFollowStates(browser, base, full, next) {
   // --- a store with no room for the chart -------------------------------
   {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
-    // refuse any write over a few kilobytes, which is a quota as a browser reports one
-    await page.evaluate(() => {
+    // Measure both payloads: a receipt can grow without changing the behavior
+    // under test. The quota must admit the complete setup but refuse its chart.
+    await page.click('#detail .ss-follow button[data-follow-action="add"]');
+    await page.waitForFunction(() => window.SCStock.follow.list().length === 1);
+    const capacity = await page.evaluate(async key => {
+      const original = JSON.parse(localStorage.getItem(key)), lean = structuredClone(original);
+      lean.items[0].evidence = null; lean.items[0].evidence_dropped = true;
+      const withChart = JSON.stringify(original).length, withoutChart = JSON.stringify(lean).length;
+      const quota = Math.floor((withChart + withoutChart) / 2);
+      const snapshot = original.items[0].snapshot;
       window.__setItem = Storage.prototype.setItem;
       Storage.prototype.setItem = function (k, v) {
-        if (/following/.test(k) && String(v).length > 4000) { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; }
+        if (/following/.test(k) && String(v).length > quota) { const e = new Error('quota'); e.name = 'QuotaExceededError'; throw e; }
         return window.__setItem.call(this, k, v);
       };
-    });
+      return { withChart, withoutChart, quota, snapshot };
+    }, FOLLOW_KEY);
+    check('quota admits setup and refuses its chart', capacity.withoutChart < capacity.quota && capacity.quota < capacity.withChart);
+    await page.click('#detail .ss-follow button[data-follow-action="remove"]');
     await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(300);
     eq('a store with no room still saves the setup', await attr(page, '#detail .ss-follow', 'data-follow'), 'following');
     eq('without its chart', await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].evidence, FOLLOW_KEY), null);
+    eq('quota fallback keeps the full snapshot and receipt', await page.evaluate(k => JSON.parse(localStorage.getItem(k)).items[0].snapshot, FOLLOW_KEY), capacity.snapshot);
     await openSaved(page, trade);
     check('and the sheet says so rather than drawing one from tonight',
       (await said(page, '#saved [data-chart="unsaved"]')).includes('Original chart was not saved'), await said(page, '#saved [data-chart="unsaved"]'));
@@ -3454,7 +3468,7 @@ async function checkReaderCommentary(browser, base) {
     });
     const name = `retained JRSH ${width}/${theme}`;
     const why = await text(page, '#detail [data-item="why"]');
-    check(name + ' primary explanation uses recorded grades', why.includes('checklist A; published C') && !why.includes(rows[0].claude.reason));
+    check(name + ' primary explanation uses recorded grades', why.includes('Mechanical grade A; reader-reviewed final grade C') && !why.includes(rows[0].claude.reason));
     await page.locator('#disc-provenance > summary').focus();
     await page.keyboard.press('Enter');
     check(name + ' keyboard opens provenance', await page.locator('#disc-provenance').evaluate(el => el.open));
@@ -3679,6 +3693,7 @@ async function main() {
     if (runs('grading')) await checkGradingHistory(browser, base);
     if (runs('reader')) await checkReaderCommentary(browser, base);
     if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
+    if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
     if (runs('inputs')) await checkInputCoverage(browser, base);
   } finally {
     await browser.close();

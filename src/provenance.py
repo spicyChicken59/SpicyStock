@@ -21,7 +21,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from src import discovery, grader, plan, quality, reader_authority, scans, watchlist, sessions, inputs
+from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs
 
 VERSION = 1
 OBJECT_DIR = "evidence"
@@ -130,6 +130,8 @@ def prepare_reader(row, metrics, chart_path, system):
 
 def seal_reader(row):
     if "_evidence" in row:
+        if "reader_coverage" in row:
+            row["_evidence"]["reader_coverage"] = row["reader_coverage"]
         row["_evidence"]["reader_sha256"] = digest(row.get("claude"))
         row["_evidence"]["reader_source"] = (row.get("claude") or {}).get("source", grader.SOURCE_NOT_GRADED)
         row["_evidence"]["final_grade"] = row["grade"]
@@ -159,14 +161,17 @@ def gate(data, row):
     rules = data["rules"]["pipeline"]
     allowed = [] if regime == "red" else rules["yellow_grades"] if regime == "yellow" else rules["trade_grades"]
     p = plain_plan(row)
+    coverage_required = rules.get("reader_policy") == reader_coverage.POLICY
     cut = next((c for c in data["cash_budget"].get("cut", []) if c["ticker"] == row["ticker"]), None)
     reason = ("regime_gate" if regime == "red" or (regime == "yellow" and row["grade"] not in allowed)
               else "quality_grade" if row["grade"] not in allowed else "quality_veto" if row["vetoes"]
+              else "reader_coverage" if coverage_required and not reader_coverage.accepted(row)
               else "plan_error" if p is None else cut["kind"] if cut
               else "plan_withheld" if not p.get("eligible") else "no_order" if p.get("action") not in plan.ORDER_ACTIONS
               else None)
     error = (row.get("evidence") or row.get("_evidence") or {}).get("planning", {}).get("error")
-    return {"regime": regime, "final_grade": row["grade"], "allowed_grades": list(allowed),
+    return {**({"reader_coverage": row.get("reader_coverage", reader_coverage.UNKNOWN)} if coverage_required else {}),
+            "regime": regime, "final_grade": row["grade"], "allowed_grades": list(allowed),
             "ticket": reason is None, "reason": reason, "detail": cut.get("reason") if cut else (p or {}).get("reason") or error}
 
 
@@ -192,6 +197,8 @@ def finish(data, bursts):
         _same(digest(row["discovery"]), e["discovery_sha256"], "discovery changed after scan")
         _same(digest(mechanical(row)), e["quality_sha256"], "mechanical quality changed after scan")
         _same(digest(row.get("claude")), e["reader_sha256"], "reader result changed after grading")
+        if "reader_coverage" in e:
+            _same(row.get("reader_coverage"), e["reader_coverage"], "reader coverage changed after grading")
         _same(row["grade"], e["final_grade"], "final grade changed after grading")
         _same(digest(plain_plan(row)), e["planning"]["output_sha256"], "plan changed after construction")
         e.update(version=VERSION, kind="burst", ticker=row["ticker"], session=data["run"]["session"],
@@ -343,6 +350,15 @@ def _check_reader(row, e, compatible=True):
 def _check_plan(data, row, e, compatible=True):
     from src.pipeline import pick_of
     p, planning = plain_plan(row), e["planning"]
+    if data["rules"]["pipeline"].get("reader_policy") == reader_coverage.POLICY:
+        coverage = row.get("reader_coverage")
+        _same(coverage, e.get("reader_coverage"), "reader coverage receipt mismatch")
+        if coverage not in reader_coverage.STATES:
+            raise ValueError("missing or unknown reader coverage")
+        expected = reader_coverage.state(row, selected=bool(e.get("reader_input")))
+        _same(coverage, expected, "reader coverage contradicts reader result")
+        if p is not None and not reader_coverage.accepted(row):
+            raise ValueError("plan requires accepted reader review")
     _same(digest(p), planning["output_sha256"], "plan/ticket digest mismatch")
     _same(planning["regime_sha256"], digest(data["breadth"]["regime"]), "plan regime differs from run regime")
     _same(planning["session"], data["run"]["session"], "plan signal session mismatch")
