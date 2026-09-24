@@ -2954,3 +2954,58 @@ and profitability. **OMIT** authority weakening, invented replies, regrading,
 tuning, UI/design/sibling changes, fresh model/provider/scan/publication actions,
 dispatch/rerun, refresh, email and merge. Stop with one focused PR for Guidance;
 do not represent the unavailable historical-response gate as passed.
+
+## Checkpoint, 24 Sep 2026 — fallback risk attribution
+
+Starting main: `9357a2791b8440af4b397dec57dee94a14551a0b`, the Guidance
+merge of #88; unchanged when fetched again before submission. Zero open PRs
+were verified before branching. Branch: `fix/fallback-risk-attribution`.
+Astra owns implementation and one unmerged PR; Guidance owns independent
+review and the normal clean merge. The selected effort setting was preserved.
+Exact submitted head and completed full-browser/CI results belong in the PR.
+
+**Defect and correction.** HSIC's real September 22 fallback had no accepted
+reader risk or plan, but detail/comparison substituted the raw `biotech` flag
+as "Biotech." Warning chips also used that unqualified interpretation.
+The existing classifier flags every Health Care sector row. Its retained
+directory identifies HSIC as Health Care / Medical Specialities and KYMR as
+Health Care / Biotechnology: Biological Products (No Diagnostic Substances).
+Neither directory row is included in the candidate publication. Presentation
+now separates stock-specific risk from recorded screening warnings, explicitly
+states the unavailable precise basis, and never guesses from ticker/name or a
+newer directory. Accepted reader commentary retains its unverified attribution;
+plan risk is labelled plan-derived; neither available means explicitly
+unavailable. The same functions serve burst/anticipation detail and comparison.
+Qualified warning chips, raw flags in provenance and walkthrough language share
+that interpretation. Minimal local CSS keeps the warning hierarchy and both
+comparison columns readable on phones; shared design-system files are untouched.
+
+**FAIL before / PASS after.** The final 338-check browser regression on an
+isolated checkout of untouched starting main produces 123 failures and 215
+passing controls. Corrected presentation passes all 338. An unrelated heading
+mutation still passes all 338. Real unmodified HSIC/KYMR/IOSP excerpts, accepted
+reader-over-plan, plan stop/hazard/note, rejected text, no-flag and legacy
+unknown-basis controls exercise detail and comparison. Tests run in the normal
+page gate, not an optional replacement. Desktop 1440 and phone 390/320, both
+themes, wrapping, native disclosure keyboard/touch and comparison focus/selection
+are exercised; screenshots inspected. A separate browser pass uses all 513
+bursts in the exact full retained publication and verifies all three journeys
+at 1440/390, with no plan, order or copy control created.
+
+**PASS:** 271 directly affected Python tests; full normal suite 1,466; twelve
+fixtures current; 127 continuity and 182 chart checks. Runtime: Linux Python
+3.12.14, pandas 2.2.3, NumPy 2.3.5; Node 24.19.0, Playwright 1.56.1.
+Original publication source verifies 513 mechanical assessments and all 518
+receipts. All 6,190 protected source/data/history/evidence/ledger/design/workflow
+files match the base. Publication SHA-256 remains
+`507127d7a6e07f2d1120290c96cd717e1ef72529be8053218d317bb9b9ee3c36`.
+HSIC remains A+ 9.0, C partial, RE/VOL failed, reader fallback, regime_gate,
+null plan and no ticket. IOSP/KYMR decisions and all evidence identities remain.
+
+README and `.env.example` reviewed; no configuration change. No strategy,
+discovery, membership, raw flag, grading, reader authority, gate, entry, stop,
+sizing, plan/ticket, model-outcome or provider behavior changed. No new scan,
+provider/model call, workflow dispatch, schedule, secret, publication, email,
+brokerage action or sibling change. Next action: Guidance independently reviews
+the focused PR and its final-head evidence. Astra stops without merging or
+starting another milestone.

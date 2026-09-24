@@ -124,7 +124,7 @@
         + 'out of a quiet consolidation. Enter the next morning, stop under the burst, exit into strength, gate everything '
         + 'by breadth, and repeat hundreds of times a year.',
       facts: ['universe: US-listed common stocks with a session close of at least ' + usd(N('universe.min_price'))
-        + '; biotech and foreign names are flagged, never excluded',
+        + '; broad healthcare and domicile screening warnings are flags, never exclusions or stock-specific risk assessments',
       'under ' + usd(N('plan.low_price_band_usd')) + ' a burst runs up to ' + g(N('plan.low_price_target_high_pct'))
         + '%; over ' + usd(N('plan.high_price_band_usd')) + ' he measures it in dollars, '
         + usd(N('plan.high_price_target_low_usd')) + '–' + usd(N('plan.high_price_target_high_usd'))],

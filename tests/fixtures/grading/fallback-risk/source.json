@@ -1,0 +1,43 @@
+{
+  "description": "Unchanged candidate/context excerpts from the retained September 22 publication; directory rows are audit evidence, not fields supplied to the page. No new reader or provider call.",
+  "publication_commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+  "publication_sha256": "507127d7a6e07f2d1120290c96cd717e1ef72529be8053218d317bb9b9ee3c36",
+  "run_id": "35802203679",
+  "attempt": 1,
+  "directory_snapshot_sha256": "16762dbcd3a2a026f1dfeee06f3ffa73428d06a24a170a90d7fa6b508bf66aeb",
+  "directory_fetched_at": "2026-09-23T00:28:52.357015+00:00",
+  "directory_rows": [
+    {
+      "symbol": "HSIC",
+      "name": "Henry Schein Inc. Common Stock",
+      "country": "United States",
+      "sector": "Health Care",
+      "industry": "Medical Specialities",
+      "lastsale": "$87.43",
+      "volume": "1070609"
+    },
+    {
+      "symbol": "IOSP",
+      "name": "Innospec Inc. Common Stock",
+      "country": "United States",
+      "sector": "Industrials",
+      "industry": "Major Chemicals",
+      "lastsale": "$96.08",
+      "volume": "349854"
+    },
+    {
+      "symbol": "KYMR",
+      "name": "Kymera Therapeutics Inc. Common Stock",
+      "country": "United States",
+      "sector": "Health Care",
+      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
+      "lastsale": "$122.06",
+      "volume": "779396"
+    }
+  ],
+  "candidate_evidence_ids": {
+    "IOSP": "e33435affe6b42ea592ff4b8756afcd422611ec6b5c4acf4d195281d0a84d225",
+    "KYMR": "170c32a81cbac4cf30a426f094a2bf9d15f31939c31eb8fe5237a36d0ee7d116",
+    "HSIC": "6d79a973a6c6a6343968e3fa14965e6ae711a42894a8e3ef622a3bc7adc0aa96"
+  }
+}

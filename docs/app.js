@@ -180,7 +180,7 @@
   const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap', equity: 'beyond the configured equity', no_shares: 'no whole share', no_new_longs: 'no new longs' };
   const CUT_TONE = { withheld: 'warn', slot_cap: 'neutral', equity: 'neutral', no_shares: 'neutral', no_new_longs: 'neutral' };
   const REGIME_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
-  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'stop past the line at the limit', position_capped: 'position capped', biotech: 'biotech', foreign: 'foreign', dollar_breakout: '$ breakout', refused: 'ticket withheld', risk_halved: 'risk halved', extended: 'extended' };
+  const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'stop past the line at the limit', position_capped: 'position capped', biotech: 'healthcare category flag', foreign: 'domicile category flag', dollar_breakout: '$ breakout', refused: 'ticket withheld', risk_halved: 'risk halved', extended: 'extended' };
   // The checklist's own keys (src/quality.py): 2 L Y N C H, then RE and VOL.
   const CRITERIA_SHORT = {
     two_days: 'up days', linearity: 'linear', young_trend: 'young', narrow_or_negative: 'quiet',
@@ -2278,7 +2278,6 @@
     const vr = burst ? volumeRatio(b) : null;
     const trig = burst ? plan.entry_ref : plan.trigger, lim = burst ? plan.entry_high : plan.limit;
     const why = burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c);
-    const concern = firstText(burst ? readerRisk(cl) : '', plan.stop_risk_reason, plan.hazards, plan.notes);
     return {
       grade: c.grade ? c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : '') : null,
       provenance: burst ? (cl.source === 'claude' ? 'chart reader' + (cl.agree === false ? ', lowered the grade' : cl.agree === true ? ', agreed' : '') + (cl.chart_seen === false ? ' · numbers only, no chart' : '') : 'checklist alone') : 'measured, not graded',
@@ -2290,7 +2289,8 @@
       stop: isNum(plan.stop) ? stopWords(plan) : null,
       stopPct: isNum(plan.stop_pct) ? plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price || lim) + ' limit' : null,
       why: why || null,
-      concern: concern ? cap(sentence(concern)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : null),
+      concern: stockRisk(c),
+      screening: screeningWarnings(c, true).join(' ') || null,
       ticket: c.status === 'ticket'
         ? (av && !av.offered ? 'recorded for ' + dateWords(av.timing.session) + ', ' + av.lead + ' — ' + (text(plan.order_line) || 'a ticket in the record')
           : (text(plan.order_line) || 'a ticket in the record'))
@@ -2305,7 +2305,7 @@
       ['volume', burst ? 'volume vs previous session' : 'volume: recent ' + plain(((current.rules || {}).watchlist || {}).vol_dry_recent_sessions) + '-session average / ' + plain(((current.rules || {}).watchlist || {}).vol_dry_base_sessions) + '-session average'],
       ['base', burst ? 'base' : 'box'],
       ['trigger', 'trigger (buy stop)'], ['limit', 'ticket limit'], ['stop', 'stop'], ['stopPct', 'published stop distance'],
-      ['why', 'main qualifying reason'], ['concern', 'principal concern'], ['ticket', 'ticket']
+      ['why', 'main qualifying reason'], ['concern', 'stock-specific risk'], ['screening', 'screening warnings'], ['ticket', 'ticket']
     ].filter((r) => fa[r[0]] !== null || fb[r[0]] !== null);
     const table = el('table', { 'class': 'sc-table sc-table--compact ss-compare__table', id: 'compare-table' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'What the record says about ' + a.ticker + ' and ' + b.ticker + '. A marked row is one where the two differ; it does not say which is better.' }));
@@ -3444,6 +3444,34 @@
   function readerRisk(cl) {
     return cl && cl.source === 'claude' && text(cl.key_risk) ? 'Unverified chart-reader commentary: ' + cl.key_risk : '';
   }
+  // Flags are recorded screening warnings, never a substitute for an absent
+  // stock-specific assessment. The publication does not carry each candidate's
+  // directory row: explain the broad flag's scope without guessing its basis
+  // from a ticker/name or borrowing a newer directory snapshot.
+  function screeningWarnings(c, compact) {
+    const warnings = [];
+    if (c.flags.includes('biotech')) warnings.push(compact
+      ? 'Broad healthcare flag; exact basis unavailable. It does not establish a biotechnology company or biotechnology-specific event risk.'
+      : 'Broad healthcare screening warning. This flag can come from the Health Care sector or biotech, pharma or medicinal industry text; exact basis unavailable in this publication. It does not establish a biotechnology company classification or an assessed biotechnology-specific event risk.');
+    if (c.flags.includes('foreign')) warnings.push(compact
+      ? 'Domicile flag; exact basis unavailable. It does not establish a foreign domicile or stock-specific risk.'
+      : 'Domicile screening warning. This flag can mean a non-US or unstated directory country; exact basis unavailable in this publication. It does not establish a foreign domicile or a stock-specific risk assessment.');
+    return warnings;
+  }
+  function stockRisk(c) {
+    const plan = c.plan || {}, reader = c.stage === 'bursts' ? readerRisk(c.row.claude) : '';
+    if (reader) return cap(sentence(reader));
+    const risk = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
+    return risk ? 'Plan-derived risk: ' + cap(sentence(risk))
+      : 'Stock-specific risk unavailable: no accepted reader or plan risk was recorded for this publication.';
+  }
+  function riskSummary(c) {
+    const plan = c.plan || {};
+    return [stockRisk(c),
+      !(c.stage === 'bursts' && readerRisk(c.row.claude)) && !firstText(plan.stop_risk_reason, plan.hazards, plan.notes)
+        ? 'This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.' : '',
+      c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
+  }
   function discoveryReason(b) {
     const rec = b.discovery || {}, m = rec.measurements || {}, rules = rec.applicable_rules || {};
     if (rec.version !== 1 || !Array.isArray(rec.admitted_by)) return 'Discovery: ' + (b.scan ? words(b.scan) + ' scan' : 'route not recorded') + '. The detailed admission record is unavailable; the grade and ticket are separate.';
@@ -3469,9 +3497,7 @@
     const wait = c.plan
       ? [text(plan.pre_open_check) ? cap(sentence(plan.pre_open_check)) : '', isNum(plan.stop) ? 'Stop ' + stopWords(plan) + (plan.stop_basis !== 'max_stop' && isNum(plan.stop_pct) && isNum(plan.sizing_price) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.sizing_price) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
-    const riskText = firstText(readerRisk(cl), plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'No separate stock-risk narrative was recorded. This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.'),
-      c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
+    const risk = riskSummary(c);
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function coilDecision(c) {
@@ -3485,15 +3511,17 @@
     const wait = c.plan
       ? [text(plan.gap_rule) ? cap(sentence(plan.gap_rule)) : '', isNum(plan.stop) ? 'Stop ' + usd(plan.stop) + (text(plan.stop_basis) ? ' · ' + plan.stop_basis : '') + (isNum(plan.stop_pct) && isNum(plan.limit) ? ' · ' + plain(plan.stop_pct) + '% under the ' + usd(plan.limit) + ' limit' : '') + '.' : '']
       : [cap(sentence(c.reason))];
-    const riskText = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
-    const risk = [riskText ? cap(sentence(riskText)) : (c.flags.length ? cap(c.flags.map((f) => FLAG_WORDS[f] || words(f)).join(', ')) + '.' : 'No separate stock-risk narrative was recorded. This does not mean no risk; inspect non-passing criteria and entry restrictions. Model prices omit slippage.'),
-      c.series.length ? '' : (c.stage === 'bursts' && SCStock.sourceReference(c.row, current) ? 'Browser chart not loaded. Use Load recorded chart to inspect the retained source evidence.' : 'No bars are archived for this name, so there is no chart to read.')];
+    const risk = riskSummary(c);
     return [['why', 'Why this stock?', why], ['need', 'What would need to happen?', need], ['wait', 'What invalidates it, or makes me wait?', wait], ['risk', 'Principal risk or limitation', risk]];
   }
   function decisionSummary(c) {
     const items = c.stage === 'bursts' ? burstDecision(c) : coilDecision(c);
     const section = el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
       el('div', { 'class': 'ss-decision__item', 'data-item': it[0] }, [el('h3', { 'class': 'sc-eyebrow', text: it[1] })].concat(it[2].filter(Boolean).map((p) => el('p', { text: p }))))));
+    const warnings = screeningWarnings(c);
+    if (warnings.length) section.querySelector('[data-item="risk"]').appendChild(el('div', { 'class': 'ss-screening-warnings' }, [
+      el('h4', { 'class': 'sc-eyebrow', text: 'Recorded screening warnings' })
+    ].concat(warnings.map(p => el('p', { text: p })))));
     section.querySelector('[data-item="why"]').appendChild(el('p', { id: 'candidate-guide', 'class': 'ss-reading-order' }, [
       d.createTextNode('Being listed or A-graded does not mean a ticket is available. '), help('discovery', 'Why listed?'), help('grade', 'Grade') ]));
     return section;
@@ -3778,6 +3806,10 @@
       ? 'Evidence recorded · ' + dateWords(ev.session) + ' · ' + barBasis(run) + '. ' + (ev.gate.ticket ? 'A conditional ticket was published.' : 'No ticket: ' + String(ev.gate.reason || 'withheld').replace(/_/g, ' ') + '.')
       : run.evidence ? 'No decision receipt: this row is research only.' : 'Legacy evidence: a complete decision chain was not recorded.' }));
     if (ev) kids.push(el('details', null, [el('summary', { text: 'Technical evidence reference' }), el('p', { 'class': 'sc-hint ss-evidence-id', text: 'Schema ' + ev.version + ' · ' + ev.id })]));
+    if (c.flags.length) kids.push(el('div', { 'data-recorded-flags': '' }, [
+      el('p', null, [el('strong', { text: 'Recorded flags (raw): ' }), c.flags.join(', ')]),
+      el('p', { 'class': 'sc-hint', text: 'Original publication/plan flags, preserved as recorded. Screening flags are not stock-specific risk assessments.' })
+    ]));
     if (c.stage === 'bursts') {
       if (cl && cl.source === 'claude') {
         kids.push(el('div', { 'class': 'sc-insight' }, [

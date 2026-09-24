@@ -24,6 +24,7 @@ import { checkExplorePanes } from './explore_pane_cases.mjs';
 import { checkFollowedPlan } from './followed_plan_cases.mjs';
 import { checkScorecard } from './scorecard_cases.mjs';
 import { checkWalkthrough } from './walkthrough_cases.mjs';
+import { checkRiskAttribution } from './risk_attribution_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -3677,6 +3678,7 @@ async function main() {
     if (runs('states')) await checkStates(browser, base, full);
     if (runs('grading')) await checkGradingHistory(browser, base);
     if (runs('reader')) await checkReaderCommentary(browser, base);
+    if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
     if (runs('inputs')) await checkInputCoverage(browser, base);
   } finally {
     await browser.close();

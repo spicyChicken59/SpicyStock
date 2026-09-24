@@ -189,7 +189,15 @@ does not carry, falls back to Explore and says so.
    candle; a name without archived bars says *Chart unavailable* and keeps
    its conditions. Four answers, each from the record's own sentences:
    *why this stock?*, *what would need to happen?*, *what invalidates it,
-   or makes me wait?*, *principal risk or limitation*. Anticipation keeps its
+   or makes me wait?*, *principal risk or limitation*. Risk uses accepted reader
+   commentary (still explicitly unverified), then plan-derived risk, otherwise
+   an explicit unavailable assessment. Recorded screening warnings are separate
+   in both detail and comparison; they never fill an absent risk assessment.
+   The broad `biotech` flag covers Health Care sector rows as well as matching
+   industry text, and does not establish a biotechnology company or event risk.
+   `foreign` also includes unstated country. The publication does not carry the
+   precise per-stock directory basis, so that limit is stated; raw flags remain
+   inspectable in provenance. Anticipation keeps its
    existing action area below those answers. The Burst action summary uses
    the shared `.sc-actionbar` with a compact four-field grid (two columns on
    a phone); browse cards keep their compact form. Four disclosures follow:
@@ -411,7 +419,9 @@ session. The run:
   [retained-directory correction](docs/input-truthfulness/2026-09-22-blank-check-classification.md)
   documents every newly excluded name; it does not explain absent provider bars
   or revise the September 18/21 publications. Directory price and volume
-  never gate discovery. Biotech and foreign domicile remain flags. The
+  never gate discovery. Broad healthcare/category and domicile warnings remain
+  flags (`biotech` / `foreign`), not verified company classifications or
+  stock-specific risk assessments. The
   seven-day cache and 228-name seed fallback remain explicit. Seeds can bypass
   classification; overrides and additions are counted. The 8,000-name capacity
   safeguard retains seeds, ranks any remaining tail by directory dollar volume,
