@@ -49,8 +49,10 @@ ticket; the final pass always applies the reader requirement. Anticipation
 watchlists retain their existing measured, ungraded contract.
 
 The website distinguishes accepted review, fallback, budget exclusions and
-unknown legacy coverage in cards, detail, comparison, provenance and saved
-limitations. Missing coverage is neutral and explicitly not a measured setup
+unknown legacy coverage in detail, comparison, provenance and saved limitations.
+Cards flag missing coverage; accepted review is named in detail without adding
+a redundant card row that pushes the first stock below the desktop viewport.
+Missing coverage is neutral and explicitly not a measured setup
 failure. Mechanical and reviewed final grades are named separately. The
 prospective no-ticket cover and next action explain missing review rather than
 claiming that mechanical A candidates failed quality. No new UI workflow or

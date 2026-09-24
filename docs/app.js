@@ -1499,7 +1499,7 @@
       el('span', { 'class': 'ss-pick__row' }, [
         el('span', { 'class': 'ss-pick__ticker sc-case', text: c.ticker }),
         c.grade ? chip(c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : ''), 'brand', true) : null,
-        c.stage === 'bursts' ? readerChip(c.row) : null,
+        c.stage === 'bursts' && readerCoverage(c.row).state !== 'accepted' ? readerChip(c.row) : null,
         chip(sw[0], sw[1])
       ]),
       el('span', { 'class': 'ss-pick__reason', text: pickReason(c) }),
