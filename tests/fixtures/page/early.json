@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "9c917b84c825"
+  "rules_version": "726ce012f7a1"
  },
  "cover": {
   "h1": "Trade next session. 1 A-quality burst.",
@@ -709,7 +709,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50"
+   "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a"
   },
   "sanitised": {
    "replaced": 0,
@@ -1026,6 +1026,7 @@
    "yellow_grades": [
     "A+"
    ],
+   "reader_policy": "accepted_required_v1",
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1879,8 +1880,8 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "bee7657fd4f9b14448d8ed920b3da676b8cef0fced4fa3ddd3e747048f9d815f",
-     "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+     "id": "74cf81f93dad584e993e36c3f84750262e34801de54001036ff6d62898858f74",
+     "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
      "plan_sha256": "4282191d82332377f91420af914315320c7d41e604329ddf944adde58a1e19af",
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
     }
@@ -1924,6 +1925,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 1,
    "evidence": {
     "source": {
@@ -1969,6 +1971,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "d86a4a7a7fb8dcfdf7c2ae0758e394f7ffcf189e547ea5c7d15d7ca72d2eaf98",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -1976,9 +1979,10 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "A+",
      "allowed_grades": [
@@ -1989,7 +1993,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "bee7657fd4f9b14448d8ed920b3da676b8cef0fced4fa3ddd3e747048f9d815f"
+    "id": "74cf81f93dad584e993e36c3f84750262e34801de54001036ff6d62898858f74"
    },
    "series": [
     {
@@ -3421,8 +3425,8 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "e23f9744081f595580bbaf5f9993064c54d85fa32aaf282da0d0d448fba6a783",
-     "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+     "id": "2b79b4db274f7bdc57b53d99888eaa5ed0f9458a86999aefae5914a5afac77fb",
+     "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
      "plan_sha256": "bbc98ec48ce75a14da63b6c012e6ef4cd0b0488308f80d1fef519837e768327b",
      "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
     }
@@ -3466,6 +3470,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 2,
    "evidence": {
     "source": {
@@ -3511,6 +3516,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "438e8a9f68a780826fa00f619476783abaa6467b1b5d38234a099a1b2cee1057",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -3518,9 +3524,10 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "A+",
      "allowed_grades": [
@@ -3531,7 +3538,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "e23f9744081f595580bbaf5f9993064c54d85fa32aaf282da0d0d448fba6a783"
+    "id": "2b79b4db274f7bdc57b53d99888eaa5ed0f9458a86999aefae5914a5afac77fb"
    },
    "series": [
     {
@@ -4932,8 +4939,8 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "7798315e1bed7df95142079a5582999af659a25663773e22346c71d1672b4c8c",
-     "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+     "id": "4beb2bf1ac17bc373cb66920f7e5af9e5bf13a9ae755b549f639dd9782c85fe8",
+     "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
      "plan_sha256": "0020910720711d10a8f02d00e0e350ecc58c538f01a125c273c71d5604a0c137",
      "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
     }
@@ -4977,6 +4984,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 3,
    "evidence": {
     "source": {
@@ -5022,6 +5030,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "cb503b1bdbae0a5253475cc3cda883fb713e97d37435d0c55081591b8277198f",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -5029,9 +5038,10 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "A+",
      "allowed_grades": [
@@ -5042,7 +5052,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "7798315e1bed7df95142079a5582999af659a25663773e22346c71d1672b4c8c"
+    "id": "4beb2bf1ac17bc373cb66920f7e5af9e5bf13a9ae755b549f639dd9782c85fe8"
    },
    "series": [
     {
@@ -6462,8 +6472,8 @@
     ],
     "evidence_ref": {
      "version": 1,
-     "id": "2cf9eef178133708f369f952f0a9127dbfe28cff9c837a618123d8a3c14419b8",
-     "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+     "id": "a321d2954fc6ec1531e4cc5bddf4b6e9aef0dec04a33ed42ecdcabe5966cab2a",
+     "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
      "plan_sha256": "9192db9138653e4f17f4627722ac9569c0417fd966e2254b9ac3deec57e45cc7",
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
     }
@@ -6507,6 +6517,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 4,
    "evidence": {
     "source": {
@@ -6552,6 +6563,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "3647d98b1ec4c060d6bc0db0b0913f1d2c04c330e58ce104980ef4cb15c1477b",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -6559,9 +6571,10 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "A+",
      "allowed_grades": [
@@ -6572,7 +6585,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "2cf9eef178133708f369f952f0a9127dbfe28cff9c837a618123d8a3c14419b8"
+    "id": "a321d2954fc6ec1531e4cc5bddf4b6e9aef0dec04a33ed42ecdcabe5966cab2a"
    },
    "series": [
     {
@@ -7806,6 +7819,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 5,
    "evidence": {
     "source": {
@@ -7834,6 +7848,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "4279039d62f5fc7f7530b2172fe490ee7b3a7fb6e13b3126eac0c76b1a95352c",
     "reader_source": "claude",
     "final_grade": "C",
@@ -7841,9 +7856,10 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "C",
      "allowed_grades": [
@@ -7854,7 +7870,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "350b5c1e93d719aa9f779367ac0bf73a428b31f74f9677d60c04bdcc3e72132d"
+    "id": "cc0d669a8be8d2584688b8932226ea73ef5d5e4b619fd39b07521de0defe7f69"
    },
    "series": [
     {
@@ -9088,6 +9104,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 6,
    "evidence": {
     "source": {
@@ -9116,6 +9133,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "b5d51230350fcffc8f8f1fce40c1b18d2b533afcb04b47c02484d67e7daefc69",
     "reader_source": "claude",
     "final_grade": "C",
@@ -9123,9 +9141,10 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2024-11-27",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "green",
      "final_grade": "C",
      "allowed_grades": [
@@ -9136,7 +9155,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "45c0cd939419d43ab234b72729d861f49d072a32e16978830686fd1a2380c622"
+    "id": "3b99b690b3829d66669e5d21eff48583923dd8bd613c4538aa883f2e2eae6cbf"
    },
    "series": [
     {
@@ -10425,8 +10444,8 @@
      ],
      "evidence_ref": {
       "version": 1,
-      "id": "5a59b4ce25ef1dbfe6daecacd419b2bad096d6bc6df8e49c55a823c64e300a14",
-      "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+      "id": "8231dbc5f138900c5455ab1eb8a8d960f819701bf2ec277535ea2b455426e71e",
+      "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
       "plan_sha256": "b9f6ccfe4a573b40655107027c44a9244b0093c76822fd11d46308f7c66748d5",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -11434,8 +11453,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2024-11-27",
-     "rules_version": "9c917b84c825",
-     "context_sha256": "b8f22f7189812e9ae966bf31c887d730f1653e1c47a21fd0a9aeddf3100b1f50",
+     "rules_version": "726ce012f7a1",
+     "context_sha256": "79fcb2a7af60f08274cd86c5d4b3c6ab076bdc306acf7b35ad1f98e7dabc1a7a",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -11444,7 +11463,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "5a59b4ce25ef1dbfe6daecacd419b2bad096d6bc6df8e49c55a823c64e300a14"
+     "id": "8231dbc5f138900c5455ab1eb8a8d960f819701bf2ec277535ea2b455426e71e"
     }
    }
   ],
@@ -11693,7 +11712,7 @@
    "expected_session": "2024-11-27",
    "evaluated_session": "2024-11-27"
   },
-  "replay_rules_version": "9c917b84c825"
+  "replay_rules_version": "726ce012f7a1"
  },
  "observations": {
   "as_of": "2024-11-27",
@@ -11911,53 +11930,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2024-11-27:9c917b84c825": {
+   "burst:AAPL:2024-11-27:726ce012f7a1": {
     "ticker": "AAPL",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:AMD:2024-11-27:9c917b84c825": {
+   "burst:AMD:2024-11-27:726ce012f7a1": {
     "ticker": "AMD",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:NVDA:2024-11-27:9c917b84c825": {
+   "burst:NVDA:2024-11-27:726ce012f7a1": {
     "ticker": "NVDA",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:TSLA:2024-11-27:9c917b84c825": {
+   "burst:TSLA:2024-11-27:726ce012f7a1": {
     "ticker": "TSLA",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:PLUG:2024-11-27:9c917b84c825": {
+   "burst:PLUG:2024-11-27:726ce012f7a1": {
     "ticker": "PLUG",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:DLLR:2024-11-27:9c917b84c825": {
+   "burst:DLLR:2024-11-27:726ce012f7a1": {
     "ticker": "DLLR",
     "session": "2024-11-27",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "anticipation:COIL:2024-11-27:9c917b84c825": {
+   "anticipation:COIL:2024-11-27:726ce012f7a1": {
     "ticker": "COIL",
     "session": "2024-11-27",
     "kind": "anticipation",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    }
   },
@@ -11974,7 +11993,7 @@
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
-  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
   "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",

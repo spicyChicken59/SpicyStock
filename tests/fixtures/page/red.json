@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "9c917b84c825"
+  "rules_version": "726ce012f7a1"
  },
  "cover": {
   "h1": "Stand aside.",
@@ -730,7 +730,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed"
+   "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe"
   },
   "sanitised": {
    "replaced": 0,
@@ -1047,6 +1047,7 @@
    "yellow_grades": [
     "A+"
    ],
+   "reader_policy": "accepted_required_v1",
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1684,6 +1685,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 1,
    "evidence": {
     "source": {
@@ -1712,6 +1714,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "d86a4a7a7fb8dcfdf7c2ae0758e394f7ffcf189e547ea5c7d15d7ca72d2eaf98",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -1719,9 +1722,10 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "A+",
      "allowed_grades": [],
@@ -1729,7 +1733,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "6517286ecb4cf7381fe6d9a6f0f4b7b5b9b11f6235524a7b904be11784a9808e"
+    "id": "b82a62741deb69186440c8889544fea815e9d6722cdb02734b5ab13030ee461e"
    },
    "series": [
     {
@@ -2950,6 +2954,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 2,
    "evidence": {
     "source": {
@@ -2978,6 +2983,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "438e8a9f68a780826fa00f619476783abaa6467b1b5d38234a099a1b2cee1057",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -2985,9 +2991,10 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "A+",
      "allowed_grades": [],
@@ -2995,7 +3002,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "70078fc6718206fa1a2c2390f60ced83f8fc3a3810a477788191313a92e8939f"
+    "id": "ebee1ba8411950f00aacc7a2d34eba063c93bb3eb09abc657595a3de9d5b9c4d"
    },
    "series": [
     {
@@ -4184,6 +4191,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 3,
    "evidence": {
     "source": {
@@ -4212,6 +4220,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "cb503b1bdbae0a5253475cc3cda883fb713e97d37435d0c55081591b8277198f",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -4219,9 +4228,10 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "A+",
      "allowed_grades": [],
@@ -4229,7 +4239,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "84e44c6101f7e3e211e6500d3335ab936bf9cd17d80b1647aa0b1981c0b9d2c4"
+    "id": "ce0b7c4333c020820daa48f37b866c28df99cd5f755e3aa37c382d1fcde27762"
    },
    "series": [
     {
@@ -5458,6 +5468,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 4,
    "evidence": {
     "source": {
@@ -5486,6 +5497,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "3647d98b1ec4c060d6bc0db0b0913f1d2c04c330e58ce104980ef4cb15c1477b",
     "reader_source": "claude",
     "final_grade": "A+",
@@ -5493,9 +5505,10 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "A+",
      "allowed_grades": [],
@@ -5503,7 +5516,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "315476e584132e6258abee94c139f5d18f58873f4757a5cc897d0df8f547a6fe"
+    "id": "939cff4d8da6003eba59bdeff68fc1339c6b92ed0a0c85c3aebaeb3090f5540f"
    },
    "series": [
     {
@@ -6737,6 +6750,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 5,
    "evidence": {
     "source": {
@@ -6765,6 +6779,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "4279039d62f5fc7f7530b2172fe490ee7b3a7fb6e13b3126eac0c76b1a95352c",
     "reader_source": "claude",
     "final_grade": "C",
@@ -6772,9 +6787,10 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "C",
      "allowed_grades": [],
@@ -6782,7 +6798,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "3de6079eaca90c5d87550b0fe4e74a9451461b7dc4c105b2efc2018a7ed08357"
+    "id": "f20ca1a3b445dba1e16d81dabf4fca67641f80e55910600482eca6db469c9cd9"
    },
    "series": [
     {
@@ -8016,6 +8032,7 @@
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
    },
+   "reader_coverage": "accepted",
    "rank": 6,
    "evidence": {
     "source": {
@@ -8044,6 +8061,7 @@
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
      "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f"
     },
+    "reader_coverage": "accepted",
     "reader_sha256": "b5d51230350fcffc8f8f1fce40c1b18d2b533afcb04b47c02484d67e7daefc69",
     "reader_source": "claude",
     "final_grade": "C",
@@ -8051,9 +8069,10 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "9c917b84c825",
-    "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+    "rules_version": "726ce012f7a1",
+    "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
     "gate": {
+     "reader_coverage": "accepted",
      "regime": "red",
      "final_grade": "C",
      "allowed_grades": [],
@@ -8061,7 +8080,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "3f64cd21339792a12a7a976058d2b9f47fc9d16a6afd7b37efc052f9b3262798"
+    "id": "8b294f5574c532afb404c76d305244320e6e9d2fb1a9e1af79a7574d9c8494f4"
    },
    "series": [
     {
@@ -9289,8 +9308,8 @@
      ],
      "evidence_ref": {
       "version": 1,
-      "id": "1075f05ae56bcfb58af28c4bcec30f0a6ff06e2d833e5bf4a95f2a38d6f87f6a",
-      "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+      "id": "f25b111071bc9d696272c0a7769aea462edfb8bcac8cc10512e6842c1b8fda66",
+      "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
       "plan_sha256": "cee75ad67e54fc9ce96b64c9f16be510795c3ecdb906f840d460d0c85ec0a89d",
       "pick_sha256": "54966b85e25b3ea1e78f42fd652783d9efd61f338c6ad3b6fe9a7efa63f2a57f"
      }
@@ -10298,8 +10317,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "9c917b84c825",
-     "context_sha256": "f6721950f0151e46e441236de3070d0944b02239b2086b5ed36222905178afed",
+     "rules_version": "726ce012f7a1",
+     "context_sha256": "562f01cc5e7ce79dfa662f2c5f7211078367816d926bffa99a0e3b10980b7abe",
      "gate": {
       "regime": "red",
       "final_grade": "watch",
@@ -10308,7 +10327,7 @@
       "reason": "regime_gate",
       "detail": null
      },
-     "id": "1075f05ae56bcfb58af28c4bcec30f0a6ff06e2d833e5bf4a95f2a38d6f87f6a"
+     "id": "f25b111071bc9d696272c0a7769aea462edfb8bcac8cc10512e6842c1b8fda66"
     }
    }
   ],
@@ -10557,7 +10576,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "9c917b84c825"
+  "replay_rules_version": "726ce012f7a1"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -10775,53 +10794,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:9c917b84c825": {
+   "burst:AAPL:2026-09-10:726ce012f7a1": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:9c917b84c825": {
+   "burst:AMD:2026-09-10:726ce012f7a1": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:9c917b84c825": {
+   "burst:NVDA:2026-09-10:726ce012f7a1": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:9c917b84c825": {
+   "burst:TSLA:2026-09-10:726ce012f7a1": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:9c917b84c825": {
+   "burst:PLUG:2026-09-10:726ce012f7a1": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:9c917b84c825": {
+   "burst:DLLR:2026-09-10:726ce012f7a1": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:9c917b84c825": {
+   "anticipation:COIL:2026-09-10:726ce012f7a1": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "9c917b84c825",
+    "rules_version": "726ce012f7a1",
     "coverage": "observed"
    }
   },
@@ -10838,7 +10857,7 @@
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
-  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
   "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",

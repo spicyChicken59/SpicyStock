@@ -140,7 +140,7 @@ try{
  check(jrsh.grade_mechanical==='A'&&jrsh.grade==='C'&&threshold.includes('giveback <= 0.25'),'retained JRSH has the real A-to-C result and A+ criterion');
  check(jrsh.claude.reason.includes('The base giveback of 0.34 is right at the A+ ceiling'),'retained response includes the real threshold-prose mismatch');
  check(!rt('#detail [data-item="why"]').includes(jrsh.claude.reason),'raw JRSH rationale is not the primary verified explanation');
- check(rt('#detail [data-item="why"]').includes('checklist A; published C'),'primary explanation reports the recorded grade outcome');
+ check(rt('#detail [data-item="why"]').includes('Mechanical grade A; reader-reviewed final grade C'),'primary explanation reports the recorded grade outcome');
  const prov=rw.document.querySelector('#disc-provenance');
  check(authority(prov.textContent),'original commentary is explicitly subordinate to recorded criteria');
  check(prov.textContent.indexOf('commentary is unverified')<prov.textContent.indexOf(jrsh.claude.reason),'authority notice precedes the raw explanation');
@@ -164,7 +164,7 @@ try{
    const tab=await open(data);await route(tab.w,'#/explore/bursts/AAPL');
    const b=data.bursts.find(b=>b.ticker==='AAPL'),detail=tab.w.document.querySelector('#detail');
    if(b.claude.source==='claude'){
-     check(detail.querySelector('[data-item="why"]').textContent.includes('checklist '+b.grade_mechanical+'; published '+b.grade),'valid '+variant+' control preserves recorded grade outcome');
+     check(detail.querySelector('[data-item="why"]').textContent.includes('Mechanical grade '+b.grade_mechanical+'; reader-reviewed final grade '+b.grade),'valid '+variant+' control preserves recorded grade outcome');
      check(!detail.querySelector('[data-item="why"]').textContent.includes(b.claude.reason),'valid '+variant+' control uses the same authority boundary');
      check(authority(detail.querySelector('#disc-provenance').textContent)&&detail.querySelector('#disc-provenance').textContent.includes(b.claude.reason),'valid '+variant+' commentary stays available unchanged');
    }else check(detail.querySelector('#disc-provenance').textContent.includes('checklist alone')&&!authority(detail.querySelector('#disc-provenance').textContent),'unavailable reader control does not invent a commentary');

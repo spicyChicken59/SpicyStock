@@ -245,7 +245,7 @@ def test_the_budget_line_does_not_re_report_the_stop_rules_own_refusal():
     assert study.BUDGET_CUT_KINDS == ("slot_cap", "equity")
     assert set(study.BUDGET_CUT_KINDS) < set(plan.CUT_KINDS)
     assert "withheld" not in study.BUDGET_CUT_KINDS
-    data = json.loads((FIXTURES / "degraded.json").read_text())
+    data = json.loads((FIXTURES / "full.json").read_text())
     kinds = [c["kind"] for c in data["cash_budget"]["cut"]]
     assert "withheld" in kinds and "slot_cap" in kinds, kinds
     x = study.study(data)["exclusions"]
@@ -383,9 +383,9 @@ def test_a_row_without_a_readable_bar_is_counted_as_a_missing_input():
 def test_the_production_column_is_the_production_path_not_a_second_reading():
     """Every plan a record already carries is reproduced exactly, so the
     comparison's 'today' column is the run's own answer."""
-    data = json.loads((FIXTURES / "degraded.json").read_text())
+    data = json.loads((FIXTURES / "full.json").read_text())
     carried = [b for b in data["bursts"] if b.get("plan")]
-    assert carried, "the degraded fixture should carry plans"
+    assert carried, "the accepted-reader fixture should carry plans"
     assert study.verify(data) == []
 
 

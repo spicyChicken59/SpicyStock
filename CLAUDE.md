@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1466 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1513 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3009,3 +3009,40 @@ provider/model call, workflow dispatch, schedule, secret, publication, email,
 brokerage action or sibling change. Next action: Guidance independently reviews
 the focused PR and its final-head evidence. Astra stops without merging or
 starting another milestone.
+
+## Checkpoint, 24 Sep 2026 — reader coverage and burst actionability
+
+Starting main: `456edb836cc42c908c50330b723dbfd97be5d506` (Guidance #89),
+re-resolved with zero open PRs before branch `fix/reader-coverage-actionability`.
+The selected effort setting was preserved. Astra implements and submits one
+unmerged PR; Guidance independently reviews and owns the clean merge.
+
+The full September 23 publication is pinned byte-for-byte in the retained
+regression fixture. On untouched base, synthetic GREEN gives all six budget
+exclusions eligible plans; VEEV fallback also gets a plan. VEEV/NDSN/OPY/RRR
+become tickets and STE/TTE/WLY hit the slot cap. The final portable regression
+produces two intended failures and four passing controls before the correction.
+
+New final burst planning requires an accepted reader result as well as existing
+grade/veto/regime/price/sizing/budget gates. Explicit reader coverage is sealed
+in the candidate receipt and archived with a prospective policy identifier.
+Fallback and budget exclusions keep mechanical grades for research. A private
+preview preserves the stops supplied in reader charts, and receipt verification
+independently rejects publishing such a preview without accepted coverage.
+GREEN A+/A, YELLOW A+ only and RED none remain unchanged. Existing anticipation
+watchlists keep their measured, ungraded policy. Historical decisions are not
+recomputed. The website names missing review without calling it setup failure.
+
+47 coverage regressions accompany the normal Python suite (1,513 collected),
+regenerated synthetic fixtures, full page/continuity/chart gates and inspected
+phone/desktop renders. Final-head local/CI results belong in the PR. All 6,797
+protected base files are byte-identical. Original-code replay passes September
+22 (513 assessments, 518 receipts) and September 23 (282, 287). The 46 synthetic
+candidate input/checklist/grade/reader projections are unchanged; only four
+fallback plans disappear from the synthetic degraded fixture.
+
+See `docs/input-truthfulness/2026-09-24-reader-coverage.md` for the policy table,
+reproduction and SHA-256 values. README and `.env.example` reviewed; no setting
+change. No new provider/model/production call, dispatch, rerun, publication,
+email, threshold/breadth/universe/account/history change or sibling modification.
+Stop at one reviewable PR without merging or beginning reader-quality tuning.

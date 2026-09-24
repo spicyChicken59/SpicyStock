@@ -20,7 +20,7 @@ import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
-from src import universe
+from src import universe, reader_coverage
 from src import watchlist
 
 log = logging.getLogger("spicystock.pipeline")
@@ -59,6 +59,7 @@ RULES = {
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
     "pipeline.yellow_grades": list(YELLOW_GRADES),
+    "pipeline.reader_policy": reader_coverage.POLICY,
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
     "pipeline.observation_days": OBSERVATION_DAYS,
@@ -430,12 +431,14 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
     usage: dict = {}
     rows = grader.grade_all(candidates, system_prompt, MAX_READS, usage) if candidates else []
     by_ticker = {r["ticker"]: r for r in rows}
+    selected = {c["ticker"] for c in candidates}
     done = unavailable = 0
     for b in bursts:
         r = by_ticker.get(b["ticker"])
         if r is None:
             b["claude"] = None
             b["grade"] = b["grade_mechanical"]
+            b["reader_coverage"] = reader_coverage.state(b, selected=b["ticker"] in selected)
             provenance.seal_reader(b)
             continue
         prov = r.get("provenance", {})
@@ -461,6 +464,7 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         b["claude"]["attempts"] = prov.get("attempts", [])
         b["claude"]["attempted_model"] = prov.get("attempted_model")
         b["claude"]["discovery_version"] = discovery.VERSION
+        b["reader_coverage"] = reader_coverage.state(b, selected=True)
         provenance.seal_reader(b)
     if candidates and done == 0:
         rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names")
@@ -475,7 +479,17 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
 # ------------------------------------------------------------------ plans ---
 def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: plan.Account,
                regime: dict, open_count: int, session: date | None = None) -> tuple[list[str], list[str], dict]:
-    """A plan for every A-grade burst the regime admits; the trades list in
+    """Only accepted reader-reviewed bursts may enter final planning.
+
+    Mechanical grades survive missing coverage for research, not permission.
+    Fallback (rejected/unavailable) and unselected candidates both wait for an
+    accepted review; neither state says anything adverse about setup quality.
+    """
+    return _make_plans(bursts, account, regime, open_count, session, require_reader=True)
+
+
+def _make_plans(bursts, account, regime, open_count, session, *, require_reader):
+    """Construct plans after the applicable gates; the trades list in
     rank order (the plans with an order that fit the slots and the equity)
     and the cash budget over them, with every cut plan named and its reason."""
     verdict = regime.get("verdict", "green")
@@ -486,6 +500,8 @@ def make_plans(bursts: list[dict], frames: dict[str, pd.DataFrame], account: pla
         b["plan"] = None
         provenance.seal_plan(b, None, regime, session)
         if b["grade"] not in admitted or b["vetoes"]:
+            continue
+        if require_reader and not reader_coverage.accepted(b):
             continue
         plan_inputs = dict(ticker=b["ticker"], close=b["close"], low=b["low"], high=b["high"],
                            open_=b["open"], prev_close=b["prev_close"], gain_pct=b["gain_pct"] or 0.0,
@@ -705,8 +721,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             log.warning("picks.json: %s", rec["problem"])
         open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
         held = slots_held(open_now)
-        # a first pass of plans sizes the stop the chart draws; the final plans come after Claude
-        make_plans(bursts, fresh, account, regime, held, session)
+        # Private preview only: preserve the stop/chart supplied to the reader.
+        # These plans are discarded by make_plans after grading; preview tickets
+        # and budgets are never recorded, published, or used as final permission.
+        _make_plans(bursts, account, regime, held, session, require_reader=False)
 
         rep.stage = "grade"
         charts_dir = docs / CHARTS_DIR_NAME

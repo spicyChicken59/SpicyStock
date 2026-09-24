@@ -164,7 +164,10 @@ def test_claude_down_grades_by_the_checklist_alone_and_degrades_the_run(market, 
     burst = data["bursts"][0]
     assert burst["grade"] == burst["quality"]["grade"] == "A+"
     assert burst["claude"]["source"] != "claude" and burst["claude"]["error"]
-    assert data["trades"] == ["AAA"]                      # the checklist's grade still trades
+    assert data["trades"] == []                         # grade survives; coverage grants no permission
+    assert burst["reader_coverage"] == "fallback" and burst["plan"] is None
+    assert burst["evidence"]["gate"]["reason"] == "reader_coverage"
+    assert all(p["ticker"] != "AAA" for p in json.loads((docs / record.PICKS_FILE).read_text())["picks"])
     assert data["run"]["reads"]["done"] == 0
 
 

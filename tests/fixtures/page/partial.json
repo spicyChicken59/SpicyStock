@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "9c917b84c825"
+  "rules_version": "726ce012f7a1"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -745,7 +745,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "1fe27f5cbde9d2e57e6cc2c5882fdb807be21959671721c16393abc95fbb1754"
+   "context_sha256": "53c560dfbf2fcb8160897c43a9dadd88d5701ed84fe8f31f3f4997b83c4b4578"
   },
   "sanitised": {
    "replaced": 0,
@@ -1062,6 +1062,7 @@
    "yellow_grades": [
     "A+"
    ],
+   "reader_policy": "accepted_required_v1",
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1614,7 +1615,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "9c917b84c825"
+  "replay_rules_version": "726ce012f7a1"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -1650,7 +1651,7 @@
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
-  "cover": "The night's verdict as sentences: h1 (one of six fixed forms), dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
+  "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
   "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
