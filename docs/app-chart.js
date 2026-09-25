@@ -912,7 +912,8 @@
   function buildTwin(SC, g, options) {
     var name = options.ticker || 'the series';
     var details = SC.el('details', { 'class': 'sc-details' }, SC.el('summary', { text: 'table view · last 10 sessions and levels' }));
-    var scroll = SC.el('div', { 'class': 'sc-table-scroll' });
+    var scroll = SC.el('div', { 'class': 'sc-table-scroll', tabindex: '0', role: 'region',
+      'aria-label': name + ': last 10 sessions and chart levels' });
     details.appendChild(scroll);
     var bars = SC.tableTwin(scroll, { details: false, caption: name + ': last 10 sessions, newest first',
       head: ['session', 'open', 'high', 'low', 'close', 'chg', 'volume'], rows: barRows(g) });
@@ -1065,6 +1066,9 @@
     host.appendChild(state.twin);
 
     host.addEventListener('keydown', function (e) {
+      /* Descendants own their native keys: table scrolling, disclosure and
+         any controls nested in the chart must not start chart inspection. */
+      if (e.target !== host) return;
       var g = state.g, key = e.key, start = state.index !== null ? state.index : (g.burst ? g.burst.index : g.n - 1);
       if (key === 'ArrowLeft') focus(state.index === null ? start : start - 1);
       else if (key === 'ArrowRight') focus(state.index === null ? start : start + 1);

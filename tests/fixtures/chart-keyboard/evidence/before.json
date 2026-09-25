@@ -1,0 +1,108 @@
+[
+  {
+    "revision": "6822dddd14d0a541083e7caaecca9c945b451af2",
+    "publicationSHA256": "97da76d4f0eae671a5168760b79852c2eb6c4539bef3a144df6ef6bfe20c93f4",
+    "browser": "141.0.7390.37",
+    "theme": "dark",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "route": "#/explore/bursts/NIC",
+    "session": "2026-09-24",
+    "focus": true,
+    "clientWidth": 344,
+    "scrollWidth": 474,
+    "scrollLeft": 0,
+    "volume": {
+      "left": 421.3125,
+      "right": 483.40625
+    },
+    "scroller": {
+      "left": 23,
+      "right": 367
+    },
+    "cross": "visible",
+    "tooltip": true,
+    "keys": [
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      }
+    ]
+  },
+  {
+    "revision": "6822dddd14d0a541083e7caaecca9c945b451af2",
+    "publicationSHA256": "97da76d4f0eae671a5168760b79852c2eb6c4539bef3a144df6ef6bfe20c93f4",
+    "browser": "141.0.7390.37",
+    "theme": "light",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "route": "#/explore/bursts/NIC",
+    "session": "2026-09-24",
+    "focus": true,
+    "clientWidth": 344,
+    "scrollWidth": 474,
+    "scrollLeft": 0,
+    "volume": {
+      "left": 421.3125,
+      "right": 483.40625
+    },
+    "scroller": {
+      "left": 23,
+      "right": 367
+    },
+    "cross": "visible",
+    "tooltip": true,
+    "keys": [
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      },
+      {
+        "key": "ArrowRight",
+        "prevented": true,
+        "target": "sc-table-scroll"
+      }
+    ]
+  }
+]

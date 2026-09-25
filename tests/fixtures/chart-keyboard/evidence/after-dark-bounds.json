@@ -1,0 +1,176 @@
+{
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "route": "#/explore/bursts/NIC",
+  "browser": "141.0.7390.37",
+  "initial": {
+    "left": 23,
+    "right": 367,
+    "clientWidth": 344,
+    "scrollWidth": 474,
+    "scrollLeft": 0,
+    "finalColumnVisible": false,
+    "cells": [
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      },
+      {
+        "left": 421.3125,
+        "right": 483.40625,
+        "visible": false
+      }
+    ]
+  },
+  "right": {
+    "left": 23,
+    "right": 367,
+    "clientWidth": 344,
+    "scrollWidth": 474,
+    "scrollLeft": 120,
+    "finalColumnVisible": true,
+    "cells": [
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      },
+      {
+        "left": 301.3125,
+        "right": 363.40625,
+        "visible": true
+      }
+    ]
+  },
+  "keys": [
+    {
+      "key": "ArrowRight",
+      "prevented": false
+    },
+    {
+      "key": "ArrowRight",
+      "prevented": false
+    },
+    {
+      "key": "ArrowRight",
+      "prevented": false
+    },
+    {
+      "key": "ArrowLeft",
+      "prevented": false
+    },
+    {
+      "key": "ArrowLeft",
+      "prevented": false
+    },
+    {
+      "key": "ArrowLeft",
+      "prevented": false
+    },
+    {
+      "key": "Home",
+      "prevented": false
+    },
+    {
+      "key": "End",
+      "prevented": false
+    },
+    {
+      "key": "Escape",
+      "prevented": false
+    }
+  ]
+}
