@@ -55,7 +55,7 @@
     {
       "name": "base",
       "exit": 1,
-      "result": "312/352 chart checks passed",
+      "result": "313/352 chart checks passed",
       "failedChecks": [
         "FAIL  dark-360-table: scroller has an explicit tab stop and meaningful region name",
         "FAIL  dark-360-table: Right Arrow reveals every cell in the final column",
@@ -84,7 +84,6 @@
         "FAIL  light-360-table: all table keys leave the tooltip and crosshair unchanged",
         "FAIL  light-360-table: disclosure keys do not activate or move chart inspection",
         "FAIL  light-360: descendant input Home retains caret behavior",
-        "FAIL  light-360: descendant input does not activate chart inspection",
         "FAIL  light-390-table: scroller has an explicit tab stop and meaningful region name",
         "FAIL  light-390-table: Right Arrow reveals every cell in the final column",
         "FAIL  light-390-table: table arrows leave chart inspection unchanged",
@@ -102,7 +101,7 @@
     {
       "name": "ownership",
       "exit": 1,
-      "result": "338/378 chart checks passed",
+      "result": "341/378 chart checks passed",
       "failedChecks": [
         "FAIL  dark-360-table: Right Arrow reveals every cell in the final column",
         "FAIL  dark-360-table: table arrows leave chart inspection unchanged",
@@ -110,7 +109,6 @@
         "FAIL  dark-360-table: all table keys leave the tooltip and crosshair unchanged",
         "FAIL  dark-360-table: disclosure keys do not activate or move chart inspection",
         "FAIL  dark-360: descendant input Home retains caret behavior",
-        "FAIL  dark-360: descendant input does not activate chart inspection",
         "FAIL  dark-390-table: Right Arrow reveals every cell in the final column",
         "FAIL  dark-390-table: table arrows leave chart inspection unchanged",
         "FAIL  dark-390-table: table Left/Right/Home/End/Escape retain native defaults",
@@ -123,14 +121,12 @@
         "FAIL  dark-1280-table: all table keys leave the tooltip and crosshair unchanged",
         "FAIL  dark-1280-table: disclosure keys do not activate or move chart inspection",
         "FAIL  dark-1280: descendant input Home retains caret behavior",
-        "FAIL  dark-1280: descendant input does not activate chart inspection",
         "FAIL  light-360-table: Right Arrow reveals every cell in the final column",
         "FAIL  light-360-table: table arrows leave chart inspection unchanged",
         "FAIL  light-360-table: table Left/Right/Home/End/Escape retain native defaults",
         "FAIL  light-360-table: all table keys leave the tooltip and crosshair unchanged",
         "FAIL  light-360-table: disclosure keys do not activate or move chart inspection",
         "FAIL  light-360: descendant input Home retains caret behavior",
-        "FAIL  light-360: descendant input does not activate chart inspection",
         "FAIL  light-390-table: Right Arrow reveals every cell in the final column",
         "FAIL  light-390-table: table arrows leave chart inspection unchanged",
         "FAIL  light-390-table: table Left/Right/Home/End/Escape retain native defaults",

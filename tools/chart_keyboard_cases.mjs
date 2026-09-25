@@ -106,6 +106,9 @@ export async function checkChartKeyboard({ page, host, check, tag, shotsDir }) {
   test('Tab exits the table without trapping focus', await host.evaluate(h => !h.contains(document.activeElement)));
   await page.keyboard.press('Shift+Tab');
   test('Shift+Tab returns from the next control', await scroll.evaluate(s => s === document.activeElement));
+  // The next control can be chart help, which closes after its blur delay.
+  await page.mouse.move(0, 0);
+  await page.locator('#ss-reading-help').waitFor({ state: 'detached' });
 
   // Summary shortcuts are not chart shortcuts either.
   await page.keyboard.press('Shift+Tab');
@@ -113,7 +116,7 @@ export async function checkChartKeyboard({ page, host, check, tag, shotsDir }) {
   await summary.evaluate(s => { s.__keys = []; s.__capture = e => s.__keys.push(e.defaultPrevented); document.addEventListener('keydown', s.__capture); });
   for (const key of ['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Escape']) await page.keyboard.press(key);
   const summaryKeys = await summary.evaluate(s => { document.removeEventListener('keydown', s.__capture); const keys = s.__keys; delete s.__capture; delete s.__keys; return keys; });
-  test('disclosure keys do not activate or move chart inspection', JSON.stringify(await inspection(host)) === summaryState && summaryKeys.every(p => !p));
+  test('disclosure keys do not activate or move chart inspection', JSON.stringify(await inspection(host)) === summaryState && summaryKeys.length === 5 && summaryKeys.every(p => !p));
   await settle(page);
   await scroll.scrollIntoViewIfNeeded();
   const box = await scroll.boundingBox();
@@ -183,6 +186,8 @@ export async function checkPageChartKeyboard({ browser, base, open, check, eq, s
         check(`${tag}: Tab exits table`, await host.evaluate(h => !h.contains(document.activeElement)));
         await page.keyboard.press('Shift+Tab');
         check(`${tag}: Shift+Tab returns to table`, await scroll.evaluate(s => s === document.activeElement));
+        await page.mouse.move(0, 0);
+        await page.locator('#ss-reading-help').waitFor({ state: 'detached' });
         if (shotsDir) { await scroll.scrollIntoViewIfNeeded(); await page.screenshot({ path: path.join(shotsDir, `${tag}-left-viewport.png`) }); }
       }
       // Save through the UI into this context only, preserving its frozen bars.
