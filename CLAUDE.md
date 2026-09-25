@@ -3052,8 +3052,8 @@ Stop at one reviewable PR without merging or beginning reader-quality tuning.
 Starting main: `6822dddd14d0a541083e7caaecca9c945b451af2`, re-resolved
 before branching and again before submission; zero open PRs at both reads.
 No newer publication was displaced. Branch: `fix/chart-table-keyboard-access`.
-Implementation/test head: `a430e778c64da5de1ce75aff7a1cb4b7be6b5ad1`. The following handoff commit
-changes only these notes; the PR records the exact submitted head and CI run.
+Implementation/test head: `a430e778c64da5de1ce75aff7a1cb4b7be6b5ad1`. The following handoff commits
+change only these notes; the PR records the exact submitted head and CI run.
 Selected model/effort settings were not changed. Astra implements and stops
 at one unmerged PR; Guidance owns independent review and the normal clean merge.
 
@@ -3107,7 +3107,10 @@ Node 24.19.0, Playwright 1.56.1 / Chromium 141.0.7390.37):**
 - PASS — `node tools/chart_check.mjs --shots <dir>`: 378/378.
 - PASS — `node tools/page_smoke.mjs --only chart-keyboard --shots <dir>`:
   259/259, both themes and all three NIC viewports; comparison/saved at 390/1280.
-- FAIL (Windows clipboard only) — `node tools/page_smoke.mjs --shots <dir>`: 8,402/8,409; seven unchanged clipboard assertions receive CRLF instead of LF. The same behavior was reproduced on untouched base. The final focused suite above was rerun after the help-delay test correction.
+- FAIL (Windows clipboard only) — `node tools/page_smoke.mjs --shots <dir>`:
+  8,402/8,409; seven unchanged clipboard assertions receive CRLF instead of LF.
+  The same behavior was reproduced on untouched base. The final focused suite
+  above was rerun after the help-delay test correction.
 - FAIL (Windows container bytes) — `python tools/make_fixture.py --check`:
   24 retained gzip objects differ only at header byte 9 (Windows OS 10 versus
   Unix OS 3); all decompressed payloads, lengths and all other bytes match.
@@ -3135,4 +3138,3 @@ call, new scan, workflow dispatch/rerun, schedule, secret/settings change, manua
 publication, external message, brokerage action or sibling edit. Test-pipeline
 messages about reader failures came from the existing offline doubles.
 Stop at the reviewable PR; no merge or next milestone is authorized here.
-
