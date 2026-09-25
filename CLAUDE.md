@@ -3046,3 +3046,95 @@ reproduction and SHA-256 values. README and `.env.example` reviewed; no setting
 change. No new provider/model/production call, dispatch, rerun, publication,
 email, threshold/breadth/universe/account/history change or sibling modification.
 Stop at one reviewable PR without merging or beginning reader-quality tuning.
+
+## Checkpoint, 25 Sep 2026 — chart-table keyboard access
+
+Starting main: `6822dddd14d0a541083e7caaecca9c945b451af2`, re-resolved
+before branching and again before submission; zero open PRs at both reads.
+No newer publication was displaced. Branch: `fix/chart-table-keyboard-access`.
+Implementation/test head: `a430e778c64da5de1ce75aff7a1cb4b7be6b5ad1`. The following handoff commits
+change only these notes; the PR records the exact submitted head and CI run.
+Selected model/effort settings were not changed. Astra implements and stops
+at one unmerged PR; Guidance owns independent review and the normal clean merge.
+
+**Reproduced before the repair.** Untouched base, full September 24 publication,
+`#/explore/bursts/NIC`, Chromium 141.0.7390.37 through Playwright 1.56.1,
+Windows, 390 × 844, both themes: click the table disclosure, Tab into its
+scroller, press Right five times. Each key was default-prevented; scrollLeft
+stayed zero, volume remained beyond the scroller, and chart inspection opened.
+This environment measured clientWidth 344 and scrollWidth 474; those are evidence,
+not acceptance constants. The publication SHA-256 remains
+`97da76d4f0eae671a5168760b79852c2eb6c4539bef3a144df6ef6bfe20c93f4`.
+Run `36077970591`, attempt 1; execution revision
+`470c358c06bc9c997184d829c63845c4db0dc4f5`. No live production page or physical
+device was tested; a local server served retained sources/data with fonts and
+external requests blocked for this focused regression.
+
+**Repair.** `chart()` handles inspection shortcuts only when the event target
+is its host. `buildTwin()` gives the native table wrapper an explicit tab stop,
+region role and ticker-specific accessible name. Existing design-system focus
+tokens remain in force. App source blob changes from
+`16ac43f6b8e9f0a1b8fedcc3d0d80ea9765e1344` to
+`4990146201710b51f8ca6dd34909fef8b3fd52e3`; no other application file changes.
+
+**Regression and rendered evidence.** `tools/chart_check.mjs` now includes
+360 × 800, 390 × 844 and 1280 × 900 in both themes; `tools/page_smoke.mjs`
+runs the shared `chart-keyboard` suite in its normal unfiltered gate. Tests use
+native keyboard/wheel input, wait for scrolling to settle, and measure every
+final-column cell inside the scroller clear of the sticky session column.
+They cover return-left, explicit focus/name/native tables/visible outline,
+unchanged crosshair/tooltip, host Left/Right/Home/End/Escape, disclosure
+Enter/Space, Tab/Shift+Tab exit, pointer scrolling, surrounding document or
+desktop pane scroll, geometry and selected route. A descendant input preserves
+Home/End caret behavior. Disposable synthetic contexts exercise both comparison
+charts (including the phone A/B switch) and saved originals, native Escape
+dismissal/focus return, peer-chart independence and unchanged saved snapshots.
+The chart-help popover's existing blur delay is allowed to settle before Escape.
+
+The exact retained publication and inspected before/after screenshots are in
+`tests/fixtures/chart-keyboard/`. Its evidence manifest records source blobs,
+browser, viewport, route, session, hashes and mutation results. The 390 viewport
+captures show the final column; tall host crops document inspection state.
+Normal CI `page-shots` also retains narrow/desktop and consumer screenshots.
+
+**Executed checks (Windows Python 3.12.14, pandas 3.0.6, NumPy 2.5.3;
+Node 24.19.0, Playwright 1.56.1 / Chromium 141.0.7390.37):**
+
+- PASS — `python -m pytest tests/ -q`: 1,513 passed. `MPLBACKEND=Agg` and
+  a writable `MPLCONFIGDIR` were used after the initial chart-only attempt
+  exposed this runtime's missing Tk resources (9 environment failures).
+- PASS — `node tools/continuity_check.mjs`: 127 offline DOM/store checks.
+- PASS — `node tools/chart_check.mjs --shots <dir>`: 378/378.
+- PASS — `node tools/page_smoke.mjs --only chart-keyboard --shots <dir>`:
+  259/259, both themes and all three NIC viewports; comparison/saved at 390/1280.
+- FAIL (Windows clipboard only) — `node tools/page_smoke.mjs --shots <dir>`:
+  8,402/8,409; seven unchanged clipboard assertions receive CRLF instead of LF.
+  The same behavior was reproduced on untouched base. The final focused suite
+  above was rerun after the help-delay test correction.
+- FAIL (Windows container bytes) — `python tools/make_fixture.py --check`:
+  24 retained gzip objects differ only at header byte 9 (Windows OS 10 versus
+  Unix OS 3); all decompressed payloads, lengths and all other bytes match.
+  All generated page JSON fixtures match. No fixture was regenerated.
+- PASS — isolated negative controls via `SCSTOCK_CHART=<source copy> node
+  tools/chart_check.mjs --shots <dir>`: untouched base gives 39 intended failures (313/352);
+  removing only the target guard gives 37 intended failures (341/378);
+  removing only tabindex gives 8 failures (344/352). Existing chart-host and
+  geometry controls stay green with the guard removed. Disabling unrelated
+  pointermove inspection gives only six existing hover failures (372/378),
+  while every keyboard assertion passes. No live working-tree mutation.
+- PASS — `git diff --check` and protected-file review; 7,828 prior tracked
+  files are unchanged, including publication/history/evidence, all Python
+  application code, workflows, configuration and the complete design-system
+  2.13.0 snapshot/manifest at `14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c`.
+- CI results on the submitted head are recorded in the PR; normal assertions
+  and required checks remain unchanged.
+- NOT RUN — physical-device, live-page and assistive-technology testing.
+
+README was reviewed and now documents chart/table key ownership; `.env.example`
+was reviewed and remains accurate without changes. No strategy, reader authority,
+coverage policy, grading, plans/tickets, sizing, timing, measurements, source data,
+historical publication, ledger or outcome changes. No provider/model/production
+call, new scan, workflow dispatch/rerun, schedule, secret/settings change, manual
+publication, external message, brokerage action or sibling edit. Test-pipeline
+messages about reader failures came from the existing offline doubles.
+Stop at the reviewable PR; no merge or next milestone is authorized here.

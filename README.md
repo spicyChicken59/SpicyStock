@@ -168,6 +168,10 @@ does not carry, falls back to Explore and says so.
    actual grade, planner, budget, breadth or timing/publication reason. Expired
    plans remain inspectable as recorded history with no actionable levels or
    copy button in this summary. No client-side trading levels are calculated.
+   The chart's arrow keys, Home/End and Escape inspect sessions when the
+   chart itself has focus. Open its table disclosure and Tab into the named
+   table region to scroll horizontally with the arrow keys; Tab/Shift+Tab
+   leave the table normally. These table keys do not inspect the chart.
    Then one chart panel with one header (the symbol, its
    last close and session), the controls together above the plot, and every
    price label in a reserved right gutter with a leader back to its exact

@@ -1,0 +1,177 @@
+{
+  "base": "6822dddd14d0a541083e7caaecca9c945b451af2",
+  "baseChartBlob": "16ac43f6b8e9f0a1b8fedcc3d0d80ea9765e1344",
+  "repairedChartBlob": "4990146201710b51f8ca6dd34909fef8b3fd52e3",
+  "route": "#/explore/bursts/NIC",
+  "record": "2026-09-24",
+  "run": "36077970591",
+  "attempt": 1,
+  "executionRevision": "470c358c06bc9c997184d829c63845c4db0dc4f5",
+  "publicationSHA256": "97da76d4f0eae671a5168760b79852c2eb6c4539bef3a144df6ef6bfe20c93f4",
+  "environment": {
+    "os": "Windows",
+    "node": "24.19.0",
+    "playwright": "1.56.1",
+    "chromium": "141.0.7390.37",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "physicalDevice": false,
+    "externalFonts": "blocked",
+    "delivery": "offline local server, retained publication"
+  },
+  "screenshots": {
+    "before-dark-390.png": {
+      "sha256": "8f78b3f26714cd0a977a34a0e0c5e3fa4e789a9bec4367e4b1b2f1a85674bd83",
+      "source": "16ac43f6b8e9f0a1b8fedcc3d0d80ea9765e1344"
+    },
+    "before-light-390.png": {
+      "sha256": "038b3121fe13808b4099fdf619c9a9ab415414992b71ebb2a637371bacc0d9f6",
+      "source": "16ac43f6b8e9f0a1b8fedcc3d0d80ea9765e1344"
+    },
+    "before-dark-chart.png": {
+      "sha256": "4d14f5b8acc84e5f3e55750f6a9e41b8271333fb216caa0452a85fe32896a07b",
+      "source": "16ac43f6b8e9f0a1b8fedcc3d0d80ea9765e1344"
+    },
+    "after-dark-390.png": {
+      "sha256": "fe470e7797ac5eb085d2ed47a0155793514aebec34795ab12f0cdee6f31fa7fb",
+      "source": "4990146201710b51f8ca6dd34909fef8b3fd52e3"
+    },
+    "after-light-390.png": {
+      "sha256": "c741e47b8ee4283796019342c74c3d828b0bbc7aee2ad1341f55f3fb7aaecacf",
+      "source": "4990146201710b51f8ca6dd34909fef8b3fd52e3"
+    },
+    "after-dark-chart.png": {
+      "sha256": "181aa6821392f64103176eb29bb3fc1d41ba693f0631498ec2a4745ff28c658c",
+      "source": "4990146201710b51f8ca6dd34909fef8b3fd52e3"
+    }
+  },
+  "mutations": [
+    {
+      "name": "base",
+      "exit": 1,
+      "result": "313/352 chart checks passed",
+      "failedChecks": [
+        "FAIL  dark-360-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  dark-360-table: Right Arrow reveals every cell in the final column",
+        "FAIL  dark-360-table: table arrows leave chart inspection unchanged",
+        "FAIL  dark-360-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  dark-360-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  dark-360-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  dark-360: descendant input Home retains caret behavior",
+        "FAIL  dark-360: descendant input does not activate chart inspection",
+        "FAIL  dark-390-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  dark-390-table: Right Arrow reveals every cell in the final column",
+        "FAIL  dark-390-table: table arrows leave chart inspection unchanged",
+        "FAIL  dark-390-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  dark-390-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  dark-390-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  dark-390: descendant input Home retains caret behavior",
+        "FAIL  dark-390: descendant input does not activate chart inspection",
+        "FAIL  dark-1280-table: Tab reaches the table scroller",
+        "FAIL  dark-1280-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  dark-1280: descendant input Home retains caret behavior",
+        "FAIL  dark-1280: descendant input does not activate chart inspection",
+        "FAIL  light-360-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-360-table: Right Arrow reveals every cell in the final column",
+        "FAIL  light-360-table: table arrows leave chart inspection unchanged",
+        "FAIL  light-360-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  light-360-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  light-360-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  light-360: descendant input Home retains caret behavior",
+        "FAIL  light-390-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-390-table: Right Arrow reveals every cell in the final column",
+        "FAIL  light-390-table: table arrows leave chart inspection unchanged",
+        "FAIL  light-390-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  light-390-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  light-390-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  light-390: descendant input Home retains caret behavior",
+        "FAIL  light-390: descendant input does not activate chart inspection",
+        "FAIL  light-1280-table: Tab reaches the table scroller",
+        "FAIL  light-1280-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-1280: descendant input Home retains caret behavior",
+        "FAIL  light-1280: descendant input does not activate chart inspection"
+      ]
+    },
+    {
+      "name": "ownership",
+      "exit": 1,
+      "result": "341/378 chart checks passed",
+      "failedChecks": [
+        "FAIL  dark-360-table: Right Arrow reveals every cell in the final column",
+        "FAIL  dark-360-table: table arrows leave chart inspection unchanged",
+        "FAIL  dark-360-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  dark-360-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  dark-360-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  dark-360: descendant input Home retains caret behavior",
+        "FAIL  dark-390-table: Right Arrow reveals every cell in the final column",
+        "FAIL  dark-390-table: table arrows leave chart inspection unchanged",
+        "FAIL  dark-390-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  dark-390-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  dark-390-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  dark-390: descendant input Home retains caret behavior",
+        "FAIL  dark-390: descendant input does not activate chart inspection",
+        "FAIL  dark-1280-table: table arrows leave chart inspection unchanged",
+        "FAIL  dark-1280-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  dark-1280-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  dark-1280-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  dark-1280: descendant input Home retains caret behavior",
+        "FAIL  light-360-table: Right Arrow reveals every cell in the final column",
+        "FAIL  light-360-table: table arrows leave chart inspection unchanged",
+        "FAIL  light-360-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  light-360-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  light-360-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  light-360: descendant input Home retains caret behavior",
+        "FAIL  light-390-table: Right Arrow reveals every cell in the final column",
+        "FAIL  light-390-table: table arrows leave chart inspection unchanged",
+        "FAIL  light-390-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  light-390-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  light-390-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  light-390: descendant input Home retains caret behavior",
+        "FAIL  light-390: descendant input does not activate chart inspection",
+        "FAIL  light-1280-table: table arrows leave chart inspection unchanged",
+        "FAIL  light-1280-table: table Left/Right/Home/End/Escape retain native defaults",
+        "FAIL  light-1280-table: all table keys leave the tooltip and crosshair unchanged",
+        "FAIL  light-1280-table: disclosure keys do not activate or move chart inspection",
+        "FAIL  light-1280: descendant input Home retains caret behavior",
+        "FAIL  light-1280: descendant input does not activate chart inspection"
+      ]
+    },
+    {
+      "name": "focusability",
+      "exit": 1,
+      "result": "344/352 chart checks passed",
+      "failedChecks": [
+        "FAIL  dark-360-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  dark-390-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  dark-1280-table: Tab reaches the table scroller",
+        "FAIL  dark-1280-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-360-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-390-table: scroller has an explicit tab stop and meaningful region name",
+        "FAIL  light-1280-table: Tab reaches the table scroller",
+        "FAIL  light-1280-table: scroller has an explicit tab stop and meaningful region name"
+      ]
+    },
+    {
+      "name": "unrelated_hover",
+      "exit": 1,
+      "result": "372/378 chart checks passed",
+      "failedChecks": [
+        "FAIL  dark-360: hovering the burst bar shows the tooltip for it",
+        "FAIL  dark-390: hovering the burst bar shows the tooltip for it",
+        "FAIL  dark-1280: hovering the burst bar shows the tooltip for it",
+        "FAIL  light-360: hovering the burst bar shows the tooltip for it",
+        "FAIL  light-390: hovering the burst bar shows the tooltip for it",
+        "FAIL  light-1280: hovering the burst bar shows the tooltip for it"
+      ]
+    }
+  ],
+  "mutationMethod": "SCSTOCK_CHART points to isolated source copies. base restores untouched source; ownership removes only the event-target guard; focusability removes only tabindex; unrelated_hover disables pointermove inspection. No live working-tree mutation.",
+  "controls": "All chart-host key and geometry assertions pass with ownership removed. All keyboard assertions pass with unrelated_hover; only six existing hover assertions fail.",
+  "cropNote": "390 viewport captures prove column visibility. Tall chart element captures show the inspection state; their crop follows the chart host, while the table margin extends past it."
+}

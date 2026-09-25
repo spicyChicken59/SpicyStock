@@ -5,7 +5,7 @@
 //    function, so its scales, candle rects and annotation positions are
 //    asserted directly against a synthetic 120-bar series.
 // 2. Rendering, in playwright's chromium: a minimal page that links the
-//    vendored design system and docs/app-chart.js, opened at 360px and 1280px
+//    vendored design system and docs/app-chart.js, opened at 360/390/1280px
 //    in both themes. Asserts no page errors, the host contract, the table
 //    twin, the tooltip on hover / keyboard / tap, and that every text and
 //    mark wears a token the theme resolves. Screenshots go to --shots <dir>
@@ -21,6 +21,7 @@ import { existsSync } from 'node:fs';
 import { extname, join, resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import vm from 'node:vm';
+import { checkChartKeyboard } from './chart_keyboard_cases.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..');
@@ -397,9 +398,9 @@ if (!chromium) {
   }
 
   for (const theme of ['dark', 'light']) {
-    for (const width of [360, 1280]) {
+    for (const width of [360, 390, 1280]) {
       const tag = `${theme}-${width}`;
-      const { ctx, page, errors } = await session({ width, height: width === 360 ? 800 : 900, theme });
+      const { ctx, page, errors } = await session({ width, height: width === 360 ? 800 : width === 390 ? 844 : 900, theme });
       await page.waitForTimeout(150);
       ok(`${tag}: no page errors`, errors.length === 0, errors.join(' | '));
       const host = page.locator('#chart-full');
@@ -465,6 +466,17 @@ if (!chromium) {
       ok(`${tag}: no page errors after interaction`, errors.length === 0, errors.join(' | '));
       await page.screenshot({ path: join(SHOTS, `${tag}.png`), fullPage: true });
       await host.screenshot({ path: join(SHOTS, `${tag}-chart.png`) });
+      await checkChartKeyboard({ page, host, check: ok, tag: `${tag}-table`, shotsDir: SHOTS });
+      // A future descendant text control must keep its own caret shortcuts.
+      await host.evaluate(h => { const input = document.createElement('input'); input.value = 'descendant'; input.setAttribute('aria-label', 'test descendant'); h.appendChild(input); });
+      const input = host.locator('input');
+      await input.focus();
+      await page.keyboard.press('Home');
+      ok(`${tag}: descendant input Home retains caret behavior`, await input.evaluate(i => i.selectionStart === 0));
+      await page.keyboard.press('End');
+      ok(`${tag}: descendant input End retains caret behavior`, await input.evaluate(i => i.selectionStart === i.value.length));
+      ok(`${tag}: descendant input does not activate chart inspection`, await host.evaluate(h => !h.querySelector('.sc-tooltip').classList.contains('is-on')));
+      await input.evaluate(i => i.remove());
       await ctx.close();
     }
   }

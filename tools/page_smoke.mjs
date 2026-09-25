@@ -26,6 +26,7 @@ import { checkScorecard } from './scorecard_cases.mjs';
 import { checkWalkthrough } from './walkthrough_cases.mjs';
 import { checkRiskAttribution } from './risk_attribution_cases.mjs';
 import { checkReaderCoverage } from './reader_coverage_cases.mjs';
+import { checkPageChartKeyboard } from './chart_keyboard_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -3694,6 +3695,7 @@ async function main() {
     if (runs('reader')) await checkReaderCommentary(browser, base);
     if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
     if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
+    if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
     if (runs('inputs')) await checkInputCoverage(browser, base);
   } finally {
     await browser.close();
