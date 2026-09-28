@@ -625,6 +625,71 @@
       ' scan/quality errors occurred. Results describe only the evaluated subset.';
   }
 
+  // A null plan does not identify a stage. Only a matching archived early
+  // gate plus an explicit unattempted planning receipt establishes a skip.
+  // Old/unknown policies are never upgraded to today's reader prerequisite.
+  function planningWaitReasons(c, data) {
+    const b = c.row, p = c.plan, e = b.evidence || {}, gate = e.gate || {}, planning = e.planning || {};
+    const reasons = [], rules = ((data.rules || {}).pipeline || {}), reg = (data.breadth || {}).regime || {};
+    const error = text(planning.error) || (gate.reason === 'plan_error' ? text(gate.detail) : '');
+    if (p) {
+      if (p.eligible === false) reasons.push('Plan produced but ineligible: ' + (text(p.reason) || 'the refusal reason is unavailable.'));
+      else if (p.action === 'refused') reasons.push('Plan produced but withheld: ' + (text(p.reason) || 'the refusal reason is unavailable.'));
+      if (isNum(p.shares)) reasons.push('Whole-share size: ' + plain(p.shares) + ' recorded under the published account assumptions.');
+      if (p.action === 'no_new_longs') reasons.push('Plan permission: ' + (text(p.reason) || 'the recorded action permits no new longs.'));
+    } else if (error) {
+      reasons.push('Planning failed: ' + error + '. No executable levels were published; successful structural and sizing checks are not established.');
+    } else if (planning.inputs && typeof planning.inputs === 'object' && !Array.isArray(planning.inputs)) {
+      reasons.push('Planning was attempted, but its outcome is unavailable in this record. No executable levels were published.');
+    } else {
+      const allowed = reg.verdict === 'yellow' ? rules.yellow_grades : rules.trade_grades;
+      const skips = {
+        regime_gate: reg.verdict === 'red' || (reg.verdict === 'yellow' && Array.isArray(allowed) && !allowed.includes(b.grade)),
+        quality_grade: Array.isArray(allowed) && !allowed.includes(b.grade),
+        quality_veto: (b.vetoes || []).length > 0,
+        reader_coverage: rules.reader_policy === 'accepted_required_v1' && readerCoverage(b).state !== 'accepted'
+      };
+      const labels = { regime_gate: 'market gate', quality_grade: 'quality-grade gate', quality_veto: 'quality veto', reader_coverage: 'accepted reader review prerequisite' };
+      const skipped = e.version === 1 && planning.inputs === null && planning.error === null && skips[gate.reason];
+      reasons.push(skipped
+        ? 'Planning skipped at the recorded ' + labels[gate.reason] + '. Structural stop, whole-share size and allocation were not evaluated in this published plan path. No executable levels were published.'
+        : 'Planning evidence unavailable: this record does not establish whether structural-stop or sizing checks were skipped, failed or completed. No executable levels were published.');
+    }
+    const cut = c.cut || (['slot_cap', 'equity', 'no_shares', 'withheld', 'no_new_longs'].includes(gate.reason) ? { kind: gate.reason, reason: gate.detail } : null);
+    if (cut) reasons.push('Allocation: ' + (text(cut.reason) || CUT_WORDS[cut.kind] || words(cut.kind)) + '.');
+    else if (p && c.status !== 'ticket') reasons.push('Allocation outcome: no ticket or allocation refusal was recorded for this candidate.');
+    return reasons;
+  }
+
+  // Completion is a market-data buffer, not the evening publication time.
+  // Use the existing status authority's pending/stale boundary; never mirror
+  // a workflow cron here or promise when a future run will finish.
+  function evaluationExplanation(data, at) {
+    const run = data.run || {}, pub = status(data, at), cal = calendarOf(data);
+    const published = instant(run.published_at);
+    const lead = 'Next step: wait for a later validated record and inspect its gates again. ';
+    const tail = ' Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders.';
+    if (pub.state === 'failed') return lead + 'The loaded run failed to provide a completed verdict. Check the run log; we cannot establish the next evaluation.' + tail;
+    if (pub.state === 'unknown' || !cal) return lead + 'Archived calendar evidence is insufficient at this clock; we cannot establish the next evaluation session.' + tail;
+    if (!published || published > at) return lead + 'Publication timing evidence is insufficient at this clock; we cannot establish the next evaluation.' + tail;
+    const loaded = 'Loaded publication: ' + run.session + (pub.state === 'degraded' ? ' (degraded).' : '.');
+    if (pub.state === 'pending') return lead + loaded + ' The ' + pub.expected + ' session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record.' + tail;
+    if (pub.state === 'stale1' || pub.state === 'stale2') return lead + loaded + ' No publication for the completed ' + pub.expected + ' session is loaded. It may be delayed, missing or failed; check the run log. We cannot establish the next evaluation time.' + tail;
+    const next = cal.rows.find(r => r.session > run.session);
+    if (!next) return lead + loaded + ' The next market session is outside this archived calendar; we cannot establish the next evaluation session.' + tail;
+    if (instant(next.closes_at) <= at) return lead + loaded + ' The ' + next.session + ' market session has closed; its market-data buffer has not completed. Its after-close evaluation has not published.' + tail;
+    if (instant(next.opens_at) <= at) return lead + loaded + ' The ' + next.session + ' market session is still in progress. Its after-close evaluation has not published.' + tail;
+    return lead + loaded + ' The next market session in the archived XNYS calendar is ' + next.session + '. Its after-close evaluation is still ahead.' + tail;
+  }
+  function refreshDecisionEvaluation(data, at) {
+    const node = $('decision-gates').querySelector('[data-evaluation-next]');
+    if (!node) return false;
+    const said = evaluationExplanation(data, at);
+    if (node.textContent === said) return false;
+    node.textContent = said;
+    return true;
+  }
+
   // Recorded facts only: this view neither re-grades nor invents an entry band.
   function independentWaitReasons(c, data) {
     const reasons = [], b = c.row, reg = ((data.breadth || {}).regime || {});
@@ -638,23 +703,21 @@
       if (review.state !== 'accepted' && ((b.claude || {}).error || '').includes('ReaderAuthorityError: evidence outside criterion authority')) {
         reasons.push('Recorded review rejection: a finding cited evidence outside the permitted criterion. A later valid review is required; this reply remains rejected.');
       }
-      if (!c.plan) reasons.push('Structural stop, whole-share size and allocation: not evaluated in this published plan path. No executable levels were published.');
     }
-    if (c.plan && c.plan.eligible === false) reasons.push('Structural stop: ' + (c.plan.reason || 'no feasible ticket band was recorded.'));
-    if (c.cut) reasons.push('Allocation: ' + c.reason);
+    reasons.push(...planningWaitReasons(c, data));
     return reasons;
   }
 
   function renderDecisionGates(data) {
-    const slot = clear($('decision-gates')), rows = data.bursts || [], run = data.run || {};
+    const slot = $('decision-gates'), rows = data.bursts || [], run = data.run || {};
     const cov = run.coverage || {}, a = cov.acceptance || {}, reg = (data.breadth || {}).regime || {};
     const accepted = rows.filter(b => readerCoverage(b).state === 'accepted');
     const band = listRule(data, 'trade_grades', ['A+', 'A']);
     const qualified = accepted.filter(b => band.includes(b.grade) && !(b.vetoes || []).length);
     const tickets = (data.trades || []).length;
     slot.hidden = tickets > 0;
-    if (tickets) return;
-    const host = el('details'); slot.appendChild(host);
+    if (tickets) { clear(slot); return; }
+    const host = el('details');
     host.appendChild(el('summary', { 'data-wait-summary': '', text: 'Why wait? Market ' + (reg.verdict || 'unknown').toUpperCase() +
       ' · ' + num(qualified.length) + ' accepted A/A+ · ' + num(accepted.length) + '/' + num((run.reads || {}).requested) + ' reviews accepted' }));
     host.appendChild(el('p', { 'data-population-status': '', text: cov.version
@@ -667,12 +730,11 @@
       ' accepted, non-vetoed candidates in the A/A+ band. ' + num(tickets) + ' reaction tickets published. A completed scan does not grant market permission.' }));
     const top = (data.watchlist || {}).top || [];
     host.appendChild(el('p', { text: top.length ? num(top.length) + ' existing anticipation setups are available under Setting up. They are research candidates; inspect their own market, entry and volume conditions.' : 'No anticipation shortlist was recorded.' }));
-    const cal = (((run.calendar || {}).schedule || {}).sessions || []);
-    const next = cal.find(s => new Date(s.completion_at) > nowAt());
-    host.appendChild(el('p', { 'class': 'sc-hint', text: 'Next step: wait for a later validated record and inspect its gates again. ' +
-      (next ? 'The next exchange session available for an after-close evaluation is ' + next.session + '.' : 'The next evaluation date is outside this record’s calendar.') +
-      ' The existing evening schedule supplies that evaluation; this page does not monitor prices or place orders.' }));
+    host.appendChild(el('p', { 'class': 'sc-hint', 'data-evaluation-next': '', text: evaluationExplanation(data, nowAt()) }));
     host.appendChild(el('a', { href: '#/record', text: 'What the retained historical sample establishes' }));
+    const previous = slot.querySelector('details');
+    if (previous) repaint(previous, () => host);
+    else slot.appendChild(host);
   }
 
   // ---------------------------------------------------------------- run strip (the method view)
@@ -4470,7 +4532,9 @@
       next.pub.chip === av.pub.chip && next.offered === av.offered;
     clockAt = next.at;
     av = next; st = av.pub; SCStock.state = st; SCStock.avail = av;
-    if (same) return false;
+    // Market close can change this explanation without changing availability.
+    const evaluationChanged = refreshDecisionEvaluation(current, next.at);
+    if (same) return evaluationChanged;
     // the clock-dependent surfaces, and nothing else: no chart is disposed, no
     // lens re-read, no comparison closed, no saved sheet dismissed, and the
     // detail's chart instance is left standing while the words beside it change
