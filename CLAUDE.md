@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1541 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1677 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3268,3 +3268,60 @@ No new provider/model/live scan, workflow dispatch/rerun, production publication
 schedule/secret/settings/feed/model/brokerage/upstream/sibling change occurred.
 Astra stops with this same PR ready for independent Guidance re-review; Guidance
 owns the normal protected merge after authorization.
+
+## Historical input proof checkpoint — 28 Sep 2026
+
+The next bounded milestone starts from re-resolved main
+`0d702940814af05e9b8d2a4c887aee00939e46fc`, preserving the accepted PR #92 tree
+`b67eef40bd1db94d865e9182d1d13a4e08789ef1`. Branch
+`investigate/historical-input-breadth-proof` adds offline investigation tools,
+synthetic regressions and dated evidence. Its one PR records the exact submitted
+head and normal CI; Guidance owns independent review and the normal clean merge.
+No production, strategy, model, account, website or workflow behavior changes.
+
+PASS — both original publication hashes, artifact identities, complete intended
+and readiness populations, aggregate algebra and every recorded regime predicate
+reconcile. The retained ten-session ratios 0.94 / 0.89 independently force RED.
+Independent reference and production agree on 8,830 available selected-source
+stock/session comparisons. That selected evidence does not prove the missing
+full-market observations. The complete original target-price exclusion masks
+were not retained: final membership remains unknown for 4,332 / 4,290 ready
+names, containing both included and excluded securities. Intended universes
+are retained; the earlier blanket statement that they were unavailable was too
+broad. All 31 stale securities / 38 dated occurrences are explicitly accounted
+for without assigning unsupported causes.
+
+BLOCKED — a complete later-retrieved basis and its RED verdict. Acquisition and
+the access probe are NOT RUN: zero actual requests, zero new response bytes,
+zero additional spend. Neither accessible runtime exposes the configured Alpaca
+credential pair; current $0 entitlement, retention rights, approved private
+storage and an authorized Guidance retrieval path are unestablished. No keys
+were extracted and no production workflow was dispatched. The frozen manifest
+contains the original 4,780-stock union plus SPY, deliberate mapping dates,
+required prefixes, one small probe and 96 bounded chunks. The persistent ledger
+enforces shared 400-request / 1-GiB ceilings across retries and restarts.
+
+PASS — the dated CRL public-volume substitution adds the Burst route and one
+up event, preserves Dollar admission, and changes mechanical A to A+ while the
+conditioned aggregate still rounds to 0.94 / RED. IQV is the unchanged control.
+Original final grades were B. Changed inputs cannot inherit old reader approval;
+structural feasibility is diagnostic only. No production defect was demonstrated.
+Controls deliberately break arithmetic and acquisition guards, with unaffected
+controls retained. Initial environment, harness and documentation-count failures
+remain disclosed in verification.json. PASS — the final sealed local Python
+suite is 1,677/1,677 with no skips; 8,867 protected files match the baseline.
+Normal Linux fixture/browser gates are recorded in the PR. Windows needs an external import
+adapter for Unix-only resource telemetry; it supplies no fabricated measurement.
+The Windows fixture check reports 24 differing gzip objects, left unchanged.
+
+KEEP existing thresholds, accepted_required_v1, reader budgets, stop-constrained
+plans, historical records and design-system 2.13.0. FIX NOW the bounded toolchain,
+missing-mask accounting and reproducible retained-data investigation. DEFER secure
+acquisition, full original-value proof, source-policy and trade-condition
+adjudication, and new reader judgments. OMIT invented plans, provider blame,
+performance claims, redesign and a second milestone. Reproduction commands and
+the precise evidence boundary are in
+`docs/input-truthfulness/2026-09-28-historical-input-proof.md`. Exact next action:
+Guidance reviews this PR, then identifies an existing secret-capable runtime and
+approved private evidence destination under documented $0 access and retention
+rights before any historical acquisition. Tahir need not run commands or send keys.

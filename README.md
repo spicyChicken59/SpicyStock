@@ -843,6 +843,16 @@ The original two records are gzip fixtures under `tests/fixtures/continuity/`.
 
 ## Retained quality evidence
 
+The [September 24/25 input and market-permission investigation](docs/input-truthfulness/2026-09-28-historical-input-proof.md)
+reconciles retained aggregate RED decisions and the available stock observations.
+Complete original final-population masks and full daily-bar inputs remain missing.
+`tools/historical_input_proof.py` reproduces the retained-data analysis with sockets
+blocked. The separate bounded acquisition tool defaults to offline validation;
+live historical retrieval requires the frozen manifest and documented zero-cost,
+private-storage authorization. No new data was acquired in this checkpoint.
+`tools/historical_reconcile.py` consumes only that tool's verified private cache,
+keeps later observations separate and never publishes plans or reuses reader approval.
+
 The [22 September quality audit](docs/input-truthfulness/2026-09-22-retained-quality-audit.md)
 distinguishes input reliability, mechanical/final grades and model outcomes.
 Future real publications append compact immutable facts under

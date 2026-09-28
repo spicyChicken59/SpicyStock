@@ -1,0 +1,10 @@
+{
+  "manifest_bytes_sha256": "110385822e2a9e9bfc7547694d8cd3b5648646c2f89cc9eb9e4785451e17a202",
+  "manifest_bytes_sha256_encoding": "exact committed pretty-printed acquisition-manifest.json bytes",
+  "manifest_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+  "manifest_sha256_encoding": "sorted-key compact JSON plus LF; matches acquisition approval/ledger identity",
+  "new_provider_requests_before_freeze": 0,
+  "new_provider_responses_examined": 0,
+  "status": "PASS",
+  "timestamp_limit": "No fabricated pre-experiment wall-clock claim; git commit and manifest byte hash freeze the declared acquisition. Only retained original/public corroboration values have been examined."
+}

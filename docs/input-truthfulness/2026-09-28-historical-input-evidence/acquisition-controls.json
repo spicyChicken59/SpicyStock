@@ -1,0 +1,65 @@
+{
+  "status": "PASS",
+  "source_sha256": "4df7438cffb9b3a07153d85fdbdae5040359a40444217e23d606570fe64e63ec",
+  "tests_sha256": "1febf969a5a6a93a4b3cb8f7f157a5eac3c6b45f1e0318e80c6d4f5115cdd65f",
+  "source_and_tests_unchanged": true,
+  "network": "blocked_by_test_conftest",
+  "fixtures": "synthetic_only",
+  "runtime": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "controls": [
+    {
+      "control": "baseline",
+      "status": "PASS",
+      "expected_pytest_exit": 0,
+      "actual_pytest_exit": 0,
+      "assertion_failures": 0,
+      "passing_tests": 76,
+      "log": "baseline.txt"
+    },
+    {
+      "control": "request_cap",
+      "status": "PASS",
+      "expected_pytest_exit": 1,
+      "actual_pytest_exit": 1,
+      "assertion_failures": 1,
+      "passing_tests": 0,
+      "log": "request_cap.txt"
+    },
+    {
+      "control": "byte_cap",
+      "status": "PASS",
+      "expected_pytest_exit": 1,
+      "actual_pytest_exit": 1,
+      "assertion_failures": 1,
+      "passing_tests": 0,
+      "log": "byte_cap.txt"
+    },
+    {
+      "control": "probe",
+      "status": "PASS",
+      "expected_pytest_exit": 1,
+      "actual_pytest_exit": 1,
+      "assertion_failures": 1,
+      "passing_tests": 0,
+      "log": "probe.txt"
+    },
+    {
+      "control": "geometry",
+      "status": "PASS",
+      "expected_pytest_exit": 1,
+      "actual_pytest_exit": 1,
+      "assertion_failures": 1,
+      "passing_tests": 7,
+      "log": "geometry.txt"
+    },
+    {
+      "control": "unrelated_geometry_control",
+      "status": "PASS",
+      "expected_pytest_exit": 0,
+      "actual_pytest_exit": 0,
+      "assertion_failures": 0,
+      "passing_tests": 1,
+      "log": "unrelated_geometry_control.txt"
+    }
+  ]
+}
