@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1513 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1541 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3138,3 +3138,57 @@ call, new scan, workflow dispatch/rerun, schedule, secret/settings change, manua
 publication, external message, brokerage action or sibling edit. Test-pipeline
 messages about reader failures came from the existing offline doubles.
 Stop at the reviewable PR; no merge or next milestone is authorized here.
+
+## Handoff — 2026-09-28: historical validation and usable decisions
+
+Repository: `spicyChicken59/SpicyStock`; branch:
+`fix/historical-validation-usable-plans`. Actual base was re-resolved repeatedly
+as `8be007f68deaa417b85a512d2e16a37899d27011`; no competing open PR existed.
+The one scoped release PR records the final remote head and CI status. Guidance
+owns independent review and the clean merge. Do not merge, manually dispatch a
+scan, or begin another campaign from this checkpoint. Direct git push lacked
+credentials; the connected GitHub API publishes the identical tree. The POC was
+frozen locally in `24615d6` before outcomes; its raw commit and the later remote
+specification-tree commit are preserved in `spec-freeze.json`.
+
+The review is `docs/input-truthfulness/2026-09-28-validation-review.md`, alongside
+the frozen specification, selected operating contract and machine evidence.
+Thirteen actual rebuild publications represent eleven unique sessions, not
+thirteen trading days. All are RED; no accepted review finishes A/A+. All thirteen
+original picks files are empty. Nine original-code/source replays agree; four
+earlier complete source layers are unavailable. The 5,215 candidate traces show
+joint market, grade/review, structural and sizing blockers. Removing only market
+or reader gates still gives no tickets. Their joint ablation gives synthetic
+counterfactual tickets, never historical orders. Alphabetical review ties and
+unreviewed mechanically feasible candidates establish access starvation, not
+hypothetical approval or an edge.
+
+Verified prospective repairs send the shared schema for supported Sonnet 4.6,
+include the measured leg/base in the exact reader image and date its context,
+version request semantics, and remove asymmetric approval/rejection encouragement.
+Model, review count, attempts, ceilings, authority and numeric strategy rules stay
+unchanged. NIC/BIO/RVTY/MSFT remain rejected. Latest MSFT failed authority, not
+JSON parsing. No live API success or acceptance improvement was measured.
+
+The existing website now explains overlapping wait gates and incomplete inputs,
+connects Method/Record to frozen CRL/IQV/MSFT development cases, and separates
+later observations from original evidence. Reader-image links use retained image
+hashes. Saving and outcome reveal preserve the original; no historical case
+acquires live order action. Agent-operated Chromium checks cover 390×844,
+320×844 and desktop, both themes, with 85 historical checks and screenshots.
+The #91 harness now waits for actual chart layout before its unchanged exact
+SVG/keyboard assertions; delayed-observer baseline and restored-defect controls
+both detect the previous capture race. Physical-device and assistive-technology
+checks remain NOT RUN. Final regression results belong to the review package.
+
+KEEP existing authority, stop-constrained mathematics, source identities and the
+unchanged design-system 2.13.0 snapshot. FIX NOW the demonstrated request, image,
+wording and browser-test defects in this PR. DEFER point-in-time universe/security
+identity, comparable volume adjudication, intraday execution and policy proposals.
+OMIT profitability claims and approval inflation. Candidate-only next-close
+observations are selected, dependent and inconclusive; zero settlements give no
+expectancy. Real-data qualified-plan and executable-performance gates remain
+BLOCKED. The latest September 25 record offers no ticket for Monday September 28.
+After review/authorized merge, only the next existing normal run can supply new
+prospective evidence; its health and any ticket remain unknown. Exact next action:
+Guidance reviews the final base/head, evidence, publication effects and normal CI.

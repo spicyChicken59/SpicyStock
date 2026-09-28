@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "726ce012f7a1"
+  "rules_version": "7e15f9c97146"
  },
  "cover": {
   "h1": "No new burst tickets. Reader review incomplete.",
@@ -741,7 +741,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8"
+   "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2"
   },
   "sanitised": {
    "replaced": 0,
@@ -833,7 +833,8 @@
   },
   "grading": {
    "discovery_version": 1,
-   "reader_authority_version": 1
+   "reader_authority_version": 1,
+   "reader_request_version": 2
   },
   "quality": {
    "base_search_sessions": 40,
@@ -1672,21 +1673,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32",
+    "request_text_sha256": "b32390d7519c17f30ff6aa9ccb79a5b2a434f385c1060f5ab75cdf73bc492940",
     "input": {
-     "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "1ac72010c1e945e02533ca79815c882966c2609e161c7d34df8c02f5d7714a79",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "3625ae811f9ee2fc6daad4d613f9c81b94af3912c9ca77c0e43d246dd3bdc240",
+      "request_sha256": "16a92d2e8f5c224d49542c55eb20cdf98bba18ef0fce79784ee09c4f12cd11a9",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "3625ae811f9ee2fc6daad4d613f9c81b94af3912c9ca77c0e43d246dd3bdc240",
+      "request_sha256": "16a92d2e8f5c224d49542c55eb20cdf98bba18ef0fce79784ee09c4f12cd11a9",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -1718,22 +1719,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "75664812e4ea88c4455e0df764bb49a15b8abefe9e1928a5aaa93d6186a26951",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "1ac72010c1e945e02533ca79815c882966c2609e161c7d34df8c02f5d7714a79",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "19281e7250aa9a4ee51f789c70ed17256d5e6f04af88084a60b3c305ce354d32"
+     "request_text_sha256": "b32390d7519c17f30ff6aa9ccb79a5b2a434f385c1060f5ab75cdf73bc492940"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "99671baa81656aeb7bfadc34b2ca9a248d680e5d07a4d3735e3ea7478fb60fa4",
+    "reader_sha256": "03cea76fe0c068f96bad857c81c1cf387677f9a800a3dedb9b5ca3cfda263be8",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -1746,7 +1747,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "6c1300982042c61a1d3b107c9b32f7d2d366179c06eb6b8824044f2b0a6398d8"
+    "id": "191a7c6a0557281e72d4c5e52eb525a99602b0cb886bfe1fba8ede64af9dae15"
    },
    "series": [
     {
@@ -2939,21 +2940,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8",
+    "request_text_sha256": "1496e950ca2e10526c5ac6f7016fbe7d0c9188bb62a0028e11b929e3e0ac6525",
     "input": {
-     "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "4beb88212ca7691cc0b98b34c823653b13394b13cba15ffa48e2ab534cd91167",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": null
     },
     "attempts": [
      {
-      "request_sha256": "343d62e6e0a3720d71bb7daad11cf3b87a3278d723cbe8332bc8ec994d5d2f10",
+      "request_sha256": "07ac23a3362c67fe74dea82a9adad6d60514267af3d22863f0b90f6050f85847",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "343d62e6e0a3720d71bb7daad11cf3b87a3278d723cbe8332bc8ec994d5d2f10",
+      "request_sha256": "07ac23a3362c67fe74dea82a9adad6d60514267af3d22863f0b90f6050f85847",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -2985,22 +2986,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "45de428839b5a56a08c038d879a63515490a1cfc41088d837ce111af1fd18577",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "4beb88212ca7691cc0b98b34c823653b13394b13cba15ffa48e2ab534cd91167",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": null,
-     "request_text_sha256": "37c1a460059c7b84857fa41396f9b63a2532ee0236dd1c5944797f41a08982c8"
+     "request_text_sha256": "1496e950ca2e10526c5ac6f7016fbe7d0c9188bb62a0028e11b929e3e0ac6525"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "9b4ea2688f03b6a8c50b3ddd9cbc05123e0991de0876922e6d0d24e9895db76e",
+    "reader_sha256": "924d137e49134689d4a23c9bd664b218b7a5a5212511a994825cd62b1a92eabc",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -3013,7 +3014,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "bf15a7ec2f7edb9eaa509692fa3ea9eac583b50127f14e6b23e1c7a7faa4156e"
+    "id": "cd1cfc6cdfb80fd20e59fed1ea5bbd1d642073e7ca505f6aace52b1158812217"
    },
    "series": [
     {
@@ -4174,21 +4175,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490",
+    "request_text_sha256": "e22404c00b4917a46cc40924d7090ec6bcf92f8c2d5122cba340ae2d05fa43b3",
     "input": {
-     "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "c6047c304f5fba54f297ef97f7a007516fa2b074f852ffc21971c368bcfbcacc",
+      "request_sha256": "dc07bdd2dd0562cf0e9daf72200e480b6c4a41705e51ab2f53dafc2b777e3e58",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "c6047c304f5fba54f297ef97f7a007516fa2b074f852ffc21971c368bcfbcacc",
+      "request_sha256": "dc07bdd2dd0562cf0e9daf72200e480b6c4a41705e51ab2f53dafc2b777e3e58",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -4220,22 +4221,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "67217dc64f9964a52db46f723e6904d3666f4683c988edb669efa566a4038f1e",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "7b4a5b6c97aee4dd677e7540641608188b471a8423ad788fb7d27f891c9d1490"
+     "request_text_sha256": "e22404c00b4917a46cc40924d7090ec6bcf92f8c2d5122cba340ae2d05fa43b3"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "189457009ca1f5f77f77dcbaa59b5b0c1ac476930ecdb9816e77300f26e6af1a",
+    "reader_sha256": "82d69edcd1ae80f254cf998307e94006aa7710e0948c6cca1de035518b666202",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -4248,7 +4249,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "760a3379001193abf3e7384443eb1e49d864fc67e6a1033ddd08603e84c96c9a"
+    "id": "374824610f7981f7a309fc652cc3a4230dbdf62a1351bcb8e7d113818c90cdd4"
    },
    "series": [
     {
@@ -5449,21 +5450,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8",
+    "request_text_sha256": "89eeeeab324d4a79c13311cdc6f23ed3f9d5c7a71d113b2396ea896a30738348",
     "input": {
-     "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "29542fa67a95204b57faefad212f1d0d2e7853d47b60f690cc4b0855c3582f6b",
+      "request_sha256": "0446fa49114a99fa5f37c4ac651017e3868ed6f90a5f056e7e558707c0e8fc68",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "29542fa67a95204b57faefad212f1d0d2e7853d47b60f690cc4b0855c3582f6b",
+      "request_sha256": "0446fa49114a99fa5f37c4ac651017e3868ed6f90a5f056e7e558707c0e8fc68",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -5495,22 +5496,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "99ccc1434d04991933ba489ff9cb7cb38b66d80fb5ba36a902586b4905f5d488",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "2aac16bc43f20aaf6d7d76b2461fbf886ebd7ae52d360437214a4d5f68d1c0cf",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "699a0ad245036a1dfeafc2188ff673e1167f9882f87298ee0ac08d1fcdaaf7d8"
+     "request_text_sha256": "89eeeeab324d4a79c13311cdc6f23ed3f9d5c7a71d113b2396ea896a30738348"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "165c8b89d65972e6722c01ac6376807e8e28028ce540d24380f3e856e0f07a77",
+    "reader_sha256": "0d11ce27084d5e2775f15049452b75b9a3cf72188680800cb57aab3459657fdf",
     "reader_source": "fallback",
     "final_grade": "A+",
     "version": 1,
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -5523,7 +5524,7 @@
      "reason": "reader_coverage",
      "detail": null
     },
-    "id": "3c16718a62a87cbf08eaf0ef51ccbd1a84ad589a098d34b8c9de29bfa10ce17c"
+    "id": "c35cb594ed07f6d787c60b46d6498d4d6488ac7f94eea9b1687ef73b41f0e427"
    },
    "series": [
     {
@@ -6717,21 +6718,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7",
+    "request_text_sha256": "07d0293d5d6be3277bfddf6035bfb7996970697135d4631f6dc06049bc2c6878",
     "input": {
-     "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "59e6c6819ae6938c7066baa632790e211dd7a627d321e8acd077baeba29f1116",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "5d555fe6e01200899e6079967fb0b50bb51de28f966dc988e2dfc39fd97fa89d",
+      "request_sha256": "5959f584d624b503ab2376cfed6cbd2ae0d2de66350d5f1d2634916372d0774f",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "5d555fe6e01200899e6079967fb0b50bb51de28f966dc988e2dfc39fd97fa89d",
+      "request_sha256": "5959f584d624b503ab2376cfed6cbd2ae0d2de66350d5f1d2634916372d0774f",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -6763,22 +6764,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "2548d6136874c50fcb67fcc0e99ad6ba82f0585886e7625694f9aae5333df210",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "59e6c6819ae6938c7066baa632790e211dd7a627d321e8acd077baeba29f1116",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "ce3648c4fbd69d5ab4d1fc7054c17139dbc9675b9826013fddae85073b8c8fb7"
+     "request_text_sha256": "07d0293d5d6be3277bfddf6035bfb7996970697135d4631f6dc06049bc2c6878"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "2d5c41212393148ebe3e5ec5235c446652c43ab97c857d0c4cdaae2fc9a5f28e",
+    "reader_sha256": "752ed5f505b5d4eaaa41bd94c76ab95342d6369f2e385e4007a2d389e13e4f6b",
     "reader_source": "fallback",
     "final_grade": "B",
     "version": 1,
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -6791,7 +6792,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "668e3011e0e20a92875798c1e07c72193ab7a7c4d43ace4ef0dd93d33dbc9396"
+    "id": "8b8023628f116a2e9d326a62fc48d0a41e270cbc73cf7548aaffcb44e64b5a80"
    },
    "series": [
     {
@@ -7985,21 +7986,21 @@
     "source": "fallback",
     "chart_seen": false,
     "error": "RuntimeError: upstream connect error",
-    "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f",
+    "request_text_sha256": "e8fc2c0082f83aa0e3291a05313823613b1e2e742a13ab831436364dd7ade2a0",
     "input": {
-     "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "81a63bfc1ddf575064744ed6eeac56e2e0a309ec1c78a72cee9efc23bfc5383f",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
     },
     "attempts": [
      {
-      "request_sha256": "8640bc06d99de72a70dc08f89ec22adc0cd2d02ea65555c829c10fcfbb27a737",
+      "request_sha256": "b80ca8311826400db4c0457ee4fdf77f6a3f4680f720b8d5f2eb4c9fd3053a57",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
      },
      {
-      "request_sha256": "8640bc06d99de72a70dc08f89ec22adc0cd2d02ea65555c829c10fcfbb27a737",
+      "request_sha256": "b80ca8311826400db4c0457ee4fdf77f6a3f4680f720b8d5f2eb4c9fd3053a57",
       "correction": false,
       "outcome": "rejected",
       "error": "RuntimeError: upstream connect error"
@@ -8031,22 +8032,22 @@
      "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
     },
     "reader_input": {
-     "metrics_sha256": "1a5066e0c6e36101a374e37ffad8296156ccc83b6639098f6156bf8814f722eb",
-     "system_object": "89ce99900dbd9dcb3502bb95163d278f5f6940b501ada67b6558511fe291977e",
-     "system_sha256": "5dd7e691ebb76bf5ffd3236e353bd20490a7186f422111ccba68e24f988af51f",
+     "metrics_sha256": "81a63bfc1ddf575064744ed6eeac56e2e0a309ec1c78a72cee9efc23bfc5383f",
+     "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
+     "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
      "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-     "request_text_sha256": "ec7bff6934aa6ff71abf8984f2203291e2bdce4317bbedabbe0e04682b24835f"
+     "request_text_sha256": "e8fc2c0082f83aa0e3291a05313823613b1e2e742a13ab831436364dd7ade2a0"
     },
     "reader_coverage": "fallback",
-    "reader_sha256": "eac93165b96f9a3b8044e72fe6e1ce37fd16897bc4727b5c5614ec40d2493dfa",
+    "reader_sha256": "51e0bf2bfedfe015bac747d965564457eccc20a1d3b46ce2a9130ebe5f59c3b6",
     "reader_source": "fallback",
     "final_grade": "B",
     "version": 1,
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "726ce012f7a1",
-    "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+    "rules_version": "7e15f9c97146",
+    "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
     "gate": {
      "reader_coverage": "fallback",
      "regime": "green",
@@ -8059,7 +8060,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "42382739c5a0dd0f815d44225a2ec38f4a0e011ecf31c01e0c142988654ad58a"
+    "id": "ece01281e3145c95a842b3b06e06b130d05e9177db63510c6781f45bc1571a95"
    },
    "series": [
     {
@@ -9305,8 +9306,8 @@
      ],
      "evidence_ref": {
       "version": 1,
-      "id": "63e98eda810baff2ae2140f57b7451a1784ed37899a8a32b6a712f68b014dcf2",
-      "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+      "id": "e3ee29b8894884117d8408e1d6f6728dc8b9b6cdefb342528eaef4f055c9b153",
+      "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
       "plan_sha256": "02805406e094a6fe2efc60fcd35944fd6ce051fc0a8ebec74b704d75c24b9eb1",
       "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
      }
@@ -10314,8 +10315,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "726ce012f7a1",
-     "context_sha256": "202fc37fbed0f0fbf96605870ab5f50acbaf282de936ad15d3d3c8db9c31b0f8",
+     "rules_version": "7e15f9c97146",
+     "context_sha256": "b0e7a1a84a341fb11bb9ef65b74c8269efff47506ea09e1c251c2ee0af68bab2",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
@@ -10324,7 +10325,7 @@
       "reason": null,
       "detail": null
      },
-     "id": "63e98eda810baff2ae2140f57b7451a1784ed37899a8a32b6a712f68b014dcf2"
+     "id": "e3ee29b8894884117d8408e1d6f6728dc8b9b6cdefb342528eaef4f055c9b153"
     }
    }
   ],
@@ -10573,7 +10574,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "726ce012f7a1"
+  "replay_rules_version": "7e15f9c97146"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -10791,53 +10792,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:726ce012f7a1": {
+   "burst:AAPL:2026-09-10:7e15f9c97146": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:726ce012f7a1": {
+   "burst:AMD:2026-09-10:7e15f9c97146": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:726ce012f7a1": {
+   "burst:NVDA:2026-09-10:7e15f9c97146": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:726ce012f7a1": {
+   "burst:TSLA:2026-09-10:7e15f9c97146": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:726ce012f7a1": {
+   "burst:PLUG:2026-09-10:7e15f9c97146": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:726ce012f7a1": {
+   "burst:DLLR:2026-09-10:7e15f9c97146": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:726ce012f7a1": {
+   "anticipation:COIL:2026-09-10:7e15f9c97146": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "726ce012f7a1",
+    "rules_version": "7e15f9c97146",
     "coverage": "observed"
    }
   },

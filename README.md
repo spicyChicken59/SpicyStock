@@ -12,26 +12,27 @@ every rule is; this file says what the software does with them. The dated
 the primary 2015 4% and 2017 Dollar formulas, their differing volume
 boundaries, and the repository's separate precision/universe choices.
 
-The page is the product. It is generated, static, and renders one file,
-`docs/data.json`; it computes nothing of its own except whether the record
-it is showing is tonight's. Everything else — the regime, the grades, the
+The page is the product. It is generated and static: `docs/data.json` supplies
+the latest decision, with separate read-only historical evidence and optional
+browser-local saved research. It displays recorded gate counts and entry timing.
+The regime, the grades, the
 share counts, the order tickets, the exits, the record — is written by the
 run and printed verbatim. It is an implementation of the method with
 explicit assumptions (the archived rules, and `knowledge/method.md` on whose
 number each is), not a proven edge, and it knows nothing about what anyone
 holds: every plan it follows is a model of the published ticket.
 
-**Fourteen days.** Week one is paper: read the page every evening, place the
-orders in Fidelity's paper view or not at all, and read the open-plan rail
-each morning. Week two is the $10,000 account at the default 0.5% risk
-(0.25% is the more conservative end of his band and one variable away). Day
-fourteen is a decision point, made on the page's own reliability row and
-its bars-only scorecard, not on a feeling — and not an automatic switch to
-real money: twenty settled model plans make a rate readable, not an edge.
+**Historical validation.** The retained rebuild sample contains 13 publications
+across 11 sessions, with no published reaction ticket or settled plan. It does
+not establish an executable trading edge or a timetable for funding an account.
+The $10,000 / 0.5% / 25% / four-slot account is a model assumption. Twenty settled
+plans would make a rate readable, not certify an edge. Read the
+[versioned evidence and blocked claims](docs/input-truthfulness/2026-09-28-validation-review.md)
+and [selected operating contract](docs/input-truthfulness/2026-09-28-operating-contract.md).
 
 ## What the page says
 
-The page is a small application over one record: four views behind the
+The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
 `#/explore/setting-up/COIL`, `#/record`, `#/market`, `#/method`) so a link
 reloads to the same stock and the Back button works; the old one-page

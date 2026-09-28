@@ -1,5 +1,13 @@
 # Burst actionability and chart-source contract
 
+The [September 28 validation release](../input-truthfulness/2026-09-28-validation-review.md)
+adds overlapping recorded wait reasons and read-only historical cases to these
+existing adapters. It does not calculate new browser orders or loosen permission.
+Historical outcome reveals cannot rewrite the current record, chart inputs or
+saved originals. The archived cases use their original byte identities; if an
+original leaves the rotating public archive, the page reports it unavailable.
+The retained git/evidence package remains the offline reproduction source.
+
 Baseline: `964316f30a81035abf4dd5bd4be3ffbb2520a2fe` (merge #72).
 This is browser presentation only. Discovery/source mapping, grades, ticket
 permission, calendar, provenance v1 and runtime rules are unchanged.

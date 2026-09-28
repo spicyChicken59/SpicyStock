@@ -41,6 +41,19 @@ async function inspection(host) {
   }));
 }
 
+async function waitForChartLayout(page) {
+  // Newly opened dialogs first contain the detached chart's fallback width.
+  // ResizeObserver redraws it on a later animation frame. Capture the keyboard
+  // baseline only once visible SVGs fit their hosts; keep the exact SVG equality
+  // assertion below, including both the active chart and its peer.
+  await page.waitForFunction(() => [...document.querySelectorAll('.sc-chart--stock')]
+    .filter(h => h.getClientRects().length && h.clientWidth)
+    .every(h => {
+      const svg = h.querySelector('.sc-chart__stage > svg');
+      return svg && Math.abs(Number(svg.getAttribute('width')) - Math.max(200, h.clientWidth)) < 4;
+    }), null, { polling: 'raf' });
+}
+
 export async function checkChartKeyboard({ page, host, check, tag, shotsDir }) {
   const test = (name, pass, detail) => check(`${tag}: ${name}`, pass, detail);
   const summary = host.locator('.sc-details > summary'), scroll = host.locator('.sc-table-scroll');
@@ -164,13 +177,23 @@ export async function checkPageChartKeyboard({ browser, base, open, check, eq, s
   for (const width of [390, 1280]) for (const theme of ['dark', 'light']) {
     const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/full.json', '2026-09-10T22:31:00Z', width, {
       height: width === 390 ? 844 : 900, theme, lens: 'all', hash: '#/explore/bursts/AAPL',
-      beforeLoad: p => p.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.fulfill({ status: 200, body: '' }))
+      beforeLoad: async p => {
+        const delay = Number(process.env.SCSTOCK_TEST_RESIZE_DELAY_MS || 0);
+        if (delay > 0) await p.addInitScript(ms => {
+          const Native = window.ResizeObserver;
+          window.ResizeObserver = class extends Native {
+            constructor(callback) { super((entries, observer) => setTimeout(() => callback(entries, observer), ms)); }
+          };
+        }, delay);
+        await p.route(/^https?:\/\/(?!127\.0\.0\.1)/, r => r.fulfill({ status: 200, body: '' }));
+      }
     });
     try {
       async function consumer(selector, tag) {
         const host = page.locator(selector), summary = host.locator('summary'), scroll = host.locator('.sc-table-scroll');
         await host.focus(); await page.keyboard.press('Tab'); await page.keyboard.press('Enter'); await page.keyboard.press('Tab');
         check(`${tag}: Tab reaches its named table region`, await scroll.evaluate(s => s === document.activeElement && s.getAttribute('tabindex') === '0' && s.getAttribute('role') === 'region' && !!s.getAttribute('aria-label')));
+        await waitForChartLayout(page);
         const before = await page.locator('.sc-chart--stock').evaluateAll(hs => hs.map(h => h.querySelector('.sc-chart__stage > svg').outerHTML));
         const initial = await bounds(scroll);
         let right = initial;

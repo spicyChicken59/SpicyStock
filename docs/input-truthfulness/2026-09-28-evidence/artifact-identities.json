@@ -1,0 +1,46 @@
+[
+  {
+    "artifact_id": "10841015914",
+    "run_id": 36077970591,
+    "job_id": 107893350693,
+    "attempt": 1,
+    "workflow_checkout": "470c358c06bc9c997184d829c63845c4db0dc4f5",
+    "checkout_evidence": "actual git log checkout line in retained Actions job log, independently fetched through GitHub",
+    "publication_sha256": "97da76d4f0eae671a5168760b79852c2eb6c4539bef3a144df6ef6bfe20c93f4",
+    "zip_sha256": "d0f64ca3f620ec693262686fd7193994ef57090f0a2b2eb107248fdf42e8f4fd",
+    "zip_bytes": 34518199,
+    "session": "2026-09-24",
+    "captured_at": "2026-09-25T00:32:29.515829+00:00",
+    "rules": "7c02ee92cb05"
+  },
+  {
+    "artifact_id": "10893835913",
+    "run_id": 36205470985,
+    "job_id": 108300957661,
+    "attempt": 1,
+    "workflow_checkout": "e1359495ad267365dae9b6d03712fe7f17dc70cb",
+    "checkout_evidence": "actual git log checkout line in retained Actions job log, independently fetched through GitHub",
+    "publication_sha256": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+    "zip_sha256": "7eb1df028192e93bd188d3358c33c53f02d45662ba59742cd19a8fd81ca8505e",
+    "zip_bytes": 39251463,
+    "session": "2026-09-25",
+    "captured_at": "2026-09-26T00:36:55.145085+00:00",
+    "rules": "81ed3b38d571"
+  },
+  {
+    "artifact_id": "10841205634",
+    "zip_sha256": "ef8b36b8d043e319254139552dd066d3d4ca572810bc879a84425b3f1a3e4695",
+    "zip_bytes": 248102,
+    "original_json_sha256": "381b553b92eb127cabb7cd71505060d02496c108280a5e76c53c26b2a51f8a18",
+    "local_path": "tests/fixtures/historical-validation/2026-09-24/input-exceptions.json.gz",
+    "storage_note": "Original JSON bytes wrapped in deterministic gzip; directory gzip unchanged."
+  },
+  {
+    "artifact_id": "10893820885",
+    "zip_sha256": "114b8a0cd33ccb0fe56c2fec59d8a31bc32a55d3c3a5904708f570878569b6f6",
+    "zip_bytes": 249665,
+    "original_json_sha256": "18086b19b2ddf83273fa894fd65e507f3768843fc4112d4d02dcace5bdf2f7a2",
+    "local_path": "tests/fixtures/historical-validation/2026-09-25/input-exceptions.json.gz",
+    "storage_note": "Original JSON bytes wrapped in deterministic gzip; directory gzip unchanged."
+  }
+]

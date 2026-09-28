@@ -1,0 +1,26 @@
+[
+  {
+    "variant": "original-reader",
+    "status": "PASS",
+    "returncode": 1,
+    "summary": " ============================\nFAILED tests/test_reader_request_v2.py::test_documented_direct_api_models_send_the_authoritative_schema[claude-sonnet-4-6]\nFAILED tests/test_reader_request_v2.py::test_documented_direct_api_models_send_the_authoritative_schema[claude-sonnet-4-5]\nFAILED tests/test_reader_request_v2.py::test_documented_direct_api_models_send_the_authoritative_schema[claude-opus-4-6]\nFAILED tests/test_reader_request_v2.py::test_sdk_payload_uses_direct_endpoint_without_network\nFAILED tests/test_reader_request_v2.py::test_unverified_structured_output_combinations_do_not_get_schema[claude-opus-4-1]\n5 failed, 2 passed, 6 deselected in 0.71s\n"
+  },
+  {
+    "variant": "restored-reader-omission",
+    "status": "PASS",
+    "returncode": 1,
+    "summary": " ============================\nFAILED tests/test_reader_request_v2.py::test_documented_direct_api_models_send_the_authoritative_schema[claude-sonnet-4-6]\nFAILED tests/test_reader_request_v2.py::test_sdk_payload_uses_direct_endpoint_without_network\n2 failed, 5 passed, 6 deselected in 0.75s\n"
+  },
+  {
+    "variant": "original-chart",
+    "status": "PASS",
+    "returncode": 1,
+    "summary": " ============================\nFAILED tests/test_reader_chart_context.py::test_full_claimed_leg_is_in_the_dated_image\nFAILED tests/test_reader_chart_context.py::test_ordinary_chart_and_future_boundary_are_unchanged\n2 failed, 17 passed in 3.40s\n"
+  },
+  {
+    "variant": "restored-chart-clipping",
+    "status": "PASS",
+    "returncode": 1,
+    "summary": " ============================\nFAILED tests/test_reader_chart_context.py::test_full_claimed_leg_is_in_the_dated_image\n1 failed, 18 passed in 3.19s\n"
+  }
+]

@@ -1,5 +1,14 @@
 # Input truthfulness milestone
 
+[28 September 2026: historical validation and usable decisions](2026-09-28-validation-review.md)
+accounts for all 13 rebuild publications across 11 unique sessions, preserves
+overlapping zero-ticket causes and identifies unsupported historical claims.
+Its [frozen specification](2026-09-28-poc-spec.md),
+[selected operating contract](2026-09-28-operating-contract.md) and machine-readable
+evidence distinguish original replay, current-policy simulation, selected event
+studies and synthetic controls. No genuine qualifying historical ticket or
+trading edge is established.
+
 [23 September 2026: production reader compatibility](2026-09-23-reader-authority-production-compatibility.md)
 reconstructs all twelve September 22 request/fallback identities. Raw replies
 were discarded, so finding-level classification remains BLOCKED. The bounded

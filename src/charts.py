@@ -34,11 +34,14 @@ BOX_ALPHA = 0.18
 
 def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts", *,
                  through: int | None = None,
+                 context_start: int | None = None,
                  box: tuple[int, int, float, float] | None = None,
                  stop: float | None = None, trigger: float | None = None,
                  title: str | None = None) -> str:
     """Render `df`'s last SESSIONS readable bars to `<out_dir>/<ticker>.png`.
 
+    `context_start` extends the ordinary window to include a measured region;
+    it never extends the right edge beyond `through`.
     `through` is the position in `df` of the last bar drawn -- the bar the
     checklist graded and the metrics describe -- or None for the whole frame.
     `box` is `(first, last, low, high)`: positions in `df`, inclusive, and
@@ -62,6 +65,10 @@ def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts", *,
                 else np.zeros(len(frame), dtype=bool))
     drawn = np.flatnonzero(readable)[-SESSIONS:]
     start = int(drawn[0]) if len(drawn) else 0
+    if context_start is not None:
+        if type(context_start) is not int or not 0 <= context_start < len(frame):
+            raise ValueError("chart context start is outside the decision prefix")
+        start = min(start, context_start)
     plot_df = frame.iloc[start:].copy()
     blank = np.flatnonzero(~readable[start:])
     if len(blank) and price:
@@ -85,6 +92,25 @@ def render_chart(ticker: str, df: pd.DataFrame, out_dir: str = "charts", *,
         kwargs["fill_between"] = shade
     mpf.plot(plot_df, **kwargs)
     return path
+
+
+def reader_context(df, assessment):
+    """Date the exact image and measured regions; no later observations enter."""
+    readable = df[list(PRICE_COLUMNS)].notna().all(axis=1).to_numpy()
+    drawn = np.flatnonzero(readable)[-SESSIONS:]
+    start = int(drawn[0]) if len(drawn) else 0
+    regions = {}
+    for name, region in (("leg", assessment.leg), ("base", assessment.base)):
+        if region:
+            a, b = int(region['start']), int(region['end'])
+            if not 0 <= a <= b < len(df):
+                raise ValueError("reader region is outside the decision prefix")
+            start = min(start, a)
+            regions[name] = {"from": df.index[a].date().isoformat(),
+                             "through": df.index[b].date().isoformat()}
+    return {"start_index": start, "from": df.index[start].date().isoformat(),
+            "through": df.index[-1].date().isoformat(), "rows": len(df)-start,
+            "missing_price_rows": int((~readable[start:]).sum()), "regions": regions}
 
 
 def _finite(value) -> bool:

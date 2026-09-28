@@ -1,0 +1,69 @@
+{
+  "application_chart_sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+  "normal_race": {
+    "before_svg_width": 640,
+    "after_svg_width": 730,
+    "height": 340
+  },
+  "assertions": "Exact SVG equality, peer independence, keyboard/focus/scroll and geometry retained",
+  "command": "SCSTOCK_TEST_RESIZE_DELAY_MS=350 node tools/page_smoke.mjs --only chart-keyboard --shots /tmp/delayed-layout",
+  "mutation": "In an isolated tools copy, remove only await waitForChartLayout(page); keep the same delay and all assertions.",
+  "results": [
+    {
+      "name": "release-page",
+      "classification": "unmodified harness; natural race",
+      "delivery_delay_ms": 0,
+      "log_sha256": "b0c3257b6a2f0513c8bc5c2d836741955e9fe28da315be66cb2cce03c7a9fab2",
+      "passed": 8408,
+      "checks": 8409,
+      "failures": [
+        "FAIL  saved-1280-light: neither chart inspection nor its peer changes"
+      ]
+    },
+    {
+      "name": "baseline-delayed-resize",
+      "classification": "unchanged base application; observer-delivery control",
+      "delivery_delay_ms": 350,
+      "log_sha256": "df54dc01a60d278c27257fcfabd6274a84ffae6c2e0e0295e1150619e9fe0173",
+      "passed": 251,
+      "checks": 259,
+      "failures": [
+        "FAIL  comparison-a-390-dark: neither chart inspection nor its peer changes",
+        "FAIL  saved-390-dark: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-390-light: neither chart inspection nor its peer changes",
+        "FAIL  saved-390-light: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-1280-dark: neither chart inspection nor its peer changes",
+        "FAIL  saved-1280-dark: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-1280-light: neither chart inspection nor its peer changes",
+        "FAIL  saved-1280-light: neither chart inspection nor its peer changes"
+      ]
+    },
+    {
+      "name": "repaired-delayed-resize",
+      "classification": "repaired harness; same observer-delivery control",
+      "delivery_delay_ms": 350,
+      "log_sha256": "0d9a4219a21f475510f0bc079d5bd54829ee673bd7cead3f3b4d2985737164c1",
+      "passed": 259,
+      "checks": 259,
+      "failures": []
+    },
+    {
+      "name": "keyboard-wait-mutant",
+      "classification": "isolated restored premature capture; same observer-delivery control",
+      "delivery_delay_ms": 350,
+      "log_sha256": "cc94fa8509f3396855095e8bacdc77d8dd942cdc82431c9ab06efca2a0c92676",
+      "passed": 251,
+      "checks": 259,
+      "failures": [
+        "FAIL  comparison-a-390-dark: neither chart inspection nor its peer changes",
+        "FAIL  saved-390-dark: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-390-light: neither chart inspection nor its peer changes",
+        "FAIL  saved-390-light: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-1280-dark: neither chart inspection nor its peer changes",
+        "FAIL  saved-1280-dark: neither chart inspection nor its peer changes",
+        "FAIL  comparison-a-1280-light: neither chart inspection nor its peer changes",
+        "FAIL  saved-1280-light: neither chart inspection nor its peer changes"
+      ]
+    }
+  ]
+}

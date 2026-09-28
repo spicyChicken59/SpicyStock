@@ -1,0 +1,357 @@
+[
+  {
+    "ticker": "CRL",
+    "session": "2026-09-24",
+    "provider_volumes": [
+      1594208,
+      1590887
+    ],
+    "public_volumes": [
+      1474124,
+      1574098
+    ],
+    "source": "https://stockanalysis.com/stocks/crl/history/",
+    "retrieved_on": "2026-09-28",
+    "basis": "NYSE-listed named security, daily share volume; S&P Global page vs retained Alpaca SIP. Exact conditions/revision/volume adjustment comparability unresolved.",
+    "identity_limit": "No retained permanent security identifier independently corroborates share class.",
+    "before": {
+      "routes": [
+        "dollar"
+      ],
+      "score": 10.0,
+      "grade": "A",
+      "checks": {
+        "2": {
+          "status": "PASS",
+          "values": {
+            "up_run": 0,
+            "up_closes": 0,
+            "prior_day_pct": -2.73
+          }
+        },
+        "L": {
+          "status": "PASS",
+          "values": {
+            "er": 0.44,
+            "r2": 0.9,
+            "leg_sessions": 60,
+            "leg_gain_pct": 64.8
+          }
+        },
+        "Y": {
+          "status": "PASS",
+          "values": {
+            "breakouts_in_move": 1,
+            "sessions_since_move_start": 45,
+            "gain_since_move_start_pct": 34.6
+          }
+        },
+        "N": {
+          "status": "PASS",
+          "values": {
+            "prior_day_pct": -2.73,
+            "prior_range_pct": 5.2,
+            "negative": true,
+            "narrow": false,
+            "median_range_pct": 2.5
+          }
+        },
+        "C": {
+          "status": "PASS",
+          "values": {
+            "base_sessions": 18,
+            "breakdowns": 0,
+            "bursts_in_base": 0,
+            "giveback": 0.27,
+            "tightness": 0.8,
+            "base_volume_vs_leg": 1.05,
+            "base_volume_vs_avg": 1.0
+          }
+        },
+        "H": {
+          "status": "PASS",
+          "values": {
+            "close_pos": 0.82,
+            "close_above_open": true
+          }
+        },
+        "RE": {
+          "status": "PASS",
+          "values": {
+            "vs_prior_5": 1.4,
+            "vs_prior_10": 1.4,
+            "bar_range_pct": 7.3
+          }
+        },
+        "VOL": {
+          "status": "FAIL",
+          "values": {
+            "volume_vs_prior": 1.0,
+            "volume_vs_avg50": 1.7,
+            "volume_rank_60": 3,
+            "cv_required": false
+          }
+        }
+      }
+    },
+    "substituted_public_volumes": {
+      "routes": [
+        "burst",
+        "dollar"
+      ],
+      "score": 10.0,
+      "grade": "A+",
+      "checks": {
+        "2": {
+          "status": "PASS",
+          "values": {
+            "up_run": 0,
+            "up_closes": 0,
+            "prior_day_pct": -2.73
+          }
+        },
+        "L": {
+          "status": "PASS",
+          "values": {
+            "er": 0.44,
+            "r2": 0.9,
+            "leg_sessions": 60,
+            "leg_gain_pct": 64.8
+          }
+        },
+        "Y": {
+          "status": "PASS",
+          "values": {
+            "breakouts_in_move": 1,
+            "sessions_since_move_start": 45,
+            "gain_since_move_start_pct": 34.6
+          }
+        },
+        "N": {
+          "status": "PASS",
+          "values": {
+            "prior_day_pct": -2.73,
+            "prior_range_pct": 5.2,
+            "negative": true,
+            "narrow": false,
+            "median_range_pct": 2.5
+          }
+        },
+        "C": {
+          "status": "PASS",
+          "values": {
+            "base_sessions": 18,
+            "breakdowns": 0,
+            "bursts_in_base": 0,
+            "giveback": 0.27,
+            "tightness": 0.8,
+            "base_volume_vs_leg": 1.04,
+            "base_volume_vs_avg": 1.0
+          }
+        },
+        "H": {
+          "status": "PASS",
+          "values": {
+            "close_pos": 0.82,
+            "close_above_open": true
+          }
+        },
+        "RE": {
+          "status": "PASS",
+          "values": {
+            "vs_prior_5": 1.4,
+            "vs_prior_10": 1.4,
+            "bar_range_pct": 7.3
+          }
+        },
+        "VOL": {
+          "status": "PASS",
+          "values": {
+            "volume_vs_prior": 1.07,
+            "volume_vs_avg50": 1.69,
+            "volume_rank_60": 2,
+            "cv_required": false
+          }
+        }
+      }
+    },
+    "label": "COMPONENT SENSITIVITY ONLY; two volume values substituted, no provider-error adjudication or new reader acceptance"
+  },
+  {
+    "ticker": "IQV",
+    "session": "2026-09-24",
+    "provider_volumes": [
+      1116832,
+      1893479
+    ],
+    "public_volumes": [
+      1104252,
+      1891777
+    ],
+    "source": "https://stockanalysis.com/stocks/iqv/history/",
+    "retrieved_on": "2026-09-28",
+    "basis": "NYSE-listed named security, daily share volume; S&P Global page vs retained Alpaca SIP. Exact conditions/revision/volume adjustment comparability unresolved.",
+    "identity_limit": "No retained permanent security identifier independently corroborates share class.",
+    "before": {
+      "routes": [
+        "dollar"
+      ],
+      "score": 10.0,
+      "grade": "A",
+      "checks": {
+        "2": {
+          "status": "PASS",
+          "values": {
+            "up_run": 0,
+            "up_closes": 0,
+            "prior_day_pct": -0.83
+          }
+        },
+        "L": {
+          "status": "PASS",
+          "values": {
+            "er": 0.37,
+            "r2": 0.9,
+            "leg_sessions": 60,
+            "leg_gain_pct": 45.2
+          }
+        },
+        "Y": {
+          "status": "PASS",
+          "values": {
+            "breakouts_in_move": 1,
+            "sessions_since_move_start": 60,
+            "gain_since_move_start_pct": 42.3
+          }
+        },
+        "N": {
+          "status": "PASS",
+          "values": {
+            "prior_day_pct": -0.83,
+            "prior_range_pct": 3.7,
+            "negative": true,
+            "narrow": false,
+            "median_range_pct": 2.2
+          }
+        },
+        "C": {
+          "status": "PASS",
+          "values": {
+            "base_sessions": 4,
+            "breakdowns": 0,
+            "bursts_in_base": 0,
+            "giveback": 0.09,
+            "tightness": 0.78,
+            "base_volume_vs_leg": 1.72,
+            "base_volume_vs_avg": 1.62
+          }
+        },
+        "H": {
+          "status": "PASS",
+          "values": {
+            "close_pos": 0.8,
+            "close_above_open": true
+          }
+        },
+        "RE": {
+          "status": "PASS",
+          "values": {
+            "vs_prior_5": 1.05,
+            "vs_prior_10": 1.05,
+            "bar_range_pct": 3.9
+          }
+        },
+        "VOL": {
+          "status": "PASS",
+          "values": {
+            "volume_vs_prior": 1.7,
+            "volume_vs_avg50": 1.28,
+            "volume_rank_60": 8,
+            "cv_required": false
+          }
+        }
+      }
+    },
+    "substituted_public_volumes": {
+      "routes": [
+        "dollar"
+      ],
+      "score": 10.0,
+      "grade": "A",
+      "checks": {
+        "2": {
+          "status": "PASS",
+          "values": {
+            "up_run": 0,
+            "up_closes": 0,
+            "prior_day_pct": -0.83
+          }
+        },
+        "L": {
+          "status": "PASS",
+          "values": {
+            "er": 0.37,
+            "r2": 0.9,
+            "leg_sessions": 60,
+            "leg_gain_pct": 45.2
+          }
+        },
+        "Y": {
+          "status": "PASS",
+          "values": {
+            "breakouts_in_move": 1,
+            "sessions_since_move_start": 60,
+            "gain_since_move_start_pct": 42.3
+          }
+        },
+        "N": {
+          "status": "PASS",
+          "values": {
+            "prior_day_pct": -0.83,
+            "prior_range_pct": 3.7,
+            "negative": true,
+            "narrow": false,
+            "median_range_pct": 2.2
+          }
+        },
+        "C": {
+          "status": "PASS",
+          "values": {
+            "base_sessions": 4,
+            "breakdowns": 0,
+            "bursts_in_base": 0,
+            "giveback": 0.09,
+            "tightness": 0.78,
+            "base_volume_vs_leg": 1.72,
+            "base_volume_vs_avg": 1.62
+          }
+        },
+        "H": {
+          "status": "PASS",
+          "values": {
+            "close_pos": 0.8,
+            "close_above_open": true
+          }
+        },
+        "RE": {
+          "status": "PASS",
+          "values": {
+            "vs_prior_5": 1.05,
+            "vs_prior_10": 1.05,
+            "bar_range_pct": 3.9
+          }
+        },
+        "VOL": {
+          "status": "PASS",
+          "values": {
+            "volume_vs_prior": 1.71,
+            "volume_vs_avg50": 1.28,
+            "volume_rank_60": 8,
+            "cv_required": false
+          }
+        }
+      }
+    },
+    "label": "COMPONENT SENSITIVITY ONLY; two volume values substituted, no provider-error adjudication or new reader acceptance"
+  }
+]

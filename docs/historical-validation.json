@@ -1,0 +1,135 @@
+{
+  "version": "historical-validation-v1",
+  "spec_sha256": "7be3cb4407fdcaeb3ccb9af2186b20417b8cd3c68b1c39e22d259cb2c1f19ceb",
+  "base": "8be007f68deaa417b85a512d2e16a37899d27011",
+  "from": "2026-09-11",
+  "through": "2026-09-25",
+  "publications": 13,
+  "unique_sessions": 11,
+  "candidate_publications": 5215,
+  "unique_candidate_sessions": 4434,
+  "published_tickets": 0,
+  "settled": 0,
+  "selection": "Complete retained rebuild publications; repeated sessions are revisions. Displayed CRL/IQV/MSFT cases were named development challenges, not a holdout or a representative performance sample.",
+  "original_policy": "recorded rules for each publication; reader authority v1",
+  "proposed_policy": "reader request v2; old replies are not reviews of the new request",
+  "cases": [
+    {
+      "ticker": "CRL",
+      "session": "2026-09-24",
+      "entry": {
+        "ticker": "CRL",
+        "kind": "burst",
+        "grade": "B",
+        "rank": 51,
+        "scan": "dollar",
+        "source": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "path": "332b99ffac36b3b723de58197ce853e1ecd96b20/burst-CRL.json",
+        "sha256": "53e3f6d6f5e1d572f14224d143aea1ad3f7b4b1c152bc918170bd67aa6267de5",
+        "chart": true,
+        "evidence_id": "932eeffaaeb781b132c79ad8edf5d26f953aaf2b44246233513fa80680a69a2b"
+      },
+      "source": {
+        "record_id": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "git_blob": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "commit": null,
+        "session": "2026-09-24",
+        "published_at": "2026-09-25T00:32:29.515829+00:00",
+        "rules_version": "7c02ee92cb05",
+        "run_id": "36077970591",
+        "context_sha256": "1e7fd209bf7a61694dd2cf17925680e54ff257dc97e5bbcc9a93a529ad0bf2e4"
+      },
+      "next_session": "2026-09-25",
+      "later_observation": {
+        "bar": {
+          "c": 292.84,
+          "date": "2026-09-25",
+          "from_session": "2026-09-25",
+          "h": 295.2276,
+          "l": 287.2348,
+          "o": 293.19,
+          "source": "public observation history",
+          "v": 838398.0
+        },
+        "capture": "2026-09-26T00:36:55.145085+00:00",
+        "prior_close": 294.44,
+        "publication": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+        "source": "publication observation"
+      },
+      "close_change_pct": -0.5434
+    },
+    {
+      "ticker": "IQV",
+      "session": "2026-09-24",
+      "entry": {
+        "ticker": "IQV",
+        "kind": "burst",
+        "grade": "B",
+        "rank": 52,
+        "scan": "dollar",
+        "source": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "path": "332b99ffac36b3b723de58197ce853e1ecd96b20/burst-IQV.json",
+        "sha256": "3aa003bc988727941411f7dc9a829e03e0f7709437979284d893380602dd95d4",
+        "chart": false,
+        "evidence_id": "c95fe8826e3e7453901d2a13e21750691634058a634c70ebbb3c24544afcee78"
+      },
+      "source": {
+        "record_id": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "git_blob": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+        "commit": null,
+        "session": "2026-09-24",
+        "published_at": "2026-09-25T00:32:29.515829+00:00",
+        "rules_version": "7c02ee92cb05",
+        "run_id": "36077970591",
+        "context_sha256": "1e7fd209bf7a61694dd2cf17925680e54ff257dc97e5bbcc9a93a529ad0bf2e4"
+      },
+      "next_session": "2026-09-25",
+      "later_observation": {
+        "bar": {
+          "c": 270.37,
+          "date": "2026-09-25",
+          "from_session": "2026-09-25",
+          "h": 274.9,
+          "l": 269.43,
+          "o": 274.9,
+          "source": "public observation history",
+          "v": 1104971.0
+        },
+        "capture": "2026-09-26T00:36:55.145085+00:00",
+        "prior_close": 275.02,
+        "publication": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+        "source": "publication observation"
+      },
+      "close_change_pct": -1.6908
+    },
+    {
+      "ticker": "MSFT",
+      "session": "2026-09-25",
+      "entry": {
+        "ticker": "MSFT",
+        "kind": "burst",
+        "grade": "A",
+        "rank": 1,
+        "scan": "dollar",
+        "source": "6fce465edd51badead8ad0c38b111819ee69c884",
+        "path": "6fce465edd51badead8ad0c38b111819ee69c884/burst-MSFT.json",
+        "sha256": "26ef0c085dbad0bdad0bcdf880a9d4c1070a50b6ccd991c292f5561db3b9f639",
+        "chart": true,
+        "evidence_id": "c31461a52de2674a665bea383b2acc548e4470e607e13a1a2d67783f7055c698"
+      },
+      "source": {
+        "record_id": "6fce465edd51badead8ad0c38b111819ee69c884",
+        "git_blob": "6fce465edd51badead8ad0c38b111819ee69c884",
+        "commit": null,
+        "session": "2026-09-25",
+        "published_at": "2026-09-26T00:36:55.145085+00:00",
+        "rules_version": "81ed3b38d571",
+        "run_id": "36205470985",
+        "context_sha256": "f841d8cdfda44014235a52af4c3dccae51d890c45be5bf262012a6a99c62cb0f"
+      },
+      "next_session": "2026-09-28",
+      "later_observation": null,
+      "close_change_pct": null
+    }
+  ]
+}

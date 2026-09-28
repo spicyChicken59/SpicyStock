@@ -154,13 +154,11 @@ def _metrics_of(call: dict) -> dict:
 # ----------------------------------------------------------- the request ----
 
 
-def test_the_default_model_gets_temperature_and_no_output_config():
-    """claude-sonnet-4-6 accepts sampling parameters and does NOT support
-    structured outputs: output_config to it is a 400, and no temperature is
-    the unpinned sort key."""
+def test_the_default_model_gets_temperature_and_output_config():
+    """Direct Sonnet 4.6 supports both independently documented capabilities."""
     kwargs = request_kwargs("sys", [{"type": "text", "text": "t"}], model="claude-sonnet-4-6")
     assert kwargs["extra_body"] == {"temperature": 0}
-    assert "output_config" not in kwargs
+    assert kwargs["output_config"]["format"]["schema"] == SCORE_SCHEMA
     assert kwargs["max_tokens"] == MAX_TOKENS
 
 
@@ -184,11 +182,11 @@ def test_an_unrecognised_model_is_sent_neither_gated_parameter():
     assert "extra_body" not in kwargs and "output_config" not in kwargs
 
 
-def test_the_two_capability_lists_do_not_overlap_by_accident():
-    """An id in both lists would be sent a schema it may not support and a
-    sampling parameter it may reject."""
+def test_the_two_capability_lists_have_documented_overlap():
+    """Schema support does not imply that sampling parameters are forbidden."""
     overlap = STRUCTURED_OUTPUT_MODELS & SAMPLING_MODELS
-    assert overlap <= {"claude-haiku-4-5", "claude-opus-4-5"}, overlap
+    assert overlap == {"claude-haiku-4-5", "claude-opus-4-5", "claude-opus-4-6",
+                       "claude-sonnet-4-5", "claude-sonnet-4-6"}, overlap
 
 
 @pytest.mark.parametrize("model", ["claude-sonnet-4-6", "claude-opus-5", "claude-unknown-9"])
