@@ -781,6 +781,21 @@ records lacking provenance, freshness is unknown and actions are withheld. Old
 records and saved setups retain their original timing and limitations. New saves
 freeze their original timing evidence; later observations do not replace it.
 
+The wait explanation uses that same publication/calendar authority. The close
+buffer does not end an unpublished evening evaluation: the completed session
+remains pending, or is reported as delayed/missing/possibly failed under the
+existing freshness policy. A future completion time is not promised. Clock, focus,
+visibility and refresh updates preserve the reading state. Planning explanations
+distinguish a recorded early-gate skip, an attempted error, a produced refusal,
+recorded sizing/allocation and unknown historical evidence; null alone establishes
+none of those stages. See the [PR #92 correction and proof limits](docs/input-truthfulness/2026-09-28-pr92-explanation-correction.md).
+
+The normal `page_smoke.mjs` gate includes the shared historical journey and wait
+regressions, pinned to retained publications independently of later automatic
+`docs/data.json` updates. `--only historical,wait-explanations` runs that focused
+selection; `tools/historical_journeys.mjs` remains a standalone entry point to
+the same historical assertions.
+
 Deterministic cases include 2024-08-26 (ordinary Monday), Aug 31/Sep 1 (weekend),
 Sep 2 (Labor Day), Aug 30→Sep 3 (adjacent sessions), Nov 29 (13:00 ET close),
 Dec 2 (the following session), Mar 8→11 and Nov 1→4 (DST offsets). Historical
