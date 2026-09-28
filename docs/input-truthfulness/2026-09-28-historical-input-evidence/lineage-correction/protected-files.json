@@ -1,0 +1,153 @@
+{
+  "allowed_changes": [
+    {
+      "path": "CLAUDE.md",
+      "reviewed": {
+        "blob": "1429d838bb9948af2a58d871512f9df5ae735b21",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "63da6c32557416bcd19b8807528684229cc0c325",
+        "mode": "100644"
+      }
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-28-historical-input-evidence/README.md",
+      "reviewed": {
+        "blob": "a3f6edcb9e69f5437764ccb7006b103aef1108a7",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "3b8ffb4c996a8c9b508fe08c6bf3c4d5cfe1f074",
+        "mode": "100644"
+      }
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-28-historical-input-proof.md",
+      "reviewed": {
+        "blob": "715fc07025b984031d63b832633161ac4bde2f6a",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "164ce3a959864b7591498207e0b2cae187343bb8",
+        "mode": "100644"
+      }
+    },
+    {
+      "path": "tests/test_historical_acquisition.py",
+      "reviewed": {
+        "blob": "994dab7397e67a06a47ec14363304faf314f1377",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "2866de3475dd76c2d2951e507ffd3f38cf8feda7",
+        "mode": "100644"
+      }
+    },
+    {
+      "path": "tools/historical_acquisition.py",
+      "reviewed": {
+        "blob": "f882254b97f838ac95e0875b22702c4935a3a938",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "c75d7080f1baa101f82843be8d14e29451f4a860",
+        "mode": "100644"
+      }
+    }
+  ],
+  "authorized_existing_edits": [
+    "CLAUDE.md",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/README.md",
+    "docs/input-truthfulness/2026-09-28-historical-input-proof.md",
+    "tests/test_historical_acquisition.py",
+    "tools/historical_acquisition.py"
+  ],
+  "authorized_new_exact_paths": [
+    "tools/historical_lineage_controls.py"
+  ],
+  "authorized_new_prefix": "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/",
+  "critical_protected_files": {
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-execution.json": {
+      "reviewed": {
+        "blob": "71ac1df1ae7c1dcea97013ac6396cda7d502560f",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "71ac1df1ae7c1dcea97013ac6396cda7d502560f",
+        "mode": "100644"
+      },
+      "status": "PASS"
+    },
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json": {
+      "reviewed": {
+        "blob": "cc2c4b1d20dd695eb183a274081d150634c73656",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "cc2c4b1d20dd695eb183a274081d150634c73656",
+        "mode": "100644"
+      },
+      "status": "PASS"
+    },
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/manifest-freeze.json": {
+      "reviewed": {
+        "blob": "662feb7f9969d17ad6484644a7bb62f3eab90f27",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "662feb7f9969d17ad6484644a7bb62f3eab90f27",
+        "mode": "100644"
+      },
+      "status": "PASS"
+    },
+    "tools/historical_input_proof.py": {
+      "reviewed": {
+        "blob": "9bb59bdf0bd1204897374e818d600acb8bafc6ba",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "9bb59bdf0bd1204897374e818d600acb8bafc6ba",
+        "mode": "100644"
+      },
+      "status": "PASS"
+    },
+    "tools/historical_normalization.py": {
+      "reviewed": {
+        "blob": "147d2d803150968201f65953bc80005e3c6d6c6f",
+        "mode": "100644"
+      },
+      "staged": {
+        "blob": "147d2d803150968201f65953bc80005e3c6d6c6f",
+        "mode": "100644"
+      },
+      "status": "PASS"
+    }
+  },
+  "invalid_authorized_file_deletions_or_mode_changes": [],
+  "limits": "Checks staged canonical Git bytes/modes, not platform-specific working-tree newline encodings; Git objects must be present. No history replay, network request, file edit, staging or workflow action occurs.",
+  "manifest_encoding": "Sorted path + NUL + Git mode + NUL + Git blob identity + LF for every protected entry, UTF-8.",
+  "new_staged_files": [
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/README.md",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/before-working-tree.txt",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/controls.json",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/fixed.txt",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/full-suite.txt",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/protected-files.json",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/restored_defect.txt",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/reviewed.txt",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/lineage-correction/verification.json",
+    "tools/historical_lineage_controls.py"
+  ],
+  "protected_file_count": 8896,
+  "protected_manifest_sha256": "13a845034e2fa151888dddf29cec18fe15db08a7d93ca0c92755729ac3b22ee7",
+  "protected_violations": [],
+  "reviewed_head": "a9ed0ec3b64399e1f9d80ac3ce27d921c289f9b1",
+  "scope": "Every reviewed-head tracked Git blob and mode except exactly five authorized editable files; prior evidence is protected regardless of any new-file prefix.",
+  "staged_protected_manifest_sha256": "13a845034e2fa151888dddf29cec18fe15db08a7d93ca0c92755729ac3b22ee7",
+  "status": "PASS",
+  "unauthorized_new_files": [],
+  "unmerged_entries": [],
+  "unstaged_tracked_files": [],
+  "untracked_files": []
+}

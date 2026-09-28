@@ -1,0 +1,112 @@
+{
+  "status": "PASS",
+  "base_main": "0d702940814af05e9b8d2a4c887aee00939e46fc",
+  "reviewed_head": "a9ed0ec3b64399e1f9d80ac3ce27d921c289f9b1",
+  "review_id": 5342729066,
+  "corrected_head": "PR #93 records the submitted commit and completed normal CI without a self-referential follow-up commit.",
+  "execution_order": [
+    "Remote branch/main and clean checkout verified before editing.",
+    "New tests run through the untouched reviewed Acquisition class: 6 wrong-pointer assertion failures, 3 controls pass; source diff empty before run.",
+    "Applied page-local enumerate and explicit source coordinates only.",
+    "Isolated exact-reviewed, fixed and restored-defect class controls executed; all expected results verified.",
+    "Final complete local pytest suite:1686 PASS, no skips.",
+    "Stage and hash-check all protected reviewed-head files; normal CI recorded in same PR."
+  ],
+  "before": {
+    "status": "FAIL",
+    "passed": 3,
+    "failed": 6,
+    "errors": 0,
+    "reviewed_source_git_bytes_sha256": "10112b5792fe52f1f64afaed3c329393da434dc51300a97f70df7c606da99724",
+    "log": "before-working-tree.txt"
+  },
+  "focused_and_mutation_controls": {
+    "status": "PASS",
+    "report": "controls.json",
+    "fixed_passed": 9,
+    "reviewed_failed": 6,
+    "restored_failed": 6,
+    "unaffected_passed_each": 3
+  },
+  "raw_pointer_resolution": {
+    "status": "PASS",
+    "scope": "Both previous/discarded and selected pointers resolve exact retained raw JSON symbol/timestamp/OHLCV and agree with unchanged normalizer identities; 7 page cases and 2 cached-resume cases."
+  },
+  "cached_resume": {
+    "status": "PASS",
+    "extra_transport_calls": 0,
+    "request_byte_caps_exhausted": true,
+    "attempt_rows_unchanged": true,
+    "raw_bytes_unchanged": true,
+    "full_manifest_unchanged": true,
+    "charges_unchanged": true
+  },
+  "full_python": {
+    "status": "PASS",
+    "command": "python -m pytest tests/ -q --junitxml=../lineage-full.xml",
+    "tests": 1686,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 129.626,
+    "log": "full-suite.txt"
+  },
+  "runtime": {
+    "python": "3.12.14",
+    "requirements": "tools/requirements-historical.txt",
+    "platform": "Windows",
+    "variables": [
+      "PYTHONUTF8=1",
+      "MPLBACKEND=Agg",
+      "external MPLCONFIGDIR",
+      "external PYTHONPATH resource import adapter"
+    ],
+    "resource_limitation": "Unchanged preexisting Unix-only resource import needs the external adapter documented in the original verification; getrusage raises, no telemetry fabricated. Normal Linux CI uses native resource."
+  },
+  "protected_files": {
+    "status": "PASS",
+    "count": 8896,
+    "evidence": "protected-files.json",
+    "scope": "All reviewed-head tracked blobs/modes except5 named authorized code/test/report edits."
+  },
+  "normal_ci_at_commit": {
+    "status": "NOT RUN",
+    "scope": "Normal PR-triggered Linux Python/fixture, page and secret outcomes recorded at exact submitted head in PR #93 before handoff; no manual dispatch."
+  },
+  "real_acquisition": {
+    "status": "NOT RUN",
+    "probe": "NOT RUN",
+    "requests": 0,
+    "new_raw_response_bytes": 0,
+    "additional_spend_usd": 0,
+    "prerequisites": "BLOCKED",
+    "prior_execution_report_unchanged": true
+  },
+  "historical_analysis_regeneration": "NOT RUN",
+  "source_sha256": {
+    "tools/historical_acquisition.py": "e588b4a8665938e0143aa0db14d1b947f20fd9e739842ff24d1e3e2f6fbfc597",
+    "tests/test_historical_acquisition.py": "b8221b95db87cba04eaa021e859e285cad5f8c584b196a880b27e2f46a748055",
+    "tools/historical_lineage_controls.py": "855e175ab3c0b5238463e8f07c92c504fa5012abd0c30788e131c83c37fdc59d"
+  },
+  "working_log_sha256": {
+    "before-working-tree.txt": "914c6fd7962e590622fd10c84d1fc1a2fed68e82f2bc9da9ac3057f17a318cff",
+    "fixed.txt": "8faa4f0ce57b78f6ce26824b843eab8afbdb3194719de1d0bd3d75c9b07d24e8",
+    "full-suite.txt": "afbd2b7ec20c4be1e792387ef853310210506c082d3f70f943711773a8265806",
+    "restored_defect.txt": "692a9064768ccfca95fb464d744b21295bb1a26a12a4256901e6cc005b19e8dd",
+    "reviewed.txt": "e4c4ec1fa1cf2c865d35feefb95a7339ace085933c6fd329c853a412464194e4"
+  },
+  "retained_log_lf_sha256": {
+    "before-working-tree.txt": "4a68fc3998c2f258118a52481d30560ca825c61de4ff1e080f351fa8d48a69ba",
+    "fixed.txt": "4a208e83c829033ec5e81567c4fd8b6690ad00d52f3e0c4680c3306a29af9039",
+    "full-suite.txt": "7a3553087dcd9814ce6cb7f4a2b472e3f8db9c6ecf99d92d8d85b47fa1f74b54",
+    "restored_defect.txt": "a83eba2478e403b2b87612740470b2336e5048d54c567fc9e556c72bd129be9b",
+    "reviewed.txt": "5f47c14faf50218481cfbc60e671338515e391a3f399a6def6a740c9e6932c01"
+  },
+  "hash_basis": "working_log_sha256 and source_sha256 identify original Windows checkout bytes; retained_log_lf_sha256 identifies canonical Git text bytes. Compiled source identity is UTF-8/LF in controls.json.",
+  "source_git_text_lf_sha256": {
+    "tools/historical_acquisition.py": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e",
+    "tests/test_historical_acquisition.py": "b8221b95db87cba04eaa021e859e285cad5f8c584b196a880b27e2f46a748055",
+    "tools/historical_lineage_controls.py": "855e175ab3c0b5238463e8f07c92c504fa5012abd0c30788e131c83c37fdc59d"
+  },
+  "log_presentation": "Committed test transcripts use LF and trim trailing whitespace only. working_log_sha256 preserves original captured-log identities. Synthetic raw response bytes are not changed."
+}

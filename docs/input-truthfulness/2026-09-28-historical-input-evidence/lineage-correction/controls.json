@@ -1,0 +1,196 @@
+{
+  "status": "PASS",
+  "reviewed_head": "a9ed0ec3b64399e1f9d80ac3ce27d921c289f9b1",
+  "scope": "Actual Acquisition class with synthetic transport, retained raw JSON, normalizer and cached resume; no method excerpt or live HTTP.",
+  "source_coordinate_contract": "raw-page-symbol-row-v1: SHA256(raw page), query-chain page_index, symbol, zero-based row_index into that raw page's bars[symbol] array.",
+  "unchanged_control_cases": [
+    "same_page_control",
+    "no_duplicate_control",
+    "cached same_page_control"
+  ],
+  "network": "blocked by tests/conftest.py",
+  "real_provider_requests": 0,
+  "source_tests_runner_unchanged": true,
+  "runtime": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "input_sha256": {
+    "tools/historical_acquisition.py": "e588b4a8665938e0143aa0db14d1b947f20fd9e739842ff24d1e3e2f6fbfc597",
+    "tests/test_historical_acquisition.py": "b8221b95db87cba04eaa021e859e285cad5f8c584b196a880b27e2f46a748055",
+    "tools/historical_lineage_controls.py": "855e175ab3c0b5238463e8f07c92c504fa5012abd0c30788e131c83c37fdc59d"
+  },
+  "variants": [
+    {
+      "variant": "reviewed",
+      "status": "FAIL",
+      "expected_result_verified": true,
+      "pytest_exit": 1,
+      "passed": 3,
+      "failed": 6,
+      "source_utf8_lf_sha256": "10112b5792fe52f1f64afaed3c329393da434dc51300a97f70df7c606da99724",
+      "tests": [
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[two_pages_wrong_observation]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[one_row_later_page]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[three_page_replacements]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[within_later_page]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[multiple_symbols]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[no_duplicate_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[three_page_replacements]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        }
+      ],
+      "log": "reviewed.txt",
+      "junit": "reviewed.xml"
+    },
+    {
+      "variant": "fixed",
+      "status": "PASS",
+      "expected_result_verified": true,
+      "pytest_exit": 0,
+      "passed": 9,
+      "failed": 0,
+      "source_utf8_lf_sha256": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e",
+      "tests": [
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[two_pages_wrong_observation]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[one_row_later_page]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[three_page_replacements]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[within_later_page]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[multiple_symbols]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[no_duplicate_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[three_page_replacements]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        }
+      ],
+      "log": "fixed.txt",
+      "junit": "fixed.xml"
+    },
+    {
+      "variant": "restored_defect",
+      "status": "FAIL",
+      "expected_result_verified": true,
+      "pytest_exit": 1,
+      "passed": 3,
+      "failed": 6,
+      "source_utf8_lf_sha256": "5f9821c6806c181551a11622fda594252ac78ae4ef83a691c14e7d165278077b",
+      "tests": [
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[two_pages_wrong_observation]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[one_row_later_page]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[three_page_replacements]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[within_later_page]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[multiple_symbols]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_resolve_retained_raw[no_duplicate_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[three_page_replacements]",
+          "status": "FAIL",
+          "failure_is_raw_pointer_assertion": true
+        },
+        {
+          "test": "test_duplicate_source_coordinates_cached_resume[same_page_control]",
+          "status": "PASS",
+          "failure_is_raw_pointer_assertion": false
+        }
+      ],
+      "log": "restored_defect.txt",
+      "junit": "restored_defect.xml"
+    }
+  ]
+}

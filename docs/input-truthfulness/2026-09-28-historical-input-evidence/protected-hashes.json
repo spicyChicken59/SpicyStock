@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "base_commit": "0d702940814af05e9b8d2a4c887aee00939e46fc",
+  "baseline_tracked_files": 8870,
+  "protected_files": 8867,
+  "permitted_existing_file_edits": [
+    ".env.example",
+    "CLAUDE.md",
+    "README.md"
+  ],
+  "changed_protected_files": [],
+  "inventory": "protected-files.json.gz",
+  "inventory_uncompressed_sha256": "2440050969529505e61a84f964c8dca8ed1a8a5079d2c81a8d97f70421a7526b",
+  "inventory_compressed_sha256": "a717a8cdf24425cede5120ce3f98a35357973262d07baf197a21a59208bb898b",
+  "scope": "All baseline tracked files except three deliberately edited handoff/environment/readme documents. Includes producer code, workflows, prior reports, publications, picks, source objects, quality ledgers and installed design system.",
+  "portability": "Git blob identities are canonical; checkout SHA256 records the untouched Windows baseline bytes, including its CRLF checkout conversion.",
+  "design_system": {
+    "version": "2.13.0",
+    "upstream_commit": "14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c"
+  }
+}

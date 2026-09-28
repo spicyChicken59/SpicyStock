@@ -1,0 +1,115 @@
+{
+  "base_commit": "0d702940814af05e9b8d2a4c887aee00939e46fc",
+  "final_python": {
+    "status": "PASS",
+    "command": "python -m pytest tests/ -q --junitxml=../pytest-sealed.xml",
+    "tests": 1677,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "seconds": 105.867,
+    "network": "Blocked by existing tests/conftest.py; synthetic acquisition transport only."
+  },
+  "windows_environment": {
+    "python": "3.12.14",
+    "requirements": "tools/requirements-historical.txt",
+    "variables": [
+      "PYTHONUTF8=1",
+      "MPLBACKEND=Agg",
+      "MPLCONFIGDIR outside repo",
+      "PYTHONPATH external resource import adapter"
+    ],
+    "resource_adapter": {
+      "scope": "Allows import of preexisting Unix-only historical_validation module for pure-function tests. RUSAGE_SELF=0; getrusage raises RuntimeError if called. No telemetry fabricated; no assertion skipped.",
+      "sha256": "ee7fd7e4d24193e40cd40104ca01bf83d755fb3c8c036904e0f632bcf6159198"
+    }
+  },
+  "initial_failures": [
+    {
+      "status": "FAIL",
+      "scope": "Initial full collection",
+      "reason": "Windows cp1252 decoding in existing docs tests and Unix-only resource import; fixed only disposable test runtime."
+    },
+    {
+      "status": "FAIL",
+      "scope": "New acquisition lock regression on Windows",
+      "reason": "Lock portability corrected in new tool; final 76 focused tests pass."
+    },
+    {
+      "status": "FAIL",
+      "scope": "New reconciliation integration fixtures",
+      "reason": "Fixtures omitted newly mandatory small access probe; corrected fixtures now exercise probe then bulk."
+    },
+    {
+      "status": "FAIL",
+      "scope": "First final affected integration",
+      "passed": 749,
+      "failed": 1,
+      "reason": "Stale documented test count; collection subprocess initially lacked external resource adapter."
+    },
+    {
+      "status": "FAIL",
+      "scope": "Full integration before final source seal",
+      "passed": 1676,
+      "failed": 1,
+      "reason": "CLAUDE count captured1676 before the last shallow-checkout regression made the suite1677. Count corrected before final sealed run."
+    }
+  ],
+  "windows_fixture_check": {
+    "status": "FAIL",
+    "command": "python tools/make_fixture.py --check",
+    "differing_objects": 24,
+    "scope": "gzip fixture object byte comparisons on Windows; no fixture regenerated or modified. Prior checkpoint documents platform serialization differences. Native Linux normal CI is authoritative; this run did not separately adjudicate the byte-level cause."
+  },
+  "arithmetic_negative_controls": {
+    "status": "PASS",
+    "evidence": "reference-controls.json"
+  },
+  "acquisition_negative_controls": {
+    "status": "PASS",
+    "evidence": "acquisition-controls.json"
+  },
+  "protected_files": {
+    "status": "PASS",
+    "count": 8867,
+    "evidence": "protected-hashes.json"
+  },
+  "normal_ci_at_commit": {
+    "status": "NOT RUN",
+    "scope": "PR-triggered Linux Python, fixture and real-browser gates will be recorded with the exact submitted head in the PR; no workflow dispatch."
+  },
+  "new_real_acquisition": {
+    "status": "BLOCKED",
+    "probe": "NOT RUN",
+    "actual_requests": 0,
+    "retained_response_bytes": 0,
+    "additional_spend_usd": 0,
+    "evidence": "acquisition-execution.json"
+  },
+  "log_identities": {
+    "pytest-sealed.log": {
+      "sha256": "cae3c60a64be811518c14ffd8c7cc180b1e449eafa7e08fd0c1dbccceeebe9bf",
+      "bytes": 2553
+    },
+    "pytest-sealed.xml": {
+      "sha256": "e41ac2b890b7da6d00856ed4d1a0ad2f8d28153ce2e9c55e45f8708a81c319f6",
+      "bytes": 222267
+    },
+    "pytest-full-final.log": {
+      "sha256": "ca75c7ccfeab87c3f9d4d647518b6c43b5b5e990bbc77d7d1b5eda93e0c2c1c0",
+      "bytes": 3394
+    },
+    "pytest-final.log": {
+      "sha256": "4033e486bf3ea26ee86b1e9e76fc11d37a1c89eb934f84c493509b090929da75",
+      "bytes": 2329
+    },
+    "pytest-affected.log": {
+      "sha256": "e3d2208198bc259dc63c38acc453ee1064c14f844c2c3d7bc34d9e0f3a203c0b",
+      "bytes": 1407
+    },
+    "fixture-check.log": {
+      "sha256": "aecd6e6c827e98bed55252e51dcf54a8c9f386121b69cc37007f66cd781b35f2",
+      "bytes": 4425
+    }
+  }
+}

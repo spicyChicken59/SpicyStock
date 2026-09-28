@@ -1,0 +1,657 @@
+[
+  {
+    "all_affected_events_ratio_10d": 0.94,
+    "basis_limits": "NYSE-listed named security, daily share volume; S&P Global page vs retained Alpaca SIP. Exact conditions/revision/volume adjustment comparability unresolved.",
+    "cases": [
+      {
+        "basis": "original_retained",
+        "breadth_gain_percent_unrounded": 6.169545307034945,
+        "checks": {
+          "2": {
+            "status": "PASS",
+            "values": {
+              "prior_day_pct": -2.73,
+              "up_closes": 0,
+              "up_run": 0
+            }
+          },
+          "C": {
+            "status": "PASS",
+            "values": {
+              "base_sessions": 18,
+              "base_volume_vs_avg": 1.0,
+              "base_volume_vs_leg": 1.05,
+              "breakdowns": 0,
+              "bursts_in_base": 0,
+              "giveback": 0.27,
+              "tightness": 0.8
+            }
+          },
+          "H": {
+            "status": "PASS",
+            "values": {
+              "close_above_open": true,
+              "close_pos": 0.82
+            }
+          },
+          "L": {
+            "status": "PASS",
+            "values": {
+              "er": 0.44,
+              "leg_gain_pct": 64.8,
+              "leg_sessions": 60,
+              "r2": 0.9
+            }
+          },
+          "N": {
+            "status": "PASS",
+            "values": {
+              "median_range_pct": 2.5,
+              "narrow": false,
+              "negative": true,
+              "prior_day_pct": -2.73,
+              "prior_range_pct": 5.2
+            }
+          },
+          "RE": {
+            "status": "PASS",
+            "values": {
+              "bar_range_pct": 7.3,
+              "vs_prior_10": 1.4,
+              "vs_prior_5": 1.4
+            }
+          },
+          "VOL": {
+            "status": "FAIL",
+            "values": {
+              "cv_required": false,
+              "volume_rank_60": 3,
+              "volume_vs_avg50": 1.7,
+              "volume_vs_prior": 1.0
+            }
+          },
+          "Y": {
+            "status": "PASS",
+            "values": {
+              "breakouts_in_move": 1,
+              "gain_since_move_start_pct": 34.6,
+              "sessions_since_move_start": 45
+            }
+          }
+        },
+        "close": 294.44,
+        "discovery_routes": [
+          "dollar"
+        ],
+        "mechanical_grade": "A",
+        "mechanical_score": 10.0,
+        "prior_close": 277.33,
+        "prior_volume_shares": 1594208,
+        "reference_breadth_down4": false,
+        "reference_breadth_up4": false,
+        "volume_above_prior": false,
+        "volume_floor_100000": true,
+        "volume_shares": 1590887
+      },
+      {
+        "basis": "dated_public_two_volume_substitution",
+        "breadth_gain_percent_unrounded": 6.169545307034945,
+        "checks": {
+          "2": {
+            "status": "PASS",
+            "values": {
+              "prior_day_pct": -2.73,
+              "up_closes": 0,
+              "up_run": 0
+            }
+          },
+          "C": {
+            "status": "PASS",
+            "values": {
+              "base_sessions": 18,
+              "base_volume_vs_avg": 1.0,
+              "base_volume_vs_leg": 1.04,
+              "breakdowns": 0,
+              "bursts_in_base": 0,
+              "giveback": 0.27,
+              "tightness": 0.8
+            }
+          },
+          "H": {
+            "status": "PASS",
+            "values": {
+              "close_above_open": true,
+              "close_pos": 0.82
+            }
+          },
+          "L": {
+            "status": "PASS",
+            "values": {
+              "er": 0.44,
+              "leg_gain_pct": 64.8,
+              "leg_sessions": 60,
+              "r2": 0.9
+            }
+          },
+          "N": {
+            "status": "PASS",
+            "values": {
+              "median_range_pct": 2.5,
+              "narrow": false,
+              "negative": true,
+              "prior_day_pct": -2.73,
+              "prior_range_pct": 5.2
+            }
+          },
+          "RE": {
+            "status": "PASS",
+            "values": {
+              "bar_range_pct": 7.3,
+              "vs_prior_10": 1.4,
+              "vs_prior_5": 1.4
+            }
+          },
+          "VOL": {
+            "status": "PASS",
+            "values": {
+              "cv_required": false,
+              "volume_rank_60": 2,
+              "volume_vs_avg50": 1.69,
+              "volume_vs_prior": 1.07
+            }
+          },
+          "Y": {
+            "status": "PASS",
+            "values": {
+              "breakouts_in_move": 1,
+              "gain_since_move_start_pct": 34.6,
+              "sessions_since_move_start": 45
+            }
+          }
+        },
+        "close": 294.44,
+        "discovery_routes": [
+          "burst",
+          "dollar"
+        ],
+        "mechanical_grade": "A+",
+        "mechanical_score": 10.0,
+        "prior_close": 277.33,
+        "prior_volume_shares": 1474124,
+        "reference_breadth_down4": false,
+        "reference_breadth_up4": true,
+        "volume_above_prior": true,
+        "volume_floor_100000": true,
+        "volume_shares": 1574098
+      }
+    ],
+    "complete_ten_session_event_comparison": [
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-11",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-14",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-15",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-16",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-17",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-18",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-21",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-22",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-23",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-24",
+        "substituted": {
+          "down4": false,
+          "up4": true
+        }
+      }
+    ],
+    "identity_limit": "No retained permanent security identifier independently corroborates share class.",
+    "isolated_structural_feasibility": {
+      "eligible_structural_band": true,
+      "market_multiplier_substitution": 1,
+      "nonzero_whole_share_size": true,
+      "same_for_both_volume_cases": true,
+      "scope": "Diagnostic arithmetic only using recorded account and unchanged prices. Reader-dependent actionability unknown; order terms omitted, no publication."
+    },
+    "new_provider_comparison": "BLOCKED",
+    "new_reader_judgment": "unknown",
+    "original_final_grade": "B",
+    "plan_prerequisites": "Recorded RED and final B independently block plans. Changed metrics invalidate reader-response reuse.",
+    "public_observation_date": "2026-09-28",
+    "session": "2026-09-24",
+    "source_typed_sha256": "2cb037dcadf9f91197ed571bb4b8c92e81a13895aa9a075d383e4341cd46b233",
+    "source_url": "https://stockanalysis.com/stocks/crl/history/",
+    "status": "PASS",
+    "target_event_delta": {
+      "down4": 0,
+      "up4": 1
+    },
+    "target_event_only_bound_scope": "Holds all other original events fixed. Prior-date volume can also change the prior event; full substitution is emitted by the independent retained-frame comparison, not inferred from this target-only diagnostic.",
+    "target_event_only_ratio_10d": 0.94,
+    "ten_session_event_deltas": {
+      "down4": 0,
+      "up4": 1
+    },
+    "ticker": "CRL",
+    "trade_condition_adjudication": "BLOCKED: needs specifically authorized condition-coded CRL/IQV trades for Sep23/24 plus provider daily inclusion/adjustment rules; trade/quote requests are outside this permission."
+  },
+  {
+    "all_affected_events_ratio_10d": 0.94,
+    "basis_limits": "NYSE-listed named security, daily share volume; S&P Global page vs retained Alpaca SIP. Exact conditions/revision/volume adjustment comparability unresolved.",
+    "cases": [
+      {
+        "basis": "original_retained",
+        "breadth_gain_percent_unrounded": 2.6730381542596757,
+        "checks": {
+          "2": {
+            "status": "PASS",
+            "values": {
+              "prior_day_pct": -0.83,
+              "up_closes": 0,
+              "up_run": 0
+            }
+          },
+          "C": {
+            "status": "PASS",
+            "values": {
+              "base_sessions": 4,
+              "base_volume_vs_avg": 1.62,
+              "base_volume_vs_leg": 1.72,
+              "breakdowns": 0,
+              "bursts_in_base": 0,
+              "giveback": 0.09,
+              "tightness": 0.78
+            }
+          },
+          "H": {
+            "status": "PASS",
+            "values": {
+              "close_above_open": true,
+              "close_pos": 0.8
+            }
+          },
+          "L": {
+            "status": "PASS",
+            "values": {
+              "er": 0.37,
+              "leg_gain_pct": 45.2,
+              "leg_sessions": 60,
+              "r2": 0.9
+            }
+          },
+          "N": {
+            "status": "PASS",
+            "values": {
+              "median_range_pct": 2.2,
+              "narrow": false,
+              "negative": true,
+              "prior_day_pct": -0.83,
+              "prior_range_pct": 3.7
+            }
+          },
+          "RE": {
+            "status": "PASS",
+            "values": {
+              "bar_range_pct": 3.9,
+              "vs_prior_10": 1.05,
+              "vs_prior_5": 1.05
+            }
+          },
+          "VOL": {
+            "status": "PASS",
+            "values": {
+              "cv_required": false,
+              "volume_rank_60": 8,
+              "volume_vs_avg50": 1.28,
+              "volume_vs_prior": 1.7
+            }
+          },
+          "Y": {
+            "status": "PASS",
+            "values": {
+              "breakouts_in_move": 1,
+              "gain_since_move_start_pct": 42.3,
+              "sessions_since_move_start": 60
+            }
+          }
+        },
+        "close": 275.02,
+        "discovery_routes": [
+          "dollar"
+        ],
+        "mechanical_grade": "A",
+        "mechanical_score": 10.0,
+        "prior_close": 267.86,
+        "prior_volume_shares": 1116832,
+        "reference_breadth_down4": false,
+        "reference_breadth_up4": false,
+        "volume_above_prior": true,
+        "volume_floor_100000": true,
+        "volume_shares": 1893479
+      },
+      {
+        "basis": "dated_public_two_volume_substitution",
+        "breadth_gain_percent_unrounded": 2.6730381542596757,
+        "checks": {
+          "2": {
+            "status": "PASS",
+            "values": {
+              "prior_day_pct": -0.83,
+              "up_closes": 0,
+              "up_run": 0
+            }
+          },
+          "C": {
+            "status": "PASS",
+            "values": {
+              "base_sessions": 4,
+              "base_volume_vs_avg": 1.62,
+              "base_volume_vs_leg": 1.72,
+              "breakdowns": 0,
+              "bursts_in_base": 0,
+              "giveback": 0.09,
+              "tightness": 0.78
+            }
+          },
+          "H": {
+            "status": "PASS",
+            "values": {
+              "close_above_open": true,
+              "close_pos": 0.8
+            }
+          },
+          "L": {
+            "status": "PASS",
+            "values": {
+              "er": 0.37,
+              "leg_gain_pct": 45.2,
+              "leg_sessions": 60,
+              "r2": 0.9
+            }
+          },
+          "N": {
+            "status": "PASS",
+            "values": {
+              "median_range_pct": 2.2,
+              "narrow": false,
+              "negative": true,
+              "prior_day_pct": -0.83,
+              "prior_range_pct": 3.7
+            }
+          },
+          "RE": {
+            "status": "PASS",
+            "values": {
+              "bar_range_pct": 3.9,
+              "vs_prior_10": 1.05,
+              "vs_prior_5": 1.05
+            }
+          },
+          "VOL": {
+            "status": "PASS",
+            "values": {
+              "cv_required": false,
+              "volume_rank_60": 8,
+              "volume_vs_avg50": 1.28,
+              "volume_vs_prior": 1.71
+            }
+          },
+          "Y": {
+            "status": "PASS",
+            "values": {
+              "breakouts_in_move": 1,
+              "gain_since_move_start_pct": 42.3,
+              "sessions_since_move_start": 60
+            }
+          }
+        },
+        "close": 275.02,
+        "discovery_routes": [
+          "dollar"
+        ],
+        "mechanical_grade": "A",
+        "mechanical_score": 10.0,
+        "prior_close": 267.86,
+        "prior_volume_shares": 1104252,
+        "reference_breadth_down4": false,
+        "reference_breadth_up4": false,
+        "volume_above_prior": true,
+        "volume_floor_100000": true,
+        "volume_shares": 1891777
+      }
+    ],
+    "complete_ten_session_event_comparison": [
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-11",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-14",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-15",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-16",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-17",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-18",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-21",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-22",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-23",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      },
+      {
+        "original": {
+          "down4": false,
+          "up4": false
+        },
+        "session": "2026-09-24",
+        "substituted": {
+          "down4": false,
+          "up4": false
+        }
+      }
+    ],
+    "identity_limit": "No retained permanent security identifier independently corroborates share class.",
+    "isolated_structural_feasibility": {
+      "eligible_structural_band": true,
+      "market_multiplier_substitution": 1,
+      "nonzero_whole_share_size": true,
+      "same_for_both_volume_cases": true,
+      "scope": "Diagnostic arithmetic only using recorded account and unchanged prices. Reader-dependent actionability unknown; order terms omitted, no publication."
+    },
+    "new_provider_comparison": "BLOCKED",
+    "new_reader_judgment": "unknown",
+    "original_final_grade": "B",
+    "plan_prerequisites": "Recorded RED and final B independently block plans. Changed metrics invalidate reader-response reuse.",
+    "public_observation_date": "2026-09-28",
+    "session": "2026-09-24",
+    "source_typed_sha256": "ac162b1830bdfe600a85540a23a6acc52ba74fa486ae0c5ed0b27cf9e73f5a14",
+    "source_url": "https://stockanalysis.com/stocks/iqv/history/",
+    "status": "PASS",
+    "target_event_delta": {
+      "down4": 0,
+      "up4": 0
+    },
+    "target_event_only_bound_scope": "Holds all other original events fixed. Prior-date volume can also change the prior event; full substitution is emitted by the independent retained-frame comparison, not inferred from this target-only diagnostic.",
+    "target_event_only_ratio_10d": 0.94,
+    "ten_session_event_deltas": {
+      "down4": 0,
+      "up4": 0
+    },
+    "ticker": "IQV",
+    "trade_condition_adjudication": "BLOCKED: needs specifically authorized condition-coded CRL/IQV trades for Sep23/24 plus provider daily inclusion/adjustment rules; trade/quote requests are outside this permission."
+  }
+]

@@ -1,0 +1,127 @@
+{
+  "status": "PASS",
+  "scope": "Synthetic mutation adequacy of independent reference, not a demonstrated production defect.",
+  "execution": "Each variant compiles a changed source string in its own socket-blocked subprocess; no repository edits.",
+  "source_sha256": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c",
+  "runner_sha256": "8f49c70c72ae4067c858bb2a557ffcfe4a77f20036ea9266db34cc6d9511746e",
+  "source_file_unchanged": true,
+  "baseline_all_pass": true,
+  "all_mutations_detected": true,
+  "unaffected_control_all_pass": true,
+  "variants": [
+    {
+      "variant": "baseline",
+      "tests": {
+        "mean_of_daily_ratios": {
+          "status": "PASS"
+        },
+        "unknown_as_false": {
+          "status": "PASS"
+        },
+        "strict_up_boundary": {
+          "status": "PASS"
+        },
+        "uncoupled_ratio_upper": {
+          "status": "PASS"
+        },
+        "unaffected_equal_volume_control": {
+          "status": "PASS"
+        }
+      },
+      "network_blocked": true,
+      "mutated_module_sha256": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c"
+    },
+    {
+      "variant": "mean_of_daily_ratios",
+      "tests": {
+        "mean_of_daily_ratios": {
+          "status": "FAIL",
+          "assertion": "ratio-of-sums expected 1.0; got 4.56"
+        },
+        "unknown_as_false": {
+          "status": "PASS"
+        },
+        "strict_up_boundary": {
+          "status": "PASS"
+        },
+        "uncoupled_ratio_upper": {
+          "status": "PASS"
+        },
+        "unaffected_equal_volume_control": {
+          "status": "PASS"
+        }
+      },
+      "network_blocked": true,
+      "mutated_module_sha256": "58c25a032419a3123589b8fd9e28c882c737000a2bd3fe1a2c83fb5514f01f2b"
+    },
+    {
+      "variant": "unknown_as_false",
+      "tests": {
+        "mean_of_daily_ratios": {
+          "status": "PASS"
+        },
+        "unknown_as_false": {
+          "status": "FAIL",
+          "assertion": "missing prior must be unknown; got False"
+        },
+        "strict_up_boundary": {
+          "status": "PASS"
+        },
+        "uncoupled_ratio_upper": {
+          "status": "PASS"
+        },
+        "unaffected_equal_volume_control": {
+          "status": "PASS"
+        }
+      },
+      "network_blocked": true,
+      "mutated_module_sha256": "d1f4ed7138fdeece9e8cfacfeb9c35360b03b7a54dc4f8e8841d887d4dbd5015"
+    },
+    {
+      "variant": "strict_up_boundary",
+      "tests": {
+        "mean_of_daily_ratios": {
+          "status": "PASS"
+        },
+        "unknown_as_false": {
+          "status": "PASS"
+        },
+        "strict_up_boundary": {
+          "status": "FAIL",
+          "assertion": "exact +4% event must count; got False"
+        },
+        "uncoupled_ratio_upper": {
+          "status": "PASS"
+        },
+        "unaffected_equal_volume_control": {
+          "status": "PASS"
+        }
+      },
+      "network_blocked": true,
+      "mutated_module_sha256": "acc79d66decfa8dc9598746bf74d22a0f3f12088556864da8861d78cb4d0fcd2"
+    },
+    {
+      "variant": "uncoupled_ratio_upper",
+      "tests": {
+        "mean_of_daily_ratios": {
+          "status": "PASS"
+        },
+        "unknown_as_false": {
+          "status": "PASS"
+        },
+        "strict_up_boundary": {
+          "status": "PASS"
+        },
+        "uncoupled_ratio_upper": {
+          "status": "FAIL",
+          "assertion": "one contributor cannot be both up and down; got [0.0, 1.0]"
+        },
+        "unaffected_equal_volume_control": {
+          "status": "PASS"
+        }
+      },
+      "network_blocked": true,
+      "mutated_module_sha256": "99ede5818c572b2e3f092983d5e0ec6a91f0bc3845c99804748fe53719fb5071"
+    }
+  ]
+}
