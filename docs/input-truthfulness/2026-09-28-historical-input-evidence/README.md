@@ -27,6 +27,7 @@ offline command itself requires no network.
 | `reference-controls.json`, `acquisition-controls.json` | Isolated synthetic defect controls with expected failures and unaffected controls; these do not claim historical production defects. |
 | `verification.json` | Final local suite, initial failures, runtime limitations and final-CI handoff. |
 | `protected-hashes.json`, `protected-files.json.gz` | Hash proof for every preexisting tracked file except the three explicitly updated documentation/environment files. Git blob identities are portable; raw SHA-256 identifies the original Windows checkout. |
+| `lineage-correction/` | PR #93 review 5342729066: actual-class raw-pointer failure on reviewed source, fixed and restored-defect controls, cache/normalizer checks, and protected-file verification. Earlier evidence above remains dated to its original execution. |
 
 Original price exclusions retained counts, hashes and eight-name samples, not
 complete lists. Therefore the exact final original populations cannot be

@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1677 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1686 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3325,3 +3325,46 @@ the precise evidence boundary are in
 Guidance reviews this PR, then identifies an existing secret-capable runtime and
 approved private evidence destination under documented $0 access and retention
 rights before any historical acquisition. Tahir need not run commands or send keys.
+
+## PR #93 lineage correction checkpoint — 28 Sep 2026
+
+Continue PR #93 and `investigate/historical-input-breadth-proof` only. Guidance
+review `5342729066` found incorrect cross-page duplicate references on reviewed
+head `a9ed0ec3b64399e1f9d80ac3ce27d921c289f9b1`. Re-resolved base/main remains
+`0d702940814af05e9b8d2a4c887aee00939e46fc`. The PR records the exact corrected
+head and its completed normal CI. No newer publication or work was displaced.
+
+FAIL — before editing the acquisition source, nine normal pytest regressions
+ran the actual class with synthetic transport: six failed on a wrong raw-row
+timestamp/value or out-of-range index; three controls passed. This extends the
+review's method-level reproduction through raw retention, pagination and ledger
+handling. PASS — the correction passes all nine. FAIL — restoring only the old
+cumulative-index assignment in an isolated subprocess produces the same six
+pointer failures, while all three unaffected controls pass. No test was weakened.
+
+The `raw-page-symbol-row-v1` output contract contains raw-page SHA-256, zero-based
+query page number, symbol, and zero-based index within that page's `bars[symbol]`
+array. Both previous/discarded and selected references resolve to exact retained
+timestamps and OHLCV values, and agree with the unchanged normalizer. Coverage
+includes two/three pages, duplicate rows within a later page, multiple symbols,
+one-row later pages, repeated replacements, and same-page/no-duplicate controls.
+Raw bytes/hashes/order and stable-last-arrival selection remain intact.
+
+PASS — cached resume reproduces the complete manifest with no additional
+transport call, unchanged attempt rows/raw bytes and unchanged request/byte
+charges even at exhausted synthetic caps. The persistent live authorization and
+ledger identity are unchanged; no live ledger exists or was reset. The suite now
+collects 1,686 tests. Full-suite verification, source identities, before/after logs
+and protected-file proof are in the existing historical-input evidence directory's
+`lineage-correction/`; normal Linux fixture and browser results belong to PR #93.
+No previous historical analysis was regenerated and no UI change was made.
+
+KEEP all producer/policy/publication/browser safeguards and design-system 2.13.0.
+FIX NOW this demonstrated offline acquisition-lineage defect. DEFER the still
+BLOCKED secure-runtime, $0 access, retention-rights and approved private reviewer
+storage prerequisites. Acquisition and probe remain NOT RUN: zero requests,
+zero new response bytes, zero additional spend. The frozen manifest and
+acquisition-execution.json stay unchanged. OMIT a new acquisition, invented
+full-population proof, new reader judgment, trading-edge claim or next milestone.
+Exact next action: Guidance independently re-reviews this same PR and owns the
+normal protected merge. Astra stops unmerged after the normal checks finish.

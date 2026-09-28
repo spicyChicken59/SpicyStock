@@ -614,3 +614,170 @@ def test_cli_all_uses_shared_runner_without_live_transport(setup, tmp_path, monk
                              "--acquire", "--all"]) == 0
     assert called == ["all"]
     assert json.loads(capsys.readouterr().out)["request_slots_charged"] == 1
+
+
+def _duplicate_lineage_case(case):
+    """Invented observations plus independently declared page/symbol coordinates."""
+    prior = lambda volume: bar("2026-09-23", v=volume)
+    target = lambda volume: bar("2026-09-24", v=volume)
+    cases = {
+        "two_pages_wrong_observation": (
+            [{"AAA": [prior(1000)]}, {"AAA": [prior(1500), target(2000)]}],
+            [("AAA", (0, 0), (1, 0))]),
+        "one_row_later_page": (
+            [{"AAA": [prior(1000)]}, {"AAA": [prior(1500)]}],
+            [("AAA", (0, 0), (1, 0))]),
+        "three_page_replacements": (
+            [{"AAA": [prior(1000)]},
+             {"AAA": [prior(1500), target(2000)]},
+             {"AAA": [prior(1800), target(2500)]}],
+            [("AAA", (0, 0), (1, 0)), ("AAA", (1, 0), (2, 0)),
+             ("AAA", (1, 1), (2, 1))]),
+        "within_later_page": (
+            [{"AAA": [prior(1000)]}, {"AAA": [target(2000), target(2300)]}],
+            [("AAA", (1, 0), (1, 1))]),
+        "multiple_symbols": (
+            [{"AAA": [prior(1000)], "BBB": [prior(4000), target(4200)]},
+             {"AAA": [prior(1500)], "BBB": [prior(4500), target(4700)]}],
+            [("AAA", (0, 0), (1, 0)), ("BBB", (0, 0), (1, 0)),
+             ("BBB", (0, 1), (1, 1))]),
+        "same_page_control": (
+            [{"AAA": [prior(1000), prior(1500), target(2000)],
+              "BBB": [prior(3000), prior(3500)]}],
+            [("AAA", (0, 0), (0, 1)), ("BBB", (0, 0), (0, 1))]),
+        "no_duplicate_control": (
+            [{"AAA": [prior(1000)], "BBB": [prior(4000)]},
+             {"AAA": [target(2000)], "BBB": [target(4200)],
+              "SPY": [prior(10000), target(12000)]}], []),
+    }
+    return cases[case]
+
+
+def _lineage_responses(manifest, case):
+    manifest["queries"][0].update(
+        start="2026-09-23T04:00:00Z", end="2026-09-24T23:59:59Z",
+        asof="2026-09-25", required_sessions=["2026-09-23", "2026-09-24"])
+    raw_bars, expected_pairs = _duplicate_lineage_case(case)
+    responses = [response(bars, token=f"page-{index + 1}" if index + 1 < len(raw_bars) else None)
+                 for index, bars in enumerate(raw_bars)]
+    return responses, raw_bars, expected_pairs
+
+
+def _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs):
+    """Resolve actual saved bytes before checking any newly added metadata."""
+    from tools.historical_normalization import normalize_pages
+
+    expected_hashes = [acquisition.digest(item.body) for item in responses]
+    assert [page["sha256"] for page in report["pages"]] == expected_hashes
+    saved = {}
+    for page_index, body_hash in enumerate(expected_hashes):
+        raw = (root / "pages" / (body_hash + ".json")).read_bytes()
+        assert raw == responses[page_index].body, "raw source bytes changed during acquisition"
+        assert acquisition.digest(raw) == body_hash
+        saved[body_hash] = json.loads(raw)
+
+    def resolve(reference, symbol):
+        # Reviewed references have symbol in the enclosing duplicate operation.
+        # Accepting that documented scope makes pre-fix failures about the row.
+        actual_symbol = reference.get("symbol", symbol)
+        assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+        body_hash = reference["page_sha256"]
+        assert body_hash in saved, "raw source hash does not identify a retained page"
+        rows = saved[body_hash]["bars"][actual_symbol]
+        index = reference["row_index"]
+        assert 0 <= index < len(rows), (
+            f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+        coordinate = {"page_sha256": body_hash,
+                      "page_index": expected_hashes.index(body_hash),
+                      "symbol": actual_symbol, "row_index": index}
+        if "page_index" in reference:
+            assert reference["page_index"] == coordinate["page_index"], "raw source page ordinal is inconsistent"
+        return rows[index], coordinate
+
+    operations = report["duplicate_operations"]
+    assert len(operations) == len(expected_pairs)
+    coordinates = []
+    for operation, (symbol, previous, selected) in zip(operations, expected_pairs):
+        assert operation["symbol"] == symbol
+        pair = {}
+        for field, (page_index, row_index) in (("previous", previous), ("selected", selected)):
+            actual, coordinate = resolve(operation[field], symbol)
+            expected = raw_bars[page_index][symbol][row_index]
+            assert actual["t"] == expected["t"] == operation["timestamp"], (
+                f"raw source {field} points to the wrong observation timestamp")
+            assert actual == expected, f"raw source {field} points to the wrong OHLCV values"
+            assert coordinate == {"page_sha256": expected_hashes[page_index],
+                                  "page_index": page_index, "symbol": symbol, "row_index": row_index}, (
+                f"raw source {field} does not identify the declared retained observation")
+            pair[field] = coordinate
+        coordinates.append((symbol, pair))
+
+    # The independently normalized references resolve the same retained rows.
+    exported = acquisition.cached_pages(manifest, root, "canonical")
+    normalized = normalize_pages(exported["pages"],
+        query=acquisition.resolved_query(manifest, "canonical"), terminal=exported["terminal"],
+        target_session="2026-09-24", required_sessions=["2026-09-23", "2026-09-24"])
+    positions = {symbol: 0 for symbol in manifest["queries"][0]["symbols"]}
+    for operation, (symbol, pair) in zip(operations, coordinates):
+        expected = normalized["symbols"][symbol]["duplicates"][positions[symbol]]
+        positions[symbol] += 1
+        assert pair["previous"] == expected["discarded"]
+        assert pair["selected"] == expected["selected"]
+        for reference, field in ((expected["discarded"], "previous"), (expected["selected"], "selected")):
+            row, coordinate = resolve(reference, symbol)
+            actual, _ = resolve(operation[field], symbol)
+            assert row == actual, "raw source disagrees with the normalizer's retained observation"
+            assert coordinate == reference
+        if "source_coordinate_contract" in report:
+            assert operation["previous"] == expected["discarded"]
+            assert operation["selected"] == expected["selected"]
+    for symbol, record in normalized["symbols"].items():
+        assert positions[symbol] == len(record["duplicates"])
+        selected_rows = {row["t"]: row for page in raw_bars for row in page.get(symbol, [])}
+        assert record["selected_rows"] == len(selected_rows)
+        for row in record["rows"]:
+            raw, _ = resolve(row["source"], symbol)
+            assert raw == selected_rows[row["timestamp"]], "raw source changed stable-last-arrival selection"
+            assert row["values"] == {name: str(raw[field]) for field, name in
+                                     {"o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}.items()}
+    if "source_coordinate_contract" in report:
+        assert report["source_coordinate_contract"] == "raw-page-symbol-row-v1"
+
+
+@pytest.mark.parametrize("case", [
+    "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+    "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+])
+def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+    manifest, _, root, _, build = setup
+    responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+    runner, transport = build(responses)
+    report = runner.run("canonical")
+    assert report["pagination_complete"] is True
+    assert len(transport.calls) == len(responses)
+    assert report["ledger"]["request_slots_charged"] == len(responses)
+    assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+    _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+
+@pytest.mark.parametrize("case", ["three_page_replacements", "same_page_control"])
+def test_duplicate_source_coordinates_cached_resume(setup, case):
+    manifest, _, root, _, build = setup
+    responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+    manifest["limits"]["requests"] = len(responses)
+    manifest["limits"]["retained_bytes"] = sum(len(item.body) for item in responses)
+    runner, transport = build(responses)
+    original = runner.run("canonical")
+    charged = ledger(root)
+    raw_before = {path.name: path.read_bytes() for path in (root / "pages").iterdir()}
+    resumed, cached_transport = build([AssertionError("successful cached pages must not reach transport")])
+    replay = resumed.run("canonical")
+    assert cached_transport.calls == []
+    assert len(transport.calls) == len(responses)
+    assert replay == original
+    assert ledger(root) == charged
+    assert replay["ledger"]["request_slots_charged"] == manifest["limits"]["requests"]
+    assert replay["ledger"]["uncompressed_retained_bytes_charged"] == manifest["limits"]["retained_bytes"]
+    assert replay["ledger"]["unresolved_byte_reservations"] == 0
+    assert {path.name: path.read_bytes() for path in (root / "pages").iterdir()} == raw_before
+    _assert_duplicate_raw_coordinates(manifest, root, replay, responses, raw_bars, expected_pairs)

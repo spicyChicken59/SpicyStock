@@ -1,0 +1,434 @@
+FFFFF..F.                                                                [100%]
+================================== FAILURES ===================================
+_ test_duplicate_source_coordinates_resolve_retained_raw[two_pages_wrong_observation] _
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC01B7A0>, <function setup.<locals>.build at 0x000002B3BBFE67A0>)
+case = 'two_pages_wrong_observation'
+
+    @pytest.mark.parametrize("case", [
+        "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+        "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+    ])
+    def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        runner, transport = build(responses)
+        report = runner.run("canonical")
+        assert report["pagination_complete"] is True
+        assert len(transport.calls) == len(responses)
+        assert report["ledger"]["request_slots_charged"] == len(responses)
+        assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+>       _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:760:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+manifest = {'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'20...nonical', 'symbols': ['AAA', 'BBB', 'SPY'], 'start': '2026-09-23T04:00:00Z', 'end': '2026-09-24T23:59:59Z', ...}], ...}
+root = WindowsPath('C:/Users/motah/AppData/Local/Temp/pytest-of-motah/pytest-58/test_duplicate_source_coordina0/private-synthetic-storage')
+report = {'schema': 'historical-acquisition-v1', 'manifest_sha256': 'fa51247899820b52b933f121d3f461fdbb81c667c3900db56e8f07ff7330b104', 'query_id': 'canonical', 'pagination_complete': True, ...}
+responses = [HTTPResult(status=200, headers={}, body=b'{"bars":{"AAA":[{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-23T04:00:00Z","v":...23T04:00:00Z","v":1500},{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-24T04:00:00Z","v":2000}]},"next_page_token":null}\n')]
+raw_bars = [{'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}, {'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}, {'t': '2026-09-24T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}]
+expected_pairs = [('AAA', (0, 0), (1, 0))]
+
+    def _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs):
+        """Resolve actual saved bytes before checking any newly added metadata."""
+        from tools.historical_normalization import normalize_pages
+
+        expected_hashes = [acquisition.digest(item.body) for item in responses]
+        assert [page["sha256"] for page in report["pages"]] == expected_hashes
+        saved = {}
+        for page_index, body_hash in enumerate(expected_hashes):
+            raw = (root / "pages" / (body_hash + ".json")).read_bytes()
+            assert raw == responses[page_index].body, "raw source bytes changed during acquisition"
+            assert acquisition.digest(raw) == body_hash
+            saved[body_hash] = json.loads(raw)
+
+        def resolve(reference, symbol):
+            # Reviewed references have symbol in the enclosing duplicate operation.
+            # Accepting that documented scope makes pre-fix failures about the row.
+            actual_symbol = reference.get("symbol", symbol)
+            assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+            body_hash = reference["page_sha256"]
+            assert body_hash in saved, "raw source hash does not identify a retained page"
+            rows = saved[body_hash]["bars"][actual_symbol]
+            index = reference["row_index"]
+            assert 0 <= index < len(rows), (
+                f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+            coordinate = {"page_sha256": body_hash,
+                          "page_index": expected_hashes.index(body_hash),
+                          "symbol": actual_symbol, "row_index": index}
+            if "page_index" in reference:
+                assert reference["page_index"] == coordinate["page_index"], "raw source page ordinal is inconsistent"
+            return rows[index], coordinate
+
+        operations = report["duplicate_operations"]
+        assert len(operations) == len(expected_pairs)
+        coordinates = []
+        for operation, (symbol, previous, selected) in zip(operations, expected_pairs):
+            assert operation["symbol"] == symbol
+            pair = {}
+            for field, (page_index, row_index) in (("previous", previous), ("selected", selected)):
+                actual, coordinate = resolve(operation[field], symbol)
+                expected = raw_bars[page_index][symbol][row_index]
+>               assert actual["t"] == expected["t"] == operation["timestamp"], (
+                    f"raw source {field} points to the wrong observation timestamp")
+E               AssertionError: raw source selected points to the wrong observation timestamp
+E               assert '2026-09-24T04:00:00Z' == '2026-09-23T04:00:00Z'
+E
+E                 - 2026-09-23T04:00:00Z
+E                 ?          ^
+E                 + 2026-09-24T04:00:00Z
+E                 ?          ^
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:706: AssertionError
+_ test_duplicate_source_coordinates_resolve_retained_raw[one_row_later_page] __
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC29A4B0>, <function setup.<locals>.build at 0x000002B3BC37C540>)
+case = 'one_row_later_page'
+
+    @pytest.mark.parametrize("case", [
+        "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+        "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+    ])
+    def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        runner, transport = build(responses)
+        report = runner.run("canonical")
+        assert report["pagination_complete"] is True
+        assert len(transport.calls) == len(responses)
+        assert report["ledger"]["request_slots_charged"] == len(responses)
+        assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+>       _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:760:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:704: in _assert_duplicate_raw_coordinates
+    actual, coordinate = resolve(operation[field], symbol)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+reference = {'page_sha256': '2b191119be89fc6d11334223cf7259b796ef632a460242e2a249daa17a31191f', 'row_index': 1}
+symbol = 'AAA'
+
+    def resolve(reference, symbol):
+        # Reviewed references have symbol in the enclosing duplicate operation.
+        # Accepting that documented scope makes pre-fix failures about the row.
+        actual_symbol = reference.get("symbol", symbol)
+        assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+        body_hash = reference["page_sha256"]
+        assert body_hash in saved, "raw source hash does not identify a retained page"
+        rows = saved[body_hash]["bars"][actual_symbol]
+        index = reference["row_index"]
+>       assert 0 <= index < len(rows), (
+            f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+E       AssertionError: raw source index 1 is outside retained AAA array of 1 rows
+E       assert 1 < 1
+E        +  where 1 = len([{'c': 11, 'h': 12, 'l': 9, 'o': 10, ...}])
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:688: AssertionError
+_ test_duplicate_source_coordinates_resolve_retained_raw[three_page_replacements] _
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC2F6BD0>, <function setup.<locals>.build at 0x000002B3BC37D260>)
+case = 'three_page_replacements'
+
+    @pytest.mark.parametrize("case", [
+        "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+        "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+    ])
+    def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        runner, transport = build(responses)
+        report = runner.run("canonical")
+        assert report["pagination_complete"] is True
+        assert len(transport.calls) == len(responses)
+        assert report["ledger"]["request_slots_charged"] == len(responses)
+        assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+>       _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:760:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+manifest = {'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'20...nonical', 'symbols': ['AAA', 'BBB', 'SPY'], 'start': '2026-09-23T04:00:00Z', 'end': '2026-09-24T23:59:59Z', ...}], ...}
+root = WindowsPath('C:/Users/motah/AppData/Local/Temp/pytest-of-motah/pytest-58/test_duplicate_source_coordina2/private-synthetic-storage')
+report = {'schema': 'historical-acquisition-v1', 'manifest_sha256': 'fa51247899820b52b933f121d3f461fdbb81c667c3900db56e8f07ff7330b104', 'query_id': 'canonical', 'pagination_complete': True, ...}
+responses = [HTTPResult(status=200, headers={}, body=b'{"bars":{"AAA":[{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-23T04:00:00Z","v":...23T04:00:00Z","v":1800},{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-24T04:00:00Z","v":2500}]},"next_page_token":null}\n')]
+raw_bars = [{'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}, {'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': ...'2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}, {'t': '2026-09-24T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}]
+expected_pairs = [('AAA', (0, 0), (1, 0)), ('AAA', (1, 0), (2, 0)), ('AAA', (1, 1), (2, 1))]
+
+    def _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs):
+        """Resolve actual saved bytes before checking any newly added metadata."""
+        from tools.historical_normalization import normalize_pages
+
+        expected_hashes = [acquisition.digest(item.body) for item in responses]
+        assert [page["sha256"] for page in report["pages"]] == expected_hashes
+        saved = {}
+        for page_index, body_hash in enumerate(expected_hashes):
+            raw = (root / "pages" / (body_hash + ".json")).read_bytes()
+            assert raw == responses[page_index].body, "raw source bytes changed during acquisition"
+            assert acquisition.digest(raw) == body_hash
+            saved[body_hash] = json.loads(raw)
+
+        def resolve(reference, symbol):
+            # Reviewed references have symbol in the enclosing duplicate operation.
+            # Accepting that documented scope makes pre-fix failures about the row.
+            actual_symbol = reference.get("symbol", symbol)
+            assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+            body_hash = reference["page_sha256"]
+            assert body_hash in saved, "raw source hash does not identify a retained page"
+            rows = saved[body_hash]["bars"][actual_symbol]
+            index = reference["row_index"]
+            assert 0 <= index < len(rows), (
+                f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+            coordinate = {"page_sha256": body_hash,
+                          "page_index": expected_hashes.index(body_hash),
+                          "symbol": actual_symbol, "row_index": index}
+            if "page_index" in reference:
+                assert reference["page_index"] == coordinate["page_index"], "raw source page ordinal is inconsistent"
+            return rows[index], coordinate
+
+        operations = report["duplicate_operations"]
+        assert len(operations) == len(expected_pairs)
+        coordinates = []
+        for operation, (symbol, previous, selected) in zip(operations, expected_pairs):
+            assert operation["symbol"] == symbol
+            pair = {}
+            for field, (page_index, row_index) in (("previous", previous), ("selected", selected)):
+                actual, coordinate = resolve(operation[field], symbol)
+                expected = raw_bars[page_index][symbol][row_index]
+>               assert actual["t"] == expected["t"] == operation["timestamp"], (
+                    f"raw source {field} points to the wrong observation timestamp")
+E               AssertionError: raw source selected points to the wrong observation timestamp
+E               assert '2026-09-24T04:00:00Z' == '2026-09-23T04:00:00Z'
+E
+E                 - 2026-09-23T04:00:00Z
+E                 ?          ^
+E                 + 2026-09-24T04:00:00Z
+E                 ?          ^
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:706: AssertionError
+__ test_duplicate_source_coordinates_resolve_retained_raw[within_later_page] __
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC59C4A0>, <function setup.<locals>.build at 0x000002B3BC37C220>)
+case = 'within_later_page'
+
+    @pytest.mark.parametrize("case", [
+        "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+        "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+    ])
+    def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        runner, transport = build(responses)
+        report = runner.run("canonical")
+        assert report["pagination_complete"] is True
+        assert len(transport.calls) == len(responses)
+        assert report["ledger"]["request_slots_charged"] == len(responses)
+        assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+>       _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:760:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+manifest = {'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'20...nonical', 'symbols': ['AAA', 'BBB', 'SPY'], 'start': '2026-09-23T04:00:00Z', 'end': '2026-09-24T23:59:59Z', ...}], ...}
+root = WindowsPath('C:/Users/motah/AppData/Local/Temp/pytest-of-motah/pytest-58/test_duplicate_source_coordina3/private-synthetic-storage')
+report = {'schema': 'historical-acquisition-v1', 'manifest_sha256': 'fa51247899820b52b933f121d3f461fdbb81c667c3900db56e8f07ff7330b104', 'query_id': 'canonical', 'pagination_complete': True, ...}
+responses = [HTTPResult(status=200, headers={}, body=b'{"bars":{"AAA":[{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-23T04:00:00Z","v":...24T04:00:00Z","v":2000},{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-24T04:00:00Z","v":2300}]},"next_page_token":null}\n')]
+raw_bars = [{'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}, {'AAA': [{'t': '2026-09-24T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}, {'t': '2026-09-24T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}]
+expected_pairs = [('AAA', (1, 0), (1, 1))]
+
+    def _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs):
+        """Resolve actual saved bytes before checking any newly added metadata."""
+        from tools.historical_normalization import normalize_pages
+
+        expected_hashes = [acquisition.digest(item.body) for item in responses]
+        assert [page["sha256"] for page in report["pages"]] == expected_hashes
+        saved = {}
+        for page_index, body_hash in enumerate(expected_hashes):
+            raw = (root / "pages" / (body_hash + ".json")).read_bytes()
+            assert raw == responses[page_index].body, "raw source bytes changed during acquisition"
+            assert acquisition.digest(raw) == body_hash
+            saved[body_hash] = json.loads(raw)
+
+        def resolve(reference, symbol):
+            # Reviewed references have symbol in the enclosing duplicate operation.
+            # Accepting that documented scope makes pre-fix failures about the row.
+            actual_symbol = reference.get("symbol", symbol)
+            assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+            body_hash = reference["page_sha256"]
+            assert body_hash in saved, "raw source hash does not identify a retained page"
+            rows = saved[body_hash]["bars"][actual_symbol]
+            index = reference["row_index"]
+            assert 0 <= index < len(rows), (
+                f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+            coordinate = {"page_sha256": body_hash,
+                          "page_index": expected_hashes.index(body_hash),
+                          "symbol": actual_symbol, "row_index": index}
+            if "page_index" in reference:
+                assert reference["page_index"] == coordinate["page_index"], "raw source page ordinal is inconsistent"
+            return rows[index], coordinate
+
+        operations = report["duplicate_operations"]
+        assert len(operations) == len(expected_pairs)
+        coordinates = []
+        for operation, (symbol, previous, selected) in zip(operations, expected_pairs):
+            assert operation["symbol"] == symbol
+            pair = {}
+            for field, (page_index, row_index) in (("previous", previous), ("selected", selected)):
+                actual, coordinate = resolve(operation[field], symbol)
+                expected = raw_bars[page_index][symbol][row_index]
+                assert actual["t"] == expected["t"] == operation["timestamp"], (
+                    f"raw source {field} points to the wrong observation timestamp")
+>               assert actual == expected, f"raw source {field} points to the wrong OHLCV values"
+E               AssertionError: raw source previous points to the wrong OHLCV values
+E               assert {'c': 11, 'h'... 'o': 10, ...} == {'t': '2026-0..., 'l': 9, ...}
+E
+E                 Omitting 5 identical items, use -vv to show
+E                 Differing items:
+E                 {'v': 2300} != {'v': 2000}
+E                 Use -v to get more diff
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:708: AssertionError
+__ test_duplicate_source_coordinates_resolve_retained_raw[multiple_symbols] ___
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC59D220>, <function setup.<locals>.build at 0x000002B3BC37DBC0>)
+case = 'multiple_symbols'
+
+    @pytest.mark.parametrize("case", [
+        "two_pages_wrong_observation", "one_row_later_page", "three_page_replacements",
+        "within_later_page", "multiple_symbols", "same_page_control", "no_duplicate_control",
+    ])
+    def test_duplicate_source_coordinates_resolve_retained_raw(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        runner, transport = build(responses)
+        report = runner.run("canonical")
+        assert report["pagination_complete"] is True
+        assert len(transport.calls) == len(responses)
+        assert report["ledger"]["request_slots_charged"] == len(responses)
+        assert report["ledger"]["uncompressed_retained_bytes_charged"] == sum(len(item.body) for item in responses)
+>       _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:760:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:704: in _assert_duplicate_raw_coordinates
+    actual, coordinate = resolve(operation[field], symbol)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+reference = {'page_sha256': 'c2574c2d19632e8692cc276abfcf228ae6f59b432f3b39a55f7ad6fe8b7a9a5d', 'row_index': 1}
+symbol = 'AAA'
+
+    def resolve(reference, symbol):
+        # Reviewed references have symbol in the enclosing duplicate operation.
+        # Accepting that documented scope makes pre-fix failures about the row.
+        actual_symbol = reference.get("symbol", symbol)
+        assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+        body_hash = reference["page_sha256"]
+        assert body_hash in saved, "raw source hash does not identify a retained page"
+        rows = saved[body_hash]["bars"][actual_symbol]
+        index = reference["row_index"]
+>       assert 0 <= index < len(rows), (
+            f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+E       AssertionError: raw source index 1 is outside retained AAA array of 1 rows
+E       assert 1 < 1
+E        +  where 1 = len([{'c': 11, 'h': 12, 'l': 9, 'o': 10, ...}])
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:688: AssertionError
+__ test_duplicate_source_coordinates_cached_resume[three_page_replacements] ___
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x000002B3BC299D60>, <function setup.<locals>.build at 0x000002B3BC37DC60>)
+case = 'three_page_replacements'
+
+    @pytest.mark.parametrize("case", ["three_page_replacements", "same_page_control"])
+    def test_duplicate_source_coordinates_cached_resume(setup, case):
+        manifest, _, root, _, build = setup
+        responses, raw_bars, expected_pairs = _lineage_responses(manifest, case)
+        manifest["limits"]["requests"] = len(responses)
+        manifest["limits"]["retained_bytes"] = sum(len(item.body) for item in responses)
+        runner, transport = build(responses)
+        original = runner.run("canonical")
+        charged = ledger(root)
+        raw_before = {path.name: path.read_bytes() for path in (root / "pages").iterdir()}
+        resumed, cached_transport = build([AssertionError("successful cached pages must not reach transport")])
+        replay = resumed.run("canonical")
+        assert cached_transport.calls == []
+        assert len(transport.calls) == len(responses)
+        assert replay == original
+        assert ledger(root) == charged
+        assert replay["ledger"]["request_slots_charged"] == manifest["limits"]["requests"]
+        assert replay["ledger"]["uncompressed_retained_bytes_charged"] == manifest["limits"]["retained_bytes"]
+        assert replay["ledger"]["unresolved_byte_reservations"] == 0
+        assert {path.name: path.read_bytes() for path in (root / "pages").iterdir()} == raw_before
+>       _assert_duplicate_raw_coordinates(manifest, root, replay, responses, raw_bars, expected_pairs)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:783:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+manifest = {'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'20...nonical', 'symbols': ['AAA', 'BBB', 'SPY'], 'start': '2026-09-23T04:00:00Z', 'end': '2026-09-24T23:59:59Z', ...}], ...}
+root = WindowsPath('C:/Users/motah/AppData/Local/Temp/pytest-of-motah/pytest-58/test_duplicate_source_coordina7/private-synthetic-storage')
+report = {'schema': 'historical-acquisition-v1', 'manifest_sha256': 'ce20407f3d080f3280eb83e2dc9a02a0ac4a480797d9802fdc791fa7db6aa7f8', 'query_id': 'canonical', 'pagination_complete': True, ...}
+responses = [HTTPResult(status=200, headers={}, body=b'{"bars":{"AAA":[{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-23T04:00:00Z","v":...23T04:00:00Z","v":1800},{"c":11,"h":12,"l":9,"o":10,"t":"2026-09-24T04:00:00Z","v":2500}]},"next_page_token":null}\n')]
+raw_bars = [{'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}, {'AAA': [{'t': '2026-09-23T04:00:00Z', 'o': ...'2026-09-23T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}, {'t': '2026-09-24T04:00:00Z', 'o': 10, 'h': 12, 'l': 9, ...}]}]
+expected_pairs = [('AAA', (0, 0), (1, 0)), ('AAA', (1, 0), (2, 0)), ('AAA', (1, 1), (2, 1))]
+
+    def _assert_duplicate_raw_coordinates(manifest, root, report, responses, raw_bars, expected_pairs):
+        """Resolve actual saved bytes before checking any newly added metadata."""
+        from tools.historical_normalization import normalize_pages
+
+        expected_hashes = [acquisition.digest(item.body) for item in responses]
+        assert [page["sha256"] for page in report["pages"]] == expected_hashes
+        saved = {}
+        for page_index, body_hash in enumerate(expected_hashes):
+            raw = (root / "pages" / (body_hash + ".json")).read_bytes()
+            assert raw == responses[page_index].body, "raw source bytes changed during acquisition"
+            assert acquisition.digest(raw) == body_hash
+            saved[body_hash] = json.loads(raw)
+
+        def resolve(reference, symbol):
+            # Reviewed references have symbol in the enclosing duplicate operation.
+            # Accepting that documented scope makes pre-fix failures about the row.
+            actual_symbol = reference.get("symbol", symbol)
+            assert actual_symbol == symbol, "raw source resolves the wrong symbol"
+            body_hash = reference["page_sha256"]
+            assert body_hash in saved, "raw source hash does not identify a retained page"
+            rows = saved[body_hash]["bars"][actual_symbol]
+            index = reference["row_index"]
+            assert 0 <= index < len(rows), (
+                f"raw source index {index} is outside retained {actual_symbol} array of {len(rows)} rows")
+            coordinate = {"page_sha256": body_hash,
+                          "page_index": expected_hashes.index(body_hash),
+                          "symbol": actual_symbol, "row_index": index}
+            if "page_index" in reference:
+                assert reference["page_index"] == coordinate["page_index"], "raw source page ordinal is inconsistent"
+            return rows[index], coordinate
+
+        operations = report["duplicate_operations"]
+        assert len(operations) == len(expected_pairs)
+        coordinates = []
+        for operation, (symbol, previous, selected) in zip(operations, expected_pairs):
+            assert operation["symbol"] == symbol
+            pair = {}
+            for field, (page_index, row_index) in (("previous", previous), ("selected", selected)):
+                actual, coordinate = resolve(operation[field], symbol)
+                expected = raw_bars[page_index][symbol][row_index]
+>               assert actual["t"] == expected["t"] == operation["timestamp"], (
+                    f"raw source {field} points to the wrong observation timestamp")
+E               AssertionError: raw source selected points to the wrong observation timestamp
+E               assert '2026-09-24T04:00:00Z' == '2026-09-23T04:00:00Z'
+E
+E                 - 2026-09-23T04:00:00Z
+E                 ?          ^
+E                 + 2026-09-24T04:00:00Z
+E                 ?          ^
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock\tests\test_historical_acquisition.py:706: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_resolve_retained_raw[two_pages_wrong_observation]
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_resolve_retained_raw[one_row_later_page]
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_resolve_retained_raw[three_page_replacements]
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_resolve_retained_raw[within_later_page]
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_resolve_retained_raw[multiple_symbols]
+FAILED tests/test_historical_acquisition.py::test_duplicate_source_coordinates_cached_resume[three_page_replacements]
+6 failed, 3 passed, 76 deselected in 1.01s

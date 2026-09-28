@@ -232,6 +232,66 @@ collect screenshots, run commands or paste credentials.
 
 ## Repairs, verification and handoff
 
+### PR #93 correction: resolvable duplicate raw-row references
+
+Guidance review `5342729066` identified an acquisition-tool lineage defect on
+`a9ed0ec3b64399e1f9d80ac3ce27d921c289f9b1`. Re-resolved base/main remains
+`0d702940814af05e9b8d2a4c887aee00939e46fc`. The correction stays on PR #93;
+its final submitted head and normal CI results are recorded in that PR.
+
+The old reference paired the current page hash with the symbol's cumulative
+arrival count. Through the actual `Acquisition` class and synthetic transport,
+September 23's replacement (1,500 shares at page 2 / AAA row 0) incorrectly
+pointed to September 24 (2,000 shares at row 1); a one-row later page produced
+an out-of-range reference. Terminal pagination still reported true. These are
+synthetic observations, not a new provider acquisition or a production finding.
+
+The output contract is now `raw-page-symbol-row-v1`. Every previous/discarded
+and selected reference carries `page_sha256`, `page_index`, `symbol`, and
+`row_index`. Verify the raw bytes against the SHA-256, then resolve
+`json.loads(raw_page)["bars"][symbol][row_index]`. Both indices are zero-based:
+`page_index` is query pagination order; `row_index` is within that page's own
+symbol array, never an accumulated arrival count. This is the same raw-row
+identity emitted by the unchanged normalizer. Stable last-arrival selection,
+original raw bytes/hashes/order, pagination and persistent budgets are unchanged.
+Cached resume re-derives the output manifest from the same verified raw pages;
+the frozen acquisition request manifest and ledger identity are not rewritten.
+
+- FAIL — reviewed source: 6 raw-pointer regressions fail, 3 unaffected controls
+  pass. The first execution used the unchanged working-tree acquisition module,
+  before applying the repair; its transcript and JUnit are retained.
+- PASS — corrected source: all 9 focused regressions pass. They dereference both
+  references and check symbol, timestamp, complete OHLCV values and agreement with
+  the normalizer. Cases cover two/three pages, later-page internal duplicates,
+  multiple symbols, one-row later pages and repeated replacements, plus unchanged
+  same-page/no-duplicate controls.
+- FAIL — restoring only the cumulative-index assignment in an isolated process
+  produces the same 6 raw-pointer failures; the 3 controls still pass. The durable
+  runner also loads the exact reviewed source without changing the checkout.
+- PASS — cached-resume cases reproduce the full manifest and both raw references
+  with zero further transport calls, unchanged attempt rows and raw page bytes,
+  and unchanged request/byte charges even when both synthetic budgets are exhausted.
+
+See [correction evidence](2026-09-28-historical-input-evidence/lineage-correction/README.md).
+Use a full-history clone at the correction head with the existing pinned test
+environment; the reviewed parent commit must be present for the source control.
+All test/replay sockets are blocked, and all transport responses are synthetic:
+
+```sh
+python tools/historical_lineage_controls.py --output /tmp/spicystock-lineage-controls
+MPLBACKEND=Agg python -m pytest tests/test_historical_acquisition.py tests/test_historical_normalization.py tests/test_historical_reconcile.py -q
+MPLBACKEND=Agg python -m pytest tests/ -q
+```
+
+Real acquisition and its access probe remain NOT RUN: zero requests, zero new
+raw-response bytes and zero additional spend. Runtime/access/retention/private
+storage prerequisites remain BLOCKED; the 400-request / 1-GiB / $0 authorization
+is unchanged. Corrected synthetic lineage establishes none of the missing
+original membership, later-retrieval, provider-truth, reader or trading-edge proof.
+No production, UI, workflow or previous historical analysis is changed or rerun.
+
+### Original investigation verification
+
 No production data/calculation defect has been demonstrated. The scope therefore
 adds investigation tooling and focused regressions; it does not manufacture a
 production patch. Initial new-tool test failures and their corrections are

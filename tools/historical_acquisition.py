@@ -562,6 +562,14 @@ class Acquisition:
                     self.db = None
 
     def _run_query(self, query):
+        """Retain page-local raw coordinates, including both duplicate arrivals.
+
+        raw-page-symbol-row-v1 resolves a reference as
+        json.loads(raw_page)["bars"][symbol][row_index]. page_sha256 identifies
+        the unchanged raw bytes; page_index is the zero-based query page order;
+        row_index is zero-based within that page's own symbol array, never a
+        cumulative arrival count. Stable last arrival still selects duplicates.
+        """
         query_id = query["id"]
         if query["scope"] == "bulk":
             probe = next(q for q in self.manifest["queries"] if q["scope"] == "probe")
@@ -590,9 +598,10 @@ class Acquisition:
             pages.append({"sha256": body_hash, "request_token": token,
                           "next_page_token": payload["next_page_token"]})
             for symbol, rows in payload["bars"].items():
-                for row in rows:
+                for row_index, row in enumerate(rows):
                     row_id = (symbol, row["t"])
-                    source = {"page_sha256": body_hash, "row_index": len(by_symbol[symbol])}
+                    source = {"page_sha256": body_hash, "page_index": len(pages) - 1,
+                              "symbol": symbol, "row_index": row_index}
                     if row_id in selected:
                         duplicate_rows.append({"symbol": symbol, "timestamp": row["t"],
                             "previous": selected[row_id], "selected": source,
@@ -612,6 +621,7 @@ class Acquisition:
                 "lookback_completeness": "checked_against_declared_sessions" if required else "unresolved"}
         report = {"schema": SCHEMA, "manifest_sha256": self.identity, "query_id": query_id,
                   "pagination_complete": True, "pages": pages, "symbols": symbol_manifest,
+                  "source_coordinate_contract": "raw-page-symbol-row-v1",
                   "duplicate_operations": duplicate_rows,
                   "vintage": "later_retrieval_not_original_information_set",
                   "mapping_note": "asof_is_symbol_mapping_not_observation_vintage",
