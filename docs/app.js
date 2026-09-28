@@ -631,7 +631,8 @@
   function planningWaitReasons(c, data) {
     const b = c.row, p = c.plan, e = b.evidence || {}, gate = e.gate || {}, planning = e.planning || {};
     const reasons = [], rules = ((data.rules || {}).pipeline || {}), reg = (data.breadth || {}).regime || {};
-    const error = text(planning.error) || (gate.reason === 'plan_error' ? text(gate.detail) : '');
+    const error = text(planning.error) || (gate.reason === 'plan_error'
+      ? text(gate.detail) || 'the producer recorded a planner error without further detail' : '');
     if (p) {
       if (p.eligible === false) reasons.push('Plan produced but ineligible: ' + (text(p.reason) || 'the refusal reason is unavailable.'));
       else if (p.action === 'refused') reasons.push('Plan produced but withheld: ' + (text(p.reason) || 'the refusal reason is unavailable.'));

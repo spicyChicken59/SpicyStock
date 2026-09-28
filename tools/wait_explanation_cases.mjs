@@ -64,8 +64,9 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
     b.evidence.gate={reason:'plan_error',detail:'synthetic invalid planner input',ticket:false};
   });
   const legacy=projection((d,b)=>{delete b.evidence;delete d.rules.pipeline.reader_policy;});
-  const attempted=projection((d,b)=>{b.evidence.planning={inputs:{ticker:b.ticker}};b.evidence.gate={reason:'plan_error'};});
+  const attempted=projection((d,b)=>{b.evidence.planning={inputs:{ticker:b.ticker}};b.evidence.gate={};});
   const gateOnly=projection((d,b)=>{delete b.evidence.planning;b.evidence.gate={reason:'plan_error',detail:'synthetic recorded planner error'};});
+  const gateWithoutDetail=projection((d,b)=>{delete b.evidence.planning;b.evidence.gate={reason:'plan_error'};});
   const readerSkip=projection((d,b)=>{
     b.reader_coverage='not_selected_budget';b.claude={source:'not_graded'};b.evidence.gate={reason:'reader_coverage'};
   });
@@ -77,6 +78,7 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
     ['legacy-unknown',legacy,['Planning evidence unavailable'],['not evaluated','Planning skipped','Planning failed']],
     ['attempted-unknown',attempted,['Planning was attempted','outcome is unavailable'],['not evaluated','Planning skipped','Planning failed']],
     ['gate-error',gateOnly,['Planning failed','synthetic recorded planner error'],['not evaluated','skipped']],
+    ['gate-error-without-detail',gateWithoutDetail,['Planning failed','recorded a planner error without further detail'],['not evaluated','skipped']],
     ['reader-skip',readerSkip,['Planning skipped','accepted reader review'],['Planning failed']],
     ['unknown-policy',unknownPolicy,['Planning evidence unavailable'],['Planning skipped']],
     ['legacy-policy',oldPolicy,['Planning evidence unavailable'],['Planning skipped']],
