@@ -1,0 +1,8 @@
+{
+  "original_local_commit": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af",
+  "raw_commit": "tree 205a747533de966c3688eb70b23d646095b5125e\nparent 8be007f68deaa417b85a512d2e16a37899d27011\nauthor Codex <codex@openai.com> 1790579448 +0900\ncommitter Codex <codex@openai.com> 1790579448 +0900\n\nFreeze historical validation hypotheses and evidence boundaries\n",
+  "tree": "205a747533de966c3688eb70b23d646095b5125e",
+  "spec_sha256": "7be3cb4407fdcaeb3ccb9af2186b20417b8cd3c68b1c39e22d259cb2c1f19ceb",
+  "remote_identical_tree_commit": "f92a8c0d1efbe0f2291cb5b4d4bb80404826471c",
+  "publication_note": "Direct git push lacked credentials; the connected GitHub API uploaded identical content later. The local freeze predates the experiments."
+}

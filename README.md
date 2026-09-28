@@ -12,26 +12,27 @@ every rule is; this file says what the software does with them. The dated
 the primary 2015 4% and 2017 Dollar formulas, their differing volume
 boundaries, and the repository's separate precision/universe choices.
 
-The page is the product. It is generated, static, and renders one file,
-`docs/data.json`; it computes nothing of its own except whether the record
-it is showing is tonight's. Everything else — the regime, the grades, the
+The page is the product. It is generated and static: `docs/data.json` supplies
+the latest decision, with separate read-only historical evidence and optional
+browser-local saved research. It displays recorded gate counts and entry timing.
+The regime, the grades, the
 share counts, the order tickets, the exits, the record — is written by the
 run and printed verbatim. It is an implementation of the method with
 explicit assumptions (the archived rules, and `knowledge/method.md` on whose
 number each is), not a proven edge, and it knows nothing about what anyone
 holds: every plan it follows is a model of the published ticket.
 
-**Fourteen days.** Week one is paper: read the page every evening, place the
-orders in Fidelity's paper view or not at all, and read the open-plan rail
-each morning. Week two is the $10,000 account at the default 0.5% risk
-(0.25% is the more conservative end of his band and one variable away). Day
-fourteen is a decision point, made on the page's own reliability row and
-its bars-only scorecard, not on a feeling — and not an automatic switch to
-real money: twenty settled model plans make a rate readable, not an edge.
+**Historical validation.** The retained rebuild sample contains 13 publications
+across 11 sessions, with no published reaction ticket or settled plan. It does
+not establish an executable trading edge or a timetable for funding an account.
+The $10,000 / 0.5% / 25% / four-slot account is a model assumption. Twenty settled
+plans would make a rate readable, not certify an edge. Read the
+[versioned evidence and blocked claims](docs/input-truthfulness/2026-09-28-validation-review.md)
+and [selected operating contract](docs/input-truthfulness/2026-09-28-operating-contract.md).
 
 ## What the page says
 
-The page is a small application over one record: four views behind the
+The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
 `#/explore/setting-up/COIL`, `#/record`, `#/market`, `#/method`) so a link
 reloads to the same stock and the Back button works; the old one-page
@@ -779,6 +780,21 @@ sessions without independent holiday arithmetic. Beyond that window, or on old
 records lacking provenance, freshness is unknown and actions are withheld. Old
 records and saved setups retain their original timing and limitations. New saves
 freeze their original timing evidence; later observations do not replace it.
+
+The wait explanation uses that same publication/calendar authority. The close
+buffer does not end an unpublished evening evaluation: the completed session
+remains pending, or is reported as delayed/missing/possibly failed under the
+existing freshness policy. A future completion time is not promised. Clock, focus,
+visibility and refresh updates preserve the reading state. Planning explanations
+distinguish a recorded early-gate skip, an attempted error, a produced refusal,
+recorded sizing/allocation and unknown historical evidence; null alone establishes
+none of those stages. See the [PR #92 correction and proof limits](docs/input-truthfulness/2026-09-28-pr92-explanation-correction.md).
+
+The normal `page_smoke.mjs` gate includes the shared historical journey and wait
+regressions, pinned to retained publications independently of later automatic
+`docs/data.json` updates. `--only historical,wait-explanations` runs that focused
+selection; `tools/historical_journeys.mjs` remains a standalone entry point to
+the same historical assertions.
 
 Deterministic cases include 2024-08-26 (ordinary Monday), Aug 31/Sep 1 (weekend),
 Sep 2 (Labor Day), Aug 30→Sep 3 (adjacent sessions), Nov 29 (13:00 ET close),

@@ -1,0 +1,665 @@
+{
+  "application_revision": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af",
+  "application_files": {
+    "docs/app.js": "a7ec1102e184107779383a8affdb967099959019d50c086115d3d921fe059432",
+    "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+    "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+    "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+  },
+  "publication_sha256": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+  "clock": "2026-09-28T13:15:00Z",
+  "browser": "Chromium 141.0.7390.37 / Playwright 1.56.1",
+  "rules_version": "81ed3b38d571",
+  "routes": [
+    "/docs/index.html#/explore/bursts/MSFT",
+    "/docs/index.html#/record",
+    "/docs/index.html#/followed/<saved-CRL-identity>"
+  ],
+  "viewports": [
+    {
+      "width": 390,
+      "height": 844,
+      "touch_emulation": true
+    },
+    {
+      "width": 320,
+      "height": 844,
+      "touch_emulation": true
+    },
+    {
+      "width": 1280,
+      "height": 844,
+      "touch_emulation": false
+    }
+  ],
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "mode": "repaired",
+  "physical_device": "NOT RUN",
+  "assistive_technology": "NOT RUN",
+  "human_usability": "NOT RUN",
+  "journey_A": "BLOCKED: no real qualifying historical ticket in the declared sample",
+  "results": [
+    {
+      "name": "390/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 390,
+        "document": 390,
+        "charts": [
+          {
+            "width": 286,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "390/dark rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 286,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "390/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 390,
+        "document": 390,
+        "charts": [
+          {
+            "width": 286,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "390/light rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 286,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "390/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 320,
+        "document": 320,
+        "charts": [
+          {
+            "width": 216,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "320/dark rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 216,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "320/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 320,
+        "document": 320,
+        "charts": [
+          {
+            "width": 216,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "320/light rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 216,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "320/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 1280,
+        "document": 1280,
+        "charts": [
+          {
+            "width": 1124,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "1280/dark rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 1124,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "1280/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light page geometry",
+      "status": "PASS",
+      "detail": {
+        "viewport": 1280,
+        "document": 1280,
+        "charts": [
+          {
+            "width": 1124,
+            "height": 280
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          },
+          {
+            "width": 8,
+            "height": 14
+          }
+        ]
+      }
+    },
+    {
+      "name": "1280/light rendered historical chart geometry",
+      "status": "PASS",
+      "detail": [
+        {
+          "width": 1124,
+          "height": 280
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        },
+        {
+          "width": 8,
+          "height": 14
+        }
+      ]
+    },
+    {
+      "name": "1280/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "no browser exceptions",
+      "status": "PASS",
+      "detail": []
+    }
+  ],
+  "checkout_note": "The capture used the source-file hashes below in a dirty worktree based on application_revision. The final PR maps these bytes to its tree; no claim that the base commit alone contains the tested code.",
+  "retained_screenshots": [
+    {
+      "path": "screenshots/1280-light-historical.png",
+      "sha256": "1a922df15ed5e2fbca9614662dbd4548fe38bffef2cff1ba0d33be35f556f866",
+      "bytes": 108116
+    },
+    {
+      "path": "screenshots/320-light-gates.png",
+      "sha256": "f3b0182b90290473f2ab6896b28f3c68ac544b1a04a4fa052aaf71f66c0e854d",
+      "bytes": 73787
+    },
+    {
+      "path": "screenshots/390-dark-historical.png",
+      "sha256": "21d2d121f8f838356674b916b4699dc0e404c5af934836bdfb1f2ce8f77f249e",
+      "bytes": 75411
+    },
+    {
+      "path": "screenshots/390-dark-reader-wait.png",
+      "sha256": "17009f51c41db25f2f2b2c4c76572d8a62be1ff3826e6f0d38c4c7f27efa3dbf",
+      "bytes": 83262
+    },
+    {
+      "path": "screenshots/390-light-gates.png",
+      "sha256": "447e7e3d18dc7620722e89b6c469866b39c56ae7661c8723c89909830071793f",
+      "bytes": 83682
+    },
+    {
+      "path": "screenshots/390-light-saved.png",
+      "sha256": "ba0e4bd9a2d3820cef3b2d110ba648453a005476af876f2d71cd401f2cd06ee2",
+      "bytes": 64533
+    },
+    {
+      "path": "screenshots/PAG-reader-context-v2.png",
+      "sha256": "18e7f912dd89e674e43837f4e3f700fdfa7dee95f1963b225fba09e6ae54f9c1",
+      "bytes": 63913
+    }
+  ]
+}

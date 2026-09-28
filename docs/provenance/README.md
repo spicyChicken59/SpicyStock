@@ -1,5 +1,12 @@
 # Recommendation provenance v1
 
+The September 28 reader request repair adds `grading.reader_request_version = 2`
+to prospective rules. Its dated image context is included in reader metrics and
+their digest. Old requests, raw responses and receipts remain unchanged; full
+replay uses their original code, not new request semantics. See the
+[historical validation review](../input-truthfulness/2026-09-28-validation-review.md)
+for exact original-code coverage and missing evidence.
+
 Every new reaction candidate and top anticipation plan receives a content-derived
 `evidence.id`. This is a decision receipt, not an execution record, an authenticity
 signature, a backtest or evidence of trading edge. `docs/picks.json` remains model

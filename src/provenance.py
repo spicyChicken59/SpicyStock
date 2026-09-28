@@ -433,6 +433,9 @@ def _check_source(data, row, e, objects):
     if ri:
         extra = {k: row[k] for k in ("scan", "discovery", "flags", "gain_pct", "volume_vs_prior", "dollar_volume")}
         metrics = quality.metrics_for_model(assessment, row["ticker"], row["close"], extra)
+        if data['rules'].get('grading', {}).get('reader_request_version', 1) >= 2:
+            from src import charts
+            metrics['chart_context'] = charts.reader_context(df, assessment) if ri.get('chart_sha256') else None
         _same(digest(metrics), ri["metrics_sha256"], "reader input measurements mismatch")
         system = _object(objects, ri["system_object"])["text"]
         _same(hashlib.sha256(system.encode()).hexdigest(), ri["system_sha256"], "reader system digest mismatch")
@@ -478,7 +481,7 @@ archive. Integrity-only callers explicitly disable the source replay requirement
         from src.report import rules_version, timing_faults
         _same(rules_version(data["rules"]), data["app"]["rules_version"], "rules identity mismatch")
         mismatches = []
-        for rules in (scans.RULES, discovery.RULES, reader_authority.RULES, quality.RULES, plan.RULES, watchlist.RULES, sessions.RULES, RULES):
+        for rules in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, sessions.RULES, RULES):
             for key, value in rules.items():
                 family, _, name = key.partition(".")
                 if digest(data["rules"].get(family, {}).get(name)) != digest(value):

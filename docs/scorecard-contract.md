@@ -5,6 +5,13 @@ Effective with the September 16, 2026 product campaign. This is a SpicyStock
 finding. `src/record.py` is the calculation authority; `record.replay()` and
 `plan.follow()` remain the only fill/exit engine. Personal selection has no role.
 
+The September 28 [historical validation](input-truthfulness/2026-09-28-validation-review.md)
+is a separate read-only research layer. Its original decisions, later close
+observations, counterfactuals and synthetic controls do not add picks or scorecard
+settlements. The retained 13-publication / 11-session sample has zero published
+reaction tickets; its selected next-close observations are not trade returns.
+An empty settlement sample supplies no expectancy or cost-adjusted performance.
+
 ## Population and coverage
 
 Every valid retained pick in `docs/picks.json` whose signal session is within

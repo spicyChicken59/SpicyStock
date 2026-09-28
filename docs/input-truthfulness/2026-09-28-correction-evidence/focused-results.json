@@ -1,0 +1,3234 @@
+{
+  "status": "PASS",
+  "checks": 806,
+  "historical_checks": 85,
+  "wait_checks": 721,
+  "application_sha256": "fa635076804c7ad9e7cbfce5947527b66a0d37d714a538e3d1bfb3df677e4968",
+  "note": "The 85 historical assertions are from the first full run at implementation 2078a23; the 721 final wait assertions are from the sealed c0e9d9b implementation. The final exact-head unfiltered normal CI is recorded in PR #92.",
+  "results": [
+    {
+      "name": "390/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light independent wait gates",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light rejected review visible",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light exact retained reader rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light historical reader image identity",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light frozen case has no order copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outcome reveal keeps earlier chart",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light page geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light rendered historical chart geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light current record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reveal leaves saved originals untouched",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light historical original saved for research",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outcome toggle preserves saved original",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light Back restores current view",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light refresh keeps current identity",
+      "status": "PASS"
+    },
+    {
+      "name": "no browser exceptions",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/dark clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "390/light clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/dark clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "320/light clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/dark clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light full genuine record does not skip pending Monday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light independent RED and rejected review retained",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light known early-gate skip is recorded",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-close evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-close no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-close no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light in-session evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light in-session no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light in-session no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light close-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light close-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light close-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light completion-boundary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light completion-boundary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light completion-boundary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light completion-boundary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light after-buffer evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light after-buffer does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light after-buffer no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light after-buffer no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-primary evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-primary does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-primary no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-primary no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pre-primary readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light delayed evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light delayed does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light delayed no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light delayed no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light delayed readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-next-morning evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-next-morning does not jump to Tuesday",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-next-morning no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-next-morning no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light multiple-missing evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light multiple-missing no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light multiple-missing no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light weekend evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light weekend no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light weekend no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outside-calendar evaluation explanation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outside-calendar no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light outside-calendar no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light explicit failed run distinguished",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing calendar evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing published_at evidence is unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light malformed calendar not bypassed",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light holiday/weekend 2026-09-05T16:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light holiday/weekend 2026-09-07T21:00:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light holiday/weekend 2026-09-08T13:15:00Z uses archived session",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner-error readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-unknown readable rendered geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light attempted-unknown stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light attempted-unknown no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light attempted-unknown no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light attempted-unknown no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error-without-detail stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error-without-detail no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error-without-detail no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light gate-error-without-detail no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reader-skip stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reader-skip no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reader-skip no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light reader-skip no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unknown-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unknown-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unknown-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unknown-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-policy stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-policy no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-policy no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light legacy-policy no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-stage-inputs stage evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-stage-inputs no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-stage-inputs no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light missing-stage-inputs no plan/levels fabricated",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light planner failure does not erase independent blockers",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light TSLA recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light TSLA no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light TSLA plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light AMD recorded refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light AMD no copy on refused detail",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light AMD plan unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light explicit zero-size outcome",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light zero size no copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light ordinary eligible plan no invented blocker",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light eligible plan levels unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light ordinary eligible plan retains its published copy",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light focus updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light focus keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light visibilitychange updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light visibilitychange keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pageshow updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light pageshow keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light tick updates evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light tick keeps charts selection focus disclosures and scroll",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unchanged refresh keeps evaluation",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light unchanged refresh keeps chart and focus",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light genuine September 25 evaluation pending",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light newly arrived genuine record acknowledged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light newer refresh preserves wait disclosure",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light newer refresh focus preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light newer refresh keeps selected stock",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light genuine arrival no copy controls",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light genuine arrival no actionable order rows",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light real arrival record unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "1280/light clock/refresh browser errors",
+      "status": "PASS"
+    },
+    {
+      "name": "frozen wait publication unchanged in harness",
+      "status": "PASS"
+    }
+  ]
+}

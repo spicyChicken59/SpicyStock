@@ -1,0 +1,13 @@
+# Offline POC reproduction environment, not a production dependency upgrade.
+pandas==2.2.3
+numpy==2.3.5
+anthropic==1.8.0
+alpaca-py==0.44.0
+exchange_calendars==4.13.2
+matplotlib==3.10.8
+mplfinance==0.12.10b0
+resend==2.48.0
+pytest==9.1.1
+PyYAML==6.0.3
+httpx2==2.13.1
+socksio==1.0.0

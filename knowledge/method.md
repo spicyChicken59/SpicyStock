@@ -104,9 +104,13 @@ type per Qullamaggie "market stops, never limit stops"). The ticket's shares,
 its stop distance and the halving are judged at its limit, the highest fill
 it permits (P): a fixed quantity that keeps the budget and the 4% line at
 every fill it can take, or no ticket. His 4% is measured from his own fill;
-at a +4% ceiling that reading withholds any burst whose usable stop sits
-more than about 0.16% under the close, which is most of them -- an
-implementation choice, recorded as an open question, not his number. Exits (B, 2018):
+the implemented `stop_constrained` rule narrows the ticket limit to the lesser
+of the outer +4% ceiling and floor-to-cents(stop / 0.96). It tries the signal
+low, then its cent-rounded midpoint, and requires a stop below the trigger
+and a limit strictly above it. This DERIVED choice has been implemented since
+September 12; the old fixed-ceiling incompatibility is not current behavior.
+Price-to-stop risk is not a guaranteed maximum loss: stop-market gaps can
+exceed it. Exits (B, 2018):
 +8% same or next day → sell half and raise the stop under that day's high;
 10%+ abnormal day → partial; 20%+ gap after entry → out at the open; day 3
 close → sell at least half; no progress by day 3 → out; after day 3 trail the

@@ -411,10 +411,13 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         assessment: quality.Assessment = b["_assessment"]
         df = frames[b["ticker"]]
         chart_path = None
+        chart_context = None
         try:
+            chart_context = charts.reader_context(df, assessment)
             base = assessment.base or {}
             box = (base["start"], base["end"], base["low"], base["high"]) if base else None
             chart_path = charts.render_chart(b["ticker"], df, str(charts_dir), box=box,
+                                             context_start=chart_context["start_index"],
                                              stop=(b.get("plan") or {}).get("stop"),
                                              title=f"{b['ticker']} — {b['scan']} scan, close change {b['gain_pct']}%")
         except Exception as exc:  # noqa: BLE001
@@ -424,6 +427,7 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
                  "flags": b["flags"], "gain_pct": b["gain_pct"],
                  "volume_vs_prior": b["volume_vs_prior"], "dollar_volume": b["dollar_volume"]}
         metrics = quality.metrics_for_model(assessment, b["ticker"], b["close"], extra)
+        metrics["chart_context"] = chart_context if chart_path else None
         provenance.prepare_reader(b, metrics, chart_path, system_prompt)
         candidates.append({"ticker": b["ticker"],
                            "metrics": metrics,
@@ -575,7 +579,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,

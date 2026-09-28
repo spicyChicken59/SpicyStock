@@ -1,0 +1,91 @@
+{
+  "base": "8be007f68deaa417b85a512d2e16a37899d27011",
+  "repository_directory": "/workspace/scratch/4ee934a24e5f/SpicyStock",
+  "python": "3.12.14",
+  "node": "v24.19.0",
+  "browser": "Chromium 141.0.7390.37 / Playwright 1.56.1",
+  "checks": [
+    {
+      "name": "python",
+      "status": "PASS",
+      "command": "MPLBACKEND=Agg python -m pytest tests/ -q",
+      "checks": 1541,
+      "log_sha256": "350705eaee19951f2fd4ba233837f1f3e30d1716d31508c3a16ef6ad455aeb90"
+    },
+    {
+      "name": "fixtures",
+      "status": "PASS",
+      "command": "MPLBACKEND=Agg python tools/make_fixture.py --check",
+      "checks": 12,
+      "log_sha256": "6d98518610519de81f2327cfc639bd39199c104a905dde31b831c7fcfb8d5ed7"
+    },
+    {
+      "name": "continuity",
+      "status": "PASS",
+      "command": "node tools/continuity_check.mjs",
+      "checks": 127,
+      "log_sha256": "61f2e15542e5093965e39dda5c9e6ec60f6572d4bbff05edb403ff8fb2c846cd"
+    },
+    {
+      "name": "chart",
+      "status": "PASS",
+      "command": "node tools/chart_check.mjs --shots /workspace/scratch/4ee934a24e5f/final-chart-shots",
+      "checks": 378,
+      "log_sha256": "3489627724be8444297198c9e04eefe6351d5c2793d46fa734348634c8094d24"
+    },
+    {
+      "name": "full_page",
+      "status": "PASS",
+      "command": "node tools/page_smoke.mjs --shots /workspace/scratch/4ee934a24e5f/review-page-shots",
+      "checks": 8409,
+      "log_sha256": "c74585f1339b82ab03b3d35d8bdd30c803a7b204c497365a8b35a734ffc6c4cf"
+    },
+    {
+      "name": "historical_journeys",
+      "status": "PASS",
+      "command": "node tools/historical_journeys.mjs --output /workspace/scratch/4ee934a24e5f/release-historical-shots",
+      "checks": 85,
+      "log_sha256": "3b7182528ecc8a84e84dcddc3e6492ffd5bd114ecad805727248e6f6a9b10d65"
+    },
+    {
+      "name": "delayed_layout",
+      "status": "PASS",
+      "command": "SCSTOCK_TEST_RESIZE_DELAY_MS=350 node tools/page_smoke.mjs --only chart-keyboard --shots /workspace/scratch/4ee934a24e5f/repaired-delayed-resize",
+      "checks": 259,
+      "log_sha256": "0d9a4219a21f475510f0bc079d5bd54829ee673bd7cead3f3b4d2985737164c1"
+    },
+    {
+      "name": "documentation",
+      "status": "PASS",
+      "command": "python -m pytest tests/test_docs.py -q",
+      "checks": 34,
+      "log_sha256": "a7073f32742b14450a098cd223523cb17848b34084356e9d6b0725633848fa07"
+    }
+  ],
+  "tested_application_files": {
+    "docs/app.js": "a7ec1102e184107779383a8affdb967099959019d50c086115d3d921fe059432",
+    "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+    "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+    "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+  },
+  "protected_files": 8577,
+  "design_system": {
+    "version": "2.13.0",
+    "source_commit": "14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c",
+    "manifest_files": 22,
+    "drift": []
+  },
+  "secret_scan": {
+    "status": "PASS",
+    "tool": "gitleaks 8.24.3",
+    "scope": "Committed changes from the exact base through the local implementation head; no detector/allowlist changes",
+    "command": "gitleaks git . --config .gitleaks.toml --redact --log-opts=8be007f68deaa417b85a512d2e16a37899d27011..HEAD",
+    "result_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+  },
+  "pr_ci": {
+    "status": "NOT RUN",
+    "note": "Normal PR-triggered checks are recorded against the exact remote head in the PR body; no manual rerun/dispatch."
+  },
+  "final_tree_note": "Local/API commit metadata may differ; tree and file hashes must match exactly before creating the PR.",
+  "local_implementation_commit": "93ab28c7a50cdf49256ad30c9d66ccb86438f9d4"
+}

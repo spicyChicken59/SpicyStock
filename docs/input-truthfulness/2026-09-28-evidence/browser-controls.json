@@ -1,0 +1,129 @@
+{
+  "version": 1,
+  "classification": "SYNTHETIC ENGINEERING CONTROL over retained display data; expected failures demonstrate detection, not trading results",
+  "controls": [
+    {
+      "name": "historical-before",
+      "source": "/workspace/scratch/4ee934a24e5f/historical-before/results.json",
+      "result_sha256": "c69eb5f28bb53d8817f86bbd9a8f4fc667174573c92fc14c43a62adf78659c2f",
+      "checks": 7,
+      "failed": [
+        "390/dark independent wait gates",
+        "390/dark rejected review visible",
+        "320/dark independent wait gates",
+        "320/dark rejected review visible",
+        "1280/dark independent wait gates",
+        "1280/dark rejected review visible"
+      ],
+      "application_files": {
+        "docs/app.js": "b9dc4894367f6df77dd9ac0678f2b90d22d09d9cf53f84d1c31e4d3bd9f323dc",
+        "docs/app.css": "c77823577fe356428578600496328fd636af82594602709dfa3151bb957d1117",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "237d6af24b9f06250d67da127aea1bffa1f949be4fa0e7bf130bb91744d8b127"
+      },
+      "capture_head": "8be007f68deaa417b85a512d2e16a37899d27011"
+    },
+    {
+      "name": "historical-mutant",
+      "source": "/workspace/scratch/4ee934a24e5f/historical-mutant/results.json",
+      "result_sha256": "ee58debaa14c9e342dc780a155d6b0834b3b60c563182d5d5b25710721ad4561",
+      "checks": 7,
+      "failed": [
+        "390/dark independent wait gates",
+        "320/dark independent wait gates",
+        "1280/dark independent wait gates"
+      ],
+      "application_files": {
+        "docs/app.js": "b9dc4894367f6df77dd9ac0678f2b90d22d09d9cf53f84d1c31e4d3bd9f323dc",
+        "docs/app.css": "c77823577fe356428578600496328fd636af82594602709dfa3151bb957d1117",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "237d6af24b9f06250d67da127aea1bffa1f949be4fa0e7bf130bb91744d8b127"
+      },
+      "capture_head": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af"
+    },
+    {
+      "name": "reader-reason-before",
+      "source": "/workspace/scratch/4ee934a24e5f/reader-reason-before/results.json",
+      "result_sha256": "0c997846f8979fa1921c093b016ad24de83c31a437bd55e321aff2856705988e",
+      "checks": 67,
+      "failed": [
+        "390/dark exact retained reader rejection",
+        "390/light exact retained reader rejection",
+        "320/dark exact retained reader rejection",
+        "320/light exact retained reader rejection",
+        "1280/dark exact retained reader rejection",
+        "1280/light exact retained reader rejection"
+      ],
+      "application_files": {
+        "docs/app.js": "5cd770ba815ce4161fee2181a86adc8be0fa67c9affac9582547504143033e67",
+        "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      "capture_head": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af"
+    },
+    {
+      "name": "history-image-before",
+      "source": "/workspace/scratch/4ee934a24e5f/history-image-before/results.json",
+      "result_sha256": "8ba5750c1330244e986ba9d3cee76bfe8077ab55a6f26d3530e1e34e1213f19c",
+      "checks": 73,
+      "failed": [
+        "390/dark historical reader image identity",
+        "390/light historical reader image identity",
+        "320/dark historical reader image identity",
+        "320/light historical reader image identity",
+        "1280/dark historical reader image identity",
+        "1280/light historical reader image identity"
+      ],
+      "application_files": {
+        "docs/app.js": "c315321843994aa4444c31854590ee40a593d348f41265fb78c5494b6022ffea",
+        "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      "capture_head": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af"
+    },
+    {
+      "name": "history-image-mutant",
+      "source": "/workspace/scratch/4ee934a24e5f/history-image-mutant/results.json",
+      "result_sha256": "947e7332b45633e77d012ed84dd3cd57e03bb10d30e3817659b548e5fc8f5be4",
+      "checks": 85,
+      "failed": [
+        "390/dark historical reader image identity",
+        "390/light historical reader image identity",
+        "320/dark historical reader image identity",
+        "320/light historical reader image identity",
+        "1280/dark historical reader image identity",
+        "1280/light historical reader image identity"
+      ],
+      "application_files": {
+        "docs/app.js": "a7ec1102e184107779383a8affdb967099959019d50c086115d3d921fe059432",
+        "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      "capture_head": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af"
+    },
+    {
+      "name": "history-reader-mutant",
+      "source": "/workspace/scratch/4ee934a24e5f/history-reader-mutant/results.json",
+      "result_sha256": "971567e9381a55deac1d37cf23d83a6f6992e4934c6999ff633cd614491a2f76",
+      "checks": 85,
+      "failed": [
+        "390/dark exact retained reader rejection",
+        "390/light exact retained reader rejection",
+        "320/dark exact retained reader rejection",
+        "320/light exact retained reader rejection",
+        "1280/dark exact retained reader rejection",
+        "1280/light exact retained reader rejection"
+      ],
+      "application_files": {
+        "docs/app.js": "a7ec1102e184107779383a8affdb967099959019d50c086115d3d921fe059432",
+        "docs/app.css": "d7c4d9d59a2be466966733a26d4846cb90b1c8f3fd9fdb55cd868c874ab6fc54",
+        "docs/index.html": "9ed806ac76110dde98fccc67d9cbbb437bd4cd55571e51eddb8d6c7aa441802f",
+        "docs/historical-validation.json": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      "capture_head": "24615d60412a3e7a9e9a2dddddf4c3e8d44338af"
+    }
+  ]
+}

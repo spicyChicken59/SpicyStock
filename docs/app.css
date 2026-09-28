@@ -854,3 +854,14 @@
 }
 @media (pointer: coarse) { .ss-walk__controls .sc-btn, .ss-walk__index .sc-tab { min-height: 36px; } }
 @media (prefers-reduced-motion: reduce) { .ss-walk__bar, .ss-walk__mark { transition: none; } }
+
+/* Recorded gate overlap and isolated historical research, using existing tokens. */
+.ss-decision-gates { margin-block: 16px; }
+.ss-decision-gates summary { cursor: pointer; min-height: 44px; font-weight: 600; }
+.ss-decision-gates p, .ss-study p { max-width: 78ch; }
+.ss-study { margin-top: 20px; overflow-wrap: anywhere; }
+.ss-study-case { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--sc-border); }
+.ss-study-case details { margin-block: 16px; }
+.ss-study-case summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+[data-all-blockers] { padding-left: 20px; }
+[data-all-blockers] li + li { margin-top: 8px; }

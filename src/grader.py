@@ -79,17 +79,17 @@ SOURCE_NOT_GRADED = "not_graded"
 NOT_GRADED_REASON = "call budget"
 
 # ---------------------------------------------------------------- models ----
-# The two request levers are model-gated in OPPOSITE directions, so neither
-# can be hard-coded onto a request. Both lists come from the claude-api
-# skill's model tables, and CLAUDE_MODEL lets an operator pick either side.
-#
-# Structured outputs (`output_config.format`): supported on these and NOT on
-# claude-sonnet-4-6, the default. On the default the schema cannot be
-# enforced server-side and the parser below is what stands between a chatty
-# reply and a fallback.
+# Independent capabilities, not opposite sets. Direct Claude API support
+# checked 2026-09-28 against the official structured-outputs documentation:
+# https://platform.claude.com/docs/en/build-with-claude/structured-outputs
+# Sonnet 4.6 supports both schema output and sampling. SDK 1.8.0 accepts
+# output_config; local authority validation remains mandatory afterwards.
+REQUEST_VERSION = 2
+RULES = {"grading.reader_request_version": REQUEST_VERSION}
 STRUCTURED_OUTPUT_MODELS = frozenset({
     "claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-opus-4-8",
-    "claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-5", "claude-opus-4-1",
+    "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-4-6", "claude-sonnet-4-5",
+    "claude-sonnet-5", "claude-haiku-4-5", "claude-opus-4-5",
 })
 
 # Sampling parameters (`temperature`): allowed on Sonnet 4.6, Opus 4.6 and

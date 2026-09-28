@@ -27,6 +27,8 @@ import { checkWalkthrough } from './walkthrough_cases.mjs';
 import { checkRiskAttribution } from './risk_attribution_cases.mjs';
 import { checkReaderCoverage } from './reader_coverage_cases.mjs';
 import { checkPageChartKeyboard } from './chart_keyboard_cases.mjs';
+import { checkHistoricalJourneys } from './historical_cases.mjs';
+import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -56,8 +58,10 @@ const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] |
 const runs = (name) => !only || only.includes(name);
 
 let checks = 0, failures = 0;
+const results = [];
 function check(name, ok, detail) {
   checks++;
+  results.push({name, status: ok ? 'PASS' : 'FAIL', ...(!ok ? {detail} : {})});
   if (!ok) { failures++; console.log(`  FAIL  ${name}${detail === undefined ? '' : ' -- ' + detail}`); }
 }
 const eq = (name, got, want) => check(name, JSON.stringify(got) === JSON.stringify(want), `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
@@ -68,7 +72,10 @@ async function serve() {
     let file = path.join(ROOT, decodeURIComponent(url.pathname));
     try {
       if ((await stat(file)).isDirectory()) file = path.join(file, 'index.html');
-      const body = await readFile(file);
+      // Read-only isolated source controls; never mutate the working tree.
+      const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
+        : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
+      const body = await readFile(override || file);
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
       res.end(body);
     } catch (e) {
@@ -2038,12 +2045,8 @@ async function checkMapScale(browser, base, data) {
     check(`${label}: the selection line counts the crowd`, (await text(page, '#burst-map .ss-map__selection')).includes('within a finger of this point'), await text(page, '#burst-map .ss-map__selection'));
     await page.click('.ss-map__nearby-open'); await page.waitForTimeout(250);
     eq(`${label}: the nearby button opens the chooser`, await page.getAttribute('#burst-map', 'data-nearby'), 'open');
-    // The panel OPEN, which no shot ever caught: the component has to be LOOKED
-    // at. It goes here and not beside the crowded tap because an element
-    // screenshot scrolls its element into view, which moves the viewport out
-    // from under the tap coordinates measured before it -- everything after
-    // this point is driven by focus, not by coordinates.
-    if (shotsDir) await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-pick-open-${label}.png`) });
+    // Exercise native keyboard focus before taking an element screenshot:
+    // capture may scroll/resize the viewport and close the nearby panel.
     await page.keyboard.press('ArrowDown');
     const moved = await page.evaluate(() => document.activeElement.dataset.ticker || document.activeElement.className);
     check(`${label}: the arrows move inside the chooser`, moved && moved !== listed[0], String(moved));
@@ -2051,7 +2054,14 @@ async function checkMapScale(browser, base, data) {
     eq(`${label}: Enter in the chooser chooses the focused stock`, await page.getAttribute('#burst-map', 'data-nearby'), 'closed');
     check(`${label}: a stock chosen from the keyboard is one of the two under the finger`, [A, B].includes((await page.getAttribute('#burst-map', 'data-selected') || '').replace('bursts:', '')), await page.getAttribute('#burst-map', 'data-selected'));
     eq(`${label}: tap page errors`, o.errors, []);
-    if (shotsDir) await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-nearby-${width}.png`) });
+    if (shotsDir) {
+      await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-nearby-${width}.png`) });
+      // Reopen through the real control for the inspected open-panel artifact;
+      // no later keyboard assertion depends on screenshot side effects.
+      await page.click('.ss-map__nearby-open');
+      await page.waitForFunction(() => document.querySelector('#burst-map').getAttribute('data-nearby') === 'open');
+      await page.locator('#burst-map').screenshot({ path: path.join(shotsDir, `map-pick-open-${label}.png`) });
+    }
     await o.context.close();
     await unlink(path.join(ROOT, p));
   }
@@ -3697,11 +3707,17 @@ async function main() {
     if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
     if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
     if (runs('inputs')) await checkInputCoverage(browser, base);
+    if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
+    if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
   } finally {
     await browser.close();
     server.close();
   }
   console.log(`\n${checks - failures}/${checks} page checks passed${shotsDir ? '; screenshots in ' + shotsDir : ''}`);
+  if (shotsDir) {
+    await mkdir(shotsDir, {recursive: true});
+    await writeFile(path.join(shotsDir, 'page-results.json'), JSON.stringify({checks, failures, results}, null, 2) + '\n');
+  }
   process.exit(failures ? 1 : 0);
 }
 

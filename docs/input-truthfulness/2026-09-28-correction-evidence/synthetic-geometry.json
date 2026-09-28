@@ -1,0 +1,277 @@
+{
+  "source": {
+    "source_commit": "2e4d0eca42d4df099069d4ca1d791402d58825d5",
+    "source_path": "docs/data.json",
+    "source_blob": "6fce465edd51badead8ad0c38b111819ee69c884",
+    "uncompressed_sha256": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+    "session": "2026-09-25",
+    "purpose": "Frozen genuine publication for historical and wait-page checks; later CI never reads moving docs/data.json. Modified test controls are explicitly synthetic."
+  },
+  "application_sha256": "fa635076804c7ad9e7cbfce5947527b66a0d37d714a538e3d1bfb3df677e4968",
+  "geometry": [
+    {
+      "label": "390/dark pre-primary",
+      "width": 320,
+      "height": 187.171875,
+      "left": 35,
+      "right": 355,
+      "client": 320,
+      "scroll": 320,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/dark delayed",
+      "width": 320,
+      "height": 187.171875,
+      "left": 35,
+      "right": 355,
+      "client": 320,
+      "scroll": 320,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/dark planner-error",
+      "width": 350,
+      "height": 96,
+      "left": 20,
+      "right": 370,
+      "client": 350,
+      "scroll": 350,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/dark legacy-unknown",
+      "width": 350,
+      "height": 120,
+      "left": 20,
+      "right": 370,
+      "client": 350,
+      "scroll": 350,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/light pre-primary",
+      "width": 320,
+      "height": 187.171875,
+      "left": 35,
+      "right": 355,
+      "client": 320,
+      "scroll": 320,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/light delayed",
+      "width": 320,
+      "height": 187.171875,
+      "left": 35,
+      "right": 355,
+      "client": 320,
+      "scroll": 320,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/light planner-error",
+      "width": 350,
+      "height": 96,
+      "left": 20,
+      "right": 370,
+      "client": 350,
+      "scroll": 350,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "390/light legacy-unknown",
+      "width": 350,
+      "height": 120,
+      "left": 20,
+      "right": 370,
+      "client": 350,
+      "scroll": 350,
+      "viewport": 390,
+      "document": 390
+    },
+    {
+      "label": "320/dark pre-primary",
+      "width": 250,
+      "height": 228.765625,
+      "left": 35,
+      "right": 285,
+      "client": 250,
+      "scroll": 250,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/dark delayed",
+      "width": 250,
+      "height": 249.5625,
+      "left": 35,
+      "right": 285,
+      "client": 250,
+      "scroll": 250,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/dark planner-error",
+      "width": 280,
+      "height": 120,
+      "left": 20,
+      "right": 300,
+      "client": 280,
+      "scroll": 280,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/dark legacy-unknown",
+      "width": 280,
+      "height": 144,
+      "left": 20,
+      "right": 300,
+      "client": 280,
+      "scroll": 280,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/light pre-primary",
+      "width": 250,
+      "height": 228.765625,
+      "left": 35,
+      "right": 285,
+      "client": 250,
+      "scroll": 250,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/light delayed",
+      "width": 250,
+      "height": 249.5625,
+      "left": 35,
+      "right": 285,
+      "client": 250,
+      "scroll": 250,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/light planner-error",
+      "width": 280,
+      "height": 120,
+      "left": 20,
+      "right": 300,
+      "client": 280,
+      "scroll": 280,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "320/light legacy-unknown",
+      "width": 280,
+      "height": 144,
+      "left": 20,
+      "right": 300,
+      "client": 280,
+      "scroll": 280,
+      "viewport": 320,
+      "document": 320
+    },
+    {
+      "label": "1280/dark pre-primary",
+      "width": 645.125,
+      "height": 83.1875,
+      "left": 53,
+      "right": 698.125,
+      "client": 645,
+      "scroll": 645,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/dark delayed",
+      "width": 645.125,
+      "height": 103.984375,
+      "left": 53,
+      "right": 698.125,
+      "client": 645,
+      "scroll": 645,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/dark planner-error",
+      "width": 422.5,
+      "height": 72,
+      "left": 360,
+      "right": 782.5,
+      "client": 423,
+      "scroll": 423,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/dark legacy-unknown",
+      "width": 422.5,
+      "height": 96,
+      "left": 360,
+      "right": 782.5,
+      "client": 423,
+      "scroll": 423,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/light pre-primary",
+      "width": 645.125,
+      "height": 83.1875,
+      "left": 53,
+      "right": 698.125,
+      "client": 645,
+      "scroll": 645,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/light delayed",
+      "width": 645.125,
+      "height": 103.984375,
+      "left": 53,
+      "right": 698.125,
+      "client": 645,
+      "scroll": 645,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/light planner-error",
+      "width": 422.5,
+      "height": 72,
+      "left": 360,
+      "right": 782.5,
+      "client": 423,
+      "scroll": 423,
+      "viewport": 1280,
+      "document": 1280
+    },
+    {
+      "label": "1280/light legacy-unknown",
+      "width": 422.5,
+      "height": 96,
+      "left": 360,
+      "right": 782.5,
+      "client": 423,
+      "scroll": 423,
+      "viewport": 1280,
+      "document": 1280
+    }
+  ]
+}

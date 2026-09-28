@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1513 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1541 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3138,3 +3138,133 @@ call, new scan, workflow dispatch/rerun, schedule, secret/settings change, manua
 publication, external message, brokerage action or sibling edit. Test-pipeline
 messages about reader failures came from the existing offline doubles.
 Stop at the reviewable PR; no merge or next milestone is authorized here.
+
+## Handoff — 2026-09-28: historical validation and usable decisions
+
+Repository: `spicyChicken59/SpicyStock`; branch:
+`fix/historical-validation-usable-plans`. Actual base was re-resolved repeatedly
+as `8be007f68deaa417b85a512d2e16a37899d27011`; no competing open PR existed.
+The one scoped release PR records the final remote head and CI status. Guidance
+owns independent review and the clean merge. Do not merge, manually dispatch a
+scan, or begin another campaign from this checkpoint. Direct git push lacked
+credentials; the connected GitHub API publishes the identical tree. The POC was
+frozen locally in `24615d6` before outcomes; its raw commit and the later remote
+specification-tree commit are preserved in `spec-freeze.json`.
+
+The review is `docs/input-truthfulness/2026-09-28-validation-review.md`, alongside
+the frozen specification, selected operating contract and machine evidence.
+Thirteen actual rebuild publications represent eleven unique sessions, not
+thirteen trading days. All are RED; no accepted review finishes A/A+. All thirteen
+original picks files are empty. Nine original-code/source replays agree; four
+earlier complete source layers are unavailable. The 5,215 candidate traces show
+joint market, grade/review, structural and sizing blockers. Removing only market
+or reader gates still gives no tickets. Their joint ablation gives synthetic
+counterfactual tickets, never historical orders. Alphabetical review ties and
+unreviewed mechanically feasible candidates establish access starvation, not
+hypothetical approval or an edge.
+
+Verified prospective repairs send the shared schema for supported Sonnet 4.6,
+include the measured leg/base in the exact reader image and date its context,
+version request semantics, and remove asymmetric approval/rejection encouragement.
+Model, review count, attempts, ceilings, authority and numeric strategy rules stay
+unchanged. NIC/BIO/RVTY/MSFT remain rejected. Latest MSFT failed authority, not
+JSON parsing. No live API success or acceptance improvement was measured.
+
+The existing website now explains overlapping wait gates and incomplete inputs,
+connects Method/Record to frozen CRL/IQV/MSFT development cases, and separates
+later observations from original evidence. Reader-image links use retained image
+hashes. Saving and outcome reveal preserve the original; no historical case
+acquires live order action. Agent-operated Chromium checks cover 390×844,
+320×844 and desktop, both themes, with 85 historical checks and screenshots.
+The #91 harness now waits for actual chart layout before its unchanged exact
+SVG/keyboard assertions; delayed-observer baseline and restored-defect controls
+both detect the previous capture race. Physical-device and assistive-technology
+checks remain NOT RUN. Final regression results belong to the review package.
+
+KEEP existing authority, stop-constrained mathematics, source identities and the
+unchanged design-system 2.13.0 snapshot. FIX NOW the demonstrated request, image,
+wording and browser-test defects in this PR. DEFER point-in-time universe/security
+identity, comparable volume adjudication, intraday execution and policy proposals.
+OMIT profitability claims and approval inflation. Candidate-only next-close
+observations are selected, dependent and inconclusive; zero settlements give no
+expectancy. Real-data qualified-plan and executable-performance gates remain
+BLOCKED. The latest September 25 record offers no ticket for Monday September 28.
+After review/authorized merge, only the next existing normal run can supply new
+prospective evidence; its health and any ticket remain unknown. Exact next action:
+Guidance reviews the final base/head, evidence, publication effects and normal CI.
+
+## PR #92 correction checkpoint — 28 Sep 2026
+
+Continue only `fix/historical-validation-usable-plans`, PR #92. Guidance review
+`5338408980` identified two explanation defects on
+`2e4d0eca42d4df099069d4ca1d791402d58825d5`. Re-resolved base/main remains
+`8be007f68deaa417b85a512d2e16a37899d27011`. Corrected implementation:
+`c0e9d9b445a18782e39d5aa2f50b292ee08acca1`, tree
+`5d0ae9f67a09f65e940abb76a6999abf508b34de`. The connected GitHub API preserves
+that exact verified tree (local sealed metadata differed). This following handoff
+commit changes documentation/evidence only; PR #92 records the exact submitted
+head and its completed normal CI. No merge or next milestone is authorized.
+Selected model/effort and every strategy/provider/account setting stay unchanged.
+
+`evaluationExplanation()` reuses status/calendar/publication evidence: Monday
+remains pending after its close buffer when Friday is still loaded. Future,
+closed-buffer, pending, stale/missing/possibly failed, explicit failed-run,
+newly loaded and insufficient-evidence cases are distinct; no cron or completion
+promise was added. The clock updates the text in place even when availability
+is unchanged, and refresh preserves the wait disclosure. `planningWaitReasons()`
+distinguishes recorded skip, attempted failure, attempted unknown outcome,
+ineligible/withheld output, recorded sizing/allocation and legacy unknowns.
+Null alone establishes no stage. Independent blockers and all order controls
+retain their existing authority.
+
+PASS — 721 correction assertions and the original 85 historical assertions now
+run in normal `page_smoke.mjs` through shared modules. They use the frozen
+September 25 publication, whose raw SHA-256 is
+`37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5`, plus the
+existing September 24 fixture for real arrival. Holiday/session dates come from
+archived XNYS evidence. Synthetic stage/date controls are explicitly identified.
+FAIL — the exact reviewed application fails 276 of those 721 assertions; 445
+controls pass. Restoring only the selector fails 186; restoring only the planning
+explanation fails 84. PASS — the unrelated title control passes all 721. The
+control runner never edits the working tree. No assertions were weakened.
+
+PASS — Python 1,541 (JUnit confirmed), 12 fixtures current, 127 continuity and
+378 chart checks. PASS — 390×844, 320×844, 1280×844 in both themes; inspected
+pending/error/unknown/delayed screenshots and measured wrapping/geometry.
+Existing #91 viewport/key ownership coverage remains in the normal gate.
+FAIL — the first full-page attempt was 9,190/9,191 on an intermittent phone map
+chooser assertion around screenshot capture; the reviewed application reproduces
+93/94 with captures, while both pass 94/94 without them. Capture now follows the
+unchanged native keyboard sequence and reopens the real control only for the
+artifact: PASS 94/94. One restored-capture attempt passes, so its intermittency
+is preserved in the report. Map application code and all assertions are unchanged.
+The detail-free `plan_error` audit added six failing-before assertions and a
+recorded-error fallback; corrected PASS is 721/721. A second full run overlapped
+that late edit and is excluded from acceptance. Final sources were then sealed
+and all isolated controls rerun unchanged. Final unfiltered exact-head normal
+CI belongs in the PR before handoff.
+
+PASS — 8,822 existing protected files match the reviewed Git blob identities;
+all prior POC, source/evidence, publications/history/ledger, Python producer,
+workflows and design-system bytes are unchanged. The POC was not regenerated.
+README and `.env.example` were reviewed; no environment-template change.
+The fresh test runtime initially lacked socksio (five offline SDK failures);
+only the disposable test environment was corrected. Reports preserve initial
+harness/environment failures rather than counting them as acceptance.
+
+Commands and complete evidence:
+`docs/input-truthfulness/2026-09-28-pr92-explanation-correction.md` and
+`docs/input-truthfulness/2026-09-28-correction-evidence/`.
+Use `node tools/page_smoke.mjs --shots <external-dir>` for the normal gate,
+`node tools/wait_explanation_controls.mjs --output <external-dir>` for isolated
+controls, plus continuity/chart checks, pytest and `make_fixture.py --check`.
+
+BLOCKED — genuine historical qualified ticket, independent full-population data
+and breadth truth, executable performance and trading edge. NOT RUN — live
+reader improvement, future production health, physical devices/assistive tech,
+manual production validation and merge. The website and original report keep
+these limits; corrective CI does not complete the larger validation campaign.
+No new provider/model/live scan, workflow dispatch/rerun, production publication,
+schedule/secret/settings/feed/model/brokerage/upstream/sibling change occurred.
+Astra stops with this same PR ready for independent Guidance re-review; Guidance
+owns the normal protected merge after authorization.

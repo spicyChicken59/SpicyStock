@@ -1,0 +1,13 @@
+[
+  {
+    "control": "planning",
+    "status": "PASS",
+    "application_status": "FAIL",
+    "application_sha256": "4ec1ea0180bb0a0b0f3de2869a7f1f62741a69c7e36346cbebe144c0fa6fbc4d",
+    "checks": 721,
+    "failures": 84,
+    "reviewed_head": "2e4d0eca42d4df099069d4ca1d791402d58825d5",
+    "corrected_application_sha256": "fa635076804c7ad9e7cbfce5947527b66a0d37d714a538e3d1bfb3df677e4968",
+    "independent_controls": "PASS"
+  }
+]

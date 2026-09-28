@@ -1,0 +1,115 @@
+{
+  "clock": "2026-09-28T21:00:00Z",
+  "publication_sha256": "37255a5457472d47452ea326e6b6b84cec2d6bd1da07ab391e173daf73a62ce5",
+  "application_sha256": "fa635076804c7ad9e7cbfce5947527b66a0d37d714a538e3d1bfb3df677e4968",
+  "evidence": [
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "light",
+      "status": "PASS",
+      "geometry": {
+        "left": 35,
+        "right": 355,
+        "width": 320,
+        "height": 187.171875,
+        "scroll": 320,
+        "client": 320,
+        "viewport": 390,
+        "document": 390,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "theme": "dark",
+      "status": "PASS",
+      "geometry": {
+        "left": 35,
+        "right": 355,
+        "width": 320,
+        "height": 187.171875,
+        "scroll": 320,
+        "client": 320,
+        "viewport": 390,
+        "document": 390,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    },
+    {
+      "width": 320,
+      "height": 844,
+      "theme": "light",
+      "status": "PASS",
+      "geometry": {
+        "left": 35,
+        "right": 285,
+        "width": 250,
+        "height": 228.765625,
+        "scroll": 250,
+        "client": 250,
+        "viewport": 320,
+        "document": 320,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    },
+    {
+      "width": 320,
+      "height": 844,
+      "theme": "dark",
+      "status": "PASS",
+      "geometry": {
+        "left": 35,
+        "right": 285,
+        "width": 250,
+        "height": 228.765625,
+        "scroll": 250,
+        "client": 250,
+        "viewport": 320,
+        "document": 320,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    },
+    {
+      "width": 1280,
+      "height": 844,
+      "theme": "light",
+      "status": "PASS",
+      "geometry": {
+        "left": 53,
+        "right": 698.125,
+        "width": 645.125,
+        "height": 83.1875,
+        "scroll": 645,
+        "client": 645,
+        "viewport": 1280,
+        "document": 1280,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    },
+    {
+      "width": 1280,
+      "height": 844,
+      "theme": "dark",
+      "status": "PASS",
+      "geometry": {
+        "left": 53,
+        "right": 698.125,
+        "width": 645.125,
+        "height": 83.1875,
+        "scroll": 645,
+        "client": 645,
+        "viewport": 1280,
+        "document": 1280,
+        "text": "Next step: wait for a later validated record and inspect its gates again. Loaded publication: 2026-09-25. The 2026-09-28 session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record. Check for updates to re-read the publication. The next publication time is not established here; this page does not monitor prices or place orders."
+      },
+      "summary": "Why wait? Market RED · 0 accepted A/A+ · 11/12 reviews accepted"
+    }
+  ]
+}
