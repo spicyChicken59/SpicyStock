@@ -1,0 +1,51 @@
+{
+  "schema": "historical-repair-local-checks-v1",
+  "status": "PASS",
+  "observed_at": "2026-09-29T12:08:41.382472+00:00",
+  "implementation_pr": 95,
+  "base": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+  "initial_pushed_head": "b00c6593498de62c282af275e2e7e2ac4b413e54",
+  "python": "3.12.14",
+  "command": "python -m pytest tests/ -q --tb=short --basetemp=../repair-pytest-final --junitxml=../repair-final.xml",
+  "environment": {
+    "AGE_BINARY": "verified age v1.3.2 Windows executable",
+    "ACTIONLINT_BINARY": "verified actionlint v1.7.12 Windows executable",
+    "PYTHONUTF8": "1",
+    "MPLBACKEND": "Agg",
+    "MPLCONFIGDIR": "external work/mpl-cache",
+    "PYTHONPATH": "external Windows resource telemetry adapter (unchanged from earlier checkpoints)"
+  },
+  "tests": 1951,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "existing_deprecation_warnings": 1,
+  "previous_attempt": {
+    "status": "FAIL",
+    "passed": 1950,
+    "failed": 1,
+    "cause": "Stale CLAUDE current suite count 1820; corrected to 1951. Historical dated counts retained."
+  },
+  "log_sha256": "03c35896528158cd65da5d3db5192f782fe522b3ec8d7253dd4c5545edc4bc3c",
+  "junit_sha256": "2b80b5eb122f2e56035300d3f28d7781b687c6a8ea2a344bb2f4f3ef08aec2df",
+  "tested_source_lf_sha256": {
+    ".github/workflows/historical-input-proof.yml": "04ed7b09f5c686f4295cebf0d460b0b1a106d228bf25e9fcd9dacd2096d7aa3f",
+    ".github/workflows/tests.yml": "479b6472c99e784149fbc5259be27413edb63047a577e3a7809f23066e8dcb46",
+    "tools/historical_execution_guard.py": "8a1228f0909119c7602d4578a2306280492261fe29b4e85c8c211b8338d0dc3f",
+    "tools/historical_execution.py": "ca5f1c842f1ddebdfc47220a687f8a5dc3ce0618153cc2e3dcacf6e7666873f0",
+    "tools/historical_package.py": "76250695cc74d01fb71b4bb51b749a7aedf2f979e2d0b4a58a24350817c6f928",
+    "tools/historical-execution-policy.json": "1091ca2f2dd8142a1a80f266cf3026043da26e1c6b26999ed4535659d143c084",
+    "tools/historical-workflow-recovery.json": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317",
+    "tools/install_actionlint.py": "e8f8a8e73157872c2426d9a28405fbd640bb4f9cbdfbcab511115bd9a77bbebc",
+    "tests/test_historical_execution_guard.py": "272dd60c36386054125f0949b00b185534773b9be7158d30f39a30f8c4cc1396",
+    "tests/test_historical_execution.py": "41d287bb3643ff23951d35765f181f483b43c598c729efca1f253b9dd632608a",
+    "tests/test_historical_package.py": "04842d54c38e7fa001f09c1c37dc5f6601b9afca72b559f1a34bd04939201b18",
+    "tests/test_historical_recovery_integration.py": "440c1695b264cf34cd1f98882a3aaee0aac8d8c4a4cae7c61d8fe05b5cf74905",
+    "tests/test_historical_workflow_validation.py": "713d149b8cc0dec65efc3d67a8977a0cbaf0dce86cbfb853aaeba6bcb87db6dc"
+  },
+  "manual_dispatch": "NOT RUN",
+  "provider_requests": 0,
+  "provider_response_bytes": 0,
+  "dispatch_release": "BLOCKED",
+  "note": "Tests use synthetic responses and ephemeral test encryption identities only. No owner private key was read or generated. Normal final-head Linux CI and final commit identity are recorded in PR95; this file binds the tested source bytes without a self-referential commit hash."
+}

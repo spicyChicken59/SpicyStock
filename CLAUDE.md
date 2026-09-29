@@ -3432,7 +3432,8 @@ The repair starts from merged PR #94 main
 `eb2b417a7a2289ab22c239ccfe06c20daf1dde7b` remains historical evidence.
 Guidance comment `5884205539` suspends review `5347889698` and authorizes one
 follow-up correction, with Guidance retaining review and merge ownership.
-The new PR records its actual number and final head; no old PR/head can approve
+Repair PR #95 was created at `b00c6593498de62c282af275e2e7e2ac4b413e54` before
+binding its actual number in policy; it records the final head. No old PR/head can approve
 changed execution tools. This checkpoint supersedes the earlier native-1/2
 execution instructions without erasing their dated test results.
 
@@ -3477,3 +3478,5 @@ real-data reconciliation are NOT RUN: 0 Alpaca requests, 0 response bytes and
 $0 additional acquisition spend. Original membership completeness remains
 BLOCKED; new reader eligibility and trading-edge validation remain NOT RUN.
 Astra stops at one repair PR for Guidance, without merging or dispatching.
+
+Final local repair checks: PASS - 1,951 tests, zero skips, Python 3.12.14; one existing websockets warning. PASS - 9,756 protected existing Git blobs unchanged. The first full attempt's stale current suite count was corrected and the full suite rerun. PR #95 records final-head Linux CI and the post-push history check. Execution release remains BLOCKED; no merge or dispatch.

@@ -193,8 +193,10 @@ or dispatch; it does not claim that the historical investigation is complete.
 Baseline main/repair base: `33ec181ca60adaf2f7c0ef19a1889a5517161585`,
 tree `6127e63213836f72caf708cb5b4294d750fe6147`. PR #94 reviewed checkout
 `eb2b417a7a2289ab22c239ccfe06c20daf1dde7b` remains historical evidence; it
-cannot certify the changed execution code. The repair PR will record its actual
-number and exact head before review; the policy is fail-closed until bound.
+cannot certify the changed execution code. Repair [PR #95](https://github.com/spicyChicken59/SpicyStock/pull/95)
+was created with initial head `b00c6593498de62c282af275e2e7e2ac4b413e54`;
+only then was its actual number bound in the policy. The PR records the final
+submitted head and required checks. It remains unmerged and execution is BLOCKED.
 No manual dispatch, rerun, readiness PASS, provider probe or key operation is
 part of this correction.
 
@@ -270,3 +272,19 @@ NOT RUN: zero actual Alpaca requests, zero new response bytes, $0 additional
 acquisition spend. Original membership completeness remains BLOCKED; new reader
 eligibility and trading-edge validation remain NOT RUN. This repair releases
 no real-mode execution.
+
+Final local repair verification: **PASS - 1,951 tests, zero failures/errors/skips**
+on Python 3.12.14 with verified age and actionlint; one existing websockets
+warning. Command: `python -m pytest tests/ -q --tb=short
+--basetemp=../repair-pytest-final --junitxml=../repair-final.xml` with
+`PYTHONUTF8=1`, `MPLBACKEND=Agg`, external `MPLCONFIGDIR`, verified `AGE_BINARY`
+and `ACTIONLINT_BINARY`, and the existing Windows resource telemetry adapter.
+The earlier full attempt had one stale current-suite-count assertion; that
+count was corrected without rewriting dated historical counts, and the complete
+suite was rerun. PASS - 9,756 protected existing Git blobs remain identical.
+[Local source/hash verification](2026-09-29-workflow-repair-evidence/local-verification.json)
+and [protected scope](2026-09-29-workflow-repair-evidence/protected-scope.json)
+record the exact checks. The corrected first push produced no additional
+historical-workflow record at `2026-09-29T12:05:40.7803968Z`; count remained three.
+The final PR head's normal GitHub CI and fresh complete-history check will be
+reported in PR #95 before requesting Guidance review; no dispatch is released.
