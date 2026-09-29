@@ -1,0 +1,159 @@
+name: Historical input proof
+run-name: historical-input-${{ inputs.mode }}
+
+# A dedicated two-slot experiment. Merging does not authorize dispatch by itself.
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Reviewed execution phase (first rehearsal, then real)
+        type: choice
+        options: [rehearsal, real]
+        default: rehearsal
+        required: true
+      readiness_comment_id:
+        description: Numeric ID of the owner's dated PASS readiness comment on this implementation PR
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: spicystock-historical-input-2026-09-28
+  cancel-in-progress: false
+
+jobs:
+  execution:
+    name: execution
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: bash
+    env:
+      HISTORICAL_ROOT: ${{ runner.temp }}/historical-input-${{ github.run_id }}-${{ github.run_attempt }}
+      MANIFEST: docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json
+      POLICY: tools/historical-execution-policy.json
+      MODE: ${{ inputs.mode }}
+      READINESS_COMMENT_ID: ${{ inputs.readiness_comment_id }}
+      MPLBACKEND: Agg
+      MPLCONFIGDIR: ${{ runner.temp }}/historical-matplotlib
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Refuse unintended dispatch context
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REPOSITORY" == 'spicyChicken59/SpicyStock' ]]
+          [[ "$GITHUB_REPOSITORY_ID" == '1352997802' ]]
+          [[ "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ]]
+          [[ "$GITHUB_RUN_ATTEMPT" == '1' && "$READINESS_COMMENT_ID" =~ ^[1-9][0-9]*$ ]]
+          case "$MODE:$GITHUB_RUN_NUMBER" in rehearsal:1|real:2) ;; *) exit 1 ;; esac
+          umask 077
+          mkdir -m 700 "$HISTORICAL_ROOT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+      - name: Install pinned historical runtime and verified age
+        run: |
+          set -euo pipefail
+          python -m pip install -r tools/requirements-historical.txt
+          python tools/install_historical_age.py --destination "$HISTORICAL_ROOT/age"
+      - name: Verify reviewed revision, evidence and durable execution slot
+        id: guard
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          umask 077
+          python tools/historical_execution_guard.py --policy "$POLICY" \
+            --readiness-comment-id "$READINESS_COMMENT_ID" --mode "$MODE" \
+            --output-dir "$HISTORICAL_ROOT/guard" --storage-root "$HISTORICAL_ROOT/data"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.guard.outputs.checkout_sha }}
+          persist-credentials: false
+      - name: Validate recipient before exposing provider credentials
+        id: preflight
+        run: |
+          python tools/historical_execution.py --preflight-only --mode "$MODE" --manifest "$MANIFEST" \
+            --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json" \
+            --approval "$HISTORICAL_ROOT/guard/approval.json"
+          python tools/historical_package.py validate-recipient \
+            --policy "$POLICY" --age "$HISTORICAL_ROOT/age/age"
+      - name: Exercise actual tools with synthetic transport
+        id: rehearsal
+        if: inputs.mode == 'rehearsal'
+        timeout-minutes: 30
+        run: |
+          umask 077
+          python tools/historical_execution.py --mode rehearsal --manifest "$MANIFEST" \
+            --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json" \
+            --approval "$HISTORICAL_ROOT/guard/approval.json"
+      - name: One historical acquisition under the original shared limits
+        id: acquisition
+        if: inputs.mode == 'real'
+        timeout-minutes: 30
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          umask 077
+          python tools/historical_execution.py --mode real --manifest "$MANIFEST" \
+            --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json" \
+            --approval "$HISTORICAL_ROOT/guard/approval.json"
+      - name: Reconcile complete or partial retained inputs with sockets blocked
+        if: always() && steps.preflight.outcome == 'success'
+        timeout-minutes: 30
+        run: |
+          umask 077
+          python tools/historical_execution.py --mode offline --manifest "$MANIFEST" \
+            --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json"
+      - name: Encrypt only permitted evidence, including handled failures
+        id: package
+        if: always() && steps.preflight.outcome == 'success'
+        timeout-minutes: 10
+        run: |
+          umask 077
+          python tools/historical_package.py package --manifest "$MANIFEST" \
+            --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json" \
+            --policy "$POLICY" --age "$HISTORICAL_ROOT/age/age" --delivery "$HISTORICAL_ROOT/delivery"
+      - name: Upload ciphertext transport and non-sensitive receipt
+        id: artifact
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-evidence-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.mode }}
+          path: |
+            ${{ env.HISTORICAL_ROOT }}/delivery/evidence.tar.gz.age
+            ${{ env.HISTORICAL_ROOT }}/delivery/receipt.json
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          include-hidden-files: false
+          overwrite: false
+      - name: Bind public receipt to the immutable artifact identity
+        if: always() && steps.artifact.outcome == 'success'
+        env:
+          ARTIFACT_ID: ${{ steps.artifact.outputs.artifact-id }}
+          ARTIFACT_DIGEST: ${{ steps.artifact.outputs.artifact-digest }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib, re
+          root = pathlib.Path(os.environ['HISTORICAL_ROOT'])
+          artifact_id, artifact_digest = os.environ['ARTIFACT_ID'], os.environ['ARTIFACT_DIGEST']
+          assert re.fullmatch(r'[1-9][0-9]*', artifact_id)
+          assert re.fullmatch(r'[0-9a-f]{64}', artifact_digest)
+          receipt = json.loads((root / 'delivery/receipt.json').read_bytes())
+          receipt.update(artifact_id=int(artifact_id), github_artifact_digest=artifact_digest)
+          public = json.dumps(receipt, sort_keys=True, indent=2) + '\n'
+          (root / 'artifact-receipt.json').write_text(public)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+              output.write('Ciphertext transport only. Local recovery is NOT RUN.\n\n```json\n' + public + '```\n')
+          PY

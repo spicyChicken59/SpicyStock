@@ -825,7 +825,7 @@ tests/          the suite, the doubles (fakes.py), the synthetic frames, fixture
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
-.github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml
+.github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.
@@ -842,6 +842,12 @@ is not browser or layout acceptance; use the existing Playwright checks too.
 The original two records are gzip fixtures under `tests/fixtures/continuity/`.
 
 ## Retained quality evidence
+
+The dedicated manual `historical-input-proof.yml` workflow prepares encrypted
+historical evidence under the [execution handoff](docs/input-truthfulness/2026-09-29-historical-execution.md).
+It requires a merged implementation and dated readiness evidence before either
+of its two execution slots. Synthetic tests do not establish historical inputs;
+the actual Actions rehearsal and acquisition remain NOT RUN in this checkpoint.
 
 The [September 24/25 input and market-permission investigation](docs/input-truthfulness/2026-09-28-historical-input-proof.md)
 reconciles retained aggregate RED decisions and the available stock observations.

@@ -27,9 +27,9 @@ def steps(wf: dict, job: str) -> dict[str, dict]:
     return {s.get("name") or s.get("uses") or s.get("id"): s for s in wf["jobs"][job]["steps"]}
 
 
-def test_the_workflow_inventory_is_exactly_the_five_the_docs_name():
+def test_the_workflow_inventory_is_exactly_the_six_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
-        ["evening.yml", "intraday.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
+        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
 
 
 # ----------------------------------------------------------- evening -----
