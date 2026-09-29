@@ -26,9 +26,10 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.historical_acquisition import ASSIGNMENT, encode, exclusive_lock, validate_manifest
+from tools import historical_execution_guard as execution_guard
 
-SCHEMA = "historical-encrypted-receipt-v1"
-INDEX_SCHEMA = "historical-private-package-v1"
+SCHEMA = "historical-encrypted-receipt-v2"
+INDEX_SCHEMA = "historical-private-package-v2"
 REPOSITORY = "spicyChicken59/SpicyStock"
 MAX_CIPHERTEXT_BYTES = 200 * 1024 ** 2
 MAX_ARCHIVE_BYTES = MAX_CIPHERTEXT_BYTES - 1024 ** 2
@@ -41,8 +42,11 @@ RECEIPT_NAME = "receipt.json"
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _SHA = re.compile(r"[0-9a-f]{40}\Z")
 _RECIPIENT = re.compile(r"age1[023456789acdefghjklmnpqrstuvwxyz]{58}\Z")
-_EXECUTION_KEYS = {"repository", "assignment_id", "run_id", "run_attempt", "workflow_sha",
-                   "checkout_sha", "mode", "status"}
+_EXECUTION_KEYS = {"repository", "repository_id", "assignment_id", "manifest_sha256",
+                   "workflow_id", "workflow_path", "recipient_sha256", "run_id",
+                   "run_number", "run_attempt", "assignment_phase", "mode", "checkout_sha",
+                   "workflow_sha", "implementation_pr", "readiness_comment_id",
+                   "recovery_contract_sha256", "status"}
 _INTERNAL = {"_package/manifest.json", "_package/execution.json", "_package/diagnostics.json"}
 
 
@@ -115,14 +119,10 @@ def recipient_fingerprint(recipient):
 def _execution(value):
     if not isinstance(value, dict) or set(value) not in (_EXECUTION_KEYS, _EXECUTION_KEYS | {"started_at"}):
         _fail("invalid_execution_metadata")
-    if value["repository"] != REPOSITORY or value["assignment_id"] != ASSIGNMENT:
+    try:
+        execution_guard.validate_phase_binding(value)
+    except (execution_guard.GuardError, OSError, ValueError, TypeError, KeyError):
         _fail("invalid_execution_identity")
-    if any(not isinstance(value[k], str) or not re.fullmatch(r"[1-9][0-9]{0,19}", value[k])
-           for k in ("run_id", "run_attempt")):
-        _fail("invalid_run_identity")
-    if any(not isinstance(value[k], str) or not _SHA.fullmatch(value[k])
-           for k in ("workflow_sha", "checkout_sha")):
-        _fail("invalid_revision_identity")
     if value["mode"] not in ("rehearsal", "real") or value["status"] not in ("PASS", "FAIL", "BLOCKED", "NOT RUN"):
         _fail("invalid_execution_mode_or_status")
     if "started_at" in value:
@@ -139,14 +139,10 @@ def execution_metadata(record, *, status=None):
     """Explicit public projection; guard approval documents remain private."""
     if not isinstance(record, dict):
         _fail("invalid_execution_metadata")
-    if record.get("schema") == "historical-execution-v1":
+    if record.get("schema") == "historical-execution-v2":
         if any(record.get(k) != "PASS" for k in ("status", "readiness_status", "lifetime_status")):
             _fail("execution_guard_not_passed")
         result = {k: record[k] for k in _EXECUTION_KEYS}
-        for key in ("run_id", "run_attempt"):
-            if type(result[key]) is not int:
-                _fail("invalid_run_identity")
-            result[key] = str(result[key])
     else:
         result = dict(record)
     if status is not None:
@@ -255,6 +251,8 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
     identity = validate_manifest(manifest)
     execution = _execution(execution)
     fingerprint = recipient_fingerprint(recipient)
+    if execution["manifest_sha256"] != identity or execution["recipient_sha256"] != fingerprint:
+        _fail("package_execution_binding_mismatch")
     storage = _private_path(storage)
     delivery = _private_path(delivery, exists=False)
     if delivery.exists() or storage == delivery or storage in delivery.parents or delivery in storage.parents:
@@ -306,7 +304,7 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
             receipt = {"schema": SCHEMA, **execution, "manifest_sha256": identity,
                        "recipient_sha256": fingerprint, "ciphertext_sha256": _hash(ciphertext),
                        "ciphertext_bytes": ciphertext.stat().st_size,
-                       "artifact_name": "historical-evidence-" + "-".join(execution[k] for k in ("run_id", "run_attempt", "mode"))}
+                       "artifact_name": "historical-evidence-" + "-".join(str(execution[k]) for k in ("run_id", "run_attempt", "mode"))}
             delivery.mkdir(mode=0o700)
             try:
                 shutil.copyfile(ciphertext, delivery / CIPHERTEXT_NAME)
@@ -335,7 +333,7 @@ def _receipt(receipt, expected_execution=None):
         _fail("invalid_receipt")
     if type(receipt["ciphertext_bytes"]) is not int or not 22 < receipt["ciphertext_bytes"] <= MAX_CIPHERTEXT_BYTES:
         _fail("ciphertext_size_limit")
-    if receipt["artifact_name"] != "historical-evidence-" + "-".join(execution[k] for k in ("run_id", "run_attempt", "mode")):
+    if receipt["artifact_name"] != "historical-evidence-" + "-".join(str(execution[k]) for k in ("run_id", "run_attempt", "mode")):
         _fail("invalid_artifact_identity")
     return execution
 
@@ -455,19 +453,22 @@ def main(argv=None):
         elif args.command == "package":
             manifest = _json(args.manifest.read_bytes())
             guard = _json(args.execution.read_bytes())
-            if (guard.get("schema") != "historical-execution-v1" or
+            if (guard.get("schema") != "historical-execution-v2" or
                 guard.get("manifest_sha256") != validate_manifest(manifest) or
                 guard.get("recipient_sha256") != policy["recipient_sha256"]):
                 _fail("package_guard_identity_mismatch")
             diagnostics = _json((args.storage / "execution-diagnostics.json").read_bytes())
             metadata = execution_metadata(guard, status=diagnostics["status"])
+            if (diagnostics.get("schema") != "historical-execution-diagnostics-v2" or
+                    diagnostics.get("execution_binding") != execution_guard.validate_phase_binding(metadata)):
+                _fail("package_retained_execution_mismatch")
             package_evidence(args.storage, manifest, args.delivery, age_binary=args.age,
                              recipient=recipient, execution=metadata,
                              diagnostics={"execution_guard": guard})
         else:
             receipt = _json(args.receipt.read_bytes())
             expected = _json(args.expected_execution.read_bytes())
-            if expected.get("schema") == "historical-execution-v1":
+            if expected.get("schema") == "historical-execution-v2":
                 if (expected.get("manifest_sha256") != receipt.get("manifest_sha256") or
                     expected.get("recipient_sha256") != receipt.get("recipient_sha256")):
                     _fail("recovery_guard_identity_mismatch")

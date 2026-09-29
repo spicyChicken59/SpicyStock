@@ -846,8 +846,13 @@ The original two records are gzip fixtures under `tests/fixtures/continuity/`.
 The dedicated manual `historical-input-proof.yml` workflow prepares encrypted
 historical evidence under the [execution handoff](docs/input-truthfulness/2026-09-29-historical-execution.md).
 It requires a merged implementation and dated readiness evidence before either
-of its two execution slots. Synthetic tests do not establish historical inputs;
-the actual Actions rehearsal and acquisition remain NOT RUN in this checkpoint.
+of its two execution phases. The original workflow failed GitHub context
+validation before any job; the execution handoff records its three preserved
+failures and the narrowly reviewed recovery contract. Native run numbers are
+not phase numbers. Normal CI checks the changed workflows with pinned actionlint.
+Synthetic tests do not establish historical inputs; dispatch remains BLOCKED
+pending repair review, merge and a new release. Actual rehearsal and acquisition
+remain NOT RUN.
 
 The [September 24/25 input and market-permission investigation](docs/input-truthfulness/2026-09-28-historical-input-proof.md)
 reconciles retained aggregate RED decisions and the available stock observations.

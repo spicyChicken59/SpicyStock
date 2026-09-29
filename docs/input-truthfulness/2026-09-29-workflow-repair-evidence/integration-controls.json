@@ -1,0 +1,42 @@
+{
+  "schema": "historical-recovery-integration-controls-v1",
+  "status": "PASS",
+  "executed_at": "2026-09-29T11:58:32.084506+00:00",
+  "isolation": "Fresh pytest subprocess for each in-memory variant; original source and test bytes unchanged. No provider transport constructed.",
+  "source_sha256": {
+    "tools/historical_execution.py": "ca5f1c842f1ddebdfc47220a687f8a5dc3ce0618153cc2e3dcacf6e7666873f0",
+    "tools/historical_package.py": "76250695cc74d01fb71b4bb51b749a7aedf2f979e2d0b4a58a24350817c6f928",
+    "tools/historical_execution_guard.py": "8a1228f0909119c7602d4578a2306280492261fe29b4e85c8c211b8338d0dc3f",
+    "tests/test_historical_recovery_integration.py": "440c1695b264cf34cd1f98882a3aaee0aac8d8c4a4cae7c61d8fe05b5cf74905"
+  },
+  "cases": [
+    {
+      "exit_code": 0,
+      "outcomes": {
+        "tests/test_historical_recovery_integration.py::test_actual_guard_output_drives_native_four_wrapper_and_offline_replay": "PASS",
+        "tests/test_historical_recovery_integration.py::test_offline_cannot_relabel_ledger_with_another_valid_phase_identity": "PASS",
+        "tests/test_historical_recovery_integration.py::test_package_cli_rejects_relabelled_guard_before_encryption": "PASS"
+      },
+      "name": "fixed_baseline"
+    },
+    {
+      "exit_code": 1,
+      "outcomes": {
+        "tests/test_historical_recovery_integration.py::test_actual_guard_output_drives_native_four_wrapper_and_offline_replay": "PASS",
+        "tests/test_historical_recovery_integration.py::test_offline_cannot_relabel_ledger_with_another_valid_phase_identity": "FAIL",
+        "tests/test_historical_recovery_integration.py::test_package_cli_rejects_relabelled_guard_before_encryption": "PASS"
+      },
+      "name": "offline_binding_removed"
+    },
+    {
+      "exit_code": 1,
+      "outcomes": {
+        "tests/test_historical_recovery_integration.py::test_actual_guard_output_drives_native_four_wrapper_and_offline_replay": "PASS",
+        "tests/test_historical_recovery_integration.py::test_offline_cannot_relabel_ledger_with_another_valid_phase_identity": "PASS",
+        "tests/test_historical_recovery_integration.py::test_package_cli_rejects_relabelled_guard_before_encryption": "FAIL"
+      },
+      "name": "package_binding_removed"
+    }
+  ],
+  "provider_calls": 0
+}

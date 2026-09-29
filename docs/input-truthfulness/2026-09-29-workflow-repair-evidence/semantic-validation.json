@@ -1,0 +1,149 @@
+{
+  "schema": "historical-workflow-semantic-proof-v1",
+  "checked_at": "2026-09-29T12:00:18.448481+00:00",
+  "status": "PASS",
+  "reviewed_failure_commit": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+  "original_copy_matches_git_blob": true,
+  "baseline_copy_sha256": "f839300c8389a9e0bd8b0c986da3bb03faaf779a67493ad557b25cdbd8953df0",
+  "fixed_workflow_sha256": "04ed7b09f5c686f4295cebf0d460b0b1a106d228bf25e9fcd9dacd2096d7aa3f",
+  "fixed_workflow_lf_sha256": "04ed7b09f5c686f4295cebf0d460b0b1a106d228bf25e9fcd9dacd2096d7aa3f",
+  "normal_ci_lf_sha256": "c4aa9424cd98c4b0f8b6a0a83414c4b62e08f0f83146cdbf04c391fb8ce4f0d1",
+  "valid_control_sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62",
+  "valid_control_unchanged": true,
+  "validator": {
+    "name": "actionlint",
+    "version_output": "1.7.12\ninstalled by downloading from release page\nbuilt with go1.26.1 compiler for windows/amd64",
+    "local_platform": "windows_amd64",
+    "executable_sha256": "54ca21be3de4c7cfa26914aa8b61bd76bf573ef3caac5f80d110558cdf241718",
+    "source_commit": "914e7df21a07ef503a81201c76d2b11c789d3fca",
+    "official_release": "https://github.com/rhysd/actionlint/releases/tag/v1.7.12",
+    "official_digest_source": "https://github.com/rhysd/actionlint/releases/expanded_assets/v1.7.12",
+    "windows_archive_sha256": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9",
+    "linux_archive_sha256": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",
+    "provenance_claim": "Official release archive SHA-256 verified before extraction. Independent signature/attestation verification NOT RUN."
+  },
+  "command": [
+    "actionlint",
+    "-no-color",
+    "-shellcheck=",
+    "-pyflakes=",
+    "<named inputs for each check>"
+  ],
+  "context_suppressions": [],
+  "optional_external_linters": "Shellcheck and pyflakes disabled; actionlint native syntax, expression and context availability checks remain enabled.",
+  "checks": [
+    {
+      "check": "merged-original",
+      "validator_status": "FAIL",
+      "expected_status": "FAIL",
+      "assertion_status": "PASS",
+      "exit_code": 1,
+      "unsupported_context_errors": 2,
+      "inputs": [
+        {
+          "name": "merged-original.yml",
+          "sha256": "f839300c8389a9e0bd8b0c986da3bb03faaf779a67493ad557b25cdbd8953df0"
+        },
+        {
+          "name": "valid-step-context.yml",
+          "sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62"
+        }
+      ],
+      "diagnostics_file": "merged-original-diagnostics.txt",
+      "diagnostics_sha256": "020d95742ef2afc2122b38374e3495b6ed005abb8b04e5ebaf7a871a75a6a26b"
+    },
+    {
+      "check": "fixed-changed-workflows",
+      "validator_status": "PASS",
+      "expected_status": "PASS",
+      "assertion_status": "PASS",
+      "exit_code": 0,
+      "unsupported_context_errors": 0,
+      "inputs": [
+        {
+          "name": "historical-input-proof.yml",
+          "sha256": "04ed7b09f5c686f4295cebf0d460b0b1a106d228bf25e9fcd9dacd2096d7aa3f"
+        },
+        {
+          "name": "tests.yml",
+          "sha256": "3b33590a3ed7493ff9c2ed25b6f58ed0402e62be84e1c0d668fa23b1a4c33bad"
+        },
+        {
+          "name": "valid-step-context.yml",
+          "sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62"
+        }
+      ],
+      "diagnostics_file": "fixed-changed-workflows-diagnostics.txt",
+      "diagnostics_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "check": "restored-historical_root",
+      "validator_status": "FAIL",
+      "expected_status": "FAIL",
+      "assertion_status": "PASS",
+      "exit_code": 1,
+      "unsupported_context_errors": 1,
+      "inputs": [
+        {
+          "name": "restored-historical_root.yml",
+          "sha256": "5fc4718a41058276497578bfc9b4f33e7671bb33c40255673a9b180053d00245"
+        },
+        {
+          "name": "valid-step-context.yml",
+          "sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62"
+        }
+      ],
+      "diagnostics_file": "restored-historical_root-diagnostics.txt",
+      "diagnostics_sha256": "b8b21148ef3175994bd5cacc099ef22fe43cb397b7688997fea309c37aaf1c8e"
+    },
+    {
+      "check": "restored-mplconfigdir",
+      "validator_status": "FAIL",
+      "expected_status": "FAIL",
+      "assertion_status": "PASS",
+      "exit_code": 1,
+      "unsupported_context_errors": 1,
+      "inputs": [
+        {
+          "name": "restored-mplconfigdir.yml",
+          "sha256": "dd91ecca9aabea21c164880236b57dde410b38977c7b37b3ee59a4334b217db4"
+        },
+        {
+          "name": "valid-step-context.yml",
+          "sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62"
+        }
+      ],
+      "diagnostics_file": "restored-mplconfigdir-diagnostics.txt",
+      "diagnostics_sha256": "249f4a5ad3efdaaff10381f576bce84f8833a0df786a6de702ab3dc2f98c3c75"
+    },
+    {
+      "check": "unchanged-valid-control",
+      "validator_status": "PASS",
+      "expected_status": "PASS",
+      "assertion_status": "PASS",
+      "exit_code": 0,
+      "unsupported_context_errors": 0,
+      "inputs": [
+        {
+          "name": "valid-step-context.yml",
+          "sha256": "80207f0243f66caca78952300d83bb64547da2012e4af3f78a3be8cf1f813c62"
+        }
+      ],
+      "diagnostics_file": "unchanged-valid-control-diagnostics.txt",
+      "diagnostics_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "focused_tests": {
+    "status": "PASS",
+    "command": "python -m pytest tests/test_historical_workflow.py tests/test_historical_workflow_validation.py -q",
+    "environment": "ACTIONLINT_BINARY=verified v1.7.12 executable; Windows Git Bash",
+    "passed": 24,
+    "skipped": 0,
+    "notes": "Actual early Bash initialization, same-step child exports, later GITHUB_ENV values and every exact scratch consumer path executed; acquisition/install/guard/package Python commands are argv-capture doubles; the final receipt Python body executes on synthetic local data. Both checkout boundaries are simulated. Local directory permission assertions run on Linux CI only."
+  },
+  "hosted_workflow_execution": "NOT RUN",
+  "provider_retrieval": "NOT RUN",
+  "normal_remote_ci": "NOT RUN",
+  "dispatch_authorization": "BLOCKED",
+  "dispatch_hold_reason": "Guidance repair review, merge and new rehearsal release required."
+}

@@ -1,6 +1,7 @@
 {
-  "schema": "historical-execution-policy-v1",
-  "implementation_pr": 94,
+  "schema": "historical-execution-policy-v2",
+  "implementation_pr": null,
+  "recovery_contract_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
   "recipient": "age1n3xsz54659mz50vml7pg0eqdhq6dtxqmzy0janmq7qgxrhc6gceqmp75vh",
   "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"
 }

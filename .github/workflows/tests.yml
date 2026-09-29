@@ -24,11 +24,20 @@ jobs:
             requirements-dev.txt
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Install pinned workflow semantic validator
+        run: python tools/install_actionlint.py --destination "$RUNNER_TEMP/actionlint"
+      - name: Validate changed workflow contexts and syntax
+        # Optional external shell/Python linters are separate from actionlint's
+        # native workflow checks. No expression/context diagnostic is ignored.
+        run: >-
+          "$RUNNER_TEMP/actionlint/actionlint" -no-color -shellcheck= -pyflakes=
+          .github/workflows/historical-input-proof.yml .github/workflows/tests.yml
       - name: Install verified age for offline historical transport controls
         run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
         env:
           AGE_BINARY: ${{ runner.temp }}/historical-age/age
+          ACTIONLINT_BINARY: ${{ runner.temp }}/actionlint/actionlint
         run: pytest tests/ -q
       - name: The fixtures are what the pipeline writes
         # tests/fixtures/page/*.json and docs/data.json + docs/picks.json are

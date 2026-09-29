@@ -12,6 +12,7 @@ import pytest
 from src import sessions
 from tools import historical_acquisition as acquisition
 from tools import historical_execution as execution
+from tools import historical_execution_guard as guard
 
 
 @pytest.fixture
@@ -41,14 +42,23 @@ def run_setup(tmp_path, monkeypatch):
                                   "faq_url": "https://docs.alpaca.markets/us/docs/market-data-faq"}}
     identity = acquisition.validate_manifest(manifest)
     monkeypatch.setattr(execution, "MANIFEST_SHA256", identity)
+    monkeypatch.setattr(guard, "MANIFEST", identity)
     monkeypatch.setattr(execution, "_checkout_sha", lambda: "a" * 40)
     storage = tmp_path / "storage"
-    record = {"schema": "historical-execution-v1", "status": "PASS", "mode": "rehearsal",
+    policy = {"schema": "historical-execution-policy-v2", "implementation_pr": 123,
+              "recipient": "age1n3xsz54659mz50vml7pg0eqdhq6dtxqmzy0janmq7qgxrhc6gceqmp75vh",
+              "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
+              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256}
+    monkeypatch.setattr(guard, "load_policy", lambda: policy)
+    record = {"schema": "historical-execution-v2", "status": "PASS", "mode": "rehearsal",
               "assignment_id": acquisition.ASSIGNMENT, "manifest_sha256": identity,
-              "repository": execution.REPOSITORY, "repository_id": 123, "workflow_id": 456,
-              "run_id": 789, "run_number": 1, "run_attempt": 1, "readiness_comment_id": 567,
-              "implementation_pr": 94, "checkout_sha": "a" * 40, "workflow_sha": "b" * 40,
-              "recipient_sha256": "c" * 64, "readiness_status": "PASS", "lifetime_status": "PASS"}
+              "repository": execution.REPOSITORY, "repository_id": guard.REPOSITORY_ID,
+              "workflow_id": guard.WORKFLOW_ID, "workflow_path": guard.WORKFLOW,
+              "run_id": 789, "run_number": 4, "assignment_phase": 1,
+              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
+              "run_attempt": 1, "readiness_comment_id": 567,
+              "implementation_pr": 123, "checkout_sha": "a" * 40, "workflow_sha": "b" * 40,
+              "recipient_sha256": policy["recipient_sha256"], "readiness_status": "PASS", "lifetime_status": "PASS"}
     approval = {"assignment_id": acquisition.ASSIGNMENT, "manifest_sha256": identity,
                 "storage_root": str(storage), "zero_additional_cost": True,
                 "cost_basis": "invented offline test data", "sip_daily_entitlement_basis": "synthetic only",
@@ -57,7 +67,7 @@ def run_setup(tmp_path, monkeypatch):
                 "provider_requests_per_minute": 20}
     for name, value in {"GITHUB_ACTIONS": "true", "GITHUB_EVENT_NAME": "workflow_dispatch",
                         "GITHUB_REPOSITORY": execution.REPOSITORY, "GITHUB_REF": "refs/heads/main",
-                        "GITHUB_REPOSITORY_ID": "123", "GITHUB_RUN_ID": "789", "GITHUB_RUN_NUMBER": "1",
+                        "GITHUB_REPOSITORY_ID": str(guard.REPOSITORY_ID), "GITHUB_RUN_ID": "789", "GITHUB_RUN_NUMBER": "4",
                         "GITHUB_RUN_ATTEMPT": "1", "GITHUB_WORKFLOW_SHA": "b" * 40}.items():
         monkeypatch.setenv(name, value)
     return manifest, storage, record, approval
@@ -157,8 +167,8 @@ def test_provider_environment_forbidden_outside_real(run_setup, monkeypatch, mod
 
 def test_absent_real_secret_creates_no_new_ledger(run_setup, monkeypatch):
     _, storage, record, _ = run_setup
-    record.update(mode="real", run_number=2)
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "2")
+    record.update(mode="real", run_number=5, assignment_phase=2)
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "5")
     monkeypatch.setattr(execution.signal, "SIGALRM", 14, raising=False)
     monkeypatch.setattr(acquisition, "AlpacaTransport", lambda: pytest.fail("provider touched"))
     with pytest.raises(execution.ExecutionError, match="provider_credentials_unavailable"):
@@ -168,13 +178,13 @@ def test_absent_real_secret_creates_no_new_ledger(run_setup, monkeypatch):
 
 def test_preflight_without_secrets_is_non_mutating_and_offline_needs_no_new_approval(run_setup, monkeypatch):
     manifest, storage, record, approval = run_setup
-    record.update(mode="real", run_number=2)
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "2")
+    record.update(mode="real", run_number=5, assignment_phase=2)
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "5")
     monkeypatch.setattr(execution.signal, "SIGALRM", 14, raising=False)
     assert execution.preflight("real", manifest, storage, record, approval)[0] == storage
     assert not storage.exists()
-    record.update(mode="rehearsal", run_number=1)
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "1")
+    record.update(mode="rehearsal", run_number=4, assignment_phase=1)
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "4")
     invoke(run_setup)
     assert execution.execute("offline", manifest, storage, record)["status"] == "PASS"
 
