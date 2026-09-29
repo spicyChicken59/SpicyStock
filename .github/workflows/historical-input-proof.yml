@@ -34,13 +34,11 @@ jobs:
       run:
         shell: bash
     env:
-      HISTORICAL_ROOT: ${{ runner.temp }}/historical-input-${{ github.run_id }}-${{ github.run_attempt }}
       MANIFEST: docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json
       POLICY: tools/historical-execution-policy.json
       MODE: ${{ inputs.mode }}
       READINESS_COMMENT_ID: ${{ inputs.readiness_comment_id }}
       MPLBACKEND: Agg
-      MPLCONFIGDIR: ${{ runner.temp }}/historical-matplotlib
       PYTHONUTF8: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
@@ -51,9 +49,32 @@ jobs:
           [[ "$GITHUB_REPOSITORY_ID" == '1352997802' ]]
           [[ "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ]]
           [[ "$GITHUB_RUN_ATTEMPT" == '1' && "$READINESS_COMMENT_ID" =~ ^[1-9][0-9]*$ ]]
-          case "$MODE:$GITHUB_RUN_NUMBER" in rehearsal:1|real:2) ;; *) exit 1 ;; esac
+          # These remain native run numbers. The guard independently verifies
+          # all three exact reviewed pre-job failures before admitting phase 1/2.
+          case "$MODE:$GITHUB_RUN_NUMBER" in rehearsal:4|real:5) ;; *) exit 1 ;; esac
+          [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$RUNNER_TEMP" == /* && "$GITHUB_WORKSPACE" == /* ]]
+          [[ -d "$RUNNER_TEMP" && -d "$GITHUB_WORKSPACE" ]]
+          [[ "$RUNNER_TEMP" != *$'\n'* && "$RUNNER_TEMP" != *$'\r'* ]]
+          historical_temp_parent="$(realpath -e -- "$RUNNER_TEMP")"
+          historical_workspace="$(realpath -e -- "$GITHUB_WORKSPACE")"
+          [[ "$historical_temp_parent" != '/' && "$historical_temp_parent" != *$'\n'* && "$historical_temp_parent" != *$'\r'* ]]
+          [[ "$historical_temp_parent" != "$historical_workspace" && "$historical_temp_parent" != "$historical_workspace/"* ]]
+          historical_ancestor="$historical_temp_parent"
+          while true; do
+            [[ ! -e "$historical_ancestor/.git" ]]
+            [[ "$historical_ancestor" != '/' ]] || break
+            historical_ancestor="$(dirname -- "$historical_ancestor")"
+          done
+          HISTORICAL_ROOT="$historical_temp_parent/historical-input-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          MPLCONFIGDIR="$HISTORICAL_ROOT/matplotlib"
+          export HISTORICAL_ROOT MPLCONFIGDIR
           umask 077
           mkdir -m 700 "$HISTORICAL_ROOT"
+          mkdir -m 700 "$MPLCONFIGDIR"
+          # GITHUB_ENV affects later steps only; the explicit exports above
+          # are required by this step's mkdir and any child process.
+          printf 'HISTORICAL_ROOT=%s\nMPLCONFIGDIR=%s\n' "$HISTORICAL_ROOT" "$MPLCONFIGDIR" >> "$GITHUB_ENV"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
@@ -86,7 +107,7 @@ jobs:
             --storage "$HISTORICAL_ROOT/data" --execution "$HISTORICAL_ROOT/guard/execution.json" \
             --approval "$HISTORICAL_ROOT/guard/approval.json"
           python tools/historical_package.py validate-recipient \
-            --policy "$POLICY" --age "$HISTORICAL_ROOT/age/age"
+            --policy "$POLICY" --age "$HISTORICAL_ROOT/age/age" --scratch "$HISTORICAL_ROOT"
       - name: Exercise actual tools with synthetic transport
         id: rehearsal
         if: inputs.mode == 'rehearsal'

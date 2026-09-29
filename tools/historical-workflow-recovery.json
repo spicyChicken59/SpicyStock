@@ -1,0 +1,76 @@
+{
+  "assignment_id": "spicystock-historical-input-2026-09-28",
+  "exceptions": [
+    {
+      "conclusion": "failure",
+      "event": "push",
+      "head_branch": "ops/historical-proof-execution",
+      "head_repository_id": 1352997802,
+      "head_sha": "21e405fa0601bdd476bad2e8027abcae5e6fac15",
+      "id": 36520481662,
+      "jobs_total_count": 0,
+      "path": ".github/workflows/historical-input-proof.yml",
+      "repository_id": 1352997802,
+      "run_attempt": 1,
+      "run_number": 1,
+      "source_attempt_jobs_sha256": "c348f55bddee3c23e2a1b47222b1ecf4ebe220d7d2c5c037492763efd7dae64f",
+      "source_run_sha256": "6b4a4d4db4758cd3ac46182e06dc3e44c4b883213756f71d9cb6df9b4f4b4df6",
+      "status": "completed",
+      "workflow_id": 369770564
+    },
+    {
+      "conclusion": "failure",
+      "event": "push",
+      "head_branch": "ops/historical-proof-execution",
+      "head_repository_id": 1352997802,
+      "head_sha": "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b",
+      "id": 36521323183,
+      "jobs_total_count": 0,
+      "path": ".github/workflows/historical-input-proof.yml",
+      "repository_id": 1352997802,
+      "run_attempt": 1,
+      "run_number": 2,
+      "source_attempt_jobs_sha256": "c348f55bddee3c23e2a1b47222b1ecf4ebe220d7d2c5c037492763efd7dae64f",
+      "source_run_sha256": "9d2b71c567bcd6c1ac9ef68c3b40a3bd2cdb269eb6d17049f22fa4071a1ba34d",
+      "status": "completed",
+      "workflow_id": 369770564
+    },
+    {
+      "conclusion": "failure",
+      "event": "push",
+      "head_branch": "main",
+      "head_repository_id": 1352997802,
+      "head_sha": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+      "id": 36524147152,
+      "jobs_total_count": 0,
+      "path": ".github/workflows/historical-input-proof.yml",
+      "repository_id": 1352997802,
+      "run_attempt": 1,
+      "run_number": 3,
+      "source_attempt_jobs_sha256": "c348f55bddee3c23e2a1b47222b1ecf4ebe220d7d2c5c037492763efd7dae64f",
+      "source_run_sha256": "6d0a4dc7a172aa3c9ff4db2fca3fe93b380e243a3044c179769b9326d6715524",
+      "status": "completed",
+      "workflow_id": 369770564
+    }
+  ],
+  "guidance_comment_id": 5884205539,
+  "original_head_sha": "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b",
+  "original_implementation_pr": 94,
+  "original_merge_sha": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+  "repository": "spicyChicken59/SpicyStock",
+  "repository_id": 1352997802,
+  "schema": "historical-workflow-recovery-v1",
+  "slots": {
+    "real": {
+      "assignment_phase": 2,
+      "run_number": 5
+    },
+    "rehearsal": {
+      "assignment_phase": 1,
+      "run_number": 4
+    }
+  },
+  "verified_at": "2026-09-29T11:47:47.518Z",
+  "workflow_id": 369770564,
+  "workflow_path": ".github/workflows/historical-input-proof.yml"
+}

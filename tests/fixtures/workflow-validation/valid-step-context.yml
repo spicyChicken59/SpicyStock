@@ -1,0 +1,15 @@
+name: Valid step context control
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    env:
+      CONSTANT: unchanged
+    steps:
+      - name: Runner context is available at step scope
+        env:
+          TEMP_PATH: ${{ runner.temp }}/valid-control
+        run: printf '%s\n' "$TEMP_PATH" "$CONSTANT"

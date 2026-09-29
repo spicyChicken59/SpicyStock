@@ -1,0 +1,4 @@
+..\workflow-validation-repair\restored-historical_root.yml:37:28: context "runner" is not allowed here. available contexts are "github", "inputs", "matrix", "needs", "secrets", "strategy", "vars". see https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability for more details [expression]
+   |
+37 |       HISTORICAL_ROOT: ${{ runner.temp }}/historical-input-${{ github.run_id }}-${{ github.run_attempt }}
+   |                            ^~~~~~~~~~~

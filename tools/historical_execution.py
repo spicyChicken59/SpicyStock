@@ -13,7 +13,6 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
-import re
 import signal
 import sqlite3
 import subprocess
@@ -23,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from tools import historical_acquisition as acquisition
+from tools import historical_execution_guard as guard
 
 MANIFEST_SHA256 = "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc"
 MANIFEST = ROOT / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
@@ -59,7 +59,7 @@ def _checkout_sha():
 def validate_execution(execution, mode, identity):
     """The document is emitted by the independently checked Actions guard."""
     original_mode = execution.get("mode")
-    if (execution.get("schema") != "historical-execution-v1" or
+    if (execution.get("schema") != "historical-execution-v2" or
             execution.get("status") != "PASS" or
             execution.get("assignment_id") != acquisition.ASSIGNMENT or
             execution.get("manifest_sha256") != identity or
@@ -67,17 +67,12 @@ def validate_execution(execution, mode, identity):
             execution.get("readiness_status") != "PASS" or
             execution.get("lifetime_status") != "PASS" or
             original_mode not in ("rehearsal", "real") or
-            (mode != "offline" and original_mode != mode) or
-            type(execution.get("run_attempt")) is not int or execution["run_attempt"] != 1 or
-            type(execution.get("run_number")) is not int or
-            execution.get("run_number") != (1 if original_mode == "rehearsal" else 2)):
+            (mode != "offline" and original_mode != mode)):
         raise ExecutionError("execution_identity_rejected")
-    for field in ("repository_id", "workflow_id", "run_id", "readiness_comment_id", "implementation_pr"):
-        if type(execution.get(field)) is not int or execution[field] <= 0:
-            raise ExecutionError("execution_identity_rejected")
-    for field, size in (("checkout_sha", 40), ("workflow_sha", 40), ("recipient_sha256", 64)):
-        if not re.fullmatch("[0-9a-f]{" + str(size) + "}", execution.get(field, "")):
-            raise ExecutionError("execution_identity_rejected")
+    try:
+        guard.validate_execution_binding(execution, guard.load_policy())
+    except (guard.GuardError, OSError, ValueError, TypeError, KeyError):
+        raise ExecutionError("execution_identity_rejected") from None
     if execution["checkout_sha"] != _checkout_sha():
         raise ExecutionError("checkout_identity_rejected")
     if mode != "offline":
@@ -132,6 +127,21 @@ def ledger_accounting(storage, identity):
             "SELECT COUNT(*),COALESCE(SUM(retained),0),COALESCE(SUM(reservation),0) FROM attempts").fetchone()
     return {"request_slots_charged": count, "uncompressed_retained_bytes_charged": retained,
             "unresolved_byte_reservations": reserved}
+
+
+def validate_retained_execution(storage, execution):
+    """Offline replay keeps the acquisition's identity instead of relabelling it."""
+    binding = guard.validate_phase_binding(execution)
+    try:
+        diagnostic = _json(Path(storage) / "execution-diagnostics.json")
+        if (diagnostic.get("schema") != "historical-execution-diagnostics-v2" or
+                diagnostic.get("execution_binding") != binding):
+            raise ExecutionError("retained_execution_identity_rejected")
+        recovered = Path(storage) / "_package/execution.json"
+        if recovered.exists() and guard.validate_phase_binding(_json(recovered)) != binding:
+            raise ExecutionError("retained_execution_identity_rejected")
+    except (OSError, ValueError, TypeError, KeyError, guard.GuardError):
+        raise ExecutionError("retained_execution_identity_rejected") from None
 
 
 @contextmanager
@@ -216,6 +226,7 @@ def preflight(mode, manifest, storage, execution, approval=None):
         acquisition.validate_approval(manifest, approval or {}, storage)
     else:
         ledger_accounting(storage, identity)
+        validate_retained_execution(storage, execution)
     if mode == "real" and not hasattr(signal, "SIGALRM"):
         raise ExecutionError("bounded_linux_runner_required")
     return storage, identity
@@ -228,7 +239,8 @@ def execute(mode, manifest, storage, execution, approval=None):
         raise ExecutionError("provider_environment_forbidden")
     if mode == "real" and not all(os.environ.get(name) for name in SECRETS):
         raise ExecutionError("provider_credentials_unavailable")
-    diagnostic = {"schema": "historical-execution-diagnostics-v1", "mode": execution["mode"],
+    diagnostic = {"schema": "historical-execution-diagnostics-v2", "mode": execution["mode"],
+                  "execution_binding": guard.validate_phase_binding(execution),
                   "manifest_sha256": identity, "synthetic": execution["mode"] == "rehearsal",
                   "provider_calls_authorized": mode == "real", "phase": mode, "status": "BLOCKED"}
     previous_mask = os.umask(0o077)

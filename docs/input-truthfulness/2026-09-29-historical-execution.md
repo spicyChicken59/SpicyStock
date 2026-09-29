@@ -1,4 +1,11 @@
-# Historical execution preparation — 2026-09-29
+# Historical execution preparation - 2026-09-29
+
+**Superseding repair checkpoint:** the PR #94 workflow failed semantic validation
+before any job. Its earlier execution release is suspended by
+[Guidance comment 5884205539](https://github.com/spicyChicken59/SpicyStock/pull/94#issuecomment-5884205539).
+The repair and current hold are recorded below under **Workflow validation and
+history recovery correction**. Prior test results and the original v1 example
+remain dated evidence; neither authorizes the corrected v2 execution.
 
 Preparation checkpoint: **local full suite 1,818 tests PASS at `747c0abb665ee43fde8227eea3eec25dd9c573d3`; final normal CI is recorded in PR #94. Dedicated
 manual rehearsal, real run, run IDs and attempts: NOT RUN. Alpaca requests: 0;
@@ -180,3 +187,104 @@ providers, production patches and UI changes. Omit a fabricated PASS, private
 handoff, complete dataset, original-input reconstruction or profitability claim.
 This checkpoint prepares one reviewable implementation and stops before merge
 or dispatch; it does not claim that the historical investigation is complete.
+
+## Workflow validation and history recovery correction
+
+Baseline main/repair base: `33ec181ca60adaf2f7c0ef19a1889a5517161585`,
+tree `6127e63213836f72caf708cb5b4294d750fe6147`. PR #94 reviewed checkout
+`eb2b417a7a2289ab22c239ccfe06c20daf1dde7b` remains historical evidence; it
+cannot certify the changed execution code. Repair [PR #95](https://github.com/spicyChicken59/SpicyStock/pull/95)
+was created with initial head `b00c6593498de62c282af275e2e7e2ac4b413e54`;
+only then was its actual number bound in the policy. The PR records the final
+submitted head and required checks. It remains unmerged and execution is BLOCKED.
+No manual dispatch, rerun, readiness PASS, provider probe or key operation is
+part of this correction.
+
+FAIL - GitHub rejected both `runner.temp` expressions in job-level env. The
+[original finding](https://github.com/spicyChicken59/SpicyStock/pull/94#issuecomment-5884069064)
+preserves the annotations. The official [context table](https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#context-availability)
+excludes runner at job env. The corrected early Bash step assigns and exports
+private paths from RUNNER_TEMP for its own process and writes GITHUB_ENV for
+later steps. Scratch stays outside the checkout and is unique to run/attempt;
+provider secrets remain confined to the real acquisition step.
+
+PASS - complete unfiltered history was reread at `2026-09-29T11:47:47.5184123Z`:
+exactly three records, individually verified with attempt-1 jobs count zero.
+The [captured metadata](2026-09-29-workflow-repair-evidence/bootstrap-history.json)
+identifies the saved API JSON hashes, source URLs and date. Each event is push,
+attempt 1, completed/failure, repository 1352997802, workflow 369770564, original
+workflow path. Their exact identities remain:
+
+| Run ID | Native number | Branch | Head |
+| --- | --- | --- | --- |
+| 36520481662 | 1 | ops/historical-proof-execution | 21e405fa0601bdd476bad2e8027abcae5e6fac15 |
+| 36521323183 | 2 | ops/historical-proof-execution | eb2b417a7a2289ab22c239ccfe06c20daf1dde7b |
+| 36524147152 | 3 | main | 33ec181ca60adaf2f7c0ef19a1889a5517161585 |
+
+The immutable `historical-workflow-recovery-v1` contract is canonical SHA-256
+`6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a`.
+It exempts only those exact pre-job failures after authoritative revalidation.
+Every other record must be a permitted manual phase; a fourth bootstrap failure,
+missing/altered record, inaccessible jobs or incomplete pagination blocks access.
+Complete history is read again after individual run/job validation to reject a
+changing snapshot. Native number 4 would be phase 1 (rehearsal), and native 5
+would be phase 2 (real), only if no intervening record exists. A failed/cancelled
+manual attempt consumes its phase. No deletion, offset-only inference, new
+workflow identity, rerun or fresh ledger can reopen it.
+
+Policy/readiness/execution are v2. The actual repair PR must be merged, with
+its reviewed head bound in the owner readiness comment and checkout. The guard
+also verifies PR #94 ancestry, unchanged tools/src trees and workflow bytes.
+Readiness binds `run_number`, `assignment_phase`, and `recovery_contract_sha256`.
+Real readiness additionally requires `historical-local-recovery-v2`, binding the
+successful rehearsal's actual run ID, native 4, attempt 1, phase 1, checkout and
+workflow SHAs, matching contract, recipient and recovered evidence hashes.
+These are format requirements, not current permission or a readiness attestation.
+
+The wrapper, encrypted receipts and private package index preserve this v2
+identity without relabelling native runs. Offline replay compares the supplied
+guard against the retained diagnostics and recovered package identity before
+writing, and requires the original ledger. Old v1 evidence is retained in Git
+under its original meaning; it is not silently promoted to v2 authority.
+
+PASS - official actionlint v1.7.12 reproduces both original context errors in
+an external untouched copy before edits. Its source revision is
+`914e7df21a07ef503a81201c76d2b11c789d3fca`. Normal CI installs verified release
+assets and checks both changed workflows with expression/context validation
+unsuppressed. Independent restored-expression controls for HISTORICAL_ROOT and
+MPLCONFIGDIR fail, while the valid step-context control passes. Broken controls
+stay outside `.github/workflows`. Exact final test counts, diagnostics and
+post-push GitHub validation observations are recorded in the repair PR and
+its repair evidence directory. Semantic validity does not establish manual
+execution or recoverable Actions delivery.
+
+KEEP the unchanged frozen manifest, original acquisition-execution.json, owner
+key/recipient, historical records, design-system 2.13.0 and all production
+behavior. Request/raw/rate/retry and ciphertext/expanded-package limits remain
+unchanged. FIX NOW only workflow validity and this explicit history recovery;
+Guidance must independently review and merge the single repair PR. DEFER manual
+rehearsal until a new Guidance release after current history/revision/readiness
+checks; real execution also retains its separate transfer-permission blocker.
+OMIT dispatch, rerun, fresh budget, new key, provider outreach, UI/strategy changes
+and market conclusions. Actual manual run/attempt, historical acquisition,
+private real evidence recovery and independent real-data reconciliation are
+NOT RUN: zero actual Alpaca requests, zero new response bytes, $0 additional
+acquisition spend. Original membership completeness remains BLOCKED; new reader
+eligibility and trading-edge validation remain NOT RUN. This repair releases
+no real-mode execution.
+
+Final local repair verification: **PASS - 1,951 tests, zero failures/errors/skips**
+on Python 3.12.14 with verified age and actionlint; one existing websockets
+warning. Command: `python -m pytest tests/ -q --tb=short
+--basetemp=../repair-pytest-final --junitxml=../repair-final.xml` with
+`PYTHONUTF8=1`, `MPLBACKEND=Agg`, external `MPLCONFIGDIR`, verified `AGE_BINARY`
+and `ACTIONLINT_BINARY`, and the existing Windows resource telemetry adapter.
+The earlier full attempt had one stale current-suite-count assertion; that
+count was corrected without rewriting dated historical counts, and the complete
+suite was rerun. PASS - 9,756 protected existing Git blobs remain identical.
+[Local source/hash verification](2026-09-29-workflow-repair-evidence/local-verification.json)
+and [protected scope](2026-09-29-workflow-repair-evidence/protected-scope.json)
+record the exact checks. The corrected first push produced no additional
+historical-workflow record at `2026-09-29T12:05:40.7803968Z`; count remained three.
+The final PR head's normal GitHub CI and fresh complete-history check will be
+reported in PR #95 before requesting Guidance review; no dispatch is released.

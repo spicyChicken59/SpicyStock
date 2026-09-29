@@ -16,6 +16,7 @@ from tests.test_historical_acquisition import setup, response
 from tests.test_historical_execution import run_setup
 from tools import historical_package as package
 from tools import historical_execution as execution_runner
+from tools import historical_execution_guard as execution_guard
 from tools.historical_acquisition import cached_pages, encode, validate_manifest
 
 
@@ -24,9 +25,17 @@ SENTINEL = "PRIVATE_SYNTHETIC_SENTINEL_54e9aa1f"
 
 
 @pytest.fixture
-def execution():
+def execution(source):
+    # Explicit synthetic GitHub metadata; not a recorded or authorized run.
     return {"repository": package.REPOSITORY, "assignment_id": package.ASSIGNMENT,
-            "run_id": "123456", "run_attempt": "1", "workflow_sha": "1" * 40,
+            "repository_id": execution_guard.REPOSITORY_ID,
+            "workflow_id": execution_guard.WORKFLOW_ID, "workflow_path": execution_guard.WORKFLOW,
+            "run_id": 123456, "run_attempt": 1, "run_number": 4, "assignment_phase": 1,
+            "implementation_pr": 123, "readiness_comment_id": 654321,
+            "manifest_sha256": validate_manifest(source[0]),
+            "recipient_sha256": package.recipient_fingerprint(RECIPIENT),
+            "recovery_contract_sha256": execution_guard.RECOVERY_CONTRACT_SHA256,
+            "workflow_sha": "1" * 40,
             "checkout_sha": "2" * 40, "mode": "rehearsal", "status": "PASS",
             "started_at": "2026-09-28T17:00:00Z"}
 
@@ -70,6 +79,7 @@ def seal(source, execution, age, tmp_path):
     manifest, storage = source
     binary, keys = age
     delivery = tmp_path / "delivery"
+    execution["recipient_sha256"] = package.recipient_fingerprint(keys[0][1])
     receipt = package.package_evidence(storage, manifest, delivery, age_binary=binary,
                                        recipient=keys[0][1], execution=execution)
     return delivery, receipt
@@ -122,6 +132,7 @@ def test_real_age_invalid_recipient_leaves_no_delivery(source, execution, age, t
     manifest, storage = source
     # Correct alphabet and length, deliberately invalid Bech32 checksum.
     recipient = age[1][0][1][:-1] + ("q" if age[1][0][1][-1] != "q" else "p")
+    execution["recipient_sha256"] = package.recipient_fingerprint(recipient)
     with pytest.raises(package.PackageError, match="invalid_encryption_recipient"):
         package.validate_recipient(age[0], recipient, storage)
     delivery = tmp_path / "delivery"
@@ -209,6 +220,39 @@ def test_public_metadata_disallows_sensitive_extra_fields(execution):
         package._execution(execution)
 
 
+@pytest.mark.parametrize("field,value", [("run_number", 1), ("assignment_phase", 2),
+                                         ("run_attempt", 2), ("implementation_pr", 94),
+                                         ("recovery_contract_sha256", "f" * 64)])
+def test_native_phase_and_recovery_binding_reject_before_encryption(source, execution, tmp_path, monkeypatch, field, value):
+    execution[field] = value
+    monkeypatch.setattr(package, "_age", lambda *a, **k: pytest.fail("encryption must not run"))
+    with pytest.raises(package.PackageError, match="invalid_execution_identity"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+    assert not (tmp_path / "delivery").exists()
+
+
+@pytest.mark.parametrize("field", ["manifest_sha256", "recipient_sha256"])
+def test_package_cannot_overwrite_a_disagreeing_execution_identity(source, execution, tmp_path, monkeypatch, field):
+    execution[field] = "f" * 64
+    monkeypatch.setattr(package, "_age", lambda *a, **k: pytest.fail("encryption must not run"))
+    with pytest.raises(package.PackageError, match="package_execution_binding_mismatch"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+    assert not (tmp_path / "delivery").exists()
+
+
+def test_old_receipt_is_not_reinterpreted_under_recovery_contract(source, execution, age, tmp_path, monkeypatch):
+    delivery, receipt = seal(source, execution, age, tmp_path)
+    receipt["schema"] = "historical-encrypted-receipt-v1"
+    monkeypatch.setattr(package, "_age", lambda *a, **k: pytest.fail("decryption must not run"))
+    with pytest.raises(package.PackageError, match="invalid_receipt"):
+        package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, tmp_path / "recovered",
+                                age_binary=age[0], identity=age[1][0][0], manifest=source[0],
+                                expected_execution=execution)
+    assert not (tmp_path / "recovered").exists()
+
+
 def test_ciphertext_limit_is_fixed_and_separate_from_response_budget():
     assert package.MAX_CIPHERTEXT_BYTES == 200 * 1024 ** 2
     assert package.MAX_PLAINTEXT_BYTES == 2 * 1024 ** 3
@@ -232,7 +276,7 @@ def test_delivery_allows_no_plaintext_sentinel(source, execution, age, tmp_path)
 
 def test_receipt_must_match_independently_verified_run(source, execution, age, tmp_path):
     delivery, receipt = seal(source, execution, age, tmp_path)
-    wrong = {**execution, "run_id": "9999"}
+    wrong = {**execution, "run_id": 9999}
     with pytest.raises(package.PackageError, match="receipt_execution_mismatch"):
         package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, tmp_path / "recovered",
                     age_binary=age[0], identity=age[1][0][0], manifest=source[0], expected_execution=wrong)
@@ -295,22 +339,26 @@ def test_hardlinked_source_is_not_permitted(source, execution, tmp_path):
 
 
 def test_guard_projection_keeps_approval_text_out_of_public_metadata(execution):
-    guard = {**execution, "schema": "historical-execution-v1", "run_id": 123456, "run_attempt": 1,
+    guard = {**execution, "schema": "historical-execution-v2", "run_id": 123456, "run_attempt": 1,
              "readiness_status": "PASS", "lifetime_status": "PASS", "evidence": {"private": SENTINEL}}
     projected = package.execution_metadata(guard, status="BLOCKED")
     assert SENTINEL not in json.dumps(projected)
     assert projected["status"] == "BLOCKED"
-    assert projected["run_id"] == "123456"
+    assert projected["run_id"] == 123456
+    assert projected["run_number"] == 4 and projected["assignment_phase"] == 1
+    assert projected["recovery_contract_sha256"] == execution_guard.RECOVERY_CONTRACT_SHA256
 
 
 def test_real_age_cli_path_packages_and_recovers_actual_cache(source, execution, age, tmp_path):
     manifest, storage = source
-    (storage / "execution-diagnostics.json").write_bytes(encode({"status": "PASS", "sentinel": SENTINEL}))
-    guard = {**execution, "schema": "historical-execution-v1", "run_id": 123456, "run_attempt": 1,
+    guard = {**execution, "schema": "historical-execution-v2", "run_id": 123456, "run_attempt": 1,
              "readiness_status": "PASS", "lifetime_status": "PASS",
              "manifest_sha256": validate_manifest(manifest),
              "recipient_sha256": package.recipient_fingerprint(age[1][0][1]),
              "evidence": {"private": SENTINEL}}
+    (storage / "execution-diagnostics.json").write_bytes(encode({
+        "schema": "historical-execution-diagnostics-v2", "status": "PASS", "sentinel": SENTINEL,
+        "execution_binding": execution_guard.validate_phase_binding(guard)}))
     paths = {}
     for name, value in {"manifest": manifest, "execution": guard,
                         "policy": {"recipient": age[1][0][1], "recipient_sha256": guard["recipient_sha256"]}}.items():
@@ -348,6 +396,8 @@ def test_actual_runner_reconciliation_encryption_recovery_and_offline_replay(run
     from tools import historical_acquisition as acquisition
     manifest, storage, record, approval = run_setup
     record["recipient_sha256"] = package.recipient_fingerprint(age[1][0][1])
+    policy = execution_guard.load_policy()
+    policy.update(recipient=age[1][0][1], recipient_sha256=record["recipient_sha256"])
     monkeypatch.setattr(acquisition, "AlpacaTransport", lambda: pytest.fail("real provider transport constructed"))
     assert execution_runner.execute("rehearsal", manifest, storage, record, approval)["status"] == "PASS"
     assert execution_runner.execute("offline", manifest, storage, record, approval)["status"] in ("PASS", "BLOCKED")

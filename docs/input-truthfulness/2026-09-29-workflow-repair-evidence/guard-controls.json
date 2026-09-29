@@ -1,0 +1,107 @@
+{
+  "after": {
+    "assignment_phase": 1,
+    "native_run_number": 4,
+    "recovery_contract_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
+    "status": "PASS",
+    "verified_history": {
+      "first_listing_sha256": "be106cacc8bca40efb108b0985ec80b9fcacfb37c442eb2e9462e840f44068db",
+      "observed_on": "2026-09-29",
+      "repeated_listing_sha256": "be106cacc8bca40efb108b0985ec80b9fcacfb37c442eb2e9462e840f44068db",
+      "runs": [
+        {
+          "attempt_job_ids": [],
+          "attempt_jobs_count": 0,
+          "attempt_jobs_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "conclusion": "failure",
+          "event": "push",
+          "head_branch": "ops/historical-proof-execution",
+          "head_repository_id": 1352997802,
+          "head_sha": "21e405fa0601bdd476bad2e8027abcae5e6fac15",
+          "id": 36520481662,
+          "path": ".github/workflows/historical-input-proof.yml",
+          "repository_id": 1352997802,
+          "run_attempt": 1,
+          "run_number": 1,
+          "status": "completed",
+          "workflow_id": 369770564
+        },
+        {
+          "attempt_job_ids": [],
+          "attempt_jobs_count": 0,
+          "attempt_jobs_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "conclusion": "failure",
+          "event": "push",
+          "head_branch": "ops/historical-proof-execution",
+          "head_repository_id": 1352997802,
+          "head_sha": "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b",
+          "id": 36521323183,
+          "path": ".github/workflows/historical-input-proof.yml",
+          "repository_id": 1352997802,
+          "run_attempt": 1,
+          "run_number": 2,
+          "status": "completed",
+          "workflow_id": 369770564
+        },
+        {
+          "attempt_job_ids": [],
+          "attempt_jobs_count": 0,
+          "attempt_jobs_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+          "conclusion": "failure",
+          "event": "push",
+          "head_branch": "main",
+          "head_repository_id": 1352997802,
+          "head_sha": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+          "id": 36524147152,
+          "path": ".github/workflows/historical-input-proof.yml",
+          "repository_id": 1352997802,
+          "run_attempt": 1,
+          "run_number": 3,
+          "status": "completed",
+          "workflow_id": 369770564
+        },
+        {
+          "attempt_job_ids": [
+            604
+          ],
+          "attempt_jobs_count": 1,
+          "attempt_jobs_sha256": "5bfa3eb907b056da0437efc899f5532c5dcd01517cdad6ef6d189b30f30bd9f4",
+          "conclusion": null,
+          "event": "workflow_dispatch",
+          "head_branch": "main",
+          "head_repository_id": 1352997802,
+          "head_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "id": 104,
+          "path": ".github/workflows/historical-input-proof.yml",
+          "repository_id": 1352997802,
+          "run_attempt": 1,
+          "run_number": 4,
+          "status": "in_progress",
+          "workflow_id": 369770564
+        }
+      ],
+      "schema": "historical-history-verification-v1"
+    }
+  },
+  "before": {
+    "native_run_number": 4,
+    "reason": "execution_slot_consumed",
+    "status": "BLOCKED"
+  },
+  "provider_requests": 0,
+  "recorded_at": "2026-09-29T12:02:21.997174+00:00",
+  "restored_defect": {
+    "changed_sha_controls_failed": 3,
+    "expected_pytest_exit_code": 1,
+    "independent_transport_controls_passed": 2,
+    "observed_pytest_exit_code": 1,
+    "raw_log_sha256": "611d3ff3b71fec4d20217d3315675afeabdcbc7dc8c3ea415ad82250688ff1dc",
+    "source_mutated_on_disk": false,
+    "status": "PASS"
+  },
+  "schema": "historical-guard-recovery-controls-v1",
+  "source_before_commit": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+  "source_before_sha256": "d20069bf6454c3b3fb0f59cbb9f08a77d16caa08fbd76dd0d6f70ab1a58646e3",
+  "input_kind": "Captured bootstrap identities plus explicitly synthetic GitHub responses. Run 104/job 604 and repeated-letter SHAs are invented test data, not a hosted rehearsal.",
+  "hosted_rehearsal_status": "NOT RUN"
+}

@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1820 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1951 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3423,3 +3423,60 @@ real-data reconciliation are NOT RUN: zero Alpaca requests, zero response bytes,
 zero acquisition spend. Full contract and next operator steps are in
 `docs/input-truthfulness/2026-09-29-historical-execution.md`. Astra stops before
 merge and dispatch; Guidance owns the normal protected merge.
+
+## Workflow validation recovery checkpoint - 29 Sep 2026
+
+The repair starts from merged PR #94 main
+`33ec181ca60adaf2f7c0ef19a1889a5517161585`, tree
+`6127e63213836f72caf708cb5b4294d750fe6147`. The previous reviewed head
+`eb2b417a7a2289ab22c239ccfe06c20daf1dde7b` remains historical evidence.
+Guidance comment `5884205539` suspends review `5347889698` and authorizes one
+follow-up correction, with Guidance retaining review and merge ownership.
+Repair PR #95 was created at `b00c6593498de62c282af275e2e7e2ac4b413e54` before
+binding its actual number in policy; it records the final head. No old PR/head can approve
+changed execution tools. This checkpoint supersedes the earlier native-1/2
+execution instructions without erasing their dated test results.
+
+FAIL - the merged historical workflow used runner.temp in job env, a context
+GitHub does not allow. Normal Python/browser tests had missed that semantic
+boundary. Pinned official actionlint 1.7.12 reproduces both errors in an external
+copy of the original workflow. The corrected workflow initializes private paths
+from RUNNER_TEMP in its first Bash step, exports them there and propagates them
+through GITHUB_ENV. Each restored expression is independently rejected while
+the valid control passes. Normal CI now applies that semantic gate to both
+changed workflows before the existing tests; browser gates remain intact.
+
+PASS - complete unfiltered history was reread at `2026-09-29T11:47:47.5184123Z`.
+Runs `36520481662`, `36521323183`, `36524147152` are native numbers 1/2/3,
+attempt 1, completed push failures with authoritative zero-job responses.
+The small immutable recovery contract binds their exact repository/workflow,
+branches, SHAs, attempts and saved API evidence identities. Any altered,
+missing, duplicated, inaccessible or new unaccounted record blocks execution.
+Native 4 is only conditionally the first rehearsal; phase numbering remains
+separate. Failed/cancelled manual attempts cannot reopen a slot.
+
+Policy, readiness and execution move to v2 and bind the repair PR, reviewed
+head, PR #94 ancestry, unchanged tools/src/workflow, native number, phase and
+recovery-contract digest. The wrapper and encrypted receipt/index retain that
+identity. Offline replay and packaging reject a guard that relabels existing
+retained evidence. Synthetic integration uses actual guard output, acquisition,
+reconciliation, age encryption, recovery and offline replay; tests create no
+live allowance. Targeted binding mutations fail their intended regressions
+while the valid replay control passes. Final commands/counts, semantic logs,
+protected-file checks and GitHub validation observations belong to the existing
+execution handoff and repair PR.
+
+KEEP frozen manifest, old acquisition-execution.json, historical inputs and
+decisions, owner key/recipient, original ceilings and design-system 2.13.0.
+FIX NOW only semantic workflow validity and evidence-bound history recovery.
+DEFER dispatch until Guidance reviews/merges and releases a new rehearsal
+identity after rechecking current history/readiness. Real mode retains its
+separate transfer-permission blocker. OMIT new keys, new budgets, workflow
+replacement, provider/model calls, UI/strategy changes and market conclusions.
+Actual manual run/attempt, acquisition, private real recovery and independent
+real-data reconciliation are NOT RUN: 0 Alpaca requests, 0 response bytes and
+$0 additional acquisition spend. Original membership completeness remains
+BLOCKED; new reader eligibility and trading-edge validation remain NOT RUN.
+Astra stops at one repair PR for Guidance, without merging or dispatching.
+
+Final local repair checks: PASS - 1,951 tests, zero skips, Python 3.12.14; one existing websockets warning. PASS - 9,756 protected existing Git blobs unchanged. The first full attempt's stale current suite count was corrected and the full suite rerun. PR #95 records final-head Linux CI and the post-push history check. Execution release remains BLOCKED; no merge or dispatch.
