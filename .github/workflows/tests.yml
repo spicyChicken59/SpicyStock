@@ -24,7 +24,11 @@ jobs:
             requirements-dev.txt
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
+      - name: Install verified age for offline historical transport controls
+        run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
+        env:
+          AGE_BINARY: ${{ runner.temp }}/historical-age/age
         run: pytest tests/ -q
       - name: The fixtures are what the pipeline writes
         # tests/fixtures/page/*.json and docs/data.json + docs/picks.json are

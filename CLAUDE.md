@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1686 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1818 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3368,3 +3368,51 @@ acquisition-execution.json stay unchanged. OMIT a new acquisition, invented
 full-population proof, new reader judgment, trading-edge claim or next milestone.
 Exact next action: Guidance independently re-reviews this same PR and owns the
 normal protected merge. Astra stops unmerged after the normal checks finish.
+
+## Secure historical execution checkpoint — 29 Sep 2026
+
+The new `ops/historical-proof-execution` implementation starts from merged
+PR #93 at `56b34a8bc7a8980559cad56be488e8a29489e4fd`, tree
+`12794f02d0c291ff68ccbfdfde327d9551f5dbd1`. The single implementation PR records
+its actual submitted head and normal CI. The source manifest remains canonical
+SHA-256 `8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc`;
+the old acquisition-execution.json remains the unchanged historical event.
+
+PASS — local synthetic acquisition, both existing reconciliations, actual age
+encryption, authenticated recovery and repeat offline reconciliation preserve
+identical ledger, raw pages and detailed outputs. Wrong-key, corruption,
+truncation, encryption failure, plaintext upload, incorrect scope and duplicate
+execution are refused. Focused and full verification are recorded in the dated
+execution handoff and the PR; normal CI runs the real encryption controls.
+No historical POC, browser fixture, strategy threshold or timeout was changed.
+
+The dedicated workflow exposes only manual mode and a numeric readiness-comment
+identity. Its sole real step receives the existing Alpaca pair. Read-only
+GitHub evidence binds the merged reviewed code, workflow, recipient, started
+job and complete run history before provider access. Native run number 1 is
+reserved for rehearsal, number 2 for real acquisition; both require attempt 1.
+Failed or cancelled runs consume their slot. Existing SQLite ceilings remain
+400 actual HTTP requests and 1 GiB retained response bodies. Partial evidence
+uses the same encrypted delivery path. Runner loss or an oversized package can
+still prevent recovery; no blind restart or new allowance is authorized.
+
+PASS — a dedicated age key was generated directly under the owner's protected,
+persistent NTFS directory outside Git and recovered a synthetic local file.
+Only its public recipient/fingerprint enter the repository. Current read-only
+GitHub account evidence supports the reviewed $0 budget basis, subject to a
+fresh check before dispatch. BLOCKED — applicable Alpaca account permission
+for retained hosted processing: the browser session is signed out and one
+secure sign-in request is pending. Guidance private transfer is NOT RUN; a
+local Windows path is not a demonstrated reviewer handoff.
+
+KEEP original records, design-system 2.13.0, producer/reader safeguards and all
+public website behaviour. FIX NOW independent Guidance implementation review
+and the concrete account-permission gap. DEFER actual rehearsal/acquisition
+until review, merge and dated readiness PASS, then require actual artifact
+download and local recovery before the real slot. OMIT a fabricated dataset,
+original final-price mask, reader approval, trading edge or private inspection.
+Actual manual run/attempt, acquisition, recovered real evidence and independent
+real-data reconciliation are NOT RUN: zero Alpaca requests, zero response bytes,
+zero acquisition spend. Full contract and next operator steps are in
+`docs/input-truthfulness/2026-09-29-historical-execution.md`. Astra stops before
+merge and dispatch; Guidance owns the normal protected merge.

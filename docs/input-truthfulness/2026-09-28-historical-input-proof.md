@@ -319,3 +319,12 @@ DEFER the precisely blocked secure acquisition, complete original-value proof,
 source-policy adjudication, new reader judgments and trade-condition evidence.
 OMIT invented plans, provider blame, profitability claims, redesign, dispatch,
 automatic retention and a second milestone. Stop at one PR for Guidance review.
+# Secure execution preparation — 29 September 2026
+
+PR #93 is merged at `56b34a8bc7a8980559cad56be488e8a29489e4fd`.
+The separate [manual execution handoff](2026-09-29-historical-execution.md)
+describes the new encrypted runner path and its implementation-review hold.
+It does not replace the original evidence below or its dated
+`acquisition-execution.json`. Actual Actions rehearsal, real acquisition,
+private real-data recovery and Guidance raw-data inspection are **NOT RUN**.
+No new market-permission result is established by the synthetic tests.
