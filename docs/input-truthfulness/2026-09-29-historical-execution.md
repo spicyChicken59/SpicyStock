@@ -1,6 +1,6 @@
 # Historical execution preparation — 2026-09-29
 
-Preparation checkpoint: **132 focused tests PASS; full suite pending. Dedicated
+Preparation checkpoint: **local full suite 1,818 tests PASS at `747c0abb665ee43fde8227eea3eec25dd9c573d3`; final normal CI is recorded in PR #94. Dedicated
 manual rehearsal, real run, run IDs and attempts: NOT RUN. Alpaca requests: 0;
 new provider-response bytes: 0.** No new raw market data has been acquired.
 Local synthetic integration exercised the actual acquisition, packaging and
@@ -11,7 +11,14 @@ recovery, not a completed Actions rehearsal or provider-input proof.
 Implementation PR: [#94](https://github.com/spicyChicken59/SpicyStock/pull/94).
 The policy binds this PR; execution still requires its merge and separate dated
 readiness evidence. The reviewed starting commit is `56b34a8bc7a8980559cad56be488e8a29489e4fd`, tree
-`12794f02d0c291ff68ccbfdfde327d9551f5dbd1`. The assignment remains
+`12794f02d0c291ff68ccbfdfde327d9551f5dbd1`. Automatic publication
+`786ade7013a0c55d172d89118322b19a056fa8a6` subsequently advanced main and was
+merged without conflicts as `747c0abb665ee43fde8227eea3eec25dd9c573d3`.
+The PR records its final head independently. The final transport-permission
+change passed 63 focused guard tests; the suite now collects 1,820 tests.
+The earlier full run had zero skips and one existing websockets deprecation
+warning. Two stale assertions (workflow inventory and status spelling) and the
+collection count were corrected before that passing full run. The assignment remains
 `spicystock-historical-input-2026-09-28`; its frozen manifest's canonical SHA-256
 is `8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc`.
 
@@ -61,31 +68,52 @@ Guidance attachment route. Public recipient:
 `age1n3xsz54659mz50vml7pg0eqdhq6dtxqmzy0janmq7qgxrhc6gceqmp75vh`.
 SHA-256 of its ASCII bytes **plus one LF**:
 `0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f`.
-The private identity never enters Git, Actions or public artifacts.
+The private identity never enters Git, Actions or public artifacts. A local
+owner-key recovery check passed at `2026-09-29T04:06:18Z`; recovered synthetic
+SHA-256 `13996f8da031ae0141fcb4239489de7049f5be5211450242a97bad831d2fb98e`.
+Only `T4HIR\motah` appeared in the verified file access entries.
 
 Read-only account inspection on September 28–29 found GitHub Free, an existing
 Actions $0 budget with **Stop usage: Yes**, and current artifact billing of $0;
 no settings changed. [Standard public runners are free](https://docs.github.com/en/actions/concepts/billing-and-usage),
-and [exhausted stop-enabled budgets block additional metered usage](https://docs.github.com/en/billing/how-tos/set-up-budgets).
+and [stop-enabled budgets can block additional metered usage](https://docs.github.com/en/billing/concepts/budgets-and-alerts).
 These support a prospective $0 basis, conditional on the applicable budget
 remaining effective; they do not guarantee storage availability or delivery.
 Recheck before each dispatch. Private account quantities are omitted.
 
-[Alpaca's FAQ](https://docs.alpaca.markets/us/docs/market-data-faq) permits historical
+[Alpaca's FAQ](https://docs.alpaca.markets/us/docs/market-data-faq) documents historical
 SIP without a subscription when `end` is at least 15 minutes old. The requested
-dates qualify, but the account is signed out and accepted terms remain
-unverified. Rights are **BLOCKED**: current
-[Customer Agreement V26.2026.07, §30](https://files.alpaca.markets/disclosures/library/AcctAppMarginAndCustAgmt.pdf#page=16)
-restricts reproduction/distribution without written consent. One secure sign-in
-request is pending. Encryption grants no licence. Private Guidance transfer and
-recovery remain **NOT RUN** because no actual route was verified; the request
-explicitly permits that status.
+dates qualify. After the owner's secure sign-in, read-only inspection on
+September 29 confirmed **Paper Trading / Basic / Current Plan**. The documentary
+$0 entitlement basis is PASS; actual secret usability and the probe are NOT RUN.
+No account setting, subscription or agreement was changed.
+
+The current [Alpaca Terms and Conditions](https://files.alpaca.markets/disclosures/library/TermsAndConditions.pdf)
+(undated public PDF, inspected September 29; personal-use section p. 1 and
+content section p. 2) provide a personal, noncommercial-use basis. Their transfer
+restriction is purpose-qualified; it does not clearly prohibit owner-only
+private computation or retention. We did not establish that the separate
+brokerage Customer Agreement governs this Paper account. **BLOCKED** is limited
+to the unresolved permission for the proposed public ciphertext transport and
+any separate reviewer's raw-data access. The precise missing evidence is a
+reviewed applicable permission basis for that transfer; encryption supplies no
+licence. Guidance review can remain **NOT RUN** independently if no approved
+private handoff exists, as the request allows. A readiness attestation must
+explicitly establish encrypted transport as well as private retention.
 
 After Guidance review and merge, a separate owner readiness comment is required
 for each phase. Dispatch first with `mode=rehearsal` and
 `readiness_comment_id=<owner JSON comment ID>`. Verify GitHub run/artifact identity,
-download ciphertext, recover locally, and compare both offline outputs before
-considering `mode=real`. The comment body must be the entire JSON object,
+download the exact ciphertext artifact through the connected GitHub
+`download_workflow_artifact` route (authenticated browser download is the
+operator fallback), recover locally, and compare both offline outputs before
+considering `mode=real`. This actual download route is NOT RUN until the
+post-merge rehearsal. Its output is encrypted transport, not private shared
+storage. Measure expanded/compressed rehearsal sizes and review the full-window
+size estimate against both package ceilings before releasing the real slot.
+The post-upload job summary binds the artifact ID and GitHub ZIP digest to the
+inner ciphertext receipt; recovery must cross-check those against the Actions
+API, not trust the downloaded receipt by itself. The comment body must be the entire JSON object,
 without a Markdown fence. This example is intentionally **not dispatch-ready**:
 
 ```json
@@ -100,7 +128,7 @@ without a Markdown fence. This example is intentionally **not dispatch-ready**:
   "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
   "evidence": {
     "cost": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "zero_additional_cost": false},
-    "rights": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "private_retention_permitted": false, "controlled_review_status": "NOT RUN"},
+    "rights": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "private_retention_permitted": false, "encrypted_transport_permitted": false, "controlled_review_status": "NOT RUN"},
     "entitlement": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "historical_sip_zero_cost": false},
     "local_recovery": {"verified_at": null, "reference": "PENDING", "verified": false, "rehearsal_run_id": 0, "ciphertext_sha256": "PENDING", "recovered_plaintext_sha256": "PENDING", "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"}
   }
@@ -123,11 +151,13 @@ different part of execution identity or spending limits. Keep private Guidance
 recovery at NOT RUN until an actual approved route exists; successful local
 decryption does not demonstrate another reviewer's access.
 
-**FIX NOW.** Finish the pending full suite and normal CI, and review the dedicated workflow and helper boundary together.
-Resolve the existing account's applicable Alpaca permissions through the pending
-secure sign-in and read-only evidence inspection. Record what permits private
-retention and hosted processing; do not replace that evidence with the fact
-that the historical endpoint is free. Before either dispatch, recheck the
+**FIX NOW.** Review final normal CI and the dedicated workflow/helper boundary
+together. The local full suite passed 1,818 tests with zero skips; the final
+transport-permission guard has its own focused verification. Secure sign-in
+is complete and Basic entitlement is documented. Resolve only the applicable
+permission for public encrypted transfer; record any separately permitted
+reviewer access without treating free endpoint access as that permission.
+Before either dispatch, recheck the
 existing GitHub cost control and publish a complete owner readiness attestation.
 Before the real slot, recover the actual rehearsal artifact, verify its identity
 against GitHub and reproduce both reconciliation outputs from the recovered

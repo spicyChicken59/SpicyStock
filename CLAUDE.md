@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1818 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 1820 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3400,10 +3400,17 @@ PASS — a dedicated age key was generated directly under the owner's protected,
 persistent NTFS directory outside Git and recovered a synthetic local file.
 Only its public recipient/fingerprint enter the repository. Current read-only
 GitHub account evidence supports the reviewed $0 budget basis, subject to a
-fresh check before dispatch. BLOCKED — applicable Alpaca account permission
-for retained hosted processing: the browser session is signed out and one
-secure sign-in request is pending. Guidance private transfer is NOT RUN; a
-local Windows path is not a demonstrated reviewer handoff.
+fresh check before dispatch. The owner completed secure sign-in; read-only
+inspection confirmed Paper / Basic / Current Plan. The delayed historical SIP
+$0 entitlement basis is PASS; actual credential usability is NOT RUN. Current
+API Terms document personal/noncommercial use, without establishing permission
+for the proposed public ciphertext transfer or separate reviewer access.
+BLOCKED is this narrow transfer-permission gap, not a claim that all personal
+retention is prohibited. Guidance private transfer is NOT RUN; a local Windows
+path is not a demonstrated reviewer handoff. The local full suite passed 1,818
+tests at `747c0abb665ee43fde8227eea3eec25dd9c573d3`; final guard verification and
+normal Linux CI are recorded in PR #94. Newer publication
+`786ade7013a0c55d172d89118322b19a056fa8a6` was merged intact into this branch.
 
 KEEP original records, design-system 2.13.0, producer/reader safeguards and all
 public website behaviour. FIX NOW independent Guidance implementation review

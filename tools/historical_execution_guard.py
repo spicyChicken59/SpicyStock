@@ -111,6 +111,7 @@ def validate_readiness(comment, policy, mode, today):
         for name in ("rights", "entitlement", "local_recovery"):
             evidence_item(evidence.get(name), today, basis=name != "local_recovery")
         require(evidence["rights"].get("private_retention_permitted") is True and evidence["rights"].get("controlled_review_status") in {"NOT RUN", "PERMITTED"}, "rights_not_established")
+        require(evidence["rights"].get("encrypted_transport_permitted") is True, "encrypted_transport_not_established")
         require(evidence["entitlement"].get("historical_sip_zero_cost") is True, "entitlement_not_established")
         recovery = evidence["local_recovery"]
         require(recovery.get("verified") is True and positive(recovery.get("rehearsal_run_id")) and recovery.get("recipient_sha256") == policy["recipient_sha256"] and sha(recovery.get("ciphertext_sha256")) and sha(recovery.get("recovered_plaintext_sha256")), "recovery_not_established")

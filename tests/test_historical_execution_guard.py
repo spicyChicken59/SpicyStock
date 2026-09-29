@@ -28,7 +28,8 @@ def setup():
             "basis": "Invented offline test evidence with no provider activity"}
     evidence = {name: deepcopy(item) for name in ("cost", "rights", "entitlement", "local_recovery")}
     evidence["cost"]["zero_additional_cost"] = True
-    evidence["rights"].update(private_retention_permitted=True, controlled_review_status="NOT RUN")
+    evidence["rights"].update(private_retention_permitted=True, encrypted_transport_permitted=True,
+                              controlled_review_status="NOT RUN")
     evidence["entitlement"]["historical_sip_zero_cost"] = True
     evidence["local_recovery"].update(verified=True, rehearsal_run_id=101, recipient_sha256=policy["recipient_sha256"],
         ciphertext_sha256="d" * 64, recovered_plaintext_sha256="e" * 64)
@@ -84,6 +85,18 @@ def test_private_receipt_digest_is_supported_but_generic_reference_is_not(setup)
     assert run(setup)["status"] == "PASS"
     setup[2]["evidence"]["rights"]["reference"] = "the owner has checked everything"
     with pytest.raises(guard.GuardError, match="invalid_evidence_reference"):
+        run(setup)
+
+
+@pytest.mark.parametrize("permission", [False, None], ids=["false", "missing"])
+def test_real_requires_permission_for_public_ciphertext_transport(setup, permission):
+    rights = setup[2]["evidence"]["rights"]
+    if permission is None:
+        rights.pop("encrypted_transport_permitted")
+    else:
+        rights["encrypted_transport_permitted"] = permission
+    assert rights["private_retention_permitted"] is True
+    with pytest.raises(guard.GuardError, match="encrypted_transport_not_established"):
         run(setup)
 
 
