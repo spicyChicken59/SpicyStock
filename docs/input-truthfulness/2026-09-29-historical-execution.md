@@ -1,6 +1,6 @@
 # Historical execution preparation — 2026-09-29
 
-Preparation checkpoint: **131 focused tests PASS; full suite pending. Dedicated
+Preparation checkpoint: **132 focused tests PASS; full suite pending. Dedicated
 manual rehearsal, real run, run IDs and attempts: NOT RUN. Alpaca requests: 0;
 new provider-response bytes: 0.** No new raw market data has been acquired.
 Local synthetic integration exercised the actual acquisition, packaging and
@@ -8,9 +8,9 @@ recovery tools with seven invented transport responses; recovered bytes and
 both session reconciliation outputs were identical. That establishes local
 recovery, not a completed Actions rehearsal or provider-input proof.
 
-Implementation PR: **pending creation/binding**. The policy's temporary
-`implementation_pr: 0` deliberately blocks execution. The reviewed starting
-commit is `56b34a8bc7a8980559cad56be488e8a29489e4fd`, tree
+Implementation PR: [#94](https://github.com/spicyChicken59/SpicyStock/pull/94).
+The policy binds this PR; execution still requires its merge and separate dated
+readiness evidence. The reviewed starting commit is `56b34a8bc7a8980559cad56be488e8a29489e4fd`, tree
 `12794f02d0c291ff68ccbfdfde327d9551f5dbd1`. The assignment remains
 `spicystock-historical-input-2026-09-28`; its frozen manifest's canonical SHA-256
 is `8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc`.
@@ -31,7 +31,8 @@ The installer pins official [age v1.3.2](https://github.com/FiloSottile/age/rele
 source `b74dce4cdbe35b5e5f66c06d9612b72f89028758`, with release-asset SHA-256:
 Linux `cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10`;
 Windows `f48d8f8f9ebe903ab5027ed067652f2cc1db94bc206976430133b905dcd8e8c7`.
-Only the reviewed executables are extracted; no elevated installation occurs.
+The fixed release digests are verified before the two executables are extracted.
+No system installation or signature-attestation claim is made.
 
 The guard checks the owner-authored readiness comment on this implementation
 PR, merged reviewed head, merge ancestry, unchanged `tools`/`src` trees and
@@ -99,7 +100,7 @@ without a Markdown fence. This example is intentionally **not dispatch-ready**:
   "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
   "evidence": {
     "cost": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "zero_additional_cost": false},
-    "rights": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "private_retention_permitted": false, "controlled_review_status": "NOT_RUN"},
+    "rights": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "private_retention_permitted": false, "controlled_review_status": "NOT RUN"},
     "entitlement": {"verified_at": null, "basis": "PENDING", "reference": "PENDING", "historical_sip_zero_cost": false},
     "local_recovery": {"verified_at": null, "reference": "PENDING", "verified": false, "rehearsal_run_id": 0, "ciphertext_sha256": "PENDING", "recovered_plaintext_sha256": "PENDING", "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"}
   }
@@ -122,8 +123,7 @@ different part of execution identity or spending limits. Keep private Guidance
 recovery at NOT RUN until an actual approved route exists; successful local
 decryption does not demonstrate another reviewer's access.
 
-**FIX NOW.** Bind the implementation PR number, finish the pending full suite
-and normal CI, and review the dedicated workflow and helper boundary together.
+**FIX NOW.** Finish the pending full suite and normal CI, and review the dedicated workflow and helper boundary together.
 Resolve the existing account's applicable Alpaca permissions through the pending
 secure sign-in and read-only evidence inspection. Record what permits private
 retention and hosted processing; do not replace that evidence with the fact

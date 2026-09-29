@@ -75,7 +75,7 @@ def test_full_real_authorization_and_truthful_operator_only_recovery(setup, tmp_
     assert result["run_id"] == 102 and result["lifetime_status"] == "PASS"
     approval = guard.approval(result, tmp_path / "storage")
     assert approval["provider_requests_per_minute"] == 20
-    assert approval["reviewer_retrieval_path"].endswith("Guidance private review: NOT_RUN")
+    assert approval["reviewer_retrieval_path"].endswith("Guidance private review: NOT RUN")
     assert not (tmp_path / "storage").exists()
 
 
