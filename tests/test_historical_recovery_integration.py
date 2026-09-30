@@ -4,6 +4,8 @@ GitHub responses are synthetic/captured metadata; provider sockets remain
 blocked by conftest. Age uses only the existing ephemeral test-key fixture.
 """
 from copy import deepcopy
+import base64
+import hashlib
 import json
 
 import pytest
@@ -46,14 +48,29 @@ def pipeline(github_setup, run_setup, monkeypatch, tmp_path):
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_bytes(acquisition.encode(manifest))
     monkeypatch.setattr(guard, "MANIFEST_PATH", manifest_path)
-    return {"manifest": manifest, "manifest_path": manifest_path, "storage": storage,
+    case = {"manifest": manifest, "manifest_path": manifest_path, "storage": storage,
             "policy": policy, "readiness": readiness, "responses": responses, "env": env,
             "api": api, "api_calls": api_calls, "provider_calls": provider_calls,
             "real_baseline": real_baseline,
             "guard_dir": tmp_path / "guard", "policy_path": tmp_path / "policy.json"}
+    bind_synthetic_release(case)
+    return case
+
+
+def bind_synthetic_release(case):
+    """The tiny invented manifest/key is part of the invented release evidence."""
+    key = f"/contents/{guard.RELEASE_EVIDENCE_PATH}?ref={case['readiness']['checkout_sha']}"
+    entry = case["responses"][key]
+    document = json.loads(base64.b64decode(entry["content"]))
+    document.update(manifest_sha256=case["readiness"]["manifest_sha256"],
+                    recipient_sha256=case["readiness"]["recipient_sha256"])
+    raw = guard.encode(document)
+    entry["content"] = base64.b64encode(raw).decode()
+    case["readiness"]["release_evidence_sha256"] = hashlib.sha256(raw).hexdigest()
 
 
 def guard_command(case, monkeypatch):
+    bind_synthetic_release(case)
     case["policy_path"].write_bytes(acquisition.encode(case["policy"]))
     with monkeypatch.context() as scoped:
         scoped.setenv("GITHUB_TOKEN", "synthetic-read-token")
@@ -92,7 +109,7 @@ def assert_phase_one(binding):
 def test_actual_guard_output_drives_native_four_wrapper_and_offline_replay(pipeline, monkeypatch):
     assert guard_command(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
-    assert record["schema"] == "historical-execution-v2"
+    assert record["schema"] == "historical-execution-v3"
     assert_phase_one(record)
     assert wrapper_command(pipeline, "rehearsal", preflight=True) == 0
     assert not pipeline["storage"].exists()
@@ -114,6 +131,7 @@ def test_guard_binding_survives_actual_encryption_recovery_and_offline_replay(pi
     pipeline["policy"]["recipient"] = recipient
     fingerprint = package.recipient_fingerprint(recipient)
     pipeline["policy"]["recipient_sha256"] = fingerprint
+    monkeypatch.setattr(guard, "RECIPIENT_SHA256", fingerprint)
     pipeline["readiness"]["recipient_sha256"] = fingerprint
     assert guard_command(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
@@ -128,12 +146,12 @@ def test_guard_binding_survives_actual_encryption_recovery_and_offline_replay(pi
     receipt = package.package_evidence(pipeline["storage"], pipeline["manifest"], delivery,
                                       age_binary=age[0], recipient=recipient, execution=metadata,
                                       diagnostics={"execution_guard": record})
-    assert receipt["schema"] == "historical-encrypted-receipt-v2"
+    assert receipt["schema"] == "historical-encrypted-receipt-v3"
     assert_phase_one(receipt)
     index = package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, recovered,
                                     age_binary=age[0], identity=age[1][0][0], manifest=pipeline["manifest"],
                                     expected_execution=metadata)
-    assert index["schema"] == "historical-private-package-v2"
+    assert index["schema"] == "historical-private-package-v3"
     assert index["execution"] == metadata
     assert all((recovered / name).read_bytes() == raw for name, raw in before.items())
     assert wrapper_command(pipeline, "offline", storage=recovered) == 0
@@ -150,6 +168,8 @@ def test_guard_binding_survives_actual_encryption_recovery_and_offline_replay(pi
 @pytest.mark.parametrize("field,value", [
     ("schema", "historical-execution-v1"), ("run_number", 1), ("assignment_phase", 4),
     ("run_attempt", 2), ("recovery_contract_sha256", "0" * 64), ("workflow_id", 123),
+    ("schema", "historical-execution-v2"), ("compatibility_contract_sha256", "1" * 64),
+    ("release_evidence_sha256", "0" * 64),
 ])
 def test_guard_output_tampering_stops_wrapper_before_storage_or_transport(pipeline, monkeypatch, field, value):
     assert guard_command(pipeline, monkeypatch) == 0
@@ -213,7 +233,7 @@ def test_package_cli_rejects_relabelled_guard_before_encryption(pipeline, monkey
     assert not pipeline["provider_calls"]
 
 
-@pytest.mark.parametrize("fault", ["old_readiness", "wrong_contract", "missing_rights_for_real"])
+@pytest.mark.parametrize("fault", ["old_readiness", "wrong_contract", "missing_owner_authorization_for_real"])
 def test_failed_guard_has_no_output_that_wrapper_can_use(pipeline, monkeypatch, fault):
     if fault == "old_readiness":
         pipeline["readiness"]["schema"] = "readiness-v1"
@@ -228,9 +248,9 @@ def test_failed_guard_has_no_output_that_wrapper_can_use(pipeline, monkeypatch, 
         pipeline["responses"].update(real_responses)
         for key, value in real_env.items():
             monkeypatch.setenv(key, value)
-        del pipeline["readiness"]["evidence"]["rights"]
+        del pipeline["readiness"]["evidence"]["owner_authorization"]
     expected = {"old_readiness": "readiness_not_pass", "wrong_contract": "stale_phase_readiness",
-                "missing_rights_for_real": "missing_readiness_evidence"}[fault]
+                "missing_owner_authorization_for_real": "missing_readiness_evidence"}[fault]
     with pytest.raises(guard.GuardError, match=expected):
         guard.validate_readiness(pipeline["api"]("/issues/comments/123"), pipeline["policy"],
                                  pipeline["readiness"]["mode"], TODAY)

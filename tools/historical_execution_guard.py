@@ -27,13 +27,14 @@ POLICY_SCHEMA = "historical-execution-policy-v3"
 READINESS_SCHEMA = "readiness-v3"
 EXECUTION_SCHEMA = "historical-execution-v3"
 LOCAL_RECOVERY_SCHEMA = "historical-local-recovery-v2"
-COMPATIBILITY_CONTRACT_SHA256 = "c21764a37d25e2324e781ece1c6ce3545211eb213a95d09aa9af3e3aec685e53"
+COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
 RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-delivery-release-evidence.json"
 RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
 ORIGINAL_MERGE = "33ec181ca60adaf2f7c0ef19a1889a5517161585"
 ORIGINAL_HEAD = "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b"
 ASSIGNMENT = "spicystock-historical-input-2026-09-28"
 MANIFEST = "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc"
+RECIPIENT_SHA256 = "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"
 API_ROOT = "https://api.github.com/repos/" + REPOSITORY
 MANIFEST_PATH = Path(__file__).resolve().parents[1] / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
 POLICY_PATH = Path(__file__).with_name("historical-execution-policy.json")
@@ -91,6 +92,7 @@ def validate_policy(policy):
     recipient = policy.get("recipient", "")
     require(isinstance(recipient, str) and re.fullmatch(r"age1[023456789acdefghjklmnpqrstuvwxyz]{58}", recipient), "invalid_recipient")
     require(policy.get("recipient_sha256") == hashlib.sha256((recipient + "\n").encode()).hexdigest(), "recipient_digest_mismatch")
+    require(policy["recipient_sha256"] == RECIPIENT_SHA256, "unaccepted_delivery_recipient")
 
 
 def recovery_contract():
@@ -237,6 +239,18 @@ def validate_pr(pr, record, expected_pr):
     require(pr.get("head", {}).get("sha") == record["checkout_sha"] and sha(pr.get("merge_commit_sha"), 40), "unreviewed_checkout")
 
 
+def validate_release_date(comment, pr, record):
+    """A new owner comment after merge is separate from the PR's evidence."""
+    try:
+        created = datetime.fromisoformat(comment.get("created_at", "").replace("Z", "+00:00"))
+        merged = datetime.fromisoformat(pr.get("merged_at", "").replace("Z", "+00:00"))
+        require(created.tzinfo is not None and merged.tzinfo is not None and created >= merged and
+                record["authorized_on"] == created.astimezone(timezone.utc).date().isoformat(),
+                "execution_release_not_after_merge")
+    except (ValueError, TypeError, AttributeError, KeyError):
+        raise GuardError("execution_release_not_after_merge") from None
+
+
 def reviewed_file(api, path, revision):
     item = api(f"/contents/{path}?ref={revision}")
     require(item.get("type") == "file" and item.get("encoding") == "base64", "release_source_missing")
@@ -294,12 +308,16 @@ def validate_release_evidence(api, record):
     code = []
     for item in files:
         path = item["filename"]
+        require(item.get("status") != "renamed" and "previous_filename" not in item, "unreviewed_delivery_scope")
         if path in contract["permitted_changed_code"]:
             require(item.get("status") in {"added", "modified"} and sha(item.get("sha"), 40), "invalid_delivery_code_change")
             code.append({"path": path, "git_blob": item["sha"]})
         else:
             require(path in {"README.md", "CLAUDE.md", ".env.example"} or
-                    path.startswith("tests/") or path.startswith("docs/input-truthfulness/"), "unreviewed_delivery_scope")
+                    path.startswith("tests/") or (item.get("status") in {"added", "modified"} and
+                    (path in {"docs/input-truthfulness/2026-09-29-historical-execution.md", RELEASE_EVIDENCE_PATH} or
+                     path.startswith("docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/"))),
+                    "unreviewed_delivery_scope")
     require(evidence.get("changed_code") == sorted(code, key=lambda item: item["path"]), "release_diff_changed")
     return evidence
 
@@ -416,6 +434,7 @@ def verify(api, policy, env, mode, comment_id, today):
     record = validate_readiness(comment, policy, mode, today)
     pr = api(f"/pulls/{policy['implementation_pr']}")
     validate_pr(pr, record, policy["implementation_pr"])
+    validate_release_date(comment, pr, record)
     validate_release_evidence(api, record)
     original = api("/pulls/94")
     require(type(original.get("number")) is int and original["number"] == 94 and original.get("merged") is True and original.get("merge_commit_sha") == ORIGINAL_MERGE and
@@ -425,7 +444,7 @@ def verify(api, policy, env, mode, comment_id, today):
     comparison = api(f"/compare/{pr['merge_commit_sha']}...{env['GITHUB_SHA']}")
     require(comparison.get("status") in {"identical", "ahead"} and comparison.get("behind_by") == 0, "implementation_not_in_main")
     trees = [api(f"/git/trees/{revision}") for revision in (record["checkout_sha"], env["GITHUB_SHA"])]
-    for prefix in ("tools", "src"):
+    for prefix in ("tools", "src", ".github"):
         entries = [[entry for entry in tree.get("tree", []) if entry.get("path") == prefix and entry.get("type") == "tree"] for tree in trees]
         require(all(not tree.get("truncated") for tree in trees) and all(len(entry) == 1 for entry in entries) and entries[0][0]["sha"] == entries[1][0]["sha"], "execution_code_changed")
     contents = [api(f"/contents/{WORKFLOW}?ref={revision}") for revision in (record["checkout_sha"], env["GITHUB_WORKFLOW_SHA"])]

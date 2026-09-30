@@ -1,6 +1,7 @@
 """Actual age recovery plus fail-closed packaging of the actual acquisition cache."""
 from copy import deepcopy
 import hashlib
+import gzip
 import io
 import json
 import os
@@ -35,6 +36,8 @@ def execution(source):
             "manifest_sha256": validate_manifest(source[0]),
             "recipient_sha256": package.recipient_fingerprint(RECIPIENT),
             "recovery_contract_sha256": execution_guard.RECOVERY_CONTRACT_SHA256,
+            "compatibility_contract_sha256": execution_guard.COMPATIBILITY_CONTRACT_SHA256,
+            "release_evidence_sha256": "c" * 64,
             "workflow_sha": "1" * 40,
             "checkout_sha": "2" * 40, "mode": "rehearsal", "status": "PASS",
             "started_at": "2026-09-28T17:00:00Z"}
@@ -282,9 +285,12 @@ def test_receipt_must_match_independently_verified_run(source, execution, age, t
                     age_binary=age[0], identity=age[1][0][0], manifest=source[0], expected_execution=wrong)
 
 
-def archive_with_fault(tmp_path, source, execution, fault):
+def archive_with_fault(tmp_path, source, execution, fault, *, legacy=True):
     """Exercise recovery format directly, without needing an encryption stub."""
     manifest, storage = source
+    if legacy:
+        execution = {k: v for k, v in execution.items() if k not in
+                     ("compatibility_contract_sha256", "release_evidence_sha256")}
     identity = validate_manifest(manifest)
     payloads = {"ledger.sqlite3": (storage / "ledger.sqlite3").read_bytes(),
                 "_package/manifest.json": encode(manifest), "_package/execution.json": encode(execution),
@@ -296,12 +302,16 @@ def archive_with_fault(tmp_path, source, execution, fault):
         payloads[malicious] = b"malicious"
     if fault == "missing_ledger":
         del payloads["ledger.sqlite3"]
-    index = {"schema": package.INDEX_SCHEMA, "manifest_sha256": identity, "execution": execution,
+    index = {"schema": package.LEGACY_INDEX_SCHEMA if legacy else package.INDEX_SCHEMA,
+             "manifest_sha256": identity, "execution": execution,
              "recipient_sha256": package.recipient_fingerprint(RECIPIENT),
              "members": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
                          for name, raw in payloads.items()]}
-    archive = tmp_path / "malicious.tar.gz"
-    with tarfile.open(archive, "w:gz") as tar:
+    if not legacy:
+        index["archive_format"] = package.codec.FORMAT
+    archive = tmp_path / "malicious.archive"
+    body = io.BytesIO()
+    with tarfile.open(fileobj=body, mode="w", format=tarfile.USTAR_FORMAT) as tar:
         raw = encode(index)
         package._entry(tar, "_package/index.json", io.BytesIO(raw), len(raw))
         for name, raw in payloads.items():
@@ -316,17 +326,24 @@ def archive_with_fault(tmp_path, source, execution, fault):
                 package._entry(tar, name, io.BytesIO(raw), len(raw))
                 if fault == "duplicate" and name == malicious:
                     package._entry(tar, name, io.BytesIO(raw), len(raw))
-    receipt = {"manifest_sha256": identity, "recipient_sha256": index["recipient_sha256"]}
+    archive.write_bytes(_compressed(body.getvalue(), package.codec.LEGACY_FORMAT if legacy else package.codec.FORMAT))
+    receipt = {"schema": package.LEGACY_SCHEMA if legacy else package.SCHEMA, "manifest_sha256": identity,
+               "recipient_sha256": index["recipient_sha256"]}
+    if not legacy:
+        receipt["archive_format"] = package.codec.FORMAT
     return archive, receipt
 
 
 @pytest.mark.parametrize("fault", ["traversal", "symlink", "hardlink", "unapproved", "duplicate", "missing_ledger", "hash"])
-def test_safe_archive_recovery_rejects_unsafe_members(tmp_path, source, execution, fault):
-    archive, receipt = archive_with_fault(tmp_path, source, execution, fault)
+@pytest.mark.parametrize("legacy", [True, False])
+def test_safe_archive_recovery_rejects_unsafe_members(tmp_path, source, execution, fault, legacy):
+    archive, receipt = archive_with_fault(tmp_path, source, execution, fault, legacy=legacy)
     destination = tmp_path / "candidate"
     destination.mkdir()
     with pytest.raises(package.PackageError):
-        package._unpack(archive, destination, source[0], receipt, execution)
+        expected = ({k: v for k, v in execution.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
+                    if legacy else execution)
+        package._unpack(archive, destination, source[0], receipt, expected)
     assert not (tmp_path / "escaped").exists()
 
 
@@ -339,7 +356,7 @@ def test_hardlinked_source_is_not_permitted(source, execution, tmp_path):
 
 
 def test_guard_projection_keeps_approval_text_out_of_public_metadata(execution):
-    guard = {**execution, "schema": "historical-execution-v2", "run_id": 123456, "run_attempt": 1,
+    guard = {**execution, "schema": "historical-execution-v3", "run_id": 123456, "run_attempt": 1,
              "readiness_status": "PASS", "lifetime_status": "PASS", "evidence": {"private": SENTINEL}}
     projected = package.execution_metadata(guard, status="BLOCKED")
     assert SENTINEL not in json.dumps(projected)
@@ -351,13 +368,13 @@ def test_guard_projection_keeps_approval_text_out_of_public_metadata(execution):
 
 def test_real_age_cli_path_packages_and_recovers_actual_cache(source, execution, age, tmp_path):
     manifest, storage = source
-    guard = {**execution, "schema": "historical-execution-v2", "run_id": 123456, "run_attempt": 1,
+    guard = {**execution, "schema": "historical-execution-v3", "run_id": 123456, "run_attempt": 1,
              "readiness_status": "PASS", "lifetime_status": "PASS",
              "manifest_sha256": validate_manifest(manifest),
              "recipient_sha256": package.recipient_fingerprint(age[1][0][1]),
              "evidence": {"private": SENTINEL}}
     (storage / "execution-diagnostics.json").write_bytes(encode({
-        "schema": "historical-execution-diagnostics-v2", "status": "PASS", "sentinel": SENTINEL,
+        "schema": "historical-execution-diagnostics-v3", "status": "PASS", "sentinel": SENTINEL,
         "execution_binding": execution_guard.validate_phase_binding(guard)}))
     paths = {}
     for name, value in {"manifest": manifest, "execution": guard,
@@ -398,6 +415,7 @@ def test_actual_runner_reconciliation_encryption_recovery_and_offline_replay(run
     record["recipient_sha256"] = package.recipient_fingerprint(age[1][0][1])
     policy = execution_guard.load_policy()
     policy.update(recipient=age[1][0][1], recipient_sha256=record["recipient_sha256"])
+    monkeypatch.setattr(execution_guard, "RECIPIENT_SHA256", record["recipient_sha256"])
     monkeypatch.setattr(acquisition, "AlpacaTransport", lambda: pytest.fail("real provider transport constructed"))
     assert execution_runner.execute("rehearsal", manifest, storage, record, approval)["status"] == "PASS"
     assert execution_runner.execute("offline", manifest, storage, record, approval)["status"] in ("PASS", "BLOCKED")
@@ -425,3 +443,261 @@ def test_actual_runner_reconciliation_encryption_recovery_and_offline_replay(run
         assert detail["new_provider_requests"] == 0
         assert detail["normalizations"] and detail["C"]["status"] != "NOT RUN"
         assert detail["B"]["status"] == "BLOCKED"  # Never invent the original filter mask.
+
+
+def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, execution, age, tmp_path):
+    """Generate the frozen old writer's exact shape, never upgrade its receipt."""
+    manifest, storage = source
+    legacy = {k: v for k, v in execution.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
+    legacy["recipient_sha256"] = package.recipient_fingerprint(age[1][0][1])
+    sources = package._sources(storage, manifest, validate_manifest(manifest))
+    payloads = {name: path.read_bytes() for name, (path, _) in sources.items()}
+    payloads.update({"_package/manifest.json": encode(manifest),
+                     "_package/execution.json": encode(legacy), "_package/diagnostics.json": b"{}\n"})
+    index = {"schema": package.LEGACY_INDEX_SCHEMA, "manifest_sha256": validate_manifest(manifest),
+             "execution": legacy, "recipient_sha256": legacy["recipient_sha256"],
+             "members": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                         for name, raw in sorted(payloads.items())]}
+    archive = tmp_path / "old.tar.gz"
+    with archive.open("wb") as output, gzip.GzipFile(fileobj=output, mode="wb", mtime=0, filename="") as zipped:
+        with tarfile.open(fileobj=zipped, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+            raw = encode(index)
+            package._entry(tar, "_package/index.json", io.BytesIO(raw), len(raw))
+            for name, raw in sorted(payloads.items()):
+                package._entry(tar, name, io.BytesIO(raw), len(raw))
+    delivery = tmp_path / "old-delivery"
+    delivery.mkdir(mode=0o700)
+    cipher = delivery / package.LEGACY_CIPHERTEXT_NAME
+    package._age(age[0], ["--encrypt", "--recipient", age[1][0][1], archive], cipher, reason="test_failed")
+    receipt = {"schema": package.LEGACY_SCHEMA, **legacy, "ciphertext_sha256": package._hash(cipher),
+               "ciphertext_bytes": cipher.stat().st_size, "artifact_name": "historical-evidence-123456-1-rehearsal"}
+    (delivery / package.RECEIPT_NAME).write_bytes(encode(receipt))
+    package.validate_delivery(delivery, receipt)
+    destination = tmp_path / "legacy-recovered"
+    recovered_index = package.recover_package(cipher, receipt, destination, age_binary=age[0],
+                                             identity=age[1][0][0], manifest=manifest, expected_execution=legacy)
+    assert recovered_index == index
+    assert all((destination / name).read_bytes() == raw for name, raw in payloads.items())
+    assert "archive_format" not in receipt and "compatibility_contract_sha256" not in receipt
+    old_guard = {**legacy, "schema": "historical-execution-v2", "readiness_status": "PASS", "lifetime_status": "PASS"}
+    assert package.execution_metadata(old_guard, legacy=True) == {
+        k: v for k, v in legacy.items() if k != "started_at"}
+
+
+@pytest.mark.parametrize("field", ["compatibility_contract_sha256", "release_evidence_sha256"])
+def test_new_writer_requires_each_new_identity_digest(source, execution, tmp_path, monkeypatch, field):
+    execution.pop(field)
+    monkeypatch.setattr(package, "_write_archive", lambda *a: pytest.fail("archive must not start"))
+    with pytest.raises(package.PackageError, match="invalid_execution_metadata"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+
+
+@pytest.mark.parametrize("field,value", [("archive_format", "ustar-xz-v1"),
+                                        ("ciphertext_name", "../evidence.tar.zst.age"),
+                                        ("archive_bytes", package.MAX_ARCHIVE_BYTES + 1),
+                                        ("archive_bytes", True), ("archive_sha256", "bad")])
+def test_unsupported_receipt_refuses_before_identity_or_decryption(source, execution, age, tmp_path, monkeypatch, field, value):
+    delivery, receipt = seal(source, execution, age, tmp_path)
+    receipt[field] = value
+    monkeypatch.setattr(package, "_age", lambda *a, **kw: pytest.fail("decryption must not start"))
+    with pytest.raises(package.PackageError, match="invalid_archive_receipt"):
+        package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, tmp_path / "recovered",
+                                age_binary=age[0], identity="does-not-exist", manifest=source[0],
+                                expected_execution=execution)
+
+
+def test_archive_metrics_include_index_and_actual_tar_framing(source, execution, tmp_path, monkeypatch):
+    measured = []
+    original = package._write_archive
+    def observe(*args):
+        result = original(*args)
+        measured.append(result)
+        return result
+    monkeypatch.setattr(package, "_write_archive", observe)
+    monkeypatch.setattr(package, "MAX_ARCHIVE_BYTES", 1)
+    with pytest.raises(package.PackageError, match="package_size_or_member_limit"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+    metrics, = measured
+    assert metrics["archive_format"] == package.codec.FORMAT
+    assert metrics["archive_bytes"] > 1 and len(metrics["archive_sha256"]) == 64
+    assert metrics["index_bytes"] > 0
+    assert metrics["tar_archive_bytes"] % tarfile.RECORDSIZE == 0
+    assert metrics["tar_archive_bytes"] > metrics["expanded_payload_bytes"]
+    assert not list(source[1].glob(".package-*"))
+
+
+def test_writer_refuses_metadata_the_reader_cannot_allocate(source, execution, tmp_path, monkeypatch):
+    limit = max(len(encode(source[0])), len(encode(execution)))
+    monkeypatch.setattr(package, "MAX_INDEX_BYTES", limit)
+    monkeypatch.setattr(package, "_write_archive", lambda *a: pytest.fail("archive must not start"))
+    with pytest.raises(package.PackageError, match="package_metadata_too_large"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution, diagnostics={"test": "x" * limit})
+    assert not (tmp_path / "delivery").exists()
+
+
+def test_interrupted_archive_never_creates_delivery_and_retains_sources(source, execution, tmp_path, monkeypatch):
+    before = {p.relative_to(source[1]).as_posix(): p.read_bytes() for p in source[1].rglob("*") if p.is_file()}
+    def interrupted(archive, *args):
+        archive.write_bytes(SENTINEL.encode())
+        raise KeyboardInterrupt
+    monkeypatch.setattr(package, "_write_archive", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+    assert not list(source[1].glob(".package-*")) and not (tmp_path / "delivery").exists()
+    assert all((source[1] / name).read_bytes() == raw for name, raw in before.items())
+
+
+def test_interrupted_recovery_never_promotes_or_leaves_plaintext(source, execution, age, tmp_path, monkeypatch):
+    delivery, receipt = seal(source, execution, age, tmp_path)
+    before = {p.name: p.read_bytes() for p in delivery.iterdir()}
+    def interrupted(archive, destination, *args, **kwargs):
+        destination.write_bytes(SENTINEL.encode())
+        raise KeyboardInterrupt
+    monkeypatch.setattr(package.codec, "decode", interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, tmp_path / "recovered",
+                                age_binary=age[0], identity=age[1][0][0], manifest=source[0],
+                                expected_execution=execution)
+    assert not (tmp_path / "recovered").exists() and not list(tmp_path.glob(".recovery-*"))
+    assert {p.name: p.read_bytes() for p in delivery.iterdir()} == before
+
+
+def test_authenticated_archive_must_match_outer_receipt(source, execution, age, tmp_path, monkeypatch):
+    delivery, receipt = seal(source, execution, age, tmp_path)
+    receipt["archive_sha256"] = "0" * 64
+    monkeypatch.setattr(package, "_unpack", lambda *a: pytest.fail("decoder must not start"))
+    with pytest.raises(package.PackageError, match="archive_receipt_mismatch"):
+        package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, tmp_path / "recovered",
+                                age_binary=age[0], identity=age[1][0][0], manifest=source[0],
+                                expected_execution=execution)
+    assert not (tmp_path / "recovered").exists() and not list(tmp_path.glob(".recovery-*"))
+
+
+def _compressed(raw, archive_format):
+    if archive_format == package.codec.LEGACY_FORMAT:
+        return gzip.compress(raw, mtime=0)
+    return package.codec._zstandard().ZstdCompressor(write_checksum=True).compress(raw)
+
+
+@pytest.mark.parametrize("archive_format", [package.codec.FORMAT, package.codec.LEGACY_FORMAT])
+def test_codec_valid_single_stream_roundtrip(tmp_path, archive_format, monkeypatch):
+    raw = b"public invented fixture bytes\n" * 100000
+    archive = tmp_path / "archive"
+    archive.write_bytes(_compressed(raw, archive_format))
+    monkeypatch.setattr(package.codec, "CHUNK_BYTES", 65536)
+    if archive_format == package.codec.LEGACY_FORMAT:
+        monkeypatch.setattr(package.codec, "_zstandard", lambda: pytest.fail("legacy recovery must not require zstandard"))
+    assert package.codec.decode(archive, tmp_path / "decoded", archive_format, max_decoded=len(raw)) == len(raw)
+    assert (tmp_path / "decoded").read_bytes() == raw
+
+
+@pytest.mark.parametrize("archive_format", [package.codec.FORMAT, package.codec.LEGACY_FORMAT])
+@pytest.mark.parametrize("fault", ["truncated", "corrupt", "garbage_tail", "second_frame", "zero_tail"])
+def test_codec_rejects_incomplete_corrupt_or_trailing_streams(tmp_path, archive_format, fault):
+    original = _compressed(b"synthetic\n" * 10000, archive_format)
+    damaged = {"truncated": original[:-1], "corrupt": original[:-1] + bytes([original[-1] ^ 128]),
+               "garbage_tail": original + b"junk", "second_frame": original + original,
+               "zero_tail": original + b"\0" * 512}[fault]
+    archive = tmp_path / "archive"
+    archive.write_bytes(damaged)
+    with pytest.raises(package.codec.CodecError):
+        package.codec.decode(archive, tmp_path / "decoded", archive_format, max_decoded=1024 ** 2)
+
+
+@pytest.mark.parametrize("archive_format", [package.codec.FORMAT, package.codec.LEGACY_FORMAT])
+def test_codec_output_allocation_and_spool_are_bounded(tmp_path, archive_format, monkeypatch):
+    archive = tmp_path / "archive"
+    archive.write_bytes(_compressed(b"x" * 10000, archive_format))
+    monkeypatch.setattr(package.codec, "CHUNK_BYTES", 64)
+    with pytest.raises(package.codec.CodecError):
+        package.codec.decode(archive, tmp_path / "decoded", archive_format, max_decoded=100)
+    assert not (tmp_path / "decoded").exists() or (tmp_path / "decoded").stat().st_size <= 100
+
+
+@pytest.mark.parametrize("fault", ["no_checksum", "unknown_size", "window", "skippable", "reserved_bit", "dict_id"])
+def test_zstandard_resources_rejected_before_decoder_allocation(tmp_path, monkeypatch, fault):
+    zstd = package.codec._zstandard()
+    raw = b"synthetic" * 100
+    if fault in ("no_checksum", "unknown_size"):
+        frame = zstd.ZstdCompressor(write_checksum=fault != "no_checksum",
+                                   write_content_size=fault != "unknown_size").compress(raw)
+    else:
+        # Non-single-segment header: known four-byte size, checksum, window
+        # descriptor. No payload is needed: rejection precedes decoding.
+        descriptor = 0x84 | (1 if fault == "dict_id" else 0)
+        window = 0xA8 if fault == "window" else 0x00  # 2 GiB vs 1 KiB.
+        frame = b"\x28\xb5\x2f\xfd" + bytes([descriptor, window])
+        if fault == "dict_id":
+            frame += b"\x01"
+        frame += len(raw).to_bytes(4, "little") + b"\x01\x00\x00" + bytes(4)
+        if fault == "reserved_bit":
+            frame = frame[:4] + bytes([frame[4] | 0x08]) + frame[5:]
+        if fault == "skippable":
+            frame = b"\x50\x2a\x4d\x18" + frame[4:]
+    archive = tmp_path / "archive"
+    archive.write_bytes(frame)
+    monkeypatch.setattr(zstd, "ZstdDecompressor", lambda *a, **kw: pytest.fail("decoder must not allocate"))
+    with pytest.raises(package.codec.CodecError):
+        package.codec.decode(archive, tmp_path / "decoded", package.codec.FORMAT, max_decoded=10000)
+    assert not (tmp_path / "decoded").exists()
+
+
+def test_zstandard_window_api_receives_bytes_and_actual_stream_decodes(tmp_path, monkeypatch):
+    zstd = package.codec._zstandard()
+    original, seen = zstd.ZstdDecompressor, []
+    def observe(*args, **kwargs):
+        seen.append(kwargs["max_window_size"])
+        return original(*args, **kwargs)
+    archive = tmp_path / "archive"
+    raw = b"synthetic" * 1000
+    archive.write_bytes(_compressed(raw, package.codec.FORMAT))
+    monkeypatch.setattr(zstd, "ZstdDecompressor", observe)
+    assert package.codec.decode(archive, tmp_path / "decoded", package.codec.FORMAT, max_decoded=10000) == len(raw)
+    assert (tmp_path / "decoded").read_bytes() == raw
+    assert seen == [1024 ** 3]
+
+
+@pytest.mark.parametrize("field,value", [("__version__", "0.24.0"), ("ZSTD_VERSION", (1, 5, 6)), ("backend", "cffi")])
+def test_codec_runtime_version_is_pinned(monkeypatch, field, value):
+    zstd = package.codec._zstandard()
+    monkeypatch.setattr(zstd, field, value)
+    with pytest.raises(package.codec.CodecError, match="archive_codec_version_mismatch"):
+        package.codec.compressor(io.BytesIO(), 0)
+
+
+@pytest.mark.parametrize("fault", ["tar_tail", "tar_second", "tar_zero_record", "bad_end", "index_cap", "metadata_cap", "pax"])
+def test_tar_framing_and_true_payload_limit_fail_closed(tmp_path, source, execution, monkeypatch, fault):
+    archive, receipt = archive_with_fault(tmp_path, source, execution, None)
+    raw = gzip.decompress(archive.read_bytes())
+    if fault == "tar_tail":
+        raw += b"junk"
+    elif fault == "tar_second":
+        raw += raw
+    elif fault == "tar_zero_record":
+        raw += bytes(tarfile.RECORDSIZE)
+    elif fault == "bad_end":
+        raw = raw[:-1] + b"x"
+    elif fault == "index_cap":
+        with tarfile.open(fileobj=io.BytesIO(raw)) as tar:
+            members = tar.getmembers()
+        # The old decoder excluded index.size; this bound admits all remaining
+        # payload bytes but must reject the true total including the index.
+        monkeypatch.setattr(package, "MAX_PLAINTEXT_BYTES", sum(m.size for m in members[1:]))
+    elif fault == "metadata_cap":
+        # A tiny bound refuses metadata before reading its claimed payload.
+        monkeypatch.setattr(package, "MAX_INDEX_BYTES", 1)
+    elif fault == "pax":
+        info = tarfile.TarInfo("_package/index.json")
+        info.type, info.size = tarfile.XHDTYPE, 2 ** 30
+        raw = info.tobuf(format=tarfile.USTAR_FORMAT) + bytes(1024)
+    archive.write_bytes(gzip.compress(raw))
+    destination = tmp_path / "candidate"
+    destination.mkdir()
+    legacy = {k: v for k, v in execution.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
+    with pytest.raises(package.PackageError):
+        package._unpack(archive, destination, source[0], receipt, legacy)
+    assert not list(tmp_path.glob(".tar-*"))

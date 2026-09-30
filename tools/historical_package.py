@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime
 import argparse
-import gzip
 import hashlib
 import io
 import json
@@ -27,26 +26,31 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.historical_acquisition import ASSIGNMENT, encode, exclusive_lock, validate_manifest
 from tools import historical_execution_guard as execution_guard
+from tools import historical_archive_codec as codec
 
-SCHEMA = "historical-encrypted-receipt-v2"
-INDEX_SCHEMA = "historical-private-package-v2"
+SCHEMA = "historical-encrypted-receipt-v3"
+INDEX_SCHEMA = "historical-private-package-v3"
+LEGACY_SCHEMA = "historical-encrypted-receipt-v2"
+LEGACY_INDEX_SCHEMA = "historical-private-package-v2"
 REPOSITORY = "spicyChicken59/SpicyStock"
 MAX_CIPHERTEXT_BYTES = 200 * 1024 ** 2
 MAX_ARCHIVE_BYTES = MAX_CIPHERTEXT_BYTES - 1024 ** 2
 MAX_PLAINTEXT_BYTES = 2 * 1024 ** 3
 MAX_MEMBERS = 4096
 MAX_INDEX_BYTES = 4 * 1024 ** 2
-CIPHERTEXT_NAME = "evidence.tar.gz.age"
+CIPHERTEXT_NAME = "evidence.tar.zst.age"
+LEGACY_CIPHERTEXT_NAME = "evidence.tar.gz.age"
 AGE_HEADER = b"age-encryption.org/v1\n"
 RECEIPT_NAME = "receipt.json"
 _HEX = re.compile(r"[0-9a-f]{64}\Z")
 _SHA = re.compile(r"[0-9a-f]{40}\Z")
 _RECIPIENT = re.compile(r"age1[023456789acdefghjklmnpqrstuvwxyz]{58}\Z")
-_EXECUTION_KEYS = {"repository", "repository_id", "assignment_id", "manifest_sha256",
+_LEGACY_EXECUTION_KEYS = {"repository", "repository_id", "assignment_id", "manifest_sha256",
                    "workflow_id", "workflow_path", "recipient_sha256", "run_id",
                    "run_number", "run_attempt", "assignment_phase", "mode", "checkout_sha",
                    "workflow_sha", "implementation_pr", "readiness_comment_id",
                    "recovery_contract_sha256", "status"}
+_EXECUTION_KEYS = _LEGACY_EXECUTION_KEYS | {"compatibility_contract_sha256", "release_evidence_sha256"}
 _INTERNAL = {"_package/manifest.json", "_package/execution.json", "_package/diagnostics.json"}
 
 
@@ -76,7 +80,7 @@ def _json(raw):
         return out
     try:
         return json.loads(raw, object_pairs_hook=unique)
-    except (ValueError, UnicodeError):
+    except (ValueError, UnicodeError, RecursionError):
         _fail("invalid_package_json")
 
 
@@ -116,8 +120,9 @@ def recipient_fingerprint(recipient):
     return hashlib.sha256((recipient + "\n").encode("ascii")).hexdigest()
 
 
-def _execution(value):
-    if not isinstance(value, dict) or set(value) not in (_EXECUTION_KEYS, _EXECUTION_KEYS | {"started_at"}):
+def _execution(value, *, legacy=False):
+    keys = _LEGACY_EXECUTION_KEYS if legacy else _EXECUTION_KEYS
+    if not isinstance(value, dict) or set(value) not in (keys, keys | {"started_at"}):
         _fail("invalid_execution_metadata")
     try:
         execution_guard.validate_phase_binding(value)
@@ -135,19 +140,20 @@ def _execution(value):
     return dict(value)
 
 
-def execution_metadata(record, *, status=None):
+def execution_metadata(record, *, status=None, legacy=False):
     """Explicit public projection; guard approval documents remain private."""
     if not isinstance(record, dict):
         _fail("invalid_execution_metadata")
-    if record.get("schema") == "historical-execution-v2":
+    schema = "historical-execution-v2" if legacy else "historical-execution-v3"
+    if record.get("schema") == schema:
         if any(record.get(k) != "PASS" for k in ("status", "readiness_status", "lifetime_status")):
             _fail("execution_guard_not_passed")
-        result = {k: record[k] for k in _EXECUTION_KEYS}
+        result = {k: record[k] for k in (_LEGACY_EXECUTION_KEYS if legacy else _EXECUTION_KEYS)}
     else:
         result = dict(record)
     if status is not None:
         result["status"] = status
-    return _execution(result)
+    return _execution(result, legacy=legacy)
 
 
 def _age_environment():
@@ -205,7 +211,7 @@ def _ledger(root, manifest_sha256):
             if row != (manifest_sha256,):
                 _fail("ledger_manifest_mismatch")
             # Reserved and failed attempts remain evidence, never a fresh budget.
-            db.execute("SELECT id,reservation,retained,status,body_hash FROM attempts").fetchall()
+            db.execute("SELECT id,reservation,retained,status,body_hash FROM attempts LIMIT 0")
         finally:
             db.close()
     except sqlite3.Error:
@@ -242,6 +248,32 @@ def _entry(tar, name, stream, size):
     tar.addfile(info, stream)
 
 
+def _write_archive(archive, index_raw, index, sources, extras):
+    """Write one checksummed frame and report actual bytes before the cap gate."""
+    sizes = [len(index_raw), *(e["bytes"] for e in index["members"])]
+    unpadded = sum(512 + ((size + 511) // 512) * 512 for size in sizes) + 1024
+    tar_bytes = ((unpadded + tarfile.RECORDSIZE - 1) // tarfile.RECORDSIZE) * tarfile.RECORDSIZE
+    try:
+        with archive.open("xb") as out:
+            os.chmod(archive, 0o600)
+            with codec.compressor(out, tar_bytes) as compressed:
+                with tarfile.open(fileobj=compressed, mode="w|", format=tarfile.USTAR_FORMAT) as tar:
+                    _entry(tar, "_package/index.json", io.BytesIO(index_raw), len(index_raw))
+                    for entry in index["members"]:
+                        name = entry["path"]
+                        if name in extras:
+                            _entry(tar, name, io.BytesIO(extras[name]), entry["bytes"])
+                        else:
+                            with sources[name][0].open("rb") as source:
+                                _entry(tar, name, source, entry["bytes"])
+    except codec.CodecError:
+        _fail("archive_codec_refused")
+    return {"archive_format": codec.FORMAT, "archive_bytes": archive.stat().st_size,
+            "archive_sha256": _hash(archive), "tar_archive_bytes": tar_bytes,
+            "index_bytes": len(index_raw), "expanded_payload_bytes": sum(sizes),
+            "indexed_member_count": len(index["members"])}
+
+
 def package_evidence(storage, manifest, delivery, *, age_binary, recipient, execution, diagnostics=None):
     """Package a closed cache, including partial failures; return a public receipt.
 
@@ -265,30 +297,22 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
         extras = {"_package/manifest.json": encode(manifest),
                   "_package/execution.json": encode(execution),
                   "_package/diagnostics.json": encode(diagnostics or {})}
+        if any(len(raw) > MAX_INDEX_BYTES for raw in extras.values()):
+            _fail("package_metadata_too_large")
         members = [{"path": name, "bytes": size, "sha256": _hash(path)}
                    for name, (path, size) in sorted(sources.items())]
         members.extend({"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
                        for name, raw in sorted(extras.items()))
-        index = {"schema": INDEX_SCHEMA, "manifest_sha256": identity, "execution": execution,
+        index = {"schema": INDEX_SCHEMA, "archive_format": codec.FORMAT,
+                 "manifest_sha256": identity, "execution": execution,
                  "recipient_sha256": fingerprint, "members": sorted(members, key=lambda x: x["path"])}
         index_raw = encode(index)
         if len(index_raw) > MAX_INDEX_BYTES or sum(e["bytes"] for e in members) + len(index_raw) > MAX_PLAINTEXT_BYTES:
             _fail("package_index_too_large")
         with tempfile.TemporaryDirectory(prefix=".package-", dir=storage) as name:
             temp = Path(name)
-            archive = temp / "evidence.tar.gz"
-            with archive.open("xb") as out:
-                os.chmod(archive, 0o600)
-                with gzip.GzipFile(fileobj=out, mode="wb", mtime=0, filename="") as zipped:
-                    with tarfile.open(fileobj=zipped, mode="w", format=tarfile.USTAR_FORMAT) as tar:
-                        _entry(tar, "_package/index.json", io.BytesIO(index_raw), len(index_raw))
-                        for entry in index["members"]:
-                            path = entry["path"]
-                            if path in extras:
-                                _entry(tar, path, io.BytesIO(extras[path]), entry["bytes"])
-                            else:
-                                with sources[path][0].open("rb") as source:
-                                    _entry(tar, path, source, entry["bytes"])
+            archive = temp / "evidence.tar.zst"
+            archive_metrics = _write_archive(archive, index_raw, index, sources, extras)
             if archive.stat().st_size > MAX_ARCHIVE_BYTES:
                 _fail("package_size_or_member_limit")
             # Recheck after reading: concurrent edits must not create an index
@@ -302,6 +326,9 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
                 if stream.read(len(AGE_HEADER)) != AGE_HEADER:
                     _fail("invalid_ciphertext_header")
             receipt = {"schema": SCHEMA, **execution, "manifest_sha256": identity,
+                       "archive_format": codec.FORMAT, "ciphertext_name": CIPHERTEXT_NAME,
+                       "archive_bytes": archive_metrics["archive_bytes"],
+                       "archive_sha256": archive_metrics["archive_sha256"],
                        "recipient_sha256": fingerprint, "ciphertext_sha256": _hash(ciphertext),
                        "ciphertext_bytes": ciphertext.stat().st_size,
                        "artifact_name": "historical-evidence-" + "-".join(str(execution[k]) for k in ("run_id", "run_attempt", "mode"))}
@@ -321,12 +348,19 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
 def _receipt(receipt, expected_execution=None):
     if not isinstance(receipt, dict):
         _fail("invalid_receipt")
-    execution_keys = _EXECUTION_KEYS | ({"started_at"} if "started_at" in receipt else set())
+    legacy = receipt.get("schema") == LEGACY_SCHEMA
+    execution_keys = (_LEGACY_EXECUTION_KEYS if legacy else _EXECUTION_KEYS) | ({"started_at"} if "started_at" in receipt else set())
     extra = {"schema", "manifest_sha256", "recipient_sha256", "ciphertext_sha256", "ciphertext_bytes", "artifact_name"}
-    if set(receipt) != execution_keys | extra or receipt["schema"] != SCHEMA:
+    if not legacy:
+        extra |= {"archive_format", "ciphertext_name", "archive_bytes", "archive_sha256"}
+    if set(receipt) != execution_keys | extra or receipt["schema"] not in (SCHEMA, LEGACY_SCHEMA):
         _fail("invalid_receipt")
-    execution = _execution({k: receipt[k] for k in execution_keys})
-    if expected_execution is not None and execution != _execution(expected_execution):
+    if not legacy and (receipt["archive_format"] != codec.FORMAT or receipt["ciphertext_name"] != CIPHERTEXT_NAME or
+                       type(receipt["archive_bytes"]) is not int or not 0 < receipt["archive_bytes"] <= MAX_ARCHIVE_BYTES or
+                       not isinstance(receipt["archive_sha256"], str) or not _HEX.fullmatch(receipt["archive_sha256"])):
+        _fail("invalid_archive_receipt")
+    execution = _execution({k: receipt[k] for k in execution_keys}, legacy=legacy)
+    if expected_execution is not None and execution != _execution(expected_execution, legacy=legacy):
         _fail("receipt_execution_mismatch")
     if any(not isinstance(receipt[k], str) or not _HEX.fullmatch(receipt[k])
            for k in ("manifest_sha256", "recipient_sha256", "ciphertext_sha256")):
@@ -342,9 +376,10 @@ def validate_delivery(delivery, receipt):
     """Fail closed immediately before uploading these two exact files."""
     delivery = _private_path(delivery)
     _receipt(receipt)
-    if {p.name for p in delivery.iterdir()} != {CIPHERTEXT_NAME, RECEIPT_NAME}:
+    cipher_name = LEGACY_CIPHERTEXT_NAME if receipt["schema"] == LEGACY_SCHEMA else CIPHERTEXT_NAME
+    if {p.name for p in delivery.iterdir()} != {cipher_name, RECEIPT_NAME}:
         _fail("plaintext_or_unapproved_delivery_file")
-    ciphertext = delivery / CIPHERTEXT_NAME
+    ciphertext = delivery / cipher_name
     if _regular(ciphertext).st_size != receipt["ciphertext_bytes"] or _hash(ciphertext) != receipt["ciphertext_sha256"]:
         _fail("ciphertext_receipt_mismatch")
     _regular(delivery / RECEIPT_NAME)
@@ -356,61 +391,114 @@ def validate_delivery(delivery, receipt):
     return receipt
 
 
+def _tar_header(stream):
+    raw = stream.read(512)
+    if raw == bytes(512):
+        return None
+    if len(raw) != 512 or raw[257:265] != b"ustar\x0000":
+        _fail("invalid_package_tar_header")
+    # Parse checksum and numeric fields with the stdlib, without tarfile's
+    # automatic PAX/GNU extension processing or its unbounded extension reads.
+    info = tarfile.TarInfo.frombuf(raw, "utf-8", "strict")
+    if info.type != tarfile.REGTYPE or info.linkname or info.size < 0:
+        _fail("unsafe_archive_member")
+    return info
+
+
+def _tar_padding(stream, size):
+    length = (-size) % 512
+    if stream.read(length) != bytes(length):
+        _fail("invalid_package_tar_padding")
+
+
 def _unpack(archive, destination, manifest, receipt, execution):
     allowed = _allowed(manifest) | _INTERNAL
-    seen, total = set(), 0
+    legacy = receipt.get("schema") == LEGACY_SCHEMA
+    archive_format = codec.LEGACY_FORMAT if legacy else receipt.get("archive_format")
+    # Payload cap includes the index. Tar framing has a separate finite bound,
+    # so zero padding, headers and decoder expansion cannot escape accounting.
+    max_tar_bytes = MAX_PLAINTEXT_BYTES + MAX_MEMBERS * 1024 + tarfile.RECORDSIZE
+    seen = set()
     try:
-        with tarfile.open(archive, "r:gz") as tar:
-            first = tar.next()
-            if (first is None or first.name != "_package/index.json" or not first.isreg() or
-                first.linkname or not 0 <= first.size <= MAX_INDEX_BYTES):
-                _fail("invalid_package_index")
-            index = _json(tar.extractfile(first).read())
-            if (set(index) != {"schema", "manifest_sha256", "execution", "recipient_sha256", "members"} or
-                index["schema"] != INDEX_SCHEMA or index["manifest_sha256"] != receipt["manifest_sha256"] or
-                index["execution"] != execution or index["recipient_sha256"] != receipt["recipient_sha256"] or
-                not isinstance(index["members"], list) or len(index["members"]) >= MAX_MEMBERS):
-                _fail("package_identity_mismatch")
-            expected = {}
-            for entry in index["members"]:
-                if (not isinstance(entry, dict) or set(entry) != {"path", "bytes", "sha256"} or
-                    not isinstance(entry["path"], str) or entry["path"] in expected or
-                    type(entry["bytes"]) is not int or not 0 <= entry["bytes"] <= MAX_PLAINTEXT_BYTES or
-                    not isinstance(entry["sha256"], str) or not _HEX.fullmatch(entry["sha256"])):
+        with tempfile.TemporaryDirectory(prefix=".tar-", dir=destination.parent) as temporary:
+            spool = Path(temporary) / "decoded.tar"
+            codec.decode(archive, spool, archive_format, max_decoded=max_tar_bytes)
+            with spool.open("rb") as stream:
+                first = _tar_header(stream)
+                if first is None or first.name != "_package/index.json" or first.size > MAX_INDEX_BYTES:
                     _fail("invalid_package_index")
-                expected[entry["path"]] = entry
-            if not {"ledger.sqlite3", *_INTERNAL} <= set(expected):
-                _fail("missing_recovery_member")
-            for member in tar:
-                if member.name == first.name and not seen:
-                    # TarFile iteration yields its already-read first member.
-                    seen.add(first.name)
-                    continue
-                name = member.name
-                normalized = PurePosixPath(name)
-                if (name in seen or name not in expected or not member.isreg() or member.linkname or
-                    normalized.is_absolute() or ".." in normalized.parts or "\\" in name or
-                    (name not in allowed and not re.fullmatch(r"pages/[0-9a-f]{64}\.json", name))):
-                    _fail("unsafe_archive_member")
-                seen.add(name)
-                total += member.size
-                if member.size != expected[name]["bytes"] or total > MAX_PLAINTEXT_BYTES:
-                    _fail("package_size_or_member_limit")
-                target = destination.joinpath(*normalized.parts)
-                target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-                hasher = hashlib.sha256()
-                with tar.extractfile(member) as source, target.open("xb") as output:
-                    os.chmod(target, 0o600)
-                    for block in iter(lambda: source.read(1024 * 1024), b""):
-                        hasher.update(block)
-                        output.write(block)
-                if hasher.hexdigest() != expected[name]["sha256"]:
-                    _fail("package_member_hash_mismatch")
-                if name.startswith("pages/") and target.stem != hasher.hexdigest():
-                    _fail("raw_page_hash_mismatch")
-            if seen != set(expected) | {first.name}:
-                _fail("missing_recovery_member")
-    except (tarfile.TarError, OSError, EOFError, KeyError, TypeError, AttributeError):
+                index_raw = stream.read(first.size)
+                if len(index_raw) != first.size:
+                    _fail("invalid_package_index")
+                _tar_padding(stream, first.size)
+                index = _json(index_raw)
+                index_keys = {"schema", "manifest_sha256", "execution", "recipient_sha256", "members"}
+                if not legacy:
+                    index_keys.add("archive_format")
+                if (not isinstance(index, dict) or set(index) != index_keys or
+                    index["schema"] != (LEGACY_INDEX_SCHEMA if legacy else INDEX_SCHEMA) or
+                    (not legacy and index["archive_format"] != archive_format) or
+                    index["manifest_sha256"] != receipt["manifest_sha256"] or
+                    index["execution"] != execution or index["recipient_sha256"] != receipt["recipient_sha256"] or
+                    not isinstance(index["members"], list) or len(index["members"]) >= MAX_MEMBERS):
+                    _fail("package_identity_mismatch")
+                expected, total = {}, first.size
+                for entry in index["members"]:
+                    if (not isinstance(entry, dict) or set(entry) != {"path", "bytes", "sha256"} or
+                        not isinstance(entry["path"], str) or entry["path"] in expected or
+                        type(entry["bytes"]) is not int or not 0 <= entry["bytes"] <= MAX_PLAINTEXT_BYTES or
+                        not isinstance(entry["sha256"], str) or not _HEX.fullmatch(entry["sha256"])):
+                        _fail("invalid_package_index")
+                    name = entry["path"]
+                    normalized = PurePosixPath(name)
+                    if (str(normalized) != name or normalized.is_absolute() or ".." in normalized.parts or
+                        "\\" in name or (name not in allowed and not re.fullmatch(r"pages/[0-9a-f]{64}\.json", name))):
+                        _fail("unsafe_archive_member")
+                    if name in _INTERNAL and entry["bytes"] > MAX_INDEX_BYTES:
+                        _fail("package_metadata_too_large")
+                    total += entry["bytes"]
+                    if total > MAX_PLAINTEXT_BYTES:
+                        _fail("package_size_or_member_limit")
+                    expected[name] = entry
+                if not {"ledger.sqlite3", *_INTERNAL} <= set(expected):
+                    _fail("missing_recovery_member")
+                while True:
+                    member = _tar_header(stream)
+                    if member is None:
+                        # Exactly the USTAR two end blocks and zero record pad;
+                        # no ignored extra tar archive, record or arbitrary tail.
+                        if stream.read(512) != bytes(512):
+                            _fail("invalid_package_tar_end")
+                        padding = (-stream.tell()) % tarfile.RECORDSIZE
+                        if stream.read(padding) != bytes(padding) or stream.read(1):
+                            _fail("invalid_package_tar_end")
+                        break
+                    name = member.name
+                    if name in seen or name not in expected:
+                        _fail("unsafe_archive_member")
+                    seen.add(name)
+                    if member.size != expected[name]["bytes"]:
+                        _fail("package_size_or_member_limit")
+                    target = destination.joinpath(*PurePosixPath(name).parts)
+                    target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+                    hasher, remaining = hashlib.sha256(), member.size
+                    with target.open("xb") as output:
+                        os.chmod(target, 0o600)
+                        while remaining:
+                            block = stream.read(min(1024 * 1024, remaining))
+                            if not block:
+                                _fail("truncated_package_member")
+                            hasher.update(block)
+                            output.write(block)
+                            remaining -= len(block)
+                    _tar_padding(stream, member.size)
+                    if hasher.hexdigest() != expected[name]["sha256"]:
+                        _fail("package_member_hash_mismatch")
+                    if name.startswith("pages/") and target.stem != hasher.hexdigest():
+                        _fail("raw_page_hash_mismatch")
+                if seen != set(expected):
+                    _fail("missing_recovery_member")
+    except (codec.CodecError, tarfile.TarError, OSError, EOFError, KeyError, TypeError, AttributeError, UnicodeError):
         _fail("invalid_package_archive")
     if _json((destination / "_package/manifest.json").read_bytes()) != manifest:
         _fail("package_manifest_mismatch")
@@ -418,7 +506,7 @@ def _unpack(archive, destination, manifest, receipt, execution):
         _fail("package_execution_mismatch")
     _json((destination / "_package/diagnostics.json").read_bytes())
     _ledger(destination, receipt["manifest_sha256"])
-    (destination / "_package/index.json").write_bytes(encode(index))
+    (destination / "_package/index.json").write_bytes(index_raw)
     os.chmod(destination / "_package/index.json", 0o600)
     return index
 
@@ -453,13 +541,13 @@ def main(argv=None):
         elif args.command == "package":
             manifest = _json(args.manifest.read_bytes())
             guard = _json(args.execution.read_bytes())
-            if (guard.get("schema") != "historical-execution-v2" or
+            if (guard.get("schema") != "historical-execution-v3" or
                 guard.get("manifest_sha256") != validate_manifest(manifest) or
                 guard.get("recipient_sha256") != policy["recipient_sha256"]):
                 _fail("package_guard_identity_mismatch")
             diagnostics = _json((args.storage / "execution-diagnostics.json").read_bytes())
             metadata = execution_metadata(guard, status=diagnostics["status"])
-            if (diagnostics.get("schema") != "historical-execution-diagnostics-v2" or
+            if (diagnostics.get("schema") != "historical-execution-diagnostics-v3" or
                     diagnostics.get("execution_binding") != execution_guard.validate_phase_binding(metadata)):
                 _fail("package_retained_execution_mismatch")
             package_evidence(args.storage, manifest, args.delivery, age_binary=args.age,
@@ -468,11 +556,12 @@ def main(argv=None):
         else:
             receipt = _json(args.receipt.read_bytes())
             expected = _json(args.expected_execution.read_bytes())
-            if expected.get("schema") == "historical-execution-v2":
+            if expected.get("schema") in ("historical-execution-v2", "historical-execution-v3"):
                 if (expected.get("manifest_sha256") != receipt.get("manifest_sha256") or
                     expected.get("recipient_sha256") != receipt.get("recipient_sha256")):
                     _fail("recovery_guard_identity_mismatch")
-                expected = execution_metadata(expected, status=receipt.get("status"))
+                expected = execution_metadata(expected, status=receipt.get("status"),
+                                              legacy=receipt.get("schema") == LEGACY_SCHEMA)
             recover_package(args.cipher, receipt, args.destination, age_binary=args.age,
                             identity=args.identity, manifest=_json(args.manifest.read_bytes()),
                             expected_execution=expected)
@@ -511,6 +600,9 @@ def recover_package(ciphertext, receipt, destination, *, age_binary, identity, m
         _age(age_binary, ["--decrypt", "--identity", identity, ciphertext], archive, reason="decryption_failed")
         if archive.stat().st_size > MAX_ARCHIVE_BYTES:
             _fail("package_size_or_member_limit")
+        if receipt["schema"] == SCHEMA and (archive.stat().st_size != receipt["archive_bytes"] or
+                                             _hash(archive) != receipt["archive_sha256"]):
+            _fail("archive_receipt_mismatch")
         recovered = temp / "verified"
         recovered.mkdir(mode=0o700)
         index = _unpack(archive, recovered, manifest, receipt, execution)

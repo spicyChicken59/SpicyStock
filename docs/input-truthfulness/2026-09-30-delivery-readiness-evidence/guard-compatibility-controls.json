@@ -1,0 +1,169 @@
+{
+  "child_script_sha256": "536c70c6cf64d857c2f0cd25507ddb94e11f68a358c48490e3fbd299bab0397b",
+  "method": "Each mutation changes only one require predicate in an isolated Python child; shared source files never edited. Fixed and fresh restored controls bracket mutations.",
+  "model_calls": 0,
+  "observed_at": "2026-09-30T08:20:28.030158+00:00",
+  "owner_data_or_key_access": false,
+  "provider_requests": 0,
+  "results": [
+    {
+      "case": "fixed",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "function": null,
+      "log_sha256": "ea416ffb50ab60b6507cae67d62dddff0e5afab8de83463afc61920d66eae9b5",
+      "outcome": "PASS",
+      "removed_require_reason": null,
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_no_other_old_transport_identity_can_use_bridge[artifact_id]",
+        "tests/test_historical_delivery_binding.py::test_any_missing_or_failed_measured_check_blocks_release[stress_capacity-FAIL]",
+        "tests/test_historical_delivery_binding.py::test_hashed_release_cannot_hide_changed_or_missing_proof[proof_changed-release_proof_changed]",
+        "tests/test_historical_delivery_binding.py::test_compatibility_does_not_bypass_current_main_source_equality",
+        "tests/test_historical_delivery_binding.py::test_personal_scope_cannot_claim_provider_consent_or_expand_access[provider_consent-PERMITTED]",
+        "tests/test_historical_delivery_binding.py::test_execution_release_requires_a_fresh_comment_after_merge[before_merge]",
+        "tests/test_historical_delivery_binding.py::test_previous_evidence_cannot_be_altered_or_deleted[modified-docs/input-truthfulness/2026-09-29-workflow-repair-evidence/guard-controls.json]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "prior_transport",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_readiness",
+      "log_sha256": "d17157c5042f7326ef17c4037b5b1a810c709d9ffde0b30b56a931d1dc3291f5",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "unaccepted_prior_transport",
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_no_other_old_transport_identity_can_use_bridge[artifact_id]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "technical_check",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_release_evidence",
+      "log_sha256": "4888a772aca2f5e47bc87b92015118b35045d20ea34af7add7a98352de4e8c3f",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "technical_release_not_established",
+      "selector": "checks",
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_any_missing_or_failed_measured_check_blocks_release[stress_capacity-FAIL]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "proof_hash",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_release_evidence",
+      "log_sha256": "e4cc93994c1fbab34d41d75821b3914c41c88482cccb6735cbf0deb4d65cfceb",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "release_proof_changed",
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_hashed_release_cannot_hide_changed_or_missing_proof[proof_changed-release_proof_changed]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "source_equality",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "verify",
+      "log_sha256": "06f04de6d35f4618d2b70b0214996d3581bf962553f5e8234d8259fcfd633641",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "execution_code_changed",
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_compatibility_does_not_bypass_current_main_source_equality",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "owner_scope",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_readiness",
+      "log_sha256": "399a08ec62ab83228c951d69a46e3161f88d8d26f08f51e4051e5a14ae7fba69",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "owner_scope_not_authorized",
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_personal_scope_cannot_claim_provider_consent_or_expand_access[provider_consent-PERMITTED]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "fresh_release",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_release_date",
+      "log_sha256": "1f2a2b268b4cbf21fe5059073d14c9594ae593de262cc6d412e61cdacf7bbca9",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "execution_release_not_after_merge",
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_execution_release_requires_a_fresh_comment_after_merge[before_merge]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "old_evidence",
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "function": "validate_release_evidence",
+      "log_sha256": "20ed4b05e8b80da12ea15bf982791b94ceddde913560de73835ed651218a1cfb",
+      "outcome": "FAIL (expected target refusal lost); independent control PASS",
+      "removed_require_reason": "unreviewed_delivery_scope",
+      "selector": "path.startswith('tests/')",
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_previous_evidence_cannot_be_altered_or_deleted[modified-docs/input-truthfulness/2026-09-29-workflow-repair-evidence/guard-controls.json]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    },
+    {
+      "case": "restored",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "function": null,
+      "log_sha256": "ea416ffb50ab60b6507cae67d62dddff0e5afab8de83463afc61920d66eae9b5",
+      "outcome": "PASS",
+      "removed_require_reason": null,
+      "selector": null,
+      "sensitivity_status": "PASS",
+      "tests": [
+        "tests/test_historical_delivery_binding.py::test_no_other_old_transport_identity_can_use_bridge[artifact_id]",
+        "tests/test_historical_delivery_binding.py::test_any_missing_or_failed_measured_check_blocks_release[stress_capacity-FAIL]",
+        "tests/test_historical_delivery_binding.py::test_hashed_release_cannot_hide_changed_or_missing_proof[proof_changed-release_proof_changed]",
+        "tests/test_historical_delivery_binding.py::test_compatibility_does_not_bypass_current_main_source_equality",
+        "tests/test_historical_delivery_binding.py::test_personal_scope_cannot_claim_provider_consent_or_expand_access[provider_consent-PERMITTED]",
+        "tests/test_historical_delivery_binding.py::test_execution_release_requires_a_fresh_comment_after_merge[before_merge]",
+        "tests/test_historical_delivery_binding.py::test_previous_evidence_cannot_be_altered_or_deleted[modified-docs/input-truthfulness/2026-09-29-workflow-repair-evidence/guard-controls.json]",
+        "tests/test_historical_delivery_binding.py::test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes"
+      ]
+    }
+  ],
+  "review_role": "Implementation-side synthetic sensitivity checks; not Guidance acceptance or operative readiness",
+  "schema": "historical-delivery-guard-controls-v1",
+  "source_sha256": {
+    "tests/test_historical_delivery_binding.py": "08ac221d458f8abe6dbc742729acbc78aab03f7d2b90153f0ec5dd8713ca0dca",
+    "tests/test_historical_execution_guard.py": "b19e3c864d257fe6f89ebb046f8b17b768ccf4e915e38ba7139b3cae526c396e",
+    "tools/historical-delivery-compatibility.json": "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d",
+    "tools/historical-execution-policy.json": "1b69bdd3fa92e8f296cc016cd6c94c85eca81b99bf0f11e8c37b695cc25601df",
+    "tools/historical_execution.py": "673d5c877a12eb325575b26ac764fbfd7834cc529d427396d1a5ab347ec756df",
+    "tools/historical_execution_guard.py": "7db7a985c48bbc108c263360a5779ff8788802b08c84bf14c260077b30b14f3b"
+  },
+  "source_unchanged": true,
+  "status": "PASS"
+}

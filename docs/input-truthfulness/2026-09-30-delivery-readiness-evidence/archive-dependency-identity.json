@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "filename": "zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "5a56ba0db2d244117ed744dfa8f6f5b366e14148e00de44723413b2f3938a902",
+      "size": 5546993,
+      "url": "https://files.pythonhosted.org/packages/53/60/7be26e610767316c028a2cbedb9a3beabdbe33e2182c373f71a1c0b88f36/zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+    },
+    {
+      "filename": "zstandard-0.25.0-cp312-cp312-win_amd64.whl",
+      "sha256": "ffef5a74088f1e09947aecf91011136665152e0b4b359c42be3373897fb39b01",
+      "size": 506276,
+      "url": "https://files.pythonhosted.org/packages/79/3b/fa54d9015f945330510cb5d0b0501e8253c127cca7ebe8ba46a965df18c5/zstandard-0.25.0-cp312-cp312-win_amd64.whl"
+    }
+  ],
+  "project_urls": {
+    "Documentation": "https://python-zstandard.readthedocs.io/en/latest/",
+    "Homepage": "https://github.com/indygreg/python-zstandard"
+  },
+  "requires_python": ">=3.9",
+  "source": "https://pypi.org/pypi/zstandard/0.25.0/json",
+  "version": "0.25.0"
+}

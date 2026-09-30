@@ -23,12 +23,13 @@ def jobs_path(run_id, page=1):
 
 
 @pytest.fixture
-def setup():
+def setup(monkeypatch):
     recipient = "age1" + "a" * 58
     policy = {"schema": guard.POLICY_SCHEMA, "implementation_pr": FIXTURE_PR,
               "recipient": recipient, "recipient_sha256": hashlib.sha256((recipient + "\n").encode()).hexdigest(),
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
               "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
+    monkeypatch.setattr(guard, "RECIPIENT_SHA256", policy["recipient_sha256"])
     env = {"GITHUB_REPOSITORY": guard.REPOSITORY, "GITHUB_REPOSITORY_ID": str(guard.REPOSITORY_ID),
            "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main", "GITHUB_JOB": "execution",
            "GITHUB_WORKFLOW_REF": guard.REPOSITORY + "/" + guard.WORKFLOW + "@refs/heads/main",
@@ -55,7 +56,7 @@ def setup():
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
               "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
     repo = {"id": guard.REPOSITORY_ID, "full_name": guard.REPOSITORY, "private": False}
-    pr = {"number": FIXTURE_PR, "merged": True, "state": "closed", "draft": False, "merge_commit_sha": MERGED,
+    pr = {"number": FIXTURE_PR, "merged": True, "merged_at": "2026-09-29T10:00:00Z", "state": "closed", "draft": False, "merge_commit_sha": MERGED,
           "base": {"ref": "main", "repo": repo}, "head": {"sha": APPROVED, "repo": repo}}
     runs = []
     for exception in guard.recovery_contract()["exceptions"]:
@@ -65,7 +66,7 @@ def setup():
              "head_branch": "main", "repository": repo, "head_repository": repo, "head_sha": guard.compatibility_contract()["accepted_transport"]["workflow_sha"] if n == 4 else CURRENT,
              "display_title": "historical-input-" + ("rehearsal" if n == 4 else "real"),
              "status": "completed" if n == 4 else "in_progress", "conclusion": "success" if n == 4 else None} for n in (4, 5)])
-    tree = {"truncated": False, "tree": [{"path": path, "type": "tree", "sha": "f" * 40} for path in ("tools", "src")]}
+    tree = {"truncated": False, "tree": [{"path": path, "type": "tree", "sha": "f" * 40} for path in ("tools", "src", ".github")]}
     content = {"type": "file", "encoding": "base64", "content": base64.b64encode(b"synthetic workflow\n").decode()}
     responses = {"": repo, "/pulls/123": pr,
                  "/pulls/94": {"number": 94, "merged": True, "merge_commit_sha": guard.ORIGINAL_MERGE, "head": {"sha": guard.ORIGINAL_HEAD}},
@@ -109,7 +110,8 @@ def setup():
     def api(path):
         calls.append(path)
         if path == "/issues/comments/123":
-            return {"id": 123, "user": {"login": guard.OWNER}, "issue_url": guard.API_ROOT + "/issues/123", "body": json.dumps(record)}
+            return {"id": 123, "user": {"login": guard.OWNER}, "issue_url": guard.API_ROOT + "/issues/123", "body": json.dumps(record),
+                    "created_at": "2026-09-29T12:00:00Z"}
         if path not in responses:
             raise guard.GuardError("missing_synthetic_response")
         return deepcopy(responses[path])

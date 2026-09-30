@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from tests.test_historical_execution_guard import setup, run, APPROVED, CURRENT, OLD_RUN, jobs_path
+from tests.test_historical_execution_guard import setup, run, APPROVED, CURRENT, OLD_RUN, TODAY, jobs_path
 from tools import historical_execution_guard as guard
 
 
@@ -65,7 +65,8 @@ def test_any_missing_or_failed_measured_check_blocks_release(setup, status, chec
     ("source_changed", "release_source_changed"), ("proof_missing", "release_proof_coverage"),
     ("proof_changed", "release_proof_changed"), ("proof_failed", "technical_release_not_established"),
     ("proof_escape", "invalid_release_proof"), ("changed_diff", "release_diff_changed"),
-    ("foreign_code", "unreviewed_delivery_scope"), ("incomplete_diff", "incomplete_delivery_diff")])
+    ("foreign_code", "unreviewed_delivery_scope"), ("renamed_source", "unreviewed_delivery_scope"),
+    ("incomplete_diff", "incomplete_delivery_diff")])
 def test_hashed_release_cannot_hide_changed_or_missing_proof(setup, mutation, reason):
     document = release_document(setup)
     path = "tools/historical_package.py"
@@ -75,7 +76,7 @@ def test_hashed_release_cannot_hide_changed_or_missing_proof(setup, mutation, re
     elif mutation == "proof_missing": del document["proofs"]["runtime"]
     elif mutation in ("proof_changed", "proof_failed"):
         proof = document["proofs"]["runtime"]
-        raw = guard.encode({"status": "FAIL"})
+        raw = guard.encode({"status": "FAIL" if mutation == "proof_failed" else "PASS", "changed": True})
         setup[3][f"/contents/{proof['path']}?ref={APPROVED}"]["content"] = base64.b64encode(raw).decode()
         if mutation == "proof_failed": proof["sha256"] = hashlib.sha256(raw).hexdigest()
     elif mutation == "proof_escape": document["proofs"]["runtime"]["path"] = "docs/input-truthfulness/../outside.json"
@@ -83,6 +84,7 @@ def test_hashed_release_cannot_hide_changed_or_missing_proof(setup, mutation, re
         change = setup[3][f"/compare/{guard.compatibility_contract()['continuation_base']}...{APPROVED}"]
         if mutation == "changed_diff": change["files"] = [{"filename": path, "status": "modified", "sha": "d" * 40}]
         elif mutation == "foreign_code": change["files"] = [{"filename": "src/breadth.py", "status": "modified", "sha": "d" * 40}]
+        elif mutation == "renamed_source": change["files"] = [{"filename": "tests/moved.py", "previous_filename": "src/another.py", "status": "renamed", "sha": "d" * 40}]
         else: change.pop("files")
     replace_release(setup, document)
     with pytest.raises(guard.GuardError, match=reason):
@@ -129,7 +131,112 @@ def test_personal_scope_cannot_claim_provider_consent_or_expand_access(setup, fi
 def test_historical_v2_projection_is_not_relabelled_or_current_authorization(setup):
     result = run(setup)
     legacy = {key: result[key] for key in guard.BINDING_FIELDS}
+    accepted = guard.compatibility_contract()["accepted_transport"]
+    legacy.update(run_id=accepted["rehearsal_run_id"], mode="rehearsal", run_number=4, assignment_phase=1,
+                  checkout_sha=accepted["checkout_sha"], workflow_sha=accepted["workflow_sha"],
+                  implementation_pr=95, readiness_comment_id=accepted["readiness_comment_id"],
+                  recipient_sha256=guard.compatibility_contract()["recipient_sha256"])
     assert guard.validate_phase_binding(legacy) == legacy
     with pytest.raises(guard.GuardError, match="missing_delivery_binding"):
         guard.validate_execution_binding(legacy, setup[0])
     assert guard.RECOVERY_CONTRACT_SHA256 == "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
+
+
+def test_old_v2_readiness_is_not_a_current_release(setup):
+    setup[2]["schema"] = "readiness-v2"
+    with pytest.raises(guard.GuardError, match="readiness_not_pass"):
+        run(setup)
+
+
+def test_new_policy_cannot_change_the_frozen_recipient(setup):
+    setup[0]["recipient"] = "age1" + "c" * 58
+    setup[0]["recipient_sha256"] = hashlib.sha256((setup[0]["recipient"] + "\n").encode()).hexdigest()
+    with pytest.raises(guard.GuardError, match="unaccepted_delivery_recipient"):
+        run(setup)
+    assert setup[4] == []
+
+
+@pytest.mark.parametrize("path", ["tools/historical_normalization.py", "tools/historical_reconcile.py",
+                                "tools/historical_breadth_reference.py"])
+def test_scientific_runtime_is_hash_bound_but_not_in_changed_code_scope(setup, path):
+    contract = guard.compatibility_contract()
+    assert path in contract["required_source_paths"]
+    assert path not in contract["permitted_changed_code"]
+    setup[3][f"/compare/{contract['continuation_base']}...{APPROVED}"]["files"] = [
+        {"filename": path, "status": "modified", "sha": "d" * 40}]
+    with pytest.raises(guard.GuardError, match="unreviewed_delivery_scope"):
+        run(setup)
+
+
+def test_compatibility_contract_is_not_an_editable_old_success_fallback(setup, tmp_path, monkeypatch):
+    contract = guard.compatibility_contract()
+    contract["accepted_transport"]["rehearsal_run_id"] += 1
+    path = tmp_path / "altered-compatibility.json"
+    path.write_bytes(guard.encode(contract))
+    monkeypatch.setattr(guard, "COMPATIBILITY_PATH", path)
+    with pytest.raises(guard.GuardError, match="changed_compatibility_contract"):
+        run(setup)
+
+
+@pytest.mark.parametrize("old_pr", [94, 95, 96, None])
+def test_old_or_unbound_pr_cannot_admit_new_code(setup, old_pr):
+    setup[0]["implementation_pr"] = old_pr
+    with pytest.raises(guard.GuardError, match="unbound_implementation_pr"):
+        run(setup)
+    assert setup[4] == []
+
+
+@pytest.mark.parametrize("created,merged,authorized", [
+    ("2026-09-29T09:59:59Z", "2026-09-29T10:00:00Z", "2026-09-29"),
+    ("2026-09-29T12:00:00Z", "2026-09-29T10:00:00Z", "2026-09-28"),
+    ("2026-09-29T12:00:00", "2026-09-29T10:00:00Z", "2026-09-29"),
+    (None, "2026-09-29T10:00:00Z", "2026-09-29"),
+    ("2026-09-29T12:00:00Z", None, "2026-09-29"),
+], ids=["before_merge", "wrong_release_date", "naive_comment", "missing_comment_time", "missing_merge_time"])
+def test_execution_release_requires_a_fresh_comment_after_merge(setup, created, merged, authorized):
+    policy, env, record, responses, _, api = setup
+    responses["/pulls/123"]["merged_at"] = merged
+    record["authorized_on"] = authorized
+    def changed_api(path):
+        value = api(path)
+        if path == "/issues/comments/123":
+            value["created_at"] = created
+            value["updated_at"] = "2026-09-29T12:30:00Z"
+        return value
+    with pytest.raises(guard.GuardError, match="execution_release_not_after_merge"):
+        guard.verify(changed_api, policy, env, "real", 123, TODAY)
+
+
+@pytest.mark.parametrize("path", [
+    "docs/input-truthfulness/2026-09-29-workflow-repair-evidence/guard-controls.json",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-stress.json",
+])
+@pytest.mark.parametrize("status", ["modified", "removed"])
+def test_previous_evidence_cannot_be_altered_or_deleted(setup, path, status):
+    setup[3][f"/compare/{guard.compatibility_contract()['continuation_base']}...{APPROVED}"]["files"] = [
+        {"filename": path, "status": status, "sha": "d" * 40}]
+    with pytest.raises(guard.GuardError, match="unreviewed_delivery_scope"):
+        run(setup)
+
+
+@pytest.mark.parametrize("path", [
+    "docs/input-truthfulness/2026-09-29-historical-execution.md",
+    "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/measured.json",
+    guard.RELEASE_EVIDENCE_PATH,
+])
+def test_only_current_delivery_documents_are_allowed_support_changes(setup, path):
+    setup[3][f"/compare/{guard.compatibility_contract()['continuation_base']}...{APPROVED}"]["files"] = [
+        {"filename": path, "status": "modified", "sha": "d" * 40}]
+    assert run(setup)["status"] == "PASS"
+
+
+@pytest.mark.parametrize("mutation", ["changed", "missing"])
+def test_other_github_workflow_changes_cannot_bypass_source_equality(setup, mutation):
+    tree = setup[3][f"/git/trees/{CURRENT}"]["tree"]
+    entry = next(item for item in tree if item["path"] == ".github")
+    if mutation == "missing":
+        tree.remove(entry)
+    else:
+        entry["sha"] = "d" * 40
+    with pytest.raises(guard.GuardError, match="execution_code_changed"):
+        run(setup)

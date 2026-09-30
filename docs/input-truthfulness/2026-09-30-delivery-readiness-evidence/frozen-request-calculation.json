@@ -1,0 +1,1034 @@
+{
+  "bulk_rows": 2753568,
+  "calculation_scope": "offline arithmetic, not provider observations or useful-completion guarantee",
+  "limits": {
+    "page_bytes": 8388608,
+    "requests": 400,
+    "requests_per_minute": 20,
+    "retained_bytes": 1073741824
+  },
+  "manifest_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+  "partial_page_sensitivity": [
+    {
+      "assumed_page_fill_fraction": 1,
+      "assumption": "every nonterminal page uses this fixed fill; not an Alpaca response guarantee",
+      "calculated_requests": 289,
+      "request_cap_headroom": 111,
+      "status": "PASS"
+    },
+    {
+      "assumed_page_fill_fraction": 0.75,
+      "assumption": "every nonterminal page uses this fixed fill; not an Alpaca response guarantee",
+      "calculated_requests": 385,
+      "request_cap_headroom": 15,
+      "status": "PASS"
+    },
+    {
+      "assumed_page_fill_fraction": 0.5,
+      "assumption": "every nonterminal page uses this fixed fill; not an Alpaca response guarantee",
+      "calculated_requests": 575,
+      "request_cap_headroom": -175,
+      "status": "FAIL"
+    }
+  ],
+  "probe_rows": 2,
+  "queries": [
+    {
+      "full_page_minimum": 1,
+      "id": "access-probe",
+      "limit": 10000,
+      "required_sessions": 2,
+      "scope": "probe",
+      "security_count": 1,
+      "security_session_rows": 2,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-001",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-002",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-003",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-004",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-005",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-006",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-007",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-008",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-009",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-010",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-011",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-012",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-013",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-014",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-015",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-016",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-017",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-018",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-019",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-020",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-021",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-022",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-023",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-024",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-025",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-026",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-027",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-028",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-029",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-030",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-031",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-032",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-033",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-034",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-035",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-036",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-037",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-038",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-039",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-040",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-041",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-042",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-043",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-044",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-045",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-046",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-047",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-24-048",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 80,
+      "security_session_rows": 23040,
+      "target_session": "2026-09-24"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-001",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-002",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-003",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-004",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-005",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-006",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-007",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-008",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-009",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-010",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-011",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-012",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-013",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-014",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-015",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-016",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-017",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-018",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-019",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-020",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-021",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-022",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-023",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-024",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-025",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-026",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-027",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-028",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-029",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-030",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-031",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-032",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-033",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-034",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-035",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-036",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-037",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-038",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-039",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-040",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-041",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-042",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-043",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-044",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-045",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-046",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-047",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 100,
+      "security_session_rows": 28800,
+      "target_session": "2026-09-25"
+    },
+    {
+      "full_page_minimum": 3,
+      "id": "canonical-2026-09-25-048",
+      "limit": 10000,
+      "required_sessions": 288,
+      "scope": "bulk",
+      "security_count": 81,
+      "security_session_rows": 23328,
+      "target_session": "2026-09-25"
+    }
+  ],
+  "query_count": 97,
+  "request_accounting": {
+    "actual_provider_requests_this_task": 0,
+    "filled_page_minimum": 289,
+    "maximum_with_every_minimum_request_retried_once": 578,
+    "no_fresh_allowance": true
+  },
+  "schema": "historical-delivery-frozen-request-calculation-v1",
+  "status": "PASS",
+  "timing_assumptions": {
+    "instantaneous_burst_lower_bound_seconds_289": 840.014,
+    "instantaneous_burst_lower_bound_seconds_400": 1140.019,
+    "internal_acquisition_deadline_seconds": 1500,
+    "job_seconds": 4500,
+    "outer_acquisition_step_seconds": 1800,
+    "package_step_seconds": 600,
+    "qualification": "burst lower bounds follow unchanged rolling-window throttle; fake sleeps are not real HTTP duration; enforced deadlines may stop partial acquisition",
+    "shared_offline_step_seconds": 1800,
+    "standard_rate": 20,
+    "unknowns": [
+      "HTTP latency/body transfer",
+      "local parsing/fsync duration on actual response bodies",
+      "provider lower rate",
+      "Retry-After",
+      "partial pages and transient failures"
+    ]
+  }
+}
