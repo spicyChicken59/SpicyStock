@@ -52,6 +52,7 @@ REPAIR_TESTS = {
     "tests/test_historical_recovery_integration.py",
     "tests/test_historical_execution.py",
     "tests/test_historical_package.py",
+    "tests/test_historical_projection_binding.py",
 }
 REPAIR_DOCUMENTS = {"README.md", ".env.example", "CLAUDE.md",
     "docs/input-truthfulness/2026-09-29-historical-execution.md",

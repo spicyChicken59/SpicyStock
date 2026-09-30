@@ -1,0 +1,58 @@
+{
+  "base": "6979904ad872d8d648c93537c77ead5fda909481",
+  "checked_head": "0cc7bcb7548415da2321553949ce9f33341dd763",
+  "commands": [
+    "git rev-parse <base>:<path> <head>:<path>",
+    "git show <head>:<path> (binary captured; SHA-256 checked)"
+  ],
+  "design_system": {
+    "source": "14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c",
+    "version": "2.13.0"
+  },
+  "observed_at": "2026-09-30T22:30:19.338386+00:00",
+  "protected_git_objects": {
+    ".env.example": "0d349a32c7dcf3420d207b2e0cdd3e8d81de11c7",
+    ".github/workflows/secret-scan.yml": "f568689c3789a53835708b676ef6c2dcc418fd6f",
+    ".github/workflows/tests.yml": "900379e417eebbcc650a7e018509883419f89b08",
+    "docs/data.json": "39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd",
+    "docs/design-system": "0487cc30bb28bb62453546b9712b83cae380a695",
+    "docs/history": "7d459b64a025ab6f41c778547a212ba14ebe9a3e",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json": "cc2c4b1d20dd695eb183a274081d150634c73656",
+    "docs/input-truthfulness/historical-delivery-release-evidence.json": "c10510482a8415669073308d90986d1cc1b1c37e",
+    "docs/picks.json": "2dd4d683e3362c9032c8615a83def4192707fd2d",
+    "knowledge": "615a24ea2ebbc877fa54164971fcfbf074220455",
+    "src": "14c96a4b4c8e3e8fdccbdb1d537aade3ab1fb170",
+    "tools/historical-delivery-compatibility.json": "edc96112386019ab987246ccc8dadddf84123f93",
+    "tools/historical-workflow-recovery.json": "f10500440e54159ebf640d51d5d699ab702d9c28"
+  },
+  "reader_identity_only": {
+    "after_sha256": "e16c675a62d0880ea2148b4569bc10128c6c667ea47804b88725aa58d6ed7cbb",
+    "before_sha256": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128",
+    "path": "tools/historical_package.py",
+    "scope": "Only _execution compatibility acceptance: original PR97 v4 receipts remain readable; live admission still requires the new relation. All other package bytes are unchanged."
+  },
+  "schema": "historical-native6-preservation-v1",
+  "scope": "Read-only public Git object comparisons. No source rewrite, benchmark, owner key or private package.",
+  "status": "PASS",
+  "unchanged_pr97_source_sha256": {
+    ".github/workflows/tests.yml": "fb6bcae8838f8e07f458c2dd66f9f63665008e0a7ff09080faac0b8af23bc349",
+    ".gitleaks.toml": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607",
+    "src/breadth.py": "8b5a27ca89d77a0e18883a3f4bbca808a87d2475eb2220d01da6d0cee0a2cb9a",
+    "src/quality.py": "8cca1509e40de7096fd396bdff9c1a0464a7e641ae0d75c81812532d3cbc4ecc",
+    "src/scans.py": "67559cdf70ffea87a4fcd75c13abd19193b1f55bf2d62a335ddbf68dac182668",
+    "src/sessions.py": "aea32502bea30159d49e6b35cd68e95889694808eb561c8d34bbf7d268ad3a4b",
+    "tools/historical-delivery-compatibility.json": "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d",
+    "tools/historical-workflow-recovery.json": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317",
+    "tools/historical_acquisition.py": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e",
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_breadth_reference.py": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c",
+    "tools/historical_execution.py": "673d5c877a12eb325575b26ac764fbfd7834cc529d427396d1a5ab347ec756df",
+    "tools/historical_memory_supervisor.py": "d9443b73c840ed951a144ed54af356e28774133fccc1626028047691ac331fcd",
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_projection_benchmark.py": "8a2d106a1afb83d7c1615b8f8ed7ffece7a2b73803477e04560de454598707ea",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c",
+    "tools/historical_runtime_profile.py": "f8c653e0170695fce1d810ab6fefdaaa212a224eb46cb30e449f556af84cf3ac",
+    "tools/requirements-historical-archive.txt": "db68c200c6280d9db78b0ff8b3e2e31c1b9d06c9c41f50520ca58828bd7ff6e9",
+    "tools/requirements-historical.txt": "e2680226c4040935132d95d02cfe400bc3683b831f5330ba19002f035b78c6ed"
+  }
+}

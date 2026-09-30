@@ -34,7 +34,7 @@ def test_unchanged_synthetic_review_and_recovery_still_pass(github_setup):
     result = verify(github_setup)
     assert result["checkout_sha"] == APPROVED
     assert result["implementation_pr"] == FIXTURE_PR
-    assert result["run_number"] == 5 and result["assignment_phase"] == 2
+    assert result["run_number"] == 6 and result["assignment_phase"] == 2
     assert result["evidence"]["local_recovery"]["checkout_sha"] == guard.compatibility_contract()["accepted_transport"]["checkout_sha"]
 
 

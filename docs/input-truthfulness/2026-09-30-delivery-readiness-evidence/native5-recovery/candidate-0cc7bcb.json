@@ -1,0 +1,18 @@
+{
+  "schema": "historical-native6-candidate-ci-v1",
+  "head": "0cc7bcb7548415da2321553949ce9f33341dd763",
+  "tests_run_id": 36785729554,
+  "pytest_job_id": 110126554331,
+  "pytest_status": "FAIL",
+  "passed": 2712,
+  "failed": 2,
+  "failures": {
+    "tests/test_docs.py::test_claude_md_counts_the_suite": "Current suite count was still 2449; actual collection is 2714. Dated historical counts remain unchanged.",
+    "tests/test_historical_projection_binding.py::test_unchanged_synthetic_review_and_recovery_still_pass": "The shared prospective fixture correctly returned native 6; the old assertion still expected native 5."
+  },
+  "semantic_validation": "PASS",
+  "secret_scan": {"status": "PASS", "run_id": 36785729617},
+  "full_scale_benchmark": "NOT RUN",
+  "benchmark_gate": {"status": "PASS", "artifact_id": 11129746150, "artifact_sha256": "b4032a1607983dfb74d27491b9d0eb1e095e14cd7292384188586da4d5d5bb45"},
+  "scope": "Retained failure evidence. Only current documentation and the remaining prospective test expectation were corrected; no scientific or execution outcome was changed."
+}
