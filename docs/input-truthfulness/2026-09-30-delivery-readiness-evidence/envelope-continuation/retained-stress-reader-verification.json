@@ -1,0 +1,66 @@
+{
+  "schema": "historical-frame-count-repair-verification-v1",
+  "status": "PASS",
+  "synthetic_only": true,
+  "provider_requests": 0,
+  "owner_key_access": "NOT RUN",
+  "recompression": "NOT RUN",
+  "encryption": "NOT RUN",
+  "reconciliation": "NOT RUN",
+  "started_at": "2026-09-30T15:07:44.816995+00:00",
+  "completed_at": "2026-09-30T15:07:52.445962+00:00",
+  "archive": {
+    "bytes": 215909395,
+    "sha256": "b6b9b607efe8c9380ae13d63faaa12c6481e9334b9403df7224d9f60b1435035"
+  },
+  "diagnosis": {
+    "old_error": "invalid_archive_block",
+    "frame_blocks": 20463,
+    "old_maximum": 16418,
+    "first_refused_block": 16419,
+    "first_refused_offset": 208138299,
+    "new_maximum": 65536
+  },
+  "decode_invocations": 1,
+  "decoded_tar_bytes": 1866926080,
+  "decode_seconds": 3.0939999999827705,
+  "decode_and_member_verification_seconds": 7.625,
+  "index": {
+    "bytes": 67168,
+    "sha256": "fc7cb4d2b61d3351179ee1c8e86b76a24546fb24d8b20385d1963031bf8a2fdc",
+    "schema": "historical-private-package-v2"
+  },
+  "original_inventory": {
+    "members": 390,
+    "sha256": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+    "published_sha256": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+    "equals_published": true
+  },
+  "checks": {
+    "original_390_lengths_and_sha256": "PASS",
+    "all_393_indexed_members": "PASS",
+    "archive_preserved": "PASS",
+    "writer_function_unchanged": "PASS",
+    "codec_source_preserved_during_decode": "PASS"
+  },
+  "scientific_and_ledger_members": {
+    "ledger.sqlite3": {
+      "bytes": 86016,
+      "sha256": "da3b49d672277f22731c0ffd4ff83c25e863bf7cb12036ac08dd713c9a64d6c0"
+    },
+    "reconciliation-2026-09-24.json": {
+      "bytes": 725956396,
+      "sha256": "feb42a6319aab18fe0f4458bd57073aa4fbe9b42e3216c722766978ca307c6db"
+    },
+    "reconciliation-2026-09-25.json": {
+      "bytes": 726113604,
+      "sha256": "d981767334f0f57dadbf13bfb806cdc3af08a36088411d713891485728ef0696"
+    }
+  },
+  "source_sha256": {
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128",
+    "tests/test_historical_package.py": "6ec6a0b3752fab60b3db4d1a82e49ee2c70954f624ae41d92581a4842cb97414"
+  },
+  "scope": "Retained PR96 synthetic codec decode/member proof; not a new hosted recovery or release authorization."
+}

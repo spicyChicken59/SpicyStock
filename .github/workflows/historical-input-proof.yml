@@ -85,6 +85,7 @@ jobs:
       - name: Install pinned historical runtime and verified age
         run: |
           set -euo pipefail
+          python -m pip install --require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt
           python -m pip install -r tools/requirements-historical.txt
           python tools/install_historical_age.py --destination "$HISTORICAL_ROOT/age"
       - name: Verify reviewed revision, evidence and durable execution slot
@@ -152,7 +153,7 @@ jobs:
         with:
           name: historical-evidence-${{ github.run_id }}-${{ github.run_attempt }}-${{ inputs.mode }}
           path: |
-            ${{ env.HISTORICAL_ROOT }}/delivery/evidence.tar.gz.age
+            ${{ env.HISTORICAL_ROOT }}/delivery/evidence.tar.zst.age
             ${{ env.HISTORICAL_ROOT }}/delivery/receipt.json
           if-no-files-found: error
           retention-days: 7

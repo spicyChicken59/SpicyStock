@@ -1,0 +1,17 @@
+{
+  "changed_file_count": 37,
+  "claim": "This decision is not a benchmark result or execution release.",
+  "observed_before": "d53155bba5f63f42f65d21b4af708a3257b920f2",
+  "observed_head": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+  "reason": "runtime_or_validation_inputs_changed",
+  "relevant_changed_paths": [
+    "tests/test_historical_projection_benchmark.py",
+    "tests/test_historical_runtime_profile.py",
+    "tools/historical_archive_codec.py",
+    "tools/historical_projection_benchmark.py",
+    "tools/historical_runtime_profile.py"
+  ],
+  "run_required": true,
+  "schema": "historical-runtime-pr-gate-v1",
+  "status": "NOT RUN"
+}

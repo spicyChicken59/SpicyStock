@@ -1,0 +1,35 @@
+{
+  "exit_code": 0,
+  "files": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "9b2dacea9b99e053cf58246e5db67c3d78546741e01a451e473db3444e1daf83"
+    },
+    {
+      "path": "tests/secret_scan_controls.py",
+      "sha256": "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e"
+    },
+    {
+      "path": "tests/test_secret_scan.py",
+      "sha256": "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json",
+      "sha256": "5f71044ee6595c6d6ff1a4b4c51c57d7949621aa170ce3ef58d711db27b0c457"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/scanner-controls.json",
+      "sha256": "a1ea2d0b3bef849b0aa3ea097e9be9fd73c16889320f06704d1385d5d2a176c5"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/security-controls.md",
+      "sha256": "0aaccd111a33d446be9fdc7f9616683fcca2f22dc4178086f7131ad70c2ecd2a"
+    }
+  ],
+  "findings": 0,
+  "network_requests": 0,
+  "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+  "schema": "historical-public-correction-scan-v1",
+  "status": "PASS",
+  "version": "8.24.3"
+}

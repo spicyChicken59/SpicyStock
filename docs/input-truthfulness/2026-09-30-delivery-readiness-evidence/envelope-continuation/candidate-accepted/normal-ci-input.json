@@ -1,0 +1,144 @@
+{
+  "head_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+  "implementation_pr": 97,
+  "jobs": {
+    "page": {
+      "api_observations": {
+        "job": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-job-109953799460.json",
+          "sha256": "77c41f2ebc952cdd6d893c2bef1e9a6b37c37f55db1c1412976ff433bd2d8ccd"
+        },
+        "run": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-run.json",
+          "sha256": "75aed3620e96e9d76d9c7268f3fff4298ba6dbf3c7bce5177c53a298ff28c772"
+        }
+      },
+      "checkout_sha": "ab23402815cd1904061fc6c7714b5621b59ca12e",
+      "completed_at": "2026-09-30T15:25:55Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+      "job_id": 109953799460,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/page-log.txt",
+          "sha256": "52290f505bc58d466f485d78571de52c0dc6a9822f05bc8fafbfd0c90c331e0d"
+        }
+      ],
+      "run_attempt": 1,
+      "run_conclusion": "success",
+      "run_id": 36734865293,
+      "run_status": "completed",
+      "started_at": "2026-09-30T15:11:52Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36734865293/job/109953799460",
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    "pytest": {
+      "api_observations": {
+        "job": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-job-109953799099.json",
+          "sha256": "d34c28a03af95dec1fa770f914a49efe4ed048be2e0e13971480e65fb7a2b94a"
+        },
+        "run": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-run.json",
+          "sha256": "75aed3620e96e9d76d9c7268f3fff4298ba6dbf3c7bce5177c53a298ff28c772"
+        }
+      },
+      "checkout_sha": "ab23402815cd1904061fc6c7714b5621b59ca12e",
+      "checks": {
+        "clean_tree": "PASS",
+        "producer_fixture": "PASS",
+        "pytest": "PASS",
+        "semantic_gate": "PASS"
+      },
+      "completed_at": "2026-09-30T15:15:12Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+      "job_id": 109953799099,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/pytest-log.txt",
+          "sha256": "28e59d55fd5efab72d456de6e8acaabfdcca5cf245486f2ec6c9cc634b28a71a"
+        }
+      ],
+      "run_attempt": 1,
+      "run_conclusion": "success",
+      "run_id": 36734865293,
+      "run_status": "completed",
+      "started_at": "2026-09-30T15:11:52Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36734865293/job/109953799099",
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    "secret_scan": {
+      "api_observations": {
+        "job": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/scan-job-109953798163.json",
+          "sha256": "89e084bf6d57dea3a9867e96f05bf8d9853ccefe219794778270fe17dc29ec2a"
+        },
+        "run": {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/scan-run.json",
+          "sha256": "b52f39500743de5a9fce6db1cfb5e2476b66c17080cbb7de121b000b043250fc"
+        }
+      },
+      "checkout_sha": "ab23402815cd1904061fc6c7714b5621b59ca12e",
+      "completed_at": "2026-09-30T15:13:20Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+      "job_id": 109953798163,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/gitleaks-log.txt",
+          "sha256": "e5c8098d904518d7f2c9ab912469c049eead2829023457b726b2952f7f506f49"
+        }
+      ],
+      "run_attempt": 1,
+      "run_conclusion": "success",
+      "run_id": 36734865392,
+      "run_status": "completed",
+      "started_at": "2026-09-30T15:11:51Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36734865392/job/109953798163",
+      "workflow_path": ".github/workflows/secret-scan.yml"
+    }
+  },
+  "observed_at": "2026-09-30T16:03:40.401094+00:00",
+  "repository": "spicyChicken59/SpicyStock",
+  "schema": "historical-delivery-normal-ci-input-v2",
+  "source_sha256": {
+    ".github/workflows/historical-input-proof.yml": "cc1b035399873ec8395b875cedce38f6f345276bc66158d319e659a97614c16f",
+    ".github/workflows/tests.yml": "fb6bcae8838f8e07f458c2dd66f9f63665008e0a7ff09080faac0b8af23bc349",
+    ".gitleaks.toml": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json": "110385822e2a9e9bfc7547694d8cd3b5648646c2f89cc9eb9e4785451e17a202",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-central-members.json": "afb554858e6f3c2978f590e7f8a49998c7b003dce0bf139d17a14415048f78cf",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-central.json": "7b76630958f818e52d163ca4af5e0a84c517cf56c30881d344b465d0c0b6651f",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-stress-members.json": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-stress.json": "35b739a1f0e40bbfcd5be80e38323606f4da1127a17baf926ca35f15062ca47a",
+    "src/breadth.py": "8b5a27ca89d77a0e18883a3f4bbca808a87d2475eb2220d01da6d0cee0a2cb9a",
+    "src/quality.py": "8cca1509e40de7096fd396bdff9c1a0464a7e641ae0d75c81812532d3cbc4ecc",
+    "src/scans.py": "67559cdf70ffea87a4fcd75c13abd19193b1f55bf2d62a335ddbf68dac182668",
+    "src/sessions.py": "aea32502bea30159d49e6b35cd68e95889694808eb561c8d34bbf7d268ad3a4b",
+    "tools/historical-delivery-compatibility.json": "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d",
+    "tools/historical-execution-policy.json": "bd8e97d6fdbc053a8f584bab6229cc28ac483ec6b40f2773ccf4adfd58e88418",
+    "tools/historical-workflow-recovery.json": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317",
+    "tools/historical_acquisition.py": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e",
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_benchmark_gate.py": "a015dc4bfdc6db5692f472007eb0c50149679898b3e4a70b7e4c8ce334e2dc01",
+    "tools/historical_breadth_reference.py": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c",
+    "tools/historical_execution.py": "673d5c877a12eb325575b26ac764fbfd7834cc529d427396d1a5ab347ec756df",
+    "tools/historical_execution_guard.py": "0f71c74585e3bc8a70ee4ac016f42a83d4492e90c88ba68e2855286deb950289",
+    "tools/historical_memory_supervisor.py": "d9443b73c840ed951a144ed54af356e28774133fccc1626028047691ac331fcd",
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128",
+    "tools/historical_projection_benchmark.py": "8a2d106a1afb83d7c1615b8f8ed7ffece7a2b73803477e04560de454598707ea",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c",
+    "tools/historical_runtime_profile.py": "f8c653e0170695fce1d810ab6fefdaaa212a224eb46cb30e449f556af84cf3ac",
+    "tools/install_historical_age.py": "be2f4d6030ea4e5206523cbd6cba47869d1049d36575939f53d2a9050ec57e64",
+    "tools/requirements-historical-archive.txt": "db68c200c6280d9db78b0ff8b3e2e31c1b9d06c9c41f50520ca58828bd7ff6e9",
+    "tools/requirements-historical.txt": "e2680226c4040935132d95d02cfe400bc3683b831f5330ba19002f035b78c6ed"
+  },
+  "status": "PASS"
+}

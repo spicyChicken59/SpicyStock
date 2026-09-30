@@ -10,6 +10,100 @@ on:
 permissions:
   contents: read
 jobs:
+  historical-runtime-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run_required: ${{ steps.decision.outputs.run_required }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Decide from the observed complete push range
+        id: decision
+        run: >-
+          python3 tools/historical_benchmark_gate.py --event "$GITHUB_EVENT_PATH"
+          --output "$RUNNER_TEMP/historical-runtime-gate.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-runtime-gate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/historical-runtime-gate.json
+          retention-days: 7
+          if-no-files-found: error
+
+  historical-runtime:
+    name: historical-runtime (${{ matrix.case }})
+    if: github.event_name == 'pull_request' && needs.historical-runtime-gate.outputs.run_required == 'true'
+    needs: historical-runtime-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [central, stress]
+    defaults:
+      run:
+        shell: bash
+    env:
+      MPLBACKEND: Agg
+      PYTHONUTF8: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+      BENCHMARK_CASE: ${{ matrix.case }}
+    steps:
+      - name: Initialize isolated synthetic scratch and setup clock
+        run: |
+          set -euo pipefail
+          umask 077
+          benchmark_parent="$RUNNER_TEMP/historical-runtime-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$BENCHMARK_CASE"
+          mkdir -m 700 "$benchmark_parent"
+          printf 'BENCHMARK_PARENT=%s\nBENCHMARK_SETUP_START=%s\n' "$benchmark_parent" "$(date +%s)" >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.14'
+      - name: Install the exact historical runtime and verified test encryption
+        run: |
+          set -euo pipefail
+          python -m pip install --require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt
+          python -m pip install -r tools/requirements-historical.txt
+          python tools/install_historical_age.py --destination "$BENCHMARK_PARENT/age"
+      - name: Enforce 12 GiB, profile the fixed case, recover, and reproduce offline
+        # Each two-date offline pass has one unchanged 30-minute deadline;
+        # packaging has one 10-minute deadline. The helper emits partial receipts
+        # on handled deadline refusal. This is never a historical dispatch.
+        run: |
+          set -euo pipefail
+          umask 077
+          sudo --preserve-env=GITHUB_ACTIONS,GITHUB_RUN_ID,GITHUB_RUN_ATTEMPT,GITHUB_SHA,GITHUB_EVENT_NAME,RUNNER_OS,RUNNER_ARCH,ImageOS,ImageVersion,MPLBACKEND,PYTHONUTF8,PYTHONDONTWRITEBYTECODE \
+            -- "$(command -v python)" -I -B tools/historical_memory_supervisor.py --case "$BENCHMARK_CASE" \
+            --workspace "$BENCHMARK_PARENT/synthetic-compaction-$BENCHMARK_CASE" \
+            --age "$BENCHMARK_PARENT/age/age" --uid "$(id -u)" --gid "$(id -g)" \
+            --setup-start "$BENCHMARK_SETUP_START"
+      - name: Preserve only compact synthetic measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: historical-runtime-${{ matrix.case }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.BENCHMARK_PARENT }}/memory-envelope.json
+            ${{ env.BENCHMARK_PARENT }}/benchmark-preflight.json
+            ${{ env.BENCHMARK_PARENT }}/synthetic-compaction-${{ matrix.case }}/benchmark-result.json
+            ${{ env.BENCHMARK_PARENT }}/synthetic-compaction-${{ matrix.case }}/runtime-profile.json
+            ${{ env.BENCHMARK_PARENT }}/synthetic-compaction-${{ matrix.case }}/synthetic-member-inventory.json
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 9
+
   pytest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -22,8 +116,11 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-dev.txt
+            tools/requirements-historical-archive.txt
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt
+          python -m pip install -r requirements-dev.txt
       - name: Install pinned workflow semantic validator
         run: python tools/install_actionlint.py --destination "$RUNNER_TEMP/actionlint"
       - name: Validate changed workflow contexts and syntax

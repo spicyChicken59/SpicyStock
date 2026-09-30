@@ -189,7 +189,7 @@ def test_actual_initialization_exports_same_step_and_later_consumers_keep_one_ex
                 assert value == shared["HISTORICAL_ROOT"] + suffix
     uploads = [s for s in workflow()["jobs"]["execution"]["steps"] if s.get("id") == "artifact"]
     resolved = uploads[0]["with"]["path"].replace("${{ env.HISTORICAL_ROOT }}", shared["HISTORICAL_ROOT"]).splitlines()
-    assert resolved == [shared["HISTORICAL_ROOT"] + "/delivery/evidence.tar.gz.age",
+    assert resolved == [shared["HISTORICAL_ROOT"] + "/delivery/evidence.tar.zst.age",
                         shared["HISTORICAL_ROOT"] + "/delivery/receipt.json"]
     # Execute the actual final receipt consumer too, using only synthetic data.
     # Git Bash represents the same Windows directory as /c/...; native Python

@@ -1,0 +1,193 @@
+{
+  "schema": "assembler-synthetic-predicate-controls-v1",
+  "status": "PASS",
+  "scope": "Offline control fixtures only; no hosted runtime or package run and no technical release claim.",
+  "controls": [
+    {
+      "case": "synthetic_positive_capacity",
+      "status": "PASS"
+    },
+    {
+      "case": "unaffected_public_v2_equivalence",
+      "status": "PASS"
+    },
+    {
+      "case": "synthetic_positive_recovery",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_index_bytes_never_passes",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_tar_archive_bytes_never_passes",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_ciphertext_bytes_never_passes",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_archive_sha256_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_ciphertext_sha256_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "overhead_over_1MiB_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "archive_over_250MiB_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "old_receipt_not_relabelled",
+      "status": "PASS"
+    },
+    {
+      "case": "old_index_not_relabelled",
+      "status": "PASS"
+    },
+    {
+      "case": "old_caps_not_relabelled",
+      "status": "PASS"
+    },
+    {
+      "case": "bad_tar_arithmetic_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "synthetic_positive_memory",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_final_memory_is_not_run",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_dropped_worker_membership_control_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "bad_benchmark_result_sha256_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "bad_benchmark_checkout_sha_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "bad_supervisor_source_sha256_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "over_12GiB_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "workload_oom_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_actual_overlimit_control_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "workload_timeout_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "supervised_job_over_deadline_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "five_proof_names_preserved",
+      "status": "PASS"
+    },
+    {
+      "case": "new_input_requires_hosted_and_memory",
+      "status": "PASS"
+    },
+    {
+      "case": "synthetic_hosted_binding_positive",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_hosted_binding_not_run",
+      "status": "PASS"
+    },
+    {
+      "case": "downloaded_memory_digest_mismatch_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "wrong_hosted_run_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "unknown_checkout_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "changed_public_observation_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "changed_job_id_and_url_with_unchanged_api_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "changed_download_digest_with_unchanged_api_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "changed_download_size_with_unchanged_api_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "relabelled_workflow_result_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "wrong_authoritative_api_hash_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "missing_authoritative_api_refs_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "authoritative_job_conclusion_mismatch_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "authoritative_job_id_mismatch_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "authoritative_job_name_mismatch_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "synthetic_normal_ci_api_positive",
+      "status": "PASS"
+    },
+    {
+      "case": "normal_ci_changed_job_id_url_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "normal_ci_relabelled_overall_success_refused",
+      "status": "PASS"
+    },
+    {
+      "case": "normal_ci_actual_timeout_cannot_be_success",
+      "status": "PASS"
+    }
+  ],
+  "count": 46,
+  "assembler_sha256": "c7f7836c8f63047c209170e35266dbe12cdd6e103bf866e574dc7ddf6d7772c6"
+}

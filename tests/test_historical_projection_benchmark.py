@@ -6,6 +6,7 @@ import hashlib
 import os
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -25,6 +26,32 @@ def age_binary():
 def short_root(tmp_path):
     # Keep actual hash-named pages below Windows' native path-length boundary.
     return tmp_path.parent / ("b-" + hashlib.sha256(str(tmp_path).encode()).hexdigest()[:12])
+
+
+def test_failed_public_recipient_extraction_removes_only_its_disposable_identity(tmp_path, monkeypatch):
+    for failure in (ValueError("synthetic_recipient_failed"), benchmark.RuntimeDeadline("synthetic_interruption")):
+        root = tmp_path / type(failure).__name__
+        root.mkdir()
+        unrelated = root / "unrelated.txt"
+        unrelated.write_bytes(b"unchanged synthetic control")
+        identity = root / "DISPOSABLE-SYNTHETIC-TEST-IDENTITY.txt"
+        calls = []
+        def keygen(command, **kwargs):
+            calls.append(command[1])
+            assert Path(command[2]) == identity
+            if command[1] == "-o":
+                identity.write_bytes(b"invented test-only identity placeholder")
+                return SimpleNamespace(returncode=0)
+            assert command[1] == "-y"
+            if isinstance(failure, benchmark.RuntimeDeadline):
+                raise failure
+            return SimpleNamespace(returncode=1, stdout=b"")
+        monkeypatch.setattr(benchmark.subprocess, "run", keygen)
+        with pytest.raises(type(failure), match=str(failure)):
+            benchmark.test_identity(root / "age.exe", root)
+        assert calls == ["-o", "-y"]
+        assert not identity.exists()
+        assert unrelated.read_bytes() == b"unchanged synthetic control"
 
 
 @pytest.mark.parametrize("child_peak", [None, 1024])
@@ -107,11 +134,38 @@ def test_actual_small_acquisition_reconciliation_package_recovery(run_setup, tmp
     assert all(row["same_input_formula_status"] == "PASS" for row in result["reconciliation"])
     metrics = result["package_measurements"]
     assert metrics["expanded_payload_bytes"] > result["source_member_payload_bytes"]
-    assert metrics["tar_archive_bytes"] > metrics["expanded_payload_bytes"] > metrics["gzip_archive_bytes"]
-    assert metrics["ciphertext_bytes"] > metrics["gzip_archive_bytes"]
+    assert metrics["tar_archive_bytes"] > metrics["expanded_payload_bytes"] > metrics["archive_bytes"]
+    assert metrics["ciphertext_bytes"] > metrics["archive_bytes"]
+    assert metrics["ciphertext_bytes"] - metrics["archive_bytes"] <= benchmark.package.MAX_CIPHERTEXT_OVERHEAD_BYTES
+    assert metrics["receipt_schema"] == benchmark.package.SCHEMA
+    assert metrics["index_schema"] == benchmark.package.INDEX_SCHEMA
+    assert metrics["delivery_envelope"] == result["delivery_envelope"] == benchmark.package.DELIVERY_ENVELOPE
     assert metrics["index_bytes"] > 0 and metrics["tar_headers_and_padding_bytes"] > 0
     assert result["memory"]["process_peak_rss_bytes"] > 0
     assert result["peak_scratch_bytes_sampled"] >= result["source_member_payload_bytes"] * 2
+    profile = json.loads((root / "runtime-profile.json").read_bytes())
+    assert {"parsing", "normalization", "projection", "projection_hashing", "reference", "reference_preparation",
+            "production", "serialization", "inventory", "package", "recovery"} <= set(profile["stages"])
+    assert profile["active_stages"] == []
+    assert profile["stages"]["production"]["calls"] == 40
+    assert all(stage["wall_inclusive_seconds"] >= stage["wall_exclusive_seconds"] >= 0 for stage in profile["stages"].values())
+
+
+@pytest.mark.parametrize("case", benchmark.CASES)
+def test_small_profile_recovered_offline_reproduces_both_dates(run_setup, tmp_path, monkeypatch, age_binary, case):
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    # Only full PR jobs claim the exact PR96 member set. This exercises the same
+    # recovered replay/deadline path on the declared small ordinary-test fixture.
+    monkeypatch.setattr(benchmark, "verify_original_outputs", lambda *_: {
+        "status": "NOT RUN", "scope": "small test fixture; full PR96 inventory verifier has separate tamper tests"})
+    result = benchmark.run_case(run_setup[0], case, short_root(tmp_path), age_binary, full_scale=False, representative=True)
+    assert result["status"] == "PASS", result
+    assert result["reproduced_offline"]["status"] == "PASS"
+    assert result["reproduced_offline"]["both_dates_exact_bytes"]
+    assert len(result["reproduced_offline"]["reconciliation"]) == 2
+    assert result["timing_acceptance"]["status"] == "PASS"
+    assert not result["full_frozen_shape"]
+    assert result["ledger_accounting_unchanged"] and not result["release_authorized"]
 
 
 def test_actual_archive_cap_failure_is_measured_without_encryption_or_delivery(run_setup, tmp_path, monkeypatch, age_binary):
@@ -123,10 +177,64 @@ def test_actual_archive_cap_failure_is_measured_without_encryption_or_delivery(r
     assert result["status"] == "FAIL"
     assert result["stopped_at_phase"] == "package"
     assert result["reason"] == "package_size_or_member_limit"
-    assert result["package_measurements"]["gzip_archive_bytes"] > 1
+    assert result["package_measurements"]["archive_bytes"] > 1
     assert result["package_measurements"]["index_bytes"] > 0
     assert "ciphertext_bytes" not in result["package_measurements"]
     assert result["memory"]["python_plus_age_peak_rss_conservative_sum_bytes"] is None
     assert not (root / "delivery").exists() and not (root / "recovered").exists()
     assert result["disposable_test_identity_removed"]
     assert not list((root / "synthetic-storage").glob(".package-*"))
+
+
+def test_deadline_inside_normalization_leaves_failure_receipt(run_setup, tmp_path, monkeypatch, age_binary):
+    from tools import historical_normalization as normalization
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    def expired(*_, **__):
+        raise benchmark.RuntimeDeadline("shared_offline_initial_deadline_exceeded")
+    monkeypatch.setattr(normalization, "_decimal", expired)
+    root = short_root(tmp_path)
+    result = benchmark.run_case(run_setup[0], "central", root, age_binary, full_scale=False)
+    assert result["status"] == "FAIL"
+    assert result["reason"] == "shared_offline_initial_deadline_exceeded"
+    assert result["stopped_at_phase"] == "reconcile_2026-09-24"
+    assert json.loads((root / "benchmark-result.json").read_bytes()) == result
+    profile = json.loads((root / "runtime-profile.json").read_bytes())
+    assert profile["active_stages"] == []
+    assert profile["stages"]["normalization"]["failures"] == 1
+    assert not (root / "delivery").exists()
+
+
+def test_small_benchmark_reports_absent_historical_only_distribution(run_setup, tmp_path, monkeypatch, age_binary):
+    from importlib.metadata import PackageNotFoundError
+    original = benchmark.version
+    def missing_optional(name):
+        if name == "socksio":
+            raise PackageNotFoundError(name)
+        return original(name)
+    monkeypatch.setattr(benchmark, "version", missing_optional)
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    result = benchmark.run_case(run_setup[0], "central", short_root(tmp_path), age_binary, full_scale=False)
+    assert result["status"] == "PASS", result
+    assert result["dependencies"]["socksio"] is None
+    assert result["dependencies"]["pandas"] == original("pandas")
+    assert not result["representative_mode"] and not result["full_frozen_shape"]
+    assert result["all_original_members_byte_identical"] and result["ledger_accounting_unchanged"]
+
+
+def test_quick_second_replay_failure_cannot_pass_timing_acceptance(run_setup, tmp_path, monkeypatch, age_binary):
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    monkeypatch.setattr(benchmark, "verify_original_outputs", lambda *_: {"status": "NOT RUN", "scope": "small fixture"})
+    original, calls = benchmark.reconcile, []
+    def fail_second_replay(manifest, storage, session):
+        calls.append((storage.name, session))
+        if len(calls) == 4:
+            raise ValueError("synthetic_second_replay_failure")
+        return original(manifest, storage, session)
+    monkeypatch.setattr(benchmark, "reconcile", fail_second_replay)
+    result = benchmark.run_case(run_setup[0], "central", short_root(tmp_path), age_binary,
+                                full_scale=False, representative=True)
+    assert len(calls) == 4 and calls[-1] == ("recovered", "2026-09-25")
+    assert result["status"] == "FAIL" and result["reason"] == "synthetic_second_replay_failure"
+    assert "reproduce_2026-09-25" in result["phases_seconds"]
+    assert result["timing_acceptance"]["status"] == "FAIL"
+    assert not result["timing_acceptance"]["required_passes_completed"]

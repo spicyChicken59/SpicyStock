@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2106 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2449 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3535,3 +3535,207 @@ silently changing attestations. Real acquisition, new reader eligibility,
 Guidance plaintext inspection and trading-edge evidence remain NOT RUN.
 Original final-price membership and real release remain BLOCKED. Astra stops
 at the PR; merge does not release execution.
+
+## Delivery readiness checkpoint - 30 Sep 2026, PR #97
+
+This continuation follows Guidance review 5362976589 and comment 5906480203.
+The measured runtime candidate is `00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c`,
+tree `16c8241fe63eab575471fdc2e52254718f6ed685`, based on merged PR #96 at
+`19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc`. Later documentation commits do not
+constitute another runtime measurement. Earlier failures retain their original
+dated meaning. The [technical review](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/delivery-review.md) links the source-bound receipts.
+
+PASS - normal CI on actual PR merge checkout
+`6c40cf7f97dd905617fe7aa796cf63ed3ae52247` passed 2,324 pytest tests, semantic
+workflow validation, 12 producer fixtures and the clean-tree check. Browser
+checks passed 127 DOM/store, 378 chart and 9,215 page checks; secret scanning
+passed. All 28 runtime source hashes match the branch and tested merge checkout.
+These individual normal jobs do not establish a passing whole Tests workflow.
+
+The scientific implementation is unchanged. Each full synthetic case uses 96
+bulk queries, all 288 sessions, 2,753,568 bulk observations and two probe
+observations. Final central is PASS: archive 99,741,871 bytes, ciphertext
+99,766,407 and expanded content 1,546,827,473 all fit their unchanged caps.
+All 390 original members retain identical bytes, lengths and hashes; ledger
+accounting is unchanged and both complete v2 reconciliation files reproduce
+exactly after recovery. The initial and recovered two-date calculations took
+1,377.739460 and 1,390.110803 seconds respectively, each within its own shared
+1,800-second budget. Packaging took 37.288482 seconds.
+
+Final stress reproduced all 388 original raw-page, query-manifest and full v2
+reconciliation identities. Its initial calculation took 1,396.736550 seconds,
+within the shared limit. The complete archive is FAIL: 215,909,287 bytes against
+208,666,624, exceeding the cap by 7,242,663 bytes. Expanded content fits 2 GiB.
+The package phase took 62.202810 seconds before refusing the oversized archive.
+Encryption, recovery and a separate all-390-member post-refusal sweep are NOT
+RUN. Initial calculation success and unused time do not establish delivery.
+
+Versioned v3 binding relates only accepted transport run 36570997883, native
+4 / attempt 1 / phase 1, to separately reviewed new code. The original recovery
+contract, complete history and source-equality checks remain. No replacement
+rehearsal or extra allowance exists. Legacy gzip v2 recovery preserves its
+original metadata. Owner personal-use authorization is not provider consent;
+the no-outreach direction remains in force. Technical evidence and a later
+dated execution release are separate.
+
+KEEP - the 199 MiB archive, 200 MiB ciphertext, 2 GiB expanded and original
+request/raw-byte ceilings, deadlines, owner key/recipient, website, strategy and
+design-system 2.13.0. FIX NOW - Guidance reviews this measured engineering result
+and the single proposed next decision: separately authorize one level-12,
+2 GiB-window comparison on verified synthetic stress inputs, bounded by 600
+seconds and a declared 12 GiB process-memory ceiling. Keep the evidence caps;
+no fit is promised and this checkpoint does not authorize the comparison.
+
+DEFER - real release remains BLOCKED pending capacity closure and a fresh dated
+execution release. Real acquisition, Guidance plaintext inspection, new reader
+eligibility and trading-edge validation are NOT RUN; original final-price
+membership completeness remains BLOCKED. OMIT - repeated rehearsal, owner-package
+inspection, provider/model calls, licensing outreach, broader tuning and raised
+caps or deadlines. Guidance owns independent review and merge; merge alone does
+not release historical execution.
+
+## PR97 bounded correction checkpoint — 30 Sep 2026
+
+FAIL — the single Guidance-authorized level-12 / 2 GiB-window comparison has
+finished and triggers stop condition A. The complete archive is 215,854,671
+bytes against the unchanged 208,666,624-byte cap, exceeding it by 7,188,047.
+Expanded content is PASS at 1,866,624,285 bytes. No second comparison, codec
+adoption, encryption, full-case replay or hosted historical run follows this
+failure. See the [dated correction review](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/review.md)
+and exact receipts; earlier accepted and failed evidence is preserved.
+
+The repository base remains `19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc` and the
+reviewed starting head is `bd779c2a1ce14b8a7361c4866678e55e29ae18f8`. The final
+submitted head and actual exact-head Tests/Secret Scan results are recorded in
+the subsequent PR97 closeout comment, not invented in this pre-push checkpoint.
+The accepted Linux measurement remains `00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c`.
+
+PASS — all 390 original synthetic source members were hash-checked during
+streaming, without regenerated observations or changed scientific outputs.
+The comparison retained the original public fictional PR96 metadata; it is not
+a new execution receipt. Supervised wall time was 191.094 seconds, compression
+CPU 180.734375 seconds and native job CPU 181.265625 seconds. Peak Python RSS was
+2,205,577,216 bytes; peak aggregate job committed memory was 2,201,931,776.
+Hard 12 GiB process/job committed-memory limits and a 600-second watchdog were
+verified before execution. The output footprint sampled 215,873,410 bytes;
+including retained input lengths gives 2,082,220,259 logical bytes. Ciphertext
+size, stress encryption and stress recovery are NOT RUN because capacity failed.
+
+PASS — the narrow scanner correction allows only the two independently verified
+public-response hashes at the exact original receipt path. Actual gitleaks
+8.24.3 controls retain detection of unrelated values, other paths and another
+default detector. Normal final-head hosted CI is a separate required observation.
+A receipt-bound PR97-only NOT RUN deferral prevents automatic repetition of the
+accepted full benchmark after this stop; it does not certify changed source or
+skip normal Python/browser/Secret Scan checks. README and .env.example remain
+accurate without modification.
+
+KEEP — the accepted central recovery, legacy gzip reader, lossless v2 outputs,
+native-4 transport identity, original limits, owner-personal-use wording,
+website/strategy and design-system 2.13.0. FIX NOW — hand this measured failure
+and the scanner disposition to Guidance for independent review. DEFER — the
+next delivery decision and any prospective source-bound execution review remain
+BLOCKED; the unchanged technical declaration is BLOCKED. OMIT — more codec
+tuning, a second rehearsal, owner-key/private-package access, provider/model
+calls, outreach and actual historical acquisition. No market-data correctness,
+new reader authority or trading edge is established. Guidance owns any next
+instruction, clean merge and later real release; Astra stops at PR97.
+
+
+FAIL — subsequent full commit-range scan at
+`629ed4433daa6ff60a636cd56490cabb52a371f8` resolved the two original findings
+but detected four additional public binary/source fingerprints in the newly
+retained evidence. Astra introduced these while recording this correction.
+The exact paths and content-hash verification are retained in the correction
+review. No additional allowlist, detector exclusion or history rewrite was
+made. These findings remain a separate Secret Scan blocker; the capacity
+failure already requires the stop. Final hosted results belong to the PR97
+closeout comment.
+
+
+## 30 September 2026 — explicit delivery-envelope continuation on PR97
+
+The owner superseded the stopped compression experiment with an explicit
+250 MiB archive / 251 MiB ciphertext contract. The existing level-12 / 1 GiB
+Zstandard codec, scientific contents and 2 GiB expanded limit are unchanged.
+The v4 receipt/index bind the envelope; v2 gzip and v3 Zstandard retain their
+original limits. Full synthetic acceptance at the new source is NOT RUN until
+the normal PR benchmark completes; real execution stays BLOCKED.
+
+The [current evidence](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/platform-and-contract.md)
+records official platform limits, the unchanged account Actions $0 stopping
+budget, narrow public-digest dispositions, exact history and focused controls.
+The complete fixed central/stress cases require encrypted recovery, all390
+original members and exact v2 replay under a kernel-enforced 12 GiB process-tree
+ceiling. Dated earlier failures remain evidence. No compression search, provider
+call, owner-key operation, private-package inspection or historical dispatch.
+
+
+### 30 September 2026 - envelope recovery reader correction
+
+The first v4 candidate `2e50aba0ffdc3b8bb09a7745c4e9edc45ce9281d` fit
+all stress size and memory bounds, but recovery failed before tar extraction.
+The reader incorrectly inferred a maximum block count from 128 KiB, which is
+Zstandard's maximum block size rather than a required size. The retained stress
+archive has 20,463 valid blocks. The reader now has an explicit 65,536-block work
+budget; the writer, window, science and all other resource limits are unchanged.
+The [dated failure](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-initial/recovery-failure.md)
+remains FAIL evidence. A one-time decode of the retained synthetic archive checked
+all 393 indexed members and all 390 original PR96 lengths/hashes without
+recompression. The 126 focused package tests pass, including the restored defect
+and before-allocation excess-work refusal; collection is 2,449 tests. New
+source-pinned hosted acceptance is still required. Real execution remains
+BLOCKED; historical acquisition and findings are NOT RUN.
+
+
+### 30 September 2026 — complete synthetic delivery accepted for PR97 review
+
+PASS — the explicitly versioned delivery envelope now retains and recovers the
+complete fixed central and stress evidence. Base remains
+`19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc`; continuation started at
+`65cd32ba0991ecad4bb04d53132d4a44889aca32`. Measured code is
+`ca881bba3600d4eadee5481e5528161a5c2edb99`, tree
+`1a3b64ddfd795dbb209780b421138e7d3535312b`. The final evidence-only head and its
+normal CI are identified in PR97's subsequent dated checkpoint; source remains
+identical to this measured revision.
+
+The owner's delivery decision changes archive/ciphertext ceilings from
+199/200 MiB to 250/251 MiB, with an additional explicit 1 MiB actual encryption
+overhead bound. Expanded content remains capped at 2 GiB. The selected level-12,
+one-GiB-window writer is unchanged. GitHub's authoritative artifact documentation
+does not impose the former project ceiling; public standard-runner execution is
+free, while storage remains separately quota-bound under the unchanged $0
+stopping budget. Future quota can refuse delivery and is not certified here.
+
+PASS — Tests run 36734865293/attempt1 completed both full cases. Central archive,
+ciphertext and expanded sizes are 99,741,885  / 99,766,421  / 1,546,827,527 bytes;
+stress sizes are 215,909,320  / 215,962,224  / 1,866,624,761 bytes. Both cases recovered
+all 390 original members exactly, preserved ledger accounting and reproduced both
+complete v2 reconciliation files byte-for-byte. All 388 portable scientific members
+also match PR96. The 289 transport slots per case are simulated; provider requests
+are zero. Compact artifacts 11109327191 and 11110657864 have verified GitHub ZIP
+digests. TEST-ONLY encryption ran on the benchmark runners; no owner key or private
+package was accessed.
+
+PASS — initial/recovered offline passes took 961.338/986.024 seconds centrally
+and 1385.438/1380.727 seconds under stress; packaging took 35.054/60.561 seconds.
+Kernel-enforced benchmark peaks were 7,662,833,664/8,903,364,608 bytes, below 12 GiB,
+without workload OOM. Existing shared-step/package/job deadlines remain. The
+prospective full acquisition reservation plus measured work and assumed 300-second
+overhead leaves 1369.001/927.238 seconds.
+
+PASS — 126 focused package regressions, 2449 hosted tests, producer fixtures,
+semantic lint, unchanged page gates and Secret Scan 36734865392. Exact path/value
+scanner dispositions retain unrelated-value detection. The first v4 reader failure
+is preserved and corrected with a bounded block-work contract; no compression
+experiment followed. Ten assembled technical checks pass. Real execution remains
+BLOCKED; native 5/phase2 is prospective, and accepted native 4 proves its old transport
+only. Historical acquisition and historical findings are NOT RUN.
+
+KEEP — scientific identities, every original member and dated evidence.
+FIX NOW — Guidance independently reviews this completed technical package and
+exact final-head CI. DEFER — protected merge and separately authorized acquisition
+to Guidance. OMIT — further compression optimization, readiness approval and any
+new infrastructure milestone.
+
+See the [bound delivery review](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/review.md) for measured tables and receipts.

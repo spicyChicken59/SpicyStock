@@ -45,7 +45,7 @@ def test_upload_is_a_literal_ciphertext_allowlist_after_successful_packaging():
     upload = uploads[0]
     assert upload["if"] == "always() && steps.package.outcome == 'success'"
     assert upload["with"]["path"].splitlines() == [
-        "${{ env.HISTORICAL_ROOT }}/delivery/evidence.tar.gz.age",
+        "${{ env.HISTORICAL_ROOT }}/delivery/evidence.tar.zst.age",
         "${{ env.HISTORICAL_ROOT }}/delivery/receipt.json",
     ]
     assert upload["with"]["retention-days"] == "7"

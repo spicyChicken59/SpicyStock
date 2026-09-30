@@ -1,0 +1,60 @@
+{
+  "checks": [
+    {
+      "command": "python -m pytest tests/test_secret_scan.py tests/test_historical_package.py tests/test_historical_delivery_binding.py tests/test_historical_execution_guard.py tests/test_historical_execution.py tests/test_historical_benchmark_gate.py -q --basetemp ../bounded-correction-focused-01",
+      "passed": 422,
+      "scope": "Package, codec, execution and scanner controls; gate tests were collected before its added correction controls.",
+      "seconds": 54.67,
+      "status": "PASS"
+    },
+    {
+      "command": "python -m pytest tests/test_historical_benchmark_gate.py tests/test_secret_scan.py -q --basetemp ../bounded-correction-gate-final",
+      "passed": 69,
+      "scope": "Final gate and scanner controls after edits; no skips.",
+      "seconds": 0.23,
+      "status": "PASS"
+    },
+    {
+      "collected": 2366,
+      "command": "python -m pytest tests/ --collect-only -q -p no:cacheprovider",
+      "scope": "Collection only; does not establish whole-suite PASS.",
+      "status": "PASS"
+    },
+    {
+      "command": "python -m pytest tests/test_docs.py -q --basetemp ../bounded-docs-final",
+      "passed": 34,
+      "seconds": 4.16,
+      "status": "PASS",
+      "warnings": 1
+    },
+    {
+      "command": "actionlint -no-color -shellcheck= -pyflakes= .github/workflows/historical-input-proof.yml .github/workflows/tests.yml",
+      "scope": "Verified v1.7.12; no workflow source changes and no diagnostics.",
+      "status": "PASS"
+    }
+  ],
+  "environment": {
+    "ACTIONLINT_BINARY": "work/actionlint-v1.7.12/verified/actionlint.exe",
+    "AGE_BINARY": "work/age-tools/age/age.exe",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "work/windows-test-support;work/codecdeps",
+    "PYTHONUTF8": "1",
+    "python": "3.12.14"
+  },
+  "focused_log_sha256": "8a0043801d993b14e0e47c4b27d0c5e1250f2dd3650a55afdc7a6a5bf9b4cfb4",
+  "full_scale_benchmark": "NOT RUN",
+  "hosted_exact_head_ci": "NOT RUN",
+  "provider_requests": 0,
+  "runtime_code_changes": "NOT RUN",
+  "schema": "historical-bounded-correction-focused-tests-v1",
+  "source_sha256": {
+    ".gitleaks.toml": "9b2dacea9b99e053cf58246e5db67c3d78546741e01a451e473db3444e1daf83",
+    "tests/secret_scan_controls.py": "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e",
+    "tests/test_historical_benchmark_gate.py": "884f8c6b3cc5d6d8dadfeb48afda0a8a65ba23a6fa45307f14c0eeb6c6816c3e",
+    "tests/test_secret_scan.py": "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d",
+    "tools/historical_archive_codec.py": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+    "tools/historical_benchmark_gate.py": "1fc8ebfb85ba434cc675a9d9ed9597ad869f1cb0fb2dafb6fa9fc418b18e7708",
+    "tools/historical_package.py": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d"
+  },
+  "status": "PASS"
+}

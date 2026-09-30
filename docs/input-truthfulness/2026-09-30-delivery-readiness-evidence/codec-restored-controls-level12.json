@@ -1,0 +1,53 @@
+{
+  "cases": [
+    {
+      "actual_exit": 0,
+      "expected_exit": 0,
+      "name": "unchanged_valid_and_negative_controls",
+      "pytest_summary": "5 passed, 90 deselected in 0.19s",
+      "selection": "codec_valid_single_stream_roundtrip or (codec_rejects and zero_tail and gzip) or (tar_framing and index_cap) or (resources_rejected and window)",
+      "status": "PASS"
+    },
+    {
+      "actual_exit": 1,
+      "expected_exit": 1,
+      "name": "restored_legacy_gzip_ignored_trailer",
+      "pytest_summary": "1 failed, 94 deselected in 0.22s",
+      "selection": "codec_rejects and zero_tail and gzip",
+      "status": "PASS"
+    },
+    {
+      "actual_exit": 1,
+      "expected_exit": 1,
+      "name": "restored_index_excluded_from_expanded_cap",
+      "pytest_summary": "1 failed, 94 deselected in 0.30s",
+      "selection": "tar_framing and index_cap",
+      "status": "PASS"
+    },
+    {
+      "actual_exit": 1,
+      "expected_exit": 1,
+      "name": "restored_window_allocation_before_header_bound",
+      "pytest_summary": "1 failed, 94 deselected in 0.23s",
+      "selection": "resources_rejected and window",
+      "status": "PASS"
+    }
+  ],
+  "interpretation": "Each restored defect must make its existing negative test fail; unchanged valid and negative controls must pass.",
+  "owner_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "schema": "historical-codec-restored-controls-v1",
+  "source_files_unchanged": true,
+  "source_hashes_after": {
+    "tests\\test_historical_package.py": "d13eba96cde0f3047401ba99e5c27c1e8da1ac9982b4c943e388f97fd44b3030",
+    "tools\\historical_archive_codec.py": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+    "tools\\historical_package.py": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d"
+  },
+  "source_hashes_before": {
+    "tests\\test_historical_package.py": "d13eba96cde0f3047401ba99e5c27c1e8da1ac9982b4c943e388f97fd44b3030",
+    "tools\\historical_archive_codec.py": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+    "tools\\historical_package.py": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d"
+  },
+  "status": "PASS",
+  "synthetic_only": true
+}

@@ -1,0 +1,50 @@
+{
+  "checkout_sha": "6c40cf7f97dd905617fe7aa796cf63ed3ae52247",
+  "excerpts": [
+    {
+      "line": 120,
+      "text": "2026-09-30T09:09:51.8075766Z [command]/usr/bin/git log -1 --format=%H"
+    },
+    {
+      "line": 121,
+      "text": "2026-09-30T09:09:51.8102994Z 6c40cf7f97dd905617fe7aa796cf63ed3ae52247"
+    },
+    {
+      "line": 329,
+      "text": "2026-09-30T09:10:12.9282682Z ##[group]Run \"$RUNNER_TEMP/actionlint/actionlint\" -no-color -shellcheck= -pyflakes= .github/workflows/historical-input-proof.yml .github/workflows/tests.yml"
+    },
+    {
+      "line": 404,
+      "text": "2026-09-30T09:13:32.8673841Z 2324 passed, 1 warning in 197.86s (0:03:17)"
+    },
+    {
+      "line": 405,
+      "text": "2026-09-30T09:13:33.3255501Z ##[group]Run python tools/make_fixture.py --check"
+    },
+    {
+      "line": 439,
+      "text": "2026-09-30T09:13:57.3262201Z 12 fixtures current"
+    },
+    {
+      "line": 444,
+      "text": "2026-09-30T09:13:57.5283031Z dirty=$(git status --porcelain --untracked-files=all)"
+    }
+  ],
+  "facts": {
+    "clean_tree": "PASS",
+    "fixture_fault_logs": "Intentional FakeAnthropic/market-data degraded cases in make_fixture.py; API/model calls are replaced by fixtures.",
+    "fixtures_current": 12,
+    "producer_fixture": "PASS",
+    "pytest_passed": 2324,
+    "pytest_seconds": 197.86,
+    "pytest_warnings": 1,
+    "semantic_gate": "PASS"
+  },
+  "job_id": 109818501874,
+  "representation": "UTF-8 connector-decoded log text with terminal LF retained outside Git; summary quotes only selected verification lines.",
+  "retained_log_bytes": 48184,
+  "retained_log_sha256": "ca00f41864dafa95ba8b093c9904163d2d353d2ea6addc5434b2ab130dce93d1",
+  "schema": "historical-normal-ci-log-observation-v1",
+  "status": "PASS",
+  "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857/job/109818501874"
+}

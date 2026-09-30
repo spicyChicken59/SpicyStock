@@ -1,0 +1,50 @@
+{
+  "command_basis": "gitleaks dir --config <current-config> --redact=100 --ignore-gitleaks-allow --gitleaks-ignore-path <empty-file> --exit-code 2 .",
+  "exit_code": 0,
+  "findings": 0,
+  "network_requests": 0,
+  "provider_requests": 0,
+  "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+  "schema": "historical-envelope-scanner-file-check-v1",
+  "scope": "Actual Gitleaks 8.24.3 directory scan before committing; no hosted-head result inferred.",
+  "sources": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607"
+    },
+    {
+      "path": "tests/secret_scan_controls.py",
+      "sha256": "b5ad9e02c0f362228cbd72c6afd2b9a8691989794000f3fb586194e008e4900d"
+    },
+    {
+      "path": "tests/test_secret_scan.py",
+      "sha256": "430e7b883a3543de0408f4a99e31d3eee2a80748a4f14d7cfa1ee767ab98a958"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json",
+      "sha256": "5f71044ee6595c6d6ff1a4b4c51c57d7949621aa170ce3ef58d711db27b0c457"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json",
+      "sha256": "77ee1a171b9c0d0361c18ebfabda17a3e6d63e6287a26c24881295b792368a7e"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py",
+      "sha256": "5746482fcc37b512e120438a23c2a68807a2110024bf7641cacdd64716bc1f04"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+      "sha256": "7bd226d2f59b4a7ee3571550e4de67e4c90cd6db2e461158fafe681777930407"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/scanner-controls.json",
+      "sha256": "de33613ea8d55d0c8348f3cf47ef984ae8db3651efe49e4faa3c7f2d2ad7932d"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/scanner-controls.md",
+      "sha256": "d04520e5e7efd4128480216a3b8e680dbd9086f31c21b8e78cd6fc3a3c6dc866"
+    }
+  ],
+  "status": "PASS",
+  "version": "8.24.3"
+}

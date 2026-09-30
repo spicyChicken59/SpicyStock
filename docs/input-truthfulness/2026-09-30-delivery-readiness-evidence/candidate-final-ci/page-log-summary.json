@@ -1,0 +1,40 @@
+{
+  "checkout_sha": "6c40cf7f97dd905617fe7aa796cf63ed3ae52247",
+  "excerpts": [
+    {
+      "line": 121,
+      "text": "2026-09-30T09:09:48.7261537Z [command]/usr/bin/git log -1 --format=%H"
+    },
+    {
+      "line": 122,
+      "text": "2026-09-30T09:09:48.7288724Z 6c40cf7f97dd905617fe7aa796cf63ed3ae52247"
+    },
+    {
+      "line": 422,
+      "text": "2026-09-30T09:10:51.1702848Z {\"status\":\"PASS: offline DOM/store checks; not browser/layout acceptance\",\"checks\":127,\"requests\":[\"history/index.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/record.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/burst-ATEC.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/record.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/burst-VICR.json\"]}"
+    },
+    {
+      "line": 424,
+      "text": "2026-09-30T09:11:22.4807469Z 378/378 chart checks passed; screenshots in /tmp/claude-0/-home-user/edc6f11d-ce23-5094-b116-41a165a13e91/scratchpad/chart/shots"
+    },
+    {
+      "line": 467,
+      "text": "2026-09-30T09:23:36.8812971Z 9215/9215 page checks passed; screenshots in /tmp/shots"
+    }
+  ],
+  "facts": {
+    "chart_checks_passed": 378,
+    "chart_checks_total": 378,
+    "offline_dom_store_checks": 127,
+    "page_checks_passed": 9215,
+    "page_checks_total": 9215,
+    "scope": "DOM/store checks retain their original non-layout scope; chart/page browser checks are independently reported."
+  },
+  "job_id": 109818501488,
+  "representation": "UTF-8 connector-decoded log text with terminal LF retained outside Git; summary quotes only selected verification lines.",
+  "retained_log_bytes": 48666,
+  "retained_log_sha256": "aac2ed7a646dfd7fc54e8bd72cd427d18372318879c808259ac89b7fd06144c2",
+  "schema": "historical-normal-ci-log-observation-v1",
+  "status": "PASS",
+  "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857/job/109818501488"
+}

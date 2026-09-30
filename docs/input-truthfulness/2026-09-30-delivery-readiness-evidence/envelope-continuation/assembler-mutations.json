@@ -1,0 +1,52 @@
+{
+  "assembler_sha256": "c7f7836c8f63047c209170e35266dbe12cdd6e103bf866e574dc7ddf6d7772c6",
+  "mutations": [
+    {
+      "all_failing_controls": [
+        "changed_job_id_and_url_with_unchanged_api_refused",
+        "relabelled_workflow_result_refused",
+        "authoritative_job_conclusion_mismatch_refused",
+        "authoritative_job_id_mismatch_refused",
+        "authoritative_job_name_mismatch_refused",
+        "normal_ci_changed_job_id_url_refused",
+        "normal_ci_relabelled_overall_success_refused",
+        "normal_ci_actual_timeout_cannot_be_success"
+      ],
+      "mutation": "omit_api_job_semantics",
+      "target_control": "changed_job_id_and_url_with_unchanged_api_refused",
+      "target_outcome": "FAIL",
+      "unaffected_control": "synthetic_hosted_binding_positive",
+      "unaffected_outcome": "PASS"
+    },
+    {
+      "all_failing_controls": [
+        "changed_download_digest_with_unchanged_api_refused",
+        "changed_download_size_with_unchanged_api_refused"
+      ],
+      "mutation": "omit_api_artifact_digest",
+      "target_control": "changed_download_digest_with_unchanged_api_refused",
+      "target_outcome": "FAIL",
+      "unaffected_control": "synthetic_hosted_binding_positive",
+      "unaffected_outcome": "PASS"
+    },
+    {
+      "all_failing_controls": [
+        "synthetic_positive_capacity",
+        "unaffected_public_v2_equivalence",
+        "synthetic_positive_recovery",
+        "missing_index_bytes_never_passes",
+        "missing_tar_archive_bytes_never_passes",
+        "missing_ciphertext_bytes_never_passes"
+      ],
+      "mutation": "restore_four_field_limits",
+      "target_control": "synthetic_positive_capacity",
+      "target_outcome": "FAIL",
+      "unaffected_control": "synthetic_positive_memory",
+      "unaffected_outcome": "PASS"
+    }
+  ],
+  "schema": "envelope-api-assembler-isolated-controls-v1",
+  "scope": "Synthetic offline unit fixtures; no hosted measurement, current candidate PASS or release claim. Shared source never edited by mutations.",
+  "status": "PASS",
+  "valid_controls": 46
+}

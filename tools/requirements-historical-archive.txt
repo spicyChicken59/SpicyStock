@@ -1,0 +1,6 @@
+# Public PyPI 0.25.0 CPython 3.12 Linux x86_64 and Windows amd64 wheels.
+# Install this file first with --require-hashes --only-binary=:all:.
+# https://pypi.org/pypi/zstandard/0.25.0/json
+zstandard==0.25.0 \
+    --hash=sha256:5a56ba0db2d244117ed744dfa8f6f5b366e14148e00de44723413b2f3938a902 \
+    --hash=sha256:ffef5a74088f1e09947aecf91011136665152e0b4b359c42be3373897fb39b01

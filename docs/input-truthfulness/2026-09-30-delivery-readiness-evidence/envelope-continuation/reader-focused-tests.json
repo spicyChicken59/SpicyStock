@@ -1,0 +1,30 @@
+{
+  "schema": "historical-frame-count-repair-tests-v1",
+  "status": "PASS",
+  "passed": 126,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 0,
+  "pytest_reported_seconds": 9.99,
+  "junit_seconds": 9.83,
+  "actual_age_configured": true,
+  "focused_command": "python -B -m pytest tests/test_historical_package.py --basetemp <external>/frame-count-repair/pytest --junitxml <external>/frame-count-repair/package-tests.xml -q",
+  "junit_sha256": "53eaaae7be6e84a34686848c0de37445c7b29549478454fd5399560eee5050b7",
+  "source_sha256": {
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128",
+    "tests/test_historical_package.py": "6ec6a0b3752fab60b3db4d1a82e49ee2c70954f624ae41d92581a4842cb97414"
+  },
+  "new_regression_nodes": [
+    "test_zstandard_variable_blocks_decode_exactly_and_restored_formula_refuses",
+    "test_zstandard_fixed_frame_work_boundary_decodes_exactly",
+    "test_zstandard_frame_work_cap_plus_one_refuses_before_allocation"
+  ],
+  "restored_rule_control": {
+    "scope": "Function source compiled in isolated namespace inside collected regression; repository source unchanged",
+    "old_formula_outcome": "CodecError: invalid_archive_block",
+    "new_formula_outcome": "Exact byte decode PASS",
+    "positive_control": "Fixed65,536-block boundary decodes empty payload exactly;65,537 refuses before decoder construction"
+  },
+  "format_reference": "https://github.com/facebook/zstd/blob/v1.5.7/doc/zstd_compression_format.md#blocks"
+}

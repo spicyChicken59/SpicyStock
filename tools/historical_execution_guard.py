@@ -1,7 +1,8 @@
-"""Read-only guard for two phases after three exact reviewed zero-job failures.
+"""Read-only prospective delivery guard after the exact accepted rehearsal.
 
-The owner's readiness comment is a human attestation, not machine proof of a
-data licence or account billing. No provider credentials are read here.
+Owner personal-use authorization is not provider consent. A new reviewed source
+and technical evidence binding never relabels the old transport/recovery record.
+No provider credentials are read here.
 """
 from __future__ import annotations
 
@@ -22,23 +23,32 @@ REPOSITORY_ID = 1352997802
 OWNER = "spicyChicken59"
 WORKFLOW = ".github/workflows/historical-input-proof.yml"
 WORKFLOW_ID = 369770564
-POLICY_SCHEMA = "historical-execution-policy-v2"
-READINESS_SCHEMA = "readiness-v2"
-EXECUTION_SCHEMA = "historical-execution-v2"
+POLICY_SCHEMA = "historical-execution-policy-v3"
+READINESS_SCHEMA = "readiness-v3"
+EXECUTION_SCHEMA = "historical-execution-v3"
 LOCAL_RECOVERY_SCHEMA = "historical-local-recovery-v2"
+PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
+COMPATIBILITY_CONTRACT_SHA256 = "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d"
+RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-delivery-release-evidence.json"
 RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
 ORIGINAL_MERGE = "33ec181ca60adaf2f7c0ef19a1889a5517161585"
 ORIGINAL_HEAD = "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b"
 ASSIGNMENT = "spicystock-historical-input-2026-09-28"
 MANIFEST = "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc"
+RECIPIENT_SHA256 = "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"
 API_ROOT = "https://api.github.com/repos/" + REPOSITORY
 MANIFEST_PATH = Path(__file__).resolve().parents[1] / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
 POLICY_PATH = Path(__file__).with_name("historical-execution-policy.json")
 RECOVERY_PATH = Path(__file__).with_name("historical-workflow-recovery.json")
+COMPATIBILITY_PATH = Path(__file__).with_name("historical-delivery-compatibility.json")
 BINDING_FIELDS = ("repository", "repository_id", "assignment_id", "manifest_sha256",
                   "workflow_id", "workflow_path", "recipient_sha256", "run_id", "run_number",
                   "run_attempt", "assignment_phase", "mode", "checkout_sha", "workflow_sha",
                   "implementation_pr", "readiness_comment_id", "recovery_contract_sha256")
+DELIVERY_BINDING_FIELDS = ("compatibility_contract_sha256", "release_evidence_sha256")
+RELEASE_CHECKS = ("central_capacity", "stress_capacity", "central_exact_recovery", "stress_exact_recovery",
+                  "legacy_gzip_recovery", "exact_v2_equivalence", "shared_offline_step", "total_job_envelope", "process_memory", "normal_ci")
+RELEASE_PROOFS = ("capacity", "runtime", "equivalence", "legacy_recovery", "normal_ci")
 
 
 class GuardError(RuntimeError):
@@ -77,11 +87,13 @@ def parse(raw):
 
 def validate_policy(policy):
     require(isinstance(policy, dict) and policy.get("schema") == POLICY_SCHEMA, "invalid_policy")
-    require(positive(policy.get("implementation_pr")) and policy["implementation_pr"] != 94, "unbound_implementation_pr")
+    require(positive(policy.get("implementation_pr")) and policy["implementation_pr"] > 96, "unbound_implementation_pr")
     require(policy.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "wrong_recovery_contract")
+    require(policy.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256, "wrong_compatibility_contract")
     recipient = policy.get("recipient", "")
     require(isinstance(recipient, str) and re.fullmatch(r"age1[023456789acdefghjklmnpqrstuvwxyz]{58}", recipient), "invalid_recipient")
     require(policy.get("recipient_sha256") == hashlib.sha256((recipient + "\n").encode()).hexdigest(), "recipient_digest_mismatch")
+    require(policy["recipient_sha256"] == RECIPIENT_SHA256, "unaccepted_delivery_recipient")
 
 
 def recovery_contract():
@@ -90,8 +102,16 @@ def recovery_contract():
     return contract
 
 
+def compatibility_contract():
+    contract = parse(COMPATIBILITY_PATH.read_bytes())
+    require(hashlib.sha256(encode(contract)).hexdigest() == COMPATIBILITY_CONTRACT_SHA256,
+            "changed_compatibility_contract")
+    return contract
+
+
 def load_policy(path=None):
     recovery_contract()
+    compatibility_contract()
     policy = parse((POLICY_PATH if path is None else Path(path)).read_bytes())
     validate_policy(policy)
     return policy
@@ -121,12 +141,20 @@ def validate_phase_binding(record):
     require(record.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "wrong_recovery_contract")
     for key, size in (("manifest_sha256", 64), ("recipient_sha256", 64), ("checkout_sha", 40), ("workflow_sha", 40)):
         require(sha(record.get(key), size), "invalid_execution_binding")
-    return {key: record[key] for key in BINDING_FIELDS}
+    # Historical v2 receipts retain exactly their original projection. Current
+    # execution requires both new digests; no legacy record is upgraded here.
+    extra = DELIVERY_BINDING_FIELDS if any(k in record for k in DELIVERY_BINDING_FIELDS) else ()
+    if extra:
+        require(record.get("compatibility_contract_sha256") in {COMPATIBILITY_CONTRACT_SHA256, PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} and
+                sha(record.get("release_evidence_sha256")) and record["implementation_pr"] > 96, "invalid_delivery_binding")
+    return {key: record[key] for key in (*BINDING_FIELDS, *extra)}
 
 
 def validate_execution_binding(record, policy):
     binding = validate_phase_binding(record)
     validate_policy(policy)
+    require(all(key in binding for key in DELIVERY_BINDING_FIELDS), "missing_delivery_binding")
+    require(binding["compatibility_contract_sha256"] == COMPATIBILITY_CONTRACT_SHA256, "stale_delivery_binding")
     require(binding["manifest_sha256"] == MANIFEST and binding["recipient_sha256"] == policy["recipient_sha256"] and
             binding["implementation_pr"] == policy["implementation_pr"], "unbound_execution_policy")
     return binding
@@ -164,29 +192,45 @@ def validate_readiness(comment, policy, mode, today):
     require(comment.get("user", {}).get("login") == OWNER and comment.get("issue_url") == API_ROOT + "/issues/" + str(policy["implementation_pr"]), "untrusted_readiness_comment")
     record = parse(comment.get("body"))
     require(isinstance(record, dict) and record.get("schema") == READINESS_SCHEMA and record.get("status") == "PASS" and record.get("mode") == mode, "readiness_not_pass")
+    try:
+        require(date.fromisoformat(record.get("authorized_on", "")) <= today, "invalid_authorization_date")
+    except (ValueError, TypeError):
+        raise GuardError("invalid_authorization_date") from None
     native, phase = phase_slot(mode)
     require(type(record.get("run_number")) is int and record["run_number"] == native and
             type(record.get("assignment_phase")) is int and record["assignment_phase"] == phase and
             record.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "stale_phase_readiness")
     require(record.get("assignment_id") == ASSIGNMENT and record.get("manifest_sha256") == MANIFEST, "wrong_readiness_assignment")
+    require(record.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256 and
+            sha(record.get("release_evidence_sha256")), "unbound_delivery_readiness")
     require(sha(record.get("checkout_sha"), 40) and type(record.get("workflow_id")) is int and record["workflow_id"] == WORKFLOW_ID and record.get("recipient_sha256") == policy["recipient_sha256"], "unbound_readiness")
     evidence = record.get("evidence", {})
     require(isinstance(evidence, dict), "missing_readiness_evidence")
     evidence_item(evidence.get("cost"), today)
     require(evidence["cost"].get("zero_additional_cost") is True, "cost_not_established")
     if mode == "real":
-        for name in ("rights", "entitlement", "local_recovery"):
+        for name in ("owner_authorization", "entitlement", "local_recovery"):
             evidence_item(evidence.get(name), today, basis=name != "local_recovery")
-        require(evidence["rights"].get("private_retention_permitted") is True and evidence["rights"].get("controlled_review_status") in {"NOT RUN", "PERMITTED"}, "rights_not_established")
-        require(evidence["rights"].get("encrypted_transport_permitted") is True, "encrypted_transport_not_established")
+        owner = evidence["owner_authorization"]
+        require(owner.get("schema") == "owner-personal-use-v1" and owner.get("owner") == OWNER and
+                owner.get("scope") == "personal_research" and owner.get("owner_authorized") is True and
+                owner.get("owner_only_decryption") is True and owner.get("public_plaintext") is False and
+                owner.get("direction_reference") == compatibility_contract()["owner_direction_reference"] and
+                type(owner.get("public_ciphertext_retention_days")) is int and owner["public_ciphertext_retention_days"] == 7 and
+                owner.get("provider_consent") == "NOT ASSERTED" and owner.get("controlled_review_status") == "NOT RUN",
+                "owner_scope_not_authorized")
         require(evidence["entitlement"].get("historical_sip_zero_cost") is True, "entitlement_not_established")
         recovery = evidence["local_recovery"]
         require(recovery.get("schema") == LOCAL_RECOVERY_SCHEMA and recovery.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256 and
                 type(recovery.get("run_number")) is int and recovery["run_number"] == 4 and
                 type(recovery.get("assignment_phase")) is int and recovery["assignment_phase"] == 1 and
                 type(recovery.get("run_attempt")) is int and recovery["run_attempt"] == 1 and
-                recovery.get("checkout_sha") == record["checkout_sha"] and sha(recovery.get("workflow_sha"), 40), "stale_recovery_binding")
+                sha(recovery.get("checkout_sha"), 40) and sha(recovery.get("workflow_sha"), 40), "stale_recovery_binding")
         require(recovery.get("verified") is True and positive(recovery.get("rehearsal_run_id")) and recovery.get("recipient_sha256") == policy["recipient_sha256"] and sha(recovery.get("ciphertext_sha256")) and sha(recovery.get("recovered_plaintext_sha256")), "recovery_not_established")
+        accepted = compatibility_contract()["accepted_transport"]
+        require(all(recovery.get(key) == value for key, value in accepted.items()) and
+                recovery.get("manifest_sha256") == MANIFEST and
+                recovery.get("reference") == "sha256:" + accepted["recovery_checkpoint_sha256"], "unaccepted_prior_transport")
     return record
 
 
@@ -195,6 +239,90 @@ def validate_pr(pr, record, expected_pr):
     require(pr.get("merged") is True and pr.get("state") == "closed" and not pr.get("draft"), "implementation_not_merged")
     require(pr.get("base", {}).get("ref") == "main" and pr.get("base", {}).get("repo", {}).get("full_name") == REPOSITORY and pr.get("head", {}).get("repo", {}).get("full_name") == REPOSITORY, "wrong_implementation_repository")
     require(pr.get("head", {}).get("sha") == record["checkout_sha"] and sha(pr.get("merge_commit_sha"), 40), "unreviewed_checkout")
+
+
+def validate_release_date(comment, pr, record):
+    """A new owner comment after merge is separate from the PR's evidence."""
+    try:
+        created = datetime.fromisoformat(comment.get("created_at", "").replace("Z", "+00:00"))
+        merged = datetime.fromisoformat(pr.get("merged_at", "").replace("Z", "+00:00"))
+        require(created.tzinfo is not None and merged.tzinfo is not None and created >= merged and
+                record["authorized_on"] == created.astimezone(timezone.utc).date().isoformat(),
+                "execution_release_not_after_merge")
+    except (ValueError, TypeError, AttributeError, KeyError):
+        raise GuardError("execution_release_not_after_merge") from None
+
+
+def reviewed_file(api, path, revision):
+    item = api(f"/contents/{path}?ref={revision}")
+    require(item.get("type") == "file" and item.get("encoding") == "base64", "release_source_missing")
+    try:
+        raw = base64.b64decode(item["content"].replace("\n", ""), validate=True)
+    except (ValueError, TypeError, KeyError):
+        raise GuardError("release_source_missing") from None
+    require(0 < len(raw) <= 2 * 1024 ** 2, "release_source_size")
+    return raw
+
+
+def validate_release_evidence(api, record):
+    """Check reviewed declarative measurements, separately from authorization.
+
+    The evidence file binds exact code/proof bytes, not its own commit hash.
+    The dated readiness comment supplies the final reviewed checkout and file
+    digest after that commit exists. These checks are not a new benchmark.
+    """
+    contract = compatibility_contract()
+    revision = record["checkout_sha"]
+    raw = reviewed_file(api, RELEASE_EVIDENCE_PATH, revision)
+    require(hashlib.sha256(raw).hexdigest() == record["release_evidence_sha256"], "release_evidence_changed")
+    evidence = parse(raw)
+    require(isinstance(evidence, dict) and evidence.get("schema") == "historical-delivery-release-evidence-v2" and
+            evidence.get("status") == "PASS" and evidence.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256 and
+            evidence.get("manifest_sha256") == MANIFEST and evidence.get("recipient_sha256") == record["recipient_sha256"],
+            "technical_release_not_established")
+    require(evidence.get("delivery_envelope") == contract["delivery_envelope"], "unbound_delivery_envelope")
+    checks = evidence.get("checks")
+    require(isinstance(checks, dict) and set(checks) == set(RELEASE_CHECKS) and
+            all(checks[key] == "PASS" for key in RELEASE_CHECKS), "technical_release_not_established")
+    sources = evidence.get("source_sha256")
+    require(isinstance(sources, dict) and set(sources) == set(contract["required_source_paths"]), "release_source_coverage")
+    for path, digest in sources.items():
+        require(sha(digest) and hashlib.sha256(reviewed_file(api, path, revision)).hexdigest() == digest,
+                "release_source_changed")
+    proofs = evidence.get("proofs")
+    require(isinstance(proofs, dict) and set(proofs) == set(RELEASE_PROOFS), "release_proof_coverage")
+    for proof in proofs.values():
+        require(isinstance(proof, dict) and set(proof) == {"path", "sha256"}, "invalid_release_proof")
+        path = proof["path"]
+        require(isinstance(path, str) and bool(re.fullmatch(r"docs/input-truthfulness/[A-Za-z0-9_./-]+\.json", path)) and
+                ".." not in path.split("/") and "//" not in path and path != RELEASE_EVIDENCE_PATH and sha(proof["sha256"]),
+                "invalid_release_proof")
+        proof_raw = reviewed_file(api, path, revision)
+        require(hashlib.sha256(proof_raw).hexdigest() == proof["sha256"], "release_proof_changed")
+        proof_record = parse(proof_raw)
+        require(isinstance(proof_record, dict) and proof_record.get("status") == "PASS", "technical_release_not_established")
+    change = api(f"/compare/{contract['continuation_base']}...{revision}")
+    files = change.get("files")
+    require(change.get("status") in {"identical", "ahead"} and change.get("behind_by") == 0 and
+            isinstance(files, list) and len(files) < 300 and all(isinstance(item, dict) for item in files),
+            "incomplete_delivery_diff")
+    paths = [item.get("filename") for item in files]
+    require(all(isinstance(path, str) for path in paths) and len(set(paths)) == len(paths), "incomplete_delivery_diff")
+    code = []
+    for item in files:
+        path = item["filename"]
+        require(item.get("status") != "renamed" and "previous_filename" not in item, "unreviewed_delivery_scope")
+        if path in contract["permitted_changed_code"]:
+            require(item.get("status") in {"added", "modified"} and sha(item.get("sha"), 40), "invalid_delivery_code_change")
+            code.append({"path": path, "git_blob": item["sha"]})
+        else:
+            require(path in {"README.md", "CLAUDE.md", ".env.example"} or
+                    path.startswith("tests/") or (item.get("status") in {"added", "modified"} and
+                    (path in {"docs/input-truthfulness/2026-09-29-historical-execution.md", RELEASE_EVIDENCE_PATH} or
+                     path.startswith("docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/"))),
+                    "unreviewed_delivery_scope")
+    require(evidence.get("changed_code") == sorted(code, key=lambda item: item["path"]), "release_diff_changed")
+    return evidence
 
 
 def run_binding(run):
@@ -309,6 +437,8 @@ def verify(api, policy, env, mode, comment_id, today):
     record = validate_readiness(comment, policy, mode, today)
     pr = api(f"/pulls/{policy['implementation_pr']}")
     validate_pr(pr, record, policy["implementation_pr"])
+    validate_release_date(comment, pr, record)
+    validate_release_evidence(api, record)
     original = api("/pulls/94")
     require(type(original.get("number")) is int and original["number"] == 94 and original.get("merged") is True and original.get("merge_commit_sha") == ORIGINAL_MERGE and
             original.get("head", {}).get("sha") == ORIGINAL_HEAD, "original_implementation_lineage_changed")
@@ -317,7 +447,7 @@ def verify(api, policy, env, mode, comment_id, today):
     comparison = api(f"/compare/{pr['merge_commit_sha']}...{env['GITHUB_SHA']}")
     require(comparison.get("status") in {"identical", "ahead"} and comparison.get("behind_by") == 0, "implementation_not_in_main")
     trees = [api(f"/git/trees/{revision}") for revision in (record["checkout_sha"], env["GITHUB_SHA"])]
-    for prefix in ("tools", "src"):
+    for prefix in ("tools", "src", ".github"):
         entries = [[entry for entry in tree.get("tree", []) if entry.get("path") == prefix and entry.get("type") == "tree"] for tree in trees]
         require(all(not tree.get("truncated") for tree in trees) and all(len(entry) == 1 for entry in entries) and entries[0][0]["sha"] == entries[1][0]["sha"], "execution_code_changed")
     contents = [api(f"/contents/{WORKFLOW}?ref={revision}") for revision in (record["checkout_sha"], env["GITHUB_WORKFLOW_SHA"])]
@@ -339,6 +469,9 @@ def verify(api, policy, env, mode, comment_id, today):
     for run in runs:
         if run["run_number"] in (4, 5):
             validate_job(jobs_by_run[run["id"]][0], run, today)
+            if mode == "real" and run["run_number"] == 4:
+                require(jobs_by_run[run["id"]][0]["id"] == compatibility_contract()["accepted_transport"]["job_id"],
+                        "unaccepted_prior_transport_job")
     repeated = history(api, record["workflow_id"])
     require(sorted((run_binding(item) for item in repeated), key=lambda item: item["id"]) ==
             sorted((run_binding(item) for item in runs), key=lambda item: item["id"]), "history_changed_during_read")
@@ -355,6 +488,8 @@ def verify(api, policy, env, mode, comment_id, today):
               "recipient_sha256": policy["recipient_sha256"], "run_id": int(env["GITHUB_RUN_ID"]), "run_number": int(env["GITHUB_RUN_NUMBER"]),
               "run_attempt": 1, "assignment_phase": phase_slot(mode)[1], "readiness_comment_id": comment_id,
               "implementation_pr": policy["implementation_pr"], "recovery_contract_sha256": RECOVERY_CONTRACT_SHA256,
+              "compatibility_contract_sha256": COMPATIBILITY_CONTRACT_SHA256,
+              "release_evidence_sha256": record["release_evidence_sha256"],
               "readiness_status": "PASS", "lifetime_status": "PASS", "evidence": record["evidence"],
               "history_verification": history_evidence}
     validate_execution_binding(result, policy)
@@ -363,7 +498,7 @@ def verify(api, policy, env, mode, comment_id, today):
 
 def approval(execution, storage_root):
     evidence, real = execution["evidence"], execution["mode"] == "real"
-    return {"assignment_id": ASSIGNMENT, "manifest_sha256": MANIFEST, "storage_root": str(storage_root), "zero_additional_cost": True, "cost_basis": evidence["cost"]["basis"], "sip_daily_entitlement_basis": evidence["entitlement"]["basis"] if real else "Synthetic rehearsal only; no provider request authorized", "non_public_storage": True, "retention_rights_basis": evidence["rights"]["basis"] if real else "Invented synthetic rows only", "reviewer_retrieval_path": "Operator recovery receipt: " + evidence["local_recovery"]["reference"] + "; Guidance private review: " + evidence["rights"]["controlled_review_status"] if real else "Synthetic rehearsal awaiting operator recovery", "approved_by": OWNER + " readiness comment " + str(execution["readiness_comment_id"]), "provider_requests_per_minute": 20}
+    return {"assignment_id": ASSIGNMENT, "manifest_sha256": MANIFEST, "storage_root": str(storage_root), "zero_additional_cost": True, "cost_basis": evidence["cost"]["basis"], "sip_daily_entitlement_basis": evidence["entitlement"]["basis"] if real else "Synthetic rehearsal only; no provider request authorized", "non_public_storage": True, "retention_rights_basis": "Private runner and owner-local plaintext only. Owner-authorized personal research; provider consent NOT ASSERTED. " + evidence["owner_authorization"]["basis"] if real else "Invented synthetic rows only", "reviewer_retrieval_path": "Accepted old transport recovery: " + evidence["local_recovery"]["reference"] + "; Guidance private review: NOT RUN" if real else "Synthetic rehearsal awaiting operator recovery", "approved_by": OWNER + " readiness comment " + str(execution["readiness_comment_id"]), "provider_requests_per_minute": 20}
 
 
 def main(argv=None):

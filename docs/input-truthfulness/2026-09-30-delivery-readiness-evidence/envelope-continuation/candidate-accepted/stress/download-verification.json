@@ -1,0 +1,27 @@
+{
+  "archive_bytes": 26550,
+  "archive_sha256": "abc81923766137dc8ed98e58d0ace6ac7009e707c28c62442be644ccc5e276e2",
+  "artifact_id": 11110657864,
+  "files": {
+    "inventory": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/synthetic-member-inventory.json",
+      "sha256": "bcb90f3e0b786e48772424eb640fc0eb9f8abfd687d974830335188ea476cdda"
+    },
+    "memory": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/memory-envelope.json",
+      "sha256": "fec8677ee37e3db0f6980e174627eb04f1df877f8e901fc1ba54615198708ff8"
+    },
+    "profile": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/runtime-profile.json",
+      "sha256": "1dbda1a0a1d766adf7be15d2a48069b83276e1505f25ab337db80778aa59c7f8"
+    },
+    "report": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/benchmark-result.json",
+      "sha256": "957ab3a814593b85ac9dc78f8c2c93c66b19068fc25c0b1c2186c6b188746e83"
+    }
+  },
+  "observed_at": "2026-09-30T16:03:40.401094+00:00",
+  "schema": "public-synthetic-artifact-download-v1",
+  "scope": "Only four public compact measurement files; no evidence archive or private key downloaded.",
+  "status": "PASS"
+}

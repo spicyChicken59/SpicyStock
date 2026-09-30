@@ -1,0 +1,40 @@
+{
+  "allowed_existing_edits": [
+    ".env.example",
+    ".github/workflows/historical-input-proof.yml",
+    ".github/workflows/tests.yml",
+    "CLAUDE.md",
+    "README.md",
+    "docs/input-truthfulness/2026-09-29-historical-execution.md",
+    "tests/test_historical_execution.py",
+    "tests/test_historical_execution_guard.py",
+    "tests/test_historical_package.py",
+    "tests/test_historical_projection_benchmark.py",
+    "tests/test_historical_projection_binding.py",
+    "tests/test_historical_recovery_integration.py",
+    "tests/test_historical_workflow.py",
+    "tests/test_historical_workflow_validation.py",
+    "tools/historical-execution-policy.json",
+    "tools/historical_execution.py",
+    "tools/historical_execution_guard.py",
+    "tools/historical_package.py",
+    "tools/historical_projection_benchmark.py",
+    "tools/requirements-historical.txt"
+  ],
+  "base": "19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc",
+  "changed_protected_paths": [],
+  "checked_existing_blobs": 10565,
+  "manifest_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+  "owner_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "record_list_sha256": "149540e178df2fc17039bdfa14a43154797c59cf627d6fca1782c290cd730b78",
+  "recovery_contract_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
+  "schema": "historical-delivery-protected-scope-v1",
+  "scope": "All original Git blobs except the explicit authorized existing-file edit set; includes prior evidence, fixtures, website, src, original manifest/recovery and v2 projection",
+  "src_tree": "14c96a4b4c8e3e8fdccbdb1d537aade3ab1fb170",
+  "status": "PASS",
+  "unchanged_representation_files": {
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c"
+  }
+}

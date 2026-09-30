@@ -1,0 +1,488 @@
+{
+  "allowed_exact_paths": [
+    ".gitleaks.toml",
+    "CLAUDE.md",
+    "docs/input-truthfulness/2026-09-29-historical-execution.md",
+    "tests/secret_scan_controls.py",
+    "tests/test_historical_benchmark_gate.py",
+    "tests/test_secret_scan.py",
+    "tools/historical_benchmark_gate.py"
+  ],
+  "allowed_new_document_prefix": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/",
+  "base": "19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc",
+  "base_accepted_delta_source": "Prior committed historical-delivery-compatibility permitted_changed_code; not an authorization for new changes.",
+  "base_protected_source_count": 77,
+  "base_source_delta_already_present_in_prior": [
+    ".github/workflows/historical-input-proof.yml",
+    ".github/workflows/tests.yml",
+    "tools/historical-delivery-compatibility.json",
+    "tools/historical-execution-policy.json",
+    "tools/historical_archive_codec.py",
+    "tools/historical_benchmark_gate.py",
+    "tools/historical_execution.py",
+    "tools/historical_execution_guard.py",
+    "tools/historical_package.py",
+    "tools/historical_projection_benchmark.py",
+    "tools/historical_runtime_profile.py",
+    "tools/requirements-historical-archive.txt",
+    "tools/requirements-historical.txt"
+  ],
+  "committed_prior_protected_mismatches": [],
+  "compression_or_replay_executed": false,
+  "current_head": "bd779c2a1ce14b8a7361c4866678e55e29ae18f8",
+  "external_preservation_receipt_sha256": "0542ef8047499708c6d93127d3e495390407c39616a194bbd0bc63599c95c9da",
+  "external_verifier_sha256": "c152f53b68ab48e8f0f9519c7cf5759a409e767ffe87e53ea1fb7669381053cf",
+  "forbidden_tracked_changes": [],
+  "forbidden_untracked_additions": [],
+  "groups": {
+    "design_system": {
+      "all_also_equal_base": true,
+      "prior_entry_count": 23,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "original_input_evidence": {
+      "all_also_equal_base": true,
+      "prior_entry_count": 27,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "pr96_projection_evidence": {
+      "all_also_equal_base": true,
+      "prior_entry_count": 30,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "production_source": {
+      "all_also_equal_base": true,
+      "prior_entry_count": 23,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "recovery_contract": {
+      "all_also_equal_base": true,
+      "prior_entry_count": 1,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "tools_except_gate": {
+      "all_also_equal_base": false,
+      "prior_entry_count": 60,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    },
+    "workflow_files": {
+      "all_also_equal_base": false,
+      "prior_entry_count": 6,
+      "status": "PASS",
+      "unchanged_from_prior": true
+    }
+  },
+  "observed_at": "2026-09-30T12:14:36.415130+00:00",
+  "observed_tracked_changes": [
+    ".gitleaks.toml",
+    "CLAUDE.md",
+    "docs/input-truthfulness/2026-09-29-historical-execution.md",
+    "tests/test_historical_benchmark_gate.py",
+    "tools/historical_benchmark_gate.py"
+  ],
+  "prior": "bd779c2a1ce14b8a7361c4866678e55e29ae18f8",
+  "prior_protected_count": 10679,
+  "prior_tracked_count": 10684,
+  "private_evidence_or_identity_access": false,
+  "provider_requests": 0,
+  "public_recipient_sha256": {
+    "base": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
+    "prior": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
+    "working_tree": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f"
+  },
+  "publication_scope": "Audit did not edit protected repository files. After checks passed, only this new compact bounded-correction receipt was published. External full receipt and tree inventories retained separately.",
+  "raw_git_tree_inventories": {
+    "base": {
+      "bytes": 1366175,
+      "entry_count": 10585,
+      "file": "base.ls-tree",
+      "sha256": "5bf2e8f75650639f9f8acee48045495e281f7af79ec88044f07d7001dac21120"
+    },
+    "current-head": {
+      "bytes": 1380610,
+      "entry_count": 10684,
+      "file": "current-head.ls-tree",
+      "sha256": "bdf5b556bb56b0c390c4050e1a3197d33eaa270712199df6d9808d681d56f38b"
+    },
+    "prior": {
+      "bytes": 1380610,
+      "entry_count": 10684,
+      "file": "prior.ls-tree",
+      "sha256": "bdf5b556bb56b0c390c4050e1a3197d33eaa270712199df6d9808d681d56f38b"
+    }
+  },
+  "raw_source_sha256_comparison": {
+    "file_count": 89,
+    "files": {
+      ".github/workflows/evening.yml": {
+        "bytes": 9360,
+        "sha256": "3424f31c7d45be341f9d05f8fa2acff580cbae388dd503b1d60371ab77f73dad"
+      },
+      ".github/workflows/historical-input-proof.yml": {
+        "bytes": 8855,
+        "sha256": "cc1b035399873ec8395b875cedce38f6f345276bc66158d319e659a97614c16f"
+      },
+      ".github/workflows/intraday.yml": {
+        "bytes": 2106,
+        "sha256": "1005e3ebe4719913e1f04e26303c805e37b2b8d4baab83e8946cbbf61821d8ca"
+      },
+      ".github/workflows/publish-dashboard.yml": {
+        "bytes": 1525,
+        "sha256": "682a48e5463cbbcc2d8059743e1aaf140ab47e468c088020127eea6eab101524"
+      },
+      ".github/workflows/secret-scan.yml": {
+        "bytes": 1645,
+        "sha256": "b069b00f7f73b12a11ce787305f52f2751a1326565406b2d153a2f26de06dc47"
+      },
+      ".github/workflows/tests.yml": {
+        "bytes": 7651,
+        "sha256": "14b2c271d1e6fedf9b0b4c29d3402c44180127495658af0a15ca3f1450cbcd9e"
+      },
+      "src/breadth.py": {
+        "bytes": 21475,
+        "sha256": "8b5a27ca89d77a0e18883a3f4bbca808a87d2475eb2220d01da6d0cee0a2cb9a"
+      },
+      "src/charts.py": {
+        "bytes": 6166,
+        "sha256": "fbf2ac4f9f0da5db17d54aeca08f6b771c20c08bfd388626e0a6180d9822e099"
+      },
+      "src/clock.py": {
+        "bytes": 1529,
+        "sha256": "b7a38e51118486726d83705c4a9f1ce08527b0db819177f0c1518c3cfe31584b"
+      },
+      "src/discovery.py": {
+        "bytes": 6137,
+        "sha256": "789dcd640011549383185a373d58e4b6b1f5346861e5eaad11aba4a69ff4b77e"
+      },
+      "src/grader.py": {
+        "bytes": 25353,
+        "sha256": "e932cd59b2fd3802ce28af924f43212e7131aff70cab8d87f12c665cf292b209"
+      },
+      "src/history.py": {
+        "bytes": 10834,
+        "sha256": "321f5fe356e14c7b60607f58f8bca3462c7fb1d16022b86e4e9e6783de18149f"
+      },
+      "src/input_diagnostics.py": {
+        "bytes": 19474,
+        "sha256": "c03ca823aba930081574527049d299fb45dd7b4b3894755c92a466093b83a6cc"
+      },
+      "src/inputs.py": {
+        "bytes": 9517,
+        "sha256": "c7af538493b5949901c618f1b94494a2dc21cdbe44fff1791da17445b1ec59c4"
+      },
+      "src/market_data.py": {
+        "bytes": 30208,
+        "sha256": "f73b1d47157f5063b1f0b445d62bb7a1787d78d52716af675b5c86409231a0e6"
+      },
+      "src/pipeline.py": {
+        "bytes": 57986,
+        "sha256": "111f8b1c086d6f231eb9d0925e1672d5205920bddb1bb2f3793cc0a4360fabaf"
+      },
+      "src/plan.py": {
+        "bytes": 76435,
+        "sha256": "6e22c3bb5759c8a21ba1b7f26f905b81e1ebbcddb9b51357676d62cf592def83"
+      },
+      "src/provenance.py": {
+        "bytes": 37483,
+        "sha256": "85494eadd47a0e8ce1b33e285fd159e4bbf9cecda744f6931f379f33b4128114"
+      },
+      "src/quality.py": {
+        "bytes": 45100,
+        "sha256": "8cca1509e40de7096fd396bdff9c1a0464a7e641ae0d75c81812532d3cbc4ecc"
+      },
+      "src/quality_ledger.py": {
+        "bytes": 7981,
+        "sha256": "b11f7654db17020f44870b7e5bcaf1e6821f64ac0d37e7e149bbcbac20a2166b"
+      },
+      "src/reader_authority.py": {
+        "bytes": 9050,
+        "sha256": "f33f4b01c0fa7107b7b87e25957e53b6a3586e30a2db09efd6a7d0790b0ebdc0"
+      },
+      "src/reader_coverage.py": {
+        "bytes": 1078,
+        "sha256": "c206d0cd5adcaf509251a03ee2bf508345fb1ce6310e4e6ae1dba03c4876f0d6"
+      },
+      "src/record.py": {
+        "bytes": 33843,
+        "sha256": "05e3d7cbc7f51641b5d45de228e497ad52ca0202aef2473d9c98e18cb690cf44"
+      },
+      "src/report.py": {
+        "bytes": 63583,
+        "sha256": "84634a3efd133fb770c3d406415b84a0540260a7a7daec123950584d21466c4b"
+      },
+      "src/scans.py": {
+        "bytes": 19222,
+        "sha256": "67559cdf70ffea87a4fcd75c13abd19193b1f55bf2d62a335ddbf68dac182668"
+      },
+      "src/sessions.py": {
+        "bytes": 7656,
+        "sha256": "aea32502bea30159d49e6b35cd68e95889694808eb561c8d34bbf7d268ad3a4b"
+      },
+      "src/timing.py": {
+        "bytes": 7923,
+        "sha256": "f0313180f80bee054e3cbc8a334c8025e542e14e881b5cf94233c7b1c7cfbcf9"
+      },
+      "src/universe.py": {
+        "bytes": 27774,
+        "sha256": "9d00192f7e59f881898ee7fd682a62afc100d8a6d53bdf0ad418b7ce168e653b"
+      },
+      "src/watchlist.py": {
+        "bytes": 18439,
+        "sha256": "708ce680ec5b17dfe30e8e44689c4094a8cf32810e23fdc359e95bf10cee6478"
+      },
+      "tools/actionability_cases.mjs": {
+        "bytes": 21750,
+        "sha256": "8c6ff0769b7b1ac4370dcea5ef43156838ad70ed02dd6e89d672da463fa0db32"
+      },
+      "tools/audit_consolidation.py": {
+        "bytes": 25376,
+        "sha256": "dfcb4ae00c3aa9a36191b64e8bef2572aeba712d9e70332a9bd7a06265424e42"
+      },
+      "tools/audit_reader_downgrades.py": {
+        "bytes": 29352,
+        "sha256": "01b1e3cb8072b7941736828dbbeaf887d970fd40716abb860beb5774c9693204"
+      },
+      "tools/audit_reader_production.py": {
+        "bytes": 5584,
+        "sha256": "8442f938069fb67cb25ed5e0bcb30ff5264ad2316b5f51ff4102c9448add122e"
+      },
+      "tools/audit_retained_quality.py": {
+        "bytes": 17030,
+        "sha256": "6a6d571039385348f5e3fe56e31b806c8f40a3f55c12192bb43c96aefb62ff78"
+      },
+      "tools/backfill_history.py": {
+        "bytes": 1827,
+        "sha256": "ec212a31c6b32781634648f586d18d96d259b10e2795a9eed967cfd0c744681d"
+      },
+      "tools/build_historical_review.py": {
+        "bytes": 2468,
+        "sha256": "864bb70af0a848103eb9c4a2c63ad6cf9015a3ef0f1f234bc999612edacb712e"
+      },
+      "tools/chart_check.mjs": {
+        "bytes": 46190,
+        "sha256": "ed7407d930c02bcac23af0a79f043093e076ce56f349e860dc7c62544cf2a856"
+      },
+      "tools/chart_keyboard_cases.mjs": {
+        "bytes": 18215,
+        "sha256": "d51ba8a461cd6a877dcd8d97bb4d9fb47856cd4e34dcaea92ff64d26961cf8be"
+      },
+      "tools/check_blank_check_universe.py": {
+        "bytes": 4714,
+        "sha256": "12db4455051e12c6b0e9ededda4db31ecdbc48849ce4e85b6af662419521c4fe"
+      },
+      "tools/continuity_check.mjs": {
+        "bytes": 22096,
+        "sha256": "a2e933344bc17eae3a211a98879e81fc9af5adfdcfed38de0f37065de9c51b48"
+      },
+      "tools/entry_limit_study.py": {
+        "bytes": 31074,
+        "sha256": "ebeab78353085cc93bf779a747ba8cbde1b9999e815f93ac290db3eb4e318db1"
+      },
+      "tools/evidence_focus_cases.mjs": {
+        "bytes": 16862,
+        "sha256": "5ceb09b8635d8ca6aba91712126bb2cce6369aa7f9d145c2098e71c6b640db4f"
+      },
+      "tools/explore_pane_cases.mjs": {
+        "bytes": 22843,
+        "sha256": "6dc4660247670fa2c4fb451077a789efd345c63371a9cb8a684f47e84c9d5249"
+      },
+      "tools/followed_plan_cases.mjs": {
+        "bytes": 13330,
+        "sha256": "547a4842a9176274ae52645cf452388c6faaba41ecf288c9159fb093a61ec11d"
+      },
+      "tools/historical-delivery-compatibility.json": {
+        "bytes": 2870,
+        "sha256": "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
+      },
+      "tools/historical-execution-policy.json": {
+        "bytes": 448,
+        "sha256": "1b69bdd3fa92e8f296cc016cd6c94c85eca81b99bf0f11e8c37b695cc25601df"
+      },
+      "tools/historical-workflow-recovery.json": {
+        "bytes": 2740,
+        "sha256": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317"
+      },
+      "tools/historical_acquisition.py": {
+        "bytes": 38128,
+        "sha256": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e"
+      },
+      "tools/historical_acquisition_controls.py": {
+        "bytes": 4812,
+        "sha256": "b42743378613351e0066f86c7c2159cc26789054e51f3ed8ca3412e6cfb5cb8c"
+      },
+      "tools/historical_archive_codec.py": {
+        "bytes": 5853,
+        "sha256": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def"
+      },
+      "tools/historical_breadth_reference.py": {
+        "bytes": 22073,
+        "sha256": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c"
+      },
+      "tools/historical_cases.mjs": {
+        "bytes": 6668,
+        "sha256": "be67622ee4d9d9133859eadd3acc92eafb6b6124a8321c2ffa1fdc0c274473e0"
+      },
+      "tools/historical_execution.py": {
+        "bytes": 16940,
+        "sha256": "673d5c877a12eb325575b26ac764fbfd7834cc529d427396d1a5ab347ec756df"
+      },
+      "tools/historical_execution_guard.py": {
+        "bytes": 34251,
+        "sha256": "7db7a985c48bbc108c263360a5779ff8788802b08c84bf14c260077b30b14f3b"
+      },
+      "tools/historical_input_proof.py": {
+        "bytes": 39960,
+        "sha256": "f292edb14001f8a05b3153e1e9c2493abf192b9bbf03bf853098137e7dbe9c29"
+      },
+      "tools/historical_journeys.mjs": {
+        "bytes": 1987,
+        "sha256": "20e4a4112e319edb33361a4313563ec77c25b337e38a5be1c29879ffc5e64475"
+      },
+      "tools/historical_lineage_controls.py": {
+        "bytes": 6422,
+        "sha256": "855e175ab3c0b5238463e8f07c92c504fa5012abd0c30788e131c83c37fdc59d"
+      },
+      "tools/historical_normalization.py": {
+        "bytes": 21714,
+        "sha256": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5"
+      },
+      "tools/historical_package.py": {
+        "bytes": 31353,
+        "sha256": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d"
+      },
+      "tools/historical_projection_benchmark.py": {
+        "bytes": 40941,
+        "sha256": "6faf814e1d3f1761c39fb3dbe8c908e04997c40848da682f88e916bcb3c1aeb7"
+      },
+      "tools/historical_reconcile.py": {
+        "bytes": 9999,
+        "sha256": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c"
+      },
+      "tools/historical_reference_controls.py": {
+        "bytes": 6195,
+        "sha256": "8f49c70c72ae4067c858bb2a557ffcfe4a77f20036ea9266db34cc6d9511746e"
+      },
+      "tools/historical_repair_mutations.py": {
+        "bytes": 3020,
+        "sha256": "acba4c67aa61aa69379b6ab2fa31cbf44587b70ec07b88f3c092dacdb7c963e1"
+      },
+      "tools/historical_runtime_profile.py": {
+        "bytes": 8328,
+        "sha256": "f8c653e0170695fce1d810ab6fefdaaa212a224eb46cb30e449f556af84cf3ac"
+      },
+      "tools/historical_validation.py": {
+        "bytes": 34854,
+        "sha256": "bfd53b4aedf46ca76964c49b18571c193a8b5b6b0295ea01a9f37c1ad10f646b"
+      },
+      "tools/input_diagnostic_size.py": {
+        "bytes": 2650,
+        "sha256": "42db734e672b3276bc4c61e34fb0733d07a617c8d76864b4a35f7f690819a30a"
+      },
+      "tools/input_impact.py": {
+        "bytes": 4524,
+        "sha256": "e0b1c14e2f8565374fc4a743b5b661c5e2e43d3c84e10a10ad0b0b032124af74"
+      },
+      "tools/install_actionlint.py": {
+        "bytes": 2503,
+        "sha256": "e8f8a8e73157872c2426d9a28405fbd640bb4f9cbdfbcab511115bd9a77bbebc"
+      },
+      "tools/install_historical_age.py": {
+        "bytes": 2461,
+        "sha256": "be2f4d6030ea4e5206523cbd6cba47869d1049d36575939f53d2a9050ec57e64"
+      },
+      "tools/investigate_stale_inputs.py": {
+        "bytes": 7172,
+        "sha256": "c25c687a44b36483c3955d82651d5e04f7a88c2d1be4ae8c8557cf899e27823b"
+      },
+      "tools/make_fixture.py": {
+        "bytes": 34366,
+        "sha256": "29ff70c39e2a43e7ea8fa8c10f68144fd0a2b2f7abe9a34de1d4b1bf85afd5e8"
+      },
+      "tools/measure_continuity.py": {
+        "bytes": 3977,
+        "sha256": "9e874d6382a4d5d9396944e74aa252964ae83d2af7775acb71198baeb24786bf"
+      },
+      "tools/page_smoke.mjs": {
+        "bytes": 308326,
+        "sha256": "12d8d734d1be0d64dc3a310d03fa444a1cd75aa05500cc4ec9f5f530aecf3f8d"
+      },
+      "tools/provenance_impact.py": {
+        "bytes": 4582,
+        "sha256": "432d9ab62a4d9697d93f29187df2c794d0bed9298926b75a0c0f756b986f988e"
+      },
+      "tools/publish_dashboard.py": {
+        "bytes": 6107,
+        "sha256": "29aa6786aac5bcf544c418cc97bb5e4d6c5a2299bfa02c90e9469a6a87226d2d"
+      },
+      "tools/reader_coverage_cases.mjs": {
+        "bytes": 7745,
+        "sha256": "ea78fec849353dfdf505ecee75aef133dfea7506a7909af6429d30b4036f9777"
+      },
+      "tools/reading_cases.mjs": {
+        "bytes": 20407,
+        "sha256": "c742cc8649a0116dfcdfaeb9ce42050d21391135daf3696845fdce701df4e179"
+      },
+      "tools/replay_volume_observations.py": {
+        "bytes": 1814,
+        "sha256": "0d7f443076c9f634ba7241f0702b874bfa9522fa736d64d265e65421e914d1ef"
+      },
+      "tools/requirements-historical-archive.txt": {
+        "bytes": 376,
+        "sha256": "db68c200c6280d9db78b0ff8b3e2e31c1b9d06c9c41f50520ca58828bd7ff6e9"
+      },
+      "tools/requirements-historical.txt": {
+        "bytes": 298,
+        "sha256": "e2680226c4040935132d95d02cfe400bc3683b831f5330ba19002f035b78c6ed"
+      },
+      "tools/risk_attribution_cases.mjs": {
+        "bytes": 11007,
+        "sha256": "5bb73c2d11425d71a20dda39db3ed990e5f7475c4821afbbeb053ba5f8791bef"
+      },
+      "tools/scorecard_analysis.py": {
+        "bytes": 4217,
+        "sha256": "5f0c721ccb955f3938aff4418700bf086528897e0e6c29c94ce09db433d0861a"
+      },
+      "tools/scorecard_cases.mjs": {
+        "bytes": 4516,
+        "sha256": "8307fc57d1990a4458e9e2ed410e9703fd63682fe71cdbfbcf740e0ad73d80af"
+      },
+      "tools/verify_input_diagnostics.py": {
+        "bytes": 2036,
+        "sha256": "824de134df79b72b29cca28e5e218b3efdd6426ffeea0af725bd34a5812e91c9"
+      },
+      "tools/verify_provenance.py": {
+        "bytes": 2269,
+        "sha256": "0b0e260682049099678a6977986f8b7e0b1ad4fc9aded4611c70abd0a66922bc"
+      },
+      "tools/verify_retained_publication.py": {
+        "bytes": 2834,
+        "sha256": "d7b744bbf355432629527e7cc353c543fdec849756edebef3c7c490ae13cd27b"
+      },
+      "tools/wait_explanation_cases.mjs": {
+        "bytes": 18615,
+        "sha256": "23a7234c5a019d16450bf7e0eed577a0d16b5ad741246a68d38c56d8718008b0"
+      },
+      "tools/wait_explanation_controls.mjs": {
+        "bytes": 4916,
+        "sha256": "98915d1c6f1158be807e12f2faaecbce7f8b7c4449599384d779f7e905dd193f"
+      },
+      "tools/walkthrough_cases.mjs": {
+        "bytes": 13536,
+        "sha256": "cb70b895f137cc6416f12d26cfb78a9abf05931e3e9832a60107517a9ae35454"
+      }
+    },
+    "registry_sha256": "de2981aa1cca31502b6f62d1bf2050e5b957959224b9bf23c77778cba4faf267",
+    "scope": "Every prior .github/, src/, and tools/ file except tools/historical_benchmark_gate.py. Binary subprocess git show of exact prior commit blob compared directly with Path.read_bytes from the frozen working tree; no newline normalization, filters, imports, or execution.",
+    "status": "PASS"
+  },
+  "repository_edits": false,
+  "schema": "bounded-correction-preservation-v1",
+  "scope": "Point-in-time read-only preservation audit. Committed comparisons use exact Git tree mode/type/blob identities. Uncommitted content uses git diff against prior, therefore Git-clean content semantics rather than Windows checkout newline bytes.",
+  "status": "PASS"
+}

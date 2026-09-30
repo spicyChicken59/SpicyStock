@@ -1,0 +1,27 @@
+{
+  "archive_bytes": 26640,
+  "archive_sha256": "1f3aad3fcd175916187a346a4e9f0818479308f9955ff7c73f2318b34351db3f",
+  "artifact_id": 11109327191,
+  "files": {
+    "inventory": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/synthetic-member-inventory.json",
+      "sha256": "4e6fb8322a47389973c756a209a895244809a8f248dd1bd0f222cdc87fd2e1ae"
+    },
+    "memory": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/memory-envelope.json",
+      "sha256": "0fe33212a75657ac3405b68e65e391f0625cb0d1be327d5251d78a4a27a8a677"
+    },
+    "profile": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/runtime-profile.json",
+      "sha256": "9fd2f059d556ee1b4b115fbd498e7eaab57fc1461e436595fb8ab0e33a3cd35a"
+    },
+    "report": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/benchmark-result.json",
+      "sha256": "e8f3fc896262effd119e34e9c22a76347d867d49e850fd55654022f6fd0190ff"
+    }
+  },
+  "observed_at": "2026-09-30T16:03:40.401094+00:00",
+  "schema": "public-synthetic-artifact-download-v1",
+  "scope": "Only four public compact measurement files; no evidence archive or private key downloaded.",
+  "status": "PASS"
+}
