@@ -3786,3 +3786,53 @@ DEFER — merge, fresh post-merge readiness and separate explicit release; only
 then may Tahir dispatch once. OMIT — root changes, compression, provider calls
 and readiness approval. Acquisition, recovery of provider data and historical
 findings remain NOT RUN. README was corrected; .env.example remains accurate.
+
+
+### 2026-09-30 PR98 implementation CI checkpoint (supersedes pending checks only)
+
+PASS — the repair implementation at `4f1b6e3b37d206c70c0fe64780d0dceffa4b0ff6`
+completed normal Tests run 36787315265 and Secret Scan run 36787315309, attempt 1.
+Base/main remains `6979904ad872d8d648c93537c77ead5fda909481`. This dated
+addendum records results; the final submitted head and its additional normal CI
+are recorded on PR98. The implementation source is unchanged by this addendum.
+
+PASS — the actual workflow boundary trims only edge ASCII spaces/tabs and emits
+one canonical positive-decimal ID through the boundary output to the guard.
+Embedded whitespace/newlines, Unicode, malformed IDs and wrong authorization
+remain refused. The original ancestor loop is byte-for-byte unchanged: root
+termination and Git-ancestor refusal pass. The four-leading-space failure,
+fixed path and isolated restored defect are covered by extracted-shell tests.
+
+PASS — fresh complete unfiltered workflow history at 22:45:55 UTC contains only
+native runs 1–5. Run 36780349890 / native 5 / attempt 1, job 110108745578, is
+one failed pre-acquisition job, not a zero-job exception. Setup succeeded,
+step 2 failed, exact steps 3–14 were skipped and artifacts are empty. No ledger
+was created; provider requests remain zero. The original three zero-job records
+and accepted native-4 rehearsal retain their original meaning. New contract
+`8f884be642bbcc01a0c02907d73c8d1075ac9040c1b9620e1a307d7330c25c71`
+admits only prospective native 6 / attempt 1 / phase 2, under fresh post-merge
+readiness-v4 and a separate release. Comment 5920107119 remains consumed.
+
+PASS — 768 initial focused tests, 383 focused binding follow-ups and 32 actual
+gitleaks-engine controls. Normal Linux CI passed 2727 Python tests, semantic
+workflow validation, 12 fixture comparisons, clean tree, 127 continuity checks,
+378 chart checks and 9215 page assertions. The single public Git blob false
+positive has an exact path/value AND disposition; unrelated values, other paths
+and default detectors still fail. Earlier CI failures remain dated evidence.
+
+PASS — all 27 declared source pins and 13 protected Git objects match. PR97's
+scientific/codec/runtime proof documents remain unchanged; no full-scale
+benchmark was repeated. The 250/251 MiB archive/ciphertext, 1 MiB overhead,
+2 GiB expanded, 12 GiB memory, 400-request/1 GiB raw, rate/retry/$0 and deadline
+controls remain intact. The pure technical declaration is separate from any
+owner readiness approval. Evidence and commands are retained in
+`native5-recovery/proof-repair.json`, `history-final.json` and the existing
+execution handoff.
+
+KEEP — accepted evidence and limits. FIX NOW — Guidance review of PR98 and its
+final-head CI. DEFER — normal protected merge, fresh post-merge owner readiness
+and explicit execution release before Tahir dispatches once. OMIT — root-walk
+changes, compression work, provider calls and readiness approval. Real execution
+remains BLOCKED; acquisition, provider-package recovery and historical findings
+remain NOT RUN. No dispatch, rerun, key access or private-package scan occurred.
+
