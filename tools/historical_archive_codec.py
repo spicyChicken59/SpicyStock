@@ -16,6 +16,10 @@ LIBZSTD_VERSION = (1, 5, 7)
 WINDOW_BYTES = 1024 ** 3
 CHUNK_BYTES = 1024 ** 2
 BLOCK_BYTES = 128 * 1024
+# Project framing-work budget, independent of decoded-byte and window limits.
+# Zstandard permits variable-sized blocks: 128 KiB is a maximum, not a promise
+# that the encoder fills every block. Bound header work without assuming that.
+MAX_FRAME_BLOCKS = 65536
 COMPRESSION_PARAMETERS = {"window_log": 30, "enable_ldm": True,
                           "write_checksum": True, "write_content_size": True,
                           "threads": 0}
@@ -73,9 +77,6 @@ def _zstandard_frame(archive, max_decoded):
                 params.dict_id != 0 or not params.has_checksum):
             _fail("archive_frame_resource_limit")
         offset, blocks = header_size, 0
-        # Our writer uses ordinary 128 KiB blocks without intermediate flushes.
-        # A small final block is allowed; arbitrary empty-block CPU bombs are not.
-        max_blocks = (max_decoded + BLOCK_BYTES - 1) // BLOCK_BYTES + 1
         while True:
             source.seek(offset)
             raw = source.read(3)
@@ -84,7 +85,7 @@ def _zstandard_frame(archive, max_decoded):
             header = int.from_bytes(raw, "little")
             last, kind, size = header & 1, (header >> 1) & 3, header >> 3
             blocks += 1
-            if kind == 3 or size > BLOCK_BYTES or blocks > max_blocks:
+            if kind == 3 or size > BLOCK_BYTES or blocks > MAX_FRAME_BLOCKS:
                 _fail("invalid_archive_block")
             offset += 3 + (1 if kind == 1 else size)
             if offset > length:

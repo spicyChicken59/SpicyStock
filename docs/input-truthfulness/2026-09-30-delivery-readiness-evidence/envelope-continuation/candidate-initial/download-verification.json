@@ -1,0 +1,29 @@
+{
+  "archive_bytes": 26303,
+  "archive_sha256": "f77b8f6faef8174a10ce4519efa16e983e66918474b15f48636e947c0c646d95",
+  "artifact_id": 11106025096,
+  "members": [
+    {
+      "bytes": 14626,
+      "path": "stress/benchmark-result.json",
+      "sha256": "687e4d2c73001e8bd31509ee314f64bd6381352d2cdf29cfb70d882b6465009a"
+    },
+    {
+      "bytes": 2506,
+      "path": "stress/memory-envelope.json",
+      "sha256": "3d54ddfdbe128ae0b1198c9aaeb28864bcf5dc4f9b3ba492c29535645bc63682"
+    },
+    {
+      "bytes": 4110,
+      "path": "stress/runtime-profile.json",
+      "sha256": "dfca976dfce5b4e1805e6e990a4aee07a3df908eca60b70e226e85e4665ce99d"
+    },
+    {
+      "bytes": 63078,
+      "path": "stress/synthetic-member-inventory.json",
+      "sha256": "bcb90f3e0b786e48772424eb640fc0eb9f8abfd687d974830335188ea476cdda"
+    }
+  ],
+  "scope": "Authenticated connector artifact download and public API digest/length; measurement status remains FAIL. No raw dataset or key in uploaded artifact.",
+  "status": "PASS"
+}

@@ -574,3 +574,20 @@ New full central/stress recovery and normal exact-head CI remain NOT RUN at this
 pre-submission checkpoint. Real acquisition and historical findings remain
 NOT RUN; real execution remains BLOCKED for Guidance after normal merge.
 Native4 remains old transport evidence only, and native5/phase2 is prospective.
+
+
+### 30 September 2026 - envelope recovery reader correction
+
+The first v4 candidate `2e50aba0ffdc3b8bb09a7745c4e9edc45ce9281d` fit
+all stress size and memory bounds, but recovery failed before tar extraction.
+The reader incorrectly inferred a maximum block count from 128 KiB, which is
+Zstandard's maximum block size rather than a required size. The retained stress
+archive has 20,463 valid blocks. The reader now has an explicit 65,536-block work
+budget; the writer, window, science and all other resource limits are unchanged.
+The [dated failure](2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-initial/recovery-failure.md)
+remains FAIL evidence. A one-time decode of the retained synthetic archive checked
+all 393 indexed members and all 390 original PR96 lengths/hashes without
+recompression. The 126 focused package tests pass, including the restored defect
+and before-allocation excess-work refusal; collection is 2,449 tests. New
+source-pinned hosted acceptance is still required. Real execution remains
+BLOCKED; historical acquisition and findings are NOT RUN.

@@ -1,0 +1,85 @@
+{
+  "benchmark_checkout_sha": "2e50aba0ffdc3b8bb09a7745c4e9edc45ce9281d",
+  "benchmark_result_sha256": "687e4d2c73001e8bd31509ee314f64bd6381352d2cdf29cfb70d882b6465009a",
+  "case": "stress",
+  "memory_limit_bytes": 12884901888,
+  "native_controls": {
+    "aggregate_over_limit": {
+      "limit_bytes": 268435456,
+      "observed": {
+        "memory.events": {
+          "high": 0,
+          "low": 0,
+          "max": 39,
+          "oom": 2,
+          "oom_group_kill": 1,
+          "oom_kill": 4
+        },
+        "memory.max": 268435456,
+        "memory.oom.group": 1,
+        "memory.peak": 268435456,
+        "memory.swap.max": 0
+      },
+      "reason": "workload_memory_or_child_failure",
+      "returncode": -9,
+      "seconds": 0.079977,
+      "status": "FAIL",
+      "timed_out": false
+    },
+    "below_limit": {
+      "limit_bytes": 268435456,
+      "observed": {
+        "memory.events": {
+          "high": 0,
+          "low": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_group_kill": 0,
+          "oom_kill": 0
+        },
+        "memory.max": 268435456,
+        "memory.oom.group": 1,
+        "memory.peak": 13594624,
+        "memory.swap.max": 0
+      },
+      "returncode": 0,
+      "seconds": 0.044042,
+      "status": "PASS",
+      "timed_out": false
+    },
+    "below_limit_counter_read_as_worker": true,
+    "scope": "Two160MiB children each fit256MiB individually; concurrent aggregate must OOM the256MiB group. No full benchmark or provider input.",
+    "status": "PASS"
+  },
+  "provider_requests": 0,
+  "reason": "benchmark_result_not_complete",
+  "release_authorized": false,
+  "schema": "historical-memory-supervisor-v1",
+  "scope": "Kernel cgroup accounting for benchmark and descendants, including charged page cache/kernel memory; supervisor/Actions runner excluded.",
+  "setup_seconds_including_controls": 21.774701,
+  "status": "FAIL",
+  "supervisor_source_sha256": "d9443b73c840ed951a144ed54af356e28774133fccc1626028047691ac331fcd",
+  "swap_limit_bytes": 0,
+  "workload": {
+    "limit_bytes": 12884901888,
+    "observed": {
+      "memory.events": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory.max": 12884901888,
+      "memory.oom.group": 1,
+      "memory.peak": 5951119360,
+      "memory.swap.max": 0
+    },
+    "reason": "workload_memory_or_child_failure",
+    "returncode": 2,
+    "seconds": 584.835214,
+    "status": "FAIL",
+    "timed_out": false
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "actual_age": true,
+  "checks": {
+    "all_original_members_exact": "PASS",
+    "legacy_execution_binding_preserved": "PASS",
+    "v2_receipt_and_index_unchanged": "PASS"
+  },
+  "exit_code": 0,
+  "observations": [
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/reader-test-observation.json",
+      "sha256": "ee59d4e5a5104632ba282021bd339346cb9a413f5d4a440b1864f616fee4c898"
+    }
+  ],
+  "observed_at": "2026-09-30T11:06:06.214197-04:00",
+  "owner_key_access": "NOT RUN",
+  "passed": 1,
+  "provider_requests": 0,
+  "schema": "historical-delivery-legacy-recovery-input-v1",
+  "skipped": 0,
+  "source_sha256": {
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
+  },
+  "status": "PASS",
+  "synthetic_only": true,
+  "test_node": "tests/test_historical_package.py::test_real_age_legacy_v2_gzip_recovers_original_members_and_guard"
+}

@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2446 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2449 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3669,3 +3669,20 @@ The complete fixed central/stress cases require encrypted recovery, all390
 original members and exact v2 replay under a kernel-enforced 12 GiB process-tree
 ceiling. Dated earlier failures remain evidence. No compression search, provider
 call, owner-key operation, private-package inspection or historical dispatch.
+
+
+### 30 September 2026 - envelope recovery reader correction
+
+The first v4 candidate `2e50aba0ffdc3b8bb09a7745c4e9edc45ce9281d` fit
+all stress size and memory bounds, but recovery failed before tar extraction.
+The reader incorrectly inferred a maximum block count from 128 KiB, which is
+Zstandard's maximum block size rather than a required size. The retained stress
+archive has 20,463 valid blocks. The reader now has an explicit 65,536-block work
+budget; the writer, window, science and all other resource limits are unchanged.
+The [dated failure](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-initial/recovery-failure.md)
+remains FAIL evidence. A one-time decode of the retained synthetic archive checked
+all 393 indexed members and all 390 original PR96 lengths/hashes without
+recompression. The 126 focused package tests pass, including the restored defect
+and before-allocation excess-work refusal; collection is 2,449 tests. New
+source-pinned hosted acceptance is still required. Real execution remains
+BLOCKED; historical acquisition and findings are NOT RUN.

@@ -3,6 +3,7 @@ from copy import deepcopy
 import hashlib
 import gzip
 import io
+import inspect
 import json
 import os
 from pathlib import Path
@@ -803,6 +804,63 @@ def test_codec_valid_single_stream_roundtrip(tmp_path, archive_format, monkeypat
         monkeypatch.setattr(package.codec, "_zstandard", lambda: pytest.fail("legacy recovery must not require zstandard"))
     assert package.codec.decode(archive, tmp_path / "decoded", archive_format, max_decoded=len(raw)) == len(raw)
     assert (tmp_path / "decoded").read_bytes() == raw
+
+
+def _variable_block_frame(raw):
+    zstd = package.codec._zstandard()
+    output = io.BytesIO()
+    with package.codec.compressor(output, len(raw)) as writer:
+        for offset in range(0, len(raw), 257):
+            writer.write(raw[offset:offset + 257])
+            writer.flush(zstd.FLUSH_BLOCK)
+    return output.getvalue()
+
+
+def test_zstandard_variable_blocks_decode_exactly_and_restored_formula_refuses(tmp_path):
+    raw = bytes(range(256)) * 32
+    archive = tmp_path / "archive"
+    archive.write_bytes(_variable_block_frame(raw))
+    assert package.codec._zstandard_frame(archive, len(raw)) == len(raw)
+    assert package.codec.decode(archive, tmp_path / "decoded", package.codec.FORMAT,
+                                max_decoded=len(raw)) == len(raw)
+    assert (tmp_path / "decoded").read_bytes() == raw
+    # Restore only the faulty rule in an isolated function namespace. The same
+    # valid input must expose the old refusal; no runtime source is modified.
+    source = inspect.getsource(package.codec._zstandard_frame)
+    fixed = "blocks > MAX_FRAME_BLOCKS"
+    assert source.count(fixed) == 1
+    restored = source.replace(fixed, "blocks > (max_decoded + BLOCK_BYTES - 1) // BLOCK_BYTES + 1")
+    namespace = dict(vars(package.codec))
+    exec(compile(restored, "<restored-frame-count-rule>", "exec"), namespace)
+    with pytest.raises(package.codec.CodecError, match="^invalid_archive_block$"):
+        namespace["_zstandard_frame"](archive, len(raw))
+
+
+def _empty_block_frame(block_count):
+    zstd = package.codec._zstandard()
+    empty = zstd.ZstdCompressor(write_checksum=True).compress(b"")
+    header = empty[:zstd.frame_header_size(empty)]
+    # Raw empty blocks are legal. Retain the real encoder's empty-data checksum.
+    return header + b"\0\0\0" * (block_count - 1) + b"\1\0\0" + empty[-4:]
+
+
+def test_zstandard_fixed_frame_work_boundary_decodes_exactly(tmp_path):
+    assert package.codec.MAX_FRAME_BLOCKS == 65536
+    archive = tmp_path / "archive"
+    archive.write_bytes(_empty_block_frame(package.codec.MAX_FRAME_BLOCKS))
+    assert package.codec.decode(archive, tmp_path / "decoded", package.codec.FORMAT,
+                                max_decoded=0) == 0
+    assert (tmp_path / "decoded").read_bytes() == b""
+
+
+def test_zstandard_frame_work_cap_plus_one_refuses_before_allocation(tmp_path, monkeypatch):
+    archive = tmp_path / "archive"
+    archive.write_bytes(_empty_block_frame(package.codec.MAX_FRAME_BLOCKS + 1))
+    zstd = package.codec._zstandard()
+    monkeypatch.setattr(zstd, "ZstdDecompressor", lambda *a, **kw: pytest.fail("decoder must not allocate"))
+    with pytest.raises(package.codec.CodecError, match="^invalid_archive_block$"):
+        package.codec.decode(archive, tmp_path / "decoded", package.codec.FORMAT, max_decoded=0)
+    assert not (tmp_path / "decoded").exists()
 
 
 @pytest.mark.parametrize("archive_format", [package.codec.FORMAT, package.codec.LEGACY_FORMAT])

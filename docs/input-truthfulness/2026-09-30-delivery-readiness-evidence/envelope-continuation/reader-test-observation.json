@@ -1,0 +1,43 @@
+{
+  "actual_age": true,
+  "original_junit_sha256": "53eaaae7be6e84a34686848c0de37445c7b29549478454fd5399560eee5050b7",
+  "schema": "historical-selected-test-observation-v1",
+  "scope": "Selected actual JUnit cases and suite totals; machine hostname omitted, original XML retained outside Git.",
+  "selected_cases": [
+    {
+      "classname": "tests.test_historical_package",
+      "name": "test_real_age_legacy_v2_gzip_recovers_original_members_and_guard",
+      "time": "0.184"
+    },
+    {
+      "classname": "tests.test_historical_package",
+      "name": "test_zstandard_variable_blocks_decode_exactly_and_restored_formula_refuses",
+      "time": "0.005"
+    },
+    {
+      "classname": "tests.test_historical_package",
+      "name": "test_zstandard_fixed_frame_work_boundary_decodes_exactly",
+      "time": "0.099"
+    },
+    {
+      "classname": "tests.test_historical_package",
+      "name": "test_zstandard_frame_work_cap_plus_one_refuses_before_allocation",
+      "time": "0.094"
+    }
+  ],
+  "source_sha256": {
+    "tests/test_historical_package.py": "6ec6a0b3752fab60b3db4d1a82e49ee2c70954f624ae41d92581a4842cb97414",
+    "tools/historical_archive_codec.py": "e3f5a6bf5fa798e97378d17e9538917f53f6b2fb002ec7b6423571f8565d6d33",
+    "tools/historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
+  },
+  "status": "PASS",
+  "suite": {
+    "errors": "0",
+    "failures": "0",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "126",
+    "time": "9.830",
+    "timestamp": "2026-09-30T11:06:06.214197-04:00"
+  }
+}
