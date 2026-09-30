@@ -45,18 +45,20 @@ def run_setup(tmp_path, monkeypatch):
     monkeypatch.setattr(guard, "MANIFEST", identity)
     monkeypatch.setattr(execution, "_checkout_sha", lambda: "a" * 40)
     storage = tmp_path / "storage"
-    policy = {"schema": "historical-execution-policy-v2", "implementation_pr": 123,
+    policy = {"schema": "historical-execution-policy-v3", "implementation_pr": 123,
               "recipient": "age1n3xsz54659mz50vml7pg0eqdhq6dtxqmzy0janmq7qgxrhc6gceqmp75vh",
               "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
-              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256}
+              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
+              "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
     monkeypatch.setattr(guard, "load_policy", lambda: policy)
-    record = {"schema": "historical-execution-v2", "status": "PASS", "mode": "rehearsal",
+    record = {"schema": "historical-execution-v3", "status": "PASS", "mode": "rehearsal",
               "assignment_id": acquisition.ASSIGNMENT, "manifest_sha256": identity,
               "repository": execution.REPOSITORY, "repository_id": guard.REPOSITORY_ID,
               "workflow_id": guard.WORKFLOW_ID, "workflow_path": guard.WORKFLOW,
               "run_id": 789, "run_number": 4, "assignment_phase": 1,
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
               "run_attempt": 1, "readiness_comment_id": 567,
+              "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256, "release_evidence_sha256": "7" * 64,
               "implementation_pr": 123, "checkout_sha": "a" * 40, "workflow_sha": "b" * 40,
               "recipient_sha256": policy["recipient_sha256"], "readiness_status": "PASS", "lifetime_status": "PASS"}
     approval = {"assignment_id": acquisition.ASSIGNMENT, "manifest_sha256": identity,

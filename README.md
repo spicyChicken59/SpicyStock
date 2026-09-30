@@ -853,12 +853,15 @@ not phase numbers. Normal CI checks the changed workflows with pinned actionlint
 The hosted synthetic rehearsal (run 36570997883, native 4 / attempt 1 / phase 1)
 and exact source-pinned owner replay were accepted on PR #95. They used the
 previous execution checkout; they did not exercise the later conversion-evidence
-compaction. Real acquisition remains NOT RUN and release remains BLOCKED pending
-capacity and execution-binding review. The later personal-use decision on PR #95
-ends the licensing/outreach task; it is not provider consent. Any obsolete
-project readiness attestation still needs an explicit reviewed adjustment.
-Synthetic fit does not establish real-data fit or market correctness. The existing
-guard refuses to reuse the old checkout's approval for changed execution tools.
+compaction or archive delivery changes. Real acquisition remains NOT RUN and
+release remains BLOCKED pending Guidance's separate execution review. The
+versioned delivery relation names only that accepted transport evidence and
+requires the new implementation's own capacity/runtime evidence, reviewed head,
+current-main source equality and complete native run history. It does not reopen
+the rehearsal slot. The personal-use decision on PR #95 ends licensing/outreach
+work; the new owner-scope attestation records authorization, not provider consent.
+Cost, entitlement, credential and technical safety checks remain separate.
+Synthetic fit does not establish real-data fit or market correctness.
 
 The [September 24/25 input and market-permission investigation](docs/input-truthfulness/2026-09-28-historical-input-proof.md)
 reconciles retained aggregate RED decisions and the available stock observations.

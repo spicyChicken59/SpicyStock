@@ -12,6 +12,8 @@ from tools import historical_execution_guard as guard
 
 APPROVED, CURRENT, MERGED = "a" * 40, "b" * 40, "c" * 40
 TODAY = date(2026, 9, 29)
+OLD_RUN = 36570997883
+FIXTURE_PR = 123
 HISTORY = f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=1"
 HISTORY_END = f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=2"
 
@@ -23,9 +25,10 @@ def jobs_path(run_id, page=1):
 @pytest.fixture
 def setup():
     recipient = "age1" + "a" * 58
-    policy = {"schema": guard.POLICY_SCHEMA, "implementation_pr": 95,
+    policy = {"schema": guard.POLICY_SCHEMA, "implementation_pr": FIXTURE_PR,
               "recipient": recipient, "recipient_sha256": hashlib.sha256((recipient + "\n").encode()).hexdigest(),
-              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256}
+              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
+              "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
     env = {"GITHUB_REPOSITORY": guard.REPOSITORY, "GITHUB_REPOSITORY_ID": str(guard.REPOSITORY_ID),
            "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main", "GITHUB_JOB": "execution",
            "GITHUB_WORKFLOW_REF": guard.REPOSITORY + "/" + guard.WORKFLOW + "@refs/heads/main",
@@ -33,33 +36,38 @@ def setup():
            "GITHUB_RUN_ID": "105", "GITHUB_RUN_NUMBER": "5", "GITHUB_RUN_ATTEMPT": "1"}
     item = {"verified_at": "2026-09-28", "reference": "https://example.test/private-attestation/123",
             "basis": "Invented offline test evidence with no provider activity"}
-    evidence = {name: deepcopy(item) for name in ("cost", "rights", "entitlement", "local_recovery")}
+    evidence = {name: deepcopy(item) for name in ("cost", "owner_authorization", "entitlement", "local_recovery")}
     evidence["cost"]["zero_additional_cost"] = True
-    evidence["rights"].update(private_retention_permitted=True, encrypted_transport_permitted=True,
-                              controlled_review_status="NOT RUN")
+    evidence["owner_authorization"].update(schema="owner-personal-use-v1", owner=guard.OWNER, scope="personal_research",
+        owner_authorized=True, owner_only_decryption=True, public_plaintext=False, public_ciphertext_retention_days=7,
+        provider_consent="NOT ASSERTED", controlled_review_status="NOT RUN",
+        direction_reference=guard.compatibility_contract()["owner_direction_reference"])
     evidence["entitlement"]["historical_sip_zero_cost"] = True
-    evidence["local_recovery"].update(schema=guard.LOCAL_RECOVERY_SCHEMA, verified=True, rehearsal_run_id=104,
+    evidence["local_recovery"].update(schema=guard.LOCAL_RECOVERY_SCHEMA, verified=True, rehearsal_run_id=OLD_RUN,
         run_number=4, assignment_phase=1, run_attempt=1, recovery_contract_sha256=guard.RECOVERY_CONTRACT_SHA256,
         checkout_sha=APPROVED, workflow_sha=CURRENT, recipient_sha256=policy["recipient_sha256"],
         ciphertext_sha256="d" * 64, recovered_plaintext_sha256="e" * 64)
-    record = {"schema": guard.READINESS_SCHEMA, "status": "PASS", "mode": "real", "assignment_id": guard.ASSIGNMENT,
+    evidence["local_recovery"].update(guard.compatibility_contract()["accepted_transport"], manifest_sha256=guard.MANIFEST,
+        reference="sha256:" + guard.compatibility_contract()["accepted_transport"]["recovery_checkpoint_sha256"])
+    record = {"schema": guard.READINESS_SCHEMA, "status": "PASS", "authorized_on": "2026-09-29", "mode": "real", "assignment_id": guard.ASSIGNMENT,
               "manifest_sha256": guard.MANIFEST, "checkout_sha": APPROVED, "workflow_id": guard.WORKFLOW_ID,
               "recipient_sha256": policy["recipient_sha256"], "evidence": evidence, "run_number": 5, "assignment_phase": 2,
-              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256}
+              "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
+              "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
     repo = {"id": guard.REPOSITORY_ID, "full_name": guard.REPOSITORY, "private": False}
-    pr = {"number": 95, "merged": True, "state": "closed", "draft": False, "merge_commit_sha": MERGED,
+    pr = {"number": FIXTURE_PR, "merged": True, "state": "closed", "draft": False, "merge_commit_sha": MERGED,
           "base": {"ref": "main", "repo": repo}, "head": {"sha": APPROVED, "repo": repo}}
     runs = []
     for exception in guard.recovery_contract()["exceptions"]:
         runs.append({**{key: exception[key] for key in ("id", "run_number", "run_attempt", "workflow_id", "path", "event", "head_branch", "head_sha", "status", "conclusion")},
                      "repository": deepcopy(repo), "head_repository": deepcopy(repo)})
-    runs.extend([{"id": 100 + n, "run_number": n, "run_attempt": 1, "workflow_id": guard.WORKFLOW_ID, "path": guard.WORKFLOW, "event": "workflow_dispatch",
-             "head_branch": "main", "repository": repo, "head_repository": repo, "head_sha": CURRENT,
+    runs.extend([{"id": OLD_RUN if n == 4 else 105, "run_number": n, "run_attempt": 1, "workflow_id": guard.WORKFLOW_ID, "path": guard.WORKFLOW, "event": "workflow_dispatch",
+             "head_branch": "main", "repository": repo, "head_repository": repo, "head_sha": guard.compatibility_contract()["accepted_transport"]["workflow_sha"] if n == 4 else CURRENT,
              "display_title": "historical-input-" + ("rehearsal" if n == 4 else "real"),
              "status": "completed" if n == 4 else "in_progress", "conclusion": "success" if n == 4 else None} for n in (4, 5)])
     tree = {"truncated": False, "tree": [{"path": path, "type": "tree", "sha": "f" * 40} for path in ("tools", "src")]}
     content = {"type": "file", "encoding": "base64", "content": base64.b64encode(b"synthetic workflow\n").decode()}
-    responses = {"": repo, "/pulls/95": pr,
+    responses = {"": repo, "/pulls/123": pr,
                  "/pulls/94": {"number": 94, "merged": True, "merge_commit_sha": guard.ORIGINAL_MERGE, "head": {"sha": guard.ORIGINAL_HEAD}},
                  f"/compare/{guard.ORIGINAL_MERGE}...{APPROVED}": {"status": "ahead", "behind_by": 0},
                  f"/compare/{MERGED}...{CURRENT}": {"status": "ahead", "behind_by": 0},
@@ -71,17 +79,37 @@ def setup():
     for run_record in runs:
         run_id = run_record["id"]
         responses[f"/actions/runs/{run_id}"] = deepcopy(run_record)
-        jobs = [] if run_record["run_number"] <= 3 else [{"id": 500 + run_id, "run_id": run_id, "name": "execution",
+        jobs = [] if run_record["run_number"] <= 3 else [{"id": guard.compatibility_contract()["accepted_transport"]["job_id"] if run_record["run_number"] == 4 else 500 + run_id, "run_id": run_id, "name": "execution",
             "status": run_record["status"], "conclusion": run_record["conclusion"], "started_at": "2026-09-29T12:00:00Z"}]
         responses[jobs_path(run_id)] = {"total_count": len(jobs), "jobs": jobs}
         if jobs:
             responses[jobs_path(run_id, 2)] = {"total_count": len(jobs), "jobs": []}
+    contract = guard.compatibility_contract()
+    source_bytes = {path: ("synthetic source " + path + "\n").encode() for path in contract["required_source_paths"]}
+    source_bytes[guard.WORKFLOW] = b"synthetic workflow\n"
+    release = {"schema": "historical-delivery-release-evidence-v1", "status": "PASS",
+        "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256,
+        "manifest_sha256": guard.MANIFEST, "recipient_sha256": policy["recipient_sha256"],
+        "checks": {key: "PASS" for key in guard.RELEASE_CHECKS},
+        "source_sha256": {path: hashlib.sha256(raw).hexdigest() for path, raw in source_bytes.items()},
+        "changed_code": [], "proofs": {}}
+    for path, raw in source_bytes.items():
+        responses[f"/contents/{path}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
+    for name in guard.RELEASE_PROOFS:
+        path = "docs/input-truthfulness/synthetic-" + name + ".json"
+        raw = guard.encode({"status": "PASS", "synthetic_only": True, "scope": "invented unit-test evidence"})
+        release["proofs"][name] = {"path": path, "sha256": hashlib.sha256(raw).hexdigest()}
+        responses[f"/contents/{path}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
+    raw = guard.encode(release)
+    record["release_evidence_sha256"] = hashlib.sha256(raw).hexdigest()
+    responses[f"/contents/{guard.RELEASE_EVIDENCE_PATH}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
+    responses[f"/compare/{contract['continuation_base']}...{APPROVED}"] = {"status": "ahead", "behind_by": 0, "files": []}
     calls = []
 
     def api(path):
         calls.append(path)
         if path == "/issues/comments/123":
-            return {"id": 123, "user": {"login": guard.OWNER}, "issue_url": guard.API_ROOT + "/issues/95", "body": json.dumps(record)}
+            return {"id": 123, "user": {"login": guard.OWNER}, "issue_url": guard.API_ROOT + "/issues/123", "body": json.dumps(record)}
         if path not in responses:
             raise guard.GuardError("missing_synthetic_response")
         return deepcopy(responses[path])
@@ -91,14 +119,16 @@ def setup():
 
 def make_rehearsal(setup):
     _, env, record, responses, _, _ = setup
-    env.update(GITHUB_RUN_ID="104", GITHUB_RUN_NUMBER="4")
+    env.update(GITHUB_RUN_ID=str(OLD_RUN), GITHUB_RUN_NUMBER="4")
     record.update(mode="rehearsal", run_number=4, assignment_phase=1)
     record["evidence"] = {"cost": record["evidence"]["cost"]}
     responses[HISTORY]["workflow_runs"] = [run for run in responses[HISTORY]["workflow_runs"] if run["run_number"] <= 4]
     for path in (HISTORY, HISTORY_END):
         responses[path]["total_count"] = 4
-    for run in (responses[HISTORY]["workflow_runs"][-1], responses["/actions/runs/104"], responses[jobs_path(104)]["jobs"][0]):
+    for run in (responses[HISTORY]["workflow_runs"][-1], responses[f"/actions/runs/{OLD_RUN}"], responses[jobs_path(OLD_RUN)]["jobs"][0]):
         run.update(status="in_progress", conclusion=None)
+    for run in (responses[HISTORY]["workflow_runs"][-1], responses[f"/actions/runs/{OLD_RUN}"]):
+        run["head_sha"] = CURRENT
     return setup
 
 
@@ -128,22 +158,22 @@ def test_full_real_authorization_and_truthful_operator_only_recovery(setup, tmp_
 
 
 def test_private_receipt_digest_is_supported_but_generic_reference_is_not(setup):
-    setup[2]["evidence"]["local_recovery"]["reference"] = "sha256:" + "6" * 64
+    assert setup[2]["evidence"]["local_recovery"]["reference"].startswith("sha256:")
     assert run(setup)["status"] == "PASS"
-    setup[2]["evidence"]["rights"]["reference"] = "the owner has checked everything"
+    setup[2]["evidence"]["owner_authorization"]["reference"] = "the owner has checked everything"
     with pytest.raises(guard.GuardError, match="invalid_evidence_reference"):
         run(setup)
 
 
 @pytest.mark.parametrize("permission", [False, None], ids=["false", "missing"])
 def test_real_requires_permission_for_public_ciphertext_transport(setup, permission):
-    rights = setup[2]["evidence"]["rights"]
+    rights = setup[2]["evidence"]["owner_authorization"]
     if permission is None:
-        rights.pop("encrypted_transport_permitted")
+        rights.pop("owner_only_decryption")
     else:
-        rights["encrypted_transport_permitted"] = permission
-    assert rights["private_retention_permitted"] is True
-    with pytest.raises(guard.GuardError, match="encrypted_transport_not_established"):
+        rights["owner_only_decryption"] = permission
+    assert rights["owner_authorized"] is True
+    with pytest.raises(guard.GuardError, match="owner_scope_not_authorized"):
         run(setup)
 
 
@@ -195,9 +225,9 @@ def test_readiness_attestation_failures(setup, mutation):
         if mutation == "false_recovery": evidence["local_recovery"]["verified"] = False
         elif mutation == "wrong_recipient": evidence["local_recovery"]["recipient_sha256"] = "3" * 64
         elif mutation == "future": evidence["cost"]["verified_at"] = "2026-09-30"
-        elif mutation == "placeholder": evidence["rights"]["basis"] = "TODO establish this evidence"
+        elif mutation == "placeholder": evidence["owner_authorization"]["basis"] = "TODO establish this evidence"
         elif mutation == "unpaid": evidence["cost"]["zero_additional_cost"] = False
-        elif mutation == "unlicensed": evidence["rights"]["private_retention_permitted"] = False
+        elif mutation == "unlicensed": evidence["owner_authorization"]["owner_authorized"] = False
         elif mutation == "no_entitlement": evidence["entitlement"]["historical_sip_zero_cost"] = False
         comment["body"] = json.dumps(record)
     with pytest.raises(guard.GuardError):
@@ -206,7 +236,7 @@ def test_readiness_attestation_failures(setup, mutation):
 
 @pytest.mark.parametrize("key,value", [("merged", False), ("state", "open"), ("draft", True)])
 def test_unmerged_implementation_rejected(setup, key, value):
-    setup[3]["/pulls/95"][key] = value
+    setup[3]["/pulls/123"][key] = value
     with pytest.raises(guard.GuardError, match="implementation_not_merged"):
         run(setup)
 
@@ -217,7 +247,7 @@ def test_unmerged_implementation_rejected(setup, key, value):
     ("job_started", "execution_job_not_durable"), ("job_run", "execution_job_not_durable")])
 def test_reviewed_source_and_durable_job_failures(setup, mutation, reason):
     responses = setup[3]
-    if mutation == "head": responses["/pulls/95"]["head"]["sha"] = CURRENT
+    if mutation == "head": responses["/pulls/123"]["head"]["sha"] = CURRENT
     elif mutation == "ancestry": responses[f"/compare/{MERGED}...{CURRENT}"]["behind_by"] = 1
     elif mutation == "tree": responses[f"/git/trees/{CURRENT}"]["tree"][0]["sha"] = CURRENT
     elif mutation == "truncated": responses[f"/git/trees/{CURRENT}"]["truncated"] = True
@@ -249,7 +279,7 @@ def test_native_history_cannot_reopen_a_slot(setup, mutation):
     reasons = {"deleted": "incomplete_or_consumed_history", "extra": "consumed_or_invalid_history",
         "duplicate": "duplicate_run_history", "rerun": "unaccounted_or_retried_run",
         "failed": "rehearsal_not_recovered", "cancelled": "rehearsal_not_recovered",
-        "wrong_receipt": "rehearsal_not_recovered", "wrong_phase": "wrong_historical_phase",
+        "wrong_receipt": "unaccepted_prior_transport", "wrong_phase": "wrong_historical_phase",
         "fork": "foreign_run_repository", "wrong_current": "current_run_not_durable", "not_started": "current_run_not_durable"}
     with pytest.raises(guard.GuardError, match=reasons[mutation]):
         run(setup)
@@ -335,7 +365,7 @@ def test_partial_or_unavailable_history_fails_closed(setup, mutation):
 def test_unknown_fourth_zero_job_validation_failure_is_not_exempt(setup):
     make_rehearsal(setup)
     change_run(setup, 4, event="push", status="completed", conclusion="failure")
-    setup[3][jobs_path(104)] = {"total_count": 0, "jobs": []}
+    setup[3][jobs_path(OLD_RUN)] = {"total_count": 0, "jobs": []}
     with pytest.raises(guard.GuardError, match="unaccounted_or_retried_run"):
         run(setup)
 
@@ -383,14 +413,14 @@ def test_full_binding_adds_runtime_policy_identity(setup):
     result = run(setup)
     assert guard.validate_execution_binding(result, setup[0]) == guard.validate_phase_binding(result)
     result["implementation_pr"] = 96
-    with pytest.raises(guard.GuardError, match="unbound_execution_policy"):
+    with pytest.raises(guard.GuardError, match="invalid_delivery_binding"):
         guard.validate_execution_binding(result, setup[0])
 
 
 @pytest.mark.parametrize("mutation", ["repair_number", "original_number", "original_merge", "original_ancestry", "null_policy", "old_policy"])
 def test_repair_and_original_pr_lineage_are_both_required(setup, mutation):
     responses = setup[3]
-    if mutation == "repair_number": responses["/pulls/95"]["number"] = 96
+    if mutation == "repair_number": responses["/pulls/123"]["number"] = 96
     elif mutation == "original_number": responses["/pulls/94"]["number"] = 93
     elif mutation == "original_merge": responses["/pulls/94"]["merge_commit_sha"] = MERGED
     elif mutation == "original_ancestry": responses[f"/compare/{guard.ORIGINAL_MERGE}...{APPROVED}"]["behind_by"] = 1

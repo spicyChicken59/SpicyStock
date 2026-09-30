@@ -59,7 +59,7 @@ def _checkout_sha():
 def validate_execution(execution, mode, identity):
     """The document is emitted by the independently checked Actions guard."""
     original_mode = execution.get("mode")
-    if (execution.get("schema") != "historical-execution-v2" or
+    if (execution.get("schema") != "historical-execution-v3" or
             execution.get("status") != "PASS" or
             execution.get("assignment_id") != acquisition.ASSIGNMENT or
             execution.get("manifest_sha256") != identity or
@@ -134,7 +134,7 @@ def validate_retained_execution(storage, execution):
     binding = guard.validate_phase_binding(execution)
     try:
         diagnostic = _json(Path(storage) / "execution-diagnostics.json")
-        if (diagnostic.get("schema") != "historical-execution-diagnostics-v2" or
+        if (diagnostic.get("schema") != "historical-execution-diagnostics-v3" or
                 diagnostic.get("execution_binding") != binding):
             raise ExecutionError("retained_execution_identity_rejected")
         recovered = Path(storage) / "_package/execution.json"
@@ -239,7 +239,7 @@ def execute(mode, manifest, storage, execution, approval=None):
         raise ExecutionError("provider_environment_forbidden")
     if mode == "real" and not all(os.environ.get(name) for name in SECRETS):
         raise ExecutionError("provider_credentials_unavailable")
-    diagnostic = {"schema": "historical-execution-diagnostics-v2", "mode": execution["mode"],
+    diagnostic = {"schema": "historical-execution-diagnostics-v3", "mode": execution["mode"],
                   "execution_binding": guard.validate_phase_binding(execution),
                   "manifest_sha256": identity, "synthetic": execution["mode"] == "rehearsal",
                   "provider_calls_authorized": mode == "real", "phase": mode, "status": "BLOCKED"}
