@@ -1,0 +1,438 @@
+{
+  "actual_engine": {
+    "after": {
+      "cases": [
+        {
+          "case": "without_disposition",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "exact_public_observation",
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "expected_rule_ids": [],
+          "rule_ids": [],
+          "status": "PASS"
+        },
+        {
+          "case": "unrelated_value_same_path",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "same_values_other_file",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "same_values_path_suffix",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "same_values_path_prefix",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "different_default_detector",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "github-pat"
+          ],
+          "rule_ids": [
+            "github-pat"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_defaults",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_exact",
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "expected_rule_ids": [],
+          "rule_ids": [],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_unrelated",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_elsewhere",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_crossed",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_receipt_default_detector",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "github-pat"
+          ],
+          "rule_ids": [
+            "github-pat"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_defaults",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_exact",
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "expected_rule_ids": [],
+          "rule_ids": [],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_unrelated",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_elsewhere",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_crossed",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "supervisor_source_default_detector",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "github-pat"
+          ],
+          "rule_ids": [
+            "github-pat"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_defaults",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_exact",
+          "exit_code": 0,
+          "expected_exit_code": 0,
+          "expected_rule_ids": [],
+          "rule_ids": [],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_unrelated",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_elsewhere",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key",
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_crossed",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "generic-api-key"
+          ],
+          "rule_ids": [
+            "generic-api-key"
+          ],
+          "status": "PASS"
+        },
+        {
+          "case": "focused_receipt_default_detector",
+          "exit_code": 2,
+          "expected_exit_code": 2,
+          "expected_rule_ids": [
+            "github-pat"
+          ],
+          "rule_ids": [
+            "github-pat"
+          ],
+          "status": "PASS"
+        }
+      ],
+      "passed": 25,
+      "receipt_sha256": "98fb8ceabcb09025fb74b901b6e275304216528dc80f080cdc35105748f50cfa",
+      "status": "PASS"
+    },
+    "before": {
+      "failed_cases": [
+        "supervisor_receipt_exact",
+        "supervisor_source_exact",
+        "focused_receipt_exact"
+      ],
+      "passed": 22,
+      "receipt_sha256": "5a15a3984e9378495048a807229a50e5a1af69413e287d3b7d941bc25fbdab07",
+      "status": "FAIL"
+    },
+    "command_template": "../venv/Scripts/python.exe tests/secret_scan_controls.py --gitleaks ../gitleaks-8.24.3/gitleaks.exe --workspace <fresh-scratch-outside-git> --receipt <fresh-receipt-outside-git>",
+    "initial_attempt": {
+      "reason": "The first scratch layout exceeded the Windows path-length limit before completing. Short numeric case directories fixed the harness layout; the completed before/after receipts are cited above.",
+      "status": "ERROR"
+    }
+  },
+  "baseline_head": "65cd32ba0991ecad4bb04d53132d4a44889aca32",
+  "configuration_sha256": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607",
+  "history_comparison": {
+    "baseline_head": "65cd32ba0991ecad4bb04d53132d4a44889aca32",
+    "history_rewritten": false,
+    "log_options": "--no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..65cd32ba0991ecad4bb04d53132d4a44889aca32",
+    "results": [
+      {
+        "case": "before",
+        "configuration_sha256": "9b2dacea9b99e053cf58246e5db67c3d78546741e01a451e473db3444e1daf83",
+        "exit_code": 2,
+        "finding_count": 4,
+        "report_sha256": "79f723f5bd44c281ac9b56b6cb93898f73539a4ab808b6c74e6c9480eb204375"
+      },
+      {
+        "case": "after",
+        "configuration_sha256": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607",
+        "exit_code": 0,
+        "finding_count": 0,
+        "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    ],
+    "schema": "historical-envelope-scanner-range-v1",
+    "scope": "Before/after regression of unchanged existing PR history. Not a future hosted-head conclusion.",
+    "status": "PASS",
+    "unchanged_ignore_sha256": "6514d71e645e72336bc269076ac5ea99b777a4260eaa2e744c8209ef85c87bfe",
+    "version": "8.24.3"
+  },
+  "history_rewritten": false,
+  "observed_at_utc": "2026-09-30T14:31:57.766549+00:00",
+  "private_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "pytest": {
+    "after": {
+      "failed": 0,
+      "junit_sha256": "90545291130a5eb061f3d9b8287851d7e1e221604eb5f75e9bf75e3c179a3f3e",
+      "passed": 43,
+      "seconds": 0.59,
+      "skipped": 0,
+      "warnings": 1
+    },
+    "before": {
+      "failed": 5,
+      "passed": 37,
+      "scope": "New config structure and four intended acceptance pairs fail without the new dispositions; existing negative controls pass."
+    },
+    "command": "../venv/Scripts/python.exe -m pytest tests/test_secret_scan.py tests/test_discovery_grading.py::test_historical_context_disposition_is_exact_value_and_exact_path_only -q --basetemp ../envelope-scanner-pytest-after -p no:cacheprovider --junitxml=../envelope-scanner-tests.xml",
+    "environment": {
+      "MPLBACKEND": "Agg",
+      "MPLCONFIGDIR": "../mpl-cache",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "../windows-test-support",
+      "PYTHONUTF8": "1"
+    }
+  },
+  "retained_evidence_changed": false,
+  "scanner": {
+    "archive_matches_published_checksum": true,
+    "archive_sha256": "3f1a35578631dbfe633cc5b49e6c906e55ff14a4bfd7336a10fb27fe33b6dcd2",
+    "archive_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_windows_x64.zip",
+    "binary_sha256": "8f397272f513c00b573f50380c4724e4b3ac759be1de313d907bb968c5d14c09",
+    "platform": "windows_x64",
+    "published_checksums_sha256": "eefa9ab1ee69571248a6fa070a2a7de0837dd9eb72745d131f8766206aac8ac2",
+    "published_checksums_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_checksums.txt",
+    "release_url": "https://github.com/gitleaks/gitleaks/releases/tag/v8.24.3",
+    "version": "8.24.3"
+  },
+  "schema": "historical-envelope-scanner-controls-v1",
+  "scope": "Implementation-side local verification of exactly four additional public-digest findings. Final pushed-head hosted CI remains pending.",
+  "source_identities": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607"
+    },
+    {
+      "path": "tests/secret_scan_controls.py",
+      "sha256": "b5ad9e02c0f362228cbd72c6afd2b9a8691989794000f3fb586194e008e4900d"
+    },
+    {
+      "path": "tests/test_secret_scan.py",
+      "sha256": "430e7b883a3543de0408f4a99e31d3eee2a80748a4f14d7cfa1ee767ab98a958"
+    }
+  ],
+  "status": "PASS",
+  "verification": {
+    "binary_basis": "Installed age v1.3.2 executable bytes equal retained official archive member; archive digest equals committed installer pin.",
+    "pairs": [
+      {
+        "basis_path": "work/age-tools/age/age-keygen.exe",
+        "line": 4,
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json",
+        "sha256": "1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c"
+      },
+      {
+        "basis_path": "tests/secret_scan_controls.py",
+        "line": 52,
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+        "sha256": "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e"
+      },
+      {
+        "basis_path": "tests/test_secret_scan.py",
+        "line": 54,
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+        "sha256": "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d"
+      },
+      {
+        "basis_path": "work/age-tools/age/age-keygen.exe",
+        "line": 45,
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py",
+        "sha256": "1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c"
+      }
+    ],
+    "prior_independent_receipt": "../bounded-correction/final-local-scan-findings.json",
+    "source_basis": "Raw committed bytes at the baseline head; historical source digests do not track the edited support files.",
+    "status": "PASS"
+  }
+}

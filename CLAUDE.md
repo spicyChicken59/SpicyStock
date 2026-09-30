@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2366 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2446 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3651,3 +3651,21 @@ review. No additional allowlist, detector exclusion or history rewrite was
 made. These findings remain a separate Secret Scan blocker; the capacity
 failure already requires the stop. Final hosted results belong to the PR97
 closeout comment.
+
+
+## 30 September 2026 — explicit delivery-envelope continuation on PR97
+
+The owner superseded the stopped compression experiment with an explicit
+250 MiB archive / 251 MiB ciphertext contract. The existing level-12 / 1 GiB
+Zstandard codec, scientific contents and 2 GiB expanded limit are unchanged.
+The v4 receipt/index bind the envelope; v2 gzip and v3 Zstandard retain their
+original limits. Full synthetic acceptance at the new source is NOT RUN until
+the normal PR benchmark completes; real execution stays BLOCKED.
+
+The [current evidence](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/platform-and-contract.md)
+records official platform limits, the unchanged account Actions $0 stopping
+budget, narrow public-digest dispositions, exact history and focused controls.
+The complete fixed central/stress cases require encrypted recovery, all390
+original members and exact v2 replay under a kernel-enforced 12 GiB process-tree
+ceiling. Dated earlier failures remain evidence. No compression search, provider
+call, owner-key operation, private-package inspection or historical dispatch.

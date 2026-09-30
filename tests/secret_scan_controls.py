@@ -19,6 +19,32 @@ PUBLIC_VALUES = (
     "f5d4b3ca6e7b8b3d1af734970650a8a06b7ba7b564abadfeda221528461f9ef2",
     "c10038851e257ac00a9966242e290a1436d8e6d6c5151807e1e8d7cf3338ec62",
 )
+BOUNDED_BASE = "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/"
+BOUNDED_PATHS = tuple(BOUNDED_BASE + name for name in (
+    "window31-supervisor.json", "window31-supervisor.py", "focused-tests.json",
+))
+# Historical public file identities verified at 65cd32ba; these are not the
+# fingerprints of the evolving test/support files in the current checkout.
+BOUNDED_VALUES = (
+    "1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c",
+    "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e",
+    "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d",
+)
+
+
+def retained_documents():
+    documents = [(ROOT / path).read_bytes() for path in BOUNDED_PATHS]
+    report = json.loads(documents[0])
+    focused = json.loads(documents[2])
+    expected = (
+        report["age_keygen_binary_sha256"] == BOUNDED_VALUES[0],
+        f'KEYGEN_SHA = "{BOUNDED_VALUES[0]}"' in documents[1].decode("utf-8"),
+        focused["source_sha256"]["tests/secret_scan_controls.py"] == BOUNDED_VALUES[1],
+        focused["source_sha256"]["tests/test_secret_scan.py"] == BOUNDED_VALUES[2],
+    )
+    if not all(expected):
+        raise ValueError("retained_public_file_identity_changed")
+    return documents
 
 
 def sha(raw):
@@ -83,18 +109,34 @@ def run_controls(binary: Path, workspace: Path):
         ("same_values_path_prefix", config, "copied/" + OBSERVATION, observation, 2, ["generic-api-key"] * 2),
         ("different_default_detector", config, OBSERVATION, default_detector, 2, ["github-pat"]),
     ]
+    documents = retained_documents()
+    for index, (path, raw) in enumerate(zip(BOUNDED_PATHS, documents)):
+        label = ("supervisor_receipt", "supervisor_source", "focused_receipt")[index]
+        detected = ["generic-api-key"] * (2 if index == 2 else 1)
+        crossed = BOUNDED_VALUES[0] if index == 2 else BOUNDED_VALUES[1]
+        cases.extend([
+            (label + "_defaults", baseline, path, raw, 2, detected),
+            (label + "_exact", config, path, raw, 0, []),
+            (label + "_unrelated", config, path, other_value, 2, ["generic-api-key"]),
+            (label + "_elsewhere", config, path + ".backup", raw, 2, detected),
+            (label + "_crossed", config, path, encode({"api_key": crossed}), 2, ["generic-api-key"]),
+            (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
+        ])
     results = []
-    for name, selected_config, path, raw, code, rules in cases:
-        actual = scan(binary, selected_config, workspace / name, path, raw)
+    for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
+        # Keep scratch prefixes short for the existing deeply nested evidence
+        # paths on Windows. Human-readable case names remain in the receipt.
+        actual = scan(binary, selected_config, workspace / str(index), path, raw)
         success = actual["exit_code"] == code and actual["rule_ids"] == rules
         if rules:
             success = success and actual["finding_paths"] == [path]
         results.append({"case": name, "status": "PASS" if success else "FAIL", "expected_exit_code": code,
                         "expected_rule_ids": rules, **actual})
-    return {"schema": "historical-exact-disposition-controls-v1", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
+    return {"schema": "historical-exact-disposition-controls-v2", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
             "scope": "Actual offline gitleaks 8.24.3 on isolated public evidence and invented canaries; not a credential or provider test.",
             "version": version, "binary_sha256": sha(binary.read_bytes()), "config_sha256": sha(config.read_bytes()),
             "observation_path": OBSERVATION, "observation_sha256": sha(observation), "results": results,
+            "retained_documents": [{"path": path, "sha256": sha(raw)} for path, raw in zip(BOUNDED_PATHS, documents)],
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 

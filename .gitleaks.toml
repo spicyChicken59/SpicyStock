@@ -40,3 +40,19 @@ condition = "AND"
 regexes = ['''^(f5d4b3ca6e7b8b3d1af734970650a8a06b7ba7b564abadfeda221528461f9ef2|c10038851e257ac00a9966242e290a1436d8e6d6c5151807e1e8d7cf3338ec62)$''']
 paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api\.json$''']
 regexTarget = "secret"
+
+# The retained public executable has one verified digest at two exact paths.
+[[rules.allowlists]]
+description = "PR97 retained public executable digest in the bounded comparison"
+condition = "AND"
+regexes = ['''^(1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor\.json$''', '''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor\.py$''']
+regexTarget = "secret"
+
+# These are historical source digests recorded before the current test edits.
+[[rules.allowlists]]
+description = "PR97 retained public source digests in the focused test receipt"
+condition = "AND"
+regexes = ['''^(a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e|cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests\.json$''']
+regexTarget = "secret"

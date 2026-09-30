@@ -27,7 +27,8 @@ POLICY_SCHEMA = "historical-execution-policy-v3"
 READINESS_SCHEMA = "readiness-v3"
 EXECUTION_SCHEMA = "historical-execution-v3"
 LOCAL_RECOVERY_SCHEMA = "historical-local-recovery-v2"
-COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
+PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
+COMPATIBILITY_CONTRACT_SHA256 = "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d"
 RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-delivery-release-evidence.json"
 RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
 ORIGINAL_MERGE = "33ec181ca60adaf2f7c0ef19a1889a5517161585"
@@ -46,7 +47,7 @@ BINDING_FIELDS = ("repository", "repository_id", "assignment_id", "manifest_sha2
                   "implementation_pr", "readiness_comment_id", "recovery_contract_sha256")
 DELIVERY_BINDING_FIELDS = ("compatibility_contract_sha256", "release_evidence_sha256")
 RELEASE_CHECKS = ("central_capacity", "stress_capacity", "central_exact_recovery", "stress_exact_recovery",
-                  "legacy_gzip_recovery", "exact_v2_equivalence", "shared_offline_step", "total_job_envelope", "normal_ci")
+                  "legacy_gzip_recovery", "exact_v2_equivalence", "shared_offline_step", "total_job_envelope", "process_memory", "normal_ci")
 RELEASE_PROOFS = ("capacity", "runtime", "equivalence", "legacy_recovery", "normal_ci")
 
 
@@ -144,7 +145,7 @@ def validate_phase_binding(record):
     # execution requires both new digests; no legacy record is upgraded here.
     extra = DELIVERY_BINDING_FIELDS if any(k in record for k in DELIVERY_BINDING_FIELDS) else ()
     if extra:
-        require(record.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256 and
+        require(record.get("compatibility_contract_sha256") in {COMPATIBILITY_CONTRACT_SHA256, PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} and
                 sha(record.get("release_evidence_sha256")) and record["implementation_pr"] > 96, "invalid_delivery_binding")
     return {key: record[key] for key in (*BINDING_FIELDS, *extra)}
 
@@ -153,6 +154,7 @@ def validate_execution_binding(record, policy):
     binding = validate_phase_binding(record)
     validate_policy(policy)
     require(all(key in binding for key in DELIVERY_BINDING_FIELDS), "missing_delivery_binding")
+    require(binding["compatibility_contract_sha256"] == COMPATIBILITY_CONTRACT_SHA256, "stale_delivery_binding")
     require(binding["manifest_sha256"] == MANIFEST and binding["recipient_sha256"] == policy["recipient_sha256"] and
             binding["implementation_pr"] == policy["implementation_pr"], "unbound_execution_policy")
     return binding
@@ -274,10 +276,11 @@ def validate_release_evidence(api, record):
     raw = reviewed_file(api, RELEASE_EVIDENCE_PATH, revision)
     require(hashlib.sha256(raw).hexdigest() == record["release_evidence_sha256"], "release_evidence_changed")
     evidence = parse(raw)
-    require(isinstance(evidence, dict) and evidence.get("schema") == "historical-delivery-release-evidence-v1" and
+    require(isinstance(evidence, dict) and evidence.get("schema") == "historical-delivery-release-evidence-v2" and
             evidence.get("status") == "PASS" and evidence.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256 and
             evidence.get("manifest_sha256") == MANIFEST and evidence.get("recipient_sha256") == record["recipient_sha256"],
             "technical_release_not_established")
+    require(evidence.get("delivery_envelope") == contract["delivery_envelope"], "unbound_delivery_envelope")
     checks = evidence.get("checks")
     require(isinstance(checks, dict) and set(checks) == set(RELEASE_CHECKS) and
             all(checks[key] == "PASS" for key in RELEASE_CHECKS), "technical_release_not_established")

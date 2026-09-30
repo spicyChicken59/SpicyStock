@@ -1,0 +1,103 @@
+{
+  "cases": [
+    {
+      "case": "unchanged_valid_control",
+      "errors": 0,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "failures": 0,
+      "log": "package-v4-controls-2\\unchanged_valid_control.txt",
+      "log_sha256": "0fddd270be8bdf92283635bbc99b33521a127e3b95e2d75800d1d72f2ed979a7",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 15
+    },
+    {
+      "case": "removed_overhead_rule",
+      "errors": 0,
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "failures": 3,
+      "log": "package-v4-controls-2\\removed_overhead_rule.txt",
+      "log_sha256": "c9a2dba8d1790efdd213003dee06171065f694c950db858a32311ba189acba79",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 3
+    },
+    {
+      "case": "old_envelope_inherits_new_caps",
+      "errors": 0,
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "failures": 3,
+      "log": "package-v4-controls-2\\old_envelope_inherits_new_caps.txt",
+      "log_sha256": "3012e2428502378dbdc10f14ca1ae4ec8f247a357c9598250504a24a1db420bb",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 5
+    },
+    {
+      "case": "removed_archive_cap_rule",
+      "errors": 0,
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "failures": 2,
+      "log": "package-v4-controls-2\\removed_archive_cap_rule.txt",
+      "log_sha256": "5223c70c9c39c23d669a7f6f1850d562f84fbcad648c8f745a03912761a07478",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 2
+    },
+    {
+      "case": "removed_envelope_identity_rule",
+      "errors": 0,
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "failures": 4,
+      "log": "package-v4-controls-2\\removed_envelope_identity_rule.txt",
+      "log_sha256": "b6f7c1daf6b6f94132b0f3113bace0a52ceaadd6baa4eb3b340469e0c6096890",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 5
+    },
+    {
+      "case": "removed_versioned_compatibility_rule",
+      "errors": 0,
+      "exit_code": 1,
+      "expected_exit_code": 1,
+      "failures": 2,
+      "log": "package-v4-controls-2\\removed_versioned_compatibility_rule.txt",
+      "log_sha256": "c05078843d4546961e0d3d7de52df4cc800f7e122fdd84afba4cb8dfbd2e2f5a",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 2
+    },
+    {
+      "case": "unrelated_index_bound_control",
+      "errors": 0,
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "failures": 0,
+      "log": "package-v4-controls-2\\unrelated_index_bound_control.txt",
+      "log_sha256": "8eb428bd6c4a977f3d7b7e07200cd7f3d40e2dce7427b94c93c031d2eabe4fff",
+      "skips": 0,
+      "status": "PASS",
+      "tests": 15
+    }
+  ],
+  "observed_at": "2026-09-30T14:36:56.911044+00:00",
+  "owner_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "schema": "historical-package-envelope-controls-v1",
+  "scope": "Tiny metadata tests with rules changed only in child memory; no shared source writes, no full compression or replay.",
+  "script_sha256": "a9dae12b496b45419f41e261982c25b0e4fffa3e24eba8f9a3d8d6923ed06cc5",
+  "source_sha256_after": {
+    "tests\\test_historical_package.py": "687506d53bdd5419ab01d21f3a8c0d09bc0c4a136eea41678f9e6d51b13fea16",
+    "tools\\historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
+  },
+  "source_sha256_before": {
+    "tests\\test_historical_package.py": "687506d53bdd5419ab01d21f3a8c0d09bc0c4a136eea41678f9e6d51b13fea16",
+    "tools\\historical_package.py": "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
+  },
+  "status": "PASS"
+}

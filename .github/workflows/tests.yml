@@ -77,23 +77,25 @@ jobs:
           python -m pip install --require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt
           python -m pip install -r tools/requirements-historical.txt
           python tools/install_historical_age.py --destination "$BENCHMARK_PARENT/age"
-      - name: Profile the fixed full synthetic case, recover, and reproduce offline
+      - name: Enforce 12 GiB, profile the fixed case, recover, and reproduce offline
         # Each two-date offline pass has one unchanged 30-minute deadline;
         # packaging has one 10-minute deadline. The helper emits partial receipts
         # on handled deadline refusal. This is never a historical dispatch.
         run: |
           set -euo pipefail
           umask 077
-          benchmark_setup_seconds=$(( $(date +%s) - BENCHMARK_SETUP_START ))
-          python tools/historical_projection_benchmark.py --case "$BENCHMARK_CASE" \
+          sudo --preserve-env=GITHUB_ACTIONS,GITHUB_RUN_ID,GITHUB_RUN_ATTEMPT,GITHUB_SHA,GITHUB_EVENT_NAME,RUNNER_OS,RUNNER_ARCH,ImageOS,ImageVersion,MPLBACKEND,PYTHONUTF8,PYTHONDONTWRITEBYTECODE \
+            -- "$(command -v python)" -I -B tools/historical_memory_supervisor.py --case "$BENCHMARK_CASE" \
             --workspace "$BENCHMARK_PARENT/synthetic-compaction-$BENCHMARK_CASE" \
-            --age "$BENCHMARK_PARENT/age/age" --representative --setup-seconds "$benchmark_setup_seconds"
+            --age "$BENCHMARK_PARENT/age/age" --uid "$(id -u)" --gid "$(id -g)" \
+            --setup-start "$BENCHMARK_SETUP_START"
       - name: Preserve only compact synthetic measurements
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: historical-runtime-${{ matrix.case }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
+            ${{ env.BENCHMARK_PARENT }}/memory-envelope.json
             ${{ env.BENCHMARK_PARENT }}/benchmark-preflight.json
             ${{ env.BENCHMARK_PARENT }}/synthetic-compaction-${{ matrix.case }}/benchmark-result.json
             ${{ env.BENCHMARK_PARENT }}/synthetic-compaction-${{ matrix.case }}/runtime-profile.json

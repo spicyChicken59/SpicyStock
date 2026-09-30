@@ -74,104 +74,27 @@ def correction_event():
     return value
 
 
-@pytest.fixture
-def comparison_receipt():
-    raw = (Path(__file__).resolve().parents[1] / gate.CORRECTION_RECEIPT).read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == gate.CORRECTION_RECEIPT_SHA256
-    return raw
+def test_dated_failed_comparison_receipt_is_preserved_without_current_authority():
+    path = Path(__file__).resolve().parents[1] / (
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json")
+    raw = path.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "77ee1a171b9c0d0361c18ebfabda17a3e6d63e6287a26c24881295b792368a7e"
+    assert json.loads(raw)["status"] == "FAIL"
 
 
-def correction_git(receipt, *, paths=None, observed=None, ancestor=0, diff=0, show=0):
-    baseline_paths = paths if paths is not None else sorted(gate.CORRECTION_PATHS | {gate.CORRECTION_RECEIPT})
-    calls = []
-    def run(arguments):
-        calls.append(arguments)
-        if arguments == ["merge-base", "--is-ancestor", "a" * 40, "b" * 40]:
-            return SimpleNamespace(returncode=0)
-        if arguments == ["merge-base", "--is-ancestor", gate.CORRECTION_BASE, "b" * 40]:
-            return SimpleNamespace(returncode=ancestor)
-        if arguments == ["show", "b" * 40 + ":" + gate.CORRECTION_RECEIPT]:
-            return SimpleNamespace(returncode=show, stdout=receipt)
-        assert arguments[:4] == ["diff", "--name-only", "-z", "--no-renames"]
-        assert arguments[4:] in (["a" * 40, "b" * 40], [gate.CORRECTION_BASE, "b" * 40])
-        full_range = arguments[4] == gate.CORRECTION_BASE
-        values = baseline_paths if full_range or observed is None else observed
-        return SimpleNamespace(returncode=diff if full_range else 0,
-                               stdout=b"\0".join(p.encode() for p in values) + b"\0")
-    return run, calls
-
-
-def test_pr97_defers_only_exact_failed_receipt_and_complete_reviewed_range(comparison_receipt):
-    run, calls = correction_git(comparison_receipt)
-    result = decide(correction_event(), git=run)
-    assert result["run_required"] is False and result["status"] == "NOT RUN"
-    assert result["reason"] == "pr97_bounded_comparison_failed_no_further_benchmark_authorized"
-    assert result["reviewed_baseline"] == "bd779c2a1ce14b8a7361c4866678e55e29ae18f8"
-    assert result["comparison_receipt_sha256"] == "77ee1a171b9c0d0361c18ebfabda17a3e6d63e6287a26c24881295b792368a7e"
-    assert result["reviewed_range_changed_paths"] == sorted(gate.CORRECTION_PATHS | {gate.CORRECTION_RECEIPT})
-    assert calls[-1] == ["show", "b" * 40 + ":" + gate.CORRECTION_RECEIPT]
-    assert result["claim"] == "This decision is not a benchmark result or execution release."
-
-
-@pytest.mark.parametrize("where,key,value", [
-    ("event", "number", 98), ("pr", "number", 96), ("pr", "number", "97"),
-    ("repository", "full_name", "other/SpicyStock"), ("repository", "id", 1),
-    ("base", "full_name", "other/SpicyStock"), ("head", "full_name", "fork/SpicyStock"),
-    ("head", "id", "1352997802"),
-])
-def test_correction_does_not_apply_to_another_pr_repo_or_fork(comparison_receipt, where, key, value):
-    payload = correction_event()
-    targets = {"event": payload, "pr": payload["pull_request"], "repository": payload["repository"],
-               "base": payload["pull_request"]["base"]["repo"], "head": payload["pull_request"]["head"]["repo"]}
-    targets[where][key] = value
-    run, calls = correction_git(comparison_receipt)
-    assert decide(payload, git=run)["run_required"] is True
-    assert not any(arguments[0] == "show" for arguments in calls)
-
-
-@pytest.mark.parametrize("path", ["tools/historical_archive_codec.py", "src/breadth.py",
-    ".github/workflows/tests.yml", "tools/historical_execution_guard.py", "tools/requirements-historical-archive.txt",
-    "tests/fixtures/new-input.json", "unknown-file", "docs/input-truthfulness/old-evidence.json"])
-def test_correction_checks_earlier_changes_even_when_latest_push_is_docs_only(comparison_receipt, path):
-    run, calls = correction_git(comparison_receipt, paths=["README.md", path], observed=["README.md"])
-    result = decide(correction_event(), git=run)
+@pytest.mark.parametrize("path", ["tools/historical_memory_supervisor.py", "tools/historical_package.py",
+    "tools/historical_projection_benchmark.py", "tools/historical_benchmark_gate.py",
+    "tests/test_historical_memory_supervisor.py", ".github/workflows/tests.yml", ".gitleaks.toml"])
+def test_pr97_new_material_changes_require_measurement_despite_dated_failure(path):
+    result = decide(correction_event(), git=git([path, "README.md"]))
     assert result["run_required"] is True
-    assert result["reason"] == "pr97_correction_deferral_unverified"
-    assert not any(arguments[0] == "show" for arguments in calls)
+    assert result["reason"] == "runtime_or_validation_inputs_changed"
 
 
-@pytest.mark.parametrize("options", [{"ancestor": 1}, {"ancestor": 128}, {"diff": 128},
-    {"show": 128}, {"paths": []}, {"paths": ["../README.md"]}])
-def test_missing_baseline_diff_or_head_receipt_cannot_defer(comparison_receipt, options):
-    run, _ = correction_git(comparison_receipt, **options)
-    assert decide(correction_event(), git=run)["run_required"] is True
-
-
-@pytest.mark.parametrize("raw", [b"", b"{}", b"not-json"])
-def test_missing_or_changed_receipt_bytes_cannot_defer(raw):
-    run, _ = correction_git(raw)
-    assert decide(correction_event(), git=run)["run_required"] is True
-
-
-def test_even_whitespace_changes_to_retained_receipt_cannot_defer(comparison_receipt):
-    run, _ = correction_git(comparison_receipt + b"\n")
-    assert decide(correction_event(), git=run)["run_required"] is True
-
-
-@pytest.mark.parametrize("field,value", [("status", "PASS"), ("comparison_status", "PASS"),
-    ("archive_bytes", 199 * 1024 * 1024), ("archive_bytes", True), ("archive_headroom_bytes", 0)])
-def test_capacity_failure_is_explicit_in_addition_to_receipt_hash(comparison_receipt, monkeypatch, field, value):
-    receipt = json.loads(comparison_receipt)
-    comparison = receipt["child_result"]["archive_comparison"]
-    if field == "status":
-        receipt[field] = value
-    else:
-        comparison["status" if field == "comparison_status" else field] = value
-    raw = json.dumps(receipt).encode()
-    # Independently exercise semantic refusal after the byte-binding boundary.
-    monkeypatch.setattr(gate, "CORRECTION_RECEIPT_SHA256", hashlib.sha256(raw).hexdigest())
-    run, _ = correction_git(raw)
-    assert decide(correction_event(), git=run)["run_required"] is True
+def test_pr97_later_complete_docs_only_range_does_not_repeat_measured_cases():
+    result = decide(correction_event(), git=git(["CLAUDE.md", "README.md"]))
+    assert result["run_required"] is False and result["status"] == "NOT RUN"
+    assert result["reason"] == "observed_docs_only_push_no_runtime_change"
 
 
 def test_runtime_workflow_is_provider_free_pinned_pr_only_with_compact_artifacts():
@@ -195,11 +118,12 @@ def test_runtime_workflow_is_provider_free_pinned_pr_only_with_compact_artifacts
     runs = "\n".join(s.get("run", "") for s in job["steps"])
     assert "--require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt" in runs
     assert "pip install -r tools/requirements-historical.txt" in runs
-    assert "--representative" in runs and "--setup-seconds" in runs
+    assert "historical_memory_supervisor.py" in runs and "--setup-start" in runs
+    assert "sudo --preserve-env=" in runs and '--uid "$(id -u)" --gid "$(id -g)"' in runs
     artifact = next(s for s in job["steps"] if s.get("uses", "").startswith("actions/upload-artifact@"))
     assert artifact["if"] == "always()"
     assert set(Path(line.strip()).name for line in artifact["with"]["path"].splitlines()) == {
-        "benchmark-preflight.json", "benchmark-result.json", "runtime-profile.json", "synthetic-member-inventory.json"}
+        "memory-envelope.json", "benchmark-preflight.json", "benchmark-result.json", "runtime-profile.json", "synthetic-member-inventory.json"}
     assert ".age" not in artifact["with"]["path"] and ".tar" not in artifact["with"]["path"]
     normal_runs = "\n".join(s.get("run", "") for s in value["jobs"]["pytest"]["steps"])
     assert normal_runs.index("--require-hashes") < normal_runs.index("-r requirements-dev.txt")

@@ -1,0 +1,19 @@
+{
+  "original_junit_sha256": "fa42721934b586255bfec43c293a1e9df081147832f499aeb096a2b3dd6b62a5",
+  "scope": "Selected actual pytest testcase from 123-test suite; hostname omitted. No test output altered.",
+  "selected_testcase": {
+    "classname": "tests.test_historical_package",
+    "name": "test_real_age_legacy_v2_gzip_recovers_original_members_and_guard",
+    "time": "0.220"
+  },
+  "status": "PASS",
+  "suite": {
+    "errors": "0",
+    "failures": "0",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "123",
+    "time": "9.456",
+    "timestamp": "2026-09-30T10:33:44.633356-04:00"
+  }
+}

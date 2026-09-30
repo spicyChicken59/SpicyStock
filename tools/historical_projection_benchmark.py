@@ -33,6 +33,7 @@ from tools import historical_reconcile as reconciliation
 from tools.historical_execution import ledger_accounting
 from tools.historical_reconcile import network_blocked, reconcile
 from tools.historical_runtime_profile import RuntimeDeadline, RuntimeProfile, deadline, instrument
+from tools.historical_memory_supervisor import current_envelope
 
 MANIFEST = ROOT / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
 SEED = "spicystock-compaction-full-shape-v1"
@@ -42,6 +43,7 @@ MINIMUM_FREE_DISK = 8 * 1024 ** 3
 DELIVERY_OVERHEAD_RESERVE_SECONDS = 300
 SOURCE_FILES = tuple(sorted(("tools/historical_projection_benchmark.py", "tools/historical_acquisition.py",
                 "tools/historical_runtime_profile.py", "tools/historical_benchmark_gate.py", ".github/workflows/tests.yml",
+                "tools/historical_memory_supervisor.py", ".gitleaks.toml",
                 "tools/historical_normalization.py", "tools/historical_reconcile.py", "tools/historical_breadth_reference.py",
                 "tools/historical_package.py", "tools/historical_execution.py", "tools/historical_execution_guard.py",
                 "tools/historical_archive_codec.py", "tools/requirements-historical-archive.txt",
@@ -433,6 +435,8 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
         baseline = json.loads((ROOT / "docs/input-truthfulness/2026-09-30-projection-compaction-evidence" /
                                ("benchmark-" + case + ".json")).read_bytes())
         require(package._hash(ROOT / "src/breadth.py") == baseline["source_sha256"]["src/breadth.py"], "pr96_arithmetic_source_bytes_changed")
+    memory_envelope = current_envelope() if representative and full_scale else {
+        "status": "NOT RUN", "scope": "Small/local fixture; no representative memory claim."}
     identity = acquisition.validate_manifest(manifest)
     workspace = package._private_path(workspace, exists=False)
     require(not workspace.exists(), "benchmark_workspace_must_be_fresh")
@@ -448,7 +452,7 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
     key_path = None
     phase, started = "setup", time.perf_counter()
     profile = RuntimeProfile()
-    report = {"schema": "historical-delivery-runtime-benchmark-v2", "case": case, "seed": SEED,
+    report = {"schema": "historical-delivery-runtime-benchmark-v3", "case": case, "seed": SEED,
               "generator_assumptions": {"raw_fields": ["t", "o", "h", "l", "c", "v", "n", "vw"],
                   "central": "2-place varied OHLC cents, integer volume, integer trade count, midpoint VWAP",
                   "stress": "9-place varied OHLC, 6-place fractional volume; all five projected fields inexact; integer trade count and midpoint VWAP",
@@ -457,7 +461,7 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
               "full_frozen_shape": full_scale, "shape": shape(manifest), "manifest_sha256": identity,
               "status": "BLOCKED", "started_at": datetime.now(timezone.utc).isoformat(), "free_disk_before_bytes": free,
               "minimum_free_disk_required_bytes": MINIMUM_FREE_DISK,
-              "memory_before": capacity, "runtime_scope": (
+              "memory_before": capacity, "memory_enforcement": memory_envelope, "runtime_scope": (
                   "GitHub Actions standard ubuntu-24.04 PR job; declared image and actual host measurements recorded"
                   if representative and os.environ.get("GITHUB_ACTIONS") == "true" else
                   f"local {sys.platform} host; timing includes existing host load; not a hosted-runner timing guarantee"),
@@ -467,12 +471,13 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
               "runtime_environment": {name: os.environ.get(name) for name in ("RUNNER_OS", "RUNNER_ARCH", "ImageOS", "ImageVersion",
                     "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_SHA", "GITHUB_EVENT_NAME")},
               "representative_mode": representative, "fixture_cache": "unavailable on fresh runner; declared fixed PR96 synthetic fixture generated once" if representative else "fresh synthetic test",
-              "release_authorized": False,
+              "release_authorized": False, "delivery_envelope": package.DELIVERY_ENVELOPE,
               "age_sha256": package._hash(age_binary),
               "phases_seconds": {}, "package_measurements": {},
               "source_sha256": {name: package._hash(ROOT / name) for name in SOURCE_FILES},
               "limits_bytes": {"raw": 1024 ** 3, "expanded": package.MAX_PLAINTEXT_BYTES,
-                               "archive": package.MAX_ARCHIVE_BYTES, "ciphertext": package.MAX_CIPHERTEXT_BYTES}}
+                               "archive": package.MAX_ARCHIVE_BYTES, "ciphertext": package.MAX_CIPHERTEXT_BYTES,
+                               "ciphertext_overhead": package.MAX_CIPHERTEXT_OVERHEAD_BYTES}}
     monitor = Monitor(workspace, observe=profile.observe)
     def step(name):
         nonlocal phase, phase_start
@@ -544,12 +549,14 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
                 receipt = package.package_evidence(storage, manifest, workspace / "delivery", age_binary=age_binary,
                     recipient=recipient, execution=metadata, diagnostics={"synthetic_only": True, "case": case})
             report["package_measurements"].update(ciphertext_bytes=receipt["ciphertext_bytes"], ciphertext_sha256=receipt["ciphertext_sha256"],
+                                                   receipt_schema=receipt["schema"], delivery_envelope=receipt["delivery_envelope"],
                                                    receipt_bytes=(workspace / "delivery/receipt.json").stat().st_size)
             step("recover")
             recovered = workspace / "recovered"
             with profile.scope("recovery"), measure_archive(report["package_measurements"], monitor):
                 index = package.recover_package(workspace / "delivery" / package.CIPHERTEXT_NAME, receipt, recovered,
                            age_binary=age_binary, identity=key_path, manifest=manifest, expected_execution=metadata)
+            report["package_measurements"]["index_schema"] = index["schema"]
             with profile.scope("recovery_inventory"):
                 require(snapshot(storage) == before, "benchmark_source_changed")
                 require(all((recovered / n).stat().st_size == row["bytes"] and package._hash(recovered / n) == row["sha256"] and same_bytes(storage / n, recovered / n)
@@ -581,6 +588,12 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
     finally:
         os.umask(previous_mask)
         report["phases_seconds"][phase] = round(time.perf_counter() - phase_start, 6)
+        if representative and full_scale:
+            try:
+                report["memory_enforcement"] = current_envelope()
+            except (OSError, ValueError) as error:
+                report.update(status="FAIL", reason="benchmark_memory_envelope_failed")
+                report["memory_enforcement"] = {"status": "FAIL", "reason": type(error).__name__}
         report["timing_acceptance"] = timing_acceptance(report["phases_seconds"], setup_seconds,
                                                        report.get("simulated_rate_clock_seconds"), representative=representative,
                                                        required_passes_completed=report.get("status") == "PASS")

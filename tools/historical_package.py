@@ -28,13 +28,20 @@ from tools.historical_acquisition import ASSIGNMENT, encode, exclusive_lock, val
 from tools import historical_execution_guard as execution_guard
 from tools import historical_archive_codec as codec
 
-SCHEMA = "historical-encrypted-receipt-v3"
-INDEX_SCHEMA = "historical-private-package-v3"
+SCHEMA = "historical-encrypted-receipt-v4"
+INDEX_SCHEMA = "historical-private-package-v4"
+DELIVERY_ENVELOPE = "historical-delivery-envelope-v1"
+PREVIOUS_SCHEMA = "historical-encrypted-receipt-v3"
+PREVIOUS_INDEX_SCHEMA = "historical-private-package-v3"
+PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
 LEGACY_SCHEMA = "historical-encrypted-receipt-v2"
 LEGACY_INDEX_SCHEMA = "historical-private-package-v2"
 REPOSITORY = "spicyChicken59/SpicyStock"
-MAX_CIPHERTEXT_BYTES = 200 * 1024 ** 2
-MAX_ARCHIVE_BYTES = MAX_CIPHERTEXT_BYTES - 1024 ** 2
+MAX_ARCHIVE_BYTES = 250 * 1024 ** 2
+MAX_CIPHERTEXT_OVERHEAD_BYTES = 1024 ** 2
+MAX_CIPHERTEXT_BYTES = MAX_ARCHIVE_BYTES + MAX_CIPHERTEXT_OVERHEAD_BYTES
+LEGACY_MAX_ARCHIVE_BYTES = 199 * 1024 ** 2
+LEGACY_MAX_CIPHERTEXT_BYTES = 200 * 1024 ** 2
 MAX_PLAINTEXT_BYTES = 2 * 1024 ** 3
 MAX_MEMBERS = 4096
 MAX_INDEX_BYTES = 4 * 1024 ** 2
@@ -60,6 +67,23 @@ class PackageError(RuntimeError):
 
 def _fail(reason):
     raise PackageError(reason)
+
+
+def _limits(schema):
+    # Enlarging the new envelope must never reinterpret an old receipt's caps.
+    if schema == SCHEMA:
+        return MAX_ARCHIVE_BYTES, MAX_CIPHERTEXT_BYTES
+    if schema in (PREVIOUS_SCHEMA, LEGACY_SCHEMA):
+        return LEGACY_MAX_ARCHIVE_BYTES, LEGACY_MAX_CIPHERTEXT_BYTES
+    _fail("invalid_receipt")
+
+
+def _ciphertext_size(size, schema, archive_bytes=None):
+    _, limit = _limits(schema)
+    if type(size) is not int or not 22 < size <= limit:
+        _fail("ciphertext_size_limit")
+    if schema == SCHEMA and not 0 < size - archive_bytes <= MAX_CIPHERTEXT_OVERHEAD_BYTES:
+        _fail("ciphertext_overhead_limit")
 
 
 def _hash(path):
@@ -120,13 +144,16 @@ def recipient_fingerprint(recipient):
     return hashlib.sha256((recipient + "\n").encode("ascii")).hexdigest()
 
 
-def _execution(value, *, legacy=False):
+def _execution(value, *, legacy=False, previous=False):
     keys = _LEGACY_EXECUTION_KEYS if legacy else _EXECUTION_KEYS
     if not isinstance(value, dict) or set(value) not in (keys, keys | {"started_at"}):
         _fail("invalid_execution_metadata")
     try:
         execution_guard.validate_phase_binding(value)
     except (execution_guard.GuardError, OSError, ValueError, TypeError, KeyError):
+        _fail("invalid_execution_identity")
+    if not legacy and value["compatibility_contract_sha256"] != (
+            PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 if previous else execution_guard.COMPATIBILITY_CONTRACT_SHA256):
         _fail("invalid_execution_identity")
     if value["mode"] not in ("rehearsal", "real") or value["status"] not in ("PASS", "FAIL", "BLOCKED", "NOT RUN"):
         _fail("invalid_execution_mode_or_status")
@@ -140,7 +167,7 @@ def _execution(value, *, legacy=False):
     return dict(value)
 
 
-def execution_metadata(record, *, status=None, legacy=False):
+def execution_metadata(record, *, status=None, legacy=False, previous=False):
     """Explicit public projection; guard approval documents remain private."""
     if not isinstance(record, dict):
         _fail("invalid_execution_metadata")
@@ -153,7 +180,7 @@ def execution_metadata(record, *, status=None, legacy=False):
         result = dict(record)
     if status is not None:
         result["status"] = status
-    return _execution(result, legacy=legacy)
+    return _execution(result, legacy=legacy, previous=previous)
 
 
 def _age_environment():
@@ -163,7 +190,9 @@ def _age_environment():
     return {**{k: v for k, v in os.environ.items() if k.upper() in allowed}, "NO_COLOR": "1"}
 
 
-def _age(age_binary, arguments, output, *, reason, limit=MAX_CIPHERTEXT_BYTES):
+def _age(age_binary, arguments, output, *, reason, limit=None):
+    if limit is None:
+        limit = MAX_CIPHERTEXT_BYTES
     binary = Path(age_binary).absolute()
     _regular(binary)
     try:
@@ -304,6 +333,7 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
         members.extend({"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
                        for name, raw in sorted(extras.items()))
         index = {"schema": INDEX_SCHEMA, "archive_format": codec.FORMAT,
+                 "delivery_envelope": DELIVERY_ENVELOPE,
                  "manifest_sha256": identity, "execution": execution,
                  "recipient_sha256": fingerprint, "members": sorted(members, key=lambda x: x["path"])}
         index_raw = encode(index)
@@ -321,11 +351,14 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
                 _fail("package_source_changed")
             ciphertext = temp / "ciphertext.part"
             _age(age_binary, ["--encrypt", "--recipient", recipient, archive], ciphertext,
-                 reason="encryption_failed")
+                 reason="encryption_failed",
+                 limit=min(MAX_CIPHERTEXT_BYTES, archive.stat().st_size + MAX_CIPHERTEXT_OVERHEAD_BYTES))
+            _ciphertext_size(ciphertext.stat().st_size, SCHEMA, archive.stat().st_size)
             with ciphertext.open("rb") as stream:
                 if stream.read(len(AGE_HEADER)) != AGE_HEADER:
                     _fail("invalid_ciphertext_header")
             receipt = {"schema": SCHEMA, **execution, "manifest_sha256": identity,
+                       "delivery_envelope": DELIVERY_ENVELOPE,
                        "archive_format": codec.FORMAT, "ciphertext_name": CIPHERTEXT_NAME,
                        "archive_bytes": archive_metrics["archive_bytes"],
                        "archive_sha256": archive_metrics["archive_sha256"],
@@ -348,25 +381,31 @@ def package_evidence(storage, manifest, delivery, *, age_binary, recipient, exec
 def _receipt(receipt, expected_execution=None):
     if not isinstance(receipt, dict):
         _fail("invalid_receipt")
+    archive_limit, _ = _limits(receipt.get("schema"))
     legacy = receipt.get("schema") == LEGACY_SCHEMA
+    previous = receipt.get("schema") == PREVIOUS_SCHEMA
+    current = receipt.get("schema") == SCHEMA
     execution_keys = (_LEGACY_EXECUTION_KEYS if legacy else _EXECUTION_KEYS) | ({"started_at"} if "started_at" in receipt else set())
     extra = {"schema", "manifest_sha256", "recipient_sha256", "ciphertext_sha256", "ciphertext_bytes", "artifact_name"}
     if not legacy:
         extra |= {"archive_format", "ciphertext_name", "archive_bytes", "archive_sha256"}
-    if set(receipt) != execution_keys | extra or receipt["schema"] not in (SCHEMA, LEGACY_SCHEMA):
+    if current:
+        extra.add("delivery_envelope")
+    if set(receipt) != execution_keys | extra:
         _fail("invalid_receipt")
+    if current and receipt["delivery_envelope"] != DELIVERY_ENVELOPE:
+        _fail("invalid_delivery_envelope")
     if not legacy and (receipt["archive_format"] != codec.FORMAT or receipt["ciphertext_name"] != CIPHERTEXT_NAME or
-                       type(receipt["archive_bytes"]) is not int or not 0 < receipt["archive_bytes"] <= MAX_ARCHIVE_BYTES or
+                       type(receipt["archive_bytes"]) is not int or not 0 < receipt["archive_bytes"] <= archive_limit or
                        not isinstance(receipt["archive_sha256"], str) or not _HEX.fullmatch(receipt["archive_sha256"])):
         _fail("invalid_archive_receipt")
-    execution = _execution({k: receipt[k] for k in execution_keys}, legacy=legacy)
-    if expected_execution is not None and execution != _execution(expected_execution, legacy=legacy):
+    execution = _execution({k: receipt[k] for k in execution_keys}, legacy=legacy, previous=previous)
+    if expected_execution is not None and execution != _execution(expected_execution, legacy=legacy, previous=previous):
         _fail("receipt_execution_mismatch")
     if any(not isinstance(receipt[k], str) or not _HEX.fullmatch(receipt[k])
            for k in ("manifest_sha256", "recipient_sha256", "ciphertext_sha256")):
         _fail("invalid_receipt")
-    if type(receipt["ciphertext_bytes"]) is not int or not 22 < receipt["ciphertext_bytes"] <= MAX_CIPHERTEXT_BYTES:
-        _fail("ciphertext_size_limit")
+    _ciphertext_size(receipt["ciphertext_bytes"], receipt["schema"], receipt.get("archive_bytes"))
     if receipt["artifact_name"] != "historical-evidence-" + "-".join(str(execution[k]) for k in ("run_id", "run_attempt", "mode")):
         _fail("invalid_artifact_identity")
     return execution
@@ -414,6 +453,11 @@ def _tar_padding(stream, size):
 def _unpack(archive, destination, manifest, receipt, execution):
     allowed = _allowed(manifest) | _INTERNAL
     legacy = receipt.get("schema") == LEGACY_SCHEMA
+    current = receipt.get("schema") == SCHEMA
+    index_schema = {LEGACY_SCHEMA: LEGACY_INDEX_SCHEMA, PREVIOUS_SCHEMA: PREVIOUS_INDEX_SCHEMA,
+                    SCHEMA: INDEX_SCHEMA}.get(receipt.get("schema"))
+    if index_schema is None:
+        _fail("invalid_receipt")
     archive_format = codec.LEGACY_FORMAT if legacy else receipt.get("archive_format")
     # Payload cap includes the index. Tar framing has a separate finite bound,
     # so zero padding, headers and decoder expansion cannot escape accounting.
@@ -435,8 +479,12 @@ def _unpack(archive, destination, manifest, receipt, execution):
                 index_keys = {"schema", "manifest_sha256", "execution", "recipient_sha256", "members"}
                 if not legacy:
                     index_keys.add("archive_format")
+                if current:
+                    index_keys.add("delivery_envelope")
                 if (not isinstance(index, dict) or set(index) != index_keys or
-                    index["schema"] != (LEGACY_INDEX_SCHEMA if legacy else INDEX_SCHEMA) or
+                    index["schema"] != index_schema or
+                    (current and index["delivery_envelope"] != receipt.get("delivery_envelope")) or
+                    (current and index["delivery_envelope"] != DELIVERY_ENVELOPE) or
                     (not legacy and index["archive_format"] != archive_format) or
                     index["manifest_sha256"] != receipt["manifest_sha256"] or
                     index["execution"] != execution or index["recipient_sha256"] != receipt["recipient_sha256"] or
@@ -561,7 +609,8 @@ def main(argv=None):
                     expected.get("recipient_sha256") != receipt.get("recipient_sha256")):
                     _fail("recovery_guard_identity_mismatch")
                 expected = execution_metadata(expected, status=receipt.get("status"),
-                                              legacy=receipt.get("schema") == LEGACY_SCHEMA)
+                                              legacy=receipt.get("schema") == LEGACY_SCHEMA,
+                                              previous=receipt.get("schema") == PREVIOUS_SCHEMA)
             recover_package(args.cipher, receipt, args.destination, age_binary=args.age,
                             identity=args.identity, manifest=_json(args.manifest.read_bytes()),
                             expected_execution=expected)
@@ -581,6 +630,7 @@ def recover_package(ciphertext, receipt, destination, *, age_binary, identity, m
     expected_execution, not inferred from a successful decryption.
     """
     execution = _receipt(receipt, expected_execution)
+    archive_limit, _ = _limits(receipt["schema"])
     if validate_manifest(manifest) != receipt["manifest_sha256"]:
         _fail("receipt_manifest_mismatch")
     ciphertext, identity = Path(ciphertext).absolute(), Path(identity).absolute()
@@ -597,10 +647,11 @@ def recover_package(ciphertext, receipt, destination, *, age_binary, identity, m
     with tempfile.TemporaryDirectory(prefix=".recovery-", dir=destination.parent) as name:
         temp = Path(name)
         archive = temp / "decrypted.part"
-        _age(age_binary, ["--decrypt", "--identity", identity, ciphertext], archive, reason="decryption_failed")
-        if archive.stat().st_size > MAX_ARCHIVE_BYTES:
+        _age(age_binary, ["--decrypt", "--identity", identity, ciphertext], archive, reason="decryption_failed",
+             limit=archive_limit)
+        if archive.stat().st_size > archive_limit:
             _fail("package_size_or_member_limit")
-        if receipt["schema"] == SCHEMA and (archive.stat().st_size != receipt["archive_bytes"] or
+        if receipt["schema"] != LEGACY_SCHEMA and (archive.stat().st_size != receipt["archive_bytes"] or
                                              _hash(archive) != receipt["archive_sha256"]):
             _fail("archive_receipt_mismatch")
         recovered = temp / "verified"

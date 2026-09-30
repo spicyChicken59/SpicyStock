@@ -240,3 +240,45 @@ def test_other_github_workflow_changes_cannot_bypass_source_equality(setup, muta
         entry["sha"] = "d" * 40
     with pytest.raises(guard.GuardError, match="execution_code_changed"):
         run(setup)
+
+
+@pytest.mark.parametrize("mutation", ["missing", "old_archive", "old_cipher", "expanded", "memory"])
+def test_new_delivery_envelope_is_explicitly_bound(setup, mutation):
+    document = release_document(setup)
+    if mutation == "missing":
+        document.pop("delivery_envelope")
+    else:
+        field, value = {"old_archive": ("max_archive_bytes", 199 * 1024**2),
+                        "old_cipher": ("max_ciphertext_bytes", 200 * 1024**2),
+                        "expanded": ("max_expanded_bytes", 3 * 1024**3),
+                        "memory": ("max_process_tree_memory_bytes", 13 * 1024**3)}[mutation]
+        document["delivery_envelope"][field] = value
+    replace_release(setup, document)
+    with pytest.raises(guard.GuardError, match="unbound_delivery_envelope"):
+        run(setup)
+
+
+def test_previous_package_binding_is_readable_but_not_current_execution(setup):
+    result = run(setup)
+    result["compatibility_contract_sha256"] = guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    assert guard.validate_phase_binding(result)["compatibility_contract_sha256"] == guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    with pytest.raises(guard.GuardError, match="stale_delivery_binding"):
+        guard.validate_execution_binding(result, setup[0])
+
+
+def test_previous_technical_declaration_cannot_certify_changed_envelope(setup):
+    document = release_document(setup)
+    document["schema"] = "historical-delivery-release-evidence-v1"
+    replace_release(setup, document)
+    with pytest.raises(guard.GuardError, match="technical_release_not_established"):
+        run(setup)
+
+
+def test_versioned_envelope_preserves_accepted_transport_and_codec():
+    contract = guard.compatibility_contract()
+    assert contract["schema"] == "historical-delivery-compatibility-v2"
+    assert contract["supersedes_compatibility_sha256"] == guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    assert contract["accepted_transport"]["rehearsal_run_id"] == 36570997883
+    assert contract["accepted_transport"]["checkout_sha"] == "6b12fdfa67355b436fde89287d159bebda2ce9fc"
+    assert contract["delivery_envelope"]["archive_format"] == "ustar-zstandard-v1"
+    assert contract["delivery_envelope"]["max_expanded_bytes"] == 2 * 1024**3

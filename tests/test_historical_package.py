@@ -100,6 +100,10 @@ def test_real_age_roundtrip_preserves_exact_cache_and_private_sentinel(source, e
     assert cached_pages(manifest, recovered, "canonical") == cached_pages(manifest, storage, "canonical")
     assert json.loads((recovered / "execution-diagnostics.json").read_bytes())["sentinel"] == SENTINEL
     assert index["recipient_sha256"] == hashlib.sha256((age[1][0][1] + "\n").encode()).hexdigest()
+    assert receipt["schema"] == "historical-encrypted-receipt-v4"
+    assert index["schema"] == "historical-private-package-v4"
+    assert receipt["delivery_envelope"] == index["delivery_envelope"] == "historical-delivery-envelope-v1"
+    assert 0 < receipt["ciphertext_bytes"] - receipt["archive_bytes"] <= 1024 ** 2
     assert set(p.name for p in delivery.iterdir()) == {package.CIPHERTEXT_NAME, package.RECEIPT_NAME}
     assert all(SENTINEL.encode() not in p.read_bytes() for p in delivery.iterdir())
     assert "AGE-SECRET-KEY-" not in (delivery / package.RECEIPT_NAME).read_text()
@@ -257,8 +261,26 @@ def test_old_receipt_is_not_reinterpreted_under_recovery_contract(source, execut
 
 
 def test_ciphertext_limit_is_fixed_and_separate_from_response_budget():
-    assert package.MAX_CIPHERTEXT_BYTES == 200 * 1024 ** 2
+    assert package.MAX_ARCHIVE_BYTES == 250 * 1024 ** 2
+    assert package.MAX_CIPHERTEXT_BYTES == 251 * 1024 ** 2
+    assert package.MAX_CIPHERTEXT_OVERHEAD_BYTES == 1024 ** 2
+    assert package.LEGACY_MAX_ARCHIVE_BYTES == 199 * 1024 ** 2
+    assert package.LEGACY_MAX_CIPHERTEXT_BYTES == 200 * 1024 ** 2
     assert package.MAX_PLAINTEXT_BYTES == 2 * 1024 ** 3
+    assert package.MAX_MEMBERS == 4096 and package.MAX_INDEX_BYTES == 4 * 1024 ** 2
+    assert package.codec.WINDOW_BYTES == 1024 ** 3
+
+
+def test_current_envelope_matches_immutable_release_compatibility():
+    declared = execution_guard.compatibility_contract()["delivery_envelope"]
+    assert declared["schema"] == package.DELIVERY_ENVELOPE
+    assert declared["receipt_schema"] == package.SCHEMA and declared["index_schema"] == package.INDEX_SCHEMA
+    assert declared["archive_format"] == package.codec.FORMAT
+    assert declared["max_archive_bytes"] == package.MAX_ARCHIVE_BYTES
+    assert declared["max_ciphertext_bytes"] == package.MAX_CIPHERTEXT_BYTES
+    assert declared["max_encryption_overhead_bytes"] == package.MAX_CIPHERTEXT_OVERHEAD_BYTES
+    assert declared["max_expanded_bytes"] == package.MAX_PLAINTEXT_BYTES
+    assert package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 == execution_guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
 
 
 def test_compressed_size_limit_blocks_before_encryption(source, execution, tmp_path, monkeypatch):
@@ -309,6 +331,7 @@ def archive_with_fault(tmp_path, source, execution, fault, *, legacy=True):
                          for name, raw in payloads.items()]}
     if not legacy:
         index["archive_format"] = package.codec.FORMAT
+        index["delivery_envelope"] = package.DELIVERY_ENVELOPE
     archive = tmp_path / "malicious.archive"
     body = io.BytesIO()
     with tarfile.open(fileobj=body, mode="w", format=tarfile.USTAR_FORMAT) as tar:
@@ -331,6 +354,7 @@ def archive_with_fault(tmp_path, source, execution, fault, *, legacy=True):
                "recipient_sha256": index["recipient_sha256"]}
     if not legacy:
         receipt["archive_format"] = package.codec.FORMAT
+        receipt["delivery_envelope"] = package.DELIVERY_ENVELOPE
     return archive, receipt
 
 
@@ -445,7 +469,7 @@ def test_actual_runner_reconciliation_encryption_recovery_and_offline_replay(run
         assert detail["B"]["status"] == "BLOCKED"  # Never invent the original filter mask.
 
 
-def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, execution, age, tmp_path):
+def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, execution, age, tmp_path, monkeypatch):
     """Generate the frozen old writer's exact shape, never upgrade its receipt."""
     manifest, storage = source
     legacy = {k: v for k, v in execution.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
@@ -472,6 +496,8 @@ def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, exe
     receipt = {"schema": package.LEGACY_SCHEMA, **legacy, "ciphertext_sha256": package._hash(cipher),
                "ciphertext_bytes": cipher.stat().st_size, "artifact_name": "historical-evidence-123456-1-rehearsal"}
     (delivery / package.RECEIPT_NAME).write_bytes(encode(receipt))
+    monkeypatch.setattr(package, "MAX_ARCHIVE_BYTES", 1)
+    monkeypatch.setattr(package, "MAX_CIPHERTEXT_BYTES", 1)
     package.validate_delivery(delivery, receipt)
     destination = tmp_path / "legacy-recovered"
     recovered_index = package.recover_package(cipher, receipt, destination, age_binary=age[0],
@@ -482,6 +508,190 @@ def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, exe
     old_guard = {**legacy, "schema": "historical-execution-v2", "readiness_status": "PASS", "lifetime_status": "PASS"}
     assert package.execution_metadata(old_guard, legacy=True) == {
         k: v for k, v in legacy.items() if k != "started_at"}
+
+
+def test_real_age_previous_v3_zstandard_recovers_exact_old_envelope(source, execution, age, tmp_path, monkeypatch):
+    """Build the former v3 shape, with its old binding and no v4 envelope."""
+    manifest, storage = source
+    previous = {**execution, "compatibility_contract_sha256": package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256,
+                "recipient_sha256": package.recipient_fingerprint(age[1][0][1])}
+    sources = package._sources(storage, manifest, validate_manifest(manifest))
+    before = {name: path.read_bytes() for name, (path, _) in sources.items()}
+    extras = {"_package/manifest.json": encode(manifest), "_package/execution.json": encode(previous),
+              "_package/diagnostics.json": b"{}\n"}
+    payloads = {**before, **extras}
+    index = {"schema": "historical-private-package-v3", "archive_format": "ustar-zstandard-v1",
+             "manifest_sha256": validate_manifest(manifest), "execution": previous,
+             "recipient_sha256": previous["recipient_sha256"],
+             "members": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+                         for name, raw in sorted(payloads.items())]}
+    archive = tmp_path / "old.tar.zst"
+    metrics = package._write_archive(archive, encode(index), index, sources, extras)
+    delivery = tmp_path / "old-delivery"
+    delivery.mkdir(mode=0o700)
+    cipher = delivery / package.CIPHERTEXT_NAME
+    package._age(age[0], ["--encrypt", "--recipient", age[1][0][1], archive], cipher, reason="test_failed")
+    receipt = {"schema": "historical-encrypted-receipt-v3", **previous,
+               "archive_format": "ustar-zstandard-v1", "ciphertext_name": package.CIPHERTEXT_NAME,
+               "archive_bytes": metrics["archive_bytes"], "archive_sha256": metrics["archive_sha256"],
+               "ciphertext_sha256": package._hash(cipher), "ciphertext_bytes": cipher.stat().st_size,
+               "artifact_name": "historical-evidence-123456-1-rehearsal"}
+    (delivery / package.RECEIPT_NAME).write_bytes(encode(receipt))
+    old_receipt = (delivery / package.RECEIPT_NAME).read_bytes()
+    # Previous readers use their frozen caps, never these current-envelope globals.
+    monkeypatch.setattr(package, "MAX_ARCHIVE_BYTES", 1)
+    monkeypatch.setattr(package, "MAX_CIPHERTEXT_BYTES", 1)
+    package.validate_delivery(delivery, receipt)
+    destination = tmp_path / "old-recovered"
+    recovered = package.recover_package(cipher, receipt, destination, age_binary=age[0],
+                                        identity=age[1][0][0], manifest=manifest, expected_execution=previous)
+    assert recovered == index
+    assert all((destination / name).read_bytes() == raw for name, raw in payloads.items())
+    assert (delivery / package.RECEIPT_NAME).read_bytes() == old_receipt
+    assert "delivery_envelope" not in receipt and "delivery_envelope" not in recovered
+    old_guard = {**previous, "schema": "historical-execution-v3", "readiness_status": "PASS", "lifetime_status": "PASS"}
+    assert package.execution_metadata(old_guard, previous=True) == {k: v for k, v in previous.items() if k != "started_at"}
+    monkeypatch.setattr(package.codec, "decode", lambda *a, **kw: pytest.fail("decoder must not start"))
+    with pytest.raises(package.PackageError, match="archive_receipt_mismatch"):
+        package.recover_package(cipher, {**receipt, "archive_sha256": "0" * 64}, tmp_path / "mismatched",
+                                age_binary=age[0], identity=age[1][0][0], manifest=manifest,
+                                expected_execution=previous)
+    assert not (tmp_path / "mismatched").exists() and not list(tmp_path.glob(".recovery-*"))
+
+
+def envelope_receipt(execution, schema=package.SCHEMA):
+    """Small metadata fixture for exact cap boundaries; no large archive writes."""
+    metadata = dict(execution)
+    if schema == package.LEGACY_SCHEMA:
+        metadata = {k: v for k, v in metadata.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
+    elif schema == package.PREVIOUS_SCHEMA:
+        metadata["compatibility_contract_sha256"] = package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    receipt = {"schema": schema, **metadata, "ciphertext_sha256": "a" * 64,
+               "ciphertext_bytes": 200 * 1024 ** 2,
+               "artifact_name": "historical-evidence-123456-1-rehearsal"}
+    if schema != package.LEGACY_SCHEMA:
+        receipt.update(archive_format="ustar-zstandard-v1", ciphertext_name=package.CIPHERTEXT_NAME,
+                       archive_bytes=199 * 1024 ** 2, archive_sha256="b" * 64)
+    if schema == package.SCHEMA:
+        receipt.update(delivery_envelope=package.DELIVERY_ENVELOPE,
+                       archive_bytes=250 * 1024 ** 2, ciphertext_bytes=251 * 1024 ** 2)
+    return receipt, metadata
+
+
+@pytest.mark.parametrize("schema", [package.LEGACY_SCHEMA, package.PREVIOUS_SCHEMA, package.SCHEMA])
+def test_exact_envelope_boundary_is_admitted_without_reinterpreting_old_receipts(execution, schema):
+    receipt, expected = envelope_receipt(execution, schema)
+    assert package._receipt(receipt, expected) == expected
+
+
+@pytest.mark.parametrize("schema", [package.LEGACY_SCHEMA, package.PREVIOUS_SCHEMA, package.SCHEMA])
+def test_ciphertext_one_byte_above_its_versioned_cap_refused(execution, schema):
+    receipt, expected = envelope_receipt(execution, schema)
+    receipt["ciphertext_bytes"] += 1
+    with pytest.raises(package.PackageError, match="ciphertext_size_limit"):
+        package._receipt(receipt, expected)
+
+
+@pytest.mark.parametrize("schema", [package.PREVIOUS_SCHEMA, package.SCHEMA])
+def test_archive_one_byte_above_its_versioned_cap_refused(execution, schema):
+    receipt, expected = envelope_receipt(execution, schema)
+    receipt["archive_bytes"] += 1
+    with pytest.raises(package.PackageError, match="invalid_archive_receipt"):
+        package._receipt(receipt, expected)
+
+
+@pytest.mark.parametrize("overhead", [-1, 0, 1024 ** 2 + 1])
+def test_current_envelope_bounds_actual_overhead_below_total_cipher_cap(execution, overhead):
+    receipt, expected = envelope_receipt(execution)
+    receipt["archive_bytes"] = 1024 ** 2
+    receipt["ciphertext_bytes"] = receipt["archive_bytes"] + overhead
+    with pytest.raises(package.PackageError, match="ciphertext_overhead_limit"):
+        package._receipt(receipt, expected)
+
+
+@pytest.mark.parametrize("envelope", [None, False, "historical-delivery-envelope-v0", {}, []])
+def test_missing_or_unknown_delivery_envelope_refused(execution, envelope):
+    receipt, expected = envelope_receipt(execution)
+    if envelope is None:
+        del receipt["delivery_envelope"]
+        reason = "invalid_receipt"
+    else:
+        receipt["delivery_envelope"] = envelope
+        reason = "invalid_delivery_envelope"
+    with pytest.raises(package.PackageError, match=reason):
+        package._receipt(receipt, expected)
+
+
+@pytest.mark.parametrize("schema", [package.LEGACY_SCHEMA, package.PREVIOUS_SCHEMA])
+def test_old_receipt_cannot_declare_the_new_envelope(execution, schema):
+    receipt, expected = envelope_receipt(execution, schema)
+    receipt["delivery_envelope"] = package.DELIVERY_ENVELOPE
+    with pytest.raises(package.PackageError, match="invalid_receipt"):
+        package._receipt(receipt, expected)
+
+
+@pytest.mark.parametrize("schema", [package.PREVIOUS_SCHEMA, package.SCHEMA])
+def test_receipt_version_requires_its_exact_compatibility_contract(execution, schema):
+    receipt, expected = envelope_receipt(execution, schema)
+    wrong = (package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 if schema == package.SCHEMA
+             else execution_guard.COMPATIBILITY_CONTRACT_SHA256)
+    assert wrong != receipt["compatibility_contract_sha256"]
+    receipt["compatibility_contract_sha256"] = expected["compatibility_contract_sha256"] = wrong
+    with pytest.raises(package.PackageError, match="invalid_execution_identity"):
+        package._receipt(receipt, expected)
+
+
+def test_new_writer_refuses_old_compatibility_contract_before_compression(source, execution, tmp_path, monkeypatch):
+    execution["compatibility_contract_sha256"] = package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    monkeypatch.setattr(package, "_write_archive", lambda *a: pytest.fail("compression must not start"))
+    with pytest.raises(package.PackageError, match="invalid_execution_identity"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+
+
+@pytest.mark.parametrize("fault", ["missing", "unknown", "receipt_downgrade", "index_downgrade"])
+def test_authenticated_index_envelope_and_schema_must_match_receipt(source, execution, tmp_path, fault):
+    archive, receipt = archive_with_fault(tmp_path, source, execution, None, legacy=False)
+    raw = package.codec._zstandard().ZstdDecompressor().decompress(archive.read_bytes())
+    with tarfile.open(fileobj=io.BytesIO(raw)) as tar:
+        payloads = {member.name: tar.extractfile(member).read() for member in tar.getmembers()}
+    index = json.loads(payloads["_package/index.json"])
+    if fault == "missing":
+        del index["delivery_envelope"]
+    elif fault == "unknown":
+        index["delivery_envelope"] = "historical-delivery-envelope-v0"
+    elif fault == "receipt_downgrade":
+        receipt["schema"] = package.PREVIOUS_SCHEMA
+        del receipt["delivery_envelope"]
+    else:
+        index["schema"] = package.PREVIOUS_INDEX_SCHEMA
+        del index["delivery_envelope"]
+    payloads["_package/index.json"] = encode(index)
+    body = io.BytesIO()
+    with tarfile.open(fileobj=body, mode="w", format=tarfile.USTAR_FORMAT) as tar:
+        for name, payload in payloads.items():
+            package._entry(tar, name, io.BytesIO(payload), len(payload))
+    archive.write_bytes(_compressed(body.getvalue(), package.codec.FORMAT))
+    destination = tmp_path / "candidate"
+    destination.mkdir()
+    with pytest.raises(package.PackageError, match="package_identity_mismatch"):
+        package._unpack(archive, destination, source[0], receipt, execution)
+    assert not list(destination.iterdir()) and not list(tmp_path.glob(".tar-*"))
+
+
+def test_writer_overhead_failure_preserves_sources_and_promotes_nothing(source, execution, tmp_path, monkeypatch):
+    before = {p.relative_to(source[1]).as_posix(): p.read_bytes() for p in source[1].rglob("*") if p.is_file()}
+    monkeypatch.setattr(package, "MAX_CIPHERTEXT_OVERHEAD_BYTES", 32)
+    def oversized(_binary, arguments, output, *, reason, limit):
+        archive_bytes = Path(arguments[-1]).stat().st_size
+        assert limit == archive_bytes + 32
+        output.write_bytes(package.AGE_HEADER + bytes(archive_bytes + 33 - len(package.AGE_HEADER)))
+    monkeypatch.setattr(package, "_age", oversized)
+    with pytest.raises(package.PackageError, match="ciphertext_overhead_limit"):
+        package.package_evidence(source[1], source[0], tmp_path / "delivery", age_binary="unused",
+                                 recipient=RECIPIENT, execution=execution)
+    assert not (tmp_path / "delivery").exists() and not list(source[1].glob(".package-*"))
+    assert all((source[1] / name).read_bytes() == raw for name, raw in before.items())
 
 
 @pytest.mark.parametrize("field", ["compatibility_contract_sha256", "release_evidence_sha256"])

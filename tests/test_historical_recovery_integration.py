@@ -146,12 +146,14 @@ def test_guard_binding_survives_actual_encryption_recovery_and_offline_replay(pi
     receipt = package.package_evidence(pipeline["storage"], pipeline["manifest"], delivery,
                                       age_binary=age[0], recipient=recipient, execution=metadata,
                                       diagnostics={"execution_guard": record})
-    assert receipt["schema"] == "historical-encrypted-receipt-v3"
+    assert receipt["schema"] == "historical-encrypted-receipt-v4"
+    assert receipt["delivery_envelope"] == "historical-delivery-envelope-v1"
     assert_phase_one(receipt)
     index = package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, recovered,
                                     age_binary=age[0], identity=age[1][0][0], manifest=pipeline["manifest"],
                                     expected_execution=metadata)
-    assert index["schema"] == "historical-private-package-v3"
+    assert index["schema"] == "historical-private-package-v4"
+    assert index["delivery_envelope"] == receipt["delivery_envelope"]
     assert index["execution"] == metadata
     assert all((recovered / name).read_bytes() == raw for name, raw in before.items())
     assert wrapper_command(pipeline, "offline", storage=recovered) == 0

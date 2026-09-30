@@ -88,7 +88,8 @@ def setup(monkeypatch):
     contract = guard.compatibility_contract()
     source_bytes = {path: ("synthetic source " + path + "\n").encode() for path in contract["required_source_paths"]}
     source_bytes[guard.WORKFLOW] = b"synthetic workflow\n"
-    release = {"schema": "historical-delivery-release-evidence-v1", "status": "PASS",
+    release = {"schema": "historical-delivery-release-evidence-v2", "status": "PASS",
+        "delivery_envelope": contract["delivery_envelope"],
         "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256,
         "manifest_sha256": guard.MANIFEST, "recipient_sha256": policy["recipient_sha256"],
         "checks": {key: "PASS" for key in guard.RELEASE_CHECKS},

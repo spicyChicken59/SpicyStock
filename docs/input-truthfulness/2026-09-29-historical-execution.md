@@ -561,3 +561,16 @@ review. No additional allowlist, detector exclusion or history rewrite was
 made. These findings remain a separate Secret Scan blocker; the capacity
 failure already requires the stop. Final hosted results belong to the PR97
 closeout comment.
+
+
+## 30 September 2026 — owner-authorized envelope decision, PR97
+
+The explicit continuation versions the project delivery limit to250 MiB archive
+and251 MiB ciphertext, with at most1 MiB actual encryption overhead. The codec
+and complete scientific evidence remain unchanged. See the [current contract
+and platform check](2026-09-30-delivery-readiness-evidence/envelope-continuation/platform-and-contract.md).
+The prior stress refusal is retained; it is not a result under the new envelope.
+New full central/stress recovery and normal exact-head CI remain NOT RUN at this
+pre-submission checkpoint. Real acquisition and historical findings remain
+NOT RUN; real execution remains BLOCKED for Guidance after normal merge.
+Native4 remains old transport evidence only, and native5/phase2 is prospective.

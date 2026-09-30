@@ -1,0 +1,11 @@
+{
+  "actual_src_files_equal_bytes": 23,
+  "baseline": "65cd32ba0991ecad4bb04d53132d4a44889aca32",
+  "codec_sha256": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+  "manifest_canonical_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+  "protected_paths_sha256": "867964264485f22539228e255ab70d61f4a9955862a8b1ff968fb6b88eb806a8",
+  "protected_tracked_entries": 6025,
+  "recovery_canonical_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
+  "scope": "git diff for protected tracked entries; raw working bytes compared to binary-safe Git blob reads for every src file; no private evidence inspection",
+  "status": "PASS"
+}

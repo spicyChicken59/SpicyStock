@@ -136,6 +136,10 @@ def test_actual_small_acquisition_reconciliation_package_recovery(run_setup, tmp
     assert metrics["expanded_payload_bytes"] > result["source_member_payload_bytes"]
     assert metrics["tar_archive_bytes"] > metrics["expanded_payload_bytes"] > metrics["archive_bytes"]
     assert metrics["ciphertext_bytes"] > metrics["archive_bytes"]
+    assert metrics["ciphertext_bytes"] - metrics["archive_bytes"] <= benchmark.package.MAX_CIPHERTEXT_OVERHEAD_BYTES
+    assert metrics["receipt_schema"] == benchmark.package.SCHEMA
+    assert metrics["index_schema"] == benchmark.package.INDEX_SCHEMA
+    assert metrics["delivery_envelope"] == result["delivery_envelope"] == benchmark.package.DELIVERY_ENVELOPE
     assert metrics["index_bytes"] > 0 and metrics["tar_headers_and_padding_bytes"] > 0
     assert result["memory"]["process_peak_rss_bytes"] > 0
     assert result["peak_scratch_bytes_sampled"] >= result["source_member_payload_bytes"] * 2

@@ -10,7 +10,10 @@ import tomllib
 
 import pytest
 
-from tests.secret_scan_controls import OBSERVATION, PUBLIC_VALUES, ROOT
+from tests.secret_scan_controls import (
+    BOUNDED_PATHS, BOUNDED_VALUES, OBSERVATION, PUBLIC_VALUES, ROOT,
+    retained_documents,
+)
 
 
 def dispositions():
@@ -58,3 +61,41 @@ def test_existing_default_and_historical_dispositions_are_preserved():
     assert allowed("tests/fixtures/grading/reader-commentary/record.json", "pct_above_40ma")
     assert not allowed(OBSERVATION, "down25_quarter")
     assert not allowed("tests/fixtures/grading/record.json", PUBLIC_VALUES[0])
+
+
+def test_retained_evidence_keeps_historical_public_file_identities():
+    assert len(retained_documents()) == 3
+
+
+def test_continuation_dispositions_have_exact_values_and_paths():
+    entries = [item for item in dispositions() if "PR97 retained public" in item["description"]]
+    assert len(entries) == 2
+    for entry, paths, values in zip(entries, (BOUNDED_PATHS[:2], BOUNDED_PATHS[2:]),
+                                   (BOUNDED_VALUES[:1], BOUNDED_VALUES[1:])):
+        assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+        assert entry["condition"] == "AND"
+        assert entry["regexTarget"] == "secret"
+        assert entry["paths"] == ["^" + re.escape(path).replace(r"\-", "-") + "$" for path in paths]
+        assert entry["regexes"] == ["^(" + "|".join(values) + ")$"]
+
+
+@pytest.mark.parametrize("path_index", range(3))
+@pytest.mark.parametrize("value_index", range(3))
+def test_continuation_values_cannot_cross_their_exact_paths(path_index, value_index):
+    expected = (path_index < 2 and value_index == 0) or (path_index == 2 and value_index > 0)
+    assert allowed(BOUNDED_PATHS[path_index], BOUNDED_VALUES[value_index]) is expected
+
+
+@pytest.mark.parametrize("path", BOUNDED_PATHS)
+@pytest.mark.parametrize("variant", ("prefix", "suffix", "sibling"))
+def test_continuation_values_elsewhere_remain_detectable(path, variant):
+    altered = {"prefix": "copied/" + path, "suffix": path + ".backup",
+               "sibling": path.rsplit("/", 1)[0] + "/another.json"}[variant]
+    assert all(not allowed(altered, value) for value in BOUNDED_VALUES)
+
+
+@pytest.mark.parametrize("path", BOUNDED_PATHS)
+@pytest.mark.parametrize("value", [hashlib.sha256(b"unrelated invented scanner regression value").hexdigest(),
+    "x" + BOUNDED_VALUES[0], BOUNDED_VALUES[0] + "x", BOUNDED_VALUES[0].upper()])
+def test_continuation_paths_do_not_allow_other_values(path, value):
+    assert not allowed(path, value)
