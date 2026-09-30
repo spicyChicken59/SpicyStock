@@ -18,19 +18,24 @@ import sys
 from urllib.error import HTTPError, URLError
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tools import historical_incident_recovery as incident
+
 REPOSITORY = "spicyChicken59/SpicyStock"
 REPOSITORY_ID = 1352997802
 OWNER = "spicyChicken59"
 WORKFLOW = ".github/workflows/historical-input-proof.yml"
 WORKFLOW_ID = 369770564
-POLICY_SCHEMA = "historical-execution-policy-v3"
-READINESS_SCHEMA = "readiness-v3"
+POLICY_SCHEMA = "historical-execution-policy-v4"
+READINESS_SCHEMA = "readiness-v4"
 EXECUTION_SCHEMA = "historical-execution-v3"
 LOCAL_RECOVERY_SCHEMA = "historical-local-recovery-v2"
 PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
-COMPATIBILITY_CONTRACT_SHA256 = "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d"
-RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-delivery-release-evidence.json"
-RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
+PR97_COMPATIBILITY_CONTRACT_SHA256 = "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d"
+COMPATIBILITY_CONTRACT_SHA256 = "a425ce24be52c22119f39df1444b9518586f15734998f6d068090d4cef957be8"
+RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-native6-release-evidence.json"
+ORIGINAL_RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
+RECOVERY_CONTRACT_SHA256 = incident.RECOVERY_CONTRACT_SHA256
 ORIGINAL_MERGE = "33ec181ca60adaf2f7c0ef19a1889a5517161585"
 ORIGINAL_HEAD = "eb2b417a7a2289ab22c239ccfe06c20daf1dde7b"
 ASSIGNMENT = "spicystock-historical-input-2026-09-28"
@@ -40,7 +45,7 @@ API_ROOT = "https://api.github.com/repos/" + REPOSITORY
 MANIFEST_PATH = Path(__file__).resolve().parents[1] / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
 POLICY_PATH = Path(__file__).with_name("historical-execution-policy.json")
 RECOVERY_PATH = Path(__file__).with_name("historical-workflow-recovery.json")
-COMPATIBILITY_PATH = Path(__file__).with_name("historical-delivery-compatibility.json")
+COMPATIBILITY_PATH = Path(__file__).with_name("historical-native6-compatibility.json")
 BINDING_FIELDS = ("repository", "repository_id", "assignment_id", "manifest_sha256",
                   "workflow_id", "workflow_path", "recipient_sha256", "run_id", "run_number",
                   "run_attempt", "assignment_phase", "mode", "checkout_sha", "workflow_sha",
@@ -49,6 +54,7 @@ DELIVERY_BINDING_FIELDS = ("compatibility_contract_sha256", "release_evidence_sh
 RELEASE_CHECKS = ("central_capacity", "stress_capacity", "central_exact_recovery", "stress_exact_recovery",
                   "legacy_gzip_recovery", "exact_v2_equivalence", "shared_offline_step", "total_job_envelope", "process_memory", "normal_ci")
 RELEASE_PROOFS = ("capacity", "runtime", "equivalence", "legacy_recovery", "normal_ci")
+REPAIR_CHECKS = ("input_normalization", "exact_incident_recovery", "wrapper_receipt_binding", "normal_ci")
 
 
 class GuardError(RuntimeError):
@@ -87,7 +93,7 @@ def parse(raw):
 
 def validate_policy(policy):
     require(isinstance(policy, dict) and policy.get("schema") == POLICY_SCHEMA, "invalid_policy")
-    require(positive(policy.get("implementation_pr")) and policy["implementation_pr"] > 96, "unbound_implementation_pr")
+    require(positive(policy.get("implementation_pr")) and policy["implementation_pr"] > 97, "unbound_implementation_pr")
     require(policy.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "wrong_recovery_contract")
     require(policy.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256, "wrong_compatibility_contract")
     recipient = policy.get("recipient", "")
@@ -98,7 +104,11 @@ def validate_policy(policy):
 
 def recovery_contract():
     contract = parse(RECOVERY_PATH.read_bytes())
-    require(hashlib.sha256(encode(contract)).hexdigest() == RECOVERY_CONTRACT_SHA256, "changed_recovery_contract")
+    require(hashlib.sha256(encode(contract)).hexdigest() == ORIGINAL_RECOVERY_CONTRACT_SHA256, "changed_recovery_contract")
+    try:
+        incident.incident_contract()
+    except incident.IncidentError as error:
+        raise GuardError("changed_incident_contract") from error
     return contract
 
 
@@ -119,7 +129,7 @@ def load_policy(path=None):
 
 def phase_slot(mode):
     require(mode in {"rehearsal", "real"}, "invalid_mode")
-    return (4, 1) if mode == "rehearsal" else (5, 2)
+    return (4, 1) if mode == "rehearsal" else (6, 2)
 
 
 def validate_phase_binding(record):
@@ -131,6 +141,9 @@ def validate_phase_binding(record):
     """
     require(isinstance(record, dict), "invalid_execution_binding")
     native, phase = phase_slot(record.get("mode"))
+    historical = record.get("recovery_contract_sha256") == ORIGINAL_RECOVERY_CONTRACT_SHA256
+    if historical and record.get("mode") == "real":
+        native = 5
     for key in ("repository_id", "workflow_id", "run_id", "run_number", "run_attempt",
                 "assignment_phase", "implementation_pr", "readiness_comment_id"):
         require(positive(record.get(key)), "invalid_execution_binding")
@@ -138,15 +151,18 @@ def validate_phase_binding(record):
     require(record.get("repository") == REPOSITORY and record["repository_id"] == REPOSITORY_ID and
             record.get("assignment_id") == ASSIGNMENT and record["workflow_id"] == WORKFLOW_ID and
             record.get("workflow_path") == WORKFLOW and record["implementation_pr"] != 94, "wrong_execution_identity")
-    require(record.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "wrong_recovery_contract")
+    require(historical or record.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256, "wrong_recovery_contract")
     for key, size in (("manifest_sha256", 64), ("recipient_sha256", 64), ("checkout_sha", 40), ("workflow_sha", 40)):
         require(sha(record.get(key), size), "invalid_execution_binding")
     # Historical v2 receipts retain exactly their original projection. Current
     # execution requires both new digests; no legacy record is upgraded here.
     extra = DELIVERY_BINDING_FIELDS if any(k in record for k in DELIVERY_BINDING_FIELDS) else ()
     if extra:
-        require(record.get("compatibility_contract_sha256") in {COMPATIBILITY_CONTRACT_SHA256, PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} and
-                sha(record.get("release_evidence_sha256")) and record["implementation_pr"] > 96, "invalid_delivery_binding")
+        allowed = {PR97_COMPATIBILITY_CONTRACT_SHA256, PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} if historical else {COMPATIBILITY_CONTRACT_SHA256}
+        require(record.get("compatibility_contract_sha256") in allowed and
+                sha(record.get("release_evidence_sha256")) and record["implementation_pr"] > (96 if historical else 97), "invalid_delivery_binding")
+    else:
+        require(historical, "missing_delivery_binding")
     return {key: record[key] for key in (*BINDING_FIELDS, *extra)}
 
 
@@ -155,12 +171,14 @@ def validate_execution_binding(record, policy):
     validate_policy(policy)
     require(all(key in binding for key in DELIVERY_BINDING_FIELDS), "missing_delivery_binding")
     require(binding["compatibility_contract_sha256"] == COMPATIBILITY_CONTRACT_SHA256, "stale_delivery_binding")
+    require(binding["recovery_contract_sha256"] == RECOVERY_CONTRACT_SHA256, "stale_recovery_binding")
     require(binding["manifest_sha256"] == MANIFEST and binding["recipient_sha256"] == policy["recipient_sha256"] and
             binding["implementation_pr"] == policy["implementation_pr"], "unbound_execution_policy")
     return binding
 
 
 def validate_context(env, mode):
+    require(mode == "real", "rehearsal_slot_closed")
     native, _ = phase_slot(mode)
     require(env.get("GITHUB_REPOSITORY") == REPOSITORY and env.get("GITHUB_EVENT_NAME") == "workflow_dispatch", "wrong_repository_or_event")
     require(env.get("GITHUB_REF") == "refs/heads/main" and env.get("GITHUB_WORKFLOW_REF") == REPOSITORY + "/" + WORKFLOW + "@refs/heads/main", "wrong_workflow_or_ref")
@@ -221,7 +239,7 @@ def validate_readiness(comment, policy, mode, today):
                 "owner_scope_not_authorized")
         require(evidence["entitlement"].get("historical_sip_zero_cost") is True, "entitlement_not_established")
         recovery = evidence["local_recovery"]
-        require(recovery.get("schema") == LOCAL_RECOVERY_SCHEMA and recovery.get("recovery_contract_sha256") == RECOVERY_CONTRACT_SHA256 and
+        require(recovery.get("schema") == LOCAL_RECOVERY_SCHEMA and recovery.get("recovery_contract_sha256") == ORIGINAL_RECOVERY_CONTRACT_SHA256 and
                 type(recovery.get("run_number")) is int and recovery["run_number"] == 4 and
                 type(recovery.get("assignment_phase")) is int and recovery["assignment_phase"] == 1 and
                 type(recovery.get("run_attempt")) is int and recovery["run_attempt"] == 1 and
@@ -276,7 +294,7 @@ def validate_release_evidence(api, record):
     raw = reviewed_file(api, RELEASE_EVIDENCE_PATH, revision)
     require(hashlib.sha256(raw).hexdigest() == record["release_evidence_sha256"], "release_evidence_changed")
     evidence = parse(raw)
-    require(isinstance(evidence, dict) and evidence.get("schema") == "historical-delivery-release-evidence-v2" and
+    require(isinstance(evidence, dict) and evidence.get("schema") == "historical-delivery-release-evidence-v3" and
             evidence.get("status") == "PASS" and evidence.get("compatibility_contract_sha256") == COMPATIBILITY_CONTRACT_SHA256 and
             evidence.get("manifest_sha256") == MANIFEST and evidence.get("recipient_sha256") == record["recipient_sha256"],
             "technical_release_not_established")
@@ -301,6 +319,42 @@ def validate_release_evidence(api, record):
         require(hashlib.sha256(proof_raw).hexdigest() == proof["sha256"], "release_proof_changed")
         proof_record = parse(proof_raw)
         require(isinstance(proof_record, dict) and proof_record.get("status") == "PASS", "technical_release_not_established")
+    # PR97's completed measurements remain pinned to PR97. Only the enumerated
+    # admission files may differ; unchanged science/codec/runtime and all five
+    # measured proof documents must retain their exact previous bytes.
+    parent = contract["parent_delivery"]
+    require(evidence.get("inherited_delivery") == parent, "unbound_parent_delivery")
+    parent_raw = reviewed_file(api, parent["path"], parent["revision"])
+    require(hashlib.sha256(parent_raw).hexdigest() == parent["sha256"], "parent_delivery_changed")
+    parent_evidence = parse(parent_raw)
+    require(parent_evidence.get("schema") == "historical-delivery-release-evidence-v2" and
+            parent_evidence.get("status") == "PASS" and
+            parent_evidence.get("compatibility_contract_sha256") == PR97_COMPATIBILITY_CONTRACT_SHA256 and
+            parent_evidence.get("delivery_envelope") == contract["delivery_envelope"] and
+            evidence["checks"] == parent_evidence.get("checks") and evidence["proofs"] == parent_evidence.get("proofs"),
+            "inherited_delivery_proof_changed")
+    for path, digest in parent_evidence["source_sha256"].items():
+        if path not in contract["permitted_changed_code"]:
+            require(sources.get(path) == digest, "inherited_source_changed")
+    reader = contract["identity_reader_revision"]
+    require(parent_evidence["source_sha256"].get(reader["path"]) == reader["before_sha256"] and
+            sources.get(reader["path"]) == reader["after_sha256"], "unreviewed_identity_reader")
+    scanner = contract["scanner_disposition"]
+    require(parent_evidence["source_sha256"].get(scanner["path"]) == scanner["before_sha256"] and
+            sources.get(scanner["path"]) == scanner["after_sha256"], "unreviewed_scanner_disposition")
+    repair_checks = evidence.get("repair_checks")
+    require(isinstance(repair_checks, dict) and set(repair_checks) == set(REPAIR_CHECKS) and
+            all(value == "PASS" for value in repair_checks.values()), "repair_not_established")
+    proof = evidence.get("repair_proof")
+    require(isinstance(proof, dict) and set(proof) == {"path", "sha256"} and
+            proof["path"] == "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/proof-repair.json" and
+            sha(proof["sha256"]), "invalid_repair_proof")
+    repair_raw = reviewed_file(api, proof["path"], revision)
+    require(hashlib.sha256(repair_raw).hexdigest() == proof["sha256"], "repair_proof_changed")
+    repair = parse(repair_raw)
+    require(repair.get("schema") == "historical-native6-repair-proof-v1" and repair.get("status") == "PASS" and
+            repair.get("checks") == repair_checks and repair.get("source_sha256") == sources,
+            "repair_not_established")
     change = api(f"/compare/{contract['continuation_base']}...{revision}")
     files = change.get("files")
     require(change.get("status") in {"identical", "ahead"} and change.get("behind_by") == 0 and
@@ -319,7 +373,7 @@ def validate_release_evidence(api, record):
             require(path in {"README.md", "CLAUDE.md", ".env.example"} or
                     path.startswith("tests/") or (item.get("status") in {"added", "modified"} and
                     (path in {"docs/input-truthfulness/2026-09-29-historical-execution.md", RELEASE_EVIDENCE_PATH} or
-                     path.startswith("docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/"))),
+                     path.startswith("docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/"))),
                     "unreviewed_delivery_scope")
     require(evidence.get("changed_code") == sorted(code, key=lambda item: item["path"]), "release_diff_changed")
     return evidence
@@ -340,7 +394,7 @@ def run_binding(run):
     return binding
 
 
-def validate_history(runs, record, env, mode, jobs_by_run, contract):
+def validate_history(runs, record, env, mode, jobs_by_run, contract, artifacts_by_run=None):
     native, _ = phase_slot(mode)
     bindings = [run_binding(run) for run in runs]
     require(len(bindings) == native and {run["run_number"] for run in bindings} == set(range(1, native + 1)), "incomplete_or_consumed_history")
@@ -354,7 +408,13 @@ def validate_history(runs, record, env, mode, jobs_by_run, contract):
             require(binding == {key: expected[key] for key in binding}, "changed_reviewed_exception")
             require(jobs_by_run[run_id] == [], "reviewed_exception_has_jobs")
             continue
-        require(number in (4, 5) and binding["workflow_id"] == WORKFLOW_ID and binding["path"] == WORKFLOW and
+        if run_id == incident.FAILED_RUN_ID:
+            try:
+                incident.validate_incident(run, jobs_by_run[run_id], (artifacts_by_run or {}).get(run_id))
+            except incident.IncidentError as error:
+                raise GuardError("changed_reviewed_incident") from error
+            continue
+        require(number in (4, 6) and binding["workflow_id"] == WORKFLOW_ID and binding["path"] == WORKFLOW and
                 binding["run_attempt"] == 1 and binding["event"] == "workflow_dispatch" and binding["head_branch"] == "main", "unaccounted_or_retried_run")
         require(run.get("display_title") == "historical-input-" + ("rehearsal" if number == 4 else "real"), "wrong_historical_phase")
         require(len(jobs_by_run[run_id]) == 1, "ambiguous_execution_job")
@@ -365,6 +425,7 @@ def validate_history(runs, record, env, mode, jobs_by_run, contract):
             require(binding["status"] == "completed" and binding["conclusion"] == "success" and
                     recovery["rehearsal_run_id"] == run_id and recovery["workflow_sha"] == binding["head_sha"], "rehearsal_not_recovered")
     require(set(exceptions) <= {item["id"] for item in bindings}, "missing_reviewed_exception")
+    require(incident.FAILED_RUN_ID in {item["id"] for item in bindings}, "missing_reviewed_incident")
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -412,7 +473,7 @@ def collection(api, path, key, maximum):
 
 def history(api, workflow_id):
     require(type(workflow_id) is int and workflow_id == WORKFLOW_ID, "wrong_workflow_identity")
-    return collection(api, f"/actions/workflows/{workflow_id}/runs", "workflow_runs", 5)
+    return collection(api, f"/actions/workflows/{workflow_id}/runs", "workflow_runs", 6)
 
 
 def validate_job(job, run, today):
@@ -430,6 +491,7 @@ def verify(api, policy, env, mode, comment_id, today):
     validate_context(env, mode)
     contract = recovery_contract()
     require(positive(comment_id), "invalid_readiness_comment_id")
+    require(comment_id != incident.CONSUMED_READINESS_COMMENT_ID, "consumed_readiness_comment")
     repository = api("")
     require(repository.get("full_name") == REPOSITORY and repository.get("id") == int(env["GITHUB_REPOSITORY_ID"]) and repository.get("private") is False, "wrong_or_private_repository")
     comment = api(f"/issues/comments/{comment_id}")
@@ -460,23 +522,36 @@ def verify(api, policy, env, mode, comment_id, today):
     workflow = api(f"/actions/workflows/{record['workflow_id']}")
     require(workflow.get("id") == record["workflow_id"] and workflow.get("path") == WORKFLOW and workflow.get("state") == "active", "wrong_workflow_identity")
     runs = history(api, record["workflow_id"])
-    jobs_by_run = {}
+    jobs_by_run, artifacts_by_run = {}, {}
     for run in runs:
         individual = api(f"/actions/runs/{run['id']}")
-        require(run_binding(individual) == run_binding(run), "run_detail_changed_or_missing")
+        require(run_binding(individual) == run_binding(run) and individual.get("display_title") == run.get("display_title"), "run_detail_changed_or_missing")
         jobs_by_run[run["id"]] = collection(api, f"/actions/runs/{run['id']}/attempts/1/jobs", "jobs", 1)
-    validate_history(runs, record, env, mode, jobs_by_run, contract)
+        if run["id"] == incident.FAILED_RUN_ID:
+            artifacts_by_run[run["id"]] = collection(api, f"/actions/runs/{run['id']}/artifacts", "artifacts", 0)
+            try:
+                incident.validate_incident(individual, jobs_by_run[run["id"]], artifacts_by_run[run["id"]])
+            except incident.IncidentError as error:
+                raise GuardError("changed_reviewed_incident") from error
+    validate_history(runs, record, env, mode, jobs_by_run, contract, artifacts_by_run)
     for run in runs:
-        if run["run_number"] in (4, 5):
+        if run["run_number"] in (4, 6):
             validate_job(jobs_by_run[run["id"]][0], run, today)
             if mode == "real" and run["run_number"] == 4:
                 require(jobs_by_run[run["id"]][0]["id"] == compatibility_contract()["accepted_transport"]["job_id"],
                         "unaccepted_prior_transport_job")
     repeated = history(api, record["workflow_id"])
-    require(sorted((run_binding(item) for item in repeated), key=lambda item: item["id"]) ==
-            sorted((run_binding(item) for item in runs), key=lambda item: item["id"]), "history_changed_during_read")
-    validate_history(repeated, record, env, mode, jobs_by_run, contract)
-    history_evidence = {"schema": "historical-history-verification-v1", "observed_on": today.isoformat(),
+    require(sorted(({**run_binding(item), "display_title": item.get("display_title")} for item in repeated), key=lambda item: item["id"]) ==
+            sorted(({**run_binding(item), "display_title": item.get("display_title")} for item in runs), key=lambda item: item["id"]), "history_changed_during_read")
+    incident_jobs = collection(api, f"/actions/runs/{incident.FAILED_RUN_ID}/attempts/1/jobs", "jobs", 1)
+    incident_artifacts = collection(api, f"/actions/runs/{incident.FAILED_RUN_ID}/artifacts", "artifacts", 0)
+    require(incident_jobs == jobs_by_run[incident.FAILED_RUN_ID] and
+            incident_artifacts == artifacts_by_run[incident.FAILED_RUN_ID], "incident_changed_during_read")
+    validate_history(repeated, record, env, mode, jobs_by_run, contract, artifacts_by_run)
+    history_evidence = {"schema": "historical-history-verification-v2", "observed_on": today.isoformat(),
+        "pre_acquisition_incident": {"run_id": incident.FAILED_RUN_ID, "job_id": incident.FAILED_JOB_ID,
+            "recovery_contract_sha256": RECOVERY_CONTRACT_SHA256, "artifacts_count": 0,
+            "artifacts_sha256": hashlib.sha256(encode(incident_artifacts)).hexdigest()},
         "first_listing_sha256": hashlib.sha256(encode(runs)).hexdigest(),
         "repeated_listing_sha256": hashlib.sha256(encode(repeated)).hexdigest(),
         "runs": [{**run_binding(run), "attempt_jobs_count": len(jobs_by_run[run["id"]]),

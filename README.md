@@ -845,8 +845,13 @@ The original two records are gzip fixtures under `tests/fixtures/continuity/`.
 
 The dedicated manual `historical-input-proof.yml` workflow prepares encrypted
 historical evidence under the [execution handoff](docs/input-truthfulness/2026-09-29-historical-execution.md).
-It requires a merged implementation and dated readiness evidence before either
-of its two execution phases. The original workflow failed GitHub context
+Only the narrowly reviewed replacement real phase (native 6 / attempt 1) is
+prospective; it requires the repair's merged implementation and a fresh dated
+readiness-v4 comment. Native 5 failed before checkout because its comment-ID
+input contained leading spaces. The boundary now trims only edge ASCII spaces
+and tabs, then passes the canonical numeric ID to the unchanged authorization
+checks. Its failed attempt and consumed readiness remain immutable history.
+The original workflow failed GitHub context
 validation before any job; the execution handoff records its three preserved
 failures and the narrowly reviewed recovery contract. Native run numbers are
 not phase numbers. Normal CI checks the changed workflows with pinned actionlint.

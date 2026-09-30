@@ -474,6 +474,7 @@ def test_real_age_legacy_v2_gzip_recovers_original_members_and_guard(source, exe
     """Generate the frozen old writer's exact shape, never upgrade its receipt."""
     manifest, storage = source
     legacy = {k: v for k, v in execution.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
+    legacy["recovery_contract_sha256"] = execution_guard.ORIGINAL_RECOVERY_CONTRACT_SHA256
     legacy["recipient_sha256"] = package.recipient_fingerprint(age[1][0][1])
     sources = package._sources(storage, manifest, validate_manifest(manifest))
     payloads = {name: path.read_bytes() for name, (path, _) in sources.items()}
@@ -515,6 +516,7 @@ def test_real_age_previous_v3_zstandard_recovers_exact_old_envelope(source, exec
     """Build the former v3 shape, with its old binding and no v4 envelope."""
     manifest, storage = source
     previous = {**execution, "compatibility_contract_sha256": package.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256,
+                "recovery_contract_sha256": execution_guard.ORIGINAL_RECOVERY_CONTRACT_SHA256,
                 "recipient_sha256": package.recipient_fingerprint(age[1][0][1])}
     sources = package._sources(storage, manifest, validate_manifest(manifest))
     before = {name: path.read_bytes() for name, (path, _) in sources.items()}
@@ -563,6 +565,8 @@ def test_real_age_previous_v3_zstandard_recovers_exact_old_envelope(source, exec
 def envelope_receipt(execution, schema=package.SCHEMA):
     """Small metadata fixture for exact cap boundaries; no large archive writes."""
     metadata = dict(execution)
+    if schema in (package.LEGACY_SCHEMA, package.PREVIOUS_SCHEMA):
+        metadata["recovery_contract_sha256"] = execution_guard.ORIGINAL_RECOVERY_CONTRACT_SHA256
     if schema == package.LEGACY_SCHEMA:
         metadata = {k: v for k, v in metadata.items() if k in package._LEGACY_EXECUTION_KEYS | {"started_at"}}
     elif schema == package.PREVIOUS_SCHEMA:
@@ -577,6 +581,61 @@ def envelope_receipt(execution, schema=package.SCHEMA):
         receipt.update(delivery_envelope=package.DELIVERY_ENVELOPE,
                        archive_bytes=250 * 1024 ** 2, ciphertext_bytes=251 * 1024 ** 2)
     return receipt, metadata
+
+
+def test_pr97_v4_binding_remains_readable_without_reauthorizing_it(source, execution, age, tmp_path):
+    """Disposable tiny synthetic members, never the owner's retained package."""
+    manifest, storage = source
+    old = {**execution, "recovery_contract_sha256": execution_guard.ORIGINAL_RECOVERY_CONTRACT_SHA256,
+           "compatibility_contract_sha256": execution_guard.PR97_COMPATIBILITY_CONTRACT_SHA256,
+           "recipient_sha256": package.recipient_fingerprint(age[1][0][1])}
+    before = {name: path.read_bytes() for name, (path, _) in package._sources(
+        storage, manifest, validate_manifest(manifest)).items()}
+    delivery = tmp_path / "pr97-v4-delivery"
+    receipt = package.package_evidence(storage, manifest, delivery, age_binary=age[0],
+        recipient=age[1][0][1], execution=old)
+    receipt_bytes = (delivery / package.RECEIPT_NAME).read_bytes()
+    recovered = tmp_path / "pr97-v4-recovered"
+    index = package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, recovered,
+        age_binary=age[0], identity=age[1][0][0], manifest=manifest, expected_execution=old)
+    assert index["execution"] == old
+    assert all((recovered / path).read_bytes() == raw for path, raw in before.items())
+    assert (delivery / package.RECEIPT_NAME).read_bytes() == receipt_bytes
+    policy = {"schema": execution_guard.POLICY_SCHEMA, "implementation_pr": 123,
+        "recipient": age[1][0][1], "recipient_sha256": old["recipient_sha256"],
+        "recovery_contract_sha256": execution_guard.RECOVERY_CONTRACT_SHA256,
+        "compatibility_contract_sha256": execution_guard.COMPATIBILITY_CONTRACT_SHA256}
+    # Historical parsing passes; current authorization must never be inferred.
+    with pytest.raises(execution_guard.GuardError):
+        execution_guard.validate_execution_binding(old, policy)
+
+
+def test_only_package_identity_conditional_changed_and_restored_defect_fails(execution):
+    old_block = '''    if not legacy and value["compatibility_contract_sha256"] != (
+            PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 if previous else execution_guard.COMPATIBILITY_CONTRACT_SHA256):
+'''
+    new_block = '''    # Reading a PR97 v4 identity does not grant new execution authorization.
+    # validate_phase_binding above keeps its old recovery/native-slot pairing;
+    # the live guard separately requires the new policy and incident relation.
+    allowed = {PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} if previous else {
+        execution_guard.COMPATIBILITY_CONTRACT_SHA256,
+        execution_guard.PR97_COMPATIBILITY_CONTRACT_SHA256}
+    if not legacy and value["compatibility_contract_sha256"] not in allowed:
+'''
+    current = Path(package.__file__).read_bytes().replace(b"\r\n", b"\n")
+    assert current.count(new_block.encode()) == 1
+    restored_file = current.replace(new_block.encode(), old_block.encode())
+    assert hashlib.sha256(restored_file).hexdigest() == "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
+    assert hashlib.sha256(current).hexdigest() == "e16c675a62d0880ea2148b4569bc10128c6c667ea47804b88725aa58d6ed7cbb"
+    namespace = dict(vars(package))
+    # Trusted local function source only; isolated restored-defect control.
+    exec(inspect.getsource(package._execution).replace(new_block, old_block), namespace)
+    old = {**execution, "recovery_contract_sha256": execution_guard.ORIGINAL_RECOVERY_CONTRACT_SHA256,
+           "compatibility_contract_sha256": execution_guard.PR97_COMPATIBILITY_CONTRACT_SHA256}
+    assert package._execution(old) == old
+    with pytest.raises(package.PackageError, match="invalid_execution_identity"):
+        namespace["_execution"](old)
+    assert namespace["_execution"](execution) == execution  # Unaffected current control.
 
 
 @pytest.mark.parametrize("schema", [package.LEGACY_SCHEMA, package.PREVIOUS_SCHEMA, package.SCHEMA])

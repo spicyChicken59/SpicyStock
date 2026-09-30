@@ -20,6 +20,8 @@ from tools import install_actionlint
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/historical-input-proof.yml"
 VALID_CONTROL = ROOT / "tests/fixtures/workflow-validation/valid-step-context.yml"
+ORIGINAL_PREFLIGHT = ROOT / "tests/fixtures/workflow-validation/native5-original-preflight.sh"
+ORIGINAL_PREFLIGHT_SHA256 = "62f19a890100170a23c1290d5de83d2b81f4f9c45f1fe7b83f05622a3c5b4e4a"
 
 
 def workflow():
@@ -113,8 +115,12 @@ def path_runtime(tmp_path, bash):
     workspace.mkdir()
     environment_file = tmp_path / "github-env"
     environment_file.write_text("")
+    output_file = tmp_path / "github-output"
+    output_file.write_text("")
     capture = tmp_path / "same-step"
-    env = {k: v for k, v in os.environ.items() if k not in {"HISTORICAL_ROOT", "MPLCONFIGDIR"}}
+    env = {k: v for k, v in os.environ.items() if k not in {
+        "HISTORICAL_ROOT", "MPLCONFIGDIR", "READINESS_COMMENT_ID", "RAW_READINESS_COMMENT_ID",
+        "ALPACA_API_KEY", "ALPACA_SECRET_KEY", "ANTHROPIC_API_KEY"}}
     if os.name == "nt":
         # No login profile or mutable user aliases: Git Bash's packaged POSIX
         # utilities are the local equivalent of the Linux runner's coreutils.
@@ -122,12 +128,18 @@ def path_runtime(tmp_path, bash):
         env["PATH"] = "/usr/bin:/bin"
     env.update(GITHUB_REPOSITORY="spicyChicken59/SpicyStock", GITHUB_REPOSITORY_ID="1352997802",
                GITHUB_REF="refs/heads/main", GITHUB_EVENT_NAME="workflow_dispatch", GITHUB_RUN_ATTEMPT="1",
-               GITHUB_RUN_NUMBER="4", GITHUB_RUN_ID="123456", READINESS_COMMENT_ID="999", MODE="rehearsal",
+               GITHUB_RUN_NUMBER="6", GITHUB_RUN_ID="123456", RAW_READINESS_COMMENT_ID="999", MODE="real",
                RUNNER_TEMP=shell_path(bash, temporary), GITHUB_WORKSPACE=shell_path(bash, workspace),
                GITHUB_ENV=shell_path(bash, environment_file), PATH_CAPTURE=shell_path(bash, capture),
+               GITHUB_OUTPUT=shell_path(bash, output_file),
                MANIFEST="docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json",
                POLICY="tools/historical-execution-policy.json")
     return temporary, workspace, environment_file, capture, env
+
+
+def boundary_outputs(path_runtime):
+    output = path_runtime[1].parent / "github-output"
+    return dict(line.split("=", 1) for line in output.read_text().splitlines())
 
 
 def run_shell(bash, script, env, workspace):
@@ -151,6 +163,7 @@ def test_actual_initialization_exports_same_step_and_later_consumers_keep_one_ex
     shared = dict(line.split("=", 1) for line in env_file.read_text().splitlines())
     assert set(shared) == {"HISTORICAL_ROOT", "MPLCONFIGDIR"}
     assert capture.read_text().splitlines() == [shared["HISTORICAL_ROOT"], shared["MPLCONFIGDIR"]]
+    assert boundary_outputs(path_runtime) == {"readiness_comment_id": "999"}
     expected = temporary / "historical-input-123456-1"
     assert expected.is_dir() and (expected / "matplotlib").is_dir()
     assert workspace not in expected.parents
@@ -171,13 +184,19 @@ def test_actual_initialization_exports_same_step_and_later_consumers_keep_one_ex
             marker.write_text(str(checks))
             assert expected.is_dir()
         elif "run" in step and step["name"] != "Bind public receipt to the immutable artifact identity":
-            result = run_shell(bash, spy + step["run"], env, workspace)
+            step_env = dict(env)
+            if step.get("id") == "guard":
+                assert step["env"]["READINESS_COMMENT_ID"] == "${{ steps.boundary.outputs.readiness_comment_id }}"
+                step_env["READINESS_COMMENT_ID"] = boundary_outputs(path_runtime)["readiness_comment_id"]
+            result = run_shell(bash, spy + step["run"], step_env, workspace)
             assert result.returncode == 0, step["name"] + ": " + result.stderr
     assert checks == 2
     arguments = [[v.decode() for v in call.split(b"\0")] for call in calls.read_bytes().split(b"\0\0") if call]
     tools = {args[0] for args in arguments}
     assert {"tools/install_historical_age.py", "tools/historical_execution_guard.py",
             "tools/historical_execution.py", "tools/historical_package.py"} <= tools
+    guard_args = next(args for args in arguments if args[0] == "tools/historical_execution_guard.py")
+    assert guard_args[guard_args.index("--readiness-comment-id") + 1] == "999"
     expected_paths = {"--destination": "/age", "--storage-root": "/data", "--output-dir": "/guard",
                       "--storage": "/data", "--execution": "/guard/execution.json",
                       "--approval": "/guard/approval.json", "--age": "/age/age",
@@ -220,6 +239,128 @@ def test_same_step_child_refuses_the_restored_missing_export_defect(path_runtime
     result = initialize(bash, path_runtime, script.replace("export HISTORICAL_ROOT MPLCONFIGDIR", ": # removed exports"))
     assert result.returncode != 0
     assert not path_runtime[3].exists()
+
+
+def original_preflight():
+    # Exact extracted first-step bytes from the incident's workflow revision
+    # 6979904ad872d8d648c93537c77ead5fda909481, not a duplicate approximation.
+    value = ORIGINAL_PREFLIGHT.read_bytes()
+    assert hashlib.sha256(value).hexdigest() == ORIGINAL_PREFLIGHT_SHA256
+    return value.decode("utf-8")
+
+
+def test_pinned_original_fails_logged_four_spaces_before_any_path_work(path_runtime, bash):
+    env = path_runtime[4]
+    env.update(GITHUB_RUN_NUMBER="5", READINESS_COMMENT_ID="    5920107119")
+    result = initialize(bash, path_runtime, original_preflight())
+    assert result.returncode != 0
+    assert not path_runtime[3].exists()
+    assert not list(path_runtime[0].glob("historical-input-*"))
+    assert not path_runtime[2].read_bytes()
+    assert not boundary_outputs(path_runtime)
+
+
+def test_pinned_original_clean_input_and_root_walk_remain_passing_control(path_runtime, bash):
+    env = path_runtime[4]
+    env.update(GITHUB_RUN_NUMBER="5", READINESS_COMMENT_ID="5920107119")
+    assert initialize(bash, path_runtime, original_preflight()).returncode == 0
+    assert path_runtime[3].exists()
+
+
+def test_native5_repair_does_not_change_the_existing_path_or_root_checks():
+    def paths(script):
+        return script[script.index('[[ "$RUNNER_TEMP" == /*'):script.index('HISTORICAL_ROOT=')]
+    assert paths(workflow()["jobs"]["execution"]["steps"][0]["run"]) == paths(original_preflight())
+
+
+@pytest.mark.parametrize("raw", ["5920107119", "    5920107119", "5920107119    ",
+    "\t5920107119\t", " \t 5920107119 \t "])
+def test_actual_boundary_normalizes_only_edges_and_guard_gets_canonical_output(path_runtime, bash, tmp_path, raw):
+    env = path_runtime[4]
+    env["RAW_READINESS_COMMENT_ID"] = raw
+    result = initialize(bash, path_runtime)
+    assert result.returncode == 0, result.stderr
+    assert boundary_outputs(path_runtime) == {"readiness_comment_id": "5920107119"}
+    definition = workflow()["jobs"]["execution"]
+    assert "READINESS_COMMENT_ID" not in definition["env"]
+    assert "RAW_READINESS_COMMENT_ID" not in definition["env"]
+    boundary = definition["steps"][0]
+    assert boundary["id"] == "boundary"
+    assert boundary["env"] == {"RAW_READINESS_COMMENT_ID": "${{ inputs.readiness_comment_id }}"}
+    guard = next(step for step in definition["steps"] if step.get("id") == "guard")
+    assert guard["env"]["READINESS_COMMENT_ID"] == "${{ steps.boundary.outputs.readiness_comment_id }}"
+    shared = dict(line.split("=", 1) for line in path_runtime[2].read_text().splitlines())
+    calls = tmp_path / "canonical-guard-arguments"
+    # Actions resolves this declared step environment from the first step's
+    # output. Execute the actual guard command with a provider-free argv spy.
+    downstream = dict(env, **shared, READINESS_COMMENT_ID=boundary_outputs(path_runtime)["readiness_comment_id"],
+                      PATH_CALLS=shell_path(bash, calls))
+    downstream.pop("RAW_READINESS_COMMENT_ID")
+    spy = 'python() { printf "%s\\0" "$@" > "$PATH_CALLS"; }; export -f python\n'
+    result = run_shell(bash, spy + guard["run"], downstream, path_runtime[1])
+    assert result.returncode == 0, result.stderr
+    args = [arg.decode() for arg in calls.read_bytes().split(b"\0")[:-1]]
+    assert args[0] == "tools/historical_execution_guard.py"
+    assert args[args.index("--readiness-comment-id") + 1] == "5920107119"
+    assert "${{ inputs.readiness_comment_id }}" not in guard["run"]
+    assert not (set(downstream) & {"ALPACA_API_KEY", "ALPACA_SECRET_KEY", "ANTHROPIC_API_KEY"})
+
+
+@pytest.mark.parametrize("raw", ["", " \t ", "0", "00", "0123", "+123", "-123", "1.0", "1e3",
+    "1 23", "1\t23", "123\n", "\r123", "1\n23", "123\r\n", "\v123", "123\f",
+    "\u00a0123", "123\u00a0", "\u2003123", "\u0661\u0662\u0663", "\uff11\uff12\uff13",
+    "https://github.com/example/123", "'123'", '"123"', "$(touch must-not-exist)", "`touch must-not-exist`"])
+def test_actual_boundary_refuses_malformed_without_echo_or_path_side_effects(path_runtime, bash, raw):
+    path_runtime[4]["RAW_READINESS_COMMENT_ID"] = raw
+    result = initialize(bash, path_runtime)
+    assert result.returncode != 0
+    assert result.stdout == ""
+    assert result.stderr == ("Invalid readiness comment ID: expected positive ASCII decimal digits, "
+                             "with only optional edge spaces/tabs.\n")
+    assert not path_runtime[3].exists()
+    assert not path_runtime[2].read_bytes()
+    assert not boundary_outputs(path_runtime)
+    assert not list(path_runtime[0].glob("historical-input-*"))
+    assert not (path_runtime[1] / "must-not-exist").exists()
+
+
+def test_restored_missing_normalization_defect_fails_logged_input(path_runtime, bash):
+    script = workflow()["jobs"]["execution"]["steps"][0]["run"]
+    start = script.index('while [[ "$READINESS_COMMENT_ID"')
+    end = script.index('if [[ ! "$READINESS_COMMENT_ID"', start)
+    broken = script[:start] + script[end:]
+    path_runtime[4]["RAW_READINESS_COMMENT_ID"] = "    5920107119"
+    result = initialize(bash, path_runtime, broken)
+    assert result.returncode != 0
+    assert not boundary_outputs(path_runtime)
+    assert not path_runtime[3].exists()
+
+
+@pytest.mark.parametrize("mode,native,attempt", [("rehearsal", "4", "1"), ("real", "5", "1"),
+    ("real", "5", "2"), ("real", "6", "2"), ("real", "7", "1"), ("rehearsal", "6", "1")])
+def test_actual_boundary_keeps_consumed_and_unreviewed_slots_closed(path_runtime, bash, mode, native, attempt):
+    path_runtime[4].update(MODE=mode, GITHUB_RUN_NUMBER=native, GITHUB_RUN_ATTEMPT=attempt)
+    assert initialize(bash, path_runtime).returncode != 0
+    assert not path_runtime[3].exists()
+    assert not boundary_outputs(path_runtime)
+
+
+def test_provider_credentials_exist_only_after_guard_and_recipient_preflight():
+    definition = workflow()["jobs"]["execution"]
+    assert not any("secrets." in value for value in definition["env"].values())
+    steps = definition["steps"]
+    guard = next(i for i, step in enumerate(steps) if step.get("id") == "guard")
+    preflight = next(i for i, step in enumerate(steps) if step.get("id") == "preflight")
+    acquisition = next(i for i, step in enumerate(steps) if step.get("id") == "acquisition")
+    assert guard < preflight < acquisition
+    for index, step in enumerate(steps):
+        secrets = {key: value for key, value in step.get("env", {}).items() if "secrets." in value}
+        if index == acquisition:
+            assert secrets == {"ALPACA_API_KEY": "${{ secrets.ALPACA_API_KEY }}",
+                               "ALPACA_SECRET_KEY": "${{ secrets.ALPACA_SECRET_KEY }}"}
+            assert step["if"] == "inputs.mode == 'real'"
+        else:
+            assert not secrets
 
 
 @pytest.mark.parametrize("field,value", [("MODE", "unexpected"), ("GITHUB_RUN_NUMBER", "1"),

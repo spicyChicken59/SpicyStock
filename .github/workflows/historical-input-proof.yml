@@ -1,12 +1,13 @@
 name: Historical input proof
 run-name: historical-input-${{ inputs.mode }}
 
-# A dedicated two-slot experiment. Merging does not authorize dispatch by itself.
+# A dedicated experiment with one narrowly reviewed failed-attempt recovery.
+# Merging does not authorize dispatch by itself.
 on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Reviewed execution phase (first rehearsal, then real)
+        description: Reviewed execution phase (only the replacement real slot is available)
         type: choice
         options: [rehearsal, real]
         default: rehearsal
@@ -37,21 +38,37 @@ jobs:
       MANIFEST: docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json
       POLICY: tools/historical-execution-policy.json
       MODE: ${{ inputs.mode }}
-      READINESS_COMMENT_ID: ${{ inputs.readiness_comment_id }}
       MPLBACKEND: Agg
       PYTHONUTF8: '1'
       PYTHONDONTWRITEBYTECODE: '1'
     steps:
       - name: Refuse unintended dispatch context
+        id: boundary
+        env:
+          RAW_READINESS_COMMENT_ID: ${{ inputs.readiness_comment_id }}
         run: |
           set -euo pipefail
           [[ "$GITHUB_REPOSITORY" == 'spicyChicken59/SpicyStock' ]]
           [[ "$GITHUB_REPOSITORY_ID" == '1352997802' ]]
           [[ "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ]]
-          [[ "$GITHUB_RUN_ATTEMPT" == '1' && "$READINESS_COMMENT_ID" =~ ^[1-9][0-9]*$ ]]
+          [[ "$GITHUB_RUN_ATTEMPT" == '1' ]]
+          # Normalize the untrusted input exactly once, without shell evaluation.
+          # Only ASCII space and horizontal tab are permitted at its edges.
+          READINESS_COMMENT_ID="$RAW_READINESS_COMMENT_ID"
+          while [[ "$READINESS_COMMENT_ID" == ' '* || "$READINESS_COMMENT_ID" == $'\t'* ]]; do
+            READINESS_COMMENT_ID="${READINESS_COMMENT_ID:1}"
+          done
+          while [[ "$READINESS_COMMENT_ID" == *' ' || "$READINESS_COMMENT_ID" == *$'\t' ]]; do
+            READINESS_COMMENT_ID="${READINESS_COMMENT_ID:0:${#READINESS_COMMENT_ID}-1}"
+          done
+          if [[ ! "$READINESS_COMMENT_ID" =~ ^[1-9][0-9]*$ || "$READINESS_COMMENT_ID" == *[!0123456789]* ]]; then
+            printf '%s\n' 'Invalid readiness comment ID: expected positive ASCII decimal digits, with only optional edge spaces/tabs.' >&2
+            exit 1
+          fi
           # These remain native run numbers. The guard independently verifies
-          # all three exact reviewed pre-job failures before admitting phase 1/2.
-          case "$MODE:$GITHUB_RUN_NUMBER" in rehearsal:4|real:5) ;; *) exit 1 ;; esac
+          # the three zero-job failures, accepted rehearsal and exact native-5
+          # pre-provider failure before admitting the replacement real phase.
+          case "$MODE:$GITHUB_RUN_NUMBER" in real:6) ;; *) exit 1 ;; esac
           [[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]*$ ]]
           [[ "$RUNNER_TEMP" == /* && "$GITHUB_WORKSPACE" == /* ]]
           [[ -d "$RUNNER_TEMP" && -d "$GITHUB_WORKSPACE" ]]
@@ -75,6 +92,7 @@ jobs:
           # GITHUB_ENV affects later steps only; the explicit exports above
           # are required by this step's mkdir and any child process.
           printf 'HISTORICAL_ROOT=%s\nMPLCONFIGDIR=%s\n' "$HISTORICAL_ROOT" "$MPLCONFIGDIR" >> "$GITHUB_ENV"
+          printf 'readiness_comment_id=%s\n' "$READINESS_COMMENT_ID" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
@@ -92,6 +110,7 @@ jobs:
         id: guard
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          READINESS_COMMENT_ID: ${{ steps.boundary.outputs.readiness_comment_id }}
         run: |
           umask 077
           python tools/historical_execution_guard.py --policy "$POLICY" \

@@ -1,0 +1,217 @@
+{
+  "acquisition": "NOT RUN",
+  "artifacts": [],
+  "artifacts_total_count": 0,
+  "attempt_jobs_total_count": 1,
+  "historical_findings": "NOT RUN",
+  "history_native_numbers": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "history_run_ids": [
+    36520481662,
+    36521323183,
+    36524147152,
+    36570997883,
+    36780349890
+  ],
+  "job_log": {
+    "capture": "GitHub connector-returned log text saved as UTF-8 bytes; not represented as raw HTTP response bytes.",
+    "path": "job-110108745578.log.txt",
+    "sha256": "da559c0536c901cf5352e58b51067b7ce3fe0af016662f5e51f161055eae25d0",
+    "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36780349890/job/110108745578"
+  },
+  "jobs": [
+    {
+      "conclusion": "failure",
+      "head_branch": "main",
+      "head_sha": "6979904ad872d8d648c93537c77ead5fda909481",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36780349890/job/110108745578",
+      "id": 110108745578,
+      "name": "execution",
+      "run_attempt": 1,
+      "run_id": 36780349890,
+      "run_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "failure",
+          "name": "Refuse unintended dispatch context",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Install pinned historical runtime and verified age",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Verify reviewed revision, evidence and durable execution slot",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Validate recipient before exposing provider credentials",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Exercise actual tools with synthetic transport",
+          "number": 9,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "One historical acquisition under the original shared limits",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Reconcile complete or partial retained inputs with sockets blocked",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Encrypt only permitted evidence, including handled failures",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Upload ciphertext transport and non-sensitive receipt",
+          "number": 13,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Bind public receipt to the immutable artifact identity",
+          "number": 14,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "status": "completed"
+        }
+      ],
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/110108745578",
+      "workflow_name": "historical-input-real"
+    }
+  ],
+  "observed_at": "2026-09-30T22:10:04.365102+00:00",
+  "package_recovery": "NOT RUN",
+  "provider_request_basis": "The sole job failed before checkout; acquisition step 10 and every step 3 through 14 are skipped. No acquisition ledger exists for this run.",
+  "provider_requests": 0,
+  "replacement_dispatch": "NOT RUN",
+  "repository": "spicyChicken59/SpicyStock",
+  "run": {
+    "artifacts_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/artifacts",
+    "conclusion": "failure",
+    "display_title": "historical-input-real",
+    "event": "workflow_dispatch",
+    "head_branch": "main",
+    "head_repository": {
+      "full_name": "spicyChicken59/SpicyStock",
+      "id": 1352997802
+    },
+    "head_sha": "6979904ad872d8d648c93537c77ead5fda909481",
+    "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36780349890",
+    "id": 36780349890,
+    "jobs_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/jobs",
+    "name": "historical-input-real",
+    "path": ".github/workflows/historical-input-proof.yml",
+    "previous_attempt_url": null,
+    "repository": {
+      "full_name": "spicyChicken59/SpicyStock",
+      "id": 1352997802
+    },
+    "run_attempt": 1,
+    "run_number": 5,
+    "status": "completed",
+    "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890",
+    "workflow_id": 369770564
+  },
+  "schema": "historical-native5-incident-observation-v1",
+  "source_response_hashes": [
+    {
+      "path": "history-1.json",
+      "sha256": "06695a987c71884c8fb610c44788b91856e78ff1af61b41251e54732ab7845ac",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/workflows/369770564/runs?per_page=100&page=1"
+    },
+    {
+      "path": "history-2.json",
+      "sha256": "b18c7f1f21cd6bb39f06736a93a7edde80b5f7b81daf17da65fb6b667350c62e",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/workflows/369770564/runs?per_page=100&page=2"
+    },
+    {
+      "path": "run-36780349890.json",
+      "sha256": "15af64e1d5df6735810bbe2f65e3ae454b2ab1219b5ba8101731734ceac6e04d",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890"
+    },
+    {
+      "path": "attempt1-jobs-36780349890-1.json",
+      "sha256": "a2cfc7a76f0bd7bd00af45289e265661ffc361ea2e208d003e033154ceaa2837",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/attempts/1/jobs?per_page=100&page=1"
+    },
+    {
+      "path": "attempt1-jobs-36780349890-2.json",
+      "sha256": "5dd8446ebdbe715a2030afb987fd0ef3c8455b4353d1dcda3e17c68217366cea",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/attempts/1/jobs?per_page=100&page=2"
+    },
+    {
+      "path": "failed-artifacts-1.json",
+      "sha256": "244563f989470892c537c9a4622920af0d228ee4528f7d00c64a06d6cd95856c",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/artifacts?per_page=100&page=1"
+    },
+    {
+      "path": "job-110108745578.json",
+      "sha256": "be218bdbdfe04f3bac19e82eca1762739aa46292639d007f4e8d925fc226fb6f",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/110108745578"
+    },
+    {
+      "path": "history-repeat-1.json",
+      "sha256": "06695a987c71884c8fb610c44788b91856e78ff1af61b41251e54732ab7845ac",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/workflows/369770564/runs?per_page=100&page=1"
+    },
+    {
+      "path": "history-repeat-2.json",
+      "sha256": "b18c7f1f21cd6bb39f06736a93a7edde80b5f7b81daf17da65fb6b667350c62e",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/workflows/369770564/runs?per_page=100&page=2"
+    }
+  ],
+  "source_retention": "Selected nonsensitive identity fields are retained here. Source SHA-256 values identify captured raw public GitHub API responses; unrelated public account/commit details are not republished."
+}

@@ -1,0 +1,162 @@
+{
+  "assignment_id": "spicystock-historical-input-2026-09-28",
+  "budget": "The same unused assignment provider budget; this relation creates no new ledger or allowance.",
+  "classification": "reviewed-pre-acquisition-failure",
+  "consumed_readiness_comment_id": 5920107119,
+  "evidence": {
+    "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/incident-observation.json",
+    "sha256": "9dcfbef3cff1c6fd4193cf85ac6b833f783da8b7fbcff1739da549d22e63c52b"
+  },
+  "exception": {
+    "artifacts_total_count": 0,
+    "job": {
+      "conclusion": "failure",
+      "head_branch": "main",
+      "head_sha": "6979904ad872d8d648c93537c77ead5fda909481",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36780349890/job/110108745578",
+      "id": 110108745578,
+      "name": "execution",
+      "run_attempt": 1,
+      "run_id": 36780349890,
+      "run_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "failure",
+          "name": "Refuse unintended dispatch context",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Install pinned historical runtime and verified age",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Verify reviewed revision, evidence and durable execution slot",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Validate recipient before exposing provider credentials",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Exercise actual tools with synthetic transport",
+          "number": 9,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "One historical acquisition under the original shared limits",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Reconcile complete or partial retained inputs with sockets blocked",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Encrypt only permitted evidence, including handled failures",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Upload ciphertext transport and non-sensitive receipt",
+          "number": 13,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Bind public receipt to the immutable artifact identity",
+          "number": 14,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "status": "completed"
+        }
+      ],
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/110108745578",
+      "workflow_name": "historical-input-real"
+    },
+    "jobs_total_count": 1,
+    "run": {
+      "artifacts_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/artifacts",
+      "conclusion": "failure",
+      "display_title": "historical-input-real",
+      "event": "workflow_dispatch",
+      "head_branch": "main",
+      "head_repository": {
+        "full_name": "spicyChicken59/SpicyStock",
+        "id": 1352997802
+      },
+      "head_sha": "6979904ad872d8d648c93537c77ead5fda909481",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36780349890",
+      "id": 36780349890,
+      "jobs_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890/jobs",
+      "name": "historical-input-real",
+      "path": ".github/workflows/historical-input-proof.yml",
+      "previous_attempt_url": null,
+      "repository": {
+        "full_name": "spicyChicken59/SpicyStock",
+        "id": 1352997802
+      },
+      "run_attempt": 1,
+      "run_number": 5,
+      "status": "completed",
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36780349890",
+      "workflow_id": 369770564
+    }
+  },
+  "guidance_comment_id": 5920371235,
+  "guidance_comment_url": "https://github.com/spicyChicken59/SpicyStock/pull/97#issuecomment-5920371235",
+  "original_recovery_contract_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
+  "replacement": {
+    "assignment_phase": 2,
+    "mode": "real",
+    "requires_new_post_merge_readiness": true,
+    "run_attempt": 1,
+    "run_number": 6
+  },
+  "repository": "spicyChicken59/SpicyStock",
+  "repository_id": 1352997802,
+  "schema": "historical-native5-recovery-v1",
+  "workflow_id": 369770564,
+  "workflow_path": ".github/workflows/historical-input-proof.yml"
+}

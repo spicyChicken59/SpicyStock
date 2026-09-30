@@ -1,0 +1,561 @@
+{
+  "binary_sha256": "8f397272f513c00b573f50380c4724e4b3ac759be1de313d907bb968c5d14c09",
+  "config_sha256": "0e46fb894c9a2ea778d3f27d4e4c18871645b9746cd908136750c4484a75d088",
+  "native5_preservation": {
+    "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json",
+    "public_git_blob": "f568689c3789a53835708b676ef6c2dcc418fd6f",
+    "public_workflow_path": ".github/workflows/secret-scan.yml",
+    "sha256": "163d564a88fa9e322d40a8d06fdf45fc4c9c7e0227dfa8a9846e1cf81d25dce5"
+  },
+  "network_requests": 0,
+  "observation_path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json",
+  "observation_sha256": "5f71044ee6595c6d6ff1a4b4c51c57d7949621aa170ce3ef58d711db27b0c457",
+  "provider_requests": 0,
+  "repository_writes": false,
+  "results": [
+    {
+      "case": "without_disposition",
+      "diagnostic_sha256": "96558b47642216f4b6c9a9bf9d9e4a4045f157f76bda821caf3acfb5c3433392",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json"
+      ],
+      "report_sha256": "e470cae8bcbfa366de49f3a45ceb663a5f70565815d968f296e2cd45a6dfe49f",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "exact_public_observation",
+      "diagnostic_sha256": "a4b5ad8125243a395e876e7a34ff16585a9746951d5da1d447c522a7d1fcb624",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "expected_rule_ids": [],
+      "finding_paths": [],
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "rule_ids": [],
+      "status": "PASS"
+    },
+    {
+      "case": "unrelated_value_same_path",
+      "diagnostic_sha256": "dd80a78271a6d4468f73d4def3b1d4f934af6eec4b8742c56a8886ac96952e7b",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json"
+      ],
+      "report_sha256": "fe6fc91ce158e65a0e38141fc44ac65abc2078f6a0da5f97c82bdffdfe3e18ed",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "same_values_other_file",
+      "diagnostic_sha256": "771e2b62544bede8f08488ff8dddc36a15d5aeeaeb73022baaead538058ca67f",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/another.json"
+      ],
+      "report_sha256": "988584a28d262625c68c4c6c1b4ebbcf862a0811b8e242115e75dfcd25602e73",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "same_values_path_suffix",
+      "diagnostic_sha256": "c1fa9329661adc38bee5e16cc3e674a1d7fd65c4432f70ebdef289a8e34c8e67",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json.backup"
+      ],
+      "report_sha256": "97d1059f6578f16d0024911f672987e7c3c48d49fab44f9a5f6d30db3cdf31a3",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "same_values_path_prefix",
+      "diagnostic_sha256": "bde0e8e34c381418fa4fda936c3565cbe49cdded5e7d794c0f7b059f1d7de300",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "copied/docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json"
+      ],
+      "report_sha256": "6c79fd0bb1f2c7636bfbda992917dcae56a4740fbb156795aa26abf75eac6447",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "different_default_detector",
+      "diagnostic_sha256": "865b8e326329e7223438bd1fbbb88ae2d8dc151152fa437829558a8afad5d186",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "github-pat"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json"
+      ],
+      "report_sha256": "d0fb16ab9cec9ebb2c348ca7477f991136e90dcb462a07041fbfd52855860886",
+      "rule_ids": [
+        "github-pat"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_defaults",
+      "diagnostic_sha256": "77a0018460833499a7f2a3145e7a501b763e0aa8cb5a53dd35572b6380614fc8",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json"
+      ],
+      "report_sha256": "cf6490f24ea5a5e2d9094dd3558b757527b90800d8e399e156f251bc8708c3d5",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_exact",
+      "diagnostic_sha256": "2292f9ee728e0eb024e9733d9d7bde66a8a7071f7483808805db2632cf2b3442",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "expected_rule_ids": [],
+      "finding_paths": [],
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "rule_ids": [],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_unrelated",
+      "diagnostic_sha256": "093aadb4383073213efe7a7fd07fa31aab320d76bf63612c3d4c6b5d75576851",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json"
+      ],
+      "report_sha256": "f15b4941e2620e1576216389ea77abad299fd15cb58e2a2dd5f0b4e85641585d",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_elsewhere",
+      "diagnostic_sha256": "77a0018460833499a7f2a3145e7a501b763e0aa8cb5a53dd35572b6380614fc8",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json.backup"
+      ],
+      "report_sha256": "22eade7611edcf1a28aae108566931f15e8db45eef5c43a580549e166dfc30eb",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_crossed",
+      "diagnostic_sha256": "044680597a7bd9326b7d1552cf0d849b1a13a5b3b5ad209a37431e4d731ecc4f",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json"
+      ],
+      "report_sha256": "bea60f96b39e870aa8dad34865229604e91772f3d50204f00960850eeefd93db",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_receipt_default_detector",
+      "diagnostic_sha256": "06d6c07bac0ff082e35e654d5df95d05e4ce0710fdeb849d59feab5e15d8c388",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "github-pat"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json"
+      ],
+      "report_sha256": "c99240aff8d5aaeaa185b7c5e6a3e9deeed08bcc900b8cd67a9f3ccef1d75339",
+      "rule_ids": [
+        "github-pat"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_defaults",
+      "diagnostic_sha256": "79d9e1b9c8cb11f8116b352887346dc24363b31a0aa4c5271a7c6160cee3bdae",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py"
+      ],
+      "report_sha256": "d87acb1a962b2b9b619a5b88328595cfb9004cc8f4d69d04b059b0bd676b1402",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_exact",
+      "diagnostic_sha256": "79d3f2ceb5190739a558047ab37a1925c409bab95346f712e15ebbb9861232ed",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "expected_rule_ids": [],
+      "finding_paths": [],
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "rule_ids": [],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_unrelated",
+      "diagnostic_sha256": "5e634f0d6baba85896968ae4bb3cf7374d0fb6d1813a00fcf84cf3f3428a5927",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py"
+      ],
+      "report_sha256": "5f6e833d77d8464e0651904213ef122f465d1ccb3e1ec2b6f6ee709be48881f2",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_elsewhere",
+      "diagnostic_sha256": "b9bcb989343e0e730bda56a766b2b73b64a0638e8a7907d72161bb9739541d94",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py.backup"
+      ],
+      "report_sha256": "9de8890972c27405ca1482ca3449127f7d1bd4e92bb2629427f881836c65e9e8",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_crossed",
+      "diagnostic_sha256": "6813d280f1210b07f0baf64a84f6ef1b2d02c0c04236f9942a0626cc5cee7791",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py"
+      ],
+      "report_sha256": "5519132c96c3f6f8b0d52b4994725dfa55429e3ca8135eff2f6060fc3d0039d5",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "supervisor_source_default_detector",
+      "diagnostic_sha256": "9ae04926b91adcbacc279639daae541f0e93d72d2f15527c4925229955fd8651",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "github-pat"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py"
+      ],
+      "report_sha256": "1dbb4856c1a2a7458ad40877b58e3e46f545d4c423ed5104bc900ef258da7c2a",
+      "rule_ids": [
+        "github-pat"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_defaults",
+      "diagnostic_sha256": "62c66bccd62df61ca4b930f8a7d5c6a5d474be153884e770232075a54a2e5973",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json"
+      ],
+      "report_sha256": "910d8eb28f7684f581edc3db3228c1ef91a9deb9a25864d4390b9dc1af2ad5ea",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_exact",
+      "diagnostic_sha256": "5378d260cdab0dcc2eadd72e13c462361e4970f25d2222b0261889eac4ec08bc",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "expected_rule_ids": [],
+      "finding_paths": [],
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "rule_ids": [],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_unrelated",
+      "diagnostic_sha256": "184e574170a4b213cb095581fcf9a118d7a0c19ecd80f73b0bca395a261498c9",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json"
+      ],
+      "report_sha256": "7542f0ef57b5977da5892c5a137930e98a1feb031d7b0ee4e3e5efe339e4294d",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_elsewhere",
+      "diagnostic_sha256": "8ebd949b172686ddd0a468c13518c7dc749db8d6a873aa7d791c9946a597c0f8",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json.backup"
+      ],
+      "report_sha256": "174efff2fc8f9dd403566957c6b94abb156a408b4e1d333384c792cbf790dee0",
+      "rule_ids": [
+        "generic-api-key",
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_crossed",
+      "diagnostic_sha256": "7cd04f9cf003215cf899328fe9d35d86125b15bffdbc3653628009d7ef7c5c82",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json"
+      ],
+      "report_sha256": "bed5c499837a94b3337ae73cd97c36eeaf49402fdfa2d99e47fe24191ca83b8b",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "focused_receipt_default_detector",
+      "diagnostic_sha256": "e96649d9b75395085d23cea0a4eee359a67b798f1c2bfc848a3ac05f5607524e",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "github-pat"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json"
+      ],
+      "report_sha256": "9c8f004e28a05b801d06d7105b42037fe76ca0bb7c228e6201d6becf5b82d759",
+      "rule_ids": [
+        "github-pat"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_preservation_defaults",
+      "diagnostic_sha256": "dd9f79b7375ceeaece49cd65919ac02390cffda0fb6d09da9298cc40dfc34a88",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
+      ],
+      "report_sha256": "5a5e285c33429fbb39579adb29f9040ae2562b6b000b25de0c82263cb008b84d",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_preservation_exact",
+      "diagnostic_sha256": "113bd6748a118c644ed799a352e1500693f28032dfa924ae88df629c9969b1b3",
+      "exit_code": 0,
+      "expected_exit_code": 0,
+      "expected_rule_ids": [],
+      "finding_paths": [],
+      "report_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "rule_ids": [],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_unrelated_same_path",
+      "diagnostic_sha256": "1173ed10fdd879098eb4ef386d12c66504bd401f8db7017b5046769726728ab4",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
+      ],
+      "report_sha256": "4825d08d1b0c3f3bfeabbcdfcd5f002643d1544b84356d90a0a41ff686f6eb2b",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_original_other_path",
+      "diagnostic_sha256": "034d969ad772a207640afebf8045dd67c13db2dac311dd71cf5aa4c2c691b7ac",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/another.json"
+      ],
+      "report_sha256": "3a54c5c9071dce8d075a5780c1d74718617076cdb8706550a664177340624fd9",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_original_path_suffix",
+      "diagnostic_sha256": "7243e6f3cea2c5fded55f5743783c61c743ab2a1471d918d299346338cea2bf6",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json.backup"
+      ],
+      "report_sha256": "fa982f01e251ba0ecb7dd7e50dba54f44e589926f81fd62fbbb6a11915f054ec",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_original_path_prefix",
+      "diagnostic_sha256": "7badfdccb3c3266bc6317780b62b65d3045b01307d23370f6754dfaa3dcd7e50",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "generic-api-key"
+      ],
+      "finding_paths": [
+        "copied/docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
+      ],
+      "report_sha256": "b60b967b8d42efd27f3e0d1752af77ada4eb0021958c1646fbd345105ad5f58e",
+      "rule_ids": [
+        "generic-api-key"
+      ],
+      "status": "PASS"
+    },
+    {
+      "case": "native5_default_detector",
+      "diagnostic_sha256": "565371bb29180f6bb213bae5167fbaccc4f807cf9da784c287c7a0bb808e7efc",
+      "exit_code": 2,
+      "expected_exit_code": 2,
+      "expected_rule_ids": [
+        "github-pat"
+      ],
+      "finding_paths": [
+        "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
+      ],
+      "report_sha256": "42a17fa17dcd9e61355e98732d116d0a9d52f4b18392e77ef2885eac80770739",
+      "rule_ids": [
+        "github-pat"
+      ],
+      "status": "PASS"
+    }
+  ],
+  "retained_documents": [
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json",
+      "sha256": "77ee1a171b9c0d0361c18ebfabda17a3e6d63e6287a26c24881295b792368a7e"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py",
+      "sha256": "5746482fcc37b512e120438a23c2a68807a2110024bf7641cacdd64716bc1f04"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+      "sha256": "7bd226d2f59b4a7ee3571550e4de67e4c90cd6db2e461158fafe681777930407"
+    }
+  ],
+  "schema": "historical-exact-disposition-controls-v3",
+  "scope": "Actual offline gitleaks 8.24.3 on isolated public evidence and invented canaries; not a credential or provider test.",
+  "status": "PASS",
+  "version": "8.24.3"
+}
