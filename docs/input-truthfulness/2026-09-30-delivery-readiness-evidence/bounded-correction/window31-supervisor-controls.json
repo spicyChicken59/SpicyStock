@@ -1,0 +1,60 @@
+{
+  "compression": "NOT RUN",
+  "controls": [
+    {
+      "assignment_before_resume": true,
+      "exit_code": 0,
+      "expected_exit": 0,
+      "final_memory_query_succeeded": true,
+      "job_commit_limit_bytes": 67108864,
+      "name": "smoke",
+      "native_peak_rss_bytes": 13017088,
+      "peak_job_commit_bytes": 8708096,
+      "peak_process_commit_bytes": 7467008,
+      "process_commit_limit_bytes": 67108864,
+      "status": "PASS",
+      "wall_seconds": 0.0629999999946449
+    },
+    {
+      "assignment_before_resume": true,
+      "exit_code": 0,
+      "expected_exit": 0,
+      "final_memory_query_succeeded": true,
+      "job_commit_limit_bytes": 67108864,
+      "name": "memory",
+      "native_peak_rss_bytes": 13049856,
+      "peak_job_commit_bytes": 8732672,
+      "peak_process_commit_bytes": 7495680,
+      "process_commit_limit_bytes": 67108864,
+      "status": "PASS",
+      "wall_seconds": 0.030999999988125637
+    },
+    {
+      "assignment_before_resume": true,
+      "exit_code": 124,
+      "expected_exit": 124,
+      "final_memory_query_succeeded": true,
+      "job_commit_limit_bytes": 67108864,
+      "name": "watchdog",
+      "native_peak_rss_bytes": 10584064,
+      "peak_job_commit_bytes": 6856704,
+      "peak_process_commit_bytes": 5611520,
+      "process_commit_limit_bytes": 67108864,
+      "status": "PASS",
+      "wall_seconds": 0.25
+    }
+  ],
+  "documentation": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_extended_limit_information",
+    "https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw",
+    "https://learn.microsoft.com/en-us/windows/win32/api/jobapi2/nf-jobapi2-assignprocesstojobobject",
+    "https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex"
+  ],
+  "keys": "NOT RUN",
+  "provider_requests": 0,
+  "schema": "historical-window31-supervisor-controls-v1",
+  "status": "PASS",
+  "supervisor_sha256_after": "5746482fcc37b512e120438a23c2a68807a2110024bf7641cacdd64716bc1f04",
+  "supervisor_sha256_before": "5746482fcc37b512e120438a23c2a68807a2110024bf7641cacdd64716bc1f04"
+}

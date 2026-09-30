@@ -502,3 +502,51 @@ membership completeness remains BLOCKED. OMIT - repeated rehearsal, owner-packag
 inspection, provider/model calls, licensing outreach, broader tuning and raised
 caps or deadlines. Guidance owns independent review and merge; merge alone does
 not release historical execution.
+
+## PR97 bounded correction checkpoint — 30 Sep 2026
+
+
+FAIL — the single Guidance-authorized level-12 / 2 GiB-window comparison has
+finished and triggers stop condition A. The complete archive is 215,854,671
+bytes against the unchanged 208,666,624-byte cap, exceeding it by 7,188,047.
+Expanded content is PASS at 1,866,624,285 bytes. No second comparison, codec
+adoption, encryption, full-case replay or hosted historical run follows this
+failure. See the [dated correction review](2026-09-30-delivery-readiness-evidence/bounded-correction/review.md)
+and exact receipts; earlier accepted and failed evidence is preserved.
+
+The repository base remains `19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc` and the
+reviewed starting head is `bd779c2a1ce14b8a7361c4866678e55e29ae18f8`. The final
+submitted head and actual exact-head Tests/Secret Scan results are recorded in
+the subsequent PR97 closeout comment, not invented in this pre-push checkpoint.
+The accepted Linux measurement remains `00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c`.
+
+PASS — all 390 original synthetic source members were hash-checked during
+streaming, without regenerated observations or changed scientific outputs.
+The comparison retained the original public fictional PR96 metadata; it is not
+a new execution receipt. Supervised wall time was 191.094 seconds, compression
+CPU 180.734375 seconds and native job CPU 181.265625 seconds. Peak Python RSS was
+2,205,577,216 bytes; peak aggregate job committed memory was 2,201,931,776.
+Hard 12 GiB process/job committed-memory limits and a 600-second watchdog were
+verified before execution. The output footprint sampled 215,873,410 bytes;
+including retained input lengths gives 2,082,220,259 logical bytes. Ciphertext
+size, stress encryption and stress recovery are NOT RUN because capacity failed.
+
+PASS — the narrow scanner correction allows only the two independently verified
+public-response hashes at the exact original receipt path. Actual gitleaks
+8.24.3 controls retain detection of unrelated values, other paths and another
+default detector. Normal final-head hosted CI is a separate required observation.
+A receipt-bound PR97-only NOT RUN deferral prevents automatic repetition of the
+accepted full benchmark after this stop; it does not certify changed source or
+skip normal Python/browser/Secret Scan checks. README and .env.example remain
+accurate without modification.
+
+KEEP — the accepted central recovery, legacy gzip reader, lossless v2 outputs,
+native-4 transport identity, original limits, owner-personal-use wording,
+website/strategy and design-system 2.13.0. FIX NOW — hand this measured failure
+and the scanner disposition to Guidance for independent review. DEFER — the
+next delivery decision and any prospective source-bound execution review remain
+BLOCKED; the unchanged technical declaration is BLOCKED. OMIT — more codec
+tuning, a second rehearsal, owner-key/private-package access, provider/model
+calls, outreach and actual historical acquisition. No market-data correctness,
+new reader authority or trading edge is established. Guidance owns any next
+instruction, clean merge and later real release; Astra stops at PR97.

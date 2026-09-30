@@ -1,0 +1,179 @@
+{
+  "actual_engine_controls": {
+    "case_count": 7,
+    "cases": [
+      {
+        "case": "without_disposition",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "status": "PASS"
+      },
+      {
+        "case": "exact_public_observation",
+        "exit_code": 0,
+        "expected_exit_code": 0,
+        "expected_rule_ids": [],
+        "rule_ids": [],
+        "status": "PASS"
+      },
+      {
+        "case": "unrelated_value_same_path",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "generic-api-key"
+        ],
+        "rule_ids": [
+          "generic-api-key"
+        ],
+        "status": "PASS"
+      },
+      {
+        "case": "same_values_other_file",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "status": "PASS"
+      },
+      {
+        "case": "same_values_path_suffix",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "status": "PASS"
+      },
+      {
+        "case": "same_values_path_prefix",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "rule_ids": [
+          "generic-api-key",
+          "generic-api-key"
+        ],
+        "status": "PASS"
+      },
+      {
+        "case": "different_default_detector",
+        "exit_code": 2,
+        "expected_exit_code": 2,
+        "expected_rule_ids": [
+          "github-pat"
+        ],
+        "rule_ids": [
+          "github-pat"
+        ],
+        "status": "PASS"
+      }
+    ],
+    "command": "../venv/Scripts/python.exe tests/secret_scan_controls.py --gitleaks ../gitleaks-8.24.3/gitleaks.exe --workspace ../security-cli-controls-01 --receipt ../security-cli-controls-01.json",
+    "receipt_sha256": "7c6df2a5b9cabd16cb98c12b61c801a2567b093798934f1d7cbaad2acdb725b8"
+  },
+  "actual_history_comparison": {
+    "baseline_head": "bd779c2a1ce14b8a7361c4866678e55e29ae18f8",
+    "changed_file_scan": "PASS",
+    "history_rewritten": false,
+    "log_options": "--no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..bd779c2a1ce14b8a7361c4866678e55e29ae18f8",
+    "new_config_sha256": "9b2dacea9b99e053cf58246e5db67c3d78546741e01a451e473db3444e1daf83",
+    "old_config_sha256": "1b8702aa2cbd8f6dbf17d9c6cdf90d59f961aed2dbe07f6041a3f71e8269ddf9",
+    "range_receipt_sha256": "052a501264ed26c00f2294dccc42d047d438a9bcd2ccc0ce56968ae83a586c8d",
+    "results": [
+      {
+        "case": "before",
+        "exit_code": 2,
+        "finding_count": 2
+      },
+      {
+        "case": "after",
+        "exit_code": 0,
+        "finding_count": 0
+      }
+    ],
+    "unchanged_ignore_sha256": "6514d71e645e72336bc269076ac5ea99b777a4260eaa2e744c8209ef85c87bfe"
+  },
+  "limitations": [
+    "No hosted final-head conclusion is inferred from local controls.",
+    "The seven CLI scans use only the existing public observation and generated invented canaries.",
+    "Official binary download precedes the controls; the control scans make no network requests."
+  ],
+  "live_credentials_used": false,
+  "normal_collected_tests": {
+    "command": "../venv/Scripts/python.exe -m pytest tests/test_secret_scan.py tests/test_discovery_grading.py::test_historical_context_disposition_is_exact_value_and_exact_path_only \"tests/test_discovery_grading.py::test_all_nine_reviewed_contradictions_fall_back_without_retry[edc98bc-ADP]\" -q --basetemp ../security-scope-pytest-02",
+    "environment": {
+      "MPLBACKEND": "Agg",
+      "MPLCONFIGDIR": "../mpl-cache",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "../windows-test-support",
+      "PYTHONUTF8": "1"
+    },
+    "existing_control_leaves": 2,
+    "new_test_leaves": 10,
+    "passed": 12,
+    "prior_attempt": {
+      "failed": 1,
+      "passed": 32,
+      "reason": "Initial local wider run omitted PYTHONUTF8=1; the existing edc98bc-ADP case failed and passed after restoring the established environment. No grader or fixture edit.",
+      "status": "FAIL"
+    },
+    "seconds": 1.07,
+    "status": "PASS",
+    "warnings": 1
+  },
+  "observed_at_utc": "2026-09-30T12:01:58.114882+00:00",
+  "production_runtime_changed": false,
+  "provider_requests": 0,
+  "scanner": {
+    "archive_matches_published_checksum": true,
+    "archive_sha256": "3f1a35578631dbfe633cc5b49e6c906e55ff14a4bfd7336a10fb27fe33b6dcd2",
+    "archive_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_windows_x64.zip",
+    "binary_sha256": "8f397272f513c00b573f50380c4724e4b3ac759be1de313d907bb968c5d14c09",
+    "platform": "windows_x64",
+    "published_checksums_sha256": "eefa9ab1ee69571248a6fa070a2a7de0837dd9eb72745d131f8766206aac8ac2",
+    "published_checksums_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_checksums.txt",
+    "release_url": "https://github.com/gitleaks/gitleaks/releases/tag/v8.24.3",
+    "version": "8.24.3"
+  },
+  "schema": "historical-bounded-scanner-controls-v1",
+  "scope": "Implementation-side offline regression; exact-head hosted scan remains pending. Expected detections are successful controls, not a clean scan.",
+  "sources": [
+    {
+      "path": ".gitleaks.toml",
+      "sha256": "9b2dacea9b99e053cf58246e5db67c3d78546741e01a451e473db3444e1daf83"
+    },
+    {
+      "path": "tests/secret_scan_controls.py",
+      "sha256": "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e"
+    },
+    {
+      "path": "tests/test_secret_scan.py",
+      "sha256": "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d"
+    }
+  ],
+  "status": "PASS",
+  "workflows_changed": false
+}

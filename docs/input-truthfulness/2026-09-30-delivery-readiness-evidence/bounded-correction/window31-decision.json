@@ -1,0 +1,68 @@
+{
+  "archive_capacity": "FAIL",
+  "base": "19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc",
+  "ciphertext_bytes": null,
+  "comparability": {
+    "matching_previous_local_window30_archive_bytes": 215909395,
+    "matching_shape_reduction_bytes": 54724,
+    "prior_linux_v3_archive_bytes": 215909287,
+    "scope": "Comparison uses unchanged public fictional PR96 metadata; current v3 payload differs by 422 expanded bytes. This is not a new actual v3 package or hosted benchmark."
+  },
+  "comparison_count": 1,
+  "disk_scope": "Logical retained input lengths plus sampled output lengths; no decompressed tar spool exists in this streaming comparison. Excludes filesystem allocation/metadata and unrelated caches; not peak whole-disk usage.",
+  "encryption": "NOT RUN",
+  "evidence_files": {
+    "window31-comparison.json": "f861755e8fd1bc9eddccdb48e196f800bf66157b6d6b9476bcd604ede6fa9db7",
+    "window31-supervisor-controls.json": "404857f3e97c28d9b7fdc18c44772b450265551ef014bd31e91969c20daf3ef3",
+    "window31-supervisor-controls.py": "28b1eaf1144f23bf2f2458f6cfbf0f605e53ce6ebb2f8f4bd53f99bb48dc5cc7",
+    "window31-supervisor.json": "77ee1a171b9c0d0361c18ebfabda17a3e6d63e6287a26c24881295b792368a7e",
+    "window31-supervisor.py": "5746482fcc37b512e120438a23c2a68807a2110024bf7641cacdd64716bc1f04"
+  },
+  "expanded_capacity": "PASS",
+  "headroom": {
+    "archive_bytes": -7188047,
+    "expanded_bytes": 280859363,
+    "memory_vs_job_commit_bytes": 10682970112,
+    "memory_vs_python_rss_bytes": 10679324672,
+    "packaging_seconds": 408.90600000001723
+  },
+  "instruction": "https://github.com/spicyChicken59/SpicyStock/pull/97#issuecomment-5910491108",
+  "limits": {
+    "archive_bytes": 208666624,
+    "ciphertext_bytes": 209715200,
+    "expanded_bytes": 2147483648,
+    "memory_bytes": 12884901888,
+    "packaging_seconds": 600
+  },
+  "measured": {
+    "archive_bytes": 215854671,
+    "archive_sha256": "6745850f3c82a81994c6c916794868e8f4067c9e7f245b2cbfd6d93eb9a14354",
+    "compression_cpu_seconds": 180.734375,
+    "compression_wall_seconds": 190.42504219998955,
+    "expanded_bytes": 1866624285,
+    "index_bytes": 67168,
+    "job_cpu_seconds": 181.265625,
+    "original_inputs_plus_sampled_output_bytes": 2082220259,
+    "peak_job_commit_bytes": 2201931776,
+    "peak_python_commit_bytes": 2200743936,
+    "peak_python_rss_bytes": 2205577216,
+    "sampled_output_bytes": 215873410,
+    "source_bytes": 1866346849,
+    "supervised_wall_seconds": 191.09399999998277,
+    "tar_bytes": 1866926080
+  },
+  "memory": "PASS",
+  "new_central_recovery": "NOT RUN",
+  "new_codec_adoption": "NOT RUN",
+  "observed_at": "2026-09-30T12:05:03.350431+00:00",
+  "owner_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "real_execution": "BLOCKED",
+  "reviewed_head": "bd779c2a1ce14b8a7361c4866678e55e29ae18f8",
+  "runtime": "PASS",
+  "schema": "historical-bounded-window31-decision-v1",
+  "status": "FAIL",
+  "stop": "No further codec, level, window, encryption, replay or full-shape benchmark after the failed comparison. Preserve earlier accepted results under their original sources.",
+  "stress_recovery": "NOT RUN",
+  "technical_readiness": "BLOCKED"
+}
