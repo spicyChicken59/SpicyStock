@@ -444,3 +444,61 @@ records a raw-byte check of **10,541 existing Git blobs**, with no changed
 protected path. Only README.md, .env.example, CLAUDE.md, this existing handoff and
 the two representation modules are permitted existing-file edits. The final PR
 records staged-byte identity, exact base/head and all added support-file blobs.
+
+## Delivery readiness checkpoint - 30 Sep 2026, PR #97
+
+This continuation follows Guidance review 5362976589 and comment 5906480203.
+The measured runtime candidate is `00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c`,
+tree `16c8241fe63eab575471fdc2e52254718f6ed685`, based on merged PR #96 at
+`19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc`. Later documentation commits do not
+constitute another runtime measurement. Earlier failures retain their original
+dated meaning. The [technical review](2026-09-30-delivery-readiness-evidence/delivery-review.md) links the source-bound receipts.
+
+PASS - normal CI on actual PR merge checkout
+`6c40cf7f97dd905617fe7aa796cf63ed3ae52247` passed 2,324 pytest tests, semantic
+workflow validation, 12 producer fixtures and the clean-tree check. Browser
+checks passed 127 DOM/store, 378 chart and 9,215 page checks; secret scanning
+passed. All 28 runtime source hashes match the branch and tested merge checkout.
+These individual normal jobs do not establish a passing whole Tests workflow.
+
+The scientific implementation is unchanged. Each full synthetic case uses 96
+bulk queries, all 288 sessions, 2,753,568 bulk observations and two probe
+observations. Final central is PASS: archive 99,741,871 bytes, ciphertext
+99,766,407 and expanded content 1,546,827,473 all fit their unchanged caps.
+All 390 original members retain identical bytes, lengths and hashes; ledger
+accounting is unchanged and both complete v2 reconciliation files reproduce
+exactly after recovery. The initial and recovered two-date calculations took
+1,377.739460 and 1,390.110803 seconds respectively, each within its own shared
+1,800-second budget. Packaging took 37.288482 seconds.
+
+Final stress reproduced all 388 original raw-page, query-manifest and full v2
+reconciliation identities. Its initial calculation took 1,396.736550 seconds,
+within the shared limit. The complete archive is FAIL: 215,909,287 bytes against
+208,666,624, exceeding the cap by 7,242,663 bytes. Expanded content fits 2 GiB.
+The package phase took 62.202810 seconds before refusing the oversized archive.
+Encryption, recovery and a separate all-390-member post-refusal sweep are NOT
+RUN. Initial calculation success and unused time do not establish delivery.
+
+Versioned v3 binding relates only accepted transport run 36570997883, native
+4 / attempt 1 / phase 1, to separately reviewed new code. The original recovery
+contract, complete history and source-equality checks remain. No replacement
+rehearsal or extra allowance exists. Legacy gzip v2 recovery preserves its
+original metadata. Owner personal-use authorization is not provider consent;
+the no-outreach direction remains in force. Technical evidence and a later
+dated execution release are separate.
+
+KEEP - the 199 MiB archive, 200 MiB ciphertext, 2 GiB expanded and original
+request/raw-byte ceilings, deadlines, owner key/recipient, website, strategy and
+design-system 2.13.0. FIX NOW - Guidance reviews this measured engineering result
+and the single proposed next decision: separately authorize one level-12,
+2 GiB-window comparison on verified synthetic stress inputs, bounded by 600
+seconds and a declared 12 GiB process-memory ceiling. Keep the evidence caps;
+no fit is promised and this checkpoint does not authorize the comparison.
+
+DEFER - real release remains BLOCKED pending capacity closure and a fresh dated
+execution release. Real acquisition, Guidance plaintext inspection, new reader
+eligibility and trading-edge validation are NOT RUN; original final-price
+membership completeness remains BLOCKED. OMIT - repeated rehearsal, owner-package
+inspection, provider/model calls, licensing outreach, broader tuning and raised
+caps or deadlines. Guidance owns independent review and merge; merge alone does
+not release historical execution.

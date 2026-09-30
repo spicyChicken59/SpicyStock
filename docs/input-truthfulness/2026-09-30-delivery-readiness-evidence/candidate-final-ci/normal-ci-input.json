@@ -1,0 +1,131 @@
+{
+  "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+  "implementation_pr": 97,
+  "jobs": {
+    "page": {
+      "checkout_sha": "6c40cf7f97dd905617fe7aa796cf63ed3ae52247",
+      "completed_at": "2026-09-30T09:23:43Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+      "job_id": 109818501488,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/page-api.json",
+          "sha256": "e411616e21c20382c164cc3673525ed674b35a11deccfccba648b640339c0837"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/page-log-summary.json",
+          "sha256": "24126b295c86bcfa5cd88faf2241794e63b70b862eb784aa6f3473af565cc33a"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/source-verification.json",
+          "sha256": "6a7b5ae6bd72200fa9c2dd878385d2fbc48283f854938696dacacbad4290179a"
+        }
+      ],
+      "run_attempt": 1,
+      "run_id": 36694310857,
+      "started_at": "2026-09-30T09:09:41Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857/job/109818501488",
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    "pytest": {
+      "checkout_sha": "6c40cf7f97dd905617fe7aa796cf63ed3ae52247",
+      "checks": {
+        "clean_tree": "PASS",
+        "producer_fixture": "PASS",
+        "pytest": "PASS",
+        "semantic_gate": "PASS"
+      },
+      "completed_at": "2026-09-30T09:14:01Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+      "job_id": 109818501874,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/pytest-api.json",
+          "sha256": "2772675f6ec385b20212e1ded98617a4d104a45aa586b93e54bedf90ee9c08dd"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/pytest-log-summary.json",
+          "sha256": "e15bb5af11f27ebbbf9b8c78df1e77c69dafebe0208fc99905c82618131eb493"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/source-verification.json",
+          "sha256": "6a7b5ae6bd72200fa9c2dd878385d2fbc48283f854938696dacacbad4290179a"
+        }
+      ],
+      "run_attempt": 1,
+      "run_id": 36694310857,
+      "started_at": "2026-09-30T09:09:45Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857/job/109818501874",
+      "workflow_path": ".github/workflows/tests.yml"
+    },
+    "secret_scan": {
+      "checkout_sha": "6c40cf7f97dd905617fe7aa796cf63ed3ae52247",
+      "completed_at": "2026-09-30T09:09:53Z",
+      "conclusion": "success",
+      "event": "pull_request",
+      "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+      "job_id": 109818501875,
+      "observations": [
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api.json",
+          "sha256": "5f71044ee6595c6d6ff1a4b4c51c57d7949621aa170ce3ef58d711db27b0c457"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-log-summary.json",
+          "sha256": "6df31394854651f2ceac22660e5edb6334d14d5e5f0daf735a099585da16d1da"
+        },
+        {
+          "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/source-verification.json",
+          "sha256": "6a7b5ae6bd72200fa9c2dd878385d2fbc48283f854938696dacacbad4290179a"
+        }
+      ],
+      "run_attempt": 1,
+      "run_id": 36694310971,
+      "started_at": "2026-09-30T09:09:41Z",
+      "status": "completed",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310971/job/109818501875",
+      "workflow_path": ".github/workflows/secret-scan.yml"
+    }
+  },
+  "observed_at": "2026-09-30T09:25:36.647178+00:00",
+  "repository": "spicyChicken59/SpicyStock",
+  "schema": "historical-delivery-normal-ci-input-v1",
+  "scope": "Normal pytest/page/secret checks only. Runtime benchmark acceptance, owner execution release and historical completion are separate; no whole-Tests-run success is asserted.",
+  "source_sha256": {
+    ".github/workflows/historical-input-proof.yml": "cc1b035399873ec8395b875cedce38f6f345276bc66158d319e659a97614c16f",
+    ".github/workflows/tests.yml": "14b2c271d1e6fedf9b0b4c29d3402c44180127495658af0a15ca3f1450cbcd9e",
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json": "110385822e2a9e9bfc7547694d8cd3b5648646c2f89cc9eb9e4785451e17a202",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-central-members.json": "afb554858e6f3c2978f590e7f8a49998c7b003dce0bf139d17a14415048f78cf",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-central.json": "7b76630958f818e52d163ca4af5e0a84c517cf56c30881d344b465d0c0b6651f",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-stress-members.json": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+    "docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-stress.json": "35b739a1f0e40bbfcd5be80e38323606f4da1127a17baf926ca35f15062ca47a",
+    "src/breadth.py": "8b5a27ca89d77a0e18883a3f4bbca808a87d2475eb2220d01da6d0cee0a2cb9a",
+    "src/quality.py": "8cca1509e40de7096fd396bdff9c1a0464a7e641ae0d75c81812532d3cbc4ecc",
+    "src/scans.py": "67559cdf70ffea87a4fcd75c13abd19193b1f55bf2d62a335ddbf68dac182668",
+    "src/sessions.py": "aea32502bea30159d49e6b35cd68e95889694808eb561c8d34bbf7d268ad3a4b",
+    "tools/historical-delivery-compatibility.json": "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d",
+    "tools/historical-execution-policy.json": "1b69bdd3fa92e8f296cc016cd6c94c85eca81b99bf0f11e8c37b695cc25601df",
+    "tools/historical-workflow-recovery.json": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317",
+    "tools/historical_acquisition.py": "5a2202c0be49512ec6bcd7271babe3f35f3f0d1fab70cfad042112113dc5b32e",
+    "tools/historical_archive_codec.py": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+    "tools/historical_benchmark_gate.py": "ba78922776173141c4be6338fed645b92fa5e4b9b0971a452bfca5b5f5afa9b6",
+    "tools/historical_breadth_reference.py": "f7dfce71abc2e048b7231e43c4de305ceaf43e4d331f0fff0798919006cfd42c",
+    "tools/historical_execution.py": "673d5c877a12eb325575b26ac764fbfd7834cc529d427396d1a5ab347ec756df",
+    "tools/historical_execution_guard.py": "7db7a985c48bbc108c263360a5779ff8788802b08c84bf14c260077b30b14f3b",
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_package.py": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d",
+    "tools/historical_projection_benchmark.py": "6faf814e1d3f1761c39fb3dbe8c908e04997c40848da682f88e916bcb3c1aeb7",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c",
+    "tools/historical_runtime_profile.py": "f8c653e0170695fce1d810ab6fefdaaa212a224eb46cb30e449f556af84cf3ac",
+    "tools/install_historical_age.py": "be2f4d6030ea4e5206523cbd6cba47869d1049d36575939f53d2a9050ec57e64",
+    "tools/requirements-historical-archive.txt": "db68c200c6280d9db78b0ff8b3e2e31c1b9d06c9c41f50520ca58828bd7ff6e9",
+    "tools/requirements-historical.txt": "e2680226c4040935132d95d02cfe400bc3683b831f5330ba19002f035b78c6ed"
+  },
+  "status": "PASS"
+}

@@ -1,0 +1,34 @@
+{
+  "assembler_sha256": "567e047c863bbb4a80f5c80d7ab555543a9a50eadaff098ecb9a9fb948d3371a",
+  "receipt_sha256": "f4466b4b3badb60194f30e384be4cdca514009192e7c1e8b84f7ed6719cadc67",
+  "result": {
+    "facts": {
+      "all_pytest_substeps_pass": true,
+      "exact_normal_jobs": true,
+      "head_shape": true,
+      "observation_dated": true,
+      "page_completed_success": true,
+      "page_identity": true,
+      "page_raw_observations_hashed": true,
+      "page_tested_checkout_source_equal": true,
+      "pytest_completed_success": true,
+      "pytest_identity": true,
+      "pytest_raw_observations_hashed": true,
+      "pytest_tested_checkout_source_equal": true,
+      "repository_and_current_pr": true,
+      "schema_and_pass": true,
+      "secret_scan_completed_success": true,
+      "secret_scan_identity": true,
+      "secret_scan_raw_observations_hashed": true,
+      "secret_scan_tested_checkout_source_equal": true,
+      "source_pins_match_final_runtime": true,
+      "unique_job_ids": true,
+      "verified_pr_head_source_equal": true
+    },
+    "failed_facts": [],
+    "status": "PASS"
+  },
+  "review_role": "Implementation-side independent check of public CI evidence; not Guidance acceptance or execution release.",
+  "schema": "historical-normal-ci-receipt-validation-v1",
+  "status": "PASS"
+}

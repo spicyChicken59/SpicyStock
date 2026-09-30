@@ -1,0 +1,105 @@
+{
+  "job": {
+    "completed_at": "2026-09-30T09:23:43Z",
+    "conclusion": "success",
+    "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+    "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857/job/109818501488",
+    "id": 109818501488,
+    "name": "page",
+    "run_attempt": 1,
+    "run_id": 36694310857,
+    "started_at": "2026-09-30T09:09:41Z",
+    "status": "completed",
+    "steps": [
+      {
+        "completed_at": "2026-09-30T09:09:43Z",
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "started_at": "2026-09-30T09:09:42Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:09:48Z",
+        "conclusion": "success",
+        "name": "Run actions/checkout@v4",
+        "number": 2,
+        "started_at": "2026-09-30T09:09:43Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:09:49Z",
+        "conclusion": "success",
+        "name": "Run actions/setup-node@v4",
+        "number": 3,
+        "started_at": "2026-09-30T09:09:48Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:23:36Z",
+        "conclusion": "success",
+        "name": "Open the page against every fixture and read it back",
+        "number": 4,
+        "started_at": "2026-09-30T09:09:49Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:23:40Z",
+        "conclusion": "success",
+        "name": "Run actions/upload-artifact@v4",
+        "number": 5,
+        "started_at": "2026-09-30T09:23:36Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:23:40Z",
+        "conclusion": "success",
+        "name": "Post Run actions/setup-node@v4",
+        "number": 9,
+        "started_at": "2026-09-30T09:23:40Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:23:41Z",
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@v4",
+        "number": 10,
+        "started_at": "2026-09-30T09:23:40Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-09-30T09:23:41Z",
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 11,
+        "started_at": "2026-09-30T09:23:41Z",
+        "status": "completed"
+      }
+    ]
+  },
+  "observed_at": "2026-09-30T09:25:36.645729+00:00",
+  "representation": "UTF-8 connector-returned JSON content with terminal LF retained outside Git; these are retained-content hashes, not HTTP wire-byte hashes.",
+  "retained_response_sha256": {
+    "tests-jobs-normal-complete.json": "08c56b474beaeb6eb2d5b699d3f2a6837eb67272164e44626a85b4a45dc19e0e",
+    "tests-run.json": "32a77257cd35dd418e2432b6529962de4d1ef9253bf16361fa6fd7f924c1c33f"
+  },
+  "run": {
+    "conclusion": null,
+    "created_at": "2026-09-30T09:09:37Z",
+    "event": "pull_request",
+    "head_sha": "00a56f3dd4d8d2b68377364e04ed1f490e8e5c7c",
+    "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36694310857",
+    "id": 36694310857,
+    "name": "Tests",
+    "path": ".github/workflows/tests.yml",
+    "run_attempt": 1,
+    "run_started_at": "2026-09-30T09:09:37Z",
+    "status": "in_progress"
+  },
+  "schema": "historical-normal-ci-api-observation-v1",
+  "scope": "Selected fields from public GitHub connector responses; whole Tests run conclusion is not required for individual normal jobs.",
+  "source_urls": [
+    "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36694310857",
+    "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/36694310857/jobs?filter=all&per_page=100&page=1"
+  ]
+}

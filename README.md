@@ -854,9 +854,10 @@ The hosted synthetic rehearsal (run 36570997883, native 4 / attempt 1 / phase 1)
 and exact source-pinned owner replay were accepted on PR #95. They used the
 previous execution checkout; they did not exercise the later conversion-evidence
 compaction or archive delivery changes. Real acquisition remains NOT RUN and
-release remains BLOCKED pending Guidance's separate execution review. The
-versioned delivery relation names only that accepted transport evidence and
-requires the new implementation's own capacity/runtime evidence, reviewed head,
+release remains BLOCKED: the bounded codec comparison still exceeds the stress
+archive cap. Guidance's technical review and a separate execution release remain
+required. The versioned delivery relation names only that accepted transport
+evidence and requires the new implementation's own capacity/runtime evidence, reviewed head,
 current-main source equality and complete native run history. It does not reopen
 the rehearsal slot. The personal-use decision on PR #95 ends licensing/outreach
 work; the new owner-scope attestation records authorization, not provider consent.

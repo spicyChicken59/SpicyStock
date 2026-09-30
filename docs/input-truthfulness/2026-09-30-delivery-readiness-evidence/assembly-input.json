@@ -1,0 +1,17 @@
+{
+  "schema": "historical-delivery-assembly-input-v1",
+  "cases": {
+    "central": {
+      "report": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/central/benchmark-result.json",
+      "profile": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/central/runtime-profile.json",
+      "inventory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/central/synthetic-member-inventory.json"
+    },
+    "stress": {
+      "report": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/stress/benchmark-result.json",
+      "profile": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/stress/runtime-profile.json",
+      "inventory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final/stress/synthetic-member-inventory.json"
+    }
+  },
+  "legacy_recovery": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/codec-legacy-controls-level12.json",
+  "normal_ci": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/normal-ci-input.json"
+}
