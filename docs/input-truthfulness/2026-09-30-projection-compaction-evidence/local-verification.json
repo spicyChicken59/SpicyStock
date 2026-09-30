@@ -1,0 +1,55 @@
+{
+  "authority": "Astra local implementation evidence; Guidance independent acceptance remains NOT RUN",
+  "base": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+  "execution": {
+    "manual_dispatch": "NOT RUN",
+    "owner_key_access": "NOT RUN",
+    "provider_requests": 0,
+    "real_mode": "BLOCKED"
+  },
+  "fixture_check": {
+    "command": "../venv/Scripts/python.exe -B -X utf8 tools/make_fixture.py --check",
+    "evidence": "fixture-platform-evidence.json",
+    "evidence_sha256": "75e001e88af90fb793c912289a4935e6e10c1d77e82d7405286bfa38ae8519fa",
+    "finding": "24 unchanged provenance gzip fixtures differ only in the platform OS header byte at offset 9: committed Linux 03, local Windows 0a. DEFLATE payload, trailer, length and typed-json-f64hex-v1 object identities agree.",
+    "focused_explanation_status": "PASS",
+    "log_sha256": "aecd6e6c827e98bed55252e51dcf54a8c9f386121b69cc37007f66cd781b35f2",
+    "scope": "No fixture or checker changed. Existing Linux CI remains required; this local failure is not relabelled PASS. Synthetic FixtureClaude exceptions in the log are intentional doubles, not model calls.",
+    "status": "FAIL"
+  },
+  "production_source_sha256": {
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c"
+  },
+  "projection_tests_sha256": {
+    "tests/test_historical_projection.py": "97716a7dce7a8d8da3c946841dad0da7d697a3a179f237ec0e52b4274bfe07c5",
+    "tests/test_historical_projection_benchmark.py": "92f78f3fc922ec9fb21937647ae451f4e95dd5a653a3fbfcb9b32bf41989b453",
+    "tests/test_historical_projection_binding.py": "194e2e23797475d63e645f6a75dbf601a9e744bcdaf0f9bb1733bcb804c3968d",
+    "tests/test_historical_projection_controls.py": "dbc38ff5be6937c49d9de728c67768239ed9b0361babe0ebcbb758b4ba75e98f",
+    "tests/test_historical_projection_reconcile.py": "e3097c63a1428896f3ae7886e3fe722b25f70cc35b44b5fe0d2514f9c550de9c"
+  },
+  "schema": "historical-compaction-local-verification-v1",
+  "suite": {
+    "command": "../venv/Scripts/python.exe -B -X utf8 -m pytest tests/ -q --tb=short --basetemp=../pcf1 --junitxml=../compaction-full-tests.xml",
+    "environment": {
+      "ACTIONLINT_BINARY": "../actionlint-v1.7.12/verified/actionlint.exe (absolute path)",
+      "AGE_BINARY": "../age-tools/age/age.exe (absolute path)",
+      "MPLBACKEND": "Agg",
+      "MPLCONFIGDIR": "../pcm (absolute external directory)",
+      "PYTHONPATH": "../windows-test-support (absolute external import-only resource adapter)",
+      "PYTHONUTF8": "1"
+    },
+    "errors": 0,
+    "failures": 0,
+    "junit_sha256": "0459dabbeeafddb5e7fce1c5f5741de8c93cc430dd3a3b8b7acbb18bfd029d05",
+    "junit_start_time": "2026-09-30T00:41:40.853833-04:00",
+    "log_sha256": "383b8cd476447ef28632bc9611a154834679bfbe6145b03ba566ae8f609c8a82",
+    "resource_adapter_sha256": "ee7fd7e4d24193e40cd40104ca01bf83d755fb3c8c036904e0f632bcf6159198",
+    "scope": "Includes final production representation, exact-Fraction binary checks and corrected saved-byte mutation-log hashing. The later benchmark metadata-only portability correction has its own focused verification; final-head normal Linux CI is recorded on the PR.",
+    "seconds_reported_by_pytest": 553.49,
+    "skipped": 0,
+    "status": "PASS",
+    "tests": 2104,
+    "warning": "One existing websockets deprecation warning"
+  }
+}

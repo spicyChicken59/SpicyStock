@@ -1,0 +1,51 @@
+{
+  "status": "FAIL",
+  "scope": "prepublication local proof-receipt audit; no runtime/accepted evidence change",
+  "reason": "Windows write_text translated LF in the saved logs; previous digest was of the in-memory text",
+  "controls": [
+    {
+      "case": "untouched_base",
+      "reported_text_sha256": "24eb0a587aaefd8bb0a3cd7b7c35a9a186126865be28cf9fb9e7ce1fca896620",
+      "saved_file_sha256": "0cc2e12174b2a8f713f649aaf24bf0b6a66b87bb7a8d7b3fb25e7ca57b69e7f6"
+    },
+    {
+      "case": "fixed",
+      "reported_text_sha256": "87b1ffae008cb01b1cb73d443fc6366001240a196a4124ad7aea5b0a001096d6",
+      "saved_file_sha256": "ac9f54a3155f5b79e7746d1602b0fbbc3ad4679f71f2b17319d88977081b7a2c"
+    },
+    {
+      "case": "omit_inexact",
+      "reported_text_sha256": "e8405491f528ad302db7e84f3cb09ca92fe54bbd1d2a49dab1999cce3c813b3f",
+      "saved_file_sha256": "76a6a7ff29865c89c47c3a717c2815d57fdcc5bc72cea1f8c7d4ad06a2f03bdc"
+    },
+    {
+      "case": "wrong_float",
+      "reported_text_sha256": "e148fb51ba1ccd6bc67858e8a53785e0a72ee862c6484dade493cdbc3caf8bd2",
+      "saved_file_sha256": "e03b0857c54bab921e6e3e0a6e2adf3dfecb1c3d204dfa437f1fe84d1ddd5ac9"
+    },
+    {
+      "case": "wrong_ordinal",
+      "reported_text_sha256": "21952d1f2c1a66cca4e7f22156dde5d1a4b08293034bda116e129ac4054b384b",
+      "saved_file_sha256": "591d5a66579c35fe3c211f5f257076c86841830fc5e7d51f83838c897e48d9f9"
+    },
+    {
+      "case": "unbound_query",
+      "reported_text_sha256": "78165a294d72d5013370056e85f85eccf67c04f782845cbd1adfe2f841905b18",
+      "saved_file_sha256": "d889409aa6bdb3a09b658c68506e8d394089c82f65629be7f3fe8730296f216d"
+    },
+    {
+      "case": "reused_source",
+      "reported_text_sha256": "ec427d0d3589a372193158e58141d129a8f4ae7102bb4b85ae8b217d5f60ffb2",
+      "saved_file_sha256": "c550723a5ce3229b99ef73ccf19394f1e8b5768220081a3fb8e55cd4cb66b56f"
+    }
+  ],
+  "schema": "historical-control-log-byte-hash-correction-v1",
+  "date": "2026-09-30",
+  "earlier_receipt_sha256": "aab95fa61be1933b9ab1fa17829441e02ce1c06be3a7151b7bd94d51a6d7fbf1",
+  "resolution": {
+    "status": "PASS",
+    "basis": "all seven controls recaptured during the 2104-pass normal suite; outer regression verifies saved log bytes and saved receipt",
+    "corrected_receipt_sha256": "f2987e1853f440fa1d8443c40de0b3ae0ba94b6635761430b6fd83f875447cf3",
+    "controls_source_sha256": "dbc38ff5be6937c49d9de728c67768239ed9b0361babe0ebcbb758b4ba75e98f"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "actual_full_case_receipts_unchanged": true,
+  "all_other_executed_source_hashes_unchanged": true,
+  "executed_helper_sha256": "219dae7ecd32f7f31885d98cda16c0ad7478debbdbd7e9fab21b7e0101a45d88",
+  "focused_tests": {
+    "command": "AGE_BINARY=<verified age 1.3.2 binary> python -m pytest tests/test_historical_projection_benchmark.py -q --basetemp <work/bt06>",
+    "failed": 0,
+    "passed": 9,
+    "seconds": 1.9,
+    "skipped": 0
+  },
+  "full_case_rerun": "NOT RUN",
+  "generation_acquisition_normalization_reconciliation_package_recovery_behavior_changed": false,
+  "recorded_at": "2026-09-30T06:12:20.032603+00:00",
+  "restored_defect_control": {
+    "expected_failed": 1,
+    "replacement": "missing age child peak treated as zero",
+    "scope": "isolated Python process, in-memory replacement only",
+    "seconds": 0.18,
+    "unaffected_passed": 3
+  },
+  "reverse_patch_check": {
+    "command": "git apply --reverse --check docs/input-truthfulness/2026-09-30-projection-compaction-evidence/benchmark-reporting.patch",
+    "exit_code": 0,
+    "source_mutation": false,
+    "status": "PASS"
+  },
+  "reversible_diff_sha256": "f736c50e3c208b44499a2121fb41ffebb7619c9c3ac9c35002d0d6556560d28a",
+  "reviewed_helper_sha256": "3ff1e870bc64c28a8000d02650ed6eaeb7974fff29df2b0b9328ce54b9bd018e",
+  "reviewed_tests_sha256": "1c0b3ac93d8d60a06f4e1c6b9059189c42d1ee6eb4daef52e81bb15e8639f7dd",
+  "schema": "historical-benchmark-reporting-correction-v1",
+  "scope": "after both one-time full cases: platform label uses sys.platform; unmeasured age child no longer substitutes zero in combined peak reporting",
+  "status": "PASS",
+  "stress_raw_receipt_interpretation": "age encryption/decryption never launched; its old combined-RSS field must be treated as unavailable, not a measured combined peak"
+}

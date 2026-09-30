@@ -1,0 +1,72 @@
+{
+  "schema": "independent-projection-review-v1",
+  "observed_at": "2026-09-30T03:31:27.507234+00:00",
+  "status": "PASS",
+  "synthetic_only": true,
+  "new_provider_requests": 0,
+  "private_original_evidence_read": false,
+  "source_sha256": {
+    "tools/historical_normalization.py": "19c7ac5ecd0cc1cae1fb45cd5d9f11b731e9d1f7ca99ab418727f67e92b0e5a5",
+    "tools/historical_reconcile.py": "f78e38a53ed3ebc1a99ae0d05d2626b497d49aa9b51c099751787c8019fffb1c",
+    "tools/historical_execution_guard.py": "8a1228f0909119c7602d4578a2306280492261fe29b4e85c8c211b8338d0dc3f",
+    "tools/historical-execution-policy.json": "1091ca2f2dd8142a1a80f266cf3026043da26e1c6b26999ed4535659d143c084",
+    "tests/test_historical_projection_binding.py": "194e2e23797475d63e645f6a75dbf601a9e744bcdaf0f9bb1733bcb804c3968d"
+  },
+  "final_broken_reference_checks": [
+    {
+      "case": "valid_multi_symbol_same_row_index",
+      "expected": "ACCEPTED",
+      "actual": "ACCEPTED",
+      "facts": 15,
+      "status": "PASS"
+    },
+    {
+      "case": "duplicate_source_different_dates",
+      "expected": "REJECTED",
+      "actual": "REJECTED",
+      "facts": 0,
+      "status": "PASS"
+    },
+    {
+      "case": "impossible_raw_row_index",
+      "expected": "REJECTED",
+      "actual": "REJECTED",
+      "facts": 0,
+      "status": "PASS"
+    },
+    {
+      "case": "malformed_page_hash",
+      "expected": "REJECTED",
+      "actual": "REJECTED",
+      "facts": 0,
+      "status": "PASS"
+    }
+  ],
+  "prior_actual_persisted_replay": {
+    "synthetic_only": true,
+    "new_provider_requests": 0,
+    "synthetic_transport_calls": 9,
+    "persisted_v2_entries_directly_decode": true,
+    "sessions": [
+      {
+        "session": "2026-09-24",
+        "compact_schema": "historical-reconciliation-v2",
+        "legacy_schema": "historical-reconciliation-v1",
+        "decoded_facts": 1515,
+        "exact_fact_equivalence": true,
+        "all_other_fields_equal": true
+      },
+      {
+        "session": "2026-09-25",
+        "compact_schema": "historical-reconciliation-v2",
+        "legacy_schema": "historical-reconciliation-v1",
+        "decoded_facts": 1530,
+        "exact_fact_equivalence": true,
+        "all_other_fields_equal": true
+      }
+    ]
+  },
+  "prior_actual_persisted_replay_sha256": "31be9f73749f556131e8965427e924e0e5a5988a046ffa2f797990a96d7e62e0",
+  "scope_note": "Persisted replay was measured before the final malformed-reference predicates; this final check verifies those exact predicates on final source. No hosted execution or readiness is authorized.",
+  "review_authority": "Astra implementation-side read-only review; not Guidance acceptance"
+}

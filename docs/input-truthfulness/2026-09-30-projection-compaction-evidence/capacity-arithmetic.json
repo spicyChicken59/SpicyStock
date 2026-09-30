@@ -1,0 +1,179 @@
+{
+  "arithmetic_review_status": "PASS",
+  "cases": {
+    "central": {
+      "cap_results": {
+        "ciphertext": {
+          "limit_bytes": 209715200,
+          "margin_MiB": 5.88431,
+          "margin_bytes": 6170146,
+          "measured_bytes": 203545054,
+          "status": "PASS",
+          "used_percent": 97.057845
+        },
+        "expanded": {
+          "limit_bytes": 2147483648,
+          "margin_MiB": 572.83077,
+          "margin_bytes": 600656597,
+          "measured_bytes": 1546827051,
+          "status": "PASS",
+          "used_percent": 72.029748
+        },
+        "gzip": {
+          "limit_bytes": 208666624,
+          "margin_MiB": 4.931879,
+          "margin_bytes": 5171450,
+          "measured_bytes": 203495174,
+          "status": "PASS",
+          "used_percent": 97.521669
+        }
+      },
+      "ciphertext_status": "PASS: published fixture receipt matches measured bytes/hash",
+      "combined_python_age_RSS_status": "AVAILABLE: both child and Python counters present; sum is not simultaneous peak",
+      "component_bytes": {
+        "execution-diagnostics.json": 2676,
+        "ledger.sqlite3": 86016,
+        "query_manifests": 1354228,
+        "raw_pages": 286962286,
+        "reconciliation-2026-09-24.json": 629004649,
+        "reconciliation-2026-09-25.json": 629139853
+      },
+      "compression": {
+        "basis": "actual tar_archive_bytes divided by measured gzip_archive_bytes",
+        "gzip_percent_of_tar": 13.15306783,
+        "tar_to_gzip_ratio": 7.60278905
+      },
+      "expanded_payload_bytes": 1546827051,
+      "index_bytes": 67074,
+      "indexed_internal_members": {
+        "_package/diagnostics.json": 41,
+        "_package/execution.json": 752,
+        "_package/manifest.json": 209476
+      },
+      "internal_member_basis": "independently summed published exact package index",
+      "internal_member_payload_bytes": 210269,
+      "recovery_member_count": 390,
+      "recovery_status": "PASS reported by synthetic benchmark; no private files read by this review",
+      "reported_benchmark_status": "PASS",
+      "source_member_count": 390,
+      "source_payload_bytes": 1546549708,
+      "tar_archive_bytes": 1547130880,
+      "tar_headers_and_padding_bytes": 303829,
+      "time": {
+        "combined_reconciliation_minutes": 56.934171,
+        "combined_reconciliation_seconds": 3416.050264,
+        "job_limit_minus_local_total_seconds": 429.523297,
+        "local_offline_time_vs_step_limit": "EXCEEDS",
+        "offline_step_limit_seconds": 1800,
+        "offline_step_margin_seconds": -1616.050264,
+        "package_phase_seconds": 386.196256,
+        "package_step_margin_seconds": 213.803744,
+        "simulated_pacing_seconds_not_slept": 840.0,
+        "total_benchmark_minutes": 67.841278,
+        "total_benchmark_seconds": 4070.476703
+      }
+    },
+    "stress": {
+      "cap_results": {
+        "ciphertext": {
+          "limit_bytes": 209715200,
+          "margin_bytes": null,
+          "measured_bytes": null,
+          "status": "NOT RUN"
+        },
+        "expanded": {
+          "limit_bytes": 2147483648,
+          "margin_MiB": 267.848361,
+          "margin_bytes": 280859363,
+          "measured_bytes": 1866624285,
+          "status": "PASS",
+          "used_percent": 86.921467
+        },
+        "gzip": {
+          "limit_bytes": 208666624,
+          "margin_MiB": -205.177806,
+          "margin_bytes": -215144523,
+          "measured_bytes": 423811147,
+          "status": "FAIL",
+          "used_percent": 203.104425
+        }
+      },
+      "ciphertext_status": "NOT RUN: original gzip cap refused before encryption",
+      "combined_python_age_RSS_status": "UNAVAILABLE: raw receipt numeric sum equals Python RSS, but no age encryption/decryption ran; do not interpret as measured combined RSS",
+      "component_bytes": {
+        "execution-diagnostics.json": 2675,
+        "ledger.sqlite3": 86016,
+        "query_manifests": 1354239,
+        "raw_pages": 412833919,
+        "reconciliation-2026-09-24.json": 725956396,
+        "reconciliation-2026-09-25.json": 726113604
+      },
+      "compression": {
+        "basis": "actual tar_archive_bytes divided by measured gzip_archive_bytes",
+        "gzip_percent_of_tar": 22.7010138,
+        "tar_to_gzip_ratio": 4.40508961
+      },
+      "expanded_payload_bytes": 1866624285,
+      "index_bytes": 67168,
+      "internal_member_basis": "difference of measured expanded payload minus independently summed source inventory minus measured index; no stress index artifact retained",
+      "internal_member_payload_bytes": 210268,
+      "post_refusal_preservation_status": "PASS reported by hash-bound synthetic preservation receipt; arithmetic/accounting cross-links agree",
+      "recovery_status": "NOT RUN",
+      "reported_benchmark_status": "FAIL",
+      "source_member_count": 390,
+      "source_payload_bytes": 1866346849,
+      "tar_archive_bytes": 1866926080,
+      "tar_headers_and_padding_bytes": 301795,
+      "time": {
+        "combined_reconciliation_minutes": 58.166481,
+        "combined_reconciliation_seconds": 3489.9888499999997,
+        "job_limit_minus_local_total_seconds": 272.03676,
+        "local_offline_time_vs_step_limit": "EXCEEDS",
+        "offline_step_limit_seconds": 1800,
+        "offline_step_margin_seconds": -1689.98885,
+        "package_phase_seconds": 469.158996,
+        "package_step_margin_seconds": 130.841004,
+        "simulated_pacing_seconds_not_slept": 840.0,
+        "total_benchmark_minutes": 70.466054,
+        "total_benchmark_seconds": 4227.96324
+      }
+    }
+  },
+  "constant_source_sha256": {
+    ".github/workflows/historical-input-proof.yml": "04ed7b09f5c686f4295cebf0d460b0b1a106d228bf25e9fcd9dacd2096d7aa3f",
+    "tools/historical_package.py": "76250695cc74d01fb71b4bb51b749a7aedf2f979e2d0b4a58a24350817c6f928"
+  },
+  "engineering_release_readiness": "NOT ESTABLISHED: observed stress archive refusal and unresolved workflow execution binding remain outside arithmetic PASS",
+  "guidance_acceptance": "NOT RUN",
+  "input_sha256": {
+    "benchmark-central-fixture-receipt.json": "d5a5fa274c905dd62347d21c3f2c811b82d257e080347ca66268d4ecbbd87883",
+    "benchmark-central-members.json": "afb554858e6f3c2978f590e7f8a49998c7b003dce0bf139d17a14415048f78cf",
+    "benchmark-central-package-index.json": "0ae7590a90f6587b46d12f4eb19ebaa5302cf3902dee55f433905c79ea433492",
+    "benchmark-central.json": "7b76630958f818e52d163ca4af5e0a84c517cf56c30881d344b465d0c0b6651f",
+    "benchmark-stress-members.json": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+    "benchmark-stress-preservation.json": "509ffdc5338000aaf33efb82310d1eee019bfcf26082f53d008cd5c73d45f040",
+    "benchmark-stress.json": "35b739a1f0e40bbfcd5be80e38323606f4da1127a17baf926ca35f15062ca47a"
+  },
+  "interpretation": [
+    "Central observed synthetic package fits with narrow gzip/ciphertext margins; this is not a guarantee for provider precision or compression.",
+    "Stress measured gzip archive exceeds the unchanged cap; encryption and recovery were not run. Preservation verification after refusal is not recovery.",
+    "Both local combined reconciliations exceed the single 30-minute offline step. These Windows measurements do not predict hosted Ubuntu timing, and neither local total establishes workflow fit.",
+    "Benchmark totals include measurement overhead and central recovery, while simulated rate pacing advances a fake clock without real waiting; do not add/subtract them into a claimed hosted runtime.",
+    "Reconstructed regimes and formula PASS values describe invented synthetic inputs, not the original historical market, reader actionability, execution authorization or provider consent.",
+    "Expanded cap comparison uses indexed member payload plus index, matching package_evidence; tar headers/padding are measured separately."
+  ],
+  "limits_bytes": {
+    "ciphertext": 209715200,
+    "expanded": 2147483648,
+    "gzip": 208666624
+  },
+  "observed_at": "2026-09-30T06:08:04.899253+00:00",
+  "review_role": "implementation-side independent arithmetic/status review; not Guidance acceptance",
+  "schema": "historical-capacity-arithmetic-review-v1",
+  "scope": "Only published fresh-synthetic JSON receipts, inventories/index and unchanged package/workflow source constants read. No source data files, original historical records, owner package/key, provider access, reconciliation, benchmark rerun or outreach.",
+  "workflow_timeouts": {
+    "combined_offline_step_seconds": 1800,
+    "job_seconds": 4500,
+    "package_step_seconds": 600
+  }
+}

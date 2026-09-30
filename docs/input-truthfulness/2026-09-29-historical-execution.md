@@ -288,3 +288,159 @@ record the exact checks. The corrected first push produced no additional
 historical-workflow record at `2026-09-29T12:05:40.7803968Z`; count remained three.
 The final PR head's normal GitHub CI and fresh complete-history check will be
 reported in PR #95 before requesting Guidance review; no dispatch is released.
+
+## Lossless conversion-evidence compaction - 30 Sep 2026
+
+This dated addendum follows [Guidance instruction 5903186288](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5903186288)
+on the [capacity finding 5902648870](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5902648870).
+The implementation base is `6284cb9787c11929eaedf1a263cf463ab4ae4928`.
+The one compaction PR records its actual submitted head, required CI and review;
+this document does not provide an executable readiness attestation.
+
+[The newer owner direction, comment 5903266884](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5903266884),
+records personal use and ends further licensing investigation and all Alpaca
+outreach. The earlier unsent clarification is historical material, not pending
+work; do not request authorization for it again. This decision does not establish
+provider consent or an agreement interpretation. Guidance's next release review
+addresses engineering readiness, exact execution binding and any explicit,
+accurately labelled adjustment to obsolete project-imposed attestations. This
+compaction does not silently change the guard or claim those attestations passed.
+
+The earlier NOT RUN statements above describe their original checkpoints.
+They are superseded for the **old** hosted rehearsal and owner replay by
+[rehearsal report 5890923069](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5890923069),
+[exact LF replay 5894734715](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5894734715)
+and [Guidance acceptance 5894791957](https://github.com/spicyChicken59/SpicyStock/pull/95#issuecomment-5894791957).
+Run `36570997883`, native 4 / attempt 1 / phase 1, artifact `11033808340`,
+used execution checkout `6b12fdfa67355b436fde89287d159bebda2ce9fc`, tree
+`d4ac339901ebe99039b912f30397d43d5d76efbb`, and workflow revision
+`2687b96d0200903c5d457301e4b3f335fcfb79ce`. The initial CRLF comparison remains
+dated FAIL evidence. Guidance accepted the operator-reported private replay;
+Guidance plaintext inspection remains NOT RUN. None of that work was repeated.
+
+PASS - the actual untouched adapter was reproduced on fresh invented decimal
+inputs before changing it. Its per-field dictionaries repeat symbol, session
+and decimal strings already retained in normalized rows. The
+[baseline receipt](2026-09-30-projection-compaction-evidence/untouched-adapter.json)
+and exact extracted legacy function fixtures preserve that source contract.
+The old capacity numbers remain estimates, not provider observations.
+
+PASS - `historical-reconciliation-v2` now selects
+`historical-float64-projection-v2`. One selected-row ordinal, fixed OHLCV mask
+and complete binary-hex values replace the expanded dictionaries. Query and
+complete-normalization hashes bind each entry to its basis, security, target,
+decimal strings and selected/discarded raw lineage. Zero-mask rows are explicit.
+The [schema contract](2026-09-30-projection-compaction-evidence/contract.md)
+describes the bounded decoder, which validates the whole projection before
+yielding legacy facts in their original deterministic order. It retrieves
+decimal strings directly from retained normalized rows; raw pages remain the
+authority for original JSON spellings. No expanded legacy list is constructed
+on the new normal path. Actual DataFrames, float conversion, decimal audit,
+population masks, predicates, unknown states and decisions are unchanged.
+
+PASS - fresh small full reconciliations reproduce the untouched v1 bytes under
+the explicit legacy selector. New v2 outputs reconstruct every old conversion
+fact, preserve every other field, and reproduce their complete bytes on repeat
+with identical source and dependencies. Tests cover all 32 masks, integers,
+exact fractions, cents, longer decimals, fractional and signed-zero volume,
+exponents/trailing zeros, multiple queries/securities, selected replacements,
+same/cross-page duplicates, missing/invalid rows and partial histories. Broken
+references, query/basis bindings, masks, values and schemas are rejected.
+Independent exact Fraction/Decimal comparisons against adjacent binary floats
+check representative conversion values without using the new decoder as oracle.
+
+PASS - [normal-collected controls](2026-09-30-projection-compaction-evidence/representation-controls.json)
+show the actual old adapter failing the compact-output regression, the fixed
+implementation passing, and five isolated restored defects failing their named
+tests while unrelated controls pass. Only child-process function objects change.
+An initial unpublished log receipt hashed pre-write text rather than saved
+Windows bytes; that evidence defect remains documented in
+[log-hash-correction.json](2026-09-30-projection-compaction-evidence/log-hash-correction.json).
+The corrected harness hashes saved bytes, and all seven control logs were
+recaptured during the normal full suite. Their committed bytes must match those
+hashes; no failure was erased or relabelled.
+
+PASS - the complete local suite passed **2,104 tests**, zero failures/errors/skips,
+in 553.49 seconds on existing Python 3.12.14, pandas 2.2.3, NumPy 2.3.5 and
+exchange-calendars 4.13.2. One existing websockets warning remains. The
+[local verification receipt](2026-09-30-projection-compaction-evidence/local-verification.json)
+records commands, environment and saved log/JUnit hashes. Existing cache-resume,
+raw-row lineage, request/byte/rate/retry, interruption, encryption, truncation,
+hash, plaintext-rejection and lifetime-accounting tests remain in that suite.
+The later benchmark reporting-only portability correction has focused checks;
+the final submitted head's normal Linux CI is recorded in the PR.
+
+FAIL - local `python tools/make_fixture.py --check` reports 24 stale provenance
+gzip objects. A bounded read-only comparison of those existing public fixtures
+found only the gzip OS header byte: committed Linux `03`, local Windows `0a`.
+Lengths, DEFLATE payloads, trailers and typed-json-f64hex-v1 identities agree.
+The [platform evidence](2026-09-30-projection-compaction-evidence/fixture-platform-evidence.json)
+records all 24 comparisons and actual Python/zlib behavior. No fixture, browser
+gate or checker changed. Normal Linux CI must establish its own result; this
+local failure is retained. FixtureClaude errors in the log are intentional
+synthetic doubles, not model calls.
+
+The [full-shape benchmark](2026-09-30-projection-compaction-evidence/benchmark.md)
+records measured central and longer-decimal stress outcomes, all original member
+identities, archive/index overhead, gzip/ciphertext limits, memory, scratch and
+runtime. Each case uses the frozen 96 canonical batches, all 288 required
+sessions and the two probe rows through the actual acquisition, reconciliation
+and packaging code. Fresh deterministic synthetic responses and disposable
+TEST-ONLY age identities are used; actual provider requests are zero. No owner
+package or owner key was opened. These measurements cannot establish unseen
+provider entropy, market correctness or hosted performance.
+
+| Measured bytes / check | Central | Longer-decimal five-field stress |
+| --- | ---: | ---: |
+| Expanded package, cap 2,147,483,648 | 1,546,827,051 PASS | 1,866,624,285 PASS |
+| Gzip archive, cap 208,666,624 | 203,495,174 PASS | 423,811,147 FAIL |
+| Ciphertext, cap 209,715,200 | 203,545,054 PASS | NOT RUN |
+| Original-member recovery | 390 exact members PASS | NOT RUN |
+| Preserved inputs after refusal | NOT RUN (recovery completed) | 390 exact members PASS |
+| Combined local reconciliation, 1,800-second step | 3,416.050264 seconds FAIL | 3,489.988850 seconds FAIL |
+
+Central gzip has only 5,171,450 bytes of headroom; ciphertext has 6,170,146.
+Stress gzip exceeds its ceiling by 215,144,523 bytes. The unchanged packager
+refuses before encryption, so successful expanded-size checks do not establish
+recoverable delivery. Post-refusal input preservation is not package recovery.
+Both full cases ran once. Neither was trimmed, nested-compressed, repeated or
+admitted under a raised limit. The local timings include instrumentation and
+cannot predict hosted Linux speed; hosted full-shape performance is NOT RUN.
+The benchmark's simulated rate clock avoids wall-clock network pacing, so its
+overall duration is not a claim of fitting the workflow's 75-minute deadline.
+
+The representation correction is lossless, but capacity is not closed. The
+smallest next decision is Guidance review of this bounded PR and, if justified,
+separate authorization for a lossless archive-encoding correction under the
+unchanged caps and deadlines. Current gzip already uses its default level 9;
+this is not a recommendation to turn up its compression level. No further
+optimization, acquisition or hosted rehearsal is part of this handoff.
+
+BLOCKED - changed tools cannot borrow PR #95's approval or relabel accepted run
+36570997883. The workflow, policy, guard, wrapper, package code and original
+recovery contract are unchanged. [Binding regressions](2026-09-30-projection-compaction-evidence/binding-controls.json)
+retain the reviewed-head, source-equality and exact-recovery checks. The
+[prospective compatibility proposal](2026-09-30-projection-compaction-evidence/compatibility-proposal.md)
+identifies the smallest review decision: one exact new PR/head, one declared
+representation change and its offline proof related to only the exact accepted
+transport run/checkout/manifest/recipient. It implements no compatibility bridge,
+source-equality bypass, new phase or readiness approval. Guidance must decide
+that relation independently; merge alone does not release real mode.
+
+Real acquisition, real-data reconciliation, new hosted historical execution, reviewer
+plaintext inspection, new reader approval and trading-edge validation are
+NOT RUN. Real release and original final-price membership completeness remain
+BLOCKED. The later personal-use/no-outreach direction supersedes the earlier
+assignment to pursue contractual clarification; no outreach was sent. Frozen
+manifest `8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc`,
+recovery contract `6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a`,
+owner key/recipient, accepted evidence and original limits remain unchanged.
+README.md and .env.example were reviewed and their historical-execution prose
+updated without adding settings. Website/strategy behavior and installed
+design-system 2.13.0 at `14a752dd0269bd6ebbb7080eb0d9e1922cd1ef2c` are preserved.
+
+PASS - [protected-scope.json](2026-09-30-projection-compaction-evidence/protected-scope.json)
+records a raw-byte check of **10,541 existing Git blobs**, with no changed
+protected path. Only README.md, .env.example, CLAUDE.md, this existing handoff and
+the two representation modules are permitted existing-file edits. The final PR
+records staged-byte identity, exact base/head and all added support-file blobs.

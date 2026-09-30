@@ -1,0 +1,146 @@
+{
+  "frame_hex": [
+    [
+      "0x1.4333333333333p+3",
+      "0x1.433333333a127p+4",
+      "0x1.000000000afecp+0",
+      "0x1.6333333333333p+3",
+      "0x1.90666666666adp+6"
+    ],
+    [
+      "0x1.4000000000000p+3",
+      "0x1.4800000000000p+4",
+      "0x1.4000000000000p+0",
+      "0x1.6400000000000p+3",
+      "-0x0.0p+0"
+    ]
+  ],
+  "limitation": "Fresh synthetic observations only; no private evidence or provider data.",
+  "network_requests": 0,
+  "normalized": {
+    "normalization": [
+      "JSON numeric lexemes to Decimal",
+      "validate NY daily timestamp and XNYS session",
+      "validate OHLC geometry and finite positive prices/nonnegative share volume",
+      "stable sort exact timestamps; select last duplicate and retain both identities",
+      "no forward fill, no rounding, no fabricated bars"
+    ],
+    "original_information_set": false,
+    "page_sha256": [
+      "0309c6d57719be506b2d0e8b467967d078d32d778c911b777a4b7d60757e8cb1"
+    ],
+    "publication_allowed": false,
+    "query": {
+      "adjustment": "split",
+      "asof": "2026-09-26",
+      "currency": "USD",
+      "end": "2026-09-25T23:59:59Z",
+      "feed": "sip",
+      "limit": 10000,
+      "sort": "asc",
+      "start": "2026-09-23T00:00:00Z",
+      "symbols": [
+        "SYNTH"
+      ],
+      "timeframe": "1Day"
+    },
+    "query_id": "synthetic-before",
+    "reader_reviews_reusable": false,
+    "symbols": {
+      "SYNTH": {
+        "complete_required_window": true,
+        "duplicates": [],
+        "invalid_rows": [],
+        "missing_anchors": [],
+        "missing_required_sessions": [],
+        "returned_rows": 2,
+        "rows": [
+          {
+            "session": "2026-09-24",
+            "source": {
+              "page_index": 0,
+              "page_sha256": "0309c6d57719be506b2d0e8b467967d078d32d778c911b777a4b7d60757e8cb1",
+              "row_index": 0,
+              "symbol": "SYNTH"
+            },
+            "timestamp": "2026-09-24T04:00:00Z",
+            "values": {
+              "Close": "11.1",
+              "High": "20.2000000001",
+              "Low": "1.00000000001",
+              "Open": "10.1000",
+              "Volume": "100.100000000001"
+            }
+          },
+          {
+            "session": "2026-09-25",
+            "source": {
+              "page_index": 0,
+              "page_sha256": "0309c6d57719be506b2d0e8b467967d078d32d778c911b777a4b7d60757e8cb1",
+              "row_index": 1,
+              "symbol": "SYNTH"
+            },
+            "timestamp": "2026-09-25T04:00:00Z",
+            "values": {
+              "Close": "11.1250",
+              "High": "20.5",
+              "Low": "1.25",
+              "Open": "10",
+              "Volume": "-0.00"
+            }
+          }
+        ],
+        "selected_rows": 2,
+        "status": "returned_with_bars"
+      }
+    },
+    "target_session": "2026-09-25",
+    "terminal": true,
+    "version": "historical-normalization-v1"
+  },
+  "projection": {
+    "inexact_conversions": [
+      {
+        "decimal": "10.1000",
+        "field": "Open",
+        "float64_hex": "0x1.4333333333333p+3",
+        "session": "2026-09-24",
+        "symbol": "SYNTH"
+      },
+      {
+        "decimal": "20.2000000001",
+        "field": "High",
+        "float64_hex": "0x1.433333333a127p+4",
+        "session": "2026-09-24",
+        "symbol": "SYNTH"
+      },
+      {
+        "decimal": "1.00000000001",
+        "field": "Low",
+        "float64_hex": "0x1.000000000afecp+0",
+        "session": "2026-09-24",
+        "symbol": "SYNTH"
+      },
+      {
+        "decimal": "11.1",
+        "field": "Close",
+        "float64_hex": "0x1.6333333333333p+3",
+        "session": "2026-09-24",
+        "symbol": "SYNTH"
+      },
+      {
+        "decimal": "100.100000000001",
+        "field": "Volume",
+        "float64_hex": "0x1.90666666666adp+6",
+        "session": "2026-09-24",
+        "symbol": "SYNTH"
+      }
+    ],
+    "operation": "explicit production float64 projection; never claim wire precision"
+  },
+  "projection_sha256": "4832b0bf144bf40a78d0f49e14ff1488401a558c2aee160d35ab5f320b11ca4e",
+  "source_head": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+  "source_sha256": "f1ae88dae57ee114a0a6b55b3f0d382e1f150e21cc4716c76e4392f317d51ef2",
+  "status": "PASS",
+  "synthetic_only": true
+}
