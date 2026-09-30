@@ -29,17 +29,24 @@ def deadline(name, seconds):
     """
     started = time.monotonic()
     supported = hasattr(signal, "setitimer")
+    fired = False
     if supported:
         previous = signal.getsignal(signal.SIGALRM)
         timer = signal.getitimer(signal.ITIMER_REAL)
         def expired(*_):
+            nonlocal fired
+            fired = True
             raise RuntimeDeadline(name + "_deadline_exceeded")
         signal.signal(signal.SIGALRM, expired)
         signal.setitimer(signal.ITIMER_REAL, min(seconds, timer[0]) if timer[0] else seconds)
     try:
         yield
-        if time.monotonic() - started > seconds:
+        if fired or time.monotonic() - started > seconds:
             raise RuntimeDeadline(name + "_deadline_exceeded")
+    except BaseException as error:
+        if fired and not isinstance(error, RuntimeDeadline):
+            raise RuntimeDeadline(name + "_deadline_exceeded") from error
+        raise
     finally:
         if supported:
             signal.setitimer(signal.ITIMER_REAL, 0)

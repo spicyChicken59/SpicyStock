@@ -15,7 +15,7 @@ from decimal import Decimal
 import hashlib
 import json
 import math
-from importlib.metadata import distributions, version
+from importlib.metadata import PackageNotFoundError, distributions, version
 import os
 from pathlib import Path
 import shutil
@@ -58,6 +58,22 @@ SOURCE_FILES = tuple(sorted(("tools/historical_projection_benchmark.py", "tools/
 def require(condition, reason):
     if not condition:
         raise ValueError(reason)
+
+
+def historical_dependency_versions():
+    """Record absent optional local-test distributions without inventing versions.
+
+    Representative CLI admission separately requires every exact historical pin.
+    """
+    measured = {}
+    for line in (ROOT / "tools/requirements-historical.txt").read_text().splitlines():
+        if "==" in line and not line.startswith("#"):
+            name = line.split("==")[0]
+            try:
+                measured[name] = version(name)
+            except PackageNotFoundError:
+                measured[name] = None
+    return measured
 
 
 def shape(manifest):
@@ -381,7 +397,7 @@ def verify_original_outputs(case, inventory):
             "reconciliation": {name: inventory[name] for name in sorted(names) if name.startswith("reconciliation-")}}
 
 
-def timing_acceptance(phases, setup_seconds, simulated_wait, *, representative):
+def timing_acceptance(phases, setup_seconds, simulated_wait, *, representative, required_passes_completed=False):
     initial = sum(value for name, value in phases.items() if name.startswith("reconcile_"))
     recovered = sum(value for name, value in phases.items() if name.startswith("reproduce_"))
     packaging = phases.get("package")
@@ -393,8 +409,9 @@ def timing_acceptance(phases, setup_seconds, simulated_wait, *, representative):
                 {name for name in phases if name.startswith("reconcile_")} == {"reconcile_2026-09-24", "reconcile_2026-09-25"} and
                 (not representative or {name for name in phases if name.startswith("reproduce_")} ==
                  {"reproduce_2026-09-24", "reproduce_2026-09-25"}))
-    fits = complete and initial <= 1800 and recovered <= 1800 and packaging <= 600 and prospective <= 4500
+    fits = required_passes_completed and complete and initial <= 1800 and recovered <= 1800 and packaging <= 600 and prospective <= 4500
     return {"status": "PASS" if fits else "FAIL", "initial_shared_offline_seconds": initial,
+            "required_passes_completed": required_passes_completed,
             "recovered_shared_offline_seconds": recovered, "package_seconds": packaging,
             "measured_setup_seconds": setup_seconds, "prospective_reserved_total_seconds": prospective,
             "remaining_total_seconds_before_overhead_reserve": 4500 - measured_and_acquisition,
@@ -444,8 +461,7 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
                   "GitHub Actions standard ubuntu-24.04 PR job; declared image and actual host measurements recorded"
                   if representative and os.environ.get("GITHUB_ACTIONS") == "true" else
                   f"local {sys.platform} host; timing includes existing host load; not a hosted-runner timing guarantee"),
-              "python": sys.version, "dependencies": {line.split("==")[0]: version(line.split("==")[0])
-                    for line in (ROOT / "tools/requirements-historical.txt").read_text().splitlines() if "==" in line and not line.startswith("#")},
+              "python": sys.version, "dependencies": historical_dependency_versions(),
               "installed_distributions": dict(sorted((item.metadata["Name"], item.version) for item in distributions())),
               "checkout_sha": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip(),
               "runtime_environment": {name: os.environ.get(name) for name in ("RUNNER_OS", "RUNNER_ARCH", "ImageOS", "ImageVersion",
@@ -566,7 +582,8 @@ def run_case(manifest, case, workspace, age_binary, *, full_scale=True, represen
         os.umask(previous_mask)
         report["phases_seconds"][phase] = round(time.perf_counter() - phase_start, 6)
         report["timing_acceptance"] = timing_acceptance(report["phases_seconds"], setup_seconds,
-                                                       report.get("simulated_rate_clock_seconds"), representative=representative)
+                                                       report.get("simulated_rate_clock_seconds"), representative=representative,
+                                                       required_passes_completed=report.get("status") == "PASS")
         if representative and report["timing_acceptance"]["status"] != "PASS":
             report.update(status="FAIL", timing_reason="original_deadline_envelope_not_established")
         report.update(runtime_seconds=round(time.perf_counter() - started, 6), completed_at=datetime.now(timezone.utc).isoformat(),

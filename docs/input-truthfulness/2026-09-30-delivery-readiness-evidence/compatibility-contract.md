@@ -14,9 +14,9 @@ canonical manifest, recipient fingerprint and original recovery-contract digest.
 That evidence describes the old transport only. It does not validate the new
 codec, runtime or checkout.
 
-The current policy, readiness and execution records use v3. The policy's new PR
-number is initially unbound and must be the actual newly opened PR, never 94,
-95 or 96. A prospective real release remains native 5 / attempt 1 / phase 2.
+The current policy, readiness and execution records use v3. The policy binds the
+actual new implementation PR97; it cannot borrow PR94, PR95 or PR96's approval.
+A prospective real release remains native 5 / attempt 1 / phase 2.
 Complete history must contain all three exact zero-job exceptions, the exact
 accepted successful rehearsal and the durable current real job. Pagination,
 double snapshots and job checks remain. Nothing starts a replacement rehearsal,

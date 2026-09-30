@@ -1,10 +1,12 @@
-# Historical outer archive v3 — provisional measured candidate
+# Historical outer archive v3 — best complete candidate, readiness BLOCKED
 
 The writer uses `historical-encrypted-receipt-v3`,
 `historical-private-package-v3`, archive format `ustar-zstandard-v1`, and the
-fixed ciphertext name `evidence.tar.zst.age`. This selects a candidate for the
-full pinned Linux experiment; the two incomplete local trials are **not** size,
-deadline or recovery PASS results. See [the comparison](codec-comparison.md).
+fixed ciphertext name `evidence.tar.zst.age`. The final candidate uses level 12,
+the smallest complete archive in the bounded comparison. Its measured stress
+archive still exceeds the unchanged cap, so delivery readiness is **BLOCKED**.
+The final pinned Linux experiment measures this candidate's successful and
+refused paths; it is not another compression search. See [the comparison](codec-comparison.md).
 
 Every ordinary source member remains its exact original bytes. Only the outer
 compression and explicit package metadata change. There is one USTAR archive,
@@ -12,12 +14,13 @@ one Zstandard frame and one age ciphertext. There is no nested compression or
 excluded source member. The frozen scientific format remains reconciliation v2.
 
 The encoder requires python-zstandard 0.25.0, its C backend and bundled libzstd
-1.5.7, with the independently recorded wheel hashes. Parameters are level 19,
+1.5.7, with the independently recorded wheel hashes. Parameters are level 12,
 window_log 30 (1,073,741,824 bytes), long-distance matching enabled, zero worker
 threads, checksum enabled and a pledged exact tar size. The remaining level/LDM
-defaults are those of this pinned version. The local trial measured peak private
-commit 1,714,671,616 bytes before its timeout; that is an observation, not a
-general encoder memory ceiling or hosted measurement.
+defaults are those of this pinned version. The complete local level 12 trial
+measured peak private commit 1,269,575,680 bytes and 189.145685 seconds. Its archive
+was 215,909,395 bytes, exceeding the 208,666,624-byte cap by 7,242,771 bytes. These
+are observations, not a general encoder memory ceiling or hosted measurement.
 
 ## Identity and limits
 
@@ -94,7 +97,7 @@ oversized/unknown-window or content-size rejection, bounded decoded output,
 corruption/concatenation/trailing-byte rejection, index accounting, source
 preservation, failed encryption and interruption cleanup.
 
-[Restored-defect evidence](codec-restored-controls.json) executes five unchanged
+[Final restored-defect evidence](codec-restored-controls-level12.json) executes five unchanged
 valid/negative controls, then separately restores ignored gzip trailers, excluded
 index bytes and late window checks in child-process memory. Each restored defect
 makes its targeted test fail; no source file is edited. The
@@ -103,10 +106,21 @@ as evidence of a caught defect. A first external attempt had overlong Windows
 fixture paths and its FAIL receipt is retained locally; the published run uses
 short paths and records the actual test results and unchanged source hashes.
 
-Frozen runtime SHA-256 values at these controls:
+All [95 focused package controls](codec-level12-focused-summary.json) passed on
+the selected level 12 source, with zero skips, in 8.82 seconds. The explicitly
+identified [positive legacy recovery](codec-legacy-controls-level12.json) proves
+the old receipt/index and execution binding are preserved and every member is
+recovered exactly, using disposable TEST-ONLY age identities.
+
+Frozen runtime SHA-256 values at the final controls:
 
 - `tools/historical_package.py`: `25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d`
-- `tools/historical_archive_codec.py`: `1d99e3f826e7a64ae99d317ad44d941337187d8dc66802e1ab6c405c94565248`
+- `tools/historical_archive_codec.py`: `4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def`
+
+The initial level 19 codec hash remains
+`1d99e3f826e7a64ae99d317ad44d941337187d8dc66802e1ab6c405c94565248`, with its
+[original restored-control receipt](codec-restored-controls.json) and measured
+deadline failures preserved. The only codec source change selects level 12.
 
 Full-scale representative capacity, encryption/recovery and shared-step/total
 runtime results must be read from the actual Linux benchmark evidence. The local

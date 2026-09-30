@@ -43,7 +43,7 @@ def _zstandard():
 def compressor(output, size):
     """Pledged-size, checksummed, one-frame encoder; its version is pinned."""
     zstd = _zstandard()
-    parameters = zstd.ZstdCompressionParameters.from_level(19, **COMPRESSION_PARAMETERS)
+    parameters = zstd.ZstdCompressionParameters.from_level(12, **COMPRESSION_PARAMETERS)
     return zstd.ZstdCompressor(compression_params=parameters).stream_writer(
         output, size=size, closefd=False)
 

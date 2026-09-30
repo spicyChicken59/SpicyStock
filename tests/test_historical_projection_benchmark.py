@@ -198,3 +198,39 @@ def test_deadline_inside_normalization_leaves_failure_receipt(run_setup, tmp_pat
     assert profile["active_stages"] == []
     assert profile["stages"]["normalization"]["failures"] == 1
     assert not (root / "delivery").exists()
+
+
+def test_small_benchmark_reports_absent_historical_only_distribution(run_setup, tmp_path, monkeypatch, age_binary):
+    from importlib.metadata import PackageNotFoundError
+    original = benchmark.version
+    def missing_optional(name):
+        if name == "socksio":
+            raise PackageNotFoundError(name)
+        return original(name)
+    monkeypatch.setattr(benchmark, "version", missing_optional)
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    result = benchmark.run_case(run_setup[0], "central", short_root(tmp_path), age_binary, full_scale=False)
+    assert result["status"] == "PASS", result
+    assert result["dependencies"]["socksio"] is None
+    assert result["dependencies"]["pandas"] == original("pandas")
+    assert not result["representative_mode"] and not result["full_frozen_shape"]
+    assert result["all_original_members_byte_identical"] and result["ledger_accounting_unchanged"]
+
+
+def test_quick_second_replay_failure_cannot_pass_timing_acceptance(run_setup, tmp_path, monkeypatch, age_binary):
+    monkeypatch.setattr(benchmark, "MINIMUM_FREE_DISK", 0)
+    monkeypatch.setattr(benchmark, "verify_original_outputs", lambda *_: {"status": "NOT RUN", "scope": "small fixture"})
+    original, calls = benchmark.reconcile, []
+    def fail_second_replay(manifest, storage, session):
+        calls.append((storage.name, session))
+        if len(calls) == 4:
+            raise ValueError("synthetic_second_replay_failure")
+        return original(manifest, storage, session)
+    monkeypatch.setattr(benchmark, "reconcile", fail_second_replay)
+    result = benchmark.run_case(run_setup[0], "central", short_root(tmp_path), age_binary,
+                                full_scale=False, representative=True)
+    assert len(calls) == 4 and calls[-1] == ("recovered", "2026-09-25")
+    assert result["status"] == "FAIL" and result["reason"] == "synthetic_second_replay_failure"
+    assert "reproduce_2026-09-25" in result["phases_seconds"]
+    assert result["timing_acceptance"]["status"] == "FAIL"
+    assert not result["timing_acceptance"]["required_passes_completed"]

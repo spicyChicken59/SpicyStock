@@ -99,6 +99,28 @@ def test_deadline_post_return_check_does_not_silently_pass_on_unsupported_platfo
             pass
 
 
+def test_fired_deadline_survives_native_exception_wrapping_without_relabelling_other_errors(monkeypatch):
+    prior = lambda *_: None
+    state = {"handler": prior}
+    fake = SimpleNamespace(SIGALRM=14, ITIMER_REAL=0, getsignal=lambda _: prior,
+        getitimer=lambda _: (0, 0), signal=lambda _, handler: state.update(handler=handler),
+        setitimer=lambda *args: None)
+    monkeypatch.setattr(profiling, "signal", fake)
+    monkeypatch.setattr(profiling.time, "monotonic", lambda: 0)
+    with pytest.raises(profiling.RuntimeDeadline, match="package_deadline_exceeded") as caught:
+        with profiling.deadline("package", 600):
+            try:
+                state["handler"]()
+            except profiling.RuntimeDeadline as error:
+                raise RuntimeError("native wrapper converted the callback failure") from error
+    assert isinstance(caught.value.__cause__, RuntimeError)
+    assert state["handler"] is prior
+    with pytest.raises(RuntimeError, match="unrelated codec failure"):
+        with profiling.deadline("package", 600):
+            raise RuntimeError("unrelated codec failure")
+    assert state["handler"] is prior
+
+
 @pytest.mark.parametrize("boundary", ["normalization", "production"])
 def test_deadline_crosses_actual_malformed_data_handlers(monkeypatch, boundary):
     stop = profiling.RuntimeDeadline("shared_offline_initial_deadline_exceeded")
@@ -125,7 +147,7 @@ def test_deadline_crosses_actual_malformed_data_handlers(monkeypatch, boundary):
 def test_complete_offline_passes_and_reserved_acquisition_share_original_envelope():
     phases = {"reconcile_2026-09-24": 700, "reconcile_2026-09-25": 800,
               "reproduce_2026-09-24": 600, "reproduce_2026-09-25": 700, "package": 500}
-    result = benchmark.timing_acceptance(phases, 100, 840.014, representative=True)
+    result = benchmark.timing_acceptance(phases, 100, 840.014, representative=True, required_passes_completed=True)
     assert result["status"] == "PASS"
     assert result["prospective_reserved_total_seconds"] == 4200
     assert result["remaining_total_seconds_before_overhead_reserve"] == 600
@@ -148,22 +170,22 @@ def test_shared_deadline_cannot_be_evaded_with_individually_short_dates(change):
     phases = {"reconcile_2026-09-24": 600, "reconcile_2026-09-25": 600,
               "reproduce_2026-09-24": 600, "reproduce_2026-09-25": 600, "package": 500}
     phases.update(change)
-    assert benchmark.timing_acceptance(phases, 100, 840.014, representative=True)["status"] == "FAIL"
+    assert benchmark.timing_acceptance(phases, 100, 840.014, representative=True, required_passes_completed=True)["status"] == "FAIL"
 
 
 def test_total_envelope_and_missing_reproduction_fail_independently():
     phases = {"reconcile_2026-09-24": 800, "reconcile_2026-09-25": 900,
               "reproduce_2026-09-24": 500, "reproduce_2026-09-25": 500, "package": 600}
-    assert benchmark.timing_acceptance(phases, 401, 840.014, representative=True)["status"] == "FAIL"
+    assert benchmark.timing_acceptance(phases, 401, 840.014, representative=True, required_passes_completed=True)["status"] == "FAIL"
     del phases["reproduce_2026-09-24"], phases["reproduce_2026-09-25"]
-    assert benchmark.timing_acceptance(phases, 0, 840.014, representative=True)["status"] == "FAIL"
+    assert benchmark.timing_acceptance(phases, 0, 840.014, representative=True, required_passes_completed=True)["status"] == "FAIL"
 
 
 @pytest.mark.parametrize("setup,expected", [(300, "FAIL"), (1, "FAIL"), (0, "PASS")])
 def test_delivery_overhead_reserve_refuses_zero_or_insufficient_headroom(setup, expected):
     phases = {"reconcile_2026-09-24": 900, "reconcile_2026-09-25": 900,
               "reproduce_2026-09-24": 500, "reproduce_2026-09-25": 500, "package": 600}
-    result = benchmark.timing_acceptance(phases, setup, 840.014, representative=True)
+    result = benchmark.timing_acceptance(phases, setup, 840.014, representative=True, required_passes_completed=True)
     assert result["status"] == expected
     assert result["remaining_total_seconds_before_overhead_reserve"] == 300 - setup
     assert result["remaining_total_seconds_after_overhead_reserve"] == -setup

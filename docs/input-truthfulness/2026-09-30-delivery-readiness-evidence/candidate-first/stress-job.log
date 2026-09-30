@@ -1,0 +1,476 @@
+﻿2026-09-30T08:30:18.7272267Z Current runner version: '2.337.0'
+2026-09-30T08:30:18.7298921Z ##[group]Runner Image Provisioner
+2026-09-30T08:30:18.7300195Z Hosted Compute Agent
+2026-09-30T08:30:18.7300845Z Version: 20260828.587
+2026-09-30T08:30:18.7301571Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-30T08:30:18.7302385Z Build Date: 2026-08-28T16:44:25Z
+2026-09-30T08:30:18.7303066Z Worker ID: {28751695-ad5f-48f1-87f0-d540c31a725c}
+2026-09-30T08:30:18.7303914Z Azure Region: eastus
+2026-09-30T08:30:18.7304512Z ##[endgroup]
+2026-09-30T08:30:18.7306070Z ##[group]Operating System
+2026-09-30T08:30:18.7307024Z Ubuntu
+2026-09-30T08:30:18.7307557Z 24.04.5
+2026-09-30T08:30:18.7308231Z LTS
+2026-09-30T08:30:18.7308777Z ##[endgroup]
+2026-09-30T08:30:18.7309391Z ##[group]Runner Image
+2026-09-30T08:30:18.7310083Z Image: ubuntu-24.04
+2026-09-30T08:30:18.7310663Z Version: 20260920.314.1
+2026-09-30T08:30:18.7312046Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-30T08:30:18.7313691Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+2026-09-30T08:30:18.7314696Z ##[endgroup]
+2026-09-30T08:30:18.7315862Z ##[group]GITHUB_TOKEN Permissions
+2026-09-30T08:30:18.7318178Z Contents: read
+2026-09-30T08:30:18.7318820Z Metadata: read
+2026-09-30T08:30:18.7319524Z ##[endgroup]
+2026-09-30T08:30:18.7321732Z Secret source: Actions
+2026-09-30T08:30:18.7322859Z Cache mode: write
+2026-09-30T08:30:18.7323587Z Prepare workflow directory
+2026-09-30T08:30:18.8064097Z Prepare all required actions
+2026-09-30T08:30:18.8126914Z Getting action download info
+2026-09-30T08:30:19.0951929Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-09-30T08:30:19.5665888Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-09-30T08:30:20.0877698Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-09-30T08:30:20.3423862Z Complete job name: historical-runtime (stress)
+2026-09-30T08:30:20.4160605Z ##[group]Run set -euo pipefail
+2026-09-30T08:30:20.4161907Z [36;1mset -euo pipefail[0m
+2026-09-30T08:30:20.4162985Z [36;1mumask 077[0m
+2026-09-30T08:30:20.4165109Z [36;1mbenchmark_parent="$RUNNER_TEMP/historical-runtime-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$BENCHMARK_CASE"[0m
+2026-09-30T08:30:20.4167716Z [36;1mmkdir -m 700 "$benchmark_parent"[0m
+2026-09-30T08:30:20.4169880Z [36;1mprintf 'BENCHMARK_PARENT=%s\nBENCHMARK_SETUP_START=%s\n' "$benchmark_parent" "$(date +%s)" >> "$GITHUB_ENV"[0m
+2026-09-30T08:30:20.4454607Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-30T08:30:20.4456642Z env:
+2026-09-30T08:30:20.4457575Z   MPLBACKEND: Agg
+2026-09-30T08:30:20.4458550Z   PYTHONUTF8: 1
+2026-09-30T08:30:20.4459520Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T08:30:20.4460617Z   BENCHMARK_CASE: stress
+2026-09-30T08:30:20.4461648Z ##[endgroup]
+2026-09-30T08:30:20.4992186Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-09-30T08:30:20.4993800Z with:
+2026-09-30T08:30:20.4994763Z   ref: d53155bba5f63f42f65d21b4af708a3257b920f2
+2026-09-30T08:30:20.4996049Z   persist-credentials: false
+2026-09-30T08:30:20.4997383Z   repository: spicyChicken59/SpicyStock
+2026-09-30T08:30:20.5006517Z   token: ***
+2026-09-30T08:30:20.5007427Z   ssh-strict: true
+2026-09-30T08:30:20.5008328Z   ssh-user: git
+2026-09-30T08:30:20.5009214Z   clean: true
+2026-09-30T08:30:20.5010147Z   sparse-checkout-cone-mode: true
+2026-09-30T08:30:20.5011242Z   fetch-depth: 1
+2026-09-30T08:30:20.5012150Z   fetch-tags: false
+2026-09-30T08:30:20.5013071Z   show-progress: true
+2026-09-30T08:30:20.5014027Z   lfs: false
+2026-09-30T08:30:20.5014928Z   submodules: false
+2026-09-30T08:30:20.5015885Z   set-safe-directory: true
+2026-09-30T08:30:20.5017256Z   allow-unsafe-pr-checkout: false
+2026-09-30T08:30:20.5018335Z env:
+2026-09-30T08:30:20.5019434Z   MPLBACKEND: Agg
+2026-09-30T08:30:20.5020390Z   PYTHONUTF8: 1
+2026-09-30T08:30:20.5021352Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T08:30:20.5022414Z   BENCHMARK_CASE: stress
+2026-09-30T08:30:20.5023921Z   BENCHMARK_PARENT: /home/runner/work/_temp/historical-runtime-36690070837-1-stress
+2026-09-30T08:30:20.5025646Z   BENCHMARK_SETUP_START: 1790757020
+2026-09-30T08:30:20.5026939Z ##[endgroup]
+2026-09-30T08:30:20.6044861Z Syncing repository: spicyChicken59/SpicyStock
+2026-09-30T08:30:20.6049876Z ##[group]Getting Git version info
+2026-09-30T08:30:20.6052357Z Working directory is '/home/runner/work/SpicyStock/SpicyStock'
+2026-09-30T08:30:20.6055923Z [command]/usr/bin/git version
+2026-09-30T08:30:20.6110267Z git version 2.55.0
+2026-09-30T08:30:20.6137186Z ##[endgroup]
+2026-09-30T08:30:20.6165034Z Temporarily overriding HOME='/home/runner/work/_temp/4c3073e3-4e75-4f36-83c7-5de32be09d42' before making global git config changes
+2026-09-30T08:30:20.6168406Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-30T08:30:20.6171105Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T08:30:20.6239803Z Deleting the contents of '/home/runner/work/SpicyStock/SpicyStock'
+2026-09-30T08:30:20.6243299Z ##[group]Determining repository object format
+2026-09-30T08:30:20.6246138Z ##[endgroup]
+2026-09-30T08:30:20.6248149Z ##[group]Initializing the repository
+2026-09-30T08:30:20.6251206Z [command]/usr/bin/git init /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T08:30:20.6410137Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-30T08:30:20.6418193Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-30T08:30:20.6422252Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-30T08:30:20.6425469Z hint: call:
+2026-09-30T08:30:20.6427385Z hint:
+2026-09-30T08:30:20.6429811Z hint: 	git config --global init.defaultBranch <name>
+2026-09-30T08:30:20.6432277Z hint:
+2026-09-30T08:30:20.6434569Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-30T08:30:20.6438383Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-30T08:30:20.6441207Z hint:
+2026-09-30T08:30:20.6442804Z hint: 	git branch -m <name>
+2026-09-30T08:30:20.6444731Z hint:
+2026-09-30T08:30:20.6447334Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-30T08:30:20.6451711Z Initialized empty Git repository in /home/runner/work/SpicyStock/SpicyStock/.git/
+2026-09-30T08:30:20.6458763Z [command]/usr/bin/git remote add origin https://github.com/spicyChicken59/SpicyStock
+2026-09-30T08:30:20.6479430Z ##[endgroup]
+2026-09-30T08:30:20.6482189Z ##[group]Disabling automatic garbage collection
+2026-09-30T08:30:20.6483699Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-30T08:30:20.6532596Z ##[endgroup]
+2026-09-30T08:30:20.6535092Z ##[group]Setting up auth
+2026-09-30T08:30:20.6537581Z Removing SSH command configuration
+2026-09-30T08:30:20.6540264Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-30T08:30:20.6585013Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-30T08:30:20.7006788Z Removing HTTP extra header
+2026-09-30T08:30:20.7014899Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-30T08:30:20.7062057Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-30T08:30:20.7327327Z Removing includeIf entries pointing to credentials config files
+2026-09-30T08:30:20.7331623Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-30T08:30:20.7467933Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-30T08:30:20.7661703Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-30T08:30:20.7713043Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git.path /home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:20.7758635Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:20.7819149Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:20.7869017Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:20.7912984Z ##[endgroup]
+2026-09-30T08:30:20.7916228Z ##[group]Fetching the repository
+2026-09-30T08:30:20.7924400Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin d53155bba5f63f42f65d21b4af708a3257b920f2
+2026-09-30T08:30:24.4453078Z From https://github.com/spicyChicken59/SpicyStock
+2026-09-30T08:30:24.4453645Z  * branch            d53155bba5f63f42f65d21b4af708a3257b920f2 -> FETCH_HEAD
+2026-09-30T08:30:24.4464640Z [command]/usr/bin/git rev-parse --verify --quiet d53155bba5f63f42f65d21b4af708a3257b920f2^{object}
+2026-09-30T08:30:24.4497050Z d53155bba5f63f42f65d21b4af708a3257b920f2
+2026-09-30T08:30:24.4501925Z ##[endgroup]
+2026-09-30T08:30:24.4502378Z ##[group]Determining the checkout info
+2026-09-30T08:30:24.4503006Z ##[endgroup]
+2026-09-30T08:30:24.4509907Z [command]/usr/bin/git sparse-checkout disable
+2026-09-30T08:30:24.4571400Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-30T08:30:24.4632638Z ##[group]Checking out the ref
+2026-09-30T08:30:24.4637152Z [command]/usr/bin/git checkout --progress --force d53155bba5f63f42f65d21b4af708a3257b920f2
+2026-09-30T08:30:25.2499718Z Note: switching to 'd53155bba5f63f42f65d21b4af708a3257b920f2'.
+2026-09-30T08:30:25.2500276Z 
+2026-09-30T08:30:25.2500596Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-30T08:30:25.2501398Z changes and commit them, and you can discard any commits you make in this
+2026-09-30T08:30:25.2502256Z state without impacting any branches by switching back to a branch.
+2026-09-30T08:30:25.2502764Z 
+2026-09-30T08:30:25.2503099Z If you want to create a new branch to retain commits you create, you may
+2026-09-30T08:30:25.2503898Z do so (now or later) by using -c with the switch command. Example:
+2026-09-30T08:30:25.2504407Z 
+2026-09-30T08:30:25.2504651Z   git switch -c <new-branch-name>
+2026-09-30T08:30:25.2505317Z 
+2026-09-30T08:30:25.2505560Z Or undo this operation with:
+2026-09-30T08:30:25.2505910Z 
+2026-09-30T08:30:25.2506066Z   git switch -
+2026-09-30T08:30:25.2506594Z 
+2026-09-30T08:30:25.2506999Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-30T08:30:25.2507600Z 
+2026-09-30T08:30:25.2508036Z HEAD is now at d53155b Add bounded lossless delivery and pinned Linux runtime gate
+2026-09-30T08:30:25.2534282Z ##[endgroup]
+2026-09-30T08:30:25.2587890Z [command]/usr/bin/git log -1 --format=%H
+2026-09-30T08:30:25.2619357Z d53155bba5f63f42f65d21b4af708a3257b920f2
+2026-09-30T08:30:25.2630094Z ##[group]Removing auth
+2026-09-30T08:30:25.2630570Z Removing SSH command configuration
+2026-09-30T08:30:25.2634793Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-30T08:30:25.2672994Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-30T08:30:25.2913567Z Removing HTTP extra header
+2026-09-30T08:30:25.2920601Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-30T08:30:25.2960419Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-30T08:30:25.3201768Z Removing includeIf entries pointing to credentials config files
+2026-09-30T08:30:25.3205616Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-30T08:30:25.3239215Z includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git.path
+2026-09-30T08:30:25.3240297Z includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git/worktrees/*.path
+2026-09-30T08:30:25.3240762Z includeif.gitdir:/github/workspace/.git.path
+2026-09-30T08:30:25.3241191Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-30T08:30:25.3248436Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git.path
+2026-09-30T08:30:25.3303616Z /home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:25.3312283Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-051b9928\-42ac\-4216\-9d2c\-4af88795a70f\.config
+2026-09-30T08:30:25.3350594Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git/worktrees/*.path
+2026-09-30T08:30:25.3377507Z /home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:25.3391505Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/SpicyStock/SpicyStock/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-051b9928\-42ac\-4216\-9d2c\-4af88795a70f\.config
+2026-09-30T08:30:25.3454514Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-09-30T08:30:25.3482957Z /github/runner_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:25.3490711Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-051b9928\-42ac\-4216\-9d2c\-4af88795a70f\.config
+2026-09-30T08:30:25.3535018Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-09-30T08:30:25.3561915Z /github/runner_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config
+2026-09-30T08:30:25.3569844Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-051b9928\-42ac\-4216\-9d2c\-4af88795a70f\.config
+2026-09-30T08:30:25.3608052Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-30T08:30:25.3843314Z Removing credentials config '/home/runner/work/_temp/git-credentials-051b9928-42ac-4216-9d2c-4af88795a70f.config'
+2026-09-30T08:30:25.3853536Z ##[endgroup]
+2026-09-30T08:30:25.4048338Z ##[group]Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+2026-09-30T08:30:25.4048750Z with:
+2026-09-30T08:30:25.4048955Z   python-version: 3.12.14
+2026-09-30T08:30:25.4049195Z   check-latest: false
+2026-09-30T08:30:25.4051576Z   token: ***
+2026-09-30T08:30:25.4051794Z   update-environment: true
+2026-09-30T08:30:25.4052047Z   allow-prereleases: false
+2026-09-30T08:30:25.4052278Z   freethreaded: false
+2026-09-30T08:30:25.4052484Z env:
+2026-09-30T08:30:25.4052663Z   MPLBACKEND: Agg
+2026-09-30T08:30:25.4052860Z   PYTHONUTF8: 1
+2026-09-30T08:30:25.4053075Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T08:30:25.4053315Z   BENCHMARK_CASE: stress
+2026-09-30T08:30:25.4053680Z   BENCHMARK_PARENT: /home/runner/work/_temp/historical-runtime-36690070837-1-stress
+2026-09-30T08:30:25.4054307Z   BENCHMARK_SETUP_START: 1790757020
+2026-09-30T08:30:25.4054553Z ##[endgroup]
+2026-09-30T08:30:25.5239652Z ##[group]Installed versions
+2026-09-30T08:30:25.5278315Z Successfully set up CPython (3.12.14)
+2026-09-30T08:30:25.5279334Z ##[endgroup]
+2026-09-30T08:30:25.5437614Z ##[group]Run set -euo pipefail
+2026-09-30T08:30:25.5438136Z [36;1mset -euo pipefail[0m
+2026-09-30T08:30:25.5438982Z [36;1mpython -m pip install --require-hashes --only-binary=:all: -r tools/requirements-historical-archive.txt[0m
+2026-09-30T08:30:25.5440065Z [36;1mpython -m pip install -r tools/requirements-historical.txt[0m
+2026-09-30T08:30:25.5440949Z [36;1mpython tools/install_historical_age.py --destination "$BENCHMARK_PARENT/age"[0m
+2026-09-30T08:30:25.5518141Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-30T08:30:25.5518512Z env:
+2026-09-30T08:30:25.5518702Z   MPLBACKEND: Agg
+2026-09-30T08:30:25.5518908Z   PYTHONUTF8: 1
+2026-09-30T08:30:25.5519141Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T08:30:25.5519389Z   BENCHMARK_CASE: stress
+2026-09-30T08:30:25.5519774Z   BENCHMARK_PARENT: /home/runner/work/_temp/historical-runtime-36690070837-1-stress
+2026-09-30T08:30:25.5520198Z   BENCHMARK_SETUP_START: 1790757020
+2026-09-30T08:30:25.5520584Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:25.5521029Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-30T08:30:25.5521450Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:25.5521840Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:25.5522225Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:25.5522614Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-30T08:30:25.5522956Z ##[endgroup]
+2026-09-30T08:30:26.5310178Z Collecting zstandard==0.25.0 (from -r tools/requirements-historical-archive.txt (line 4))
+2026-09-30T08:30:26.5799103Z   Downloading zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.5 MB)
+2026-09-30T08:30:26.6408320Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 173.3 MB/s  0:00:00
+2026-09-30T08:30:26.6856708Z Installing collected packages: zstandard
+2026-09-30T08:30:26.7839369Z Successfully installed zstandard-0.25.0
+2026-09-30T08:30:27.3308818Z Collecting pandas==2.2.3 (from -r tools/requirements-historical.txt (line 2))
+2026-09-30T08:30:27.3792534Z   Downloading pandas-2.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (89 kB)
+2026-09-30T08:30:27.6269517Z Collecting numpy==2.3.5 (from -r tools/requirements-historical.txt (line 3))
+2026-09-30T08:30:27.6410144Z   Downloading numpy-2.3.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2026-09-30T08:30:27.6793872Z Collecting anthropic==1.8.0 (from -r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:27.6853599Z   Downloading anthropic-1.8.0-py3-none-any.whl.metadata (3.3 kB)
+2026-09-30T08:30:27.7050829Z Collecting alpaca-py==0.44.0 (from -r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:27.7091053Z   Downloading alpaca_py-0.44.0-py3-none-any.whl.metadata (13 kB)
+2026-09-30T08:30:27.7230271Z Collecting exchange_calendars==4.13.2 (from -r tools/requirements-historical.txt (line 6))
+2026-09-30T08:30:27.7262015Z   Downloading exchange_calendars-4.13.2-py3-none-any.whl.metadata (26 kB)
+2026-09-30T08:30:27.8522338Z Collecting matplotlib==3.10.8 (from -r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:27.8572956Z   Downloading matplotlib-3.10.8-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (52 kB)
+2026-09-30T08:30:27.8799427Z Collecting mplfinance==0.12.10b0 (from -r tools/requirements-historical.txt (line 8))
+2026-09-30T08:30:27.8833486Z   Downloading mplfinance-0.12.10b0-py3-none-any.whl.metadata (19 kB)
+2026-09-30T08:30:27.9038490Z Collecting resend==2.48.0 (from -r tools/requirements-historical.txt (line 9))
+2026-09-30T08:30:27.9113712Z   Downloading resend-2.48.0-py2.py3-none-any.whl.metadata (3.9 kB)
+2026-09-30T08:30:27.9357896Z Collecting pytest==9.1.1 (from -r tools/requirements-historical.txt (line 10))
+2026-09-30T08:30:27.9394539Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-09-30T08:30:27.9768405Z Collecting PyYAML==6.0.3 (from -r tools/requirements-historical.txt (line 11))
+2026-09-30T08:30:27.9804760Z   Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-09-30T08:30:27.9923616Z Collecting httpx2==2.13.1 (from -r tools/requirements-historical.txt (line 12))
+2026-09-30T08:30:27.9957581Z   Downloading httpx2-2.13.1-py3-none-any.whl.metadata (9.8 kB)
+2026-09-30T08:30:28.0103109Z Collecting socksio==1.0.0 (from -r tools/requirements-historical.txt (line 13))
+2026-09-30T08:30:28.0136895Z   Downloading socksio-1.0.0-py3-none-any.whl.metadata (6.1 kB)
+2026-09-30T08:30:28.0176108Z Requirement already satisfied: zstandard==0.25.0 in /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages (from -r tools/requirements-historical.txt (line 14)) (0.25.0)
+2026-09-30T08:30:28.0280048Z Collecting python-dateutil>=2.8.2 (from pandas==2.2.3->-r tools/requirements-historical.txt (line 2))
+2026-09-30T08:30:28.0312713Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-09-30T08:30:28.0650862Z Collecting pytz>=2020.1 (from pandas==2.2.3->-r tools/requirements-historical.txt (line 2))
+2026-09-30T08:30:28.0684543Z   Downloading pytz-2026.4-py2.py3-none-any.whl.metadata (22 kB)
+2026-09-30T08:30:28.0839911Z Collecting tzdata>=2022.7 (from pandas==2.2.3->-r tools/requirements-historical.txt (line 2))
+2026-09-30T08:30:28.0874310Z   Downloading tzdata-2026.4-py2.py3-none-any.whl.metadata (1.4 kB)
+2026-09-30T08:30:28.1053475Z Collecting anyio<5,>=4.1.0 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.1087098Z   Downloading anyio-4.15.1-py3-none-any.whl.metadata (4.7 kB)
+2026-09-30T08:30:28.1204456Z Collecting docstring-parser<1,>=0.15 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.1240404Z   Downloading docstring_parser-0.18.0-py3-none-any.whl.metadata (3.5 kB)
+2026-09-30T08:30:28.2111709Z Collecting jiter<1,>=0.4.0 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.2150723Z   Downloading jiter-0.17.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+2026-09-30T08:30:28.3404541Z Collecting pydantic<3,>=1.10.0 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.3446132Z   Downloading pydantic-2.13.5-py3-none-any.whl.metadata (110 kB)
+2026-09-30T08:30:28.3602531Z Collecting sniffio<2,>=1 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.3642860Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2026-09-30T08:30:28.3801394Z Collecting typing-extensions<5,>=4.14 (from anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:28.3836942Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-09-30T08:30:28.3977617Z Collecting httpcore2==2.13.1 (from httpx2==2.13.1->-r tools/requirements-historical.txt (line 12))
+2026-09-30T08:30:28.4014509Z   Downloading httpcore2-2.13.1-py3-none-any.whl.metadata (26 kB)
+2026-09-30T08:30:28.4167709Z Collecting idna>=3.18 (from httpx2==2.13.1->-r tools/requirements-historical.txt (line 12))
+2026-09-30T08:30:28.4203053Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+2026-09-30T08:30:28.4335770Z Collecting truststore>=0.10 (from httpx2==2.13.1->-r tools/requirements-historical.txt (line 12))
+2026-09-30T08:30:28.4369079Z   Downloading truststore-0.10.4-py3-none-any.whl.metadata (4.4 kB)
+2026-09-30T08:30:28.5231154Z Collecting msgpack<2.0.0,>=1.0.3 (from alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:28.5272539Z   Downloading msgpack-1.2.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.3 kB)
+2026-09-30T08:30:28.5557547Z Collecting requests<3.0.0,>=2.30.0 (from alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:28.5592157Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-09-30T08:30:28.5708352Z Collecting sseclient-py<2.0.0,>=1.7.2 (from alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:28.5748681Z   Downloading sseclient_py-1.9.0-py3-none-any.whl.metadata (1.9 kB)
+2026-09-30T08:30:28.6802275Z Collecting websockets>=10.4 (from alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:28.6837660Z   Downloading websockets-17.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.3 kB)
+2026-09-30T08:30:28.6975736Z Collecting pyluach>=2.3.0 (from exchange_calendars==4.13.2->-r tools/requirements-historical.txt (line 6))
+2026-09-30T08:30:28.7009117Z   Downloading pyluach-2.3.0-py3-none-any.whl.metadata (4.3 kB)
+2026-09-30T08:30:28.7131639Z Collecting toolz>=1.0.0 (from exchange_calendars==4.13.2->-r tools/requirements-historical.txt (line 6))
+2026-09-30T08:30:28.7165166Z   Downloading toolz-1.1.0-py3-none-any.whl.metadata (5.1 kB)
+2026-09-30T08:30:28.7272659Z Collecting korean_lunar_calendar>=0.3.1 (from exchange_calendars==4.13.2->-r tools/requirements-historical.txt (line 6))
+2026-09-30T08:30:28.7305836Z   Downloading korean_lunar_calendar-0.4.0-py3-none-any.whl.metadata (6.6 kB)
+2026-09-30T08:30:28.7945700Z Collecting contourpy>=1.0.1 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:28.7982363Z   Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+2026-09-30T08:30:28.8104345Z Collecting cycler>=0.10 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:28.8142401Z   Downloading cycler-0.12.1-py3-none-any.whl.metadata (3.8 kB)
+2026-09-30T08:30:28.9646184Z Collecting fonttools>=4.22.0 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:28.9682329Z   Downloading fonttools-4.66.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (130 kB)
+2026-09-30T08:30:29.0554624Z Collecting kiwisolver>=1.3.1 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:29.0596159Z   Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.2 kB)
+2026-09-30T08:30:29.0794329Z Collecting packaging>=20.0 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:29.0832887Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-09-30T08:30:29.2698624Z Collecting pillow>=8 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:29.2733725Z   Downloading pillow-12.3.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (9.1 kB)
+2026-09-30T08:30:29.2972757Z Collecting pyparsing>=3 (from matplotlib==3.10.8->-r tools/requirements-historical.txt (line 7))
+2026-09-30T08:30:29.3005370Z   Downloading pyparsing-3.3.3-py3-none-any.whl.metadata (5.9 kB)
+2026-09-30T08:30:29.3173795Z Collecting iniconfig>=1.0.1 (from pytest==9.1.1->-r tools/requirements-historical.txt (line 10))
+2026-09-30T08:30:29.3207738Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-09-30T08:30:29.3376761Z Collecting pluggy<2,>=1.5 (from pytest==9.1.1->-r tools/requirements-historical.txt (line 10))
+2026-09-30T08:30:29.3409453Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-09-30T08:30:29.3593967Z Collecting pygments>=2.7.2 (from pytest==9.1.1->-r tools/requirements-historical.txt (line 10))
+2026-09-30T08:30:29.3637845Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-09-30T08:30:29.3777271Z Collecting h11>=0.16 (from httpcore2==2.13.1->httpx2==2.13.1->-r tools/requirements-historical.txt (line 12))
+2026-09-30T08:30:29.3808829Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-09-30T08:30:29.3965471Z Collecting annotated-types>=0.6.0 (from pydantic<3,>=1.10.0->anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:29.4000812Z   Downloading annotated_types-0.8.0-py3-none-any.whl.metadata (15 kB)
+2026-09-30T08:30:30.0703090Z Collecting pydantic-core==2.46.5 (from pydantic<3,>=1.10.0->anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:30.0739274Z   Downloading pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+2026-09-30T08:30:30.0854523Z Collecting typing-inspection>=0.4.2 (from pydantic<3,>=1.10.0->anthropic==1.8.0->-r tools/requirements-historical.txt (line 4))
+2026-09-30T08:30:30.0890675Z   Downloading typing_inspection-0.4.4-py3-none-any.whl.metadata (2.6 kB)
+2026-09-30T08:30:30.2080511Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.30.0->alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:30.2117840Z   Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (46 kB)
+2026-09-30T08:30:30.2359077Z Collecting urllib3<3,>=1.26 (from requests<3.0.0,>=2.30.0->alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:30.2390423Z   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+2026-09-30T08:30:30.2594828Z Collecting certifi>=2023.5.7 (from requests<3.0.0,>=2.30.0->alpaca-py==0.44.0->-r tools/requirements-historical.txt (line 5))
+2026-09-30T08:30:30.2631089Z   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+2026-09-30T08:30:30.2881248Z Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas==2.2.3->-r tools/requirements-historical.txt (line 2))
+2026-09-30T08:30:30.2913439Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-09-30T08:30:30.3052973Z Downloading pandas-2.2.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (12.7 MB)
+2026-09-30T08:30:30.3593055Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.7/12.7 MB 250.6 MB/s  0:00:00
+2026-09-30T08:30:30.3628746Z Downloading numpy-2.3.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.6 MB)
+2026-09-30T08:30:30.4304752Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.6/16.6 MB 255.0 MB/s  0:00:00
+2026-09-30T08:30:30.4342432Z Downloading anthropic-1.8.0-py3-none-any.whl (1.3 MB)
+2026-09-30T08:30:30.4488908Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 95.9 MB/s  0:00:00
+2026-09-30T08:30:30.4525896Z Downloading httpx2-2.13.1-py3-none-any.whl (95 kB)
+2026-09-30T08:30:30.4598371Z Downloading alpaca_py-0.44.0-py3-none-any.whl (128 kB)
+2026-09-30T08:30:30.4655683Z Downloading exchange_calendars-4.13.2-py3-none-any.whl (213 kB)
+2026-09-30T08:30:30.4756570Z Downloading matplotlib-3.10.8-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (8.7 MB)
+2026-09-30T08:30:30.5288512Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 8.7/8.7 MB 168.0 MB/s  0:00:00
+2026-09-30T08:30:30.5321677Z Downloading mplfinance-0.12.10b0-py3-none-any.whl (75 kB)
+2026-09-30T08:30:30.5402185Z Downloading resend-2.48.0-py2.py3-none-any.whl (95 kB)
+2026-09-30T08:30:30.5459224Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-09-30T08:30:30.5519568Z Downloading pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+2026-09-30T08:30:30.5575028Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 807.9/807.9 kB 168.3 MB/s  0:00:00
+2026-09-30T08:30:30.5612476Z Downloading socksio-1.0.0-py3-none-any.whl (12 kB)
+2026-09-30T08:30:30.5669398Z Downloading httpcore2-2.13.1-py3-none-any.whl (83 kB)
+2026-09-30T08:30:30.5722889Z Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+2026-09-30T08:30:30.5776520Z Downloading docstring_parser-0.18.0-py3-none-any.whl (22 kB)
+2026-09-30T08:30:30.5828098Z Downloading jiter-0.17.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (345 kB)
+2026-09-30T08:30:30.5891951Z Downloading msgpack-1.2.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (472 kB)
+2026-09-30T08:30:30.5954881Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-09-30T08:30:30.6008035Z Downloading pydantic-2.13.5-py3-none-any.whl (472 kB)
+2026-09-30T08:30:30.6071625Z Downloading pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+2026-09-30T08:30:30.6227127Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 138.6 MB/s  0:00:00
+2026-09-30T08:30:30.6263291Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+2026-09-30T08:30:30.6316717Z Downloading charset_normalizer-3.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (257 kB)
+2026-09-30T08:30:30.6372444Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-09-30T08:30:30.6422684Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2026-09-30T08:30:30.6470589Z Downloading sseclient_py-1.9.0-py3-none-any.whl (8.4 kB)
+2026-09-30T08:30:30.6545582Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-09-30T08:30:30.6596775Z Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+2026-09-30T08:30:30.6646417Z Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+2026-09-30T08:30:30.6696746Z Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+2026-09-30T08:30:30.6752131Z Downloading contourpy-1.4.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (383 kB)
+2026-09-30T08:30:30.6807528Z Downloading cycler-0.12.1-py3-none-any.whl (8.3 kB)
+2026-09-30T08:30:30.6859355Z Downloading fonttools-4.66.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.4 MB)
+2026-09-30T08:30:30.7053952Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.4/5.4 MB 311.8 MB/s  0:00:00
+2026-09-30T08:30:30.7092997Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-09-30T08:30:30.7160212Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-09-30T08:30:30.7218299Z Downloading kiwisolver-1.5.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (1.5 MB)
+2026-09-30T08:30:30.7297269Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 243.0 MB/s  0:00:00
+2026-09-30T08:30:30.7330308Z Downloading korean_lunar_calendar-0.4.0-py3-none-any.whl (11 kB)
+2026-09-30T08:30:30.7381524Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-09-30T08:30:30.7442748Z Downloading pillow-12.3.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (6.9 MB)
+2026-09-30T08:30:30.7717964Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.9/6.9 MB 274.1 MB/s  0:00:00
+2026-09-30T08:30:30.7758400Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-09-30T08:30:30.7825451Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 230.4 MB/s  0:00:00
+2026-09-30T08:30:30.7857472Z Downloading pyluach-2.3.0-py3-none-any.whl (25 kB)
+2026-09-30T08:30:30.7919311Z Downloading pyparsing-3.3.3-py3-none-any.whl (126 kB)
+2026-09-30T08:30:30.7972304Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-09-30T08:30:30.8032075Z Downloading pytz-2026.4-py2.py3-none-any.whl (506 kB)
+2026-09-30T08:30:30.8100831Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-09-30T08:30:30.8150015Z Downloading toolz-1.1.0-py3-none-any.whl (58 kB)
+2026-09-30T08:30:30.8200436Z Downloading truststore-0.10.4-py3-none-any.whl (18 kB)
+2026-09-30T08:30:30.8254066Z Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+2026-09-30T08:30:30.8305360Z Downloading tzdata-2026.4-py2.py3-none-any.whl (347 kB)
+2026-09-30T08:30:30.8364080Z Downloading websockets-17.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (224 kB)
+2026-09-30T08:30:31.2222155Z Installing collected packages: pytz, websockets, urllib3, tzdata, typing-extensions, truststore, toolz, sseclient-py, socksio, sniffio, six, PyYAML, pyparsing, pyluach, pygments, pluggy, pillow, packaging, numpy, msgpack, korean_lunar_calendar, kiwisolver, jiter, iniconfig, idna, h11, fonttools, docstring-parser, cycler, charset_normalizer, certifi, annotated-types, typing-inspection, requests, python-dateutil, pytest, pydantic-core, httpcore2, contourpy, anyio, resend, pydantic, pandas, matplotlib, httpx2, mplfinance, exchange_calendars, anthropic, alpaca-py
+2026-09-30T08:30:45.7550725Z 
+2026-09-30T08:30:45.7599585Z Successfully installed PyYAML-6.0.3 alpaca-py-0.44.0 annotated-types-0.8.0 anthropic-1.8.0 anyio-4.15.1 certifi-2026.7.22 charset_normalizer-3.5.2 contourpy-1.4.0 cycler-0.12.1 docstring-parser-0.18.0 exchange_calendars-4.13.2 fonttools-4.66.1 h11-0.16.0 httpcore2-2.13.1 httpx2-2.13.1 idna-3.20 iniconfig-2.3.0 jiter-0.17.0 kiwisolver-1.5.1 korean_lunar_calendar-0.4.0 matplotlib-3.10.8 mplfinance-0.12.10b0 msgpack-1.2.3 numpy-2.3.5 packaging-26.3 pandas-2.2.3 pillow-12.3.0 pluggy-1.6.0 pydantic-2.13.5 pydantic-core-2.46.5 pygments-2.21.0 pyluach-2.3.0 pyparsing-3.3.3 pytest-9.1.1 python-dateutil-2.9.0.post0 pytz-2026.4 requests-2.34.2 resend-2.48.0 six-1.17.0 sniffio-1.3.1 socksio-1.0.0 sseclient-py-1.9.0 toolz-1.1.0 truststore-0.10.4 typing-extensions-4.16.0 typing-inspection-0.4.4 tzdata-2026.4 urllib3-2.8.0 websockets-17.1
+2026-09-30T08:30:46.6368167Z PASS: pinned age release installed
+2026-09-30T08:30:46.6511379Z ##[group]Run set -euo pipefail
+2026-09-30T08:30:46.6511728Z [36;1mset -euo pipefail[0m
+2026-09-30T08:30:46.6511981Z [36;1mumask 077[0m
+2026-09-30T08:30:46.6512314Z [36;1mbenchmark_setup_seconds=$(( $(date +%s) - BENCHMARK_SETUP_START ))[0m
+2026-09-30T08:30:46.6512853Z [36;1mpython tools/historical_projection_benchmark.py --case "$BENCHMARK_CASE" \[0m
+2026-09-30T08:30:46.6513403Z [36;1m  --workspace "$BENCHMARK_PARENT/synthetic-compaction-$BENCHMARK_CASE" \[0m
+2026-09-30T08:30:46.6514021Z [36;1m  --age "$BENCHMARK_PARENT/age/age" --representative --setup-seconds "$benchmark_setup_seconds"[0m
+2026-09-30T08:30:46.6578237Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-30T08:30:46.6578569Z env:
+2026-09-30T08:30:46.6578754Z   MPLBACKEND: Agg
+2026-09-30T08:30:46.6578953Z   PYTHONUTF8: 1
+2026-09-30T08:30:46.6579169Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T08:30:46.6579411Z   BENCHMARK_CASE: stress
+2026-09-30T08:30:46.6579833Z   BENCHMARK_PARENT: /home/runner/work/_temp/historical-runtime-36690070837-1-stress
+2026-09-30T08:30:46.6580265Z   BENCHMARK_SETUP_START: 1790757020
+2026-09-30T08:30:46.6580592Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:46.6581011Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-30T08:30:46.6581421Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:46.6581789Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:46.6582168Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T08:30:46.6582543Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-30T08:30:46.6582864Z ##[endgroup]
+2026-09-30T08:30:47.6708992Z {"case": "stress", "phase": "synthetic_acquisition", "status": "NOT RUN", "action": "starting"}
+2026-09-30T08:32:21.3999033Z {"case": "stress", "phase": "reconcile_2026-09-24", "status": "NOT RUN", "action": "starting"}
+2026-09-30T08:43:57.6303403Z {"case": "stress", "phase": "reconcile_2026-09-25", "status": "NOT RUN", "action": "starting"}
+2026-09-30T08:55:43.0129638Z {"case": "stress", "phase": "inventory", "status": "NOT RUN", "action": "starting"}
+2026-09-30T08:55:44.3671618Z {"case": "stress", "phase": "package", "status": "NOT RUN", "action": "starting"}
+2026-09-30T09:05:44.5345644Z {"status": "FAIL", "case": "stress", "runtime_seconds": 2097.043846}
+2026-09-30T09:05:44.6508912Z ##[error]Process completed with exit code 2.
+2026-09-30T09:05:44.6625614Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+2026-09-30T09:05:44.6626037Z with:
+2026-09-30T09:05:44.6626277Z   name: historical-runtime-stress-36690070837-1
+2026-09-30T09:05:44.6628375Z   path: /home/runner/work/_temp/historical-runtime-36690070837-1-stress/benchmark-preflight.json
+/home/runner/work/_temp/historical-runtime-36690070837-1-stress/synthetic-compaction-stress/benchmark-result.json
+/home/runner/work/_temp/historical-runtime-36690070837-1-stress/synthetic-compaction-stress/runtime-profile.json
+/home/runner/work/_temp/historical-runtime-36690070837-1-stress/synthetic-compaction-stress/synthetic-member-inventory.json
+
+2026-09-30T09:05:44.6630325Z   if-no-files-found: warn
+2026-09-30T09:05:44.6630551Z   retention-days: 7
+2026-09-30T09:05:44.6630760Z   compression-level: 9
+2026-09-30T09:05:44.6630971Z   overwrite: false
+2026-09-30T09:05:44.6631180Z   include-hidden-files: false
+2026-09-30T09:05:44.6631421Z   archive: true
+2026-09-30T09:05:44.6631641Z env:
+2026-09-30T09:05:44.6631822Z   MPLBACKEND: Agg
+2026-09-30T09:05:44.6632016Z   PYTHONUTF8: 1
+2026-09-30T09:05:44.6632223Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T09:05:44.6632457Z   BENCHMARK_CASE: stress
+2026-09-30T09:05:44.6632819Z   BENCHMARK_PARENT: /home/runner/work/_temp/historical-runtime-36690070837-1-stress
+2026-09-30T09:05:44.6633244Z   BENCHMARK_SETUP_START: 1790757020
+2026-09-30T09:05:44.6633560Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T09:05:44.6633976Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib/pkgconfig
+2026-09-30T09:05:44.6634425Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T09:05:44.6634802Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T09:05:44.6635178Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.14/x64
+2026-09-30T09:05:44.6635551Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.14/x64/lib
+2026-09-30T09:05:44.6635870Z ##[endgroup]
+2026-09-30T09:05:44.8277456Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-09-30T09:05:44.8328635Z The least common ancestor is /home/runner/work/_temp/historical-runtime-36690070837-1-stress. This will be the root directory of the artifact
+2026-09-30T09:05:44.8329816Z With the provided path, there will be 3 files uploaded
+2026-09-30T09:05:44.8330612Z Artifact name is valid!
+2026-09-30T09:05:44.8330993Z Root directory input is valid!
+2026-09-30T09:05:45.0210407Z Uploading artifact: historical-runtime-stress-36690070837-1.zip
+2026-09-30T09:05:45.0277743Z Beginning upload of artifact content to blob storage
+2026-09-30T09:05:45.1158531Z Uploaded bytes 24467
+2026-09-30T09:05:45.1698115Z Finished uploading artifact content to blob storage!
+2026-09-30T09:05:45.1699348Z SHA256 digest of uploaded artifact is dcd537c4b405ef477f083b6400215e83a92e128b2ab05fb50b96256a70b8f3d6
+2026-09-30T09:05:45.1700605Z Finalizing artifact upload
+2026-09-30T09:05:45.3921562Z Artifact historical-runtime-stress-36690070837-1 successfully finalized. Artifact ID 11086169552
+2026-09-30T09:05:45.3923244Z Artifact historical-runtime-stress-36690070837-1 has been successfully uploaded! Final size is 24467 bytes. Artifact ID is 11086169552
+2026-09-30T09:05:45.3927181Z Artifact download URL: https://github.com/spicyChicken59/SpicyStock/actions/runs/36690070837/artifacts/11086169552
+2026-09-30T09:05:45.4128997Z Post job cleanup.
+2026-09-30T09:05:45.5022297Z [command]/usr/bin/git version
+2026-09-30T09:05:45.5075468Z git version 2.55.0
+2026-09-30T09:05:45.5117805Z Temporarily overriding HOME='/home/runner/work/_temp/09b2b654-3f24-4c36-9642-1e97b87bd703' before making global git config changes
+2026-09-30T09:05:45.5119463Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-30T09:05:45.5124210Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T09:05:45.5159027Z Removing SSH command configuration
+2026-09-30T09:05:45.5166300Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-30T09:05:45.5203881Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-30T09:05:45.5475330Z Removing HTTP extra header
+2026-09-30T09:05:45.5483145Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-30T09:05:45.5534562Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-30T09:05:45.5815465Z Removing includeIf entries pointing to credentials config files
+2026-09-30T09:05:45.5825475Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-30T09:05:45.5868360Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-30T09:05:45.6324377Z Cleaning up orphan processes
+

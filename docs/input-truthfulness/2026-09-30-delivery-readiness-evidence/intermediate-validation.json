@@ -1,0 +1,64 @@
+{
+  "schema": "historical-delivery-intermediate-validation-v1",
+  "status": "FAIL",
+  "scope": "Preserved intermediate failures; not final-candidate validation or execution approval",
+  "initial_pr_ci": {
+    "checkout_sha": "7c0d35d1b4ea781f1660656a193c5c0ce019f04a",
+    "run_id": 36686934902,
+    "run_attempt": 1,
+    "pytest_job_id": 109794855474,
+    "status": "FAIL",
+    "passed": 2174,
+    "failed": 16,
+    "wall_seconds": 192.02,
+    "reason": "Initial draft contained the v3 guard before migration of package/integration fixtures and current documentation count",
+    "page": "PASS",
+    "secret_scan": "PASS"
+  },
+  "integrated_local_historical_tests": {
+    "status": "FAIL",
+    "passed": 788,
+    "failed": 1,
+    "wall_seconds": 101.99,
+    "reason": "The operator used relative PYTHONPATH for the isolated codec target; the subprocess changed working directory and could not import it",
+    "frozen_recheck": {
+      "status": "PASS",
+      "command": "python -m pytest tests/test_historical_package.py::test_real_age_cli_path_packages_and_recovers_actual_cache -q",
+      "environment_correction": "Absolute paths for the existing Windows resource shim and isolated codec target; no installed environment or source change",
+      "passed": 1,
+      "wall_seconds": 0.70
+    }
+  },
+  "intermediate_local_full_suite": {
+    "status": "FAIL",
+    "collected": 2319,
+    "passed": 2317,
+    "failed": 2,
+    "errors": 0,
+    "skipped": 0,
+    "wall_seconds": 564.18,
+    "reason": "Test collection/import preceded two final code/test additions: CLAUDE count and inspect.getsource used stale imported line coordinates. This run is not final-source proof",
+    "local_log_sha256": "c621734d57bec62543f9a9bafcd9564cba1615ba02b975a81bf2fdbb6c2d9089",
+    "local_log_bytes": 5377,
+    "local_junit_sha256": "679c51f62dc37d87c1d252ec92782e1e14bda89a48feba179522af5160778526",
+    "frozen_recheck": {
+      "status": "PASS",
+      "command": "python -m pytest tests/test_docs.py::test_claude_md_counts_the_suite tests/test_historical_runtime_profile.py::test_removed_overhead_guard_fails_its_controls_and_preserves_unrelated_identity_check -q",
+      "passed": 2,
+      "wall_seconds": 1.83
+    }
+  },
+  "first_full_candidate_ci": {
+    "checkout_sha": "d53155bba5f63f42f65d21b4af708a3257b920f2",
+    "run_id": 36690070837,
+    "run_attempt": 1,
+    "pytest_job_id": 109804916782,
+    "status": "FAIL",
+    "passed": 2315,
+    "failed": 6,
+    "wall_seconds": 191.95,
+    "reason": "Benchmark dependency metadata required socksio even in ordinary CI, where that optional historical-only package is absent. Representative jobs install the full historical pins",
+    "correction": "Report a missing local-test distribution as null; retain strict version checks for representative admission",
+    "provider_requests": 0
+  }
+}

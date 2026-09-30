@@ -1,0 +1,499 @@
+{
+  "age_binary_sha256": "2821a4ed191da07372acd302e5f6feae7a7985e285e1417765ebe74025af45f0",
+  "age_version": "1.3.2",
+  "command": "python -m pytest tests/test_historical_package.py -q --basetemp ../pc-level12 --junitxml ../codec-level12-focused.xml",
+  "errors": 0,
+  "exit_code": 0,
+  "failed": 0,
+  "junit_xml_sha256": "40c9b6ed6134725ace14cf99ecb6864d9f7ec1414d0937d11c681502cd62a3c7",
+  "observed_at": "2026-09-30T09:05:31.624933+00:00",
+  "owner_key_access": "NOT RUN",
+  "passed": 95,
+  "provider_requests": 0,
+  "schema": "historical-codec-focused-tests-v1",
+  "skipped": 0,
+  "source_sha256": {
+    "tools/historical_archive_codec.py": "4a0b4fbbe18eae1a3feed32cc7a6a08a9ee97ebd8e3e507c6029baf031319def",
+    "tools/historical_package.py": "25abc3d522b9a6398f3a9567387bb3e51831f7fa95fcb940c62decbf0c942d9d"
+  },
+  "status": "PASS",
+  "synthetic_only": true,
+  "test_source_sha256": "d13eba96cde0f3047401ba99e5c27c1e8da1ac9982b4c943e388f97fd44b3030",
+  "tests": [
+    {
+      "seconds": 0.156,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_roundtrip_preserves_exact_cache_and_private_sentinel"
+    },
+    {
+      "seconds": 0.114,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_rejects_wrong_key_tampering_and_truncation[wrong_key]"
+    },
+    {
+      "seconds": 0.119,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_rejects_wrong_key_tampering_and_truncation[tampered]"
+    },
+    {
+      "seconds": 0.122,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_rejects_wrong_key_tampering_and_truncation[truncated]"
+    },
+    {
+      "seconds": 0.102,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_invalid_recipient_leaves_no_delivery"
+    },
+    {
+      "seconds": 0.121,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_partial_ledger_and_reserved_budget_remain_recoverable"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unapproved_plaintext_blocks_packaging_before_encryption[api-key.txt]"
+    },
+    {
+      "seconds": 0.029,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unapproved_plaintext_blocks_packaging_before_encryption[unexpected.json]"
+    },
+    {
+      "seconds": 0.027,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unapproved_plaintext_blocks_packaging_before_encryption[ledger.sqlite3-wal]"
+    },
+    {
+      "seconds": 0.029,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unapproved_plaintext_blocks_packaging_before_encryption[unapproved/nested.json]"
+    },
+    {
+      "seconds": 0.028,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_missing_ledger_cannot_be_packaged_as_recovery"
+    },
+    {
+      "seconds": 0.029,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_raw_page_filename_must_bind_exact_retained_bytes"
+    },
+    {
+      "seconds": 0.037,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_failed_encryption_cannot_promote_or_log_source"
+    },
+    {
+      "seconds": 0.002,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_provider_and_github_secrets_never_enter_age_environment"
+    },
+    {
+      "seconds": 0.001,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_non_native_or_multiple_recipient_forms_rejected[]"
+    },
+    {
+      "seconds": 0.002,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_non_native_or_multiple_recipient_forms_rejected[age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p\\n]"
+    },
+    {
+      "seconds": 0.002,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_non_native_or_multiple_recipient_forms_rejected[age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p]"
+    },
+    {
+      "seconds": 0.001,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_non_native_or_multiple_recipient_forms_rejected[ssh-ed25519 AAAA]"
+    },
+    {
+      "seconds": 0.001,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_non_native_or_multiple_recipient_forms_rejected[age1plugin1qqqq]"
+    },
+    {
+      "seconds": 0.026,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_public_metadata_disallows_sensitive_extra_fields"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_native_phase_and_recovery_binding_reject_before_encryption[run_number-1]"
+    },
+    {
+      "seconds": 0.026,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_native_phase_and_recovery_binding_reject_before_encryption[assignment_phase-2]"
+    },
+    {
+      "seconds": 0.025,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_native_phase_and_recovery_binding_reject_before_encryption[run_attempt-2]"
+    },
+    {
+      "seconds": 0.029,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_native_phase_and_recovery_binding_reject_before_encryption[implementation_pr-94]"
+    },
+    {
+      "seconds": 0.028,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_native_phase_and_recovery_binding_reject_before_encryption[recovery_contract_sha256-ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff]"
+    },
+    {
+      "seconds": 0.025,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_package_cannot_overwrite_a_disagreeing_execution_identity[manifest_sha256]"
+    },
+    {
+      "seconds": 0.028,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_package_cannot_overwrite_a_disagreeing_execution_identity[recipient_sha256]"
+    },
+    {
+      "seconds": 0.091,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_old_receipt_is_not_reinterpreted_under_recovery_contract"
+    },
+    {
+      "seconds": 0.001,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_ciphertext_limit_is_fixed_and_separate_from_response_budget"
+    },
+    {
+      "seconds": 0.032,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_compressed_size_limit_blocks_before_encryption"
+    },
+    {
+      "seconds": 0.094,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_delivery_allows_no_plaintext_sentinel"
+    },
+    {
+      "seconds": 0.093,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_receipt_must_match_independently_verified_run"
+    },
+    {
+      "seconds": 0.035,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-traversal]"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-symlink]"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-hardlink]"
+    },
+    {
+      "seconds": 0.03,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-unapproved]"
+    },
+    {
+      "seconds": 0.034,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-duplicate]"
+    },
+    {
+      "seconds": 0.037,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-missing_ledger]"
+    },
+    {
+      "seconds": 0.034,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[True-hash]"
+    },
+    {
+      "seconds": 0.029,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-traversal]"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-symlink]"
+    },
+    {
+      "seconds": 0.032,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-hardlink]"
+    },
+    {
+      "seconds": 0.031,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-unapproved]"
+    },
+    {
+      "seconds": 0.035,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-duplicate]"
+    },
+    {
+      "seconds": 0.031,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-missing_ledger]"
+    },
+    {
+      "seconds": 0.031,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_safe_archive_recovery_rejects_unsafe_members[False-hash]"
+    },
+    {
+      "seconds": 0.03,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_hardlinked_source_is_not_permitted"
+    },
+    {
+      "seconds": 0.025,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_guard_projection_keeps_approval_text_out_of_public_metadata"
+    },
+    {
+      "seconds": 0.587,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_cli_path_packages_and_recovers_actual_cache"
+    },
+    {
+      "seconds": 0.023,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_cli_errors_do_not_echo_private_paths_or_values"
+    },
+    {
+      "seconds": 3.689,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_actual_runner_reconciliation_encryption_recovery_and_offline_replay"
+    },
+    {
+      "seconds": 0.235,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_real_age_legacy_v2_gzip_recovers_original_members_and_guard"
+    },
+    {
+      "seconds": 0.033,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_new_writer_requires_each_new_identity_digest[compatibility_contract_sha256]"
+    },
+    {
+      "seconds": 0.025,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_new_writer_requires_each_new_identity_digest[release_evidence_sha256]"
+    },
+    {
+      "seconds": 0.102,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unsupported_receipt_refuses_before_identity_or_decryption[archive_format-ustar-xz-v1]"
+    },
+    {
+      "seconds": 0.102,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unsupported_receipt_refuses_before_identity_or_decryption[ciphertext_name-../evidence.tar.zst.age]"
+    },
+    {
+      "seconds": 0.101,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unsupported_receipt_refuses_before_identity_or_decryption[archive_bytes-208666625]"
+    },
+    {
+      "seconds": 0.102,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unsupported_receipt_refuses_before_identity_or_decryption[archive_bytes-True]"
+    },
+    {
+      "seconds": 0.119,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_unsupported_receipt_refuses_before_identity_or_decryption[archive_sha256-bad]"
+    },
+    {
+      "seconds": 0.035,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_archive_metrics_include_index_and_actual_tar_framing"
+    },
+    {
+      "seconds": 0.031,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_writer_refuses_metadata_the_reader_cannot_allocate"
+    },
+    {
+      "seconds": 0.035,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_interrupted_archive_never_creates_delivery_and_retains_sources"
+    },
+    {
+      "seconds": 0.129,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_interrupted_recovery_never_promotes_or_leaves_plaintext"
+    },
+    {
+      "seconds": 0.112,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_authenticated_archive_must_match_outer_receipt"
+    },
+    {
+      "seconds": 0.008,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_valid_single_stream_roundtrip[ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.019,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_valid_single_stream_roundtrip[ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.006,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[truncated-ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.016,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[truncated-ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.014,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[corrupt-ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.015,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[corrupt-ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.01,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[garbage_tail-ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.015,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[garbage_tail-ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.011,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[second_frame-ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.015,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[second_frame-ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.012,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[zero_tail-ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.016,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_rejects_incomplete_corrupt_or_trailing_streams[zero_tail-ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.011,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_output_allocation_and_spool_are_bounded[ustar-zstandard-v1]"
+    },
+    {
+      "seconds": 0.011,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_output_allocation_and_spool_are_bounded[ustar-gzip-v1]"
+    },
+    {
+      "seconds": 0.011,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[no_checksum]"
+    },
+    {
+      "seconds": 0.011,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[unknown_size]"
+    },
+    {
+      "seconds": 0.008,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[window]"
+    },
+    {
+      "seconds": 0.01,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[skippable]"
+    },
+    {
+      "seconds": 0.014,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[reserved_bit]"
+    },
+    {
+      "seconds": 0.013,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_resources_rejected_before_decoder_allocation[dict_id]"
+    },
+    {
+      "seconds": 0.015,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_zstandard_window_api_receives_bytes_and_actual_stream_decodes"
+    },
+    {
+      "seconds": 0.01,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_runtime_version_is_pinned[__version__-0.24.0]"
+    },
+    {
+      "seconds": 0.009,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_runtime_version_is_pinned[ZSTD_VERSION-value1]"
+    },
+    {
+      "seconds": 0.009,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_codec_runtime_version_is_pinned[backend-cffi]"
+    },
+    {
+      "seconds": 0.094,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[tar_tail]"
+    },
+    {
+      "seconds": 0.09,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[tar_second]"
+    },
+    {
+      "seconds": 0.098,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[tar_zero_record]"
+    },
+    {
+      "seconds": 0.097,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[bad_end]"
+    },
+    {
+      "seconds": 0.091,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[index_cap]"
+    },
+    {
+      "seconds": 0.088,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[metadata_cap]"
+    },
+    {
+      "seconds": 0.086,
+      "status": "PASS",
+      "test_node": "tests/test_historical_package.py::test_tar_framing_and_true_payload_limit_fail_closed[pax]"
+    }
+  ]
+}
