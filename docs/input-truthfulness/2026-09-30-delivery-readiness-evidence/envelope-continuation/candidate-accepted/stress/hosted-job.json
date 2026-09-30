@@ -1,0 +1,69 @@
+{
+  "api_observations": {
+    "artifact": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/artifact-11110657864.json",
+      "sha256": "61d57b86bb8a7c434447021ab87f446bf6cc5c80fad05608a189d89123f02743"
+    },
+    "job": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-job-109953975803.json",
+      "sha256": "95b7537b01722839a90d93611aa279fd168a83b7d35c3e5c9063227df9e97908"
+    },
+    "run": {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/tests-run.json",
+      "sha256": "75aed3620e96e9d76d9c7268f3fff4298ba6dbf3c7bce5177c53a298ff28c772"
+    }
+  },
+  "artifact": {
+    "archive_bytes": 26550,
+    "archive_sha256": "abc81923766137dc8ed98e58d0ace6ac7009e707c28c62442be644ccc5e276e2",
+    "files": {
+      "inventory": {
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/synthetic-member-inventory.json",
+        "sha256": "bcb90f3e0b786e48772424eb640fc0eb9f8abfd687d974830335188ea476cdda"
+      },
+      "memory": {
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/memory-envelope.json",
+        "sha256": "fec8677ee37e3db0f6980e174627eb04f1df877f8e901fc1ba54615198708ff8"
+      },
+      "profile": {
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/runtime-profile.json",
+        "sha256": "1dbda1a0a1d766adf7be15d2a48069b83276e1505f25ab337db80778aa59c7f8"
+      },
+      "report": {
+        "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/benchmark-result.json",
+        "sha256": "957ab3a814593b85ac9dc78f8c2c93c66b19068fc25c0b1c2186c6b188746e83"
+      }
+    },
+    "id": 11110657864,
+    "name": "historical-runtime-stress-36734865293-1"
+  },
+  "case": "stress",
+  "checkout_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+  "completed_at": "2026-09-30T16:01:42Z",
+  "conclusion": "success",
+  "event": "pull_request",
+  "head_sha": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+  "implementation_pr": 97,
+  "job_id": 109953975803,
+  "observations": [
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/historical-runtime-stress-log.txt",
+      "sha256": "4c0d7a2c5eb09247df12a05bf6512b2ff861d1c15141c0855a9c41d75f7c6761"
+    },
+    {
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/download-verification.json",
+      "sha256": "0cea52adcdf1f40508e99582dbb670a9ff72813917be8294a4fafb2346198baf"
+    }
+  ],
+  "observed_at": "2026-09-30T16:03:40.401094+00:00",
+  "repository": "spicyChicken59/SpicyStock",
+  "run_attempt": 1,
+  "run_conclusion": "success",
+  "run_id": 36734865293,
+  "run_status": "completed",
+  "schema": "historical-delivery-runtime-ci-input-v2",
+  "started_at": "2026-09-30T15:12:17Z",
+  "status": "completed",
+  "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/36734865293/job/109953975803",
+  "workflow_path": ".github/workflows/tests.yml"
+}

@@ -1,0 +1,254 @@
+﻿2026-09-30T15:11:52.1807110Z Current runner version: '2.337.0'
+2026-09-30T15:11:52.1824657Z ##[group]Runner Image Provisioner
+2026-09-30T15:11:52.1825314Z Hosted Compute Agent
+2026-09-30T15:11:52.1825737Z Version: 20260828.587
+2026-09-30T15:11:52.1826159Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-30T15:11:52.1826643Z Build Date: 2026-08-28T16:44:25Z
+2026-09-30T15:11:52.1827175Z Worker ID: {6394c964-614b-4b0b-bf2d-8124354c04a5}
+2026-09-30T15:11:52.1827644Z Azure Region: centralus
+2026-09-30T15:11:52.1828052Z ##[endgroup]
+2026-09-30T15:11:52.1828900Z ##[group]Operating System
+2026-09-30T15:11:52.1829303Z Ubuntu
+2026-09-30T15:11:52.1829666Z 24.04.5
+2026-09-30T15:11:52.1830053Z LTS
+2026-09-30T15:11:52.1830408Z ##[endgroup]
+2026-09-30T15:11:52.1830785Z ##[group]Runner Image
+2026-09-30T15:11:52.1831179Z Image: ubuntu-24.04
+2026-09-30T15:11:52.1831570Z Version: 20260920.314.1
+2026-09-30T15:11:52.1832464Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-30T15:11:52.1833688Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+2026-09-30T15:11:52.1834337Z ##[endgroup]
+2026-09-30T15:11:52.1835181Z ##[group]GITHUB_TOKEN Permissions
+2026-09-30T15:11:52.1836657Z Contents: read
+2026-09-30T15:11:52.1837061Z Metadata: read
+2026-09-30T15:11:52.1837477Z PullRequests: read
+2026-09-30T15:11:52.1837845Z ##[endgroup]
+2026-09-30T15:11:52.1839208Z Secret source: Actions
+2026-09-30T15:11:52.1839831Z Cache mode: write
+2026-09-30T15:11:52.1840314Z Prepare workflow directory
+2026-09-30T15:11:52.2060069Z Prepare all required actions
+2026-09-30T15:11:52.2095089Z Getting action download info
+2026-09-30T15:11:52.5370086Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-30T15:11:53.3983005Z Download action repository 'gitleaks/gitleaks-action@v2' (SHA:ff98106e4c7b2bc287b24eaf42907196329070c7)
+2026-09-30T15:11:53.9519856Z Complete job name: gitleaks
+2026-09-30T15:11:54.0129478Z ##[group]Run actions/checkout@v4
+2026-09-30T15:11:54.0130549Z with:
+2026-09-30T15:11:54.0131238Z   fetch-depth: 0
+2026-09-30T15:11:54.0132078Z   repository: spicyChicken59/SpicyStock
+2026-09-30T15:11:54.0138800Z   token: ***
+2026-09-30T15:11:54.0139580Z   ssh-strict: true
+2026-09-30T15:11:54.0140341Z   ssh-user: git
+2026-09-30T15:11:54.0141059Z   persist-credentials: true
+2026-09-30T15:11:54.0141902Z   clean: true
+2026-09-30T15:11:54.0142629Z   sparse-checkout-cone-mode: true
+2026-09-30T15:11:54.0143635Z   fetch-tags: false
+2026-09-30T15:11:54.0144382Z   show-progress: true
+2026-09-30T15:11:54.0145106Z   lfs: false
+2026-09-30T15:11:54.0145818Z   submodules: false
+2026-09-30T15:11:54.0146543Z   set-safe-directory: true
+2026-09-30T15:11:54.0147363Z   allow-unsafe-pr-checkout: false
+2026-09-30T15:11:54.0148449Z ##[endgroup]
+2026-09-30T15:11:54.0938428Z Syncing repository: spicyChicken59/SpicyStock
+2026-09-30T15:11:54.0941232Z ##[group]Getting Git version info
+2026-09-30T15:11:54.0943114Z Working directory is '/home/runner/work/SpicyStock/SpicyStock'
+2026-09-30T15:11:54.0945382Z [command]/usr/bin/git version
+2026-09-30T15:11:54.1215178Z git version 2.55.0
+2026-09-30T15:11:54.1232503Z ##[endgroup]
+2026-09-30T15:11:54.1240940Z Temporarily overriding HOME='/home/runner/work/_temp/3cb8d3bf-e428-498a-835b-b1f124e13080' before making global git config changes
+2026-09-30T15:11:54.1244054Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-30T15:11:54.1246415Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T15:11:54.1288243Z Deleting the contents of '/home/runner/work/SpicyStock/SpicyStock'
+2026-09-30T15:11:54.1292023Z ##[group]Initializing the repository
+2026-09-30T15:11:54.1294204Z [command]/usr/bin/git init /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T15:11:54.3350808Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-30T15:11:54.3352818Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-30T15:11:54.3355025Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-30T15:11:54.3356542Z hint: call:
+2026-09-30T15:11:54.3357257Z hint:
+2026-09-30T15:11:54.3358141Z hint: 	git config --global init.defaultBranch <name>
+2026-09-30T15:11:54.3359112Z hint:
+2026-09-30T15:11:54.3360278Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-30T15:11:54.3362016Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-30T15:11:54.3363423Z hint:
+2026-09-30T15:11:54.3364168Z hint: 	git branch -m <name>
+2026-09-30T15:11:54.3364947Z hint:
+2026-09-30T15:11:54.3366318Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-30T15:11:54.3368029Z Initialized empty Git repository in /home/runner/work/SpicyStock/SpicyStock/.git/
+2026-09-30T15:11:54.3370869Z [command]/usr/bin/git remote add origin https://github.com/spicyChicken59/SpicyStock
+2026-09-30T15:11:54.3409097Z ##[endgroup]
+2026-09-30T15:11:54.3410510Z ##[group]Disabling automatic garbage collection
+2026-09-30T15:11:54.3412072Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-30T15:11:54.3438553Z ##[endgroup]
+2026-09-30T15:11:54.3440126Z ##[group]Setting up auth
+2026-09-30T15:11:54.3443963Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-30T15:11:54.3468905Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-30T15:11:54.5230439Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-30T15:11:54.5265110Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-30T15:11:54.5439523Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-30T15:11:54.5468966Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-30T15:11:54.5634488Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-30T15:11:54.5668603Z ##[endgroup]
+2026-09-30T15:11:54.5670648Z ##[group]Fetching the repository
+2026-09-30T15:11:54.5679675Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +ab23402815cd1904061fc6c7714b5621b59ca12e:refs/remotes/pull/97/merge
+2026-09-30T15:13:14.9342081Z From https://github.com/spicyChicken59/SpicyStock
+2026-09-30T15:13:14.9343328Z  * [new branch]      audit/consolidation-source-fidelity      -> origin/audit/consolidation-source-fidelity
+2026-09-30T15:13:14.9344475Z  * [new branch]      audit/next-session-readiness-20260908    -> origin/audit/next-session-readiness-20260908
+2026-09-30T15:13:14.9345291Z  * [new branch]      claude/amazing-ritchie-k95p6g            -> origin/claude/amazing-ritchie-k95p6g
+2026-09-30T15:13:14.9346165Z  * [new branch]      claude/fervent-dirac-9digzt              -> origin/claude/fervent-dirac-9digzt
+2026-09-30T15:13:14.9347072Z  * [new branch]      claude/inspiring-albattani-shbuoa        -> origin/claude/inspiring-albattani-shbuoa
+2026-09-30T15:13:14.9347975Z  * [new branch]      claude/spicy-stock-run-failure-jvx7z0    -> origin/claude/spicy-stock-run-failure-jvx7z0
+2026-09-30T15:13:14.9348793Z  * [new branch]      claude/spicystock-compare-evidence-j30kl4 -> origin/claude/spicystock-compare-evidence-j30kl4
+2026-09-30T15:13:14.9349569Z  * [new branch]      claude/spicystock-compare-evidence-y3hykv -> origin/claude/spicystock-compare-evidence-y3hykv
+2026-09-30T15:13:14.9350442Z  * [new branch]      claude/spicystock-continuation-klvyz0    -> origin/claude/spicystock-continuation-klvyz0
+2026-09-30T15:13:14.9351216Z  * [new branch]      claude/spicystock-follow-through-clqeb8  -> origin/claude/spicystock-follow-through-clqeb8
+2026-09-30T15:13:14.9352292Z  * [new branch]      claude/spicystock-rebuild-cont-eyma9b    -> origin/claude/spicystock-rebuild-cont-eyma9b
+2026-09-30T15:13:14.9353297Z  * [new branch]      claude/spicystock-release-acceptance-l5a1nm -> origin/claude/spicystock-release-acceptance-l5a1nm
+2026-09-30T15:13:14.9354164Z  * [new branch]      claude/spicystock-repo-import-q6ww5b     -> origin/claude/spicystock-repo-import-q6ww5b
+2026-09-30T15:13:14.9355350Z  * [new branch]      claude/spicystock-ticket-record-fixes-su1nh1 -> origin/claude/spicystock-ticket-record-fixes-su1nh1
+2026-09-30T15:13:14.9356159Z  * [new branch]      claude/vibrant-volta-7ft7cn              -> origin/claude/vibrant-volta-7ft7cn
+2026-09-30T15:13:14.9356808Z  * [new branch]      claude/volume-repair-mobile-entry-zo54u9 -> origin/claude/volume-repair-mobile-entry-zo54u9
+2026-09-30T15:13:14.9357458Z  * [new branch]      closeout/streak-scoring                  -> origin/closeout/streak-scoring
+2026-09-30T15:13:14.9357983Z  * [new branch]      codex/dated-directory-catalog            -> origin/codex/dated-directory-catalog
+2026-09-30T15:13:14.9359255Z  * [new branch]      codex/simple-stock-flow                  -> origin/codex/simple-stock-flow
+2026-09-30T15:13:14.9360080Z  * [new branch]      codex/spicyloop-fixture-determinism      -> origin/codex/spicyloop-fixture-determinism
+2026-09-30T15:13:14.9361218Z  * [new branch]      codex/universe-directory-retry           -> origin/codex/universe-directory-retry
+2026-09-30T15:13:14.9362013Z  * [new branch]      codex/universe-runner                    -> origin/codex/universe-runner
+2026-09-30T15:13:14.9362911Z  * [new branch]      codex/visual-trading-desk                -> origin/codex/visual-trading-desk
+2026-09-30T15:13:14.9363491Z  * [new branch]      continuity/my-setups                     -> origin/continuity/my-setups
+2026-09-30T15:13:14.9364293Z  * [new branch]      design/benchmark-rail                    -> origin/design/benchmark-rail
+2026-09-30T15:13:14.9364930Z  * [new branch]      design/brand-integration                 -> origin/design/brand-integration
+2026-09-30T15:13:14.9365480Z  * [new branch]      design/composition-studio                -> origin/design/composition-studio
+2026-09-30T15:13:14.9366034Z  * [new branch]      design/data-presentation                 -> origin/design/data-presentation
+2026-09-30T15:13:14.9366723Z  * [new branch]      design/home-signal-map                   -> origin/design/home-signal-map
+2026-09-30T15:13:14.9367397Z  * [new branch]      design/instrument-dossier                -> origin/design/instrument-dossier
+2026-09-30T15:13:14.9367932Z  * [new branch]      design/print-deliverables                -> origin/design/print-deliverables
+2026-09-30T15:13:14.9368480Z  * [new branch]      design/print-table-flow                  -> origin/design/print-table-flow
+2026-09-30T15:13:14.9369034Z  * [new branch]      design/signal-matrix                     -> origin/design/signal-matrix
+2026-09-30T15:13:14.9369823Z  * [new branch]      design/stock-brand-stage                 -> origin/design/stock-brand-stage
+2026-09-30T15:13:14.9370693Z  * [new branch]      feat/research-cockpit-20260908           -> origin/feat/research-cockpit-20260908
+2026-09-30T15:13:14.9371345Z  * [new branch]      feat/stockbee-investor-workflow-20260908 -> origin/feat/stockbee-investor-workflow-20260908
+2026-09-30T15:13:14.9371997Z  * [new branch]      feat/stockbee-trading-desk-20260908      -> origin/feat/stockbee-trading-desk-20260908
+2026-09-30T15:13:14.9372789Z  * [new branch]      fix/blank-check-universe-classification  -> origin/fix/blank-check-universe-classification
+2026-09-30T15:13:14.9373496Z  * [new branch]      fix/chart-table-keyboard-access          -> origin/fix/chart-table-keyboard-access
+2026-09-30T15:13:14.9374104Z  * [new branch]      fix/evidence-focus-reframing             -> origin/fix/evidence-focus-reframing
+2026-09-30T15:13:14.9374732Z  * [new branch]      fix/explore-pane-scrolling               -> origin/fix/explore-pane-scrolling
+2026-09-30T15:13:14.9375415Z  * [new branch]      fix/fallback-risk-attribution            -> origin/fix/fallback-risk-attribution
+2026-09-30T15:13:14.9376025Z  * [new branch]      fix/historical-delivery-readiness        -> origin/fix/historical-delivery-readiness
+2026-09-30T15:13:14.9376708Z  * [new branch]      fix/historical-projection-compaction     -> origin/fix/historical-projection-compaction
+2026-09-30T15:13:14.9377384Z  * [new branch]      fix/historical-validation-usable-plans   -> origin/fix/historical-validation-usable-plans
+2026-09-30T15:13:14.9378085Z  * [new branch]      fix/historical-workflow-validation-recovery -> origin/fix/historical-workflow-validation-recovery
+2026-09-30T15:13:14.9378816Z  * [new branch]      fix/mobile-session-card-20260908         -> origin/fix/mobile-session-card-20260908
+2026-09-30T15:13:14.9379443Z  * [new branch]      fix/reader-coverage-actionability        -> origin/fix/reader-coverage-actionability
+2026-09-30T15:13:14.9380097Z  * [new branch]      fix/reader-explanation-authority         -> origin/fix/reader-explanation-authority
+2026-09-30T15:13:14.9380725Z  * [new branch]      fix/reader-production-compatibility      -> origin/fix/reader-production-compatibility
+2026-09-30T15:13:14.9381322Z  * [new branch]      fix/reader-source-authority              -> origin/fix/reader-source-authority
+2026-09-30T15:13:14.9381948Z  * [new branch]      fix/research-asset-cache-20260908        -> origin/fix/research-asset-cache-20260908
+2026-09-30T15:13:14.9382587Z  * [new branch]      fix/windows-evidence-publication         -> origin/fix/windows-evidence-publication
+2026-09-30T15:13:14.9383368Z  * [new branch]      grading/scan-aware-contract              -> origin/grading/scan-aware-contract
+2026-09-30T15:13:14.9384019Z  * [new branch]      investigate/historical-input-breadth-proof -> origin/investigate/historical-input-breadth-proof
+2026-09-30T15:13:14.9384756Z  * [new branch]      investigation/stale-inputs-20260918      -> origin/investigation/stale-inputs-20260918
+2026-09-30T15:13:14.9385316Z  * [new branch]      main                                     -> origin/main
+2026-09-30T15:13:14.9385830Z  * [new branch]      ops/historical-proof-execution           -> origin/ops/historical-proof-execution
+2026-09-30T15:13:14.9386466Z  * [new branch]      product/followed-plan                    -> origin/product/followed-plan
+2026-09-30T15:13:14.9387077Z  * [new branch]      product/model-scorecard                  -> origin/product/model-scorecard
+2026-09-30T15:13:14.9387598Z  * [new branch]      readiness/live-proof                     -> origin/readiness/live-proof
+2026-09-30T15:13:14.9388180Z  * [new branch]      reliability/exchange-sessions            -> origin/reliability/exchange-sessions
+2026-09-30T15:13:14.9388792Z  * [new branch]      reliability/input-exception-evidence     -> origin/reliability/input-exception-evidence
+2026-09-30T15:13:14.9389424Z  * [new branch]      reliability/input-truthfulness           -> origin/reliability/input-truthfulness
+2026-09-30T15:13:14.9390061Z  * [new branch]      reliability/recommendation-provenance    -> origin/reliability/recommendation-provenance
+2026-09-30T15:13:14.9390712Z  * [new branch]      reliability/retained-quality-ledger      -> origin/reliability/retained-quality-ledger
+2026-09-30T15:13:14.9391354Z  * [new branch]      strategy/dollar-source-contract          -> origin/strategy/dollar-source-contract
+2026-09-30T15:13:14.9392009Z  * [new branch]      ux/burst-actionability                   -> origin/ux/burst-actionability
+2026-09-30T15:13:14.9392582Z  * [new branch]      ux/first-visit-clarity                   -> origin/ux/first-visit-clarity
+2026-09-30T15:13:14.9393256Z  * [new ref]         ab23402815cd1904061fc6c7714b5621b59ca12e -> pull/97/merge
+2026-09-30T15:13:14.9394788Z ##[endgroup]
+2026-09-30T15:13:14.9395287Z ##[group]Determining the checkout info
+2026-09-30T15:13:14.9395758Z ##[endgroup]
+2026-09-30T15:13:14.9396119Z [command]/usr/bin/git sparse-checkout disable
+2026-09-30T15:13:14.9885598Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-30T15:13:14.9950281Z ##[group]Checking out the ref
+2026-09-30T15:13:14.9953153Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/97/merge
+2026-09-30T15:13:15.5257321Z Note: switching to 'refs/remotes/pull/97/merge'.
+2026-09-30T15:13:15.5257850Z 
+2026-09-30T15:13:15.5258186Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-09-30T15:13:15.5258708Z changes and commit them, and you can discard any commits you make in this
+2026-09-30T15:13:15.5259199Z state without impacting any branches by switching back to a branch.
+2026-09-30T15:13:15.5259415Z 
+2026-09-30T15:13:15.5259608Z If you want to create a new branch to retain commits you create, you may
+2026-09-30T15:13:15.5260001Z do so (now or later) by using -c with the switch command. Example:
+2026-09-30T15:13:15.5260266Z 
+2026-09-30T15:13:15.5260405Z   git switch -c <new-branch-name>
+2026-09-30T15:13:15.5260626Z 
+2026-09-30T15:13:15.5260731Z Or undo this operation with:
+2026-09-30T15:13:15.5260893Z 
+2026-09-30T15:13:15.5261033Z   git switch -
+2026-09-30T15:13:15.5261147Z 
+2026-09-30T15:13:15.5261354Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-09-30T15:13:15.5261597Z 
+2026-09-30T15:13:15.5261876Z HEAD is now at ab23402 Merge ca881bba3600d4eadee5481e5528161a5c2edb99 into 19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc
+2026-09-30T15:13:15.5283735Z ##[endgroup]
+2026-09-30T15:13:15.5328289Z [command]/usr/bin/git log -1 --format=%H
+2026-09-30T15:13:15.5349064Z ab23402815cd1904061fc6c7714b5621b59ca12e
+2026-09-30T15:13:15.5514817Z ##[group]Run gitleaks/gitleaks-action@v2
+2026-09-30T15:13:15.5515095Z env:
+2026-09-30T15:13:15.5517185Z   GITHUB_TOKEN: ***
+2026-09-30T15:13:15.5517401Z ##[endgroup]
+2026-09-30T15:13:15.6731191Z (node:2137) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-30T15:13:15.6732072Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-30T15:13:15.6821492Z (node:2137) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-30T15:13:16.0071320Z [spicyChicken59] is an individual user. No license key is required.
+2026-09-30T15:13:16.0071984Z gitleaks version: 8.24.3
+2026-09-30T15:13:16.0073371Z Version to install: 8.24.3 (target directory: /tmp/gitleaks-8.24.3)
+2026-09-30T15:13:16.2569786Z Cache hit for: gitleaks-cache-8.24.3-linux-x64
+2026-09-30T15:13:17.1105595Z Received 5712931 of 5712931 (100.0%), 8.2 MBs/sec
+2026-09-30T15:13:17.1106630Z Cache Size: ~5 MB (5712931 B)
+2026-09-30T15:13:17.1128327Z [command]/usr/bin/tar -xf /home/runner/work/_temp/d5ae0e8f-f59a-4d7b-b7d6-fa4fc277df87/cache.tzst -P -C /home/runner/work/SpicyStock/SpicyStock --use-compress-program unzstd
+2026-09-30T15:13:17.1865733Z Cache restored successfully
+2026-09-30T15:13:17.1869282Z Gitleaks restored from cache
+2026-09-30T15:13:17.1871546Z event type: pull_request
+2026-09-30T15:13:17.6441322Z gitleaks cmd: gitleaks detect --redact -v --exit-code=2 --report-format=sarif --report-path=results.sarif --log-level=debug --log-opts=--no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..ca881bba3600d4eadee5481e5528161a5c2edb99
+2026-09-30T15:13:17.6452036Z [command]/tmp/gitleaks-8.24.3/gitleaks detect --redact -v --exit-code=2 --report-format=sarif --report-path=results.sarif --log-level=debug --log-opts=--no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..ca881bba3600d4eadee5481e5528161a5c2edb99
+2026-09-30T15:13:17.8462075Z 
+2026-09-30T15:13:17.8463160Z     ○
+2026-09-30T15:13:17.8463771Z     │╲
+2026-09-30T15:13:17.8464333Z     │ ○
+2026-09-30T15:13:17.8464697Z     ○ ░
+2026-09-30T15:13:17.8465093Z     ░    gitleaks
+2026-09-30T15:13:17.8465364Z 
+2026-09-30T15:13:17.8465820Z [90m3:13PM[0m DBG using github.com/wasilibs/go-re2 regex engine
+2026-09-30T15:13:17.8466699Z [90m3:13PM[0m DBG using existing gitleaks config .gitleaks.toml from `(--source)/.gitleaks.toml`
+2026-09-30T15:13:17.9378858Z [90m3:13PM[0m DBG extending config with default config
+2026-09-30T15:13:17.9388696Z [90m3:13PM[0m DBG found .gitleaksignore file: .gitleaksignore
+2026-09-30T15:13:17.9389133Z [90m3:13PM[0m DBG found .gitleaksignore file: .gitleaksignore
+2026-09-30T15:13:17.9394118Z [90m3:13PM[0m DBG executing: /usr/bin/git -C . log -p -U0 --no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..ca881bba3600d4eadee5481e5528161a5c2edb99
+2026-09-30T15:13:17.9474152Z [90m3:13PM[0m DBG SCM platform parsed from host [36mhost=[0mgithub.com [36mplatform=[0mgithub
+2026-09-30T15:13:18.0322954Z [90m3:13PM[0m [32mINF[0m [1m8 commits scanned.[0m
+2026-09-30T15:13:18.0323497Z [90m3:13PM[0m DBG Note: this number might be smaller than expected due to commits with no additions
+2026-09-30T15:13:18.0324302Z [90m3:13PM[0m [32mINF[0m [1mscanned ~2297202 bytes (2.30 MB) in 186ms[0m
+2026-09-30T15:13:18.0324855Z [90m3:13PM[0m [32mINF[0m [1mno leaks found[0m
+2026-09-30T15:13:18.0356361Z Artifact name is valid!
+2026-09-30T15:13:18.0356956Z Root directory input is valid!
+2026-09-30T15:13:18.3413551Z Beginning upload of artifact content to blob storage
+2026-09-30T15:13:18.3953399Z Uploaded bytes 6772
+2026-09-30T15:13:18.4434976Z Finished uploading artifact content to blob storage!
+2026-09-30T15:13:18.4435658Z SHA256 digest of uploaded artifact zip is f390f2dfb58626f7148a20a61f40d4007982841a1d7f72d1acad364fa6c9631e
+2026-09-30T15:13:18.4436543Z Finalizing artifact upload
+2026-09-30T15:13:18.7683883Z Artifact gitleaks-results.sarif.zip successfully finalized. Artifact ID 11106796912
+2026-09-30T15:13:18.7704494Z ✅ No leaks detected
+2026-09-30T15:13:18.7890671Z Post job cleanup.
+2026-09-30T15:13:18.8484144Z [command]/usr/bin/git version
+2026-09-30T15:13:18.8510606Z git version 2.55.0
+2026-09-30T15:13:18.8535535Z Temporarily overriding HOME='/home/runner/work/_temp/aecf8cfe-bb5d-42f4-98ce-3d11a7f3d75c' before making global git config changes
+2026-09-30T15:13:18.8536491Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-30T15:13:18.8539888Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/SpicyStock/SpicyStock
+2026-09-30T15:13:18.8566273Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-30T15:13:18.8588325Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-30T15:13:18.8752605Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-30T15:13:18.8769740Z http.https://github.com/.extraheader
+2026-09-30T15:13:18.8776672Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-30T15:13:18.8799425Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-30T15:13:18.8963545Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-30T15:13:18.8985388Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-30T15:13:18.9256160Z Cleaning up orphan processes
+2026-09-30T15:13:18.9434553Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, gitleaks/gitleaks-action@v2. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

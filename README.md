@@ -857,8 +857,11 @@ compaction or archive delivery changes. Real acquisition remains NOT RUN and
 release remains BLOCKED pending Guidance review and a separate execution release.
 The prior 199 MiB stress failure is preserved. The explicit delivery-envelope
 continuation uses a 250 MiB archive / 251 MiB ciphertext ceiling, preserving
-the 2 GiB expanded limit and the selected codec. Full synthetic recovery must
-pass under that versioned contract before technical acceptance. The versioned delivery relation names only that accepted transport
+the 2 GiB expanded limit and the selected codec. The complete central and stress
+synthetic cases passed encryption, recovery of all 390 original members and exact
+offline reproduction under that contract on PR #97. The
+[dated delivery evidence](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/review.md)
+binds those measurements to their actual source and hosted jobs. The versioned delivery relation names only that accepted transport
 evidence and requires the new implementation's own capacity/runtime evidence, reviewed head,
 current-main source equality and complete native run history. It does not reopen
 the rehearsal slot. The personal-use decision on PR #95 ends licensing/outreach

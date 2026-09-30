@@ -363,3 +363,13 @@ files and declaration were copied byte-for-byte. README.md and .env.example were
 reviewed for the new format and owner-scope wording; no new credential or
 runtime setting was added. The existing CLAUDE/execution checkpoints preserve
 earlier evidence and name the same capacity hold.
+
+## 30 September 2026 — superseding explicit envelope decision
+
+The owner authorized a 250 MiB archive / 251 MiB ciphertext envelope while
+preserving the selected writer and independent scientific/resource limits.
+The [dated continuation review](envelope-continuation/review.md) records complete
+central/stress encryption, exact recovery and offline reproduction at the new
+source, with actual hosted receipts. This supersedes the capacity hold described
+above; it does not rewrite that failure. Real execution remains BLOCKED and
+historical acquisition/findings are NOT RUN.

@@ -1,0 +1,37 @@
+{
+  "actual_src_file_count": 23,
+  "checks": [
+    {
+      "baseline": "65cd32ba0991ecad4bb04d53132d4a44889aca32",
+      "changed_protected_paths": [],
+      "path_list_sha256": "cca2e5a885b43b7cc1292e35946486296dbab0a8b93d6c35d389e8285639d277",
+      "protected_entries": 10619,
+      "status": "PASS"
+    },
+    {
+      "baseline": "19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc",
+      "changed_protected_paths": [],
+      "path_list_sha256": "35daca3c1aaed3ab297652a261b234ecf30417789e8e8a98775db26e33e7d992",
+      "protected_entries": 10515,
+      "status": "PASS"
+    }
+  ],
+  "frozen_files": {
+    "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json": {
+      "canonical_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+      "raw_sha256": "110385822e2a9e9bfc7547694d8cd3b5648646c2f89cc9eb9e4785451e17a202"
+    },
+    "tools/historical-workflow-recovery.json": {
+      "canonical_sha256": "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a",
+      "raw_sha256": "2f86aab87382aca484e00eb5098d652382ba0411c0ee5725cfd7fd73a1647317"
+    }
+  },
+  "head": "ca881bba3600d4eadee5481e5528161a5c2edb99",
+  "method": "git ls-tree -r -z mode/type/blob comparison; src actual raw bytes versus binary-safe git show",
+  "observed_at": "2026-09-30T15:24:19.463486+00:00",
+  "old_transport_fields_identical": true,
+  "recipient_lf_convention_unchanged": true,
+  "schema": "historical-protected-source-comparison-v1",
+  "scope": "No private package, identity file, other repository, or provider accessed.",
+  "status": "PASS"
+}

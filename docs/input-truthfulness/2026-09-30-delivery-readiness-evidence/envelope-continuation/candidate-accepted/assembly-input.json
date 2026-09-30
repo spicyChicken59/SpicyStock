@@ -1,0 +1,21 @@
+{
+  "cases": {
+    "central": {
+      "hosted_job": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/hosted-job.json",
+      "inventory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/synthetic-member-inventory.json",
+      "memory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/memory-envelope.json",
+      "profile": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/runtime-profile.json",
+      "report": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/central/benchmark-result.json"
+    },
+    "stress": {
+      "hosted_job": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/hosted-job.json",
+      "inventory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/synthetic-member-inventory.json",
+      "memory": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/memory-envelope.json",
+      "profile": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/runtime-profile.json",
+      "report": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/stress/benchmark-result.json"
+    }
+  },
+  "legacy_recovery": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/reader-legacy-recovery-input.json",
+  "normal_ci": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/candidate-accepted/normal-ci-input.json",
+  "schema": "historical-delivery-assembly-input-v2"
+}

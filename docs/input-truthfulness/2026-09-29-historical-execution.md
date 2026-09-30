@@ -591,3 +591,56 @@ recompression. The 126 focused package tests pass, including the restored defect
 and before-allocation excess-work refusal; collection is 2,449 tests. New
 source-pinned hosted acceptance is still required. Real execution remains
 BLOCKED; historical acquisition and findings are NOT RUN.
+
+
+### 30 September 2026 — complete synthetic delivery accepted for PR97 review
+
+PASS — the explicitly versioned delivery envelope now retains and recovers the
+complete fixed central and stress evidence. Base remains
+`19f75f3b7ad566fb98e8e8e28fd2482a3737e9bc`; continuation started at
+`65cd32ba0991ecad4bb04d53132d4a44889aca32`. Measured code is
+`ca881bba3600d4eadee5481e5528161a5c2edb99`, tree
+`1a3b64ddfd795dbb209780b421138e7d3535312b`. The final evidence-only head and its
+normal CI are identified in PR97's subsequent dated checkpoint; source remains
+identical to this measured revision.
+
+The owner's delivery decision changes archive/ciphertext ceilings from
+199/200 MiB to 250/251 MiB, with an additional explicit 1 MiB actual encryption
+overhead bound. Expanded content remains capped at 2 GiB. The selected level-12,
+one-GiB-window writer is unchanged. GitHub's authoritative artifact documentation
+does not impose the former project ceiling; public standard-runner execution is
+free, while storage remains separately quota-bound under the unchanged $0
+stopping budget. Future quota can refuse delivery and is not certified here.
+
+PASS — Tests run 36734865293/attempt1 completed both full cases. Central archive,
+ciphertext and expanded sizes are 99,741,885  / 99,766,421  / 1,546,827,527 bytes;
+stress sizes are 215,909,320  / 215,962,224  / 1,866,624,761 bytes. Both cases recovered
+all 390 original members exactly, preserved ledger accounting and reproduced both
+complete v2 reconciliation files byte-for-byte. All 388 portable scientific members
+also match PR96. The 289 transport slots per case are simulated; provider requests
+are zero. Compact artifacts 11109327191 and 11110657864 have verified GitHub ZIP
+digests. TEST-ONLY encryption ran on the benchmark runners; no owner key or private
+package was accessed.
+
+PASS — initial/recovered offline passes took 961.338/986.024 seconds centrally
+and 1385.438/1380.727 seconds under stress; packaging took 35.054/60.561 seconds.
+Kernel-enforced benchmark peaks were 7,662,833,664/8,903,364,608 bytes, below 12 GiB,
+without workload OOM. Existing shared-step/package/job deadlines remain. The
+prospective full acquisition reservation plus measured work and assumed 300-second
+overhead leaves 1369.001/927.238 seconds.
+
+PASS — 126 focused package regressions, 2449 hosted tests, producer fixtures,
+semantic lint, unchanged page gates and Secret Scan 36734865392. Exact path/value
+scanner dispositions retain unrelated-value detection. The first v4 reader failure
+is preserved and corrected with a bounded block-work contract; no compression
+experiment followed. Ten assembled technical checks pass. Real execution remains
+BLOCKED; native 5/phase2 is prospective, and accepted native 4 proves its old transport
+only. Historical acquisition and historical findings are NOT RUN.
+
+KEEP — scientific identities, every original member and dated evidence.
+FIX NOW — Guidance independently reviews this completed technical package and
+exact final-head CI. DEFER — protected merge and separately authorized acquisition
+to Guidance. OMIT — further compression optimization, readiness approval and any
+new infrastructure milestone.
+
+See the [bound delivery review](2026-09-30-delivery-readiness-evidence/envelope-continuation/review.md) for measured tables and receipts.
