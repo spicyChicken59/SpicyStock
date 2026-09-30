@@ -1,0 +1,44 @@
+--- a/tools/historical_projection_benchmark.py
++++ b/tools/historical_projection_benchmark.py
+@@ -162,6 +162,19 @@
+     require(bool(psapi.GetProcessMemoryInfo(process_handle or kernel.GetCurrentProcess(), ctypes.byref(counters), counters.cb)), "native_memory_counter_failed")
+     return {"process_peak_rss_bytes": counters.PeakWorkingSetSize, "process_peak_commit_bytes": counters.PeakPagefileUsage,
+             "measurement": "native Windows GetProcessMemoryInfo high-water counters"}
++
++
++def memory_summary(process_metrics, package_metrics):
++    """Do not interpret an unmeasured child high water as zero usage."""
++    result = dict(process_metrics)
++    child_peak = package_metrics.get("age_process_peak_rss_bytes")
++    result["python_plus_age_peak_rss_conservative_sum_bytes"] = (
++        process_metrics["process_peak_rss_bytes"] + child_peak if child_peak is not None else None)
++    result["scope"] = (
++        "Python process high water; age encryption/decryption high water separately; their sum is conservative, not a simultaneous peak"
++        if child_peak is not None else
++        "Python process high water only; age child high water was not measured; combined peak unavailable")
++    return result
+ 
+ 
+ def memory_headroom():
+@@ -351,7 +364,7 @@
+               "synthetic_only": True, "provider_requests": 0, "workflow_execution": "NOT RUN", "owner_key_access": "NOT RUN",
+               "full_frozen_shape": full_scale, "shape": shape(manifest), "manifest_sha256": identity,
+               "status": "BLOCKED", "started_at": datetime.now(timezone.utc).isoformat(), "free_disk_before_bytes": free,
+-              "memory_before": capacity, "runtime_scope": "local Windows host under existing memory pressure; not a hosted-runner timing guarantee",
++              "memory_before": capacity, "runtime_scope": f"local {sys.platform} host; timing includes existing host load; not a hosted-runner timing guarantee",
+               "python": sys.version, "dependencies": {name: version(name) for name in ("pandas", "numpy", "exchange_calendars")},
+               "age_sha256": package._hash(age_binary),
+               "phases_seconds": {}, "package_measurements": {},
+@@ -440,11 +453,8 @@
+         os.umask(previous_mask)
+         report["phases_seconds"][phase] = round(time.perf_counter() - phase_start, 6)
+         report.update(runtime_seconds=round(time.perf_counter() - started, 6), completed_at=datetime.now(timezone.utc).isoformat(),
+-                      memory=platform_memory(), peak_scratch_bytes_sampled=monitor.peak_scratch,
++                      memory=memory_summary(platform_memory(), report["package_measurements"]), peak_scratch_bytes_sampled=monitor.peak_scratch,
+                       scratch_measurement="250ms recursive file-size sampling plus packaging checkpoint; sampled lower bound, excludes filesystem allocation overhead")
+-        report["memory"]["python_plus_age_peak_rss_conservative_sum_bytes"] = (
+-            report["memory"]["process_peak_rss_bytes"] + report["package_measurements"].get("age_process_peak_rss_bytes", 0))
+-        report["memory"]["scope"] = "Python process high water; Windows age encryption/decryption high water separately; their sum is conservative, not a simultaneous peak"
+         report["source_unchanged_through_run"] = all(package._hash(ROOT / name) == digest for name, digest in report["source_sha256"].items())
+         if not report["source_unchanged_through_run"]:
+             report.update(status="FAIL", reason="benchmark_source_changed_during_run")

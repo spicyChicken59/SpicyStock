@@ -1,0 +1,26 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+____ test_compact_default_reconciliation_has_no_expanded_float_record_list ____
+
+setup = ({'schema': 'historical-acquisition-v1', 'assignment_id': 'spicystock-historical-input-2026-09-28', 'populations': {'2...test_historical_acquisition.Clock object at 0x00000187B24107D0>, <function setup.<locals>.build at 0x00000187B24400E0>)
+
+    def test_compact_default_reconciliation_has_no_expanded_float_record_list(setup):
+        manifest, approval, root, clock, build = setup
+        prepare(manifest)
+        rows = [bar("2026-09-24", o=10.1, h=20.2, l=1.1, c=11.3, v=100000.1),
+                bar("2026-09-25", o=10.2, h=20.3, l=1.2, c=11.4, v=100001.1)]
+        runner, _ = build([probe_response(), response({s: rows for s in ("AAA", "BBB", "SPY")})])
+        runner.run("canonical")
+        runner.run("bulk")
+        reconciliation.reconcile(manifest, root, "2026-09-25")
+        output = json.loads((root / "reconciliation-2026-09-25.json").read_bytes())
+>       assert all("inexact_conversions" not in p for p in output["float64_projection"]), (
+            "default projection must be compact while retaining every original conversion fact")
+E       AssertionError: default projection must be compact while retaining every original conversion fact
+E       assert False
+E        +  where False = all(<generator object test_compact_default_reconciliation_has_no_expanded_float_record_list.<locals>.<genexpr> at 0x00000187B24D81E0>)
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection_reconcile.py:75: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection_reconcile.py::test_compact_default_reconciliation_has_no_expanded_float_record_list
+1 failed, 1 passed in 0.51s

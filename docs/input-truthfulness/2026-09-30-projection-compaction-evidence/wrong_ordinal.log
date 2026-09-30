@@ -1,0 +1,68 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_______ test_compact_all_field_combinations_equal_untouched_adapter[31] _______
+
+mask = 31
+
+    @pytest.mark.parametrize("mask", range(32))
+    def test_compact_all_field_combinations_equal_untouched_adapter(mask):
+        value = normalized(mask)
+        saved = deepcopy(value)
+        before_frames, before = old_adapter(value)
+        frames, projection = compact(value)
+        assert_frames_equal(frames, before_frames)
+>       assert expanded(projection, value) == before["inexact_conversions"], "conversion facts differ from untouched adapter"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection.py:73: in expanded
+    return list(normalization.iter_projection_conversions(projection, value))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+projection = {'schema': 'historical-float64-projection-v2', 'operation': 'explicit production float64 projection; never claim wire precision', 'fields': ['Open', 'High', 'Low', 'Close', 'Volume'], 'query_id': 'synthetic-query', ...}
+normalized = {'version': 'historical-normalization-v1', 'query_id': 'synthetic-query', 'query': {'symbols': ['ALPHA', 'BETA', 'INVA...G'], 'start': '2026-09-23T00:00:00Z', 'end': '2026-09-25T23:59:59Z', 'asof': '2026-09-26', ...}, 'terminal': True, ...}
+
+    def iter_projection_conversions(projection, normalized):
+        """Validate v2 completely, then yield the exact original conversion facts.
+    
+        A row is [selected_row_ordinal, OHLCV_bit_mask, float64_hex_values]. Every
+        replayable selected row occurs once, including mask zero. Ordinals follow
+        canonical query symbols and each symbol's selected-row order. The full
+        normalized object (including query, exact decimal strings, selected raw
+        source, duplicate lineage and invalid rows) is hash-bound; it must be the
+        same context supplied to frames_for_replay. No expanded list is allocated.
+        Legacy unversioned lists require the explicit v1 adapter contract instead.
+        """
+        expected_keys = {"schema", "operation", "fields", "query_id", "query_sha256",
+                         "normalization_sha256", "rows", "conversion_count"}
+        if not isinstance(projection, dict) or set(projection) != expected_keys or projection.get("schema") != COMPACT_PROJECTION:
+            raise ValueError("unsupported or malformed projection schema")
+        if projection["operation"] != PROJECTION_OPERATION or projection["fields"] != list(PROJECTION_FIELDS):
+            raise ValueError("projection operation or field order differs")
+        rows = projection["rows"]
+        if (not isinstance(rows, list) or len(rows) > MAX_PROJECTION_ROWS or
+                type(projection["conversion_count"]) is not int or
+                not 0 <= projection["conversion_count"] <= MAX_PROJECTION_ROWS * len(PROJECTION_FIELDS)):
+            raise ValueError("projection rows or conversion count exceed bounds")
+        if (projection["query_id"] != normalized["query_id"] or
+                projection["query_sha256"] != _projection_digest(normalized["query"]) or
+                projection["normalization_sha256"] != _projection_digest(normalized)):
+            raise ValueError("projection query or normalization binding differs")
+        seen, count = 0, 0
+        for ordinal, _, row in _projection_rows(normalized):
+            if ordinal >= len(rows):
+                raise ValueError("projection selected row is missing")
+            entry = rows[ordinal]
+            if (not isinstance(entry, list) or len(entry) != 3 or type(entry[0]) is not int or
+                    entry[0] != ordinal or type(entry[1]) is not int or not 0 <= entry[1] < 32 or
+                    not isinstance(entry[2], list) or len(entry[2]) != entry[1].bit_count() or
+                    any(not isinstance(value, str) or len(value) > 32 for value in entry[2])):
+>               raise ValueError("malformed projection selected row reference, mask, or values")
+E               ValueError: malformed projection selected row reference, mask, or values
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tools\historical_normalization.py:292: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection.py::test_compact_all_field_combinations_equal_untouched_adapter[31]
+1 failed, 1 passed in 0.43s

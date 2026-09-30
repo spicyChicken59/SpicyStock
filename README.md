@@ -850,9 +850,15 @@ of its two execution phases. The original workflow failed GitHub context
 validation before any job; the execution handoff records its three preserved
 failures and the narrowly reviewed recovery contract. Native run numbers are
 not phase numbers. Normal CI checks the changed workflows with pinned actionlint.
-Synthetic tests do not establish historical inputs; dispatch remains BLOCKED
-pending repair review, merge and a new release. Actual rehearsal and acquisition
-remain NOT RUN.
+The hosted synthetic rehearsal (run 36570997883, native 4 / attempt 1 / phase 1)
+and exact source-pinned owner replay were accepted on PR #95. They used the
+previous execution checkout; they did not exercise the later conversion-evidence
+compaction. Real acquisition remains NOT RUN and release remains BLOCKED pending
+capacity and execution-binding review. The later personal-use decision on PR #95
+ends the licensing/outreach task; it is not provider consent. Any obsolete
+project readiness attestation still needs an explicit reviewed adjustment.
+Synthetic fit does not establish real-data fit or market correctness. The existing
+guard refuses to reuse the old checkout's approval for changed execution tools.
 
 The [September 24/25 input and market-permission investigation](docs/input-truthfulness/2026-09-28-historical-input-proof.md)
 reconciles retained aggregate RED decisions and the available stock observations.
@@ -863,6 +869,10 @@ live historical retrieval requires the frozen manifest and documented zero-cost,
 private-storage authorization. No new data was acquired in this checkpoint.
 `tools/historical_reconcile.py` consumes only that tool's verified private cache,
 keeps later observations separate and never publishes plans or reuses reader approval.
+Its version-2 output stores lossless float-conversion evidence by selected-row
+reference and field mask. Exact normalized decimal strings and raw-page lineage
+remain retained; a bounded decoder reconstructs the legacy per-field facts.
+The representation changes neither the float DataFrames nor market predicates.
 
 The [22 September quality audit](docs/input-truthfulness/2026-09-22-retained-quality-audit.md)
 distinguishes input reliability, mechanical/final grades and model outcomes.

@@ -1,50 +1,5 @@
-"""Network-blocked replay from the bounded acquisition's private frozen cache.
-
-python tools/historical_reconcile.py --manifest <frozen.json> --storage <approved-dir> --session 2026-09-24
-
-All detailed outputs remain beside the approved private inputs. This command
-does not publish, create orders, reuse reader replies, or contact any service.
-"""
-from __future__ import annotations
-
-import argparse
-from collections import Counter
-from contextlib import contextmanager
-from datetime import date
-import hashlib
-import json
-from pathlib import Path
-import socket
-import sys
-
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from tools.historical_acquisition import cached_pages, validate_manifest, encode
-from tools.historical_breadth_reference import compare_replay
-from tools.historical_normalization import normalize_pages, frames_for_replay, decimal_event_audit, COMPACT_PROJECTION, LEGACY_PROJECTION
-
-
-@contextmanager
-def network_blocked():
-    def refused(*args, **kwargs):
-        raise RuntimeError("historical reconciliation network is blocked")
-    original = socket.socket.connect, socket.socket.connect_ex, socket.create_connection
-    socket.socket.connect = socket.socket.connect_ex = socket.create_connection = refused
-    try:
-        yield
-    finally:
-        socket.socket.connect, socket.socket.connect_ex, socket.create_connection = original
-
-
-def reconcile(manifest, storage, session, *, projection_contract=COMPACT_PROJECTION):
-    """Public callers receive metadata; per-event values are private artifacts.
-
-    V2 is the default lossless compact evidence. The explicit v1 selector
-    reproduces the original reconciliation schema and expanded fixture bytes.
-    """
-    if projection_contract not in (LEGACY_PROJECTION, COMPACT_PROJECTION):
-        raise ValueError("unsupported reconciliation projection contract")
+def reconcile(manifest, storage, session):
+    """Public callers receive metadata; per-event values are private artifacts."""
     identity = validate_manifest(manifest)
     storage = Path(storage).resolve()
     if storage == ROOT or ROOT in storage.parents or any((p / ".git").exists() for p in [storage, *storage.parents]):
@@ -62,8 +17,7 @@ def reconcile(manifest, storage, session, *, projection_contract=COMPACT_PROJECT
     intended = manifest["populations"][session]["symbols"]
     if set(requested) != set(intended) | {"SPY"} or len(requested) != len(set(requested)):
         raise ValueError("query coverage does not exactly partition original intended population plus benchmark")
-    details = {"schema": ("historical-reconciliation-v2" if projection_contract == COMPACT_PROJECTION else
-                          "historical-reconciliation-v1"), "manifest_sha256": identity,
+    details = {"schema": "historical-reconciliation-v1", "manifest_sha256": identity,
                "session": session, "network_blocked": True, "new_provider_requests": 0,
                "reader_actionability": "unknown", "publication_allowed": False,
                "A": {"status": "NOT RUN", "basis": "separate original-reconciliation.json must be verified by historical_input_proof.py"},
@@ -82,9 +36,9 @@ def reconcile(manifest, storage, session, *, projection_contract=COMPACT_PROJECT
             normalized["decimal_event_audit"] = decimal_event_audit(normalized)
             details["failures"].extend({"query": q["id"], **failure} for failure in cached["failures"])
             details["ledger"] = cached["ledger"]
-            subset, projection = frames_for_replay(normalized, projection_contract=projection_contract)
+            subset, projection = frames_for_replay(normalized)
             frames.update(subset)
-            projections.append(projection if projection_contract == COMPACT_PROJECTION else {"query": q["id"], **projection})
+            projections.append({"query": q["id"], **projection})
             for s, record in normalized["symbols"].items():
                 status = record["status"]
                 if cached["failures"] and status == "requested":
@@ -144,22 +98,3 @@ def reconcile(manifest, storage, session, *, projection_contract=COMPACT_PROJECT
             "regime_scope": "later target-day eligible population, with explicit omissions; not the original information set or all intended stocks",
             "reconstructed_regime": details.get("C", {}).get("reference", {}).get("regime"),
             "original_information_set_reproduced": False, "reader_actionability": "unknown"}
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--storage", type=Path, required=True)
-    parser.add_argument("--session", choices=["2026-09-24", "2026-09-25"], required=True)
-    args = parser.parse_args(argv)
-    try:
-        result = reconcile(json.loads(args.manifest.read_bytes()), args.storage, args.session)
-    except Exception:
-        print(json.dumps({"status": "BLOCKED", "reason": "frozen_input_or_identity_validation_failed"}))
-        return 2
-    print(json.dumps(result))
-    return 0 if result["status"] == "PASS" else 2
-
-
-if __name__ == "__main__":
-    sys.exit(main())

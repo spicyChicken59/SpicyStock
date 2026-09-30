@@ -1,0 +1,48 @@
+{
+  "scope": "isolated synthetic guard-only pytest subprocesses; no API/provider calls or shared source changes",
+  "before": {
+    "tests/test_historical_projection_binding.py": "194e2e23797475d63e645f6a75dbf601a9e744bcdaf0f9bb1733bcb804c3968d",
+    "tools/historical_execution_guard.py": "8a1228f0909119c7602d4578a2306280492261fe29b4e85c8c211b8338d0dc3f"
+  },
+  "after": {
+    "tests/test_historical_projection_binding.py": "194e2e23797475d63e645f6a75dbf601a9e744bcdaf0f9bb1733bcb804c3968d",
+    "tools/historical_execution_guard.py": "8a1228f0909119c7602d4578a2306280492261fe29b4e85c8c211b8338d0dc3f"
+  },
+  "sources_unchanged": true,
+  "cases": [
+    {
+      "mutation": "none",
+      "exit_code": 0,
+      "result_lines": [
+        "4 passed in 0.05s"
+      ]
+    },
+    {
+      "mutation": "review",
+      "exit_code": 1,
+      "result_lines": [
+        "FAILED tests/test_historical_projection_binding.py::test_new_checkout_cannot_borrow_original_pr_review",
+        "1 failed, 3 passed in 0.15s"
+      ]
+    },
+    {
+      "mutation": "tools",
+      "exit_code": 1,
+      "result_lines": [
+        "FAILED tests/test_historical_projection_binding.py::test_changed_tools_cannot_borrow_original_review",
+        "1 failed, 3 passed in 0.16s"
+      ]
+    },
+    {
+      "mutation": "recovery",
+      "exit_code": 1,
+      "result_lines": [
+        "FAILED tests/test_historical_projection_binding.py::test_original_recovery_cannot_attest_changed_checkout",
+        "1 failed, 3 passed in 0.15s"
+      ]
+    }
+  ],
+  "log_file": "binding-controls.log",
+  "log_sha256": "d9214f005d9e48121ef21aaeffac95dba95fd03e481e19c888d3045318b7b986",
+  "log_hash_basis": "actual saved file bytes"
+}

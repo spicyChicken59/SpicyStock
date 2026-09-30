@@ -1,0 +1,18 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_ test_compact_recomputed_context_rejects_one_raw_source_used_for_two_sessions _
+
+    def test_compact_recomputed_context_rejects_one_raw_source_used_for_two_sessions():
+        value = normalized(31)
+        projection = compact(value)[1]
+        rows = value["symbols"]["ALPHA"]["rows"]
+        rows[1]["source"] = deepcopy(rows[0]["source"])
+        projection["normalization_sha256"] = normalization._projection_digest(value)
+>       with pytest.raises(ValueError, match="source identity is ambiguous"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection.py:351: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection.py::test_compact_recomputed_context_rejects_one_raw_source_used_for_two_sessions
+1 failed, 1 passed in 0.42s

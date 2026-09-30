@@ -1,0 +1,31 @@
+{
+  "all_source_sizes_and_hashes_match": true,
+  "benchmark_result_sha256": "35b739a1f0e40bbfcd5be80e38323606f4da1127a17baf926ca35f15062ca47a",
+  "checked_at": "2026-09-30T06:05:33.065060+00:00",
+  "ciphertext": "NOT RUN",
+  "delivery_absent": true,
+  "disposable_test_identity_absent": true,
+  "ledger_accounting": {
+    "request_slots_charged": 289,
+    "uncompressed_retained_bytes_charged": 412833919,
+    "unresolved_byte_reservations": 0
+  },
+  "ledger_accounting_unchanged": true,
+  "ledger_integrity": "PASS",
+  "ledger_sha256": "da3b49d672277f22731c0ffd4ff83c25e863bf7cb12036ac08dd713c9a64d6c0",
+  "ledger_sqlite_mode": "ro",
+  "member_inventory_sha256": "1287f11bac46dfb0992c045716f8174788912bf0eb9b2d9942fc0fb701ced813",
+  "no_unexpected_retained_files": true,
+  "operator_command": "work/venv/Scripts/python.exe work/check-synthetic-stress-preservation.py",
+  "operator_script_sha256": "7227b988041037ffff58231d33bbedaa7d9710ef3033ea8a67923c1fa97be23f",
+  "owner_key_access": "NOT RUN",
+  "package_temporary_directories_absent": true,
+  "provider_requests": 0,
+  "recovered_directory_absent": true,
+  "recovery": "NOT RUN",
+  "retained_member_count": 390,
+  "retained_payload_bytes": 1866346849,
+  "schema": "historical-synthetic-post-refusal-preservation-v1",
+  "scope": "single bounded read-only check of fresh synthetic stress inputs after archive cap refusal; not recovery or reconciliation",
+  "status": "PASS"
+}

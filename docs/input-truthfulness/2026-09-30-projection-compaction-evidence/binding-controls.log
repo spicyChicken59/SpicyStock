@@ -1,0 +1,65 @@
+none
+....                                                                     [100%]
+4 passed in 0.05s
+
+
+review
+.F..                                                                     [100%]
+================================== FAILURES ===================================
+_____________ test_new_checkout_cannot_borrow_original_pr_review ______________
+
+github_setup = ({'schema': 'historical-execution-policy-v2', 'implementation_pr': 95, 'recipient': 'age1aaaaaaaaaaaaaaaaaaaaaaaaaaaaa...ccccccccccccccc...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', ...], <function setup.<locals>.api at 0x000001E273987740>)
+
+    def test_new_checkout_cannot_borrow_original_pr_review(github_setup):
+        proposed_checkout(github_setup)
+        # A matching synthetic recovery cannot supply the missing reviewed PR head.
+        github_setup[2]["evidence"]["local_recovery"]["checkout_sha"] = PROPOSED
+        github_setup[3]["/pulls/95"]["head"]["sha"] = APPROVED
+>       with pytest.raises(guard.GuardError, match="^unreviewed_checkout$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GuardError
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection_binding.py:46: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection_binding.py::test_new_checkout_cannot_borrow_original_pr_review
+1 failed, 3 passed in 0.15s
+
+
+tools
+..F.                                                                     [100%]
+================================== FAILURES ===================================
+______________ test_changed_tools_cannot_borrow_original_review _______________
+
+github_setup = ({'schema': 'historical-execution-policy-v2', 'implementation_pr': 95, 'recipient': 'age1aaaaaaaaaaaaaaaaaaaaaaaaaaaaa...ccccccccccccccc...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', ...], <function setup.<locals>.api at 0x000002A1C2AD7F60>)
+
+    def test_changed_tools_cannot_borrow_original_review(github_setup):
+        tree = github_setup[3][f"/git/trees/{CURRENT}"]["tree"]
+        next(item for item in tree if item["path"] == "tools")["sha"] = PROPOSED
+>       with pytest.raises(guard.GuardError, match="^execution_code_changed$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GuardError
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection_binding.py:53: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection_binding.py::test_changed_tools_cannot_borrow_original_review
+1 failed, 3 passed in 0.16s
+
+
+recovery
+...F                                                                     [100%]
+================================== FAILURES ===================================
+____________ test_original_recovery_cannot_attest_changed_checkout ____________
+
+github_setup = ({'schema': 'historical-execution-policy-v2', 'implementation_pr': 95, 'recipient': 'age1aaaaaaaaaaaaaaaaaaaaaaaaaaaaa...ccccccccccccccc...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', ...], <function setup.<locals>.api at 0x000001A37325C040>)
+
+    def test_original_recovery_cannot_attest_changed_checkout(github_setup):
+        proposed_checkout(github_setup)
+        # The synthetic PR now reviews the proposed head; the old recovery does not.
+>       with pytest.raises(guard.GuardError, match="^stale_recovery_binding$"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE GuardError
+
+C:\Users\motah\Documents\Codex\2026-09-28\github-plugin-github-openai-curated-remote\work\SpicyStock-compaction\tests\test_historical_projection_binding.py:60: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_historical_projection_binding.py::test_original_recovery_cannot_attest_changed_checkout
+1 failed, 3 passed in 0.15s

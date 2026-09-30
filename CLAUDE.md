@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 1951 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2106 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3480,3 +3480,58 @@ BLOCKED; new reader eligibility and trading-edge validation remain NOT RUN.
 Astra stops at one repair PR for Guidance, without merging or dispatching.
 
 Final local repair checks: PASS - 1,951 tests, zero skips, Python 3.12.14; one existing websockets warning. PASS - 9,756 protected existing Git blobs unchanged. The first full attempt's stale current suite count was corrected and the full suite rerun. PR #95 records final-head Linux CI and the post-push history check. Execution release remains BLOCKED; no merge or dispatch.
+
+## Lossless projection compaction checkpoint - 30 Sep 2026
+
+This bounded correction follows Guidance comments 5903186288 and 5903266884
+on PR #95, from main `6284cb9787c11929eaedf1a263cf463ab4ae4928`.
+The submitted compaction PR records its exact final head and normal CI.
+Accepted execution checkout `6b12fdfa67355b436fde89287d159bebda2ce9fc`, tree
+`d4ac339901ebe99039b912f30397d43d5d76efbb`, and rehearsal workflow revision
+`2687b96d0200903c5d457301e4b3f335fcfb79ce` retain their historical meaning.
+Run 36570997883, native 4 / attempt 1 / phase 1, artifact 11033808340,
+and its accepted exact owner-side replay were not repeated or relabelled.
+
+PASS - the actual untouched adapter was reproduced with invented decimals.
+Versioned reconciliation/projection v2 constructs selected-row references,
+fixed OHLCV masks and complete binary-hex values directly. The bounded decoder
+reconstructs every legacy fact in order from hash-bound query/normalization
+context. Raw pages remain authoritative for original JSON spellings. Tests
+preserve exact frames, decimal audits, lineage, masks, unknowns and decisions;
+explicit legacy output remains byte-reproducible. All 32 masks, precision
+cases, duplicate replacements and corruption controls are exercised, with
+independent exact rational checks and isolated restored-defect failures.
+
+PASS - the local full suite ran 2,104 tests, zero skips, in 553.49 seconds.
+Later reporting-only benchmark corrections passed nine focused tests; the
+final collection is 2,106. FAIL - the separate local fixture check found 24
+unchanged gzip objects differing only in Windows/Linux OS header byte, with
+identical payloads, trailers and content identities. No fixture or gate was
+changed; the PR records actual Linux CI. PASS - 10,541 protected existing Git
+blobs were raw-byte checked, preserving frozen records and all execution limits.
+
+Each full synthetic case ran once: 96 batches, 288 sessions, 2,753,568 bulk
+rows plus two probe rows, 289 simulated transport slots and zero provider
+requests. Central encrypted recovery is PASS: expanded 1,546,827,051 bytes,
+gzip 203,495,174 and ciphertext 203,545,054, with all 390 original members
+unchanged. Stress expanded size is PASS at 1,866,624,285 bytes, but gzip is
+FAIL at 423,811,147 against 208,666,624. Encryption/recovery are NOT RUN;
+post-refusal preservation is PASS. Both local combined reconciliation times
+exceed the unchanged 30-minute step; hosted full-shape performance is NOT RUN.
+Detailed measurements, hashes, commands and reporting limitations are in the
+existing execution handoff and its linked compaction evidence directory.
+
+KEEP the lossless representation, historical evidence, owner key, frozen
+manifest/recovery identity, design-system 2.13.0 and website/strategy behavior.
+FIX NOW Guidance review of this one PR and the measured archive/deadline
+findings; any further archive-encoding work needs separate scoped authorization.
+DEFER execution compatibility and real release: unchanged guards intentionally
+reject borrowing #95's approval for changed tools. The nonoperative proposal
+names only the exact earlier transport evidence and requires a reviewed new
+head. OMIT repeated rehearsal, private-package inspection, provider/model calls,
+new readiness, market conclusions and Alpaca outreach. The later personal-use
+decision ends licensing investigation, without asserting provider consent or
+silently changing attestations. Real acquisition, new reader eligibility,
+Guidance plaintext inspection and trading-edge evidence remain NOT RUN.
+Original final-price membership and real release remain BLOCKED. Astra stops
+at the PR; merge does not release execution.
