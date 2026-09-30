@@ -1,0 +1,28 @@
+{
+  "schema": "historical-repair-ci-observation-v1",
+  "observed_at": "2026-09-30T22:43:00Z",
+  "head": "1f1139dd84218cd3d24becd229bae963d3bbdd67",
+  "tests": {
+    "run_id": 36786311870,
+    "python_job_id": 110128431988,
+    "python": "PASS",
+    "tests": 2714,
+    "seconds": 185.51,
+    "semantic_workflow": "PASS",
+    "fixtures": "PASS",
+    "clean_tree": "PASS",
+    "browser": "NOT RUN",
+    "browser_note": "Still running at this capture"
+  },
+  "scanner": {
+    "run_id": 36786311879,
+    "job_id": 110128431573,
+    "status": "FAIL",
+    "rule": "generic-api-key",
+    "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json",
+    "git_object_id": "f568689c3789a53835708b676ef6c2dcc418fd6f",
+    "verification": "git ls-tree HEAD .github/workflows/secret-scan.yml; same base6979904 identity; binary Git blob recomputed in tests/secret_scan_controls.py",
+    "disposition": "Only exact path plus exact value AND exception; default rule remains enabled"
+  },
+  "historical_dispatch": "NOT RUN"
+}

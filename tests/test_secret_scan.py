@@ -12,7 +12,8 @@ import pytest
 
 from tests.secret_scan_controls import (
     BOUNDED_PATHS, BOUNDED_VALUES, OBSERVATION, PUBLIC_VALUES, ROOT,
-    retained_documents,
+    retained_documents, NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB,
+    NATIVE5_WORKFLOW, native5_public_preservation,
 )
 
 
@@ -99,3 +100,27 @@ def test_continuation_values_elsewhere_remain_detectable(path, variant):
     "x" + BOUNDED_VALUES[0], BOUNDED_VALUES[0] + "x", BOUNDED_VALUES[0].upper()])
 def test_continuation_paths_do_not_allow_other_values(path, value):
     assert not allowed(path, value)
+
+
+def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
+    document = json.loads(native5_public_preservation())
+    assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
+    assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
+    assert len(dispositions()) == 6
+    entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
+    assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+    assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
+    assert entry["paths"] == ["^" + re.escape(NATIVE5_PRESERVATION).replace(r"\-", "-") + "$"]
+    assert entry["regexes"] == ["^(" + NATIVE5_PUBLIC_BLOB + ")$"]
+
+
+@pytest.mark.parametrize("path", ["copied/" + NATIVE5_PRESERVATION, NATIVE5_PRESERVATION + ".backup",
+    NATIVE5_PRESERVATION.replace("preservation.json", "another.json"), "unrelated.txt", OBSERVATION])
+def test_native5_public_blob_remains_detectable_elsewhere(path):
+    assert not allowed(path, NATIVE5_PUBLIC_BLOB)
+
+
+@pytest.mark.parametrize("value", [hashlib.sha256(b"unrelated invented scanner regression value").hexdigest(),
+    "x" + NATIVE5_PUBLIC_BLOB, NATIVE5_PUBLIC_BLOB + "x", NATIVE5_PUBLIC_BLOB.upper(), PUBLIC_VALUES[0]])
+def test_native5_path_does_not_allow_unrelated_or_altered_values(value):
+    assert not allowed(NATIVE5_PRESERVATION, value)

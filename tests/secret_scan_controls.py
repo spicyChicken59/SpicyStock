@@ -30,6 +30,22 @@ BOUNDED_VALUES = (
     "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e",
     "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d",
 )
+NATIVE5_PRESERVATION = "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
+NATIVE5_WORKFLOW = ".github/workflows/secret-scan.yml"
+NATIVE5_PUBLIC_BLOB = "f568689c3789a53835708b676ef6c2dcc418fd6f"
+
+
+def native5_public_preservation():
+    raw = (ROOT / NATIVE5_PRESERVATION).read_bytes()
+    document = json.loads(raw)
+    # Git blob identity uses the object header and SHA-1, not content SHA-256.
+    # LF represents the public Git object, including on a CRLF Windows checkout.
+    source = (ROOT / NATIVE5_WORKFLOW).read_bytes().replace(b"\r\n", b"\n")
+    blob = hashlib.sha1(b"blob " + str(len(source)).encode() + b"\0" + source).hexdigest()
+    if (document["protected_git_objects"][NATIVE5_WORKFLOW] != NATIVE5_PUBLIC_BLOB
+            or blob != NATIVE5_PUBLIC_BLOB):
+        raise ValueError("retained_public_workflow_blob_changed")
+    return raw
 
 
 def retained_documents():
@@ -122,6 +138,16 @@ def run_controls(binary: Path, workspace: Path):
             (label + "_crossed", config, path, encode({"api_key": crossed}), 2, ["generic-api-key"]),
             (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
         ])
+    preservation = native5_public_preservation()
+    cases.extend([
+        ("native5_preservation_defaults", baseline, NATIVE5_PRESERVATION, preservation, 2, ["generic-api-key"]),
+        ("native5_preservation_exact", config, NATIVE5_PRESERVATION, preservation, 0, []),
+        ("native5_unrelated_same_path", config, NATIVE5_PRESERVATION, other_value, 2, ["generic-api-key"]),
+        ("native5_original_other_path", config, NATIVE5_PRESERVATION.replace("preservation.json", "another.json"), preservation, 2, ["generic-api-key"]),
+        ("native5_original_path_suffix", config, NATIVE5_PRESERVATION + ".backup", preservation, 2, ["generic-api-key"]),
+        ("native5_original_path_prefix", config, "copied/" + NATIVE5_PRESERVATION, preservation, 2, ["generic-api-key"]),
+        ("native5_default_detector", config, NATIVE5_PRESERVATION, default_detector, 2, ["github-pat"]),
+    ])
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence
@@ -132,11 +158,13 @@ def run_controls(binary: Path, workspace: Path):
             success = success and actual["finding_paths"] == [path]
         results.append({"case": name, "status": "PASS" if success else "FAIL", "expected_exit_code": code,
                         "expected_rule_ids": rules, **actual})
-    return {"schema": "historical-exact-disposition-controls-v2", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
+    return {"schema": "historical-exact-disposition-controls-v3", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
             "scope": "Actual offline gitleaks 8.24.3 on isolated public evidence and invented canaries; not a credential or provider test.",
             "version": version, "binary_sha256": sha(binary.read_bytes()), "config_sha256": sha(config.read_bytes()),
             "observation_path": OBSERVATION, "observation_sha256": sha(observation), "results": results,
             "retained_documents": [{"path": path, "sha256": sha(raw)} for path, raw in zip(BOUNDED_PATHS, documents)],
+            "native5_preservation": {"path": NATIVE5_PRESERVATION, "sha256": sha(preservation),
+                                     "public_workflow_path": NATIVE5_WORKFLOW, "public_git_blob": NATIVE5_PUBLIC_BLOB},
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 

@@ -32,7 +32,7 @@ EXECUTION_SCHEMA = "historical-execution-v3"
 LOCAL_RECOVERY_SCHEMA = "historical-local-recovery-v2"
 PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 = "61ccac3fc27e9a62ccadee73ec0c069536994fedefd76a272aac129fbd7a484d"
 PR97_COMPATIBILITY_CONTRACT_SHA256 = "567f8f0267a4e1923bf2b61d28e74e4fe94905d9405826c9f735e472db66822d"
-COMPATIBILITY_CONTRACT_SHA256 = "a56f147318db31b32226d3e3011a6085a6fe2042d903b6c1cbe2b44f8aa5751e"
+COMPATIBILITY_CONTRACT_SHA256 = "a425ce24be52c22119f39df1444b9518586f15734998f6d068090d4cef957be8"
 RELEASE_EVIDENCE_PATH = "docs/input-truthfulness/historical-native6-release-evidence.json"
 ORIGINAL_RECOVERY_CONTRACT_SHA256 = "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
 RECOVERY_CONTRACT_SHA256 = incident.RECOVERY_CONTRACT_SHA256
@@ -339,6 +339,9 @@ def validate_release_evidence(api, record):
     reader = contract["identity_reader_revision"]
     require(parent_evidence["source_sha256"].get(reader["path"]) == reader["before_sha256"] and
             sources.get(reader["path"]) == reader["after_sha256"], "unreviewed_identity_reader")
+    scanner = contract["scanner_disposition"]
+    require(parent_evidence["source_sha256"].get(scanner["path"]) == scanner["before_sha256"] and
+            sources.get(scanner["path"]) == scanner["after_sha256"], "unreviewed_scanner_disposition")
     repair_checks = evidence.get("repair_checks")
     require(isinstance(repair_checks, dict) and set(repair_checks) == set(REPAIR_CHECKS) and
             all(value == "PASS" for value in repair_checks.values()), "repair_not_established")

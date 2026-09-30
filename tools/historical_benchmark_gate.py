@@ -30,6 +30,9 @@ PARENT_RELEASE_SHA256 = "4676955bd89be86e0e025f0724d07bc1279ed822170239c5fa446bc
 IDENTITY_READER = "tools/historical_package.py"
 IDENTITY_READER_BEFORE_SHA256 = "b0e45dd12f1c17538fc15d1d3a1ed48c67c89c5b67e91c63ec2c17420a692128"
 IDENTITY_READER_AFTER_SHA256 = "e16c675a62d0880ea2148b4569bc10128c6c667ea47804b88725aa58d6ed7cbb"
+SCANNER_CONFIG = ".gitleaks.toml"
+SCANNER_BEFORE_SHA256 = "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607"
+SCANNER_AFTER_SHA256 = "0e46fb894c9a2ea778d3f27d4e4c18871645b9746cd908136750c4484a75d088"
 REPAIR_EVIDENCE = NEW_EVIDENCE + "native5-recovery/"
 REPAIR_CODE = {
     ".github/workflows/historical-input-proof.yml",
@@ -40,6 +43,7 @@ REPAIR_CODE = {
     "tools/historical_execution_guard.py",
     "tools/historical_benchmark_gate.py",
     IDENTITY_READER,
+    SCANNER_CONFIG,
 }
 REPAIR_TESTS = {
     "tests/fixtures/workflow-validation/native5-original-preflight.sh",
@@ -53,6 +57,8 @@ REPAIR_TESTS = {
     "tests/test_historical_execution.py",
     "tests/test_historical_package.py",
     "tests/test_historical_projection_binding.py",
+    "tests/test_secret_scan.py",
+    "tests/secret_scan_controls.py",
 }
 REPAIR_DOCUMENTS = {"README.md", ".env.example", "CLAUDE.md",
     "docs/input-truthfulness/2026-09-29-historical-execution.md",
@@ -104,6 +110,12 @@ def _repair_decision(event, run, head):
             hashlib.sha256(_git_bytes(run, REPAIR_BASE, IDENTITY_READER)).hexdigest() != IDENTITY_READER_BEFORE_SHA256 or
             hashlib.sha256(_git_bytes(run, head, IDENTITY_READER)).hexdigest() != IDENTITY_READER_AFTER_SHA256):
         raise ValueError("repair_identity_reader_changed")
+    # One exact public-blob false positive has one path/value AND disposition.
+    # This does not exempt scanner configuration changes generally.
+    if (pins.get(SCANNER_CONFIG) != SCANNER_BEFORE_SHA256 or
+            hashlib.sha256(_git_bytes(run, REPAIR_BASE, SCANNER_CONFIG)).hexdigest() != SCANNER_BEFORE_SHA256 or
+            hashlib.sha256(_git_bytes(run, head, SCANNER_CONFIG)).hexdigest() != SCANNER_AFTER_SHA256):
+        raise ValueError("repair_scanner_disposition_changed")
     preserved = {path: digest for path, digest in pins.items() if path not in REPAIR_CODE}
     for path, digest in preserved.items():
         if hashlib.sha256(_git_bytes(run, head, path)).hexdigest() != digest:
@@ -118,6 +130,8 @@ def _repair_decision(event, run, head):
             "parent_release_sha256": PARENT_RELEASE_SHA256, "preserved_source_sha256": preserved,
             "identity_reader_revision": {"path": IDENTITY_READER,
                 "before_sha256": IDENTITY_READER_BEFORE_SHA256, "after_sha256": IDENTITY_READER_AFTER_SHA256},
+            "scanner_disposition": {"path": SCANNER_CONFIG,
+                "before_sha256": SCANNER_BEFORE_SHA256, "after_sha256": SCANNER_AFTER_SHA256},
             "claim": "PR97 measured the pinned prior sources. No new benchmark or execution release is asserted."}
 
 

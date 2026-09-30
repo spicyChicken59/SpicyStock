@@ -56,3 +56,12 @@ condition = "AND"
 regexes = ['''^(a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e|cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d)$''']
 paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests\.json$''']
 regexTarget = "secret"
+
+# Native-5 recovery retains the unchanged public Secret Scan workflow's Git
+# blob ID. Only this exact value at this exact preservation receipt is allowed.
+[[rules.allowlists]]
+description = "Native5 recovery preservation of the public Secret Scan workflow blob"
+condition = "AND"
+regexes = ['''^(f568689c3789a53835708b676ef6c2dcc418fd6f)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation\.json$''']
+regexTarget = "secret"

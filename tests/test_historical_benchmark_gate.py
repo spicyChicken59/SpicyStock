@@ -164,6 +164,10 @@ def repair_git(paths=None, *, mutate=None, missing=None):
 '''
     old_reader = files[gate.IDENTITY_READER].replace(new_conditional, old_conditional)
     assert hashlib.sha256(old_reader).hexdigest() == gate.IDENTITY_READER_BEFORE_SHA256
+    files[gate.SCANNER_CONFIG] = (root / gate.SCANNER_CONFIG).read_bytes()
+    # The disposition is appended; the complete original config remains exact.
+    old_scanner = files[gate.SCANNER_CONFIG][:3320]
+    assert hashlib.sha256(old_scanner).hexdigest() == gate.SCANNER_BEFORE_SHA256
     changed = paths if paths is not None else sorted(gate.REPAIR_CODE | gate.REPAIR_TESTS)
     calls = []
 
@@ -180,7 +184,10 @@ def repair_git(paths=None, *, mutate=None, missing=None):
         assert revision in {gate.REPAIR_BASE, "b" * 40}
         if path == missing:
             return SimpleNamespace(returncode=128, stdout=b"")
-        data = old_reader if path == gate.IDENTITY_READER and revision == gate.REPAIR_BASE else files[path]
+        data = files[path]
+        if revision == gate.REPAIR_BASE:
+            if path == gate.IDENTITY_READER: data = old_reader
+            elif path == gate.SCANNER_CONFIG: data = old_scanner
         if mutate == path and revision == "b" * 40:
             data += b" changed"
         return SimpleNamespace(returncode=0, stdout=data)
@@ -203,6 +210,8 @@ def test_exact_admission_repair_uses_complete_base_diff_and_immutable_measuremen
         assert path in result["preserved_source_sha256"]
     assert result["identity_reader_revision"] == {"path": gate.IDENTITY_READER,
         "before_sha256": gate.IDENTITY_READER_BEFORE_SHA256, "after_sha256": gate.IDENTITY_READER_AFTER_SHA256}
+    assert result["scanner_disposition"] == {"path": gate.SCANNER_CONFIG,
+        "before_sha256": gate.SCANNER_BEFORE_SHA256, "after_sha256": gate.SCANNER_AFTER_SHA256}
     assert ["diff", "--name-only", "-z", "--no-renames", gate.REPAIR_BASE, "b" * 40] in calls
 
 
@@ -221,7 +230,7 @@ def test_other_identity_cannot_borrow_the_incident_benchmark_exception(mutation)
 
 
 @pytest.mark.parametrize("path", ["tools/historical_execution.py",
-    "tools/historical_archive_codec.py", "src/breadth.py", ".github/workflows/tests.yml", ".gitleaks.toml",
+    "tools/historical_archive_codec.py", "src/breadth.py", ".github/workflows/tests.yml",
     "tests/fixtures/changed.json", "tests/conftest.py", "tools/new-admission.py",
     gate.PARENT_RELEASE, "tools/historical-workflow-recovery.json",
     gate.NEW_EVIDENCE + "envelope-continuation/proof-runtime.json"])
@@ -233,7 +242,7 @@ def test_incident_exception_does_not_admit_unrelated_or_preserved_changes(path):
 
 
 @pytest.mark.parametrize("mutation", [gate.PARENT_RELEASE, "tools/historical_package.py",
-    "tools/historical_execution.py", ".github/workflows/tests.yml",
+    "tools/historical_execution.py", ".github/workflows/tests.yml", ".gitleaks.toml",
     gate.NEW_EVIDENCE + "envelope-continuation/proof-runtime.json"])
 @pytest.mark.parametrize("failure", ["changed", "missing"])
 def test_partial_diff_cannot_hide_changed_or_unavailable_pinned_bytes(mutation, failure):

@@ -117,7 +117,11 @@ def setup(monkeypatch):
     source_bytes = {}
     for path in contract["required_source_paths"]:
         reader = contract.get("identity_reader_revision", {})
-        if path == reader.get("path"):
+        scanner = contract.get("scanner_disposition", {})
+        if path == scanner.get("path"):
+            source_bytes[path] = public_git_bytes(path)
+            assert hashlib.sha256(source_bytes[path]).hexdigest() == scanner["after_sha256"]
+        elif path == reader.get("path"):
             source_bytes[path] = public_git_bytes(path)
             assert hashlib.sha256(source_bytes[path]).hexdigest() == reader["after_sha256"]
         elif path in contract["permitted_changed_code"]:

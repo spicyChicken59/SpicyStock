@@ -321,7 +321,7 @@ def test_inherited_measurements_cannot_be_substituted_for_the_repair(setup, muta
 
 
 @pytest.mark.parametrize("path", ["src/breadth.py", "tools/historical_archive_codec.py",
-    "tools/historical_package.py", "tools/historical_execution.py", ".github/workflows/tests.yml"])
+    "tools/historical_package.py", "tools/historical_execution.py", ".github/workflows/tests.yml", ".gitleaks.toml"])
 def test_self_consistent_new_hash_cannot_borrow_unchanged_pr97_scientific_measurements(setup, path):
     document = release_document(setup)
     raw = b"invented change outside the narrowly reviewed admission scope\n"
@@ -329,6 +329,8 @@ def test_self_consistent_new_hash_cannot_borrow_unchanged_pr97_scientific_measur
     setup[3][f"/contents/{path}?ref={APPROVED}"]["content"] = base64.b64encode(raw).decode()
     replace_release(setup, document)
     reason = "unreviewed_identity_reader" if path == "tools/historical_package.py" else "inherited_source_changed"
+    if path == ".gitleaks.toml":
+        reason = "unreviewed_scanner_disposition"
     with pytest.raises(guard.GuardError, match=reason):
         run(setup)
 
