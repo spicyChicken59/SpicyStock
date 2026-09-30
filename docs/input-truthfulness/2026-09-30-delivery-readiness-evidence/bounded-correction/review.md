@@ -129,3 +129,36 @@ and any later source-bound release require a new explicit instruction. OMIT —
 another optimization round, repeated hosted rehearsal, owner-package access,
 provider contact/acquisition and trading claims. Real-data correctness, reader
 authority and trading edge are not established by these synthetic checks.
+
+
+## Later local commit-range finding — preserved FAIL
+
+The full PR-range scan after local commit
+`629ed4433daa6ff60a636cd56490cabb52a371f8` scanned five commits / approximately
+1.75 MB and returned exit 2 with four new `generic-api-key` findings. The two
+original public-response findings are resolved. Astra introduced the new
+findings in the retained measurement/source-identity evidence; the final gate
+cannot be called PASS from the earlier focused controls.
+
+- `window31-supervisor.json`, line 4, and `window31-supervisor.py`, line 45:
+  the SHA-256 of the already verified public age-keygen executable.
+- `focused-tests.json`, lines 52 and 54: SHA-256 fingerprints of the two new
+  public scanner-control source files.
+
+These are nonsensitive provenance values, independently checked against the
+actual binary/source bytes. They are not owner identities or credentials.
+Nevertheless, no additional exception is authorized by this correction.
+Deleting or renaming them in a later commit would not remove the range finding.
+The original exact two-value/path exception remains the only new disposition;
+there is no detector bypass, broad suppression or rewritten history. This
+additional FAIL must be reviewed by Guidance alongside the capacity stop.
+
+Actual command:
+
+```text
+gitleaks 8.24.3 detect --redact=100 --no-banner --config .gitleaks.toml --report-format json --exit-code 2 --log-opts="--no-merges --first-parent 7c0d35d1b4ea781f1660656a193c5c0ce019f04a^..HEAD"
+```
+
+See [the independent finding verification](final-local-scan-findings.json).
+Normal exact-head hosted Tests and Secret Scan will be reported separately in
+PR97; this local failure is preserved even if subsequent review changes scope.

@@ -1,0 +1,59 @@
+{
+  "commit": "629ed4433daa6ff60a636cd56490cabb52a371f8",
+  "independent_verification_receipt_sha256": "e63a440d1e3937306e8a8e7b475ec35e20204646c8287de378ef2aea06ff4347",
+  "input_report_sha256": "7aca09084a78ef04ff34bbfa440a192e1edcfc59e8c30ed62b1242f5d6c5a5d9",
+  "method": "Read committed finding lines with git show; hash the referenced committed source bytes. Hash the installed public executable, compare its bytes with the retained official release archive member, and match that archive to the committed installer pin.",
+  "private_key_access": "NOT RUN",
+  "provider_requests": 0,
+  "results": [
+    {
+      "archive_matches_committed_release_pin": true,
+      "basis": "public_executable_bytes",
+      "basis_path": "work/age-tools/age/age-keygen.exe",
+      "executable_matches_archive_member": true,
+      "line": 4,
+      "official_archive_sha256": "f48d8f8f9ebe903ab5027ed067652f2cc1db94bc206976430133b905dcd8e8c7",
+      "official_archive_url": "https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-windows-amd64.zip",
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.json",
+      "sha256": "1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c",
+      "verified": true
+    },
+    {
+      "basis": "committed_source_bytes",
+      "basis_git_blob": "539e959aab2ee453d08b1ede2a29eb1413c17871",
+      "basis_path": "tests/secret_scan_controls.py",
+      "line": 52,
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+      "sha256": "a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e",
+      "verified": true,
+      "worktree_matches_committed_bytes": true
+    },
+    {
+      "basis": "committed_source_bytes",
+      "basis_git_blob": "caaf54087ce68f1eeb9e5c58f013674caa27b310",
+      "basis_path": "tests/test_secret_scan.py",
+      "line": 54,
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests.json",
+      "sha256": "cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d",
+      "verified": true,
+      "worktree_matches_committed_bytes": true
+    },
+    {
+      "archive_matches_committed_release_pin": true,
+      "basis": "public_executable_bytes",
+      "basis_path": "work/age-tools/age/age-keygen.exe",
+      "executable_matches_archive_member": true,
+      "line": 45,
+      "official_archive_sha256": "f48d8f8f9ebe903ab5027ed067652f2cc1db94bc206976430133b905dcd8e8c7",
+      "official_archive_url": "https://github.com/FiloSottile/age/releases/download/v1.3.2/age-v1.3.2-windows-amd64.zip",
+      "path": "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor.py",
+      "sha256": "1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c",
+      "verified": true
+    }
+  ],
+  "scanner_status": "FAIL",
+  "schema": "historical-bounded-correction-finding-verification-v1",
+  "scope": "Independent interpretation of four retained scanner findings. No suppression, authorization or scanner PASS is inferred.",
+  "verification_status": "PASS",
+  "writes_to_configuration_or_history": false
+}

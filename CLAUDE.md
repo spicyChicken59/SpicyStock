@@ -3640,3 +3640,14 @@ tuning, a second rehearsal, owner-key/private-package access, provider/model
 calls, outreach and actual historical acquisition. No market-data correctness,
 new reader authority or trading edge is established. Guidance owns any next
 instruction, clean merge and later real release; Astra stops at PR97.
+
+
+FAIL — subsequent full commit-range scan at
+`629ed4433daa6ff60a636cd56490cabb52a371f8` resolved the two original findings
+but detected four additional public binary/source fingerprints in the newly
+retained evidence. Astra introduced these while recording this correction.
+The exact paths and content-hash verification are retained in the correction
+review. No additional allowlist, detector exclusion or history rewrite was
+made. These findings remain a separate Secret Scan blocker; the capacity
+failure already requires the stop. Final hosted results belong to the PR97
+closeout comment.
