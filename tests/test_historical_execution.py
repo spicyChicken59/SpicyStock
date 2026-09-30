@@ -45,7 +45,7 @@ def run_setup(tmp_path, monkeypatch):
     monkeypatch.setattr(guard, "MANIFEST", identity)
     monkeypatch.setattr(execution, "_checkout_sha", lambda: "a" * 40)
     storage = tmp_path / "storage"
-    policy = {"schema": "historical-execution-policy-v3", "implementation_pr": 123,
+    policy = {"schema": guard.POLICY_SCHEMA, "implementation_pr": 123,
               "recipient": "age1n3xsz54659mz50vml7pg0eqdhq6dtxqmzy0janmq7qgxrhc6gceqmp75vh",
               "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
@@ -169,8 +169,8 @@ def test_provider_environment_forbidden_outside_real(run_setup, monkeypatch, mod
 
 def test_absent_real_secret_creates_no_new_ledger(run_setup, monkeypatch):
     _, storage, record, _ = run_setup
-    record.update(mode="real", run_number=5, assignment_phase=2)
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "5")
+    record.update(mode="real", run_number=6, assignment_phase=2)
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "6")
     monkeypatch.setattr(execution.signal, "SIGALRM", 14, raising=False)
     monkeypatch.setattr(acquisition, "AlpacaTransport", lambda: pytest.fail("provider touched"))
     with pytest.raises(execution.ExecutionError, match="provider_credentials_unavailable"):
@@ -180,8 +180,8 @@ def test_absent_real_secret_creates_no_new_ledger(run_setup, monkeypatch):
 
 def test_preflight_without_secrets_is_non_mutating_and_offline_needs_no_new_approval(run_setup, monkeypatch):
     manifest, storage, record, approval = run_setup
-    record.update(mode="real", run_number=5, assignment_phase=2)
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "5")
+    record.update(mode="real", run_number=6, assignment_phase=2)
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "6")
     monkeypatch.setattr(execution.signal, "SIGALRM", 14, raising=False)
     assert execution.preflight("real", manifest, storage, record, approval)[0] == storage
     assert not storage.exists()

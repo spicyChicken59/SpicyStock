@@ -27,7 +27,7 @@ def test_exact_old_transport_and_new_reviewed_source_are_separate(setup):
     assert old["rehearsal_run_id"] == OLD_RUN and old["checkout_sha"] != result["checkout_sha"]
     assert old["artifact_id"] == 11033808340
     assert result["schema"] == "historical-execution-v3"
-    assert result["run_number"] == 5 and result["assignment_phase"] == 2
+    assert result["run_number"] == 6 and result["assignment_phase"] == 2
     assert result["release_evidence_sha256"] == setup[2]["release_evidence_sha256"]
     assert guard.validate_phase_binding(result)["compatibility_contract_sha256"] == guard.COMPATIBILITY_CONTRACT_SHA256
 
@@ -69,7 +69,7 @@ def test_any_missing_or_failed_measured_check_blocks_release(setup, status, chec
     ("incomplete_diff", "incomplete_delivery_diff")])
 def test_hashed_release_cannot_hide_changed_or_missing_proof(setup, mutation, reason):
     document = release_document(setup)
-    path = "tools/historical_package.py"
+    path = "tools/historical_execution_guard.py"
     if mutation == "source_missing": del document["source_sha256"][path]
     elif mutation == "source_changed":
         setup[3][f"/contents/{path}?ref={APPROVED}"]["content"] = base64.b64encode(b"changed source").decode()
@@ -93,7 +93,7 @@ def test_hashed_release_cannot_hide_changed_or_missing_proof(setup, mutation, re
 
 def test_declared_exact_changed_code_is_reviewable_and_unrelated_control_passes(setup):
     document = release_document(setup)
-    change = {"filename": "tools/historical_package.py", "status": "modified", "sha": "d" * 40}
+    change = {"filename": "tools/historical_execution_guard.py", "status": "modified", "sha": "d" * 40}
     setup[3][f"/compare/{guard.compatibility_contract()['continuation_base']}...{APPROVED}"]["files"] = [change]
     document["changed_code"] = [{"path": change["filename"], "git_blob": change["sha"]}]
     replace_release(setup, document)
@@ -135,11 +135,13 @@ def test_historical_v2_projection_is_not_relabelled_or_current_authorization(set
     legacy.update(run_id=accepted["rehearsal_run_id"], mode="rehearsal", run_number=4, assignment_phase=1,
                   checkout_sha=accepted["checkout_sha"], workflow_sha=accepted["workflow_sha"],
                   implementation_pr=95, readiness_comment_id=accepted["readiness_comment_id"],
+                  recovery_contract_sha256=guard.ORIGINAL_RECOVERY_CONTRACT_SHA256,
                   recipient_sha256=guard.compatibility_contract()["recipient_sha256"])
     assert guard.validate_phase_binding(legacy) == legacy
     with pytest.raises(guard.GuardError, match="missing_delivery_binding"):
         guard.validate_execution_binding(legacy, setup[0])
-    assert guard.RECOVERY_CONTRACT_SHA256 == "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
+    assert guard.ORIGINAL_RECOVERY_CONTRACT_SHA256 == "6b49a4956c8196c432e9798149e2e1544b075a13353351cb10dfe241f72aae7a"
+    assert guard.RECOVERY_CONTRACT_SHA256 != guard.ORIGINAL_RECOVERY_CONTRACT_SHA256
 
 
 def test_old_v2_readiness_is_not_a_current_release(setup):
@@ -178,7 +180,7 @@ def test_compatibility_contract_is_not_an_editable_old_success_fallback(setup, t
         run(setup)
 
 
-@pytest.mark.parametrize("old_pr", [94, 95, 96, None])
+@pytest.mark.parametrize("old_pr", [94, 95, 96, 97, None])
 def test_old_or_unbound_pr_cannot_admit_new_code(setup, old_pr):
     setup[0]["implementation_pr"] = old_pr
     with pytest.raises(guard.GuardError, match="unbound_implementation_pr"):
@@ -221,7 +223,7 @@ def test_previous_evidence_cannot_be_altered_or_deleted(setup, path, status):
 
 @pytest.mark.parametrize("path", [
     "docs/input-truthfulness/2026-09-29-historical-execution.md",
-    "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/measured.json",
+    "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/measured.json",
     guard.RELEASE_EVIDENCE_PATH,
 ])
 def test_only_current_delivery_documents_are_allowed_support_changes(setup, path):
@@ -260,6 +262,8 @@ def test_new_delivery_envelope_is_explicitly_bound(setup, mutation):
 
 def test_previous_package_binding_is_readable_but_not_current_execution(setup):
     result = run(setup)
+    result["run_number"] = 5
+    result["recovery_contract_sha256"] = guard.ORIGINAL_RECOVERY_CONTRACT_SHA256
     result["compatibility_contract_sha256"] = guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
     assert guard.validate_phase_binding(result)["compatibility_contract_sha256"] == guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
     with pytest.raises(guard.GuardError, match="stale_delivery_binding"):
@@ -276,9 +280,94 @@ def test_previous_technical_declaration_cannot_certify_changed_envelope(setup):
 
 def test_versioned_envelope_preserves_accepted_transport_and_codec():
     contract = guard.compatibility_contract()
-    assert contract["schema"] == "historical-delivery-compatibility-v2"
-    assert contract["supersedes_compatibility_sha256"] == guard.PREVIOUS_COMPATIBILITY_CONTRACT_SHA256
+    assert contract["schema"] == "historical-delivery-compatibility-v3"
+    assert contract["supersedes_compatibility_sha256"] == guard.PR97_COMPATIBILITY_CONTRACT_SHA256
     assert contract["accepted_transport"]["rehearsal_run_id"] == 36570997883
     assert contract["accepted_transport"]["checkout_sha"] == "6b12fdfa67355b436fde89287d159bebda2ce9fc"
     assert contract["delivery_envelope"]["archive_format"] == "ustar-zstandard-v1"
     assert contract["delivery_envelope"]["max_expanded_bytes"] == 2 * 1024**3
+
+
+def test_exact_pr97_parent_and_original_measurements_remain_bound(setup):
+    document = release_document(setup)
+    parent = guard.compatibility_contract()["parent_delivery"]
+    assert document["inherited_delivery"] == parent
+    assert parent["revision"] == "6979904ad872d8d648c93537c77ead5fda909481"
+    assert parent["compatibility_contract_sha256"] == guard.PR97_COMPATIBILITY_CONTRACT_SHA256
+    assert run(setup)["evidence"]["local_recovery"]["recovery_contract_sha256"] == guard.ORIGINAL_RECOVERY_CONTRACT_SHA256
+
+
+@pytest.mark.parametrize("mutation,reason", [("relation", "unbound_parent_delivery"),
+    ("parent_bytes", "parent_delivery_changed"), ("parent_missing", "missing_synthetic_response"),
+    ("substitute_measurement", "inherited_delivery_proof_changed")])
+def test_inherited_measurements_cannot_be_substituted_for_the_repair(setup, mutation, reason):
+    document = release_document(setup)
+    parent = guard.compatibility_contract()["parent_delivery"]
+    parent_path = f"/contents/{parent['path']}?ref={parent['revision']}"
+    if mutation == "relation":
+        document["inherited_delivery"]["revision"] = APPROVED
+    elif mutation == "parent_bytes":
+        setup[3][parent_path]["content"] = base64.b64encode(b'{"status":"PASS"}\n').decode()
+    elif mutation == "parent_missing":
+        del setup[3][parent_path]
+    else:
+        proof = document["proofs"]["runtime"]
+        raw = guard.encode({"status": "PASS", "scope": "invented replacement measurement"})
+        proof["sha256"] = hashlib.sha256(raw).hexdigest()
+        setup[3][f"/contents/{proof['path']}?ref={APPROVED}"]["content"] = base64.b64encode(raw).decode()
+    replace_release(setup, document)
+    with pytest.raises(guard.GuardError, match=reason):
+        run(setup)
+
+
+@pytest.mark.parametrize("path", ["src/breadth.py", "tools/historical_archive_codec.py",
+    "tools/historical_package.py", "tools/historical_execution.py", ".github/workflows/tests.yml"])
+def test_self_consistent_new_hash_cannot_borrow_unchanged_pr97_scientific_measurements(setup, path):
+    document = release_document(setup)
+    raw = b"invented change outside the narrowly reviewed admission scope\n"
+    document["source_sha256"][path] = hashlib.sha256(raw).hexdigest()
+    setup[3][f"/contents/{path}?ref={APPROVED}"]["content"] = base64.b64encode(raw).decode()
+    replace_release(setup, document)
+    reason = "unreviewed_identity_reader" if path == "tools/historical_package.py" else "inherited_source_changed"
+    with pytest.raises(guard.GuardError, match=reason):
+        run(setup)
+
+
+@pytest.mark.parametrize("check", guard.REPAIR_CHECKS)
+@pytest.mark.parametrize("status", ["FAIL", "BLOCKED", "NOT RUN", None])
+def test_new_admission_proofs_cannot_be_replaced_by_old_measurements(setup, check, status):
+    document = release_document(setup)
+    if status is None:
+        del document["repair_checks"][check]
+    else:
+        document["repair_checks"][check] = status
+    replace_release(setup, document)
+    with pytest.raises(guard.GuardError, match="repair_not_established"):
+        run(setup)
+
+
+@pytest.mark.parametrize("mutation,reason", [("missing", "invalid_repair_proof"),
+    ("wrong_path", "invalid_repair_proof"), ("changed_bytes", "repair_proof_changed"),
+    ("wrong_schema", "repair_not_established"), ("failed", "repair_not_established"),
+    ("different_sources", "repair_not_established"), ("different_checks", "repair_not_established")])
+def test_current_repair_proof_is_hash_bound_and_requires_exact_source_map(setup, mutation, reason):
+    document = release_document(setup)
+    if mutation == "missing":
+        del document["repair_proof"]
+    elif mutation == "wrong_path":
+        document["repair_proof"]["path"] = document["proofs"]["runtime"]["path"]
+    else:
+        proof = document["repair_proof"]
+        entry = setup[3][f"/contents/{proof['path']}?ref={APPROVED}"]
+        record = json.loads(base64.b64decode(entry["content"]))
+        if mutation == "wrong_schema": record["schema"] = "historical-native6-repair-proof-v0"
+        elif mutation == "failed": record["status"] = "FAIL"
+        elif mutation == "different_sources": record["source_sha256"]["tools/historical_execution_guard.py"] = "d" * 64
+        elif mutation == "different_checks": record["checks"]["input_normalization"] = "NOT RUN"
+        else: record["unbound_extra"] = True
+        raw = guard.encode(record)
+        entry["content"] = base64.b64encode(raw).decode()
+        if mutation != "changed_bytes": proof["sha256"] = hashlib.sha256(raw).hexdigest()
+    replace_release(setup, document)
+    with pytest.raises(guard.GuardError, match=reason):
+        run(setup)

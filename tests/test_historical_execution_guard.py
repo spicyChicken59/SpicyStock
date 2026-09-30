@@ -1,13 +1,19 @@
-"""Execution authorization tests use invented GitHub responses and no sockets."""
+"""Synthetic GitHub responses combine pinned public history with invented future
+records. No test performs a dispatch, provider request, or live admission.
+"""
 from copy import deepcopy
 from datetime import date
 import base64
 import hashlib
 import json
+from pathlib import Path
 
 import pytest
 
 from tools import historical_execution_guard as guard
+from tests.test_historical_workflow_validation import (
+    bash, path_runtime, initialize, boundary_outputs,
+)
 
 
 APPROVED, CURRENT, MERGED = "a" * 40, "b" * 40, "c" * 40
@@ -16,15 +22,26 @@ OLD_RUN = 36570997883
 FIXTURE_PR = 123
 HISTORY = f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=1"
 HISTORY_END = f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=2"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def jobs_path(run_id, page=1):
     return f"/actions/runs/{run_id}/attempts/1/jobs?per_page=100&page={page}"
 
 
+def artifacts_path(run_id, page=1):
+    return f"/actions/runs/{run_id}/artifacts?per_page=100&page={page}"
+
+
+def public_git_bytes(path):
+    # These API fixtures represent public LF Git blobs. A Windows checkout may
+    # have CRLF bytes; the parent declaration independently pins the LF content.
+    return (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+
+
 @pytest.fixture
 def setup(monkeypatch):
-    recipient = "age1" + "a" * 58
+    recipient = json.loads(guard.POLICY_PATH.read_bytes())["recipient"]
     policy = {"schema": guard.POLICY_SCHEMA, "implementation_pr": FIXTURE_PR,
               "recipient": recipient, "recipient_sha256": hashlib.sha256((recipient + "\n").encode()).hexdigest(),
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
@@ -34,7 +51,7 @@ def setup(monkeypatch):
            "GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_REF": "refs/heads/main", "GITHUB_JOB": "execution",
            "GITHUB_WORKFLOW_REF": guard.REPOSITORY + "/" + guard.WORKFLOW + "@refs/heads/main",
            "GITHUB_SHA": CURRENT, "GITHUB_WORKFLOW_SHA": CURRENT,
-           "GITHUB_RUN_ID": "105", "GITHUB_RUN_NUMBER": "5", "GITHUB_RUN_ATTEMPT": "1"}
+           "GITHUB_RUN_ID": "105", "GITHUB_RUN_NUMBER": "6", "GITHUB_RUN_ATTEMPT": "1"}
     item = {"verified_at": "2026-09-28", "reference": "https://example.test/private-attestation/123",
             "basis": "Invented offline test evidence with no provider activity"}
     evidence = {name: deepcopy(item) for name in ("cost", "owner_authorization", "entitlement", "local_recovery")}
@@ -45,14 +62,14 @@ def setup(monkeypatch):
         direction_reference=guard.compatibility_contract()["owner_direction_reference"])
     evidence["entitlement"]["historical_sip_zero_cost"] = True
     evidence["local_recovery"].update(schema=guard.LOCAL_RECOVERY_SCHEMA, verified=True, rehearsal_run_id=OLD_RUN,
-        run_number=4, assignment_phase=1, run_attempt=1, recovery_contract_sha256=guard.RECOVERY_CONTRACT_SHA256,
+        run_number=4, assignment_phase=1, run_attempt=1, recovery_contract_sha256=guard.ORIGINAL_RECOVERY_CONTRACT_SHA256,
         checkout_sha=APPROVED, workflow_sha=CURRENT, recipient_sha256=policy["recipient_sha256"],
         ciphertext_sha256="d" * 64, recovered_plaintext_sha256="e" * 64)
     evidence["local_recovery"].update(guard.compatibility_contract()["accepted_transport"], manifest_sha256=guard.MANIFEST,
         reference="sha256:" + guard.compatibility_contract()["accepted_transport"]["recovery_checkpoint_sha256"])
     record = {"schema": guard.READINESS_SCHEMA, "status": "PASS", "authorized_on": "2026-09-29", "mode": "real", "assignment_id": guard.ASSIGNMENT,
               "manifest_sha256": guard.MANIFEST, "checkout_sha": APPROVED, "workflow_id": guard.WORKFLOW_ID,
-              "recipient_sha256": policy["recipient_sha256"], "evidence": evidence, "run_number": 5, "assignment_phase": 2,
+              "recipient_sha256": policy["recipient_sha256"], "evidence": evidence, "run_number": 6, "assignment_phase": 2,
               "recovery_contract_sha256": guard.RECOVERY_CONTRACT_SHA256,
               "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256}
     repo = {"id": guard.REPOSITORY_ID, "full_name": guard.REPOSITORY, "private": False}
@@ -65,7 +82,9 @@ def setup(monkeypatch):
     runs.extend([{"id": OLD_RUN if n == 4 else 105, "run_number": n, "run_attempt": 1, "workflow_id": guard.WORKFLOW_ID, "path": guard.WORKFLOW, "event": "workflow_dispatch",
              "head_branch": "main", "repository": repo, "head_repository": repo, "head_sha": guard.compatibility_contract()["accepted_transport"]["workflow_sha"] if n == 4 else CURRENT,
              "display_title": "historical-input-" + ("rehearsal" if n == 4 else "real"),
-             "status": "completed" if n == 4 else "in_progress", "conclusion": "success" if n == 4 else None} for n in (4, 5)])
+             "status": "completed" if n == 4 else "in_progress", "conclusion": "success" if n == 4 else None} for n in (4, 6)])
+    incident = guard.incident.incident_contract()["exception"]
+    runs.insert(4, deepcopy(incident["run"]))
     tree = {"truncated": False, "tree": [{"path": path, "type": "tree", "sha": "f" * 40} for path in ("tools", "src", ".github")]}
     content = {"type": "file", "encoding": "base64", "content": base64.b64encode(b"synthetic workflow\n").decode()}
     responses = {"": repo, "/pulls/123": pr,
@@ -76,32 +95,60 @@ def setup(monkeypatch):
                  f"/contents/{guard.WORKFLOW}?ref={APPROVED}": deepcopy(content),
                  f"/contents/{guard.WORKFLOW}?ref={CURRENT}": deepcopy(content),
                  f"/actions/workflows/{guard.WORKFLOW_ID}": {"id": guard.WORKFLOW_ID, "path": guard.WORKFLOW, "state": "active"},
-                 HISTORY: {"total_count": 5, "workflow_runs": runs}, HISTORY_END: {"total_count": 5, "workflow_runs": []}}
+                 HISTORY: {"total_count": 6, "workflow_runs": runs}, HISTORY_END: {"total_count": 6, "workflow_runs": []}}
     for run_record in runs:
         run_id = run_record["id"]
         responses[f"/actions/runs/{run_id}"] = deepcopy(run_record)
         jobs = [] if run_record["run_number"] <= 3 else [{"id": guard.compatibility_contract()["accepted_transport"]["job_id"] if run_record["run_number"] == 4 else 500 + run_id, "run_id": run_id, "name": "execution",
             "status": run_record["status"], "conclusion": run_record["conclusion"], "started_at": "2026-09-29T12:00:00Z"}]
+        if run_record["run_number"] == 5:
+            jobs = [deepcopy(incident["job"])]
+            responses[artifacts_path(run_id)] = {"total_count": 0, "artifacts": []}
         responses[jobs_path(run_id)] = {"total_count": len(jobs), "jobs": jobs}
         if jobs:
             responses[jobs_path(run_id, 2)] = {"total_count": len(jobs), "jobs": []}
     contract = guard.compatibility_contract()
-    source_bytes = {path: ("synthetic source " + path + "\n").encode() for path in contract["required_source_paths"]}
+    parent = contract["parent_delivery"]
+    parent_raw = public_git_bytes(parent["path"])
+    assert hashlib.sha256(parent_raw).hexdigest() == parent["sha256"]
+    parent_release = json.loads(parent_raw)
+    responses[f"/contents/{parent['path']}?ref={parent['revision']}"] = {
+        "type": "file", "encoding": "base64", "content": base64.b64encode(parent_raw).decode()}
+    source_bytes = {}
+    for path in contract["required_source_paths"]:
+        reader = contract.get("identity_reader_revision", {})
+        if path == reader.get("path"):
+            source_bytes[path] = public_git_bytes(path)
+            assert hashlib.sha256(source_bytes[path]).hexdigest() == reader["after_sha256"]
+        elif path in contract["permitted_changed_code"]:
+            source_bytes[path] = ("synthetic reviewed admission source " + path + "\n").encode()
+        else:
+            source_bytes[path] = public_git_bytes(path)
+            assert hashlib.sha256(source_bytes[path]).hexdigest() == parent_release["source_sha256"][path]
     source_bytes[guard.WORKFLOW] = b"synthetic workflow\n"
-    release = {"schema": "historical-delivery-release-evidence-v2", "status": "PASS",
+    release = {"schema": "historical-delivery-release-evidence-v3", "status": "PASS",
+        "inherited_delivery": deepcopy(parent),
+        "repair_checks": {name: "PASS" for name in ("input_normalization", "exact_incident_recovery", "wrapper_receipt_binding", "normal_ci")},
         "delivery_envelope": contract["delivery_envelope"],
         "compatibility_contract_sha256": guard.COMPATIBILITY_CONTRACT_SHA256,
         "manifest_sha256": guard.MANIFEST, "recipient_sha256": policy["recipient_sha256"],
-        "checks": {key: "PASS" for key in guard.RELEASE_CHECKS},
+        "checks": deepcopy(parent_release["checks"]),
         "source_sha256": {path: hashlib.sha256(raw).hexdigest() for path, raw in source_bytes.items()},
-        "changed_code": [], "proofs": {}}
+        "changed_code": [], "proofs": deepcopy(parent_release["proofs"])}
     for path, raw in source_bytes.items():
         responses[f"/contents/{path}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
-    for name in guard.RELEASE_PROOFS:
-        path = "docs/input-truthfulness/synthetic-" + name + ".json"
-        raw = guard.encode({"status": "PASS", "synthetic_only": True, "scope": "invented unit-test evidence"})
-        release["proofs"][name] = {"path": path, "sha256": hashlib.sha256(raw).hexdigest()}
+    for proof in release["proofs"].values():
+        path = proof["path"]
+        raw = public_git_bytes(path)
+        assert hashlib.sha256(raw).hexdigest() == proof["sha256"]
         responses[f"/contents/{path}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
+    repair_path = "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/proof-repair.json"
+    repair_raw = guard.encode({"schema": "historical-native6-repair-proof-v1", "status": "PASS",
+        "checks": release["repair_checks"], "source_sha256": release["source_sha256"],
+        "scope": "Invented offline unit-test review proof, not an actual execution or approval."})
+    release["repair_proof"] = {"path": repair_path, "sha256": hashlib.sha256(repair_raw).hexdigest()}
+    responses[f"/contents/{repair_path}?ref={APPROVED}"] = {
+        "type": "file", "encoding": "base64", "content": base64.b64encode(repair_raw).decode()}
     raw = guard.encode(release)
     record["release_evidence_sha256"] = hashlib.sha256(raw).hexdigest()
     responses[f"/contents/{guard.RELEASE_EVIDENCE_PATH}?ref={APPROVED}"] = {"type": "file", "encoding": "base64", "content": base64.b64encode(raw).decode()}
@@ -153,11 +200,38 @@ def run(setup):
 def test_full_real_authorization_and_truthful_operator_only_recovery(setup, tmp_path):
     result = run(setup)
     assert result["checkout_sha"] == APPROVED
-    assert result["run_id"] == 105 and result["run_number"] == 5 and result["assignment_phase"] == 2 and result["lifetime_status"] == "PASS"
+    assert result["run_id"] == 105 and result["run_number"] == 6 and result["assignment_phase"] == 2 and result["lifetime_status"] == "PASS"
     approval = guard.approval(result, tmp_path / "storage")
     assert approval["provider_requests_per_minute"] == 20
     assert approval["reviewer_retrieval_path"].endswith("Guidance private review: NOT RUN")
     assert not (tmp_path / "storage").exists()
+
+
+@pytest.mark.parametrize("mutation,reason", [("valid", None), ("owner", "untrusted_readiness_comment"),
+    ("stale", "execution_release_not_after_merge"), ("head", "unreviewed_checkout"),
+    ("phase", "stale_phase_readiness")])
+def test_normalization_reaches_actual_guard_without_relaxing_authorization(setup, path_runtime, bash, mutation, reason):
+    policy, env, record, responses, _, api = setup
+    path_runtime[4].update(env)
+    path_runtime[4]["RAW_READINESS_COMMENT_ID"] = " \t 123\t "
+    assert initialize(bash, path_runtime).returncode == 0
+    canonical = boundary_outputs(path_runtime)["readiness_comment_id"]
+    assert canonical == "123"
+    if mutation == "head": record["checkout_sha"] = CURRENT
+    elif mutation == "phase": record["assignment_phase"] = 1
+    def reviewed_api(path):
+        response = api(path)
+        if path == "/issues/comments/123":
+            if mutation == "owner": response["user"]["login"] = "different-owner"
+            elif mutation == "stale": response["created_at"] = "2026-09-29T09:59:59Z"
+        return response
+    if reason is None:
+        assert guard.verify(reviewed_api, policy, env, "real", int(canonical), TODAY)["run_number"] == 6
+    else:
+        with pytest.raises(guard.GuardError, match=reason):
+            guard.verify(reviewed_api, policy, env, "real", int(canonical), TODAY)
+    # Boundary scratch creation is not provider storage or a fresh ledger.
+    assert not list(path_runtime[0].rglob("*.sqlite"))
 
 
 def test_private_receipt_digest_is_supported_but_generic_reference_is_not(setup):
@@ -180,9 +254,10 @@ def test_real_requires_permission_for_public_ciphertext_transport(setup, permiss
         run(setup)
 
 
-def test_rehearsal_needs_cost_evidence_but_not_provider_rights(setup):
-    result = run(make_rehearsal(setup))
-    assert result["run_number"] == 4 and result["assignment_phase"] == 1
+def test_accepted_rehearsal_slot_cannot_be_dispatched_again(setup):
+    with pytest.raises(guard.GuardError, match="rehearsal_slot_closed"):
+        run(make_rehearsal(setup))
+    assert not setup[4]
 
 
 @pytest.mark.parametrize("key,value", [
@@ -268,17 +343,17 @@ def test_native_history_cannot_reopen_a_slot(setup, mutation):
     listing = setup[3][HISTORY]
     runs = listing["workflow_runs"]
     if mutation == "deleted":
-        listing.update(total_count=4, workflow_runs=runs[1:])
-        setup[3][HISTORY_END]["total_count"] = 4
-    elif mutation == "extra": listing.update(total_count=6, workflow_runs=runs + [deepcopy(runs[0])])
+        listing.update(total_count=5, workflow_runs=runs[1:])
+        setup[3][HISTORY_END]["total_count"] = 5
+    elif mutation == "extra": listing.update(total_count=7, workflow_runs=runs + [deepcopy(runs[0])])
     elif mutation == "duplicate": runs[-1]["id"] = runs[-2]["id"]
     elif mutation == "rerun": change_run(setup, 4, run_attempt=2)
     elif mutation in {"failed", "cancelled"}: change_run(setup, 4, conclusion="failure" if mutation == "failed" else "cancelled")
     elif mutation == "wrong_receipt": setup[2]["evidence"]["local_recovery"]["rehearsal_run_id"] = 99
     elif mutation == "wrong_phase": change_run(setup, 4, display_title="historical-input-real")
     elif mutation == "fork": change_run(setup, 4, head_repository={"id": 123})
-    elif mutation == "wrong_current": change_run(setup, 5, head_sha=APPROVED)
-    elif mutation == "not_started": change_run(setup, 5, status="queued")
+    elif mutation == "wrong_current": change_run(setup, 6, head_sha=APPROVED)
+    elif mutation == "not_started": change_run(setup, 6, status="queued")
     reasons = {"deleted": "incomplete_or_consumed_history", "extra": "consumed_or_invalid_history",
         "duplicate": "duplicate_run_history", "rerun": "unaccounted_or_retried_run",
         "failed": "rehearsal_not_recovered", "cancelled": "rehearsal_not_recovered",
@@ -293,8 +368,8 @@ def test_history_reads_all_pages_and_refuses_inconsistent_totals(setup):
     first, second = listing["workflow_runs"][:2], listing["workflow_runs"][2:]
     listing["workflow_runs"] = first
     path = HISTORY_END
-    setup[3][path] = {"total_count": 5, "workflow_runs": second}
-    setup[3][f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=3"] = {"total_count": 5, "workflow_runs": []}
+    setup[3][path] = {"total_count": 6, "workflow_runs": second}
+    setup[3][f"/actions/workflows/{guard.WORKFLOW_ID}/runs?per_page=100&page=3"] = {"total_count": 6, "workflow_runs": []}
     assert run(setup)["status"] == "PASS"
     assert path in setup[4]
     setup[3][path]["total_count"] = 4
@@ -310,7 +385,8 @@ def test_fixed_three_exception_contract_and_private_snapshot(setup):
         (36524147152, 3, "33ec181ca60adaf2f7c0ef19a1889a5517161585")]
     result = run(setup)
     snapshot = result["history_verification"]
-    assert [item["attempt_jobs_count"] for item in snapshot["runs"]] == [0, 0, 0, 1, 1]
+    assert [item["attempt_jobs_count"] for item in snapshot["runs"]] == [0, 0, 0, 1, 1, 1]
+    assert snapshot["runs"][4]["attempt_job_ids"] == [guard.incident.FAILED_JOB_ID]
     assert snapshot["runs"][-1]["attempt_job_ids"] == [605]
     assert snapshot["first_listing_sha256"] == snapshot["repeated_listing_sha256"]
     assert setup[4].count(HISTORY) == 2 and setup[4].count(HISTORY_END) == 2
@@ -366,7 +442,6 @@ def test_partial_or_unavailable_history_fails_closed(setup, mutation):
 
 
 def test_unknown_fourth_zero_job_validation_failure_is_not_exempt(setup):
-    make_rehearsal(setup)
     change_run(setup, 4, event="push", status="completed", conclusion="failure")
     setup[3][jobs_path(OLD_RUN)] = {"total_count": 0, "jobs": []}
     with pytest.raises(guard.GuardError, match="unaccounted_or_retried_run"):

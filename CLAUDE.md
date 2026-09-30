@@ -3739,3 +3739,50 @@ to Guidance. OMIT — further compression optimization, readiness approval and a
 new infrastructure milestone.
 
 See the [bound delivery review](docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/envelope-continuation/review.md) for measured tables and receipts.
+
+### 30 September 2026 — native-5 input and exact-attempt recovery
+
+Guidance comment 5920371235 supersedes the unsupported root-walk diagnosis.
+Base is `6979904ad872d8d648c93537c77ead5fda909481`, tree
+`29c13da32a2752bc5d5abeec2c46c8d5c6fd9b13`; merged PR97 head remains
+`8cc49dceb47d6fad8206c44caf091b1f2dadee14`. The repair head and exact CI will
+be identified on its PR, linked from PR97. No historical record is rewritten.
+
+FAIL — run 36780349890 / native 5 / attempt 1, job 110108745578, stopped
+at the numeric readiness-ID check because the input contained four leading
+ASCII spaces. Setup succeeded, step 2 failed, and the captured steps 3–14
+were skipped. There was one job and no artifact. This is a started failure
+before checkout/acquisition, not a zero-job exception. Provider usage was zero
+because the acquisition step never executed; no ledger is invented. The root
+walk succeeds and remains byte-identical, including Git-ancestor refusal.
+
+PASS — the workflow now trims only edge ASCII spaces/tabs, rejects all other
+noncanonical input with a constant diagnostic, and explicitly passes the
+canonical ID through its boundary output to the guard. Owner, date, PR, head,
+mode, phase and evidence checks still apply. Complete history was freshly
+captured through empty terminators at 2026-09-30T22:10:04Z: exactly native 1–5,
+with unchanged main and no open PR. Runtime admission must repeat that check.
+
+The new incident relation is canonically pinned at
+`8f884be642bbcc01a0c02907d73c8d1075ac9040c1b9620e1a307d7330c25c71`.
+It requires the exact native-5 run, sole job and every captured step outcome,
+with empty artifacts only as corroboration. Prospective native 6 / attempt 1 /
+phase 2 requires readiness-v4 on the repair PR after merge. Readiness 5920107119,
+native-5 attempt 2, extra history and another replacement remain refused.
+
+PASS — 768 focused offline regressions, including actual workflow extraction,
+restored defects, full guard/wrapper/TEST-ONLY encryption recovery, legacy gzip
+and PR97 v4 reading. A minimal package identity conditional preserves old v4
+reading; every byte outside that conditional matches PR97. Scientific, codec,
+runtime, acquisition, old recovery/compatibility and measured proof pins remain.
+The precise CI exemption verifies those pins and this repair's scope; it records
+the unchanged full-scale benchmark as NOT RUN, never as a new measurement.
+PASS — local Gitleaks directory scan; normal Linux CI is NOT RUN at this dated
+pre-PR checkpoint. The technical declaration stays BLOCKED until actual CI.
+
+KEEP — accepted evidence, budgets and all 250/251 MiB/2 GiB envelopes.
+FIX NOW — complete the repair PR's normal CI and Guidance review.
+DEFER — merge, fresh post-merge readiness and separate explicit release; only
+then may Tahir dispatch once. OMIT — root changes, compression, provider calls
+and readiness approval. Acquisition, recovery of provider data and historical
+findings remain NOT RUN. README was corrected; .env.example remains accurate.

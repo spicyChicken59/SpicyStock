@@ -1,0 +1,80 @@
+﻿2026-09-30T21:35:01.2624927Z Current runner version: '2.337.0'
+2026-09-30T21:35:01.2652206Z ##[group]Runner Image Provisioner
+2026-09-30T21:35:01.2653150Z Hosted Compute Agent
+2026-09-30T21:35:01.2653795Z Version: 20260828.587
+2026-09-30T21:35:01.2654540Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-30T21:35:01.2655336Z Build Date: 2026-08-28T16:44:25Z
+2026-09-30T21:35:01.2656077Z Worker ID: {50bccd3e-c1dd-4518-b187-f88e47ed178c}
+2026-09-30T21:35:01.2656874Z Azure Region: centralus
+2026-09-30T21:35:01.2657491Z ##[endgroup]
+2026-09-30T21:35:01.2659218Z ##[group]Operating System
+2026-09-30T21:35:01.2660372Z Ubuntu
+2026-09-30T21:35:01.2661082Z 24.04.5
+2026-09-30T21:35:01.2661624Z LTS
+2026-09-30T21:35:01.2662190Z ##[endgroup]
+2026-09-30T21:35:01.2662836Z ##[group]Runner Image
+2026-09-30T21:35:01.2663473Z Image: ubuntu-24.04
+2026-09-30T21:35:01.2664146Z Version: 20260920.314.1
+2026-09-30T21:35:01.2665575Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-30T21:35:01.2667286Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+2026-09-30T21:35:01.2668335Z ##[endgroup]
+2026-09-30T21:35:01.2669977Z ##[group]GITHUB_TOKEN Permissions
+2026-09-30T21:35:01.2672631Z Actions: read
+2026-09-30T21:35:01.2673451Z Contents: read
+2026-09-30T21:35:01.2674037Z Metadata: read
+2026-09-30T21:35:01.2674653Z PullRequests: read
+2026-09-30T21:35:01.2675252Z ##[endgroup]
+2026-09-30T21:35:01.2678130Z Secret source: Actions
+2026-09-30T21:35:01.2679221Z Cache mode: write
+2026-09-30T21:35:01.2680246Z Prepare workflow directory
+2026-09-30T21:35:01.3351359Z Prepare all required actions
+2026-09-30T21:35:01.3425326Z Getting action download info
+2026-09-30T21:35:01.6320426Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-09-30T21:35:01.7235772Z Download action repository 'actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97' (SHA:5fda3b95a4ea91299a34e894583c3862153e4b97)
+2026-09-30T21:35:01.8041937Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+2026-09-30T21:35:01.9865675Z Complete job name: execution
+2026-09-30T21:35:02.0512353Z ##[group]Run set -euo pipefail
+2026-09-30T21:35:02.0513046Z [36;1mset -euo pipefail[0m
+2026-09-30T21:35:02.0513711Z [36;1m[[ "$GITHUB_REPOSITORY" == 'spicyChicken59/SpicyStock' ]][0m
+2026-09-30T21:35:02.0514461Z [36;1m[[ "$GITHUB_REPOSITORY_ID" == '1352997802' ]][0m
+2026-09-30T21:35:02.0515336Z [36;1m[[ "$GITHUB_REF" == 'refs/heads/main' && "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ]][0m
+2026-09-30T21:35:02.0516342Z [36;1m[[ "$GITHUB_RUN_ATTEMPT" == '1' && "$READINESS_COMMENT_ID" =~ ^[1-9][0-9]*$ ]][0m
+2026-09-30T21:35:02.0517294Z [36;1m# These remain native run numbers. The guard independently verifies[0m
+2026-09-30T21:35:02.0518257Z [36;1m# all three exact reviewed pre-job failures before admitting phase 1/2.[0m
+2026-09-30T21:35:02.0519310Z [36;1mcase "$MODE:$GITHUB_RUN_NUMBER" in rehearsal:4|real:5) ;; *) exit 1 ;; esac[0m
+2026-09-30T21:35:02.0520378Z [36;1m[[ "$GITHUB_RUN_ID" =~ ^[1-9][0-9]*$ ]][0m
+2026-09-30T21:35:02.0521102Z [36;1m[[ "$RUNNER_TEMP" == /* && "$GITHUB_WORKSPACE" == /* ]][0m
+2026-09-30T21:35:02.0521836Z [36;1m[[ -d "$RUNNER_TEMP" && -d "$GITHUB_WORKSPACE" ]][0m
+2026-09-30T21:35:02.0522587Z [36;1m[[ "$RUNNER_TEMP" != *$'\n'* && "$RUNNER_TEMP" != *$'\r'* ]][0m
+2026-09-30T21:35:02.0523424Z [36;1mhistorical_temp_parent="$(realpath -e -- "$RUNNER_TEMP")"[0m
+2026-09-30T21:35:02.0524322Z [36;1mhistorical_workspace="$(realpath -e -- "$GITHUB_WORKSPACE")"[0m
+2026-09-30T21:35:02.0525403Z [36;1m[[ "$historical_temp_parent" != '/' && "$historical_temp_parent" != *$'\n'* && "$historical_temp_parent" != *$'\r'* ]][0m
+2026-09-30T21:35:02.0526738Z [36;1m[[ "$historical_temp_parent" != "$historical_workspace" && "$historical_temp_parent" != "$historical_workspace/"* ]][0m
+2026-09-30T21:35:02.0527789Z [36;1mhistorical_ancestor="$historical_temp_parent"[0m
+2026-09-30T21:35:02.0528661Z [36;1mwhile true; do[0m
+2026-09-30T21:35:02.0529187Z [36;1m  [[ ! -e "$historical_ancestor/.git" ]][0m
+2026-09-30T21:35:02.0529996Z [36;1m  [[ "$historical_ancestor" != '/' ]] || break[0m
+2026-09-30T21:35:02.0530758Z [36;1m  historical_ancestor="$(dirname -- "$historical_ancestor")"[0m
+2026-09-30T21:35:02.0531434Z [36;1mdone[0m
+2026-09-30T21:35:02.0532222Z [36;1mHISTORICAL_ROOT="$historical_temp_parent/historical-input-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"[0m
+2026-09-30T21:35:02.0533209Z [36;1mMPLCONFIGDIR="$HISTORICAL_ROOT/matplotlib"[0m
+2026-09-30T21:35:02.0533866Z [36;1mexport HISTORICAL_ROOT MPLCONFIGDIR[0m
+2026-09-30T21:35:02.0534437Z [36;1mumask 077[0m
+2026-09-30T21:35:02.0534904Z [36;1mmkdir -m 700 "$HISTORICAL_ROOT"[0m
+2026-09-30T21:35:02.0535472Z [36;1mmkdir -m 700 "$MPLCONFIGDIR"[0m
+2026-09-30T21:35:02.0536189Z [36;1m# GITHUB_ENV affects later steps only; the explicit exports above[0m
+2026-09-30T21:35:02.0537063Z [36;1m# are required by this step's mkdir and any child process.[0m
+2026-09-30T21:35:02.0538077Z [36;1mprintf 'HISTORICAL_ROOT=%s\nMPLCONFIGDIR=%s\n' "$HISTORICAL_ROOT" "$MPLCONFIGDIR" >> "$GITHUB_ENV"[0m
+2026-09-30T21:35:02.0834789Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-09-30T21:35:02.0835950Z env:
+2026-09-30T21:35:02.0836814Z   MANIFEST: docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json
+2026-09-30T21:35:02.0837899Z   POLICY: tools/historical-execution-policy.json
+2026-09-30T21:35:02.0838552Z   MODE: real
+2026-09-30T21:35:02.0839022Z   READINESS_COMMENT_ID:     5920107119
+2026-09-30T21:35:02.0839788Z   MPLBACKEND: Agg
+2026-09-30T21:35:02.0840260Z   PYTHONUTF8: 1
+2026-09-30T21:35:02.0840743Z   PYTHONDONTWRITEBYTECODE: 1
+2026-09-30T21:35:02.0841287Z ##[endgroup]
+2026-09-30T21:35:02.1009299Z ##[error]Process completed with exit code 1.
+2026-09-30T21:35:02.1356343Z Cleaning up orphan processes
+

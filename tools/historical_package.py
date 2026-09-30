@@ -152,8 +152,13 @@ def _execution(value, *, legacy=False, previous=False):
         execution_guard.validate_phase_binding(value)
     except (execution_guard.GuardError, OSError, ValueError, TypeError, KeyError):
         _fail("invalid_execution_identity")
-    if not legacy and value["compatibility_contract_sha256"] != (
-            PREVIOUS_COMPATIBILITY_CONTRACT_SHA256 if previous else execution_guard.COMPATIBILITY_CONTRACT_SHA256):
+    # Reading a PR97 v4 identity does not grant new execution authorization.
+    # validate_phase_binding above keeps its old recovery/native-slot pairing;
+    # the live guard separately requires the new policy and incident relation.
+    allowed = {PREVIOUS_COMPATIBILITY_CONTRACT_SHA256} if previous else {
+        execution_guard.COMPATIBILITY_CONTRACT_SHA256,
+        execution_guard.PR97_COMPATIBILITY_CONTRACT_SHA256}
+    if not legacy and value["compatibility_contract_sha256"] not in allowed:
         _fail("invalid_execution_identity")
     if value["mode"] not in ("rehearsal", "real") or value["status"] not in ("PASS", "FAIL", "BLOCKED", "NOT RUN"):
         _fail("invalid_execution_mode_or_status")

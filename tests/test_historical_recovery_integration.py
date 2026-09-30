@@ -1,9 +1,12 @@
 """The revised guard's actual output crosses every synthetic execution boundary.
 
-GitHub responses are synthetic/captured metadata; provider sockets remain
-blocked by conftest. Age uses only the existing ephemeral test-key fixture.
+GitHub responses and run 105 are explicitly invented, not live admission.
+Provider sockets remain blocked by conftest. The real-mode wrapper's external
+transport is replaced with the existing seven-page synthetic test transport;
+only that call receives fake credential sentinels. Age uses ephemeral test keys.
 """
 from copy import deepcopy
+from contextlib import nullcontext
 import base64
 import hashlib
 import json
@@ -12,7 +15,6 @@ import pytest
 
 from tests.test_historical_execution import run_setup
 from tests.test_historical_execution_guard import setup as github_setup
-from tests.test_historical_execution_guard import make_rehearsal
 from tests.test_historical_execution_guard import TODAY
 from tests.test_historical_package import age
 from tools import historical_acquisition as acquisition
@@ -25,11 +27,10 @@ from tools import historical_package as package
 def pipeline(github_setup, run_setup, monkeypatch, tmp_path):
     """Use the public guard CLI, not a hand-assembled execution document."""
     manifest, storage, _, _ = run_setup
-    real_baseline = deepcopy(github_setup[1:4])
-    make_rehearsal(github_setup)
     policy, env, readiness, responses, api_calls, api = github_setup
     identity = acquisition.validate_manifest(manifest)
     readiness["manifest_sha256"] = identity
+    readiness["evidence"]["local_recovery"]["manifest_sha256"] = identity
     monkeypatch.setattr(guard, "MANIFEST", identity)
     monkeypatch.setattr(guard, "load_policy", lambda path=None: deepcopy(policy))
     monkeypatch.setattr(runner, "_checkout_sha", lambda: readiness["checkout_sha"])
@@ -45,13 +46,18 @@ def pipeline(github_setup, run_setup, monkeypatch, tmp_path):
         provider_calls.append(True)
         pytest.fail("provider transport must never be constructed in these tests")
     monkeypatch.setattr(acquisition, "AlpacaTransport", no_provider)
+    # Windows cannot install SIGALRM; normal Linux CI exercises the real alarm.
+    # No production deadline or runtime source is changed by this local double.
+    if not hasattr(runner.signal, "SIGALRM"):
+        monkeypatch.setattr(runner.signal, "SIGALRM", 14, raising=False)
+        monkeypatch.setattr(runner, "acquisition_deadline", nullcontext)
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_bytes(acquisition.encode(manifest))
     monkeypatch.setattr(guard, "MANIFEST_PATH", manifest_path)
     case = {"manifest": manifest, "manifest_path": manifest_path, "storage": storage,
             "policy": policy, "readiness": readiness, "responses": responses, "env": env,
             "api": api, "api_calls": api_calls, "provider_calls": provider_calls,
-            "real_baseline": real_baseline,
+            "synthetic_transport": runner.SyntheticTransport(manifest),
             "guard_dir": tmp_path / "guard", "policy_path": tmp_path / "policy.json"}
     bind_synthetic_release(case)
     return case
@@ -91,37 +97,53 @@ def wrapper_command(case, mode, *, preflight=False, storage=None):
     return runner.main(args)
 
 
+def acquire_synthetic_fixture(case, monkeypatch):
+    """Exercise the unchanged real wrapper with no provider implementation."""
+    with monkeypatch.context() as scoped:
+        scoped.setattr(acquisition, "AlpacaTransport", lambda: case["synthetic_transport"])
+        for name in runner.SECRETS:
+            scoped.setenv(name, "TEST-ONLY-NONCREDENTIAL")
+        return wrapper_command(case, "real")
+
+
 def read_guard(case):
     return json.loads((case["guard_dir"] / "execution.json").read_bytes())
 
 
-def assert_phase_one(binding):
-    assert binding["run_number"] == 4
-    assert binding["assignment_phase"] == 1
+def assert_replacement_phase(binding):
+    assert binding["run_number"] == 6
+    assert binding["assignment_phase"] == 2
     assert binding["run_attempt"] == 1
     assert binding["workflow_id"] == 369770564
     assert binding["repository_id"] == 1352997802
     assert binding["workflow_path"] == ".github/workflows/historical-input-proof.yml"
-    assert binding["mode"] == "rehearsal"
+    assert binding["mode"] == "real"
     assert len(binding["recovery_contract_sha256"]) == 64
 
 
-def test_actual_guard_output_drives_native_four_wrapper_and_offline_replay(pipeline, monkeypatch):
+def test_actual_guard_output_drives_synthetic_native_six_wrapper_and_offline_replay(pipeline, monkeypatch):
     assert guard_command(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
     assert record["schema"] == "historical-execution-v3"
-    assert_phase_one(record)
-    assert wrapper_command(pipeline, "rehearsal", preflight=True) == 0
+    assert_replacement_phase(record)
+    assert wrapper_command(pipeline, "real", preflight=True) == 0
     assert not pipeline["storage"].exists()
     assert not pipeline["provider_calls"]
-    assert wrapper_command(pipeline, "rehearsal") == 0
+    assert wrapper_command(pipeline, "real") == 2  # No secret, no fresh allowance.
+    assert not pipeline["storage"].exists()
+    assert acquire_synthetic_fixture(pipeline, monkeypatch) == 0
     ledger = (pipeline["storage"] / "ledger.sqlite3").read_bytes()
     assert wrapper_command(pipeline, "offline") == 0
     assert (pipeline["storage"] / "ledger.sqlite3").read_bytes() == ledger
     diagnostic = json.loads((pipeline["storage"] / "execution-diagnostics.json").read_bytes())
-    assert_phase_one(diagnostic["execution_binding"])
+    assert_replacement_phase(diagnostic["execution_binding"])
     assert diagnostic["execution_binding"] == guard.validate_phase_binding(record)
-    assert diagnostic["prior_acquisition"]["synthetic_transport_calls"] == 7
+    assert pipeline["synthetic_transport"].calls == 7
+    assert diagnostic["prior_acquisition"]["ledger"]["request_slots_charged"] == 7
+    assert diagnostic["status"] == "PASS"
+    for output in diagnostic["reconciliation"]:
+        assert output["complete_required_input_windows"] is False
+        assert output["reader_actionability"] == "unknown"
     assert diagnostic["new_provider_requests"] == 0
     assert not pipeline["provider_calls"]
 
@@ -133,22 +155,23 @@ def test_guard_binding_survives_actual_encryption_recovery_and_offline_replay(pi
     pipeline["policy"]["recipient_sha256"] = fingerprint
     monkeypatch.setattr(guard, "RECIPIENT_SHA256", fingerprint)
     pipeline["readiness"]["recipient_sha256"] = fingerprint
+    pipeline["readiness"]["evidence"]["local_recovery"]["recipient_sha256"] = fingerprint
     assert guard_command(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
-    assert wrapper_command(pipeline, "rehearsal") == 0
+    assert acquire_synthetic_fixture(pipeline, monkeypatch) == 0
     assert wrapper_command(pipeline, "offline") == 0
     before = {str(path.relative_to(pipeline["storage"])): path.read_bytes()
               for path in pipeline["storage"].rglob("*") if path.is_file() and path.name != "acquisition.lock"}
     diagnostic = json.loads(before["execution-diagnostics.json"])
     metadata = package.execution_metadata(record, status=diagnostic["status"])
-    assert_phase_one(metadata)
+    assert_replacement_phase(metadata)
     delivery, recovered = tmp_path / "delivery", tmp_path / "recovered"
     receipt = package.package_evidence(pipeline["storage"], pipeline["manifest"], delivery,
                                       age_binary=age[0], recipient=recipient, execution=metadata,
                                       diagnostics={"execution_guard": record})
     assert receipt["schema"] == "historical-encrypted-receipt-v4"
     assert receipt["delivery_envelope"] == "historical-delivery-envelope-v1"
-    assert_phase_one(receipt)
+    assert_replacement_phase(receipt)
     index = package.recover_package(delivery / package.CIPHERTEXT_NAME, receipt, recovered,
                                     age_binary=age[0], identity=age[1][0][0], manifest=pipeline["manifest"],
                                     expected_execution=metadata)
@@ -178,25 +201,25 @@ def test_guard_output_tampering_stops_wrapper_before_storage_or_transport(pipeli
     record = read_guard(pipeline)
     record[field] = value
     (pipeline["guard_dir"] / "execution.json").write_bytes(acquisition.encode(record))
-    assert wrapper_command(pipeline, "rehearsal", preflight=True) == 2
-    assert wrapper_command(pipeline, "rehearsal") == 2
+    assert wrapper_command(pipeline, "real", preflight=True) == 2
+    assert wrapper_command(pipeline, "real") == 2
     assert not pipeline["storage"].exists()
     assert not pipeline["provider_calls"]
 
 
-def test_rehearsal_guard_cannot_authorize_real_or_spoof_native_number(pipeline, monkeypatch):
+def test_replacement_guard_cannot_reopen_rehearsal_or_spoof_native_number(pipeline, monkeypatch):
     assert guard_command(pipeline, monkeypatch) == 0
-    assert wrapper_command(pipeline, "real", preflight=True) == 2
-    assert wrapper_command(pipeline, "real") == 2
-    monkeypatch.setenv("GITHUB_RUN_NUMBER", "1")
+    assert wrapper_command(pipeline, "rehearsal", preflight=True) == 2
     assert wrapper_command(pipeline, "rehearsal") == 2
+    monkeypatch.setenv("GITHUB_RUN_NUMBER", "1")
+    assert wrapper_command(pipeline, "real") == 2
     assert not pipeline["storage"].exists()
     assert not pipeline["provider_calls"]
 
 
 def test_offline_cannot_relabel_ledger_with_another_valid_phase_identity(pipeline, monkeypatch):
     assert guard_command(pipeline, monkeypatch) == 0
-    assert wrapper_command(pipeline, "rehearsal") == 0
+    assert acquire_synthetic_fixture(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
     record["run_id"] += 1000
     # The shape and phase remain valid: rejection must bind the retained data
@@ -214,7 +237,7 @@ def test_offline_cannot_relabel_ledger_with_another_valid_phase_identity(pipelin
 
 def test_package_cli_rejects_relabelled_guard_before_encryption(pipeline, monkeypatch, tmp_path):
     assert guard_command(pipeline, monkeypatch) == 0
-    assert wrapper_command(pipeline, "rehearsal") == 0
+    assert acquire_synthetic_fixture(pipeline, monkeypatch) == 0
     record = read_guard(pipeline)
     record["run_id"] += 1000
     guard.validate_phase_binding(record)
@@ -242,14 +265,6 @@ def test_failed_guard_has_no_output_that_wrapper_can_use(pipeline, monkeypatch, 
     elif fault == "wrong_contract":
         pipeline["readiness"]["recovery_contract_sha256"] = "0" * 64
     else:
-        real_env, real_record, real_responses = deepcopy(pipeline["real_baseline"])
-        real_record["manifest_sha256"] = acquisition.validate_manifest(pipeline["manifest"])
-        pipeline["readiness"].clear()
-        pipeline["readiness"].update(real_record)
-        pipeline["responses"].clear()
-        pipeline["responses"].update(real_responses)
-        for key, value in real_env.items():
-            monkeypatch.setenv(key, value)
         del pipeline["readiness"]["evidence"]["owner_authorization"]
     expected = {"old_readiness": "readiness_not_pass", "wrong_contract": "stale_phase_readiness",
                 "missing_owner_authorization_for_real": "missing_readiness_evidence"}[fault]
@@ -286,9 +301,9 @@ def test_disallowed_history_cannot_emit_a_runnable_guard_record(pipeline, monkey
         responses[jobs_key + "2"] = {"total_count": 1, "jobs": []}
         expected = "reviewed_exception_has_jobs"
     with pytest.raises(guard.GuardError, match=expected):
-        guard.verify(pipeline["api"], pipeline["policy"], pipeline["env"], "rehearsal", 123, TODAY)
+        guard.verify(pipeline["api"], pipeline["policy"], pipeline["env"], "real", 123, TODAY)
     assert guard_command(pipeline, monkeypatch) == 2
     assert not (pipeline["guard_dir"] / "execution.json").exists()
-    assert wrapper_command(pipeline, "rehearsal") == 2
+    assert wrapper_command(pipeline, "real") == 2
     assert not pipeline["storage"].exists()
     assert not pipeline["provider_calls"]
