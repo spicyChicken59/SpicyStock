@@ -335,6 +335,46 @@ def test_the_cli_writes_the_private_record_and_the_pasteable_summary(tmp_path, c
     assert backtest.main(["--manifest", str(manifest_path), "--storage", str(backtest.ROOT), "--output", str(out)]) == 2
 
 
+# ---------------------------------------------------- the record's retention ----
+def test_the_files_retention_cannot_drop_a_plan_the_replay_made(archive, monkeypatch):
+    """record.MAX_PICKS is a nightly file's policy. Set to two, it would keep
+    the two newest of the counterfactual's three picks and the walk would
+    score a population the replay did not issue; the replay passes a bound
+    its picks cannot reach, and refuses the mismatch outright."""
+    monkeypatch.setattr(record, "MAX_PICKS", 2)
+    with network_blocked():
+        out = backtest.run(archive)
+    ungated = out["outcomes"][backtest.NO_GATE]
+    assert ungated["tickets_issued"] == ungated["summary"]["plans"] == len(ungated["picks"]) == 3
+    assert out["outcomes"][backtest.PRODUCTION]["tickets_issued"] == 2
+
+
+def test_the_retention_bound_is_over_every_ticket_a_run_could_write():
+    assert backtest.retention_bound(29, plan.Account()) == max(record.MAX_PICKS, 29 * plan.DEFAULT_MAX_OPEN_POSITIONS)
+    assert backtest.retention_bound(1, plan.Account()) == record.MAX_PICKS
+    assert backtest.retention_bound(400, plan.Account(max_open_positions=2)) == 800
+
+
+def test_a_record_that_loses_a_ticket_is_refused_not_scored(archive, monkeypatch):
+    kept = record.append
+
+    def dropping(rec, session, picks, regime="green", **kw):
+        return kept(rec, session, picks, regime, max_picks=2)
+    monkeypatch.setattr(record, "append", dropping)
+    with network_blocked(), pytest.raises(backtest.BacktestError, match="3 tickets issued but 2 plans recorded"):
+        backtest.run(archive)
+
+
+def test_append_keeps_the_published_retention_by_default_and_a_wider_one_on_request():
+    picks = [pick(ticker=f"T{i}") for i in range(3)]
+    rec = record.append(record.empty(), "2026-09-01", picks)
+    assert len(rec["picks"]) == 3
+    assert len(record.append(record.empty(), "2026-09-01", picks, max_picks=2)["picks"]) == 2
+    for bad in (0, True, 2.5):
+        with pytest.raises(ValueError, match="max_picks"):
+            record.append(record.empty(), "2026-09-01", picks, max_picks=bad)
+
+
 # ------------------------------------------------------- the record's window ----
 def test_scorecard_rows_read_the_published_window_by_default_and_a_wider_one_on_request():
     old, recent = "2026-01-05", "2026-09-01"

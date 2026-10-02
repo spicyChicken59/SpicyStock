@@ -15,7 +15,7 @@ would have done, on real bars.
 
 | Limit | What it means for a reading |
 | --- | --- |
-| The reader is NOT RUN | The chart reader only lowers a mechanical grade, so the mechanical grade is the CEILING of what the live run could have admitted. Every ticket here is one the reader could still have refused; none the reader could have added is missing. |
+| The reader is NOT RUN | The chart reader only lowers a mechanical grade, so every name's mechanical grade is the CEILING of its final grade, and every ticket here is one the reader could still have refused. The ticket SET is not a superset of the live run's, though: a reader downgrade frees a slot that the next-ranked name takes, so the live run can hold a ticket this replay's slot cap cut. The live reader has accepted one of 183 usable judgements to date, so the live policy is far narrower than this replay. |
 | The universe is the archive's | The package carries the names the acquisition was frozen over, a September 2026 directory. A name that left the market earlier in the year is absent. Survivorship flatters the regime (its decliners are under-counted) and the candidates. Neither bias is measured, only named. |
 | A later retrieval | The bars are the provider's September 2026 view, not what any night saw; 263 names per session were partial in the reconciliation and stay partial here. |
 | A daily-bar model | A fill is booked only at the next open inside the ticket; a day the bar cannot read is `uncertain` and scored nowhere; no fee, spread or slippage. This is the published scorecard's own model, unchanged. |
@@ -36,19 +36,34 @@ would have done, on real bars.
 | The record | `pipeline.pick_of()`, `record.append()` | the same |
 | Fills, exits, R | `record.scorecard_rows(window_sessions=<the archive's length>)`, `record.summarize_scorecard()` | the same two functions over their sixty-session window |
 
-The one change to `src/` is the `window_sessions` keyword on
-`record.scorecard_rows()`, default unchanged, so the one walk reads every plan
-the replay made rather than the last sixty sessions'. `tests/test_record.py`'s
-`test_the_scorecard_window_can_fail` still passes: the default is read at call
-time, so the published window is still the module's constant.
+The two changes to `src/` are keywords with their defaults unchanged and read
+at call time: `window_sessions` on `record.scorecard_rows()`, so the one walk
+reads every plan the replay made rather than the last sixty sessions'; and
+`max_picks` on `record.append()`, so the file's `MAX_PICKS` retention -- a
+nightly product's policy, which keeps the newest 260 picks -- cannot drop a
+replay's oldest plans. The replay passes `retention_bound()`, a count its
+tickets cannot reach, and refuses outright to score a population it did not
+issue: the tickets every night issued must equal the plans recorded and the
+plans walked, or the run stops. That refusal was added after a reviewer, by
+execution over a synthetic 159-session pass, found 284 tickets issued and 260
+scored with no warning, the four oldest -- the only winners -- gone.
+`tests/test_record.py`'s `test_the_scorecard_window_can_fail` still passes.
 
 ## The lookback and its equivalence check
 
 Every evaluated session needs `pipeline.LOOKBACK_DAYS` sessions of history
-before it, as a live frame carries. Over a 288-session archive that leaves 28
-evaluable sessions (17 August to 25 September 2026), a stretch the published
-record already knows was RED. `--lookback 130` reaches 158 sessions back to
-February 2026. A shortened lookback is admitted only with its check: on every
+before it, as a live frame carries. Over the run-6 archive that leaves the
+sessions from mid-August to 25 September 2026: 28 from 18 August when the
+calendar starts with the 25 September population's queries, 29 from 17 August
+if a name carried only by the 24 September population's queries, which start a
+session earlier, is present. The published records' own breadth history says
+what those sessions were: the 10-session ratio sat between 1.03 and 1.54 from
+18 August to 8 September (above `breadth.RED_RATIO_10D`, under
+`breadth.YELLOW_RATIO_10D`, so YELLOW on that rule, with 2 September reading
+0.99 in one record and 1.00–1.03 in the others), and under 1.0 from 9 September
+on. So the exact pass reaches about fifteen nights on which an A+ burst could
+have had a half-size ticket, and thirteen RED ones. `--lookback 130` reaches
+158 sessions back to February 2026, whose regimes no record knows. A shortened lookback is admitted only with its check: on every
 evaluated session that also carries the full lookback, both are measured and
 compared -- the regime and its ratios, every candidate's mechanical grade, score
 and vetoes, every plan's trigger, limit, stop, shares and action -- and a single

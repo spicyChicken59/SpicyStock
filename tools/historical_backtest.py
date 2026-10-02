@@ -27,9 +27,11 @@ uses is held for the whole run.
 What it is NOT, said once here and again in its output:
 
 * **The reader is NOT RUN.** The chart reader can only lower a mechanical
-  grade, so the mechanical grade is the CEILING of what the live run could
-  have admitted: every ticket here is a ticket the reader could still have
-  refused, and no ticket the reader could have added is missing.
+  grade, so every name's mechanical grade is the CEILING of its final grade
+  and every ticket here is one the reader could still have refused. The
+  ticket SET is not a superset of the live run's: a reader downgrade frees a
+  slot the next-ranked name takes, so the live run can hold a ticket this
+  replay's slot cap cut.
 * **The universe is the archive's.** A recovered package carries the names
   the acquisition was frozen over -- a later directory's membership -- so a
   name that left the market before the archive was cut is not in it.
@@ -252,12 +254,16 @@ def measure(frames: dict[str, pd.DataFrame], session: date, uni: universe.Univer
     return Measurement(session, frames, fresh, regime, bursts, row)
 
 
-def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool) -> tuple[dict, dict]:
+def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool,
+           max_picks: int | None = None) -> tuple[dict, dict]:
     """One block's decision over a measurement: the open model plans of the
     sessions before counted against the slots, the plans, the cash budget,
     and the picks appended to the record. Returns the record with tonight's
     picks and the night's row. With ``gate`` false the regime handed to the
-    planner is ``UNGATED_REGIME``; the night's own regime is still recorded."""
+    planner is ``UNGATED_REGIME``; the night's own regime is still recorded.
+    ``max_picks`` is the record's retention: the replay passes a bound its
+    picks cannot reach, so the file's ``MAX_PICKS`` never drops a plan it
+    made (see ``retention_bound()``)."""
     row = {**m.row, "gate": gate, "eligible_plans": 0, "trades": [], "cut": {}, "slots_held": 0, "candidates": []}
     if m.regime is None:
         return rec, row
@@ -266,12 +272,22 @@ def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool) -> t
     trades, cut, budget = pipeline._make_plans(m.bursts, account, m.regime if gate else UNGATED_REGIME, held,
                                                m.session, require_reader=False)
     picks = [pipeline.pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in m.bursts if b["ticker"] in trades]
-    rec = record.append(rec, m.session.isoformat(), picks, verdict)
+    rec = record.append(rec, m.session.isoformat(), picks, verdict, max_picks=max_picks)
     row.update(eligible_plans=sum(1 for b in m.bursts if (b.get("plan") or {}).get("eligible")
                                   and b["plan"].get("action") in plan.ORDER_ACTIONS),
                trades=list(trades), cut=dict(Counter(c["kind"] for c in budget.get("cut", []))),
                slots_held=held, candidates=[_slim(b) for b in m.bursts])
     return rec, row
+
+
+def retention_bound(sessions_evaluated: int, account: plan.Account) -> int:
+    """A record retention no replay can reach: a night issues at most one
+    ticket per free slot, so ``sessions * max_open_positions`` is over every
+    ticket the run could write. The record's own ``MAX_PICKS`` is a file
+    policy for a nightly product, not a limit on an offline replay, and a
+    replay that lost its oldest plans to it would score a different
+    population than it issued -- ``run()`` refuses that outright."""
+    return max(record.MAX_PICKS, sessions_evaluated * account.max_open_positions)
 
 
 def fingerprint(row: dict) -> dict:
@@ -312,13 +328,14 @@ def run(archive: Archive, *, lookback: int = PRODUCTION_LOOKBACK, account: plan.
     recs = {gate: record.empty() for gate in GATES}
     nights = {gate: [] for gate in GATES}
     equivalence = {"required": lookback < PRODUCTION_LOOKBACK, "compared": 0, "differences": []}
+    retention = retention_bound(len(evaluable), account)
     started = time.monotonic()
     for session in evaluable:
         m = measure(as_of(archive, session, lookback), session, uni)
-        # the gate changes no measurement: one reading, two decisions, in the
-        # production block's order first so its candidates carry its plans
+        # the gate changes no measurement: one reading, two decisions, the
+        # production block last so its candidates carry its plans
         for gate in reversed(GATES):
-            recs[gate], row = decide(m, account, recs[gate], gate=gate == PRODUCTION)
+            recs[gate], row = decide(m, account, recs[gate], gate=gate == PRODUCTION, max_picks=retention)
             nights[gate].append(row)
         if equivalence["required"] and calendar.index(session) >= PRODUCTION_LOOKBACK:
             # both lookbacks over an empty record, so the slots cannot differ
@@ -337,8 +354,15 @@ def run(archive: Archive, *, lookback: int = PRODUCTION_LOOKBACK, account: plan.
     last = evaluable[-1].isoformat()
     outcomes = {}
     for gate in GATES:
+        # conservation: every ticket a night issued is a plan the walk scores
+        issued = sum(len(r["trades"]) for r in nights[gate])
+        if issued != len(recs[gate]["picks"]):
+            raise BacktestError(f"{gate}: {issued} tickets issued but {len(recs[gate]['picks'])} plans recorded; "
+                                "the replay refuses to score a population it did not issue")
         rows = record.scorecard_rows(recs[gate], archive.frames, last, window_sessions=len(calendar))
-        outcomes[gate] = {"summary": record.summarize_scorecard(rows), "rows": rows,
+        if len(rows) != issued:
+            raise BacktestError(f"{gate}: {issued} tickets issued but {len(rows)} plans walked")
+        outcomes[gate] = {"tickets_issued": issued, "summary": record.summarize_scorecard(rows), "rows": rows,
                           "by_grade": _partition(rows, lambda r: r.get("grade")),
                           "by_regime": _partition(rows, lambda r: r.get("regime")),
                           "by_month": _partition(rows, lambda r: r["picked"][:7]),
