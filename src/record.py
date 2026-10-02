@@ -509,14 +509,20 @@ SCORECARD_VERSION = 2
 SCORECARD_BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "unmeasured", "unreadable", "unscored")
 
 
-def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> list[dict]:
+def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str, *,
+                   window_sessions: int | None = None) -> list[dict]:
     """One audit row per retained plan in the prior window or current session.
 
     Replay remains the sole fill/exit authority. Only its five-session horizon
     is supplied: a hole after that horizon cannot erase a resolved result.
     An unfinished walk with stale coverage is unmeasured, not currently open.
+    ``window_sessions`` is the published scorecard's ``SCORECARD_SESSIONS``
+    unless given; an offline replay over a whole archive passes its own
+    length, so the one walk reads every plan it made.
     """
-    window = set(sessions_before(frames, session, SCORECARD_SESSIONS)) | {session}
+    if window_sessions is None:
+        window_sessions = SCORECARD_SESSIONS
+    window = set(sessions_before(frames, session, window_sessions)) | {session}
     rows = []
     for pick in rec.get("picks", []):
         if pick["date"] not in window:
