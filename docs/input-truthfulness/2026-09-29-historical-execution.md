@@ -742,3 +742,10 @@ changes, compression work, provider calls and readiness approval. Real execution
 remains BLOCKED; acquisition, provider-package recovery and historical findings
 remain NOT RUN. No dispatch, rerun, key access or private-package scan occurred.
 
+
+### Forward pointer, 2 October 2026
+
+The replacement real phase ran once as run `36815689950` (native 6 / attempt 1)
+on 1 October. Its outcome is recorded in
+[2026-10-02-historical-run6-result.md](2026-10-02-historical-run6-result.md).
+The entries above keep their original dated meaning.

@@ -1,0 +1,8 @@
+== cwd /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/native6/guard-dry-run/checkout (HEAD d6d774346015) ==
+{"status":"PASS"}
+exit=0
+== cwd /home/user/SpicyStock (HEAD 5d9b9add4a12) ==
+{"status":"PASS"}
+exit=0
+{"status":"BLOCKED","reason":"private_package_operation_refused"}
+exit=2

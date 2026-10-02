@@ -8,7 +8,10 @@
     "name": "historical-evidence-36815689950-1-real",
     "size_in_bytes": 107315902
   },
-  "guard_checkout_sha": "d6d774346015c3d2abfe7b7318316292daab57cb",
+  "execution_checkout_sha": {
+    "meaning": "admitted by the guard (step 6, which itself ran from the workflow revision a900236) and checked out by step 7 before preflight, acquisition, reconciliation and packaging",
+    "value": "d6d774346015c3d2abfe7b7318316292daab57cb"
+  },
   "job": {
     "completed_at": "2026-10-01T05:06:44Z",
     "conclusion": "failure",
@@ -164,13 +167,21 @@
     ]
   },
   "observed_at": "2026-10-02",
-  "public_log_status_lines": {
-    "acquisition": "{\"phase\": \"real\", \"reason\": \"private_diagnostics_retained\", \"status\": \"PASS\", \"synthetic\": false}",
-    "guard": "{\"status\":\"PASS\"}",
-    "offline": "{\"phase\": \"offline\", \"reason\": \"private_diagnostics_retained\", \"status\": \"BLOCKED\", \"synthetic\": false} then exit code 2",
-    "package": "{\"status\":\"PASS\"}",
-    "preflight": "{\"phase\": \"preflight\", \"status\": \"PASS\"}",
-    "upload": "Final size is 107315902 bytes. Artifact ID is 11142297138; SHA256 digest 043af0b3abe27fb47cd00c65b601617f23aa7846993d5e5ea02c94267438f1b3"
+  "public_job_log_lines": {
+    "lines": [
+      "2026-10-01T04:34:31.3999928Z {\"status\":\"PASS\"}",
+      "2026-10-01T04:34:32.3445635Z HEAD is now at a900236 run 2026-09-30",
+      "2026-10-01T04:34:37.0386716Z HEAD is now at d6d77434 Record passing repair CI and preserve complete native history",
+      "2026-10-01T04:34:37.4637103Z {\"phase\": \"preflight\", \"status\": \"PASS\"}",
+      "2026-10-01T04:34:37.5838987Z {\"status\":\"PASS\"}",
+      "2026-10-01T04:48:44.2972589Z {\"phase\": \"real\", \"reason\": \"private_diagnostics_retained\", \"status\": \"PASS\", \"synthetic\": false}",
+      "2026-10-01T05:06:03.5764722Z {\"phase\": \"offline\", \"reason\": \"private_diagnostics_retained\", \"status\": \"BLOCKED\", \"synthetic\": false}",
+      "2026-10-01T05:06:03.6603312Z ##[error]Process completed with exit code 2.",
+      "2026-10-01T05:06:39.6308032Z {\"status\":\"PASS\"}",
+      "2026-10-01T05:06:41.8131521Z SHA256 digest of uploaded artifact is 043af0b3abe27fb47cd00c65b601617f23aa7846993d5e5ea02c94267438f1b3",
+      "2026-10-01T05:06:42.0850625Z Artifact historical-evidence-36815689950-1-real has been successfully uploaded! Final size is 107315902 bytes. Artifact ID is 11142297138"
+    ],
+    "source": "job 110220126196 log, read verbatim through the GitHub MCP get_job_logs tool on 2026-10-01"
   },
   "readiness_comment": {
     "author": "spicyChicken59",

@@ -881,12 +881,14 @@ Complete original final-population masks and full daily-bar inputs remain missin
 `tools/historical_input_proof.py` reproduces the retained-data analysis with sockets
 blocked. The separate bounded acquisition tool defaults to offline validation;
 live historical retrieval requires the frozen manifest and documented zero-cost,
-private-storage authorization. Run 6 performed that one retrieval: all 97 queries,
-289 of 400 request slots. Its owner-decrypted, price-free summary reproduces RED
-on both sessions under both later-eligibility policies, with the 10-session ratio
-below 1.0 over every unknown (0.92–0.95 and 0.88–0.90). Strict establishment
-stays BLOCKED by six counted stocks' incomplete history, and the exact original
-population stays BLOCKED.
+private-storage authorization. Run 6 performed that one retrieval: all 97 queries
+completed, using 289 of 400 request slots. Every intended stock returned
+target-day and prior-day bars, and 263 symbols per session are partial. The
+owner-decrypted, price-free summary reproduces RED on both sessions under both
+later-eligibility policies. Under C the 10-session ratio stays below 1.0 across
+the outer bounds over every unknown (0.92–0.95 and 0.88–0.90). Under D it is
+exact (0.93 and 0.89). Strict establishment stays BLOCKED by six counted stocks'
+missing monthly-test inputs, and the exact original population stays BLOCKED.
 `tools/historical_reconcile.py` consumes only that tool's verified private cache,
 keeps later observations separate and never publishes plans or reuses reader approval.
 Its version-2 output stores lossless float-conversion evidence by selected-row

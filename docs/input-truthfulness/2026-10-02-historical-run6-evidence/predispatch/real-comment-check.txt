@@ -1,0 +1,12 @@
+# Output of real-comment-check.py, run 2026-10-01 ~04:28-04:30 UTC (before dispatch at 04:33:41Z),
+# captured from the builder session transcript. Live GitHub responses throughout, except the
+# prospective native-6 run, its detail and its attempt-1 job, which were synthesized.
+{"main_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8"}
+{"scenario": "REAL_comment_5924734477_today_2026-10-01", "source": "live", "expect": "PASS", "outcome": "PASS", "reason": null, "matches_expectation": true, "live_api_calls": 67, "replayed_calls": 0, "synthetic_responses": 7}
+{"scenario": "REAL_comment_5924734477_today_2026-10-02", "source": "live", "expect": "PASS", "outcome": "PASS", "reason": null, "matches_expectation": true, "live_api_calls": 67, "replayed_calls": 0, "synthetic_responses": 7}
+{"scenario": "REAL_ctrl_mode_rehearsal", "source": "live", "expect": "rehearsal_slot_closed", "outcome": "REFUSED", "reason": "rehearsal_slot_closed", "matches_expectation": true, "live_api_calls": 0, "replayed_calls": 0, "synthetic_responses": 0}
+{"scenario": "REAL_ctrl_env_run_7", "source": "live", "expect": "execution_slot_consumed", "outcome": "REFUSED", "reason": "execution_slot_consumed", "matches_expectation": true, "live_api_calls": 0, "replayed_calls": 0, "synthetic_responses": 0}
+{"scenario": "REAL_guard_main", "exit": 0, "stdout": "{\"status\":\"PASS\"}", "reason": null, "gh_output": "checkout_sha=d6d774346015c3d2abfe7b7318316292daab57cb\n", "readiness_comment_id": 5924734477, "run_number": 6, "checkout_sha": "d6d774346015c3d2abfe7b7318316292daab57cb", "workflow_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8", "live_calls": 67, "synthetic": 7}
+{"all_match": true}
+# Then, same session: preflight-only from a d6d7743 checkout in an empty network namespace -> {"phase": "preflight", "status": "PASS"};
+# validate-recipient with the pinned age -> {"status":"PASS"}.

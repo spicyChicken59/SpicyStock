@@ -1,0 +1,20 @@
+[
+ {
+  "scenario": "X0_positive_verify_live_rerun",
+  "source": "live",
+  "expect": "PASS",
+  "outcome": "PASS",
+  "reason": null,
+  "matches_expectation": true,
+  "live_api_calls": 66
+ },
+ {
+  "scenario": "X1_second_dispatch_queued_as_native7",
+  "source": "replay",
+  "expect": "consumed_or_invalid_history",
+  "outcome": "REFUSED",
+  "reason": "consumed_or_invalid_history",
+  "matches_expectation": true,
+  "live_api_calls": 0
+ }
+]

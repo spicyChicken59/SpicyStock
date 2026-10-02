@@ -1,0 +1,244 @@
+{
+ "live_github_api_calls_total": 205,
+ "all_match": true,
+ "results": [
+  {
+   "scenario": "P1_positive_verify_live",
+   "source": "live",
+   "expect": "PASS",
+   "outcome": "PASS",
+   "reason": null,
+   "matches_expectation": true,
+   "live_api_calls": 66,
+   "replayed_calls": 0,
+   "synthetic_responses": 8
+  },
+  {
+   "scenario": "P2_guard_main_end_to_end_live",
+   "exit_code": 0,
+   "stdout": "{\"status\":\"PASS\"}\n",
+   "refusal_reason": null,
+   "output_files": [
+    "approval.json",
+    "execution.json"
+   ],
+   "github_output": "checkout_sha=d6d774346015c3d2abfe7b7318316292daab57cb\n",
+   "live_api_calls": 66,
+   "output_dir_mode": "0o700",
+   "execution_json_sha256": "6f8436672fe8110f6c79029413d884f52c03b2403cb60731c2ab5400f3f4eadd",
+   "approval_json_sha256": "3c8c9ca8b7dc131ea48d8e1ddf689f2f8b3a76a83201e67ae0a7c370f8475b50",
+   "matches_expectation": true,
+   "execution_json_differs_from_P1_in": [],
+   "history_verification_differs_in": []
+  },
+  {
+   "scenario": "N1_authorized_on_2026-09-30_unchanged_candidate",
+   "source": "live",
+   "expect": "execution_release_not_after_merge",
+   "outcome": "REFUSED",
+   "reason": "execution_release_not_after_merge",
+   "matches_expectation": true,
+   "live_api_calls": 2,
+   "replayed_calls": 0,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N2_full_prose_body_of_5921715962",
+   "source": "live",
+   "expect": "invalid_json",
+   "outcome": "REFUSED",
+   "reason": "invalid_json",
+   "matches_expectation": true,
+   "live_api_calls": 1,
+   "replayed_calls": 0,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N2b_real_comment_5921715962_unintercepted",
+   "source": "live",
+   "expect": "invalid_json",
+   "outcome": "REFUSED",
+   "reason": "invalid_json",
+   "matches_expectation": true,
+   "live_api_calls": 2,
+   "replayed_calls": 0,
+   "synthetic_responses": 0
+  },
+  {
+   "scenario": "N3_json_wrapped_in_json_fence",
+   "source": "live",
+   "expect": "invalid_json",
+   "outcome": "REFUSED",
+   "reason": "invalid_json",
+   "matches_expectation": true,
+   "live_api_calls": 1,
+   "replayed_calls": 0,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N3b_json_fence_with_crlf",
+   "source": "replay",
+   "expect": "invalid_json",
+   "outcome": "REFUSED",
+   "reason": "invalid_json",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 1,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N4a_synthetic_run_display_title_rehearsal",
+   "source": "replay",
+   "expect": "wrong_historical_phase",
+   "outcome": "REFUSED",
+   "reason": "wrong_historical_phase",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 61,
+   "synthetic_responses": 6
+  },
+  {
+   "scenario": "N4b_synthetic_run_number_7_env_6",
+   "source": "replay",
+   "expect": "incomplete_or_consumed_history",
+   "outcome": "REFUSED",
+   "reason": "incomplete_or_consumed_history",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 61,
+   "synthetic_responses": 6
+  },
+  {
+   "scenario": "N4c_env_run_number_7",
+   "source": "replay",
+   "expect": "execution_slot_consumed",
+   "outcome": "REFUSED",
+   "reason": "execution_slot_consumed",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 0,
+   "synthetic_responses": 0
+  },
+  {
+   "scenario": "N4d_mode_rehearsal",
+   "source": "replay",
+   "expect": "rehearsal_slot_closed",
+   "outcome": "REFUSED",
+   "reason": "rehearsal_slot_closed",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 0,
+   "synthetic_responses": 0
+  },
+  {
+   "scenario": "N5_consumed_comment_5920107119",
+   "source": "live",
+   "expect": "consumed_readiness_comment",
+   "outcome": "REFUSED",
+   "reason": "consumed_readiness_comment",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 0,
+   "synthetic_responses": 0
+  },
+  {
+   "scenario": "N6_comment_by_other_user",
+   "source": "replay",
+   "expect": "untrusted_readiness_comment",
+   "outcome": "REFUSED",
+   "reason": "untrusted_readiness_comment",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 1,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N7_comment_before_merge_authorized_same_day",
+   "source": "replay",
+   "expect": "execution_release_not_after_merge",
+   "outcome": "REFUSED",
+   "reason": "execution_release_not_after_merge",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 2,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "N8_history_without_current_native6_run",
+   "source": "replay",
+   "expect": "incomplete_or_consumed_history",
+   "outcome": "REFUSED",
+   "reason": "incomplete_or_consumed_history",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 61,
+   "synthetic_responses": 3
+  },
+  {
+   "scenario": "N9_run_head_sha_not_GITHUB_SHA",
+   "source": "replay",
+   "expect": "current_run_not_durable",
+   "outcome": "REFUSED",
+   "reason": "current_run_not_durable",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 61,
+   "synthetic_responses": 6
+  },
+  {
+   "scenario": "N10_run_attempt_2",
+   "source": "replay",
+   "expect": "unaccounted_or_retried_run",
+   "outcome": "REFUSED",
+   "reason": "unaccounted_or_retried_run",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 61,
+   "synthetic_responses": 6
+  },
+  {
+   "scenario": "N11_comment_on_other_issue",
+   "source": "replay",
+   "expect": "untrusted_readiness_comment",
+   "outcome": "REFUSED",
+   "reason": "untrusted_readiness_comment",
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 1,
+   "synthetic_responses": 1
+  },
+  {
+   "scenario": "U1_trailing_newline_body",
+   "source": "live",
+   "expect": "PASS",
+   "outcome": "PASS",
+   "reason": null,
+   "matches_expectation": true,
+   "live_api_calls": 66,
+   "replayed_calls": 0,
+   "synthetic_responses": 8
+  },
+  {
+   "scenario": "U2_crlf_body",
+   "source": "replay",
+   "expect": "PASS",
+   "outcome": "PASS",
+   "reason": null,
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 66,
+   "synthetic_responses": 8
+  },
+  {
+   "scenario": "U3_compact_canonical_body",
+   "source": "replay",
+   "expect": "PASS",
+   "outcome": "PASS",
+   "reason": null,
+   "matches_expectation": true,
+   "live_api_calls": 0,
+   "replayed_calls": 66,
+   "synthetic_responses": 8
+  }
+ ]
+}
