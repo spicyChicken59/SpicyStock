@@ -16,6 +16,36 @@ its live-run rules (the `sip` hold-back, the stable de-dup, the closure
 read off the frames), the Resend transport with its test-mode respelling,
 the prompt cache, and the discipline below.
 
+## This line: `tahir/main`
+
+Two lines of work run in parallel from `main` at `d185e48` (the merge of
+#99, 2 Oct 2026): `tahir/main` is Tahir's, and `baseer/main` is Baseer's,
+taking another direction. Neither reaches `main` until its owner decides to
+merge it. This section is on `tahir/main` only, so a session that reads it
+is on Tahir's line.
+
+- Work lands on `tahir/main`: pushed directly when Tahir says so, or
+  through a pull request whose base is `tahir/main`. Never push to, or open
+  a pull request into, `main` or `baseer/main`, and never merge `baseer/main`
+  in unless Tahir asks.
+- Take `main` in with `git merge origin/main`, never a rebase or a
+  force-push: the evening run commits its record to `main` each trading
+  evening, and more than one session pushes this line. Leave what that run
+  writes to `main`: `docs/data.json`, `docs/picks.json`, `docs/history/`,
+  `docs/evidence/`, `docs/quality-ledger/`, `docs/universe-directory.json.gz`.
+- Do not dispatch `evening.yml` from this branch without Tahir's word. It
+  checks out the branch it runs on, so a real run would commit its record
+  and mail from here; every run spends provider calls and shares the
+  `evening-scan` concurrency group with `main`'s nightly run.
+- Pages serves `main` only. A push here runs the Secret scan alone; run
+  Tests by dispatching it on `tahir/main` (pytest and the page job). A pull
+  request, whatever its base, also runs the historical-runtime benchmark
+  unless the push is docs-only.
+- Whichever line merges second takes `main` in first, recounts the suite this
+  file quotes, keeps both lines' checkpoints, and regenerates the fixtures
+  with `tools/make_fixture.py` rather than merging them by hand.
+- The pull request that merges this line into `main` deletes this section.
+
 ## Standing rules
 
 **Every change sweeps the docs.** `README.md` and `.env.example` state
