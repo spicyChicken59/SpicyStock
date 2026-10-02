@@ -1,0 +1,64 @@
+SpicyStock run 6 evidence summary (no prices)
+overall status BLOCKED   reason -
+download: status PASS   queries completed 97 of 97   reason -
+ledger: {'request_slots_charged': 289, 'uncompressed_retained_bytes_charged': 275899601, 'unresolved_byte_reservations': 0}
+
+=== 2026-09-24 ===
+  status BLOCKED   formula check PASS   regime established False
+  stock statuses: {'partial': 263, 'returned_with_bars': 4517}
+  every stock has its full required window: False
+  partial (263): AADX, ACCL, ADBT, ADIG, AEC, AGBK, AGCC, AGRZ, AHMA, AIAI, AIB, AIBZ, AIDX, AIIR, AKTS, ALH, ALMR, ALPS, AMSS, ANDG, ANGX, APC, APMD, ARXS, ATCX (+238 more)
+  stocks missing some required sessions (263): AADX, ACCL, ADBT, ADIG, AEC, AGBK, AGCC, AGRZ, AHMA, AIAI, AIB, AIBZ, AIDX, AIIR, AKTS, ALH, ALMR, ALPS, AMSS, ANDG, ANGX, APC, APMD, ARXS, ATCX (+238 more)
+  C  fresh bars, $3 rule on the day: PASS
+    independent calculator: RED  (rules that fired: red_ratio_10d, yellow_ratio_10d, yellow_up50_month_hot)
+      10-day up/down 1333 / 1426 -> ratio 0.93   |   5-day 552 / 702 -> 0.79
+      that day up/down 92 / 142   counted universe 3738
+    app's own code: RED
+    regime established: False
+    unknown event counts on 2026-09-24: {'above_40ma': 21, 'down13_34d': 11, 'down25_month': 6, 'down25_quarter': 41, 'down50_month': 6, 'up13_34d': 11, 'up25_month': 6, 'up25_quarter': 41, 'up50_month': 6}
+    counted stocks with an unknown 4% event in the 10 days (4): ETRA, OIG, TEVA, WCCB
+    counted stocks with unknown up-50%-month on 2026-09-24 (6): ETRA, GIXI, OIG, TEVA, TRBG, WCCB
+    10-day ratio could be anywhere in [0.92, 0.95] given 17 unknown contributors
+    population reasons on 2026-09-24: {'eligible': 3738, 'price_below_3_after_rounding': 1041}
+  D  what-if, $3 rule each of the 10 days: PASS
+    independent calculator: RED  (rules that fired: red_ratio_10d, yellow_ratio_10d, yellow_up50_month_hot)
+      10-day up/down 1337 / 1434 -> ratio 0.93   |   5-day 551 / 707 -> 0.78
+      that day up/down 92 / 142   counted universe 3738
+    app's own code: RED
+    regime established: False
+    unknown event counts on 2026-09-24: {'above_40ma': 21, 'down13_34d': 11, 'down25_month': 6, 'down25_quarter': 41, 'down50_month': 6, 'up13_34d': 11, 'up25_month': 6, 'up25_quarter': 41, 'up50_month': 6}
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-24 (6): ETRA, GIXI, OIG, TEVA, TRBG, WCCB
+    10-day ratio could be anywhere in [0.93, 0.93] given 0 unknown contributors
+    population reasons on 2026-09-24: {'eligible': 3738, 'price_below_3_after_rounding': 1041}
+  diagnostic scan matches (no grading, no tickets): 418
+
+=== 2026-09-25 ===
+  status BLOCKED   formula check PASS   regime established False
+  stock statuses: {'partial': 263, 'returned_with_bars': 4518}
+  every stock has its full required window: False
+  partial (263): AADX, ACCL, ADBT, ADIG, AEC, AGBK, AGCC, AGRZ, AHMA, AIAI, AIB, AIBZ, AIDX, AIIR, AKTS, ALH, ALMR, ALPS, AMSS, ANDG, ANGX, APC, APMD, ARXS, ATCX (+238 more)
+  stocks missing some required sessions (263): AADX, ACCL, ADBT, ADIG, AEC, AGBK, AGCC, AGRZ, AHMA, AIAI, AIB, AIBZ, AIDX, AIIR, AKTS, ALH, ALMR, ALPS, AMSS, ANDG, ANGX, APC, APMD, ARXS, ATCX (+238 more)
+  C  fresh bars, $3 rule on the day: PASS
+    independent calculator: RED  (rules that fired: red_ratio_10d, yellow_ratio_10d, yellow_up50_month_hot)
+      10-day up/down 1262 / 1419 -> ratio 0.89   |   5-day 485 / 614 -> 0.79
+      that day up/down 84 / 68   counted universe 3729
+    app's own code: RED
+    regime established: False
+    unknown event counts on 2026-09-25: {'above_40ma': 20, 'down13_34d': 10, 'down25_month': 6, 'down25_quarter': 40, 'down50_month': 6, 'up13_34d': 10, 'up25_month': 6, 'up25_quarter': 40, 'up50_month': 6}
+    counted stocks with an unknown 4% event in the 10 days (4): ETRA, OIG, TEVA, WCCB
+    counted stocks with unknown up-50%-month on 2026-09-25 (6): ETRA, GIXI, OIG, TEVA, TRBG, WCCB
+    10-day ratio could be anywhere in [0.88, 0.9] given 13 unknown contributors
+    population reasons on 2026-09-25: {'eligible': 3729, 'price_below_3_after_rounding': 1051}
+  D  what-if, $3 rule each of the 10 days: PASS
+    independent calculator: RED  (rules that fired: red_ratio_10d, yellow_ratio_10d, yellow_up50_month_hot)
+      10-day up/down 1278 / 1430 -> ratio 0.89   |   5-day 491 / 622 -> 0.79
+      that day up/down 84 / 68   counted universe 3729
+    app's own code: RED
+    regime established: False
+    unknown event counts on 2026-09-25: {'above_40ma': 20, 'down13_34d': 10, 'down25_month': 6, 'down25_quarter': 40, 'down50_month': 6, 'up13_34d': 10, 'up25_month': 6, 'up25_quarter': 40, 'up50_month': 6}
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-25 (6): ETRA, GIXI, OIG, TEVA, TRBG, WCCB
+    10-day ratio could be anywhere in [0.89, 0.89] given 0 unknown contributors
+    population reasons on 2026-09-25: {'eligible': 3729, 'price_below_3_after_rounding': 1051}
+  diagnostic scan matches (no grading, no tickets): 455

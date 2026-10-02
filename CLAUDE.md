@@ -3836,3 +3836,44 @@ changes, compression work, provider calls and readiness approval. Real execution
 remains BLOCKED; acquisition, provider-package recovery and historical findings
 remain NOT RUN. No dispatch, rerun, key access or private-package scan occurred.
 
+
+## Checkpoint, 2 Oct 2026 — historical input run 6, executed and read
+
+Main `a930ca0` (tools identical to the PR #98 head `d6d7743`). The owner posted
+readiness-v4 comment `5924734477` on PR #98 (the `5921715962` candidate with only
+`authorized_on` set to its UTC posting date) and dispatched once: run
+`36815689950`, native 6 / attempt 1, job `110220126196`, workflow SHA `a900236`.
+Guidance's separate release was never posted; the guard reads only the owner's
+readiness comment. Pre-dispatch receipts are retained under the report's
+`predispatch/`: the actual guard against live GitHub with only comment/run/job
+synthesized (PASS; sixteen negative controls refused; repeated after `main`
+moved), the real comment `5924734477` (PASS), preflight, pinned age, recipient
+and 50 boundary inputs.
+
+Public outcome (job log): guard PASS (it ran from `a900236`; step 7 then checked
+out `d6d7743`); acquisition PASS in 14 minutes; offline reconciliation BLOCKED
+(exit 2, so the job reads `failure` by design); package and upload PASS.
+Artifact `11142297138`, 107,315,902 bytes, `sha256:043af0b3…f1b3`, expires 8 Oct.
+The sandbox cannot fetch artifact blobs (403). The owner reported downloading,
+recovering locally through the helper (zip digest check, `historical_package.py
+recover` with a GitHub-verified expected-execution) and pasted a price-free
+summary. The helper's step lines were not retained. A Linux copy of the helper
+was rehearsed on a synthetic package with a disposable key, with refusals; its
+log and adaptation diff are retained.
+
+Owner summary ([report](docs/input-truthfulness/2026-10-02-historical-run6-result.md)):
+97/97 queries, 289 of 400 slots, 275,899,601 retained bytes. RED on both
+sessions under C and D, production and the independent calculator agreeing.
+10-session ratios 0.93 / 0.89 against the original 0.94 / 0.89. Under C the
+outer bounds over every unknown are 0.92–0.95 and 0.88–0.90, all below 1.0;
+under D the ratios are exact. Populations 3,738 / 3,729 against 3,716 / 3,700.
+The same three rules fire. Every intended stock returned target and prior bars,
+but 263 symbols per session are partial, causes unassigned. Strict establishment
+(evaluated on C) is BLOCKED by six counted stocks (ETRA, GIXI, OIG, TEVA, TRBG,
+WCCB) lacking an input of the up-50%-month test; four also carry an unknown 4%
+event under C. B stays BLOCKED.
+
+KEEP the evidence and limits. FIX nothing: the strict rule did its job. DEFER
+partial-symbol causes and Guidance private review (NOT RUN). OMIT any further
+dispatch — no slot remains — and any trading claim. Next: the method's own
+prospective qualifying-ticket check on a GREEN or YELLOW session.

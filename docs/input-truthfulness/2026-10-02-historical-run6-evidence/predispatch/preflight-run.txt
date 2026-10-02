@@ -1,0 +1,11 @@
+== A. as instructed: cwd /home/user/SpicyStock (HEAD=5d9b9add4a122c53e461ec07ed9f8e99cceb2fae), inside an empty network namespace (unshare -n) ==
+{"reason": "execution_preflight_or_storage_failed", "status": "BLOCKED"}
+exit=2
+-- A reason (in-process preflight(), same inputs) --
+preflight ExecutionError: checkout_identity_rejected | HEAD: 5d9b9add4a122c53e461ec07ed9f8e99cceb2fae
+== B. faithful: cwd = scratch clone at the guard's checkout_sha (the workflow's second checkout) ==
+clone HEAD=d6d774346015c3d2abfe7b7318316292daab57cb tree=e6279bb0d48657919a72b0f7f24c2c477f214eb7
+{"phase": "preflight", "status": "PASS"}
+exit=0
+data dir exists after preflight? no
+clone status lines: 0

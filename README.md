@@ -845,9 +845,10 @@ The original two records are gzip fixtures under `tests/fixtures/continuity/`.
 
 The dedicated manual `historical-input-proof.yml` workflow prepares encrypted
 historical evidence under the [execution handoff](docs/input-truthfulness/2026-09-29-historical-execution.md).
-Only the narrowly reviewed replacement real phase (native 6 / attempt 1) is
-prospective; it requires the repair's merged implementation and a fresh dated
-readiness-v4 comment. Native 5 failed before checkout because its comment-ID
+The replacement real phase ran once as native 6 / attempt 1 (run 36815689950,
+1 October) on the owner's dated readiness-v4 comment, after the repair merged;
+no further dispatch is admitted. Its [result](docs/input-truthfulness/2026-10-02-historical-run6-result.md)
+is below. Native 5 failed before checkout because its comment-ID
 input contained leading spaces. The boundary now trims only edge ASCII spaces
 and tabs, then passes the canonical numeric ID to the unchanged authorization
 checks. Its failed attempt and consumed readiness remain immutable history.
@@ -858,8 +859,8 @@ not phase numbers. Normal CI checks the changed workflows with pinned actionlint
 The hosted synthetic rehearsal (run 36570997883, native 4 / attempt 1 / phase 1)
 and exact source-pinned owner replay were accepted on PR #95. They used the
 previous execution checkout; they did not exercise the later conversion-evidence
-compaction or archive delivery changes. Real acquisition remains NOT RUN and
-release remains BLOCKED pending Guidance review and a separate execution release.
+compaction or archive delivery changes. Guidance's separate execution release was
+never posted; the guard does not require one, and the owner dispatched on readiness.
 The prior 199 MiB stress failure is preserved. The explicit delivery-envelope
 continuation uses a 250 MiB archive / 251 MiB ciphertext ceiling, preserving
 the 2 GiB expanded limit and the selected codec. The complete central and stress
@@ -880,7 +881,14 @@ Complete original final-population masks and full daily-bar inputs remain missin
 `tools/historical_input_proof.py` reproduces the retained-data analysis with sockets
 blocked. The separate bounded acquisition tool defaults to offline validation;
 live historical retrieval requires the frozen manifest and documented zero-cost,
-private-storage authorization. No new data was acquired in this checkpoint.
+private-storage authorization. Run 6 performed that one retrieval: all 97 queries
+completed, using 289 of 400 request slots. Every intended stock returned
+target-day and prior-day bars, and 263 symbols per session are partial. The
+owner-decrypted, price-free summary reproduces RED on both sessions under both
+later-eligibility policies. Under C the 10-session ratio stays below 1.0 across
+the outer bounds over every unknown (0.92–0.95 and 0.88–0.90). Under D it is
+exact (0.93 and 0.89). Strict establishment stays BLOCKED by six counted stocks'
+missing monthly-test inputs, and the exact original population stays BLOCKED.
 `tools/historical_reconcile.py` consumes only that tool's verified private cache,
 keeps later observations separate and never publishes plans or reuses reader approval.
 Its version-2 output stores lossless float-conversion evidence by selected-row

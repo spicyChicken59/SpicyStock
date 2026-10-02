@@ -1,0 +1,99 @@
+### positive: synthetic zip, matching identity
+1/5 Zip matches GitHub: 17820 bytes, SHA-256 0B7263FE91BA78D56EE3BB1C99DF2C8AD2DBF465EEFD00795B592802A778822B
+2/5 Unpacked the box and its receipt into /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/w1/artifact
+PASS: pinned age release installed
+3/5 Tools ready
+{"status":"PASS"}
+4/5 Decrypted and verified into /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/w1/recovered
+SpicyStock run 6 evidence summary (no prices)
+overall status PASS   reason -
+download: status PASS   queries completed 3 of 97   reason -
+ledger: {'request_slots_charged': 7, 'uncompressed_retained_bytes_charged': 33106, 'unresolved_byte_reservations': 0}
+=== 2026-09-24 ===
+  status PASS   formula check PASS   regime established True
+  stock statuses: {'partial': 3}
+  every stock has its full required window: False
+  partial (3): AAA, BBB, SPY
+  stocks missing some required sessions (3): AAA, BBB, SPY
+  C  fresh bars, $3 rule on the day: PASS
+    independent calculator: GREEN  (rules that fired: none)
+      10-day up/down 0 / 0 -> ratio None   |   5-day 0 / 0 -> None
+      that day up/down 0 / 0   counted universe 2
+    app's own code: GREEN
+    regime established: True
+    unknown event counts on 2026-09-24: none
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-24 (0): none
+    10-day ratio could be anywhere in [None, None] given 0 unknown contributors
+    population reasons on 2026-09-24: {'eligible': 2}
+  D  what-if, $3 rule each of the 10 days: PASS
+    independent calculator: GREEN  (rules that fired: none)
+      10-day up/down 0 / 0 -> ratio None   |   5-day 0 / 0 -> None
+      that day up/down 0 / 0   counted universe 2
+    app's own code: GREEN
+    regime established: True
+    unknown event counts on 2026-09-24: none
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-24 (0): none
+    10-day ratio could be anywhere in [None, None] given 0 unknown contributors
+    population reasons on 2026-09-24: {'eligible': 2}
+  diagnostic scan matches (no grading, no tickets): 0
+=== 2026-09-25 ===
+  status PASS   formula check PASS   regime established True
+  stock statuses: {'partial': 3}
+  every stock has its full required window: False
+  partial (3): AAA, BBB, SPY
+  stocks missing some required sessions (3): AAA, BBB, SPY
+  C  fresh bars, $3 rule on the day: PASS
+    independent calculator: GREEN  (rules that fired: none)
+      10-day up/down 0 / 0 -> ratio None   |   5-day 0 / 0 -> None
+      that day up/down 0 / 0   counted universe 2
+    app's own code: GREEN
+    regime established: True
+    unknown event counts on 2026-09-25: none
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-25 (0): none
+    10-day ratio could be anywhere in [None, None] given 0 unknown contributors
+    population reasons on 2026-09-25: {'eligible': 2}
+  D  what-if, $3 rule each of the 10 days: PASS
+    independent calculator: GREEN  (rules that fired: none)
+      10-day up/down 0 / 0 -> ratio None   |   5-day 0 / 0 -> None
+      that day up/down 0 / 0   counted universe 2
+    app's own code: GREEN
+    regime established: True
+    unknown event counts on 2026-09-25: none
+    counted stocks with an unknown 4% event in the 10 days (0): none
+    counted stocks with unknown up-50%-month on 2026-09-25 (0): none
+    10-day ratio could be anywhere in [None, None] given 0 unknown contributors
+    population reasons on 2026-09-25: {'eligible': 2}
+  diagnostic scan matches (no grading, no tickets): 0
+5/5 Summary saved to /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/w1/summary.txt. It has no prices; paste it to Claude.
+### exit 0
+### control: tampered zip (one byte appended)
+Exception: /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/scriptdir/open-run6-test.ps1:33
+Line |
+  33 |    throw "This zip is not the one GitHub recorded (size $len, SHA-256  …
+     |    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | This zip is not the one GitHub recorded (size 17821, SHA-256 8754998A514F834E39D12C5A8A836C7A6E30B241469904AC9EBF22F28A54021A). Do not open it.
+### exit 1
+### control: wrong expected execution identity (readiness_comment_id 999)
+1/5 Zip matches GitHub: 17820 bytes, SHA-256 0B7263FE91BA78D56EE3BB1C99DF2C8AD2DBF465EEFD00795B592802A778822B
+2/5 Unpacked the box and its receipt into /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/w3/artifact
+PASS: pinned age release installed
+3/5 Tools ready
+{"status":"BLOCKED","reason":"private_package_operation_refused"}
+Exception: /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/scriptdir/open-run6-test.ps1:25
+Line |
+  25 |  … DE -ne 0) { throw "Stopped at: $What. Nothing was deleted. Send Claud …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Stopped at: decrypting and verifying. Nothing was deleted. Send Claude this line.
+### exit 1
+### w3 contents after refusal: age artifact expected-execution.json 
+### control: destination already exists (rerun into w1)
+1/5 Zip matches GitHub: 17820 bytes, SHA-256 0B7263FE91BA78D56EE3BB1C99DF2C8AD2DBF465EEFD00795B592802A778822B
+Exception: /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/scriptdir/open-run6-test.ps1:38
+Line |
+  38 |  … covered") { throw "$Work/recovered already exists. Rename it, then ru …
+     |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | /tmp/claude-0/-home-user/be741bed-fa94-5c2e-96dd-d4c8505bc631/scratchpad/ps-test/w1/recovered already exists. Rename it, then run again.
+### exit 1

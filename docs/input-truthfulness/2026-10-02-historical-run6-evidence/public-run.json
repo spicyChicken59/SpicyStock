@@ -1,0 +1,212 @@
+{
+  "artifact": {
+    "created_at": "2026-10-01T05:06:42Z",
+    "digest": "sha256:043af0b3abe27fb47cd00c65b601617f23aa7846993d5e5ea02c94267438f1b3",
+    "expired": false,
+    "expires_at": "2026-10-08T05:06:39Z",
+    "id": 11142297138,
+    "name": "historical-evidence-36815689950-1-real",
+    "size_in_bytes": 107315902
+  },
+  "execution_checkout_sha": {
+    "meaning": "admitted by the guard (step 6, which itself ran from the workflow revision a900236) and checked out by step 7 before preflight, acquisition, reconciliation and packaging",
+    "value": "d6d774346015c3d2abfe7b7318316292daab57cb"
+  },
+  "job": {
+    "completed_at": "2026-10-01T05:06:44Z",
+    "conclusion": "failure",
+    "id": 110220126196,
+    "name": "execution",
+    "started_at": "2026-10-01T04:33:45Z",
+    "status": "completed",
+    "steps": [
+      {
+        "completed_at": "2026-10-01T04:33:46Z",
+        "conclusion": "success",
+        "name": "Set up job",
+        "number": 1,
+        "started_at": "2026-10-01T04:33:46Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:33:47Z",
+        "conclusion": "success",
+        "name": "Refuse unintended dispatch context",
+        "number": 2,
+        "started_at": "2026-10-01T04:33:46Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:33:53Z",
+        "conclusion": "success",
+        "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "number": 3,
+        "started_at": "2026-10-01T04:33:47Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:33:53Z",
+        "conclusion": "success",
+        "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "number": 4,
+        "started_at": "2026-10-01T04:33:53Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:34:14Z",
+        "conclusion": "success",
+        "name": "Install pinned historical runtime and verified age",
+        "number": 5,
+        "started_at": "2026-10-01T04:33:53Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:34:31Z",
+        "conclusion": "success",
+        "name": "Verify reviewed revision, evidence and durable execution slot",
+        "number": 6,
+        "started_at": "2026-10-01T04:34:14Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:34:37Z",
+        "conclusion": "success",
+        "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "number": 7,
+        "started_at": "2026-10-01T04:34:31Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:34:37Z",
+        "conclusion": "success",
+        "name": "Validate recipient before exposing provider credentials",
+        "number": 8,
+        "started_at": "2026-10-01T04:34:37Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:34:37Z",
+        "conclusion": "skipped",
+        "name": "Exercise actual tools with synthetic transport",
+        "number": 9,
+        "started_at": "2026-10-01T04:34:37Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T04:48:44Z",
+        "conclusion": "success",
+        "name": "One historical acquisition under the original shared limits",
+        "number": 10,
+        "started_at": "2026-10-01T04:34:37Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:03Z",
+        "conclusion": "failure",
+        "name": "Reconcile complete or partial retained inputs with sockets blocked",
+        "number": 11,
+        "started_at": "2026-10-01T04:48:44Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:39Z",
+        "conclusion": "success",
+        "name": "Encrypt only permitted evidence, including handled failures",
+        "number": 12,
+        "started_at": "2026-10-01T05:06:03Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "success",
+        "name": "Upload ciphertext transport and non-sensitive receipt",
+        "number": 13,
+        "started_at": "2026-10-01T05:06:39Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "success",
+        "name": "Bind public receipt to the immutable artifact identity",
+        "number": 14,
+        "started_at": "2026-10-01T05:06:42Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "number": 26,
+        "started_at": "2026-10-01T05:06:42Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "skipped",
+        "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+        "number": 27,
+        "started_at": "2026-10-01T05:06:42Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "success",
+        "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+        "number": 28,
+        "started_at": "2026-10-01T05:06:42Z",
+        "status": "completed"
+      },
+      {
+        "completed_at": "2026-10-01T05:06:42Z",
+        "conclusion": "success",
+        "name": "Complete job",
+        "number": 29,
+        "started_at": "2026-10-01T05:06:42Z",
+        "status": "completed"
+      }
+    ]
+  },
+  "observed_at": "2026-10-02",
+  "public_job_log_lines": {
+    "lines": [
+      "2026-10-01T04:34:31.3999928Z {\"status\":\"PASS\"}",
+      "2026-10-01T04:34:32.3445635Z HEAD is now at a900236 run 2026-09-30",
+      "2026-10-01T04:34:37.0386716Z HEAD is now at d6d77434 Record passing repair CI and preserve complete native history",
+      "2026-10-01T04:34:37.4637103Z {\"phase\": \"preflight\", \"status\": \"PASS\"}",
+      "2026-10-01T04:34:37.5838987Z {\"status\":\"PASS\"}",
+      "2026-10-01T04:48:44.2972589Z {\"phase\": \"real\", \"reason\": \"private_diagnostics_retained\", \"status\": \"PASS\", \"synthetic\": false}",
+      "2026-10-01T05:06:03.5764722Z {\"phase\": \"offline\", \"reason\": \"private_diagnostics_retained\", \"status\": \"BLOCKED\", \"synthetic\": false}",
+      "2026-10-01T05:06:03.6603312Z ##[error]Process completed with exit code 2.",
+      "2026-10-01T05:06:39.6308032Z {\"status\":\"PASS\"}",
+      "2026-10-01T05:06:41.8131521Z SHA256 digest of uploaded artifact is 043af0b3abe27fb47cd00c65b601617f23aa7846993d5e5ea02c94267438f1b3",
+      "2026-10-01T05:06:42.0850625Z Artifact historical-evidence-36815689950-1-real has been successfully uploaded! Final size is 107315902 bytes. Artifact ID is 11142297138"
+    ],
+    "source": "job 110220126196 log, read verbatim through the GitHub MCP get_job_logs tool on 2026-10-01"
+  },
+  "readiness_comment": {
+    "author": "spicyChicken59",
+    "created_at": "2026-10-01T04:26:41Z",
+    "id": 5924734477,
+    "issue_url": "https://api.github.com/repos/spicyChicken59/SpicyStock/issues/98",
+    "updated_at": "2026-10-01T04:26:41Z"
+  },
+  "run": {
+    "actor": "spicyChicken59",
+    "conclusion": "failure",
+    "created_at": "2026-10-01T04:33:41Z",
+    "display_title": "historical-input-real",
+    "event": "workflow_dispatch",
+    "head_branch": "main",
+    "head_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+    "id": 36815689950,
+    "path": ".github/workflows/historical-input-proof.yml",
+    "run_attempt": 1,
+    "run_number": 6,
+    "status": "completed",
+    "triggering_actor": "spicyChicken59",
+    "updated_at": "2026-10-01T05:06:45Z",
+    "workflow_id": 369770564
+  },
+  "schema": "historical-run6-public-record-v1",
+  "source": "GitHub REST API, read-only; plaintext evidence is not part of this record"
+}
