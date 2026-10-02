@@ -1,0 +1,22 @@
+{
+  "assignment_id": "spicystock-historical-input-2026-09-28",
+  "assignment_phase": 2,
+  "checkout_sha": "d6d774346015c3d2abfe7b7318316292daab57cb",
+  "compatibility_contract_sha256": "a425ce24be52c22119f39df1444b9518586f15734998f6d068090d4cef957be8",
+  "implementation_pr": 98,
+  "manifest_sha256": "8d92ed5c56464fe9f342d024da14aa1521f6025d47ec32a6324a298b8fb63ebc",
+  "mode": "real",
+  "readiness_comment_id": 5924734477,
+  "recipient_sha256": "0f539a14ca5bf12a1ad3a706747316bc886d375b17e757af32c237aa39b8ec4f",
+  "recovery_contract_sha256": "8f884be642bbcc01a0c02907d73c8d1075ac9040c1b9620e1a307d7330c25c71",
+  "release_evidence_sha256": "13ce1b747f825e4130954f94fde30c94872aaa4ef86a81656f89a88cf2f59f7e",
+  "repository": "spicyChicken59/SpicyStock",
+  "repository_id": 1352997802,
+  "run_attempt": 1,
+  "run_id": 36815689950,
+  "run_number": 6,
+  "status": "BLOCKED",
+  "workflow_id": 369770564,
+  "workflow_path": ".github/workflows/historical-input-proof.yml",
+  "workflow_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8"
+}

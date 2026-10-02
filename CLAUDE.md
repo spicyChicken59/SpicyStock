@@ -3836,3 +3836,41 @@ changes, compression work, provider calls and readiness approval. Real execution
 remains BLOCKED; acquisition, provider-package recovery and historical findings
 remain NOT RUN. No dispatch, rerun, key access or private-package scan occurred.
 
+
+## Checkpoint, 2 Oct 2026 — historical input run 6, executed and read
+
+Main `a930ca0` (tools identical to the PR #98 head `d6d7743`). The owner posted
+readiness-v4 comment `5924734477` on PR #98 (the `5921715962` candidate with only
+`authorized_on` set to its UTC posting date) and dispatched once: run
+`36815689950`, native 6 / attempt 1, job `110220126196`, workflow SHA `a900236`.
+Guidance's separate release was never posted; the guard does not check for one.
+Before dispatch the actual guard ran against live GitHub with only the comment,
+run and job synthesized, then against the real comment: PASS, every negative
+control refused for its reason. Boundary inputs, preflight, pinned age and the
+recipient check also passed offline.
+
+Public outcome: guard PASS; acquisition PASS (97/97 queries, 289 of 400 slots,
+275,899,601 retained bytes, 14 minutes); offline reconciliation BLOCKED (exit 2,
+so the job reads `failure` by design); package and upload PASS. Artifact
+`11142297138`, 107,315,902 bytes, `sha256:043af0b3…f1b3`, expires 8 Oct. The
+sandbox cannot fetch artifact blobs (403); the owner downloaded it, checked size
+and digest, recovered it locally with `historical_package.py recover` and an
+expected-execution built from GitHub-verified facts, and pasted a price-free
+summary. The helper and summarizer were tested beforehand on a synthetic
+package with a disposable key, including tampered-zip, wrong-identity and
+existing-destination refusals.
+
+Result ([report](docs/input-truthfulness/2026-10-02-historical-run6-result.md)):
+RED on both sessions under C and D, production and independent calculators
+agreeing. 10-session ratios 0.93 / 0.89 against the original 0.94 / 0.89;
+outer bounds over every unknown 0.92–0.95 and 0.88–0.90, all below 1.0.
+Populations 3,738 / 3,729 against 3,716 / 3,700. The same three predicates fire.
+Strict establishment is BLOCKED by six counted stocks (ETRA, GIXI, OIG, TEVA,
+TRBG, WCCB) missing the 20-session window; 263 symbols per session are partial,
+causes unassigned. B stays BLOCKED. Every intended stock had target and prior
+bars in the later retrieval (current availability only).
+
+KEEP the evidence and limits. FIX nothing: the strict rule did its job. DEFER
+partial-symbol causes and Guidance private review (NOT RUN). OMIT any further
+dispatch — no slot remains — and any trading claim. Next: the method's own
+prospective qualifying-ticket check on a GREEN or YELLOW session.

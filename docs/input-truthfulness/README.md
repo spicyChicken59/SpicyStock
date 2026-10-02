@@ -1,5 +1,10 @@
 # Input truthfulness milestone
 
+[2 October 2026: historical input run 6](2026-10-02-historical-run6-result.md)
+records the one real acquisition of the September 24/25 inputs. RED reproduces
+on later complete data under both eligibility policies and over every unknown;
+strict establishment and the exact original population remain BLOCKED.
+
 [28 September 2026: historical validation and usable decisions](2026-09-28-validation-review.md)
 accounts for all 13 rebuild publications across 11 unique sessions, preserves
 overlapping zero-ticket causes and identifies unsupported historical claims.
