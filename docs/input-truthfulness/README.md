@@ -1,5 +1,21 @@
 # Input truthfulness milestone
 
+[2 October 2026: the signal-outcome study](2026-10-02-signal-outcomes.md), under
+its [frozen spec](2026-10-02-signal-outcomes-spec.json), tickets every burst
+the 17 real publications archived with the production rules -- no reader, no
+regime gate, no slot -- and walks it over the records' own published bars: the
+first R the strategy's mechanics have ever had on real bars, as a labelled
+counterfactual over RED nights, by stratum and by night, with uncertain fills
+bounded and costs beside it. It is not an edge claim.
+
+[2 October 2026: the mechanical backtest over the run-6 archive](2026-10-02-mechanical-backtest.md)
+is the tool that turns the one real year of full-market bars the owner recovered
+into the first outcome evidence: the run's own stages replayed session by
+session, the reader NOT RUN, the universe the archive's, a counterfactual block
+without the regime gate, and a shortened lookback admitted only with its
+equivalence check. It is built and tested over a synthetic archive here; its
+first real result belongs to the owner's run and is NOT RUN in this repository.
+
 [2 October 2026: historical input run 6](2026-10-02-historical-run6-result.md)
 records the one real acquisition of the September 24/25 inputs. It completed all
 97 queries and returned target-day and prior-day bars for every intended stock;

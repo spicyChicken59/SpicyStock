@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2727 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2758 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -3877,3 +3877,99 @@ KEEP the evidence and limits. FIX nothing: the strict rule did its job. DEFER
 partial-symbol causes and Guidance private review (NOT RUN). OMIT any further
 dispatch — no slot remains — and any trading claim. Next: the method's own
 prospective qualifying-ticket check on a GREEN or YELLOW session.
+
+## Checkpoint, 2 Oct 2026 — the first real-bar outcomes, and the two tools that read them
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` from `main`
+at `d185e48` (the merge of #99), pushed as **PR #100**; three commits:
+`513eb170` (the archive replay), `70dba340` (the spec freeze and the retention
+fix) and this closeout. `docs/data.json`, `docs/picks.json`, the history, the
+evidence objects, the quality ledger and the vendored design system are untouched;
+no run, mail, dispatch, merge or deployment. Guidance owns review and merge.
+The owner asked, going to sleep, for "satisfiable proof or at least a way to
+start investing". A 52-agent read of the repository (five readers, two skeptic
+lenses per headline claim, a completeness critic, three paths, a judge; 1
+confirmed, 18 reworded, 0 refuted) answered the first part: **no**. Run 6
+reproduced one input (the RED regime on 24–25 September, owner-reported); the
+pipeline has run on 17 real publications, 15 sessions, every one RED with 0
+tickets, 0 picks and a scorecard of 0 plans; no fill, R, win rate or
+expectancy had ever been measured on real data. Two readings were built so that
+stops being true.
+
+**`tools/historical_backtest.py`** replays the run's own stages over the bars a
+recovered acquisition package holds -- the run-6 archive is 288 sessions of
+4,780 names on the owner's computer -- session by session, through the
+functions `run_evening()` calls (`apply_session_rules`, `session_eligible`,
+`breadth.snapshot`, `scan_frames`, `rank`, `_make_plans(require_reader=False)`
+with `slots_held(open_plans())`, `record.append`, `scorecard_rows` over the
+whole archive, `summarize_scorecard`). Reader NOT RUN (a name's mechanical grade
+caps its final grade; the ticket SET is not a superset of the live run's);
+universe the archive's later membership; daily-bar fills; a labelled
+counterfactual block without the gate; a shortened `--lookback` admitted only
+with its equivalence check against the run's own on every overlapping session
+(regime, every candidate's grade/score/vetoes, every plan's prices and shares;
+one difference is FAIL and exit 2). **The judge's reviewer found a defect by
+execution before the owner ran it:** `record.append()`'s `MAX_PICKS` retention
+(260) silently dropped a long replay's oldest plans -- 284 issued, 260 scored,
+the four winners gone. `record.append()` gains `max_picks` and
+`record.scorecard_rows()` gains `window_sessions`, both default-unchanged and
+read at call time; the replay passes `retention_bound()` and refuses to score a
+population it did not issue. The same reviewer corrected the report: the exact
+lookback's window (18 Aug–25 Sep) was not "already known RED"; the records'
+own history puts the 10-session ratio at 1.03–1.54 through 8 September, YELLOW
+on that rule, RED only from 9 September. Eighteen tests; eight in-memory
+mutants killed with controls green, one (the published window) after it
+SURVIVED on an incidental fact of the fixture. One session costs about thirty
+seconds at the archive's scale on a burst-heavy synthetic market; the owner's
+helper `run-backtest.ps1` runs the exact lookback and `--lookback 130`.
+**NOT RUN here**: the owner's run over the real archive.
+
+**`tools/signal_outcomes.py`**, under a spec frozen in `70dba340` before any
+outcome was computed (`docs/input-truthfulness/2026-10-02-signal-outcomes-spec.json`,
+SHA-256 `d93ad856…`), tickets every burst row in the first publication of each
+of the 15 real sessions with `plan.burst_plan` at the GREEN multiplier -- no
+reader, no gate, no slot -- and walks it with `record.replay` over the records'
+own published bars (53,452 bars over 2,053 symbols; the newest publication
+wins; 2 revisions, both a re-priced low), bucketed as `scorecard_rows` buckets
+and summed by `summarize_scorecard`, in strata by the checklist's verdict.
+**Over 6,064 rows and 14 nights, 11–30 September 2026, every stratum lost.**
+Admitted (A+/A, no veto): 202 settled, 37 wins / 159 losses / 6 even, mean R
+−0.235, median −0.47, mean of night means −0.291 with a 95% night-bootstrap
+interval [−0.486, −0.109]; B −0.445, C −0.368, skip −0.386, vetoed −0.425; all
+1,478 settled −0.392. 234 admitted tickets are uncertain on daily bars (1,828
+of all rows; the bound with every one filled at its trigger is −0.332), 619
+rows set aside because an 11 or 14 September signal's own bar is in no later
+history, 579 pending (1 October), the five settled A+ tickets all losses, costs
+at 5/20 bps a side −0.276/−0.400. The reader-accepted stratum is one pending
+row (DAC). **Read it as: on every night the gate refused, its own tickets would
+have lost, in every grade -- the first real-bar evidence that the RED refusal
+had value on the nights it was applied -- and the checklist's grade ordered the
+strata the right way but found no group that made money on RED nights.** It
+says nothing about GREEN or YELLOW nights, which the record has never carried,
+and nothing about the reader. Exploratory: every next close was public before
+the spec. Thirteen tests, hand-computed R; eight mutants killed. Results in
+`docs/input-truthfulness/2026-10-02-signal-outcomes.md` and its evidence folder
+(`summary.txt` verbatim; `signal-outcomes.json.gz`, whose uncompressed SHA-256
+is `cc67f25ef2f9963426e807e2085b12323fa2fbea3d0183dc909fbac3983a4341`).
+
+**Measured** (this sandbox, Python 3.12, pandas 2.2.3): 2,758 tests collected;
+the full suite at `513eb170` 2,707 passed with 34 environment-gated skips, and
+the final tree's run is recorded in PR #100; gitleaks 8.24.3 with the repo
+config: no leaks; `git diff --check` clean. CI on `513eb170` green on all
+seven checks (pytest, page, both benchmark jobs, the gate, two gitleaks runs).
+Not run: the owner's archive replay; any GREEN or YELLOW night; the reader.
+
+**Keep / fix / defer / omit.** Keep: the spec frozen, the study re-run unchanged
+as nights mature (every publication after 1 October adds confirmatory signals,
+settling five sessions later); the replay's conservation refusal. Fix if it
+bites: `historical_backtest.py`'s `_slim()` keeps every candidate's plan per
+night, so a 158-session `backtest.json` will be large. Defer to the owner:
+run `run-backtest.ps1` before the artifact expires on 8 October (the recovered
+folder makes the expiry moot); decide the 128 MiB evidence cap the judge
+projects to bind in November. Omit: any threshold or rule change in response to
+these numbers (CLAUDE.md's own OMIT of future-return tuning); another
+acquisition; any claim of edge. **The way to start investing is unchanged and
+now has a reason behind it:** the product writes a ticket on the first GREEN or
+YELLOW night an accepted reader review admits; the one study that exists says
+the nights it refused deserved refusing. The first confirmatory number arrives
+when the first post-freeze signal settles.
