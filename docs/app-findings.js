@@ -137,7 +137,10 @@
       under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1)));
     });
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.aTop - 4 }, plain(rules.ratio_long_sessions) + '-session ratio, up ' + plain(rules.burst_pct) + '% against down'));
+    // the panel names, short on a phone so neither leaves the chart
+    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.aTop - 4 }, G.narrow
+      ? plain(rules.ratio_long_sessions) + '-session ratio'
+      : plain(rules.ratio_long_sessions) + '-session ratio, up ' + plain(rules.burst_pct) + '% against down'));
     // panel B: zero line, ticks, the compressed outcome axis
     const zero = G.yb(0);
     under.appendChild(SC.svg('line', { 'class': 'ss-find__zero', x1: G.left, x2: plotRight, y1: zero, y2: zero }));
@@ -146,8 +149,9 @@
       if (t !== 0) under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R'));
     });
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.bTop - 6 },
-      'what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') + ' did: R per ticket, compressed axis'));
+    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.bTop - 6 }, G.narrow
+      ? 'R per ticket, compressed axis'
+      : 'what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') + ' did: R per ticket, compressed axis'));
     if (model.nights.length && model.nights[0].i > 0) {
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y: G.bTop + 12, 'data-note': 'before' },
         G.narrow ? 'no published scan yet' : 'no published scan before ' + short(model.nights[0].session)));
@@ -184,14 +188,15 @@
     model.sessions.forEach((s, i) => {
       if (i % G.dateEvery !== 0 && i !== model.sessions.length - 1) return;
       if (i !== model.sessions.length - 1 && (model.sessions.length - 1 - i) * G.slot < 5 * CHAR + 6) return;
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: G.x(i), y: G.axisY, 'text-anchor': 'middle' }, short(s.date)));
+      const last = i === model.sessions.length - 1;   // the last date ends at the plot's edge, never past the chart
+      axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, short(s.date)));
     });
     const wFrom = model.index[model.window.from], wTo = model.index[model.window.through];
     if (isNum(wFrom) && isNum(wTo)) {
       const x1 = r1(G.x(wFrom) - G.slot / 2), x2 = r1(G.x(wTo) + G.slot / 2), y = G.bracketY;
       over.appendChild(SC.svg('path', { 'class': 'ss-find__bracket', d: 'M' + x1 + ',' + (y - 5) + 'V' + y + 'H' + x2 + 'V' + (y - 5), 'data-bracket': 'backtest' }));
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__bracket-text', x: x1 + 4, y: y - 9, 'data-bracket-label': 'backtest' },
-        'backtest window · ' + plural(model.window.count, 'session')));
+        (G.narrow ? 'backtest · ' : 'backtest window · ') + plural(model.window.count, 'session')));
     }
     // hit columns: one per session, over everything
     const hits = SC.svg('g', { 'class': 'ss-find__hits' });
@@ -320,9 +325,16 @@
     const next = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', 'data-find': 'next', text: 'Next', 'aria-label': 'Next night' });
     const count = el('span', { 'class': 'ss-find__count', 'data-find': 'count', 'aria-live': 'polite' });
     const controls = el('div', { 'class': 'ss-find__controls' }, [back, play, next, count]);
+    // the legend: two panels, three kinds of mark, named in words beside their marks
+    const legend = el('div', { 'class': 'sc-legend ss-find__legend', 'data-find': 'legend' }, [
+      el('span', null, [el('i', { 'class': 'ss-find__key ss-find__key--line' }), plain(F.rules.breadth.ratio_long_sessions) + '-session ratio']),
+      el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--night' }), 'published night, in its verdict’s colour']),
+      el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--dot' }), 'one settled ticket']),
+      el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--mean' }), 'the night’s mean']),
+    ]);
     const stage = el('div', { 'class': 'ss-find__stage', tabindex: 0, role: 'group', 'aria-roledescription': 'animated replay',
       'aria-label': 'The record night by night. Arrow keys move between nights, Home and End jump to the first and last, Space plays and pauses.',
-      'aria-describedby': ids.caption }, [chart, controls]);
+      'aria-describedby': ids.caption }, [chart, legend, controls]);
     const index = el('ol', { 'class': 'ss-find__index', 'aria-label': 'Nights' });
     model.nights.forEach((nt, k) => {
       index.appendChild(el('li', null, el('button', { type: 'button', 'class': 'sc-tab sc-tab--case', 'data-find-night': nt.session, 'aria-current': 'false',
