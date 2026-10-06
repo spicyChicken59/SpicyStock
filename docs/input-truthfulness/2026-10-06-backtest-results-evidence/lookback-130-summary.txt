@@ -1,0 +1,32 @@
+SpicyStock mechanical backtest (historical-backtest-v1) — no price in this summary
+archive: 4781 symbols with bars of 4780 intended; sessions 2025-08-05 .. 2026-09-25 (288); statuses {'returned_with_bars': 4518, 'partial': 263}
+evaluated: 158 sessions 2026-02-10 .. 2026-09-25 in 3813.5 s; lookback 130 of the run's 260; rules 17da26751760
+lookback equivalence: PASS (28 sessions compared, 0 differences)
+account (configured, not a balance): {'equity': 10000.0, 'risk_pct': 0.5, 'max_position_pct': 25.0, 'max_open_positions': 4}
+reader: NOT RUN: the mechanical grade is the ceiling of what the reader could have admitted
+regimes: {'red': 58, 'yellow': 100}; 10-session ratio min/median/max 0.55/1.13/3.26 over 158 defined
+candidates: 90787 bursts over 158 sessions; mechanical grades {'A': 11931, 'B': 22089, 'C': 16034, 'skip': 40175, 'A+': 558}
+
+[PRODUCTION POLICY]
+tickets 99, by the night's regime {'yellow': 99}
+plans 99: settled 44, open 0, pending 0, uncertain 42 [('trigger_timing', 33), ('stop_sequence', 5), ('open_above_limit', 4)], not filled 13, unmeasured 0, unreadable 0, unscored 0
+settled 44: wins 16, losses 27, breakeven 1; sum R 3.72; avg R 0.08; median R -0.09; win rate 0.36 (rates read only at 20+ settled: readable=True); SPY avg % over 44 pairs 0.37
+  by grade A+: plans 99, settled 44, wins 16, losses 27, sum R 3.72
+  by regime yellow: plans 99, settled 44, wins 16, losses 27, sum R 3.72
+
+[COUNTERFACTUAL — regime gate removed (not a policy)]
+tickets 153, by the night's regime {'red': 58, 'yellow': 95}
+plans 153: settled 69, open 1, pending 2, uncertain 69 [('trigger_timing', 49), ('stop_sequence', 10), ('open_above_limit', 8), ('open_below_skip', 2)], not filled 12, unmeasured 0, unreadable 0, unscored 0
+settled 69: wins 27, losses 40, breakeven 2; sum R 17.40; avg R 0.25; median R -0.11; win rate 0.39 (rates read only at 20+ settled: readable=True); SPY avg % over 69 pairs 0.31
+  by grade A: plans 55, settled 23, wins 8, losses 13, sum R 10.22
+  by grade A+: plans 98, settled 46, wins 19, losses 27, sum R 7.18
+  by regime red: plans 58, settled 25, wins 7, losses 18, sum R 1.14
+  by regime yellow: plans 95, settled 44, wins 20, losses 22, sum R 16.26
+
+limitations:
+- The reader is not run; every ticket here is one the reader could still have refused.
+- The universe is the archive's later membership; names that left the market are absent (survivorship), so the regime's decliners and the candidates are both under-counted.
+- The bars are a later retrieval, not the original information set, and partial names stay partial.
+- Fills, exits and R are the daily-bar model of the published scorecard: a fill only at the next open inside the ticket, uncertain days scored nowhere, no fee, spread or slippage.
+- The counterfactual block removes the regime gate to show what it refused; it is not a policy.
+- Counts are not an edge claim; the public scorecard reads no rate under its own minimum.

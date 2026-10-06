@@ -1,0 +1,148 @@
+{
+  "schema": "signal-outcomes-spec-v1",
+  "title": "Every archived signal ticketed by the production mechanics and walked over the records' own bars",
+  "frozen_at": "2026-10-02",
+  "frozen_through_session": "2026-10-01",
+  "freeze_rule": "Signals in publications for sessions up to and including frozen_through_session are EXPLORATORY: their next closes were public before this spec was written. Signals in later publications are CONFIRMATORY. No rule, threshold or population choice below may change after this file is committed; a change starts a new spec with a new freeze.",
+  "population": {
+    "source": "the first publication of each session among the publications listed below, by run.published_at; a later publication of the same session is a revision that contributes bars and no signals",
+    "rows": "every row of bursts[] in that publication",
+    "strata": {
+      "admitted": "grade_mechanical in pipeline.TRADE_GRADES (A+, A) with vetoes empty: what a GREEN night admits before the reader",
+      "B": "grade_mechanical B, vetoes empty",
+      "C": "grade_mechanical C, vetoes empty",
+      "skip": "grade_mechanical skip, vetoes empty",
+      "vetoed": "any grade with a veto"
+    },
+    "control": "the admitted stratum is read against B, C, skip and vetoed on the same nights; the reader-accepted A/A+ rows are reported as their own stratum"
+  },
+  "ticket": {
+    "function": "plan.burst_plan with the publication's own account block, size_multiplier breadth.SIZE_MULTIPLIER['green'], scan 'dollar' for a dollar-only row else '4pct', the row's extension_pct and gain_pct (0.0 when absent): exactly pipeline._make_plans's inputs",
+    "gate": "the regime gate, the slot cap and the cash budget are NOT applied; every ticket stands on its own",
+    "no_ticket": "a plan that is not eligible, has no order action or no shares is bucketed no_ticket with its reason; a plan the module refuses to build is plan_error",
+    "pick": "pipeline.pick_of over the plan, dated the signal session; record.pick_problem must be None"
+  },
+  "bars": {
+    "sources": "every listed publication's observations.symbols[*].history, observations.symbols[*] latest bar and bursts[*].series, in publication order, the newest winning",
+    "revision": "a later publication's bar differing from the one it replaces by more than 0.005 in open, high, low or close is counted as a revision with both values",
+    "basis": "a signal whose own close is not reproduced by the gathered bar on its session (within 0.005) is bucketed basis_mismatch and never walked"
+  },
+  "walk": {
+    "function": "record.replay over the record.OPEN_PLAN_SESSIONS (plan.FINAL_EXIT_DAY) sessions after the signal, through the newest listed session; record.r_multiple against the pick's published stop",
+    "buckets": "record.SCORECARD_BUCKETS exactly as record.scorecard_rows assigns them (pending on the newest session, unmeasured without bars, uncertain/not_filled/unreadable by status, settled with an R, open while the walk continues), plus no_ticket, plan_error and basis_mismatch",
+    "uncertain_bound": "an uncertain ticket is scored nowhere; beside it, plan.follow from the trigger over the same bars gives the R it would have had if the uncertain day had filled at the trigger, reported as a labelled bound and never pooled into the result"
+  },
+  "estimands": {
+    "E1_primary": "per stratum: the count and sum of R of settled tickets, the mean and median R, wins/losses/breakeven, the per-night mean R, and the mean of per-night means with a night-block bootstrap 95% interval (nights resampled with replacement)",
+    "E2": "the same for the admitted stratum split into exploratory and confirmatory signals; only the confirmatory split can be read as evidence",
+    "E3": "the same for the reader-accepted A/A+ rows: the live policy's own admissions",
+    "E4": "R after a per-side cost on the fill and every sale at cost_bps_per_side, in R units"
+  },
+  "reading_rule": "No rate is read under record.SCORECARD_MIN_PLANS settled tickets in a stratum (record.summarize_scorecard's own rule). No statistic here is an edge claim: every ticket was refused by the RED gate and the reader is not run. Nothing is tuned: no threshold, no rule and no population is changed in response to these numbers.",
+  "bootstrap": {
+    "reps": 2000,
+    "seed": 20261002
+  },
+  "cost_bps_per_side": [
+    0,
+    5,
+    20
+  ],
+  "publications": [
+    {
+      "commit": "7380a97605c7f16eb902421486c491a95b957cd7",
+      "session": "2026-09-11",
+      "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30"
+    },
+    {
+      "commit": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+      "session": "2026-09-11",
+      "blob": "2c5ec387654d2cea9d85b1230e91b4c7c0efb534"
+    },
+    {
+      "commit": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+      "session": "2026-09-14",
+      "blob": "a89ab122d7e0160df6a63c30957668447ace1103"
+    },
+    {
+      "commit": "442db489342660d7588d16dcc18e6c126187c1e6",
+      "session": "2026-09-15",
+      "blob": "abf693417b8308a68d6e1dfcbfd53ced16b6f8c4"
+    },
+    {
+      "commit": "580805487b22006c6f2fa35490c3edc8a5760d73",
+      "session": "2026-09-16",
+      "blob": "9dfc2d51aef7d0adf723428931c61cc83824fa71"
+    },
+    {
+      "commit": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+      "session": "2026-09-17",
+      "blob": "7e65097a70affd800bace72b2d088c8197053c47"
+    },
+    {
+      "commit": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+      "session": "2026-09-18",
+      "blob": "bf36144ea45d7c74eee724d2557964e5e8e0bfc5"
+    },
+    {
+      "commit": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+      "session": "2026-09-21",
+      "blob": "23cb5ab864e9e9de79fe33dabea898b9bef1e375"
+    },
+    {
+      "commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+      "session": "2026-09-21",
+      "blob": "6c5bd2f713eef2a787d129d6c9ddc6f409387be7"
+    },
+    {
+      "commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+      "session": "2026-09-22",
+      "blob": "d9ac3a89ca2a572128143f287180afad040f5672"
+    },
+    {
+      "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+      "session": "2026-09-23",
+      "blob": "97c89e46546e42aff4b07a5dade1ef551f4d4e4f"
+    },
+    {
+      "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+      "session": "2026-09-24",
+      "blob": "332b99ffac36b3b723de58197ce853e1ecd96b20"
+    },
+    {
+      "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
+      "session": "2026-09-25",
+      "blob": "6fce465edd51badead8ad0c38b111819ee69c884"
+    },
+    {
+      "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
+      "session": "2026-09-28",
+      "blob": "8d569933ebab8838699faff339bc1a18dde0dfa8"
+    },
+    {
+      "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+      "session": "2026-09-29",
+      "blob": "39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd"
+    },
+    {
+      "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+      "session": "2026-09-30",
+      "blob": "e31cfe5fd388a2b054a8afb16dfbe4f8da8ac93d"
+    },
+    {
+      "commit": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+      "session": "2026-10-01",
+      "blob": "d6095ca5d92ed5a056eab820bb73323fb04f5b67"
+    },
+    {
+      "commit": "58e0f38430ae82249db435ff397477bd2221106e",
+      "session": "2026-10-02",
+      "blob": "bb2edad5522c137030ec93d286c1aebfedde73de"
+    },
+    {
+      "commit": "178956b46bc50d8998636e9b4bc785ce3687c84a",
+      "session": "2026-10-05",
+      "blob": "1064e69b27bf3f6fceed1594a1a1b0387eb021bb"
+    }
+  ]
+}

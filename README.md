@@ -676,6 +676,10 @@ shares), and a single difference is a FAIL and exit code 2. It writes
 R only). Both the storage and the output must sit outside any Git checkout. It
 makes no provider, model or network call, and it is not an edge claim: the
 summary reads no rate under the scorecard's own minimum.
+Its first real result -- the owner's run of 6 October 2026 over the run-6
+archive, 158 sessions with the equivalence check PASS -- is recorded from the two
+summaries the owner pasted in `docs/input-truthfulness/2026-10-06-backtest-results.md`;
+the per-row files stay on the owner's machine.
 
 Its sibling over the public records is `python tools/signal_outcomes.py --spec
 <spec.json> --output <dir>`: every burst row in the first publication of each
@@ -698,6 +702,9 @@ the spec's freeze are exploratory, later ones confirmatory. It is a
 counterfactual: every ticket it walks was refused by the RED gate and the
 reader is not run; it reads no rate under the scorecard's minimum and is not
 an edge claim.
+Its first confirmatory re-read, over nineteen publications under a spec that
+differs from the frozen one by appended publication entries only, is
+`docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md`.
 
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
