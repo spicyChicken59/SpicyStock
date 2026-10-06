@@ -4192,6 +4192,17 @@ now, the second shape this file names). The other two were mine: a mutant that
 removed one of Play's two off-screen stops while the observer still stopped it
 (sharpened, and it dies), and a no-op.
 
+**CI found what the sandbox could not.** The first pytest run on the pull
+request errored three findings tests: CI's checkout is one commit deep and the
+builder reads the spec's nineteen publications from git by commit. Reproduced in
+a depth-1 clone (the same three errors; full history, all eight pass). Giving
+the job `fetch-depth: 0` is not open to this pass: `tests.yml`'s SHA-256 is one
+of the accepted delivery proofs' pinned sources, and editing it turned 363
+binding tests red (5 failures, 358 errors). The module's first fixture fetches exactly the named commits
+when they are missing and fails with the reason, never skips: proved green in a
+depth-1 clone of a remote that serves commits by id, as GitHub does, with no
+stray file, and red with all eight erroring when the remote cannot be reached.
+
 **Keep / fix / defer / omit.** Keep: the builder reads and the page prints; the
 study's spec stays frozen and extended by appended publications only, the
 findings file rebuilt after each extension with `--check` holding it. Fix if it

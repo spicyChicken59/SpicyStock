@@ -19,6 +19,7 @@ import math
 from pathlib import Path
 import re
 import statistics
+import subprocess
 
 import pytest
 
@@ -104,6 +105,24 @@ def by_session(doc: dict) -> dict[str, list[dict]]:
 
 
 # ------------------------------------------------------------ fixtures ----
+@pytest.fixture(scope="module", autouse=True)
+def history() -> list[str]:
+    """The builder reads every publication the study's spec names out of git
+    by commit. A shallow checkout -- CI's -- carries only its tip, so the
+    named commits are fetched here, exactly those and once; when they cannot
+    be had the module fails with the reason, and is never skipped."""
+    commits = [p["commit"] for p in json.loads((ROOT / STUDY_SPEC).read_bytes())["publications"]]
+    def present(c: str) -> bool:
+        return subprocess.run(["git", "cat-file", "-e", f"{c}^{{commit}}"], cwd=ROOT, capture_output=True).returncode == 0
+    missing = [c for c in commits if not present(c)]
+    if missing:
+        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", *missing],
+                              cwd=ROOT, capture_output=True, text=True)
+        assert done.returncode == 0 and all(present(c) for c in missing), \
+            f"{len(missing)} publications the spec names are not in this checkout and could not be fetched: {done.stderr.strip()}"
+    return commits
+
+
 @pytest.fixture(scope="module")
 def committed() -> dict:
     return json.loads((ROOT / OUTPUT).read_text(encoding="utf-8"))
