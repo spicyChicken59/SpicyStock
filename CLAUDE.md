@@ -4038,3 +4038,41 @@ acquisition; an edge claim.
 **Next action.** Re-run the study after the 8 October publication (1 October's
 tickets settle) and after 9 October's (2 October's); fix the page job; the live
 policy's own first ticket still needs a YELLOW night with an accepted A+ review.
+
+## Checkpoint, 6 Oct 2026 — the page job's dated identity, fixed
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` after PR #101 merged (the owner's instruction, as #100 was). One
+code change, under `tools/`, nothing under `src/`: no run, no mail, no
+dispatch, no record touched.
+
+**Reproduced here first**, with jsdom installed in the sandbox: on the current
+tree, where the 11 September directories are gone from `docs/history`,
+`node tools/continuity_check.mjs` exits 1 on `control exists:
+[data-history-inspect="2c5ec387…"]`, the assertion CI showed on `main` and on
+#101. The mechanism, confirmed by reading `history.publish()` and the page's
+`findEarlier()`: the archive keeps `history.DAYS` (21) calendar days, so the
+2 and 5 October publications dropped the 11 September records from
+`docs/history/index.json` and their directories, while the check pinned its
+clock to 14 September and searched the checkout's LIVE archive. The page smoke's
+own grading-history case was never exposed: it pins its index and serves its
+files through `page.route()` from `tests/fixtures/grading/`.
+
+**The fix.** The check's fetch stub serves every `docs/history/` path from
+`tests/fixtures/continuity/history-2026-10-01.json.gz`, the 1 October
+`index.json` and the 11 September record's `record.json`, `burst-ATEC.json`
+and `burst-VICR.json` exactly as published (commit `d185e48`), their SHA-256
+digests verified against the index before freezing; a path the bundle lacks is
+a 404. One assertion was added: the recovery read the frozen archive and the
+checkout no longer carries the record. 128 checks pass on the current tree.
+**Four mutants in separate copies of the tree**, the working tree untouched:
+serving the checkout again reproduces the original assertion; a broken
+`data-history-save` fails on the save control; one changed byte of the frozen
+context is refused by the page's own digest check (`publicJSON()`); an
+unrelated label change passes. gitleaks 8.24.3 over the fixture and the check:
+no leaks. README and `docs/continuity/README.md` name the frozen archive.
+
+**Not run here:** the chart check and the page smoke, which need Chromium the
+sandbox cannot download; CI's page job is the proof, and its result is on the
+PR. **Settled:** a check over a rolling public artifact pins that artifact in
+a fixture; the live `docs/history` is read by the page, never by a test.
