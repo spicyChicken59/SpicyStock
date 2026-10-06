@@ -318,7 +318,7 @@ does not carry, falls back to Explore and says so.
    last fourteen exchange sessions: ok, degraded or missing; older recorded closure outcomes remain readable.
    Under it, **What historical validation establishes** replays the record
    night by night from `docs/historical-findings.json` (`docs/app-findings.js`,
-   `SCStock.findings`): a stepper over the seventeen published nights, the
+   `SCStock.findings`): a stepper over every published night the study carries, the
    10-session ratio the gate read on every session the records know with the
    red and green lines of the regime rule drawn on it, and under it every
    settled R of that night's counterfactual tickets by stratum on a compressed
