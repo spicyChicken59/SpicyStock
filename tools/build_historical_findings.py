@@ -83,7 +83,7 @@ BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "unmeasured"
 SUM_DECIMALS, MEAN_DECIMALS = 2, 3
 # Field names gitleaks' generic-api-key rule reads as a credential's name;
 # nothing this file writes may be called one (the test holds it).
-CREDENTIAL_WORDS = re.compile(r"(api|key|token|secret|auth|access|credential|passw)", re.I)
+CREDENTIAL_WORDS = re.compile(r"(api|key|token|secret|auth|access|cred|passw)", re.I)   # `cred` reads credential and creds
 
 
 class FindingsError(RuntimeError):
@@ -160,17 +160,24 @@ def settled_block(rs: list[float]) -> dict:
             "median_r": round(statistics.median(rs), SUM_DECIMALS)}
 
 
+UNTICKETED = ("no_ticket", "plan_error")   # the two buckets with no ticket the rules wrote
+
+
 def stratum_of_night(rows: list[dict]) -> dict:
     """A night's rows in one stratum: how many there were, how many the
-    production rules wrote a ticket for (a row without one is a ``no_ticket``
-    or a ``basis_mismatch``, never walked), every bucket, and every settled R.
-    A bucket the study did not name is a refusal, never a dropped row."""
+    production rules wrote a ticket for, every bucket, and every settled R.
+    The study plans every burst first: a ``no_ticket`` row is one the rules
+    refused and a ``plan_error`` one whose plan could not be formed, so every
+    other row carries a ticket the rules wrote -- the ``basis_mismatch`` rows
+    included, whose tickets the study set aside unwalked because the bars do
+    not reproduce the signal's own close. A bucket the study did not name is
+    a refusal, never a dropped row."""
     buckets = Counter(r["bucket"] for r in rows)
     unknown = sorted(set(buckets) - set(BUCKETS))
     if unknown:
         raise FindingsError(f"a bucket the study does not name: {unknown}")
     rs = sorted(r["r"] for r in rows if r["bucket"] == "settled")
-    return {"rows": len(rows), "tickets": sum(1 for r in rows if r.get("ticket") is not None),
+    return {"rows": len(rows), "tickets": sum(1 for r in rows if r["bucket"] not in UNTICKETED),
             "buckets": {b: buckets.get(b, 0) for b in BUCKETS}, "settled": settled_block(rs), "r": rs}
 
 
@@ -527,6 +534,15 @@ def run6_public(path: Path) -> dict:
 # ----------------------------------------------------------------- build ----
 
 
+def reports_of() -> list[dict]:
+    """The reports the page links, each one a file the checkout carries: a link
+    to a report that is not there is a refusal here, never a dead link on the page."""
+    gone = [str(p) for _, p in REPORTS if not (ROOT / p).is_file()]
+    if gone:
+        raise FindingsError(f"a report the page would link is not in the checkout: {gone}")
+    return [{"title": t, "path": str(p)} for t, p in REPORTS]
+
+
 def build() -> dict:
     study, study_sha = load_study(STUDY)
     first, first_sha = load_study(FIRST_STUDY)
@@ -570,9 +586,6 @@ def build() -> dict:
                   "first_of_session": sum(1 for p in study["publications"] if p["first"]),
                   "bars": study["bars"]["observations"], "symbols": study["bars"]["symbols"],
                   "revisions": study["bars"]["revisions"], "rows": len(study["rows"]),
-                  "account": pubs[0]["data"]["account"] and {k: pubs[0]["data"]["account"][k] for k in
-                                                              ("equity", "risk_pct", "max_position_pct",
-                                                               "max_open_positions")},
                   "cost_bps_per_side": spec["cost_bps_per_side"],
                   "summary": strata_summary(study),
                   "first_read_summary": strata_summary(first)},
@@ -587,10 +600,12 @@ def build() -> dict:
                            "bursts": sum(n["bursts"] for n in nights),
                            # the nights whose A-quality tickets settled to a mean above zero,
                            # counted here so the reading can name them without counting
-                           "admitted_positive_nights": sum(1 for n in nights if (n["strata"]["admitted"]["settled"]["mean_r"] or 0) > 0)},
+                           "admitted_positive_nights": sum(1 for n in nights if math.fsum(n["strata"]["admitted"]["r"]) > 0),
+                           # the nights whose tickets have not all had their hold, inside every pooled figure
+                           "inside_hold": sum(1 for n in nights if not n["complete"])},
         "backtest": backtests,
         "run6": run6,
-        "reports": [{"title": t, "path": str(p)} for t, p in REPORTS],
+        "reports": reports_of(),
     }
 
 

@@ -81,11 +81,14 @@ def check_stratum(block: dict, rows: list[dict], where: str) -> None:
     assert set(counts) <= set(BUCKETS), (where, sorted(counts))
     assert set(block) == {"rows", "tickets", "buckets", "settled", "r"}, (where, sorted(block))
     assert block["rows"] == len(rows), (where, block["rows"], len(rows))
-    # a row is a burst; a ticket is a row the production rules wrote one for, counted
-    # off the rows and equal to every row the study did not set aside for want of one
-    tickets = sum(1 for r in rows if r.get("ticket") is not None)
-    assert block["tickets"] == tickets == len(rows) - counts.get("no_ticket", 0) - counts.get("basis_mismatch", 0), \
-        (where, block["tickets"], tickets, dict(counts))
+    # a row is a burst; the study plans every burst before it checks the bars, so the
+    # tickets the rules wrote are every row but the refused and the unformed ones --
+    # the set-aside (basis_mismatch) rows wrote a ticket the study did not walk
+    assert block["tickets"] == len(rows) - counts.get("no_ticket", 0) - counts.get("plan_error", 0), \
+        (where, block["tickets"], dict(counts))
+    # and the study's own row field agrees: no walked ticket exactly where the bucket says so
+    for r in rows:
+        assert (r.get("ticket") is None) is (r["bucket"] in ("no_ticket", "plan_error", "basis_mismatch")), (where, r["ticker"], r["bucket"])
     assert block["buckets"] == {b: counts.get(b, 0) for b in BUCKETS}, (where, block["buckets"], dict(counts))
     assert sum(block["buckets"].values()) == block["rows"], (where, block["buckets"])
     rs = sorted(r["r"] for r in rows if r["bucket"] == "settled")
@@ -257,7 +260,8 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
         "tickets_published": sum(len(d.get("trades") or []) for d in records),
         "bursts": sum(len(d["bursts"]) for d in records),
         "admitted_positive_nights": sum(1 for n in committed["nights"] if n["strata"]["admitted"]["settled"]["n"]
-                                        and math.fsum(n["strata"]["admitted"]["r"]) > 0)}, committed["nights_summary"]
+                                        and math.fsum(n["strata"]["admitted"]["r"]) > 0),
+        "inside_hold": sum(1 for n in committed["nights"] if n["horizon"] > study_doc["newest_session"])}, committed["nights_summary"]
     # the rules the captions name are every record's own, and the same in every record
     assert {(m, k) for m, ks in RULE_FIELDS.items() for k in ks} == set(bf.RULE_FIELDS), sorted(bf.RULE_FIELDS)
     rules = committed["rules"]
@@ -346,7 +350,7 @@ def test_the_study_headline_blocks_are_copied_not_recomputed(committed, study, f
     assert "ticket_multiplier" not in s and "read_as" not in committed
     spec = json.loads((ROOT / STUDY_SPEC).read_bytes())
     assert s["cost_bps_per_side"] == spec["cost_bps_per_side"] == [0, 5, 20]
-    assert set(s["account"]) == {"equity", "risk_pct", "max_position_pct", "max_open_positions"}
+    assert "account" not in s, "the study block carries an account the page never reads"
     # the sources: the file, the bytes inside it, the spec it was run under
     sources = committed["sources"]
     assert set(sources) == {"study", "first_study"}
@@ -558,6 +562,16 @@ def test_the_run6_block_is_the_owners_summary_and_the_public_receipt(committed):
             assert pol["rules_fired"] == independent[i][1].split(", ") == ["red_ratio_10d", "yellow_ratio_10d", "yellow_up50_month_hot"]
             assert (blocking[i][0], blocking[i][1].split(", ")) == ("6", BLOCKING_NAMES) and pol["unknown_up50_names"] == BLOCKING_NAMES
             assert pol["regime_established"] is False and pol["check"] == "PASS"
+        window = re.search(r"^\s+every stock has its full required window: (True|False)$", block, re.M).group(1)
+        assert s["full_window_every_stock"] is (window == "True"), (day, s["full_window_every_stock"], window)
+        labels = re.findall(r"^  ([CD])  (.+): (PASS|FAIL)$", block, re.M)
+        assert [(k, s["policies"][k]["label"], s["policies"][k]["check"]) for k in ("C", "D")] == labels, (day, labels)
+        events = re.findall(r"^\s+unknown event counts on (\S+): (\{.*\})$", block, re.M)
+        populations = re.findall(r"^\s+population reasons on (\S+): (\{.*\})$", block, re.M)
+        assert len(events) == len(populations) == 2 and {d for d, _ in events + populations} == {day}, day
+        for i, key in enumerate(("C", "D")):
+            assert s["policies"][key]["unknown_event_counts"] == json.loads(events[i][1].replace("'", '"')), (day, key)
+            assert s["policies"][key]["population"] == json.loads(populations[i][1].replace("'", '"')), (day, key)
         assert s["policies"]["D"]["unknown_4pct_names"] == [] and s["policies"]["D"]["unknown_contributors"] == 0
         assert s["policies"]["C"]["unknown_4pct_names"] == ["ETRA", "OIG", "TEVA", "WCCB"]
     assert [run6["sessions"][d]["policies"]["C"]["ratio_10d"] for d in sessions] == [0.93, 0.89]
@@ -667,6 +681,13 @@ def test_the_builder_refuses_evidence_that_does_not_reconcile(pubs, study, first
         bf.build()
     assert bf.main(["--check"]) == 2
     assert "historical findings: the study was not run under the committed extended spec" in capsys.readouterr().out
+    monkeypatch.undo()
+    # a report the page would link must be a file the checkout carries
+    assert all((ROOT / r["path"]).is_file() and r["path"].startswith(TRUTH + "/") and r["path"].endswith(".md")
+               for r in bf.reports_of())
+    monkeypatch.setattr(bf, "REPORTS", bf.REPORTS + (("A report that is not there", bf.TRUTH / "2026-10-02-signal-outcome.md"),))
+    with pytest.raises(bf.FindingsError, match="a report the page would link is not in the checkout"):
+        bf.reports_of()
     monkeypatch.undo()
     # the run-6 join: build() is the one function that performs it (the parser accepts any date)
     text = (ROOT / RUN6_SUMMARY).read_text(encoding="utf-8")

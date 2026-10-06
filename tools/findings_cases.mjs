@@ -98,6 +98,14 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('lazy-load page errors', z.errors, []);
   await z.context.close();
 
+  // ---- 0b. research last: the evidence follows the open model plans, so the old #hold anchor stays on them as it loads
+  const h = await load(FULL, 1280, { hash: '#hold' });
+  eq('the anchor route: the replay is ready', await ready(h.page), 'ready');
+  eq('the evidence follows the open model plans in the Record view', await h.page.evaluate(() => !!(document.getElementById('hold').compareDocumentPosition(document.getElementById('historical-evidence')) & Node.DOCUMENT_POSITION_FOLLOWING)), true);
+  check('a link to the open model plans still lands on them after the evidence has loaded', await h.page.evaluate(() => { const r = document.getElementById('hold').getBoundingClientRect(); return r.top >= -1 && r.top < innerHeight - 40; }), await h.page.evaluate(() => document.getElementById('hold').getBoundingClientRect().top));
+  eq('anchor route errors', h.errors, []);
+  await h.context.close();
+
   // ---- 1. the mount over the fixture page
   const f = await load(FULL, 1280);
   const p = f.page;
@@ -157,17 +165,19 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     check(`${tag}: the reader's sentence is its usable reads and the counted A-quality after it`, text.includes(reader), [reader, text]);
     const fx = await facts(p);
     check(`${tag}: the facts count the stratum's bursts and the tickets the rules wrote`, fx.includes('of ' + plural(a.rows, 'A-quality burst') + ' the rules wrote ' + plural(a.tickets, 'ticket') + ' at full size'), fx);
+    eq(`${tag}: the tickets the study set aside unwalked are named as some of those written`, fx.includes('ticket' + (a.tickets === 1 ? '' : 's') + ' at full size, ' + thousands(bk.basis_mismatch) + ' of them set aside unwalked because the later records do not carry the signal’s own bar'), !!bk.basis_mismatch);
     if (st.n > 0) {
       check(`${tag}: the facts print the wins, the sum at two places and the mean at three`, fx.includes(thousands(st.wins) + ' won, ' + thousands(st.losses) + ' lost, ' + thousands(st.breakeven) + ' even')
         && fx.includes(R2(st.sum_r) + ' in all, ' + R3(st.mean_r) + ' per settled ticket, median ' + R2(st.median_r)), fx);
       eq(`${tag}: the pill prints the mean as the file writes it and the settled count`, pl, R3(st.mean_r) + ' · ' + thousands(st.n) + ' settled');
       eq(`${tag}: "so far" only on a night still inside its hold`, fx.includes(thousands(st.n) + ' settled so far'), !nt.complete);
     } else {
-      check(`${tag}: nothing settled is said so`, fx.includes('none settled yet') && !fx.includes(' won,'), fx);
+      check(`${tag}: nothing settled is said so`, fx.includes('none settled') && !fx.includes(' won,'), fx);
+      eq(`${tag}: "yet" only while the hold runs`, fx.includes('none settled yet'), !nt.complete);
       eq(`${tag}: the pill counts the pending tickets`, pl, bk.pending ? plural(bk.pending, 'ticket') + ' pending' : 'nothing settled');
     }
     eq(`${tag}: pending and open are told apart, each from its own bucket`, [fx.includes(thousands(bk.pending) + ' pending'), fx.includes(thousands(bk.open) + ' still open')], [!!bk.pending, !!bk.open]);
-    eq(`${tag}: the bursts without a ticket are counted by cause`, [fx.includes(thousands(bk.no_ticket) + ' the rules would not write a ticket for'), fx.includes(thousands(bk.basis_mismatch) + ' set aside because the bars do not reproduce')], [!!bk.no_ticket, !!bk.basis_mismatch]);
+    eq(`${tag}: the bursts without a ticket are counted by cause, and a set-aside ticket is not among them`, [fx.includes(thousands(bk.no_ticket) + ' the rules would not write a ticket for'), /Without a ticket:[^\n]*set aside/.test(fx)], [!!bk.no_ticket, false]);
     eq(`${tag}: an unfinished hold is said so, a finished one is not`, fx.includes('The ' + hold + '-session hold runs through ' + dayWords(nt.horizon)), !nt.complete);
     const fr = nt.first_read && nt.first_read.admitted;
     eq(`${tag}: an earlier read is quoted only where the file carries one`, fx.includes('The first read, with records through'), !!(fr && fr.n));
@@ -190,7 +200,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('the reference lines are drawn once each, and no line claims green', await p.locator('#historical-evidence line[data-ref]').evaluateAll((e) => e.map((l) => l.dataset.ref).sort()), ['red', 'yellow']);
   eq('two washes: under the red line and between the lines', await p.locator('#historical-evidence rect.ss-find__wash').count(), 2);
   const bracket = await tc(p, '#historical-evidence text[data-bracket-label="backtest"]');
-  check('the backtest bracket counts the exact lookback\'s sessions', bracket.includes(plural(F.backtest.lookback_260.evaluated.count, 'session')) && (await p.locator('#historical-evidence path[data-bracket="backtest"]').count()) === 1, bracket);
+  check('the backtest bracket names the exact-lookback pass and counts its sessions', bracket === 'the backtest’s exact-lookback pass · ' + plural(F.backtest.lookback_260.evaluated.count, 'session') && (await p.locator('#historical-evidence path[data-bracket="backtest"]').count()) === 1, bracket);
   const ticks = await p.locator('#historical-evidence text[data-r-tick]').evaluateAll((e) => e.map((t) => ({ y: +t.getAttribute('y'), text: t.textContent, v: t.dataset.rTick })));
   check('the outcome axis is labelled in real multiples with zero among them', ticks.some((t) => t.text === '0R') && ticks.every((t) => /^[+−]?\d+R$/.test(t.text)), JSON.stringify(ticks));
   check('no two outcome ticks overlap', ticks.slice().sort((a, b) => a.y - b.y).every((t, i, s) => i === 0 || t.y - s[i - 1].y >= 11), JSON.stringify(ticks));
@@ -204,14 +214,21 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     const drawn = await p.locator('#historical-evidence .ss-find__night.is-current .ss-find__r').evaluateAll((e) => e.map((c) => Number(c.dataset.r)));
     const list = nt.strata.admitted.r;
     check(`night ${k + 1}: every drawn R is one the file lists, and all of them`, drawn.length === list.length && drawn.every((v) => list.includes(v)), JSON.stringify([drawn, list]));
-    eq(`night ${k + 1}: the mean mark carries the file's mean`, await attr(p, '#historical-evidence .ss-find__night.is-current .ss-find__mean', 'data-mean'), nt.strata.admitted.settled.mean_r === null ? 'none' : String(nt.strata.admitted.settled.mean_r));
+    eq(`night ${k + 1}: the mean mark carries the file's mean`, await attr(p, '#historical-evidence .ss-find__night.is-current .ss-find__mean', 'data-mean'), nt.strata.admitted.settled.mean_r === null ? null : String(nt.strata.admitted.settled.mean_r));
   }
+  eq('a night with nothing settled draws no mean, so nothing reads as a mean of zero', await p.locator('#historical-evidence .ss-find__mean').count(), F.nights.filter((n) => n.strata.admitted.settled.mean_r !== null).length);
+  check('the file has a night with nothing settled, so the line above can fail', F.nights.some((n) => n.strata.admitted.settled.mean_r === null));
+  eq('the current night\'s dots stand out from the other nights\' dots', await p.evaluate(() => {
+    const f = (s) => { const c = document.querySelector('#historical-evidence ' + s + ' .ss-find__r'); return c && getComputedStyle(c).fill; };
+    return f('.ss-find__night.is-current') !== f('.ss-find__night:not(.is-current):not(.is-ghost)');
+  }), true);
 
   // ---- 3. the stratum control recounts the dots and retables
   const kMid = 5, mid = F.nights[kMid];
   await p.locator(`#historical-evidence [data-find-night="${mid.session}"]`).click(); await settle(p);
   const pressed = () => p.locator('#historical-evidence button[data-find-stratum][aria-pressed="true"]').evaluateAll((e) => e.map((b) => b.dataset.findStratum));
   eq('the control opens on the A-quality stratum', [await attr(p, ROOTSEL, 'data-stratum'), await pressed()], ['admitted', ['admitted']]);
+  eq('the stratum tabs keep their casing', await p.locator('#historical-evidence button[data-find-stratum]').evaluateAll((e) => e.map((b) => b.innerText)), ['A-quality', 'graded B', 'graded C', 'graded skip', 'vetoed', 'every burst']);
   eq('the control is a captioned group', await p.evaluate(() => { const g = document.querySelector('#historical-evidence .sc-field--group'); const l = g && g.querySelector('.sc-field__label'); return l && l.textContent; }), 'tickets');
   const nightsTable = '#historical-evidence details[data-find="table-nights"]';
   for (const [s, block, noun] of [['all', (n) => n.all, 'burst'], ['B', (n) => n.strata.B, 'graded B burst']]) {
@@ -225,11 +242,21 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     await p.locator(nightsTable + ' > summary').click(); await settle(p);
     eq(`stratum ${s}: the nights table opens with every night`, [await p.locator(nightsTable).evaluate((d) => d.open), (await rows(p, nightsTable)).length], [true, N]);
     const row = (await rows(p, nightsTable))[kMid];
-    eq(`stratum ${s}: the current night's row counts the stratum's bursts, tickets, settled, sum and mean`, [row[7], row[8], row[9], row[13], row[14]],
-      [thousands(b.rows), thousands(b.tickets), thousands(b.settled.n), signed(b.settled.sum_r, 2), signed(b.settled.mean_r, 3)]);
+    eq(`stratum ${s}: the current night's row counts the stratum's bursts, tickets, set-aside tickets, settled, sum and mean`, [row[7], row[8], row[9], row[10], row[14], row[15]],
+      [thousands(b.rows), thousands(b.tickets), thousands(b.buckets.basis_mismatch), thousands(b.settled.n), signed(b.settled.sum_r, 2), signed(b.settled.mean_r, 3)]);
     eq(`stratum ${s}: and the night's counted A-quality before and after the reader`, [row[4], row[5]], [thousands(mid.a_quality.mechanical), thousands(mid.a_quality.final)]);
     await p.locator(nightsTable + ' > summary').click(); await settle(p);
   }
+  // a night whose hold is over with nothing settled in a stratum: "none settled", never "yet"
+  const over = F.nights.flatMap((n, k) => ['admitted', 'B', 'C', 'skip', 'vetoed'].filter((x) => n.complete && n.strata[x].settled.n === 0).map((x) => ({ k, x })))[0];
+  check('the file has a finished night with nothing settled in some stratum, so the next line can fail', !!over);
+  if (over) {
+    await p.locator(`#historical-evidence [data-find-stratum="${over.x}"]`).click(); await settle(p);
+    await p.locator(`#historical-evidence [data-find-night="${F.nights[over.k].session}"]`).click(); await settle(p);
+    const ofx = await facts(p);
+    check(`a finished night with nothing settled says so without "yet" (${F.nights[over.k].session}, ${over.x})`, ofx.includes('; none settled') && !ofx.includes('none settled yet'), ofx);
+  }
+  await p.locator(`#historical-evidence [data-find-night="${mid.session}"]`).click(); await settle(p);
   await p.locator('#historical-evidence [data-find-stratum="admitted"]').click(); await settle(p);
   eq('back to A-quality the dots are recounted', [await attr(p, ROOTSEL, 'data-stratum'), await dots(p)], ['admitted', sum(F.nights.map((n) => n.strata.admitted.r.length))]);
   eq('both tables are named, focusable regions, as every twin in the app', await p.locator('#historical-evidence .ss-find__tables .sc-table-scroll').evaluateAll((e) => e.map((x) => [x.getAttribute('tabindex'), x.getAttribute('role'), !!x.getAttribute('aria-label')])), [['0', 'region', true], ['0', 'region', true]]);
@@ -287,7 +314,15 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   await p.locator('#historical-evidence [data-find-night]').last().click(); await settle(p);
   await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
   eq('Play from the last night starts over', await stepOf(p), 1);
-  // leaving the view stops it: the stepping is for a reader who is watching
+  // scrolling the replay off the screen stops it: the stepping is for a reader who is watching
+  await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
+  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
+  await p.evaluate(() => window.scrollTo(0, 0)); await settle(p, 900);
+  const scrolled = await stepOf(p); await settle(p, 700);
+  eq('scrolled off the screen Play has stopped and the night holds', [await stepOf(p), await playWord(p)], [scrolled, 'Play']);
+  await p.locator('#historical-evidence .ss-find__stage').scrollIntoViewIfNeeded(); await settle(p, 150);
+  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
+  // leaving the view stops it too
   await p.evaluate(() => { location.hash = '#/method'; }); await settle(p, 900);
   const away = await stepOf(p);
   await settle(p, 700);
@@ -328,13 +363,14 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('the run-6 table is named by its run number', await attr(p, '#historical-evidence [data-find="run6-table"]', 'aria-label'), 'Run ' + thousands(F.run6.public.run_number) + ' as a table');
   const readAs = await p.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
   eq('the reading is four sentences', readAs.length, 4);
+  eq('the nights inside their hold are the file\'s count of them', ns.inside_hold, F.nights.filter((n) => !n.complete).length);
   const S = F.study.summary.strata;
   const pooled = Object.keys(WORDS).filter((s) => s !== 'all').map((s) => WORDS[s] + ' ' + R3(S[s].settled.mean_r) + ' over ' + thousands(S[s].settled.n)).join('; ');
-  check('the pooled sentence counts the nights and prints every stratum\'s mean and count from the study block', readAs[0].startsWith('Pooled over the ' + plural(ns.nights, 'published night') + ' (' + verdictCount(ns.verdicts) + ') to ' + dayWords(F.study.newest_session) + ', ')
+  check('the pooled sentence counts the nights, says how many are inside their hold, and prints every stratum\'s mean and count from the study block', readAs[0].startsWith('Pooled over the ' + plural(ns.nights, 'published night') + ' (' + verdictCount(ns.verdicts) + ') to ' + dayWords(F.study.newest_session) + (ns.inside_hold ? ', ' + thousands(ns.inside_hold) + ' of them still inside their hold, ' : ' '))
     && readAs[0].includes(': ' + pooled + '. '), [pooled, readAs[0]]);
   const allUnder = Object.keys(WORDS).filter((s) => s !== 'all').every((s) => S[s].settled.mean_r < 0);
   const positive = ns.admitted_positive_nights;
-  eq('the count of positive A-quality nights is the file\'s own count of them', positive, F.nights.filter((n) => n.strata.admitted.settled.mean_r > 0).length);
+  eq('the count of positive A-quality nights is the file\'s own count of them', positive, F.nights.filter((n) => sum(n.strata.admitted.r) > 0).length);
   eq('the pooled sentence says whether every stratum is under zero, from the file', readAs[0].includes('Every stratum is under zero'), allUnder);
   eq('and counts the nights with a positive A-quality mean rather than asserting one', readAs[0].includes('though ' + thousands(positive) + ' of the nights had a positive A-quality mean'), allUnder && positive > 0);
   eq('only an all-red record says yellow and green are not in it', readAs[0].includes('not in this record, which has carried none'), VERDICTS.every((v) => v === 'red' || !ns.verdicts[v]));
@@ -377,6 +413,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     const offered = await q.locator('#historical-evidence [data-find="pick"] [data-pick-night]').evaluateAll((e) => e.map((b) => b.dataset.pickNight));
     check(`${tag}: a tap on a crowd opens the chooser, the tapped night first`, offered.length > 1 && offered[0] === night.session, JSON.stringify(offered));
     eq(`${tag}: and chooses nothing until the reader does`, await stepOf(q), 2);
+    eq(`${tag}: the chooser's hint is true below the chart as beside it`, await txt(q, '#historical-evidence [data-find="pick"] .sc-pick__hint'), 'Nearest first. The list of nights reaches each one exactly.');
     eq(`${tag}: the chooser's first night has the focus`, await q.evaluate(() => document.activeElement && document.activeElement.dataset.pickNight), night.session);
     eq(`${tag}: the chooser's Close stays on one line`, await q.locator('#historical-evidence [data-find="pick"] [data-pick="close"]').evaluate((b) => b.getClientRects().length === 1 && b.getBoundingClientRect().height < 2.4 * parseFloat(getComputedStyle(b).fontSize)), true);
     const second = offered[1];
@@ -411,12 +448,17 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   const altered = structuredClone(F);
   altered.nights[0].strata.admitted.settled.sum_r = 123.45;
   altered.nights[0].a_quality.final = 4321;
+  altered.rules.record.open_plan_sessions = 7;
   const a = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(altered)) });
   eq('altered file: the replay is ready', await ready(a.page), 'ready');
   const afx = await facts(a.page);
   check('a changed sum in the file is printed as given, so the page computes nothing', afx.includes('+123.45R in all') && !afx.includes(R2(F.nights[0].strata.admitted.settled.sum_r) + ' in all'), afx);
   check('and the mean beside it is still the file\'s own, not re-derived from the sum', (await pill(a.page)).includes(R3(F.nights[0].strata.admitted.settled.mean_r)), await pill(a.page));
   check('a changed count of A-quality after the reader is printed as given, not summed from grades', (await txt(a.page, '#historical-evidence [data-find="text"]')).includes('after it, ' + thousands(4321) + ' stood at A-quality'));
+  check('a changed hold is printed as given, so no caption types its length', (await txt(a.page, '#historical-evidence [data-find="eyebrow"]')).endsWith(' · 7 sessions complete'), await txt(a.page, '#historical-evidence [data-find="eyebrow"]'));
+  const inside = F.nights.find((n) => !n.complete);
+  await a.page.locator(`#historical-evidence [data-find-night="${inside.session}"]`).click(); await settle(a.page);
+  check('and a night inside its hold names the changed length too', (await facts(a.page)).includes('The 7-session hold runs through ' + dayWords(inside.horizon)), await facts(a.page));
   eq('altered file errors', a.errors, []);
   await a.context.close();
   // a session with no ratio: the line breaks there and no zero is drawn
@@ -434,11 +476,15 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   for (const [name, body, status, sentence] of [
     ['a 500', 'boom', 500, 'The validation findings did not load. Reload the page to try again.'],
     ['a wrong version', JSON.stringify(Object.assign(structuredClone(F), { version: 'historical-findings-v0' })), 200, 'Unknown findings version.'],
-    ['a night without its B stratum', JSON.stringify((() => { const x = structuredClone(F); delete x.nights[2].strata.B; return x; })()), 200, 'A night of the findings lacks a stratum.'],
+    ['a night without its B stratum', JSON.stringify((() => { const x = structuredClone(F); delete x.nights[2].strata.B; return x; })()), 200, 'A night of the findings has a malformed stratum.'],
+    ['an R that is not a number', JSON.stringify((() => { const x = structuredClone(F); x.nights[1].strata.admitted.r[0] = 'x'; return x; })()), 200, 'A night of the findings has a malformed stratum.'],
+    ['a night without its phase', JSON.stringify((() => { const x = structuredClone(F); delete x.nights[0].phase; return x; })()), 200, 'A night of the findings is malformed.'],
+    ['a market without its red threshold', JSON.stringify((() => { const x = structuredClone(F); delete x.market.thresholds.ratio_10d_red; return x; })()), 200, 'The findings carry no market.'],
+    ['a run-6 session without its original', JSON.stringify((() => { const x = structuredClone(F); delete x.run6.sessions[Object.keys(x.run6.sessions)[0]].original; return x; })()), 200, 'The findings carry no fresh-bar reading.'],
     ['a backtest without its gates', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.gates; return x; })()), 200, 'The findings carry no backtest.'],
     ['a body that is not JSON', '{"version": ', 200, 'The validation findings did not load. Reload the page to try again.'],
     // past the shape check, broken one block down: the replay that was drawn is taken away, never left half-built
-    ['a backtest without its candidate counts', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.candidates; return x; })()), 200, 'The validation findings could not be read.'],
+    ['a backtest gate without its settled block', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.gates.production.settled; return x; })()), 200, 'The validation findings could not be read.'],
   ]) {
     const e = await load(FULL, 1280, { beforeLoad: routed(body, status) });
     eq(`${name}: the replay ends in its error state`, await ready(e.page), 'error');

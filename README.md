@@ -45,7 +45,7 @@ settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
 Record view replays those nights one at a time from
 `docs/historical-findings.json`, which `tools/build_historical_findings.py`
 builds from the committed evidence files and binds to their digests; the
-page prints its figures as the file writes them and counts nothing of its own.
+page prints its figures as the file writes them and adds no figure of its own.
 
 ## What the page says
 
@@ -318,7 +318,8 @@ does not carry, falls back to Explore and says so.
    does not know what you hold. Then the bars-only scorecard (plans, fills,
    win rate, average R, SPY over the same days) and fourteen dots for the
    last fourteen exchange sessions: ok, degraded or missing; older recorded closure outcomes remain readable.
-   Under it, **What historical validation establishes** replays the record
+   Last, under the open model plans so that nothing a link lands on moves
+   as it loads, **What historical validation establishes** replays the record
    night by night from `docs/historical-findings.json` (`docs/app-findings.js`,
    `SCStock.findings`): a stepper over every published night the study carries, the
    10-session ratio the gate read on every session the records know with the
@@ -329,7 +330,9 @@ does not carry, falls back to Explore and says so.
    the red reading, the "Read it as" caveats and the 28 September frozen
    cases. Every figure it prints is a field of that file at the precision the
    file writes it (a mean at three places, a sum at two); its own arithmetic
-   is a night's place in the list and the drawing. It reads no record, no
+   is a night's place in the list, the length of a list the file carries,
+   the comparisons that choose a sentence (every stratum under zero, only red
+   nights in the record) and the drawing. It reads no record, no
    clock and no storage, checks the file's shape before it draws and says in
    one sentence what it refused; both historical files are fetched only when
    the Record view is first shown, and a page over a fixture says the replay

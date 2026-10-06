@@ -999,7 +999,7 @@
      "sum_r": -2.58,
      "wins": 9
     },
-    "tickets": 100
+    "tickets": 367
    },
    "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
    "bursts": 400,
@@ -1103,7 +1103,7 @@
       "sum_r": -4.49,
       "wins": 2
      },
-     "tickets": 31
+     "tickets": 91
     },
     "C": {
      "buckets": {
@@ -1135,7 +1135,7 @@
       "sum_r": -2.3,
       "wins": 1
      },
-     "tickets": 14
+     "tickets": 59
     },
     "admitted": {
      "buckets": {
@@ -1173,7 +1173,7 @@
       "sum_r": 4.98,
       "wins": 4
      },
-     "tickets": 30
+     "tickets": 58
     },
     "skip": {
      "buckets": {
@@ -1200,7 +1200,7 @@
       "sum_r": null,
       "wins": 0
      },
-     "tickets": 2
+     "tickets": 22
     },
     "vetoed": {
      "buckets": {
@@ -1232,7 +1232,7 @@
       "sum_r": -0.77,
       "wins": 2
      },
-     "tickets": 23
+     "tickets": 137
     }
    },
    "tickets_published": 0,
@@ -1294,7 +1294,7 @@
      "sum_r": -10.81,
      "wins": 5
     },
-    "tickets": 147
+    "tickets": 511
    },
    "blob": "a89ab122d7e0160df6a63c30957668447ace1103",
    "bursts": 558,
@@ -1394,7 +1394,7 @@
       "sum_r": -2.26,
       "wins": 1
      },
-     "tickets": 47
+     "tickets": 134
     },
     "C": {
      "buckets": {
@@ -1428,7 +1428,7 @@
       "sum_r": -2.69,
       "wins": 1
      },
-     "tickets": 34
+     "tickets": 135
     },
     "admitted": {
      "buckets": {
@@ -1463,7 +1463,7 @@
       "sum_r": -3.01,
       "wins": 2
      },
-     "tickets": 34
+     "tickets": 58
     },
     "skip": {
      "buckets": {
@@ -1493,7 +1493,7 @@
       "sum_r": -0.45,
       "wins": 1
      },
-     "tickets": 8
+     "tickets": 39
     },
     "vetoed": {
      "buckets": {
@@ -1524,7 +1524,7 @@
       "sum_r": -2.4,
       "wins": 0
      },
-     "tickets": 24
+     "tickets": 145
     }
    },
    "tickets_published": 0,
@@ -8612,6 +8612,7 @@
   "admitted_positive_nights": 3,
   "bursts": 7128,
   "from": "2026-09-11",
+  "inside_hold": 5,
   "nights": 17,
   "through": "2026-10-05",
   "tickets_published": 0,
@@ -9063,12 +9064,6 @@
   }
  },
  "study": {
-  "account": {
-   "equity": 10000.0,
-   "max_open_positions": 4,
-   "max_position_pct": 25.0,
-   "risk_pct": 0.5
-  },
   "bars": 60964,
   "cost_bps_per_side": [
    0,

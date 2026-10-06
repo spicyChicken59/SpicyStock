@@ -99,7 +99,7 @@ def test_the_module_quotes_no_number_it_does_not_print_from_the_file():
 
 def test_the_module_reads_nothing_itself_and_tells_no_time():
     for forbidden in ("fetch(", "SCStock.data", "S.data", "SCStock.model", "S.model", "localStorage",
-                      "picks.json", "data.json", "Date.now", "new Date()"):
+                      "picks.json", "data.json", "Date.now", "new Date()", "sessionStorage", "indexedDB", "XMLHttpRequest"):
         assert forbidden not in BODY, forbidden
 
 
