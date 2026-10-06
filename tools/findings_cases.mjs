@@ -24,6 +24,9 @@ const tc = (p, sel) => p.locator(sel).first().textContent();
 const attr = (p, sel, a) => p.locator(sel).first().getAttribute(a);
 // the words the page uses for numbers, rebuilt here so a check never reads them off the page
 const thousands = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const dayWords = (iso) => { const d = new Date(iso + 'T12:00:00Z'); return DAYS[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()]; };
 const rr = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2) + 'R';
 const signed = (v, d) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d);
 const plural = (n, noun) => thousands(n) + ' ' + noun + (n === 1 ? '' : 's');
@@ -78,6 +81,15 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     const r = (s) => document.querySelector('#historical-evidence ' + s).getBoundingClientRect();
     return r('.ss-find__side').left >= r('.ss-find__stage').right - 1 && r('.ss-find__caption').top >= r('.ss-find__stage').bottom - 1;
   }));
+  check('on a desktop every chart label stays inside the chart', await p.evaluate(() => {
+    const svg = document.querySelector('#historical-evidence .ss-find__svg'), s = svg.getBoundingClientRect();
+    return Array.from(svg.querySelectorAll('text')).every((t) => { const r = t.getBoundingClientRect(); return r.right <= s.right + 1 && r.left >= s.left - 1; });
+  }));
+  const ns = F.nights_summary, lead = await txt(p, HOST + ' p[data-find="lead"]');
+  check('the lead sums the nights, the verdicts, the tickets and the bursts from the file', lead.includes('Over the ' + plural(ns.nights, 'published night') + ' from ' + dayWords(ns.from) + ' to ' + dayWords(ns.through))
+    && lead.includes('said ' + ['red', 'yellow', 'green'].filter((v) => ns.verdicts[v]).map((v) => thousands(ns.verdicts[v]) + ' ' + v).join(', '))
+    && lead.includes('published ' + plural(ns.tickets_published, 'ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned'), lead);
+  check('the lead precedes the replay', await p.evaluate(() => { const l = document.querySelector('#historical-evidence p[data-find="lead"]'), r = document.querySelector('#historical-evidence [data-find-root]'); return !!(l.compareDocumentPosition(r) & Node.DOCUMENT_POSITION_FOLLOWING); }));
   const cursorAt = () => p.evaluate(() => document.querySelector('#historical-evidence g[data-cursor]').style.transform);
   const cursor1 = await cursorAt();
 
@@ -242,8 +254,12 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   check('the first row prints the published and the fresh ratio', r6[0][1].startsWith(first.original.ratio_10d.toFixed(2)) && r6[0][2] === first.policies.C.ratio_10d.toFixed(2) && r6[0][4].includes(first.policies.C.ratio_10d_bounds.map((v) => v.toFixed(2)).join(' to ')), JSON.stringify(r6[0]));
   const r6facts = await txt(p, '#historical-evidence p[data-find="run6-facts"]');
   check('the run-6 facts name every blocking stock and the download', F.run6.blocking_names.every((n) => r6facts.includes(n)) && r6facts.includes(thousands(F.run6.download.queries_completed) + ' of ' + thousands(F.run6.download.queries_total) + ' queries') && r6facts.includes(thousands(first.partial) + ' symbols'), r6facts);
+  eq('the run-6 table is named by its run number', await attr(p, '#historical-evidence [data-find="run6-table"]', 'aria-label'), 'Run ' + thousands(F.run6.public.run_number) + ' as a table');
   const readAs = await p.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
   eq('the reading carries the four standing sentences and the file\'s', readAs.length, 4 + F.read_as.length);
+  const pooledWords = { admitted: 'A-quality', B: 'graded B', C: 'graded C', skip: 'graded skip', vetoed: 'vetoed' };
+  const pooled = Object.keys(pooledWords).map((s) => pooledWords[s] + ' ' + rr(F.study.summary.strata[s].settled.mean_r) + ' over ' + thousands(F.study.summary.strata[s].settled.n)).join('; ');
+  check('the pooled sentence prints every stratum\'s mean and count from the study block', readAs[0].startsWith('Pooled over the red nights to ' + dayWords(F.study.newest_session) + ', ') && readAs[0].includes(': ' + pooled + '.'), [pooled, readAs[0]]);
   check('every read-as sentence of the file is printed verbatim', F.read_as.every((s) => readAs.includes(s)), JSON.stringify(readAs));
   eq('every report is linked at its served path', await p.locator('#historical-evidence ul[data-find="reports"] a').evaluateAll((e) => e.map((a) => [a.getAttribute('href'), a.textContent])), F.reports.map((r) => [r.path.replace(/^docs\//, ''), r.title]));
 
@@ -267,6 +283,11 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
       return r('.ss-find__side').top >= r('.ss-find__stage').bottom - 1 && r('.ss-find__caption').top >= r('.ss-find__side').bottom - 1;
     }));
     eq(`${tag}: the yellow band is not named on a phone`, await q.locator('#historical-evidence text[data-ref-label="yellow"]').count(), 0);
+    // the ref labels have a short form for a phone; every other label must fit the screen too
+    const cut = await q.evaluate(() => Array.from(document.querySelectorAll('#historical-evidence .ss-find__svg text'))
+      .map((t) => ({ text: t.textContent, right: Math.round(t.getBoundingClientRect().right), left: Math.round(t.getBoundingClientRect().left) }))
+      .filter((x) => x.right > innerWidth || x.left < 0));
+    eq(`${tag}: no chart label is cut off by the screen`, cut, []);
     check(`${tag}: the red and green lines keep their short names`, (await tc(q, '#historical-evidence text[data-ref-label="red"]')) === 'red below ' + F.market.thresholds.ratio_10d_red.toFixed(1) && (await tc(q, '#historical-evidence text[data-ref-label="green"]')) === 'green above ' + F.market.thresholds.ratio_10d_yellow.toFixed(1));
     await q.locator('#historical-evidence [data-find="next"]').click(); await settle(q);
     check(`${tag}: a step keeps the chart inside its column`, (await stepOf(q)) === 2 && !(await sideways(q)));
