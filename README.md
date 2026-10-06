@@ -649,6 +649,56 @@ grade and budget exclusions, and it counts what the narrower limit carried
 with it. It changes no rule, writes nothing, reads no forward return, and is
 not a backtest or a claim about either ceiling.
 
+The one tool that IS a backtest is `python tools/historical_backtest.py
+--manifest <acquisition-manifest.json> --storage <recovered package> --output
+<private directory>`. It replays the run's own stages over the bars a recovered
+historical acquisition package holds, one session at a time, calling the
+functions the pipeline calls: the session rules and the $3 policy over the names
+that printed, `breadth.snapshot()` and its regime, `pipeline.scan_frames()` and
+`pipeline.rank()`, `pipeline._make_plans()` with the open model plans of the
+sessions before counted against the slots, `record.append()`, and the published
+scorecard's own `record.scorecard_rows()` and `record.summarize_scorecard()` over
+the whole archive instead of their window, with `record.append()` told a
+retention its picks cannot reach and the run refusing to score a population it
+did not issue. Every number is the module's. The reader is NOT RUN, so every
+name's mechanical grade is the ceiling of its final grade (the ticket set is
+not a superset of the live run's, because a reader downgrade frees a slot the
+next name takes); the universe is the archive's later membership
+(survivorship); fills, exits and R are the daily-bar model the scorecard uses. A
+second block removes the regime gate and is labelled a counterfactual. Each
+evaluated session needs `pipeline.LOOKBACK_DAYS` sessions of history before it,
+as a live frame carries; `--lookback` may shorten that to reach more sessions,
+and a shortened lookback is admitted only with its equivalence check -- on every
+session that also carries the full lookback both are measured and compared
+(regime, every candidate's grade, score and vetoes, every plan's prices and
+shares), and a single difference is a FAIL and exit code 2. It writes
+`backtest.json` (every row, with prices: private) and `summary.txt` (counts and
+R only). Both the storage and the output must sit outside any Git checkout. It
+makes no provider, model or network call, and it is not an edge claim: the
+summary reads no rate under the scorecard's own minimum.
+
+Its sibling over the public records is `python tools/signal_outcomes.py --spec
+<spec.json> --output <dir>`: every burst row in the first publication of each
+session the spec names, ticketed by `plan.burst_plan()` with the record's own
+account at the GREEN multiplier -- the regime gate, the slot cap and the budget
+not applied -- and walked by `record.replay()` over `plan.FINAL_EXIT_DAY`
+sessions of the records' own published bars (the observation histories, the
+latest observations and the candidate series, the newest publication winning
+and every changed bar counted as a revision), bucketed as
+`record.scorecard_rows()` buckets a plan and summed by
+`record.summarize_scorecard()`. The rows are read in strata by the checklist's
+verdict -- admitted (`pipeline.TRADE_GRADES` with no veto), B, C, skip, vetoed
+-- so the admitted stratum stands against the rest of the same nights, by night
+with a night-block bootstrap, with a labelled bound for the uncertain fills
+(the same ticket filled at its trigger) and three per-side costs beside it. The
+spec is committed before any outcome is computed and names the publication
+commits and their record blobs; a commit the checkout cannot produce or a blob
+that differs is a refusal, never a smaller population. Signals published up to
+the spec's freeze are exploratory, later ones confirmatory. It is a
+counterfactual: every ticket it walks was refused by the RED gate and the
+reader is not run; it reads no rate under the scorecard's minimum and is not
+an edge claim.
+
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
@@ -825,6 +875,8 @@ tests/          the suite, the doubles (fakes.py), the synthetic frames, fixture
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
+                historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
+                signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
 .github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 

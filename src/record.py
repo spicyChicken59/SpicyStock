@@ -222,13 +222,20 @@ def save(rec: dict, docs: Path) -> Path:
     return path
 
 
-def append(rec: dict, session: str, picks: list[dict], regime: str = "green") -> dict:
+def append(rec: dict, session: str, picks: list[dict], regime: str = "green", *,
+           max_picks: int | None = None) -> dict:
     """The record with tonight's picks added, each stamped with the session
     and the regime. A pick for the same session and ticker replaces the
     earlier one (a re-run of one night is one night). The newest
-    ``MAX_PICKS`` are kept."""
+    ``MAX_PICKS`` are kept unless ``max_picks`` says otherwise: an offline
+    replay over a whole archive passes a bound its own picks cannot reach,
+    so the file's retention never drops a plan it made."""
     if _parse_date(session) is None:
         raise ValueError(f"session must be YYYY-MM-DD, got {session!r}")
+    if max_picks is None:
+        max_picks = MAX_PICKS
+    if isinstance(max_picks, bool) or not isinstance(max_picks, int) or max_picks < 1:
+        raise ValueError(f"max_picks must be a whole number of at least 1, got {max_picks!r}")
     stamped = []
     for pick in picks:
         row = {**pick, "date": session, "regime": regime}
@@ -239,7 +246,7 @@ def append(rec: dict, session: str, picks: list[dict], regime: str = "green") ->
     tonight = {(p["date"], p["ticker"], p["kind"]) for p in stamped}
     kept = [p for p in rec.get("picks", []) if (p["date"], p["ticker"], p["kind"]) not in tonight] + stamped
     kept.sort(key=lambda p: (p["date"], p["ticker"]))
-    return {"schema_version": SCHEMA_VERSION, "picks": kept[-MAX_PICKS:]}
+    return {"schema_version": SCHEMA_VERSION, "picks": kept[-max_picks:]}
 
 
 # ------------------------------------------------------------ the walk -----
@@ -509,14 +516,20 @@ SCORECARD_VERSION = 2
 SCORECARD_BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "unmeasured", "unreadable", "unscored")
 
 
-def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> list[dict]:
+def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str, *,
+                   window_sessions: int | None = None) -> list[dict]:
     """One audit row per retained plan in the prior window or current session.
 
     Replay remains the sole fill/exit authority. Only its five-session horizon
     is supplied: a hole after that horizon cannot erase a resolved result.
     An unfinished walk with stale coverage is unmeasured, not currently open.
+    ``window_sessions`` is the published scorecard's ``SCORECARD_SESSIONS``
+    unless given; an offline replay over a whole archive passes its own
+    length, so the one walk reads every plan it made.
     """
-    window = set(sessions_before(frames, session, SCORECARD_SESSIONS)) | {session}
+    if window_sessions is None:
+        window_sessions = SCORECARD_SESSIONS
+    window = set(sessions_before(frames, session, window_sessions)) | {session}
     rows = []
     for pick in rec.get("picks", []):
         if pick["date"] not in window:
