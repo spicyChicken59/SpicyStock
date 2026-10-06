@@ -1,5 +1,22 @@
 # Input truthfulness milestone
 
+[6 October 2026: the backtest's first real result](2026-10-06-backtest-results.md)
+records the two price-free summaries the owner pasted from his run over the
+run-6 archive: 158 sessions from 10 February to 25 September 2026, equivalence
+reported PASS, 100 YELLOW and 58 RED nights and no GREEN one; the production
+policy wrote 99 A+ tickets at half size, 44 settled, a 36% win rate, +0.08R a
+ticket, net +3.72R -- the first readable rate the mechanical policy has had, the
+reader not run, its interval and costs unmeasured without the per-row files.
+Not an edge claim.
+
+[6 October 2026: the signal-outcome study's confirmatory phase begins](2026-10-06-signal-outcomes-confirmatory.md)
+re-runs the frozen study over nineteen publications under a
+[spec extended by two appended entries only](2026-10-06-signal-outcomes-spec-extended.json):
+the exploratory strata still all negative, a bias named that the first report
+had not (a night read before its fifth session leans toward losses), 132
+confirmatory admitted rows of which five are settled and none is readable yet,
+and the reader's own two admissions, both DAC, one uncertain and one holding.
+
 [2 October 2026: the signal-outcome study](2026-10-02-signal-outcomes.md), under
 its [frozen spec](2026-10-02-signal-outcomes-spec.json), tickets every burst
 the 17 real publications archived with the production rules -- no reader, no

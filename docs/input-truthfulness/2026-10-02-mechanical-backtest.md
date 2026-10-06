@@ -119,5 +119,6 @@ recorded, slots never held, the equivalence fingerprint ignoring grades, and the
 outcomes read only over the published window. The last one SURVIVED its first
 pass -- every pick sat inside the sixty-session window, an incidental fact of the
 fixture -- and was killed by the fourth burst, 138 sessions before the archive's
-end. Nothing here is a real-data result: the owner's run is NOT RUN in this
-repository, and its summary will be recorded when pasted.
+end. Nothing in this report is a real-data result: the owner's run is NOT RUN in
+this repository. The owner ran both passes on 6 October 2026, and their
+summaries are recorded in [the results report](2026-10-06-backtest-results.md).
