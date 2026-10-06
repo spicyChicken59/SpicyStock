@@ -4076,3 +4076,102 @@ no leaks. README and `docs/continuity/README.md` name the frozen archive.
 sandbox cannot download; CI's page job is the proof, and its result is on the
 PR. **Settled:** a check over a rolling public artifact pins that artifact in
 a fixture; the live `docs/history` is read by the page, never by a test.
+
+## Checkpoint, 6 Oct 2026 — the findings on the site, night by night
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` from `main` at
+`e57b41ee` (the merge of #102). The owner, after the plain-words account of what
+the October work found, asked for it on the site, "to visually understand how
+the strategy looked over this period and how the market and the suggestions
+responded, something dynamic like the method". `docs/data.json`, `docs/picks.json`,
+the history, the evidence objects and the vendored design system are untouched;
+nothing under `src/` changed; no run, mail, dispatch, merge or deployment.
+
+**What the site showed before** (three readers and two skeptics by execution,
+nothing refuted): the Record view's "What historical validation establishes" was
+the 28 September study alone -- `docs/historical-validation.json` v1, thirteen
+publications through 25 September, zero tickets, zero settled, three wait cases --
+and nothing on the site named run 6, the signal-outcome study, its confirmatory
+read or the owner's backtest, which lived only as Markdown under
+`docs/input-truthfulness/` with no link from the page.
+
+**What was built.** `tools/build_historical_findings.py` is a reader over committed
+evidence only: the two study outputs, the publication records the study's spec
+names (read from git by commit and held to the blob through
+`signal_outcomes.load_publications`), the owner's two pasted backtest summaries
+parsed by the exact line grammar `historical_backtest.summary_text()` emits (a
+line the grammar does not know is a refusal, never a skipped number), and the
+pasted run-6 summary with its public receipt. It writes
+`docs/historical-findings.json`, every block naming its source and digest,
+`--check` holding the file as `make_fixture.py --check` holds the fixtures, and a
+field name the secret scan would read as a credential refused before anything is
+written. Its one arithmetic is the per-night, per-stratum count, sum and mean of
+settled R over the study's own rows, re-derived by `tests/test_historical_findings.py`.
+`docs/app-findings.js` (`SCStock.findings`) is the walkthrough's sibling: a stepper
+over the published nights (Back, Play, Next, the arrow keys, Space,
+`SCStock.findingsInterval` for tests, reduced motion honoured); one SVG with two
+panels over the same sessions -- the 10-session ratio the gate read on every
+session the records know, each night its own publication's value and the sessions
+before 11 September from the newest record's thirty-day history (a later history
+that re-measured a night is named beside it), the red and green lines of the
+regime rule with their washes, the backtest's 28-session window bracketed under
+the dates; and under it every settled R of that night's counterfactual tickets for
+the chosen stratum on a compressed signed-log axis (a position and never a value:
+real ticks, nothing clipped, every R in the table twin) with the night's mean, the
+nights after the current one ghosted so Play reveals the outcomes as they came.
+A stratum control (A-quality, B, C, skip, vetoed, every burst), a lead line that
+counts the nights and their verdicts off the file, a caption with the night in
+words, the facts, the first-read-against-now line and the hold's horizon, a
+legend, two table twins; then the owner's backtest (a stat strip, labelled bars,
+the production and counterfactual rows and the exact-lookback pass, the pasted
+summaries' digests), the run-6 fresh-bar check, the caveats with the pooled strata
+printed off the file, the six reports; the 28 September cases follow under their
+own heading. It reads no record, no clock and no storage; `renderFindings()` in
+app.js fetches the file beside the 28 September study and prints an alert on
+failure; a fixture page says the replay reads the public findings; the page
+computes nothing of the market. `tools/backtest_timeline.py` is the price-free,
+ticker-free per-session export the owner can run on the private backtest record
+so the February-to-September nights could one day be drawn the same way (NOT RUN on
+the real file). The publication gate's `RECORD_FILES` names both study files, so
+Pages is verified serving them, which it was not before.
+
+**Measured** (this sandbox, Python 3.12.3 and pandas 2.2.3, Chromium through
+Playwright 1.56.1): 2809 tests collected, 2773 passed, 34 environment-gated skips
+(the first full run's two docs failures were the stale count and a private file's
+name in a README gloss, both fixed); 12 fixtures current; continuity 128; the
+chart check 378/378; the `findings` suite 342/342 at 1280, 390 and 320, both
+themes; the full smoke with `--shots` is quoted in the pull request. Mutants, in
+copies of the tree and never the working tree: twenty over the builder (every one
+dying in the test that names its rule, the control dying in the byte comparison
+alone, and seven builder mutants with the file regenerated by the mutant dying only
+in the independent re-derivation); eight over the page through a routed copy of
+the module (a hard-coded pill, a reveal that ghosts nothing, a stratum control that
+ignores the click, wins plus one, a lead and a pooled sentence off by one, an
+overlong label; a retitled panel as the control); fifteen over the timeline export
+(two equivalent by `record.replay()`'s own construction). gitleaks 8.24.3 over
+the tree with the repository's config: no leaks.
+
+**The screenshots found what the checks had not, three times:** the backtest
+bracket's label drawn on the date row (its own row now); the night's pill over
+the dots (in the gap between the panels now); the lower panel's name 184 px off a
+phone's screen (short forms under 560 px, the last date anchored to the plot's
+edge, and the suite holds every label inside the chart at every width). And two
+sentences that would have gone stale on the first yellow night -- "every night was
+red", "never carried a ticket" -- are counted off the file now, never typed.
+
+**Keep / fix / defer / omit.** Keep: the builder reads and the page prints; the
+study's spec stays frozen and extended by appended publications only, the
+findings file rebuilt after each extension with `--check` holding it. Fix if it
+bites: the backtest grammar refuses a pasted summary carrying a session no name
+printed on (`None ratio None`), which neither pasted file has, a refusal and not a
+silent number; the stratum tabs wrap to four rows at 320 px. Defer: the dated
+hazard already queued, the three frozen cases leaving the public window on the
+16 and 19 October publications; the February-to-September nights, which wait on
+the owner running the timeline export. Omit: any rule change on these numbers; a
+claim of edge. **Not claimable:** a live fetch, Resend, Pages until the gate prints
+Verified on the merge, and CI on this branch until the pull request runs.
+
+**Next action.** Review and merge the pull request; after the 8 and 9 October
+publications, append them to the spec, re-run `tools/signal_outcomes.py` and then
+`tools/build_historical_findings.py`, and the replay shows the first confirmatory
+nights.
