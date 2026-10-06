@@ -32,18 +32,20 @@ and [selected operating contract](docs/input-truthfulness/2026-09-28-operating-c
 October 2026 added the first outcomes on real bars, none of them an edge
 claim. Run 6 reproduced the red reading of 24 and 25 September on a later
 retrieval of every intended stock (10-session ratios 0.93 and 0.89 against
-the published 0.94 and 0.89); the signal-outcome study, which tickets every
-archived burst with the regime gate, the slot cap and the reader removed,
-found every stratum losing on the red nights -- the admitted stratum −0.235R
-per settled ticket over 202 on 2 October and −0.189R over 267 on the
-6 October re-read, a night read before its tickets' fifth session leaning
-toward losses -- and the owner's backtest over 158 archive sessions (100
+the published 0.94 and 0.89); the signal-outcome study, which runs the
+production ticket rules over every archived burst with the regime gate, the
+slot cap and the reader removed, found every stratum losing on the red
+nights -- the admitted stratum's exploratory rows −0.235R per settled ticket
+over 202 on 2 October and −0.189R over 267 on the 6 October re-read, the
+whole stratum −0.204R over 272 with the five confirmatory tickets settled
+since the freeze, all at −1R; a night read before its tickets' fifth session
+leans toward losses -- and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
 Record view replays those nights one at a time from
 `docs/historical-findings.json`, which `tools/build_historical_findings.py`
 builds from the committed evidence files and binds to their digests; the
-page computes nothing of it.
+page prints its figures as the file writes them and counts nothing of its own.
 
 ## What the page says
 
@@ -320,13 +322,20 @@ does not carry, falls back to Explore and says so.
    night by night from `docs/historical-findings.json` (`docs/app-findings.js`,
    `SCStock.findings`): a stepper over every published night the study carries, the
    10-session ratio the gate read on every session the records know with the
-   red and green lines of the regime rule drawn on it, and under it every
+   two thresholds of its ratio rule drawn and named at the axis (a key says
+   that green also needs every other breadth rule quiet), and under it every
    settled R of that night's counterfactual tickets by stratum on a compressed
    axis with the night's mean -- then the owner's backtest, the run-6 check of
    the red reading, the "Read it as" caveats and the 28 September frozen
-   cases. Every number it prints is a field of that file; it reads no record,
-   no clock and no storage, and a page over a fixture says the replay reads
-   the public findings.
+   cases. Every figure it prints is a field of that file at the precision the
+   file writes it (a mean at three places, a sum at two); its own arithmetic
+   is a night's place in the list and the drawing. It reads no record, no
+   clock and no storage, checks the file's shape before it draws and says in
+   one sentence what it refused; both historical files are fetched only when
+   the Record view is first shown, and a page over a fixture says the replay
+   reads the public findings. On a phone a tap within a finger of more than
+   one night asks which, nearest first, and the list of nights is the precise
+   way to one.
 5. **Market.** Bonde's Market Monitor over usable fetched stock frames for the measured session:
    up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the

@@ -940,6 +940,10 @@
  },
  "nights": [
   {
+   "a_quality": {
+    "final": 51,
+    "mechanical": 63
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 267,
@@ -994,7 +998,8 @@
      "n": 29,
      "sum_r": -2.58,
      "wins": 9
-    }
+    },
+    "tickets": 100
    },
    "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
    "bursts": 400,
@@ -1019,7 +1024,8 @@
      "sum_r": -1.63,
      "wins": 7
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 51,
@@ -1096,7 +1102,8 @@
       "n": 11,
       "sum_r": -4.49,
       "wins": 2
-     }
+     },
+     "tickets": 31
     },
     "C": {
      "buckets": {
@@ -1127,7 +1134,8 @@
       "n": 4,
       "sum_r": -2.3,
       "wins": 1
-     }
+     },
+     "tickets": 14
     },
     "admitted": {
      "buckets": {
@@ -1164,7 +1172,8 @@
       "n": 10,
       "sum_r": 4.98,
       "wins": 4
-     }
+     },
+     "tickets": 30
     },
     "skip": {
      "buckets": {
@@ -1190,7 +1199,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 2
     },
     "vetoed": {
      "buckets": {
@@ -1221,13 +1231,18 @@
       "n": 4,
       "sum_r": -0.77,
       "wins": 2
-     }
+     },
+     "tickets": 23
     }
    },
    "tickets_published": 0,
    "vetoed": 148
   },
   {
+   "a_quality": {
+    "final": 53,
+    "mechanical": 65
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 364,
@@ -1278,7 +1293,8 @@
      "n": 25,
      "sum_r": -10.81,
      "wins": 5
-    }
+    },
+    "tickets": 147
    },
    "blob": "a89ab122d7e0160df6a63c30957668447ace1103",
    "bursts": 558,
@@ -1303,7 +1319,8 @@
      "sum_r": -9.81,
      "wins": 5
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 53,
@@ -1376,7 +1393,8 @@
       "n": 7,
       "sum_r": -2.26,
       "wins": 1
-     }
+     },
+     "tickets": 47
     },
     "C": {
      "buckets": {
@@ -1409,7 +1427,8 @@
       "n": 6,
       "sum_r": -2.69,
       "wins": 1
-     }
+     },
+     "tickets": 34
     },
     "admitted": {
      "buckets": {
@@ -1443,7 +1462,8 @@
       "n": 7,
       "sum_r": -3.01,
       "wins": 2
-     }
+     },
+     "tickets": 34
     },
     "skip": {
      "buckets": {
@@ -1472,7 +1492,8 @@
       "n": 2,
       "sum_r": -0.45,
       "wins": 1
-     }
+     },
+     "tickets": 8
     },
     "vetoed": {
      "buckets": {
@@ -1502,13 +1523,18 @@
       "n": 3,
       "sum_r": -2.4,
       "wins": 0
-     }
+     },
+     "tickets": 24
     }
    },
    "tickets_published": 0,
    "vetoed": 159
   },
   {
+   "a_quality": {
+    "final": 29,
+    "mechanical": 41
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -1637,7 +1663,8 @@
      "n": 103,
      "sum_r": -2.09,
      "wins": 31
-    }
+    },
+    "tickets": 311
    },
    "blob": "abf693417b8308a68d6e1dfcbfd53ced16b6f8c4",
    "bursts": 342,
@@ -1662,7 +1689,8 @@
      "sum_r": -2.09,
      "wins": 31
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 29,
@@ -1751,7 +1779,8 @@
       "n": 23,
       "sum_r": -2.08,
       "wins": 8
-     }
+     },
+     "tickets": 72
     },
     "C": {
      "buckets": {
@@ -1798,7 +1827,8 @@
       "n": 20,
       "sum_r": -1.71,
       "wins": 7
-     }
+     },
+     "tickets": 62
     },
     "admitted": {
      "buckets": {
@@ -1838,7 +1868,8 @@
       "n": 13,
       "sum_r": -1.1,
       "wins": 3
-     }
+     },
+     "tickets": 38
     },
     "skip": {
      "buckets": {
@@ -1875,7 +1906,8 @@
       "n": 10,
       "sum_r": 0.21,
       "wins": 2
-     }
+     },
+     "tickets": 32
     },
     "vetoed": {
      "buckets": {
@@ -1939,13 +1971,18 @@
       "n": 37,
       "sum_r": 2.59,
       "wins": 11
-     }
+     },
+     "tickets": 107
     }
    },
    "tickets_published": 0,
    "vetoed": 119
   },
   {
+   "a_quality": {
+    "final": 9,
+    "mechanical": 21
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -2088,7 +2125,8 @@
      "n": 117,
      "sum_r": -43.52,
      "wins": 20
-    }
+    },
+    "tickets": 274
    },
    "blob": "9dfc2d51aef7d0adf723428931c61cc83824fa71",
    "bursts": 303,
@@ -2113,7 +2151,8 @@
      "sum_r": -43.52,
      "wins": 20
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 9,
@@ -2221,7 +2260,8 @@
       "n": 42,
       "sum_r": -18.55,
       "wins": 6
-     }
+     },
+     "tickets": 74
     },
     "C": {
      "buckets": {
@@ -2263,7 +2303,8 @@
       "n": 15,
       "sum_r": -4.99,
       "wins": 3
-     }
+     },
+     "tickets": 42
     },
     "admitted": {
      "buckets": {
@@ -2297,7 +2338,8 @@
       "n": 7,
       "sum_r": -1.66,
       "wins": 2
-     }
+     },
+     "tickets": 19
     },
     "skip": {
      "buckets": {
@@ -2329,7 +2371,8 @@
       "n": 5,
       "sum_r": 4.91,
       "wins": 3
-     }
+     },
+     "tickets": 30
     },
     "vetoed": {
      "buckets": {
@@ -2404,13 +2447,18 @@
       "n": 48,
       "sum_r": -23.23,
       "wins": 6
-     }
+     },
+     "tickets": 109
     }
    },
    "tickets_published": 0,
    "vetoed": 123
   },
   {
+   "a_quality": {
+    "final": 18,
+    "mechanical": 30
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -2591,7 +2639,8 @@
      "n": 155,
      "sum_r": -63.18,
      "wins": 30
-    }
+    },
+    "tickets": 367
    },
    "blob": "7e65097a70affd800bace72b2d088c8197053c47",
    "bursts": 420,
@@ -2616,7 +2665,8 @@
      "sum_r": -63.18,
      "wins": 30
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 18,
@@ -2723,7 +2773,8 @@
       "n": 41,
       "sum_r": -21.69,
       "wins": 8
-     }
+     },
+     "tickets": 91
     },
     "C": {
      "buckets": {
@@ -2788,7 +2839,8 @@
       "n": 38,
       "sum_r": -13.29,
       "wins": 7
-     }
+     },
+     "tickets": 80
     },
     "admitted": {
      "buckets": {
@@ -2823,7 +2875,8 @@
       "n": 8,
       "sum_r": -4.09,
       "wins": 2
-     }
+     },
+     "tickets": 26
     },
     "skip": {
      "buckets": {
@@ -2869,7 +2922,8 @@
       "n": 19,
       "sum_r": -8.18,
       "wins": 4
-     }
+     },
+     "tickets": 48
     },
     "vetoed": {
      "buckets": {
@@ -2945,13 +2999,18 @@
       "n": 49,
       "sum_r": -15.93,
       "wins": 9
-     }
+     },
+     "tickets": 122
     }
    },
    "tickets_published": 0,
    "vetoed": 144
   },
   {
+   "a_quality": {
+    "final": 41,
+    "mechanical": 53
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -3142,7 +3201,8 @@
      "n": 165,
      "sum_r": -6.09,
      "wins": 54
-    }
+    },
+    "tickets": 302
    },
    "blob": "bf36144ea45d7c74eee724d2557964e5e8e0bfc5",
    "bursts": 360,
@@ -3167,7 +3227,8 @@
      "sum_r": -6.09,
      "wins": 54
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 41,
@@ -3268,7 +3329,8 @@
       "n": 35,
       "sum_r": -4.04,
       "wins": 10
-     }
+     },
+     "tickets": 56
     },
     "C": {
      "buckets": {
@@ -3319,7 +3381,8 @@
       "n": 24,
       "sum_r": -1.24,
       "wins": 8
-     }
+     },
+     "tickets": 56
     },
     "admitted": {
      "buckets": {
@@ -3382,7 +3445,8 @@
       "n": 36,
       "sum_r": -3.15,
       "wins": 9
-     }
+     },
+     "tickets": 48
     },
     "skip": {
      "buckets": {
@@ -3419,7 +3483,8 @@
       "n": 10,
       "sum_r": -2.31,
       "wins": 1
-     }
+     },
+     "tickets": 30
     },
     "vetoed": {
      "buckets": {
@@ -3506,13 +3571,18 @@
       "n": 60,
       "sum_r": 4.65,
       "wins": 26
-     }
+     },
+     "tickets": 112
     }
    },
    "tickets_published": 0,
    "vetoed": 127
   },
   {
+   "a_quality": {
+    "final": 34,
+    "mechanical": 46
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -3702,7 +3772,8 @@
      "n": 164,
      "sum_r": -38.49,
      "wins": 36
-    }
+    },
+    "tickets": 332
    },
    "blob": "23cb5ab864e9e9de79fe33dabea898b9bef1e375",
    "bursts": 381,
@@ -3727,7 +3798,8 @@
      "sum_r": -38.49,
      "wins": 36
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 34,
@@ -3837,7 +3909,8 @@
       "n": 44,
       "sum_r": -19.43,
       "wins": 9
-     }
+     },
+     "tickets": 89
     },
     "C": {
      "buckets": {
@@ -3887,7 +3960,8 @@
       "n": 23,
       "sum_r": -2.34,
       "wins": 6
-     }
+     },
+     "tickets": 38
     },
     "admitted": {
      "buckets": {
@@ -3937,7 +4011,8 @@
       "n": 23,
       "sum_r": -1.15,
       "wins": 5
-     }
+     },
+     "tickets": 40
     },
     "skip": {
      "buckets": {
@@ -3970,7 +4045,8 @@
       "n": 6,
       "sum_r": -2.41,
       "wins": 1
-     }
+     },
+     "tickets": 14
     },
     "vetoed": {
      "buckets": {
@@ -4065,13 +4141,18 @@
       "n": 68,
       "sum_r": -13.16,
       "wins": 15
-     }
+     },
+     "tickets": 151
     }
    },
    "tickets_published": 0,
    "vetoed": 173
   },
   {
+   "a_quality": {
+    "final": 48,
+    "mechanical": 48
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -4221,7 +4302,8 @@
      "n": 124,
      "sum_r": -87.93,
      "wins": 14
-    }
+    },
+    "tickets": 454
    },
    "blob": "d9ac3a89ca2a572128143f287180afad040f5672",
    "bursts": 513,
@@ -4246,7 +4328,8 @@
      "sum_r": -87.93,
      "wins": 14
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 45,
@@ -4338,7 +4421,8 @@
       "n": 26,
       "sum_r": -13.08,
       "wins": 4
-     }
+     },
+     "tickets": 98
     },
     "C": {
      "buckets": {
@@ -4393,7 +4477,8 @@
       "n": 28,
       "sum_r": -12.84,
       "wins": 5
-     }
+     },
+     "tickets": 69
     },
     "admitted": {
      "buckets": {
@@ -4431,7 +4516,8 @@
       "n": 11,
       "sum_r": -6.76,
       "wins": 1
-     }
+     },
+     "tickets": 45
     },
     "skip": {
      "buckets": {
@@ -4468,7 +4554,8 @@
       "n": 10,
       "sum_r": -5.72,
       "wins": 1
-     }
+     },
+     "tickets": 29
     },
     "vetoed": {
      "buckets": {
@@ -4544,13 +4631,18 @@
       "n": 49,
       "sum_r": -49.53,
       "wins": 3
-     }
+     },
+     "tickets": 213
     }
    },
    "tickets_published": 0,
    "vetoed": 248
   },
   {
+   "a_quality": {
+    "final": 7,
+    "mechanical": 18
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -4653,7 +4745,8 @@
      "n": 77,
      "sum_r": -35.24,
      "wins": 11
-    }
+    },
+    "tickets": 254
    },
    "blob": "97c89e46546e42aff4b07a5dade1ef551f4d4e4f",
    "bursts": 282,
@@ -4678,7 +4771,8 @@
      "sum_r": -35.24,
      "wins": 11
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 7,
@@ -4776,7 +4870,8 @@
       "n": 32,
       "sum_r": -15.04,
       "wins": 4
-     }
+     },
+     "tickets": 70
     },
     "C": {
      "buckets": {
@@ -4817,7 +4912,8 @@
       "n": 14,
       "sum_r": -7.91,
       "wins": 1
-     }
+     },
+     "tickets": 32
     },
     "admitted": {
      "buckets": {
@@ -4852,7 +4948,8 @@
       "n": 8,
       "sum_r": 2.02,
       "wins": 3
-     }
+     },
+     "tickets": 18
     },
     "skip": {
      "buckets": {
@@ -4883,7 +4980,8 @@
       "n": 4,
       "sum_r": -3.81,
       "wins": 0
-     }
+     },
+     "tickets": 22
     },
     "vetoed": {
      "buckets": {
@@ -4929,13 +5027,18 @@
       "n": 19,
       "sum_r": -10.5,
       "wins": 3
-     }
+     },
+     "tickets": 112
     }
    },
    "tickets_published": 0,
    "vetoed": 123
   },
   {
+   "a_quality": {
+    "final": 50,
+    "mechanical": 59
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -5150,7 +5253,8 @@
      "n": 189,
      "sum_r": -84.33,
      "wins": 19
-    }
+    },
+    "tickets": 351
    },
    "blob": "332b99ffac36b3b723de58197ce853e1ecd96b20",
    "bursts": 418,
@@ -5175,7 +5279,8 @@
      "sum_r": -84.33,
      "wins": 19
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": true
    },
    "grades_final": {
     "A": 49,
@@ -5288,7 +5393,8 @@
       "n": 47,
       "sum_r": -26.19,
       "wins": 3
-     }
+     },
+     "tickets": 94
     },
     "C": {
      "buckets": {
@@ -5338,7 +5444,8 @@
       "n": 23,
       "sum_r": -13.04,
       "wins": 1
-     }
+     },
+     "tickets": 49
     },
     "admitted": {
      "buckets": {
@@ -5395,7 +5502,8 @@
       "n": 30,
       "sum_r": -7.03,
       "wins": 4
-     }
+     },
+     "tickets": 52
     },
     "skip": {
      "buckets": {
@@ -5430,7 +5538,8 @@
       "n": 8,
       "sum_r": -5.22,
       "wins": 0
-     }
+     },
+     "tickets": 12
     },
     "vetoed": {
      "buckets": {
@@ -5538,13 +5647,18 @@
       "n": 81,
       "sum_r": -32.85,
       "wins": 11
-     }
+     },
+     "tickets": 144
     }
    },
    "tickets_published": 0,
    "vetoed": 168
   },
   {
+   "a_quality": {
+    "final": 64,
+    "mechanical": 75
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -5630,7 +5744,8 @@
      "n": 60,
      "sum_r": -16.7,
      "wins": 11
-    }
+    },
+    "tickets": 420
    },
    "blob": "6fce465edd51badead8ad0c38b111819ee69c884",
    "bursts": 455,
@@ -5655,7 +5770,8 @@
      "sum_r": -21.53,
      "wins": 8
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": false
    },
    "grades_final": {
     "A": 64,
@@ -5733,7 +5849,8 @@
       "n": 12,
       "sum_r": -3.2,
       "wins": 1
-     }
+     },
+     "tickets": 120
     },
     "C": {
      "buckets": {
@@ -5781,7 +5898,8 @@
       "n": 21,
       "sum_r": -7.84,
       "wins": 3
-     }
+     },
+     "tickets": 67
     },
     "admitted": {
      "buckets": {
@@ -5820,7 +5938,8 @@
       "n": 12,
       "sum_r": -8.5,
       "wins": 1
-     }
+     },
+     "tickets": 71
     },
     "skip": {
      "buckets": {
@@ -5846,7 +5965,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 17
     },
     "vetoed": {
      "buckets": {
@@ -5888,13 +6008,18 @@
       "n": 15,
       "sum_r": 2.84,
       "wins": 6
-     }
+     },
+     "tickets": 145
     }
    },
    "tickets_published": 0,
    "vetoed": 158
   },
   {
+   "a_quality": {
+    "final": 47,
+    "mechanical": 58
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -6047,7 +6172,8 @@
      "n": 127,
      "sum_r": -41.92,
      "wins": 22
-    }
+    },
+    "tickets": 362
    },
    "blob": "8d569933ebab8838699faff339bc1a18dde0dfa8",
    "bursts": 406,
@@ -6072,7 +6198,8 @@
      "sum_r": -63.54,
      "wins": 6
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": false
    },
    "grades_final": {
     "A": 47,
@@ -6170,7 +6297,8 @@
       "n": 32,
       "sum_r": -9.83,
       "wins": 7
-     }
+     },
+     "tickets": 95
     },
     "C": {
      "buckets": {
@@ -6222,7 +6350,8 @@
       "n": 25,
       "sum_r": -10.96,
       "wins": 2
-     }
+     },
+     "tickets": 65
     },
     "admitted": {
      "buckets": {
@@ -6260,7 +6389,8 @@
       "n": 11,
       "sum_r": 0.58,
       "wins": 3
-     }
+     },
+     "tickets": 54
     },
     "skip": {
      "buckets": {
@@ -6298,7 +6428,8 @@
       "n": 11,
       "sum_r": -3.41,
       "wins": 2
-     }
+     },
+     "tickets": 28
     },
     "vetoed": {
      "buckets": {
@@ -6373,13 +6504,18 @@
       "n": 48,
       "sum_r": -18.3,
       "wins": 8
-     }
+     },
+     "tickets": 120
     }
    },
    "tickets_published": 0,
    "vetoed": 137
   },
   {
+   "a_quality": {
+    "final": 58,
+    "mechanical": 69
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -6582,7 +6718,8 @@
      "n": 177,
      "sum_r": -60.15,
      "wins": 31
-    }
+    },
+    "tickets": 327
    },
    "blob": "39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd",
    "bursts": 364,
@@ -6607,7 +6744,8 @@
      "sum_r": -95.51,
      "wins": 4
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": false
    },
    "grades_final": {
     "A": 58,
@@ -6711,7 +6849,8 @@
       "n": 38,
       "sum_r": -15.19,
       "wins": 7
-     }
+     },
+     "tickets": 78
     },
     "C": {
      "buckets": {
@@ -6761,7 +6900,8 @@
       "n": 23,
       "sum_r": -6.9,
       "wins": 3
-     }
+     },
+     "tickets": 51
     },
     "admitted": {
      "buckets": {
@@ -6827,7 +6967,8 @@
       "n": 39,
       "sum_r": -1.48,
       "wins": 11
-     }
+     },
+     "tickets": 67
     },
     "skip": {
      "buckets": {
@@ -6860,7 +7001,8 @@
       "n": 6,
       "sum_r": -5.52,
       "wins": 0
-     }
+     },
+     "tickets": 12
     },
     "vetoed": {
      "buckets": {
@@ -6958,13 +7100,18 @@
       "n": 71,
       "sum_r": -31.06,
       "wins": 10
-     }
+     },
+     "tickets": 119
     }
    },
    "tickets_published": 0,
    "vetoed": 130
   },
   {
+   "a_quality": {
+    "final": 6,
+    "mechanical": 16
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -7049,7 +7196,8 @@
      "n": 59,
      "sum_r": -4.89,
      "wins": 14
-    }
+    },
+    "tickets": 203
    },
    "blob": "e31cfe5fd388a2b054a8afb16dfbe4f8da8ac93d",
    "bursts": 228,
@@ -7074,7 +7222,8 @@
      "sum_r": -26.0,
      "wins": 0
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": false
    },
    "grades_final": {
     "A": 6,
@@ -7154,7 +7303,8 @@
       "n": 14,
       "sum_r": 3.18,
       "wins": 4
-     }
+     },
+     "tickets": 48
     },
     "C": {
      "buckets": {
@@ -7191,7 +7341,8 @@
       "n": 10,
       "sum_r": -1.73,
       "wins": 3
-     }
+     },
+     "tickets": 49
     },
     "admitted": {
      "buckets": {
@@ -7220,7 +7371,8 @@
       "n": 2,
       "sum_r": -2.0,
       "wins": 0
-     }
+     },
+     "tickets": 13
     },
     "skip": {
      "buckets": {
@@ -7255,7 +7407,8 @@
       "n": 8,
       "sum_r": 1.86,
       "wins": 3
-     }
+     },
+     "tickets": 20
     },
     "vetoed": {
      "buckets": {
@@ -7307,13 +7460,18 @@
       "n": 25,
       "sum_r": -6.2,
       "wins": 4
-     }
+     },
+     "tickets": 73
     }
    },
    "tickets_published": 0,
    "vetoed": 79
   },
   {
+   "a_quality": {
+    "final": 145,
+    "mechanical": 156
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -7509,7 +7667,8 @@
      "n": 170,
      "sum_r": -85.55,
      "wins": 1
-    }
+    },
+    "tickets": 579
    },
    "blob": "d6095ca5d92ed5a056eab820bb73323fb04f5b67",
    "bursts": 634,
@@ -7534,7 +7693,8 @@
      "sum_r": null,
      "wins": 0
     },
-    "as_of": "2026-10-01"
+    "as_of": "2026-10-01",
+    "horizon_passed": false
    },
    "grades_final": {
     "A": 144,
@@ -7644,7 +7804,8 @@
       "n": 44,
       "sum_r": -26.94,
       "wins": 0
-     }
+     },
+     "tickets": 140
     },
     "C": {
      "buckets": {
@@ -7690,7 +7851,8 @@
       "n": 19,
       "sum_r": -4.59,
       "wins": 1
-     }
+     },
+     "tickets": 69
     },
     "admitted": {
      "buckets": {
@@ -7767,7 +7929,8 @@
       "n": 50,
       "sum_r": -18.21,
       "wins": 0
-     }
+     },
+     "tickets": 149
     },
     "skip": {
      "buckets": {
@@ -7806,7 +7969,8 @@
       "n": 12,
       "sum_r": -11.47,
       "wins": 0
-     }
+     },
+     "tickets": 32
     },
     "vetoed": {
      "buckets": {
@@ -7878,13 +8042,18 @@
       "n": 45,
       "sum_r": -24.34,
       "wins": 0
-     }
+     },
+     "tickets": 189
     }
    },
    "tickets_published": 0,
    "vetoed": 210
   },
   {
+   "a_quality": {
+    "final": 35,
+    "mechanical": 45
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -7972,7 +8141,8 @@
      "n": 62,
      "sum_r": -62.0,
      "wins": 0
-    }
+    },
+    "tickets": 420
    },
    "blob": "bb2edad5522c137030ec93d286c1aebfedde73de",
    "bursts": 457,
@@ -8055,7 +8225,8 @@
       "n": 13,
       "sum_r": -13.0,
       "wins": 0
-     }
+     },
+     "tickets": 91
     },
     "C": {
      "buckets": {
@@ -8101,7 +8272,8 @@
       "n": 19,
       "sum_r": -19.0,
       "wins": 0
-     }
+     },
+     "tickets": 99
     },
     "admitted": {
      "buckets": {
@@ -8133,7 +8305,8 @@
       "n": 5,
       "sum_r": -5.0,
       "wins": 0
-     }
+     },
+     "tickets": 41
     },
     "skip": {
      "buckets": {
@@ -8168,7 +8341,8 @@
       "n": 8,
       "sum_r": -8.0,
       "wins": 0
-     }
+     },
+     "tickets": 33
     },
     "vetoed": {
      "buckets": {
@@ -8212,13 +8386,18 @@
       "n": 17,
       "sum_r": -17.0,
       "wins": 0
-     }
+     },
+     "tickets": 156
     }
    },
    "tickets_published": 0,
    "vetoed": 166
   },
   {
+   "a_quality": {
+    "final": 76,
+    "mechanical": 87
+   },
    "all": {
     "buckets": {
      "basis_mismatch": 0,
@@ -8243,7 +8422,8 @@
      "n": 0,
      "sum_r": null,
      "wins": 0
-    }
+    },
+    "tickets": 552
    },
    "blob": "1064e69b27bf3f6fceed1594a1a1b0387eb021bb",
    "bursts": 607,
@@ -8312,7 +8492,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 134
     },
     "C": {
      "buckets": {
@@ -8338,7 +8519,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 100
     },
     "admitted": {
      "buckets": {
@@ -8364,7 +8546,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 81
     },
     "skip": {
      "buckets": {
@@ -8390,7 +8573,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 39
     },
     "vetoed": {
      "buckets": {
@@ -8416,7 +8600,8 @@
       "n": 0,
       "sum_r": null,
       "wins": 0
-     }
+     },
+     "tickets": 198
     }
    },
    "tickets_published": 0,
@@ -8424,6 +8609,7 @@
   }
  ],
  "nights_summary": {
+  "admitted_positive_nights": 3,
   "bursts": 7128,
   "from": "2026-09-11",
   "nights": 17,
@@ -8433,14 +8619,6 @@
    "red": 17
   }
  },
- "read_as": [
-  "The reader is not run; every ticket here is one the reader could still have refused.",
-  "The universe is the archive's later membership; names that left the market are absent (survivorship), so the regime's decliners and the candidates are both under-counted.",
-  "The bars are a later retrieval, not the original information set, and partial names stay partial.",
-  "Fills, exits and R are the daily-bar model of the published scorecard: a fill only at the next open inside the ticket, uncertain days scored nowhere, no fee, spread or slippage.",
-  "The counterfactual block removes the regime gate to show what it refused; it is not a policy.",
-  "Counts are not an edge claim; the public scorecard reads no rate under its own minimum."
- ],
  "reports": [
   {
    "path": "docs/input-truthfulness/2026-10-02-signal-outcomes.md",
@@ -10031,8 +10209,7 @@
     }
    }
   },
-  "symbols": 2221,
-  "ticket_multiplier": 1.0
+  "symbols": 2221
  },
  "version": "historical-findings-v1"
 }

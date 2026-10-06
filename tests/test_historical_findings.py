@@ -79,8 +79,13 @@ def settled_of(rs: list[float]) -> dict:
 def check_stratum(block: dict, rows: list[dict], where: str) -> None:
     counts = Counter(r["bucket"] for r in rows)
     assert set(counts) <= set(BUCKETS), (where, sorted(counts))
-    assert set(block) == {"rows", "buckets", "settled", "r"}, (where, sorted(block))
+    assert set(block) == {"rows", "tickets", "buckets", "settled", "r"}, (where, sorted(block))
     assert block["rows"] == len(rows), (where, block["rows"], len(rows))
+    # a row is a burst; a ticket is a row the production rules wrote one for, counted
+    # off the rows and equal to every row the study did not set aside for want of one
+    tickets = sum(1 for r in rows if r.get("ticket") is not None)
+    assert block["tickets"] == tickets == len(rows) - counts.get("no_ticket", 0) - counts.get("basis_mismatch", 0), \
+        (where, block["tickets"], tickets, dict(counts))
     assert block["buckets"] == {b: counts.get(b, 0) for b in BUCKETS}, (where, block["buckets"], dict(counts))
     assert sum(block["buckets"].values()) == block["rows"], (where, block["buckets"])
     rs = sorted(r["r"] for r in rows if r["bucket"] == "settled")
@@ -161,7 +166,6 @@ def test_every_night_is_rederived_from_the_studys_own_rows(committed, study, fir
     rows_now, rows_first = by_session(study_doc), by_session(first_doc)
     nights = committed["nights"]
     assert [n["session"] for n in nights] == sorted(rows_now), [n["session"] for n in nights]
-    assert len(nights) == 17
     empty_strata = 0
     for night in nights:
         rows = rows_now[night["session"]]
@@ -184,19 +188,23 @@ def test_every_night_is_rederived_from_the_studys_own_rows(committed, study, fir
         if night["session"] in rows_first:
             frows = rows_first[night["session"]]
             read = night["first_read"]
-            assert set(read) == {"as_of", "admitted", "all"}, (where, sorted(read))
-            assert read["as_of"] == first_doc["newest_session"] == "2026-10-01"
+            assert set(read) == {"as_of", "admitted", "all", "horizon_passed"}, (where, sorted(read))
+            assert read["as_of"] == first_doc["newest_session"]
+            # whether the first read came after every ticket's hold: the night's horizon against the read's own date
+            assert read["horizon_passed"] is (horizon <= first_doc["newest_session"]), (where, read["horizon_passed"], horizon)
             admitted = sorted(r["r"] for r in frows if r["stratum"] == "admitted" and r["bucket"] == "settled")
             everything = sorted(r["r"] for r in frows if r["bucket"] == "settled")
             assert read["admitted"] == settled_of(admitted), (where, read["admitted"], settled_of(admitted))
             assert read["all"] == settled_of(everything), (where, read["all"], settled_of(everything))
         else:
             assert "first_read" not in night, where
-    assert {n["session"] for n in nights if "first_read" not in n} == {"2026-10-02", "2026-10-05"}
+    assert {n["session"] for n in nights if "first_read" not in n} == set(rows_now) - set(rows_first)
+    # every branch the page reads is exercised by the committed file
     assert empty_strata, "no empty stratum: the None branch of the settled block was never read"
     assert {n["phase"] for n in nights} == {"exploratory", "confirmatory"}
-    assert [n["session"] for n in nights if not n["complete"]] == ["2026-09-29", "2026-09-30", "2026-10-01",
-                                                                   "2026-10-02", "2026-10-05"]
+    assert {n["complete"] for n in nights} == {True, False}, "every night complete, or none: one caption branch unread"
+    assert {n["first_read"]["horizon_passed"] for n in nights if "first_read" in n} == {True, False}, \
+        "the first read came after every hold, or before every one: one caption branch unread"
     # a night read again after its sessions completed moved: the first read
     # is kept beside the re-read and is not a copy of it
     moved = [n["session"] for n in nights if "first_read" in n
@@ -235,16 +243,21 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
         assert n["vetoed"] == vetoed, (session, n["vetoed"], vetoed)
         assert n["tickets_published"] == len(d.get("trades") or []), (session, n["tickets_published"])
         assert n["reads"] == d["run"]["reads"], (session, n["reads"], d["run"]["reads"])
-    assert all(n["tickets_published"] == 0 and n["regime"]["verdict"] == "red" for n in nights.values()), \
-        "a night with a ticket or not red: the checkpoint says every real night was RED with no ticket"
+        # the A-quality counts the caption prints: the record's own trade grades, counted off its bursts
+        trade = d["rules"]["pipeline"]["trade_grades"]
+        assert n["a_quality"] == {"mechanical": sum(mechanical.get(g, 0) for g in trade),
+                                  "final": sum(final.get(g, 0) for g in trade)}, (session, n["a_quality"], trade)
+    assert any(n["reads"]["done"] == 0 for n in nights.values()) and any(n["reads"]["done"] for n in nights.values()), \
+        "the reader's two caption branches, none read and some read, are not both in the records"
     # the one-line count over every published night is the records' own too
     records = [p["data"] for _, p in sorted(firsts.items())]
     assert committed["nights_summary"] == {
         "nights": len(records), "from": min(firsts), "through": max(firsts),
         "verdicts": dict(Counter(d["breadth"]["regime"]["verdict"] for d in records)),
         "tickets_published": sum(len(d.get("trades") or []) for d in records),
-        "bursts": sum(len(d["bursts"]) for d in records)}, committed["nights_summary"]
-    assert committed["nights_summary"]["verdicts"] == {"red": 17}
+        "bursts": sum(len(d["bursts"]) for d in records),
+        "admitted_positive_nights": sum(1 for n in committed["nights"] if n["strata"]["admitted"]["settled"]["n"]
+                                        and math.fsum(n["strata"]["admitted"]["r"]) > 0)}, committed["nights_summary"]
     # the rules the captions name are every record's own, and the same in every record
     assert {(m, k) for m, ks in RULE_FIELDS.items() for k in ks} == set(bf.RULE_FIELDS), sorted(bf.RULE_FIELDS)
     rules = committed["rules"]
@@ -262,14 +275,15 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
     thresholds = {json.dumps({k: p["data"]["breadth"]["regime"]["thresholds"][k] for k in ("ratio_10d_red", "ratio_10d_yellow")},
                              sort_keys=True) for p in pubs}
     assert len(thresholds) == 1, thresholds
-    assert market["thresholds"] == json.loads(thresholds.pop()) == {"ratio_10d_red": 1.0, "ratio_10d_yellow": 2.0}
+    assert market["thresholds"] == json.loads(thresholds.pop()) == {"ratio_10d_red": breadth.RED_RATIO_10D,
+                                                                    "ratio_10d_yellow": breadth.YELLOW_RATIO_10D}
     newest: dict[str, tuple[dict, dict]] = {}
     for p in ordered:                                   # the newest publication carrying a date wins
         for row in p["data"]["breadth"]["history"]:
             newest[row["date"]] = (p, row)
     dates = [s["date"] for s in market["sessions"]]
     assert dates == sorted(set(newest) | set(nights)), (dates[:3], dates[-3:], len(dates))
-    assert (market["from"], market["through"]) == (dates[0], dates[-1]) == ("2026-07-31", "2026-10-05")
+    assert (market["from"], market["through"]) == (dates[0], dates[-1])
     assert set(nights) < set(dates)
     re_measured = []
     for row in market["sessions"]:
@@ -320,18 +334,16 @@ def test_the_study_headline_blocks_are_copied_not_recomputed(committed, study, f
                                 "costs_per_side_bps", "scorecard"}, (which, name, sorted(got))
     assert s["first_read_summary"]["phases"]["confirmatory"] == {"rows": 0}
     assert s["summary"]["phases"]["confirmatory"]["rows"] > 0
-    # the numbers the 6 October checkpoint quotes for the exploratory admitted read
-    exploratory = s["summary"]["phases"]["exploratory"]["settled"]
-    assert (exploratory["n"], exploratory["mean_r"]) == (267, -0.189), exploratory
     assert (s["newest_session"], s["frozen_through_session"]) == \
-        (study_doc["newest_session"], study_doc["frozen_through_session"]) == ("2026-10-05", "2026-10-01")
-    assert s["first_read_newest_session"] == first_doc["newest_session"] == "2026-10-01"
+        (study_doc["newest_session"], study_doc["frozen_through_session"])
+    assert s["first_read_newest_session"] == first_doc["newest_session"]
     assert s["rows"] == len(study_doc["rows"]), (s["rows"], len(study_doc["rows"]))
     assert (s["bars"], s["symbols"], s["revisions"]) == \
         (study_doc["bars"]["observations"], study_doc["bars"]["symbols"], study_doc["bars"]["revisions"])
-    assert s["publications"] == len(study_doc["publications"]) == 19
-    assert s["first_of_session"] == sum(1 for p in study_doc["publications"] if p["first"]) == 17
-    assert s["ticket_multiplier"] == breadth.SIZE_MULTIPLIER["green"] == 1.0
+    assert s["publications"] == len(study_doc["publications"])
+    assert s["first_of_session"] == sum(1 for p in study_doc["publications"] if p["first"]) == len(committed["nights"])
+    # nothing the page does not read: the retired multiplier and read-as list are gone
+    assert "ticket_multiplier" not in s and "read_as" not in committed
     spec = json.loads((ROOT / STUDY_SPEC).read_bytes())
     assert s["cost_bps_per_side"] == spec["cost_bps_per_side"] == [0, 5, 20]
     assert set(s["account"]) == {"equity", "risk_pct", "max_position_pct", "max_open_positions"}
@@ -432,7 +444,7 @@ def test_the_backtest_block_is_the_pasted_summary_under_the_tools_own_grammar(co
     assert p260["progress"][4] == {"session": "2026-09-24", "verdict": "red", "ratio_10d": 0.93, "counted": 3739,
                                    "bursts": 418, "tickets": 0}
     assert p260["helper_line"].startswith("3/4 Exact-lookback replay saved to ")
-    assert committed["read_as"] == p130["limitations"] == p260["limitations"] and len(p130["limitations"]) == 6
+    assert p130["limitations"] == p260["limitations"] and len(p130["limitations"]) == 6
     # (b) the grammar is summary_text's own: what the tool prints, the parser reads back whole
     assert tuple(bf.GATE_NAMES.values()) == backtest.GATES == ("production", "no_regime_gate")
     result = backtest_result()
@@ -625,6 +637,17 @@ def test_the_builder_refuses_evidence_that_does_not_reconcile(pubs, study, first
     assert rows[0]["phase"] == "exploratory"
     rows[0]["phase"] = "confirmatory"
     with pytest.raises(bf.FindingsError, match=f"{gone}: one night, 2 phases"):
+        bf.nights_of(pubs, {**study_doc, "rows": rows}, first_doc)
+    # one night, one horizon: the caption says when the night's hold ends, which is one date
+    rows = [dict(r) for r in study_doc["rows"]]
+    late = next(r for r in rows if r["session"] == gone and r.get("horizon"))
+    late["horizon"] = "2099-01-02"
+    with pytest.raises(bf.FindingsError, match=f"{gone}: one night, 2 horizons"):
+        bf.nights_of(pubs, {**study_doc, "rows": rows}, first_doc)
+    # a bucket the study does not name is refused, never counted under another or dropped
+    rows = [dict(r) for r in study_doc["rows"]]
+    rows[0]["bucket"] = "teleported"
+    with pytest.raises(bf.FindingsError, match=r"a bucket the study does not name: \['teleported'\]"):
         bf.nights_of(pubs, {**study_doc, "rows": rows}, first_doc)
     # the ratio thresholds, and the rules the captions name, cannot move between publications
     moved = copy.deepcopy(pubs[-1])

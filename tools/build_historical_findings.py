@@ -161,10 +161,17 @@ def settled_block(rs: list[float]) -> dict:
 
 
 def stratum_of_night(rows: list[dict]) -> dict:
+    """A night's rows in one stratum: how many there were, how many the
+    production rules wrote a ticket for (a row without one is a ``no_ticket``
+    or a ``basis_mismatch``, never walked), every bucket, and every settled R.
+    A bucket the study did not name is a refusal, never a dropped row."""
     buckets = Counter(r["bucket"] for r in rows)
+    unknown = sorted(set(buckets) - set(BUCKETS))
+    if unknown:
+        raise FindingsError(f"a bucket the study does not name: {unknown}")
     rs = sorted(r["r"] for r in rows if r["bucket"] == "settled")
-    return {"rows": len(rows), "buckets": {b: buckets.get(b, 0) for b in BUCKETS},
-            "settled": settled_block(rs), "r": rs}
+    return {"rows": len(rows), "tickets": sum(1 for r in rows if r.get("ticket") is not None),
+            "buckets": {b: buckets.get(b, 0) for b in BUCKETS}, "settled": settled_block(rs), "r": rs}
 
 
 def night_rows(study: dict) -> dict[str, list[dict]]:
@@ -185,7 +192,11 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
             raise FindingsError(f"{p['session']}: the study carries {len(rows)} rows for {len(d['bursts'])} bursts")
         grades = Counter(x.get("grade_mechanical") for x in d["bursts"])
         final = Counter(x.get("grade") for x in d["bursts"])
-        horizon = next((r["horizon"] for r in rows if r.get("horizon")), None)
+        trade_grades = d["rules"]["pipeline"]["trade_grades"]
+        horizons = {r["horizon"] for r in rows if r.get("horizon")}
+        if len(horizons) > 1:
+            raise FindingsError(f"{p['session']}: one night, {len(horizons)} horizons")
+        horizon = horizons.pop() if horizons else None
         phases = {r["phase"] for r in rows}
         if len(phases) != 1:
             raise FindingsError(f"{p['session']}: one night, {len(phases)} phases")
@@ -200,6 +211,9 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
             "bursts": len(d["bursts"]),
             "grades_mechanical": {g: grades.get(g, 0) for g in ("A+", "A", "B", "C", "skip")},
             "grades_final": {g: final.get(g, 0) for g in ("A+", "A", "B", "C", "skip")},
+            # the record's own trade grades, counted here so the page sums nothing
+            "a_quality": {"mechanical": sum(grades.get(g, 0) for g in trade_grades),
+                          "final": sum(final.get(g, 0) for g in trade_grades)},
             "vetoed": sum(1 for x in d["bursts"] if x.get("vetoes")),
             "reads": d["run"].get("reads"),
             "tickets_published": len(d.get("trades") or []),
@@ -209,6 +223,8 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
         }
         if p["session"] in rows_first:
             night["first_read"] = {"as_of": first["newest_session"],
+                                   # had every ticket of the night had its hold by the first read?
+                                   "horizon_passed": bool(horizon) and horizon <= first["newest_session"],
                                    "admitted": stratum_of_night([r for r in rows_first[p["session"]]
                                                                  if r["stratum"] == "admitted"])["settled"],
                                    "all": stratum_of_night(rows_first[p["session"]])["settled"]}
@@ -557,7 +573,6 @@ def build() -> dict:
                   "account": pubs[0]["data"]["account"] and {k: pubs[0]["data"]["account"][k] for k in
                                                               ("equity", "risk_pct", "max_position_pct",
                                                                "max_open_positions")},
-                  "ticket_multiplier": so.UNGATED["size_multiplier"],
                   "cost_bps_per_side": spec["cost_bps_per_side"],
                   "summary": strata_summary(study),
                   "first_read_summary": strata_summary(first)},
@@ -569,11 +584,13 @@ def build() -> dict:
         "nights_summary": {"nights": len(nights), "from": nights[0]["session"], "through": nights[-1]["session"],
                            "verdicts": dict(Counter(n["regime"]["verdict"] for n in nights)),
                            "tickets_published": sum(n["tickets_published"] for n in nights),
-                           "bursts": sum(n["bursts"] for n in nights)},
+                           "bursts": sum(n["bursts"] for n in nights),
+                           # the nights whose A-quality tickets settled to a mean above zero,
+                           # counted here so the reading can name them without counting
+                           "admitted_positive_nights": sum(1 for n in nights if (n["strata"]["admitted"]["settled"]["mean_r"] or 0) > 0)},
         "backtest": backtests,
         "run6": run6,
         "reports": [{"title": t, "path": str(p)} for t, p in REPORTS],
-        "read_as": backtests["lookback_130"]["limitations"],
     }
 
 

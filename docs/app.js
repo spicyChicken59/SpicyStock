@@ -1570,6 +1570,7 @@
     d.querySelectorAll('#nav a').forEach((a) => { if (a.getAttribute('data-view') === state.view) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     d.documentElement.setAttribute('data-ss-view', state.view);
     if (scrollTop) w.scrollTo(0, 0);
+    if (state.view === 'record') loadHistoricalEvidence();
   }
 
   // ---------------------------------------------------------------- Explore: the stages
@@ -3057,41 +3058,74 @@
     }
     return JSON.parse(new TextDecoder().decode(bytes));
   }
-  let studyPromise = null, findingsPromise = null;
+  // The two historical files load when the Record view is first shown, never
+  // on another route: the findings are the largest file the page reads after
+  // the record. A stalled request ends in a sentence rather than a spinner,
+  // and a continuation whose block has left the page writes nothing.
+  const EVIDENCE_TIMEOUT_MS = 20000;
+  let studyPromise = null, findingsPromise = null, evidencePending = null;
+  function shownError(message) { const e = new Error(message); e.shown = true; return e; }
+  function evidenceJSON(path, unavailable) {
+    const ctl = w.AbortController ? new w.AbortController() : null;
+    const timer = ctl ? w.setTimeout(() => ctl.abort(), EVIDENCE_TIMEOUT_MS) : 0;
+    return fetch(path, { credentials: 'omit', signal: ctl ? ctl.signal : undefined })
+      .then(r => { if (!r.ok) throw shownError(unavailable); return r.json(); })
+      .catch(error => { throw error && error.shown ? error : shownError(unavailable); })
+      .finally(() => { if (timer) w.clearTimeout(timer); });
+  }
   // The October findings (docs/app-findings.js over docs/historical-findings.json):
   // the record replayed night by night, the owner's backtest, the fresh-bar
-  // check of the red reading. The file is fetched here, the way the 28
-  // September study is; the module itself reads nothing. Its container is
-  // appended synchronously so the frozen cases below keep their order.
-  function renderFindings(host) {
-    const replay = el('div', { 'class': 'ss-find-host', 'data-findings': 'loading' });
-    host.appendChild(replay);
-    if (!findingsPromise) findingsPromise = fetch('historical-findings.json', { credentials: 'omit' }).then(r => {
-      if (!r.ok) throw new Error('The validation findings are unavailable.'); return r.json();
-    });
+  // check of the red reading. The file is fetched here; the module reads
+  // nothing and checks the file's shape before it draws.
+  function loadFindings(replay) {
+    replay.dataset.findings = 'loading';
+    if (!findingsPromise) findingsPromise = evidenceJSON('historical-findings.json', 'The validation findings did not load. Reload the page to try again.');
     findingsPromise.then(F => {
-      if (!SCStock.findings || F.version !== SCStock.findings.VERSION) throw new Error('Unknown findings version.');
+      if (!w.document || !replay.isConnected) return;
+      const engine = SCStock.findings;
+      const problem = engine ? engine.shapeProblem(F) : 'The replay module did not load.';
+      if (problem) throw shownError(problem);
       if (demo) replay.appendChild(el('p', { 'class': 'sc-note', 'data-findings-demo': '', text: 'This replay reads the public findings, not the sample record on this page.' }));
-      if (!SCStock.findings.mount(replay, F, { interval: SCStock.findingsInterval })) throw new Error('The replay could not be drawn.');
-      SCStock.findings.renderBacktest(replay, F);
-      SCStock.findings.renderRun6(replay, F);
-      SCStock.findings.renderReading(replay, F);
+      if (!engine.mount(replay, F, { interval: SCStock.findingsInterval })) throw shownError('The replay could not be drawn.');
+      engine.renderBacktest(replay, F);
+      engine.renderRun6(replay, F);
+      engine.renderReading(replay, F);
       replay.dataset.findings = 'ready';
-    }).catch(error => { replay.dataset.findings = 'error'; replay.appendChild(el('p', { role: 'alert', text: error.message })); });
+    }).catch(error => {
+      if (!w.document || !replay.isConnected) return;
+      clear(replay);
+      replay.dataset.findings = 'error';
+      replay.appendChild(el('p', { role: 'alert', text: error && error.shown ? error.message : 'The validation findings could not be read.' }));
+    });
   }
   function renderHistoricalEvidence() {
     const host = $('historical-evidence');
     if (!host || host.dataset.loaded) return;
     host.dataset.loaded = 'true';
     host.appendChild(el('h2', { text: 'What historical validation establishes' }));
-    host.appendChild(el('p', { text: 'No demonstrated trading edge. Below: the published record replayed night by night, the market the gate read against what the tickets it refused would have done; the owner’s backtest over eight months of the archive; the fresh-bar check of the red reading; then the three frozen decisions of the 28 September review. The Method walkthrough is a synthetic software control.' }));
-    renderFindings(host);
+    host.appendChild(el('p', { text: 'No demonstrated trading edge. Below: the published record replayed night by night, the market the gate read against what the tickets it refused would have done; the owner’s backtest over the acquisition archive; the fresh-bar check of the red reading; then the three frozen decisions of the 28 September review. The Method walkthrough is a synthetic software control.' }));
+    const replay = el('div', { 'class': 'ss-find-host', 'data-findings': 'waiting' });
+    host.appendChild(replay);
     host.appendChild(el('h3', { 'class': 'ss-study__h3', text: 'Frozen decisions from the 28 September review' }));
-    if (!studyPromise) studyPromise = fetch('historical-validation.json', { credentials: 'omit' }).then(r => {
-      if (!r.ok) throw new Error('The validation summary is unavailable.'); return r.json();
-    });
+    const cases = el('div', { 'class': 'ss-study__cases', 'data-study': 'waiting' });
+    host.appendChild(cases);
+    evidencePending = { replay, cases };
+    if (state.view === 'record') loadHistoricalEvidence();
+  }
+  function loadHistoricalEvidence() {
+    const pending = evidencePending;
+    if (!pending) return;
+    evidencePending = null;
+    loadFindings(pending.replay);
+    loadStudy(pending.cases);
+  }
+  function loadStudy(host) {
+    host.dataset.study = 'loading';
+    if (!studyPromise) studyPromise = evidenceJSON('historical-validation.json', 'The validation summary did not load. Reload the page to try again.');
     studyPromise.then(study => {
-      if (study.version !== 'historical-validation-v1') throw new Error('Unknown study version.');
+      if (!w.document || !host.isConnected) return;
+      if (study.version !== 'historical-validation-v1') throw shownError('Unknown study version.');
+      host.dataset.study = 'ready';
       host.appendChild(el('p', { 'data-study-population': '', text: study.from + ' through ' + study.through + ': ' +
         study.publications + ' publications across ' + study.unique_sessions + ' unique sessions; ' +
         num(study.unique_candidate_sessions) + ' unique candidate/session observations. Every publication was RED; zero accepted reviews finished in A/A+. Zero published reaction tickets and zero settled plans mean no cost-adjusted expectancy estimate.' }));
@@ -3145,7 +3179,11 @@
         });
         host.appendChild(card);
       });
-    }).catch(error => host.appendChild(el('p', { role: 'alert', text: error.message })));
+    }).catch(error => {
+      if (!w.document || !host.isConnected) return;
+      host.dataset.study = 'error';
+      host.appendChild(el('p', { role: 'alert', text: error && error.shown ? error.message : 'The validation summary could not be read.' }));
+    });
   }
   async function findEarlier(event) {
     event.preventDefault();

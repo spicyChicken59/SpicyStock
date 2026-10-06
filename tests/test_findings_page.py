@@ -103,16 +103,48 @@ def test_the_module_reads_nothing_itself_and_tells_no_time():
         assert forbidden not in BODY, forbidden
 
 
-def test_the_module_writes_no_colour_and_the_sheet_knows_every_class_it_uses():
+SC_CSS = (ROOT / "docs" / "design-system" / "sc.css").read_text(encoding="utf-8")
+
+
+def defined(cls: str, sheet: str) -> bool:
+    """A class is defined when a selector names it whole: `.ss-find__k` is not
+    defined by `.ss-find__key`, which a substring test would have said it was."""
+    return re.search(r"\." + re.escape(cls) + r"(?![\w-])", sheet) is not None
+
+
+def classes_used(source: str) -> set[str]:
+    """Every class token the module writes, read off its string literals; a
+    token ending in a dash is a prefix the module completes with a tone, and is
+    expanded by the tones the module itself declares."""
+    tones = re.search(r"const VERDICT_TONE = \{([^}]+)\};", source).group(1)
+    suffixes = re.findall(r"'([a-z]+)'", tones)       # a legend key takes a verdict's tone
+    chip = suffixes + ["neutral"]                      # a chip falls back to neutral for a verdict it does not know
+    used = set()
+    for literal in string_literals(source):
+        for token in literal.split():
+            # a class, never an id: the page's ids are `ss-find-<name>-<n>`, its classes `ss-find__<name>`
+            if not re.match(r"^(ss-find(?:__[\w-]*)?|sc-[\w-]+|is-[\w-]+)$", token):
+                continue
+            if token.endswith("-"):
+                used.update(token + t for t in (chip if token.startswith("sc-chip") else suffixes))
+            else:
+                used.add(token)
+    return used
+
+
+def test_the_module_writes_no_colour_and_the_sheets_know_every_class_it_uses():
     assert not re.findall(r"#[0-9a-fA-F]{3,8}\b", SOURCE)
     assert "rgb(" not in SOURCE and "hsl(" not in SOURCE
     rules = [line for line in CSS.splitlines() if "ss-find" in line or "ss-study__h3" in line]
     assert rules, "app.css has no replay rules"
     assert not [line for line in rules if re.search(r"#[0-9a-fA-F]{3,8}\b", line)]
-    used = sorted(set(re.findall(r"ss-find(?:__[a-z-]+|-host)?(?:--[a-z-]+)?", SOURCE)))
-    assert len(used) > 30
-    missing = [c for c in used if c not in CSS]
+    used = classes_used(BODY)
+    assert len(used) > 30 and {"ss-find__key--danger", "sc-pick__item", "is-ghost"} <= used, sorted(used)
+    # the page's own classes live in app.css; the design system's in its sheet or in app.css
+    missing = sorted(c for c in used if not (defined(c, CSS) if c.startswith("ss-find") else defined(c, SC_CSS) or defined(c, CSS)))
     assert not missing, missing
+    # the check can fail: a prefix of a real class is not a class
+    assert not defined("ss-find__k", CSS) and defined("ss-find__key", CSS)
 
 
 def test_the_versions_and_the_strata_are_the_builders():
@@ -124,8 +156,12 @@ def test_the_versions_and_the_strata_are_the_builders():
 
 def test_the_page_loads_the_findings_before_the_app_and_the_harnesses_name_it():
     assert INDEX.index('src="app-findings.js"') < INDEX.index('src="app.js"')
-    assert "SCStock.findings.mount(" in APP and "fetch('historical-findings.json'" in APP
-    assert "F.version !== SCStock.findings.VERSION" in APP
+    assert "engine.mount(" in APP and "evidenceJSON('historical-findings.json'" in APP
+    # the module checks the file's shape before anything is drawn, and app.js asks it to
+    assert "engine.shapeProblem(F)" in APP and "function shapeProblem(F)" in SOURCE
+    # the two historical files load when the Record view is shown, and from nowhere else
+    assert APP.count("loadHistoricalEvidence();") == 2
+    assert "if (state.view === 'record') loadHistoricalEvidence();" in APP
     for harness in ("tools/continuity_check.mjs", "tools/evidence_focus_cases.mjs"):
         assert "docs/app-findings.js" in (ROOT / harness).read_text(encoding="utf-8"), harness
     assert "checkFindings" in (ROOT / "tools" / "page_smoke.mjs").read_text(encoding="utf-8")
