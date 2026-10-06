@@ -2,6 +2,7 @@
 // DOM and store regressions, offline. JSDOM is not browser/layout acceptance.
 import {JSDOM, VirtualConsole} from 'jsdom';
 import {readFile, writeFile, mkdir} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {gunzipSync} from 'node:zlib';
 import {webcrypto} from 'node:crypto';
@@ -11,6 +12,14 @@ const ROOT=path.resolve(import.meta.dirname,'..');
 const baseline=process.argv.includes('--baseline');
 const source=async file=>baseline?execFileSync('git',['show','0233b309a43d3c3f64d30ee974d2be15d1fcea28:'+file],{cwd:ROOT,encoding:'utf8'}):readFile(path.join(ROOT,file),'utf8');
 const records={};for(const date of ['2026-09-11','2026-09-14']) records[date]=JSON.parse(gunzipSync(await readFile(path.join(ROOT,'tests/fixtures/continuity/'+date+'.json.gz'))));
+// The public archive under docs/history keeps a 21-calendar-day window, so the
+// checkout's live index stops carrying the 11 September originals this check
+// recovers once the publications move past 2 October. The archive the check
+// serves is therefore frozen: docs/history/index.json and the 11 September
+// record's context and ATEC/VICR rows exactly as published on 1 October
+// (commit d185e48), digests intact, so the journey reads the same bytes on any
+// date and never the checkout's rolling copy.
+const HISTORY=JSON.parse(gunzipSync(await readFile(path.join(ROOT,'tests/fixtures/continuity/history-2026-10-01.json.gz'))).toString('utf8')).files;
 let checks=0;function check(condition,message){assert.ok(condition,message);checks++;}
 const pause=()=>new Promise(r=>setTimeout(r,15));
 const hub=()=>({values:new Map(),windows:[],locks:new Map(),requests:[],fail:null});
@@ -26,7 +35,9 @@ async function open(data, shared=hub()) {
  w.ResizeObserver=class{observe(){}disconnect(){}};w.IntersectionObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new w.Event('close'))};
  w.fetch=async url=>{shared.requests.push(String(url));const u=new URL(url,w.location.href);if(u.host!=='stock.test')return {ok:false,json:async()=>({})};let body;
- if(u.pathname.endsWith('/data.json'))body=Buffer.from(JSON.stringify(data));else {try{body=await readFile(path.join(ROOT,u.pathname));}catch{return {ok:false,status:404}}}
+ if(u.pathname.endsWith('/data.json'))body=Buffer.from(JSON.stringify(data));
+ else if(u.pathname.startsWith('/docs/history/')){const rel=u.pathname.slice('/docs/history/'.length);if(!(rel in HISTORY))return {ok:false,status:404};body=Buffer.from(HISTORY[rel],'utf8');}
+ else {try{body=await readFile(path.join(ROOT,u.pathname));}catch{return {ok:false,status:404}}}
  return {ok:true,status:200,text:async()=>body.toString(),json:async()=>JSON.parse(body),arrayBuffer:async()=>body.buffer.slice(body.byteOffset,body.byteOffset+body.byteLength)};
  };
  w.SCStock={now:'2026-09-14T23:00:00Z'};
@@ -80,6 +91,7 @@ try{
  const found=f.list().find(i=>i.ticker===ticker);check(found?.session==='2026-09-11'&&found.snapshot.grade==='A','recovered exact original '+ticker);check(found.provenance.record_id===blob,'recovered provenance '+ticker);check(!found.annotation,'recovery does not seed personal annotations');
  click(w,'#saved-close');await pause();}
  check(f.list().length===2,'both originals saved from empty storage');
+ check(shared.requests.some(u=>String(u).endsWith('history/'+blob+'/record.json'))&&!existsSync(path.join(ROOT,'docs/history',blob)),'recovery read the frozen archive, which the checkout no longer carries');
  check(!shared.requests.some(u=>/1234|80\.01|90\.02|amount|annotation/.test(u)),'no outbound private annotations');
 
  // Save from the candidate card, then comparison. A later VICR is separate.

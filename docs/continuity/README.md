@@ -53,6 +53,11 @@ no shared or vendored design assets were edited.
 
 Verification: `npm ci && npm run test:continuity` exercises actual DOM controls
 and store code offline. JSDOM is explicitly not a real browser or a layout test.
+The public archive it searches is frozen in
+`tests/fixtures/continuity/history-2026-10-01.json.gz` (the 1 October
+`docs/history/index.json` with the 11 September record's context and
+ATEC/VICR rows), because the live archive's 21-day window dropped those
+originals on 2 October and a check over the live copy failed with the date.
 `tests/test_history.py` exercises source hashes, coverage, bounds, revisions,
 retention and unchanged provider/chart-reader call counts. Existing Playwright
 commands remain required for desktop, 390/320px, both themes, keyboard and focus.

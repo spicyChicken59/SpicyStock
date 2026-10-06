@@ -899,7 +899,13 @@ Initial backfill dates: September 11 and 14, 2026; September 11 has two distinct
 publications. Both carry ATEC's original chart and neither carries VICR's.
 `npm ci && npm run test:continuity` runs offline DOM/store regressions. This
 is not browser or layout acceptance; use the existing Playwright checks too.
-The original two records are gzip fixtures under `tests/fixtures/continuity/`.
+The original two records are gzip fixtures under `tests/fixtures/continuity/`,
+and so is the public archive the check's recovery journey searches:
+`history-2026-10-01.json.gz` is `docs/history/index.json` and the 11 September
+record's context and ATEC/VICR rows exactly as published on 1 October, digests
+intact, because the live `docs/history` keeps a 21-day window and stopped
+carrying those originals on 2 October. The check never reads the checkout's
+rolling archive, so its answer does not depend on the date.
 
 ## Retained quality evidence
 
