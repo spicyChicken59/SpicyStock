@@ -3057,13 +3057,36 @@
     }
     return JSON.parse(new TextDecoder().decode(bytes));
   }
-  let studyPromise = null;
+  let studyPromise = null, findingsPromise = null;
+  // The October findings (docs/app-findings.js over docs/historical-findings.json):
+  // the record replayed night by night, the owner's backtest, the fresh-bar
+  // check of the red reading. The file is fetched here, the way the 28
+  // September study is; the module itself reads nothing. Its container is
+  // appended synchronously so the frozen cases below keep their order.
+  function renderFindings(host) {
+    const replay = el('div', { 'class': 'ss-find-host', 'data-findings': 'loading' });
+    host.appendChild(replay);
+    if (!findingsPromise) findingsPromise = fetch('historical-findings.json', { credentials: 'omit' }).then(r => {
+      if (!r.ok) throw new Error('The validation findings are unavailable.'); return r.json();
+    });
+    findingsPromise.then(F => {
+      if (!SCStock.findings || F.version !== SCStock.findings.VERSION) throw new Error('Unknown findings version.');
+      if (demo) replay.appendChild(el('p', { 'class': 'sc-note', 'data-findings-demo': '', text: 'This replay reads the public findings, not the sample record on this page.' }));
+      if (!SCStock.findings.mount(replay, F, { interval: SCStock.findingsInterval })) throw new Error('The replay could not be drawn.');
+      SCStock.findings.renderBacktest(replay, F);
+      SCStock.findings.renderRun6(replay, F);
+      SCStock.findings.renderReading(replay, F);
+      replay.dataset.findings = 'ready';
+    }).catch(error => { replay.dataset.findings = 'error'; replay.appendChild(el('p', { role: 'alert', text: error.message })); });
+  }
   function renderHistoricalEvidence() {
     const host = $('historical-evidence');
     if (!host || host.dataset.loaded) return;
     host.dataset.loaded = 'true';
     host.appendChild(el('h2', { text: 'What historical validation establishes' }));
-    host.appendChild(el('p', { text: 'No demonstrated trading edge. The retained sample contains no genuine qualifying reaction ticket. A historical qualified-plan journey remains unestablished; the Method walkthrough is a synthetic software control.' }));
+    host.appendChild(el('p', { text: 'No demonstrated trading edge. Below: the published record replayed night by night, the market the gate read against what the tickets it refused would have done; the owner’s backtest over eight months of the archive; the fresh-bar check of the red reading; then the three frozen decisions of the 28 September review. The Method walkthrough is a synthetic software control.' }));
+    renderFindings(host);
+    host.appendChild(el('h3', { 'class': 'ss-study__h3', text: 'Frozen decisions from the 28 September review' }));
     if (!studyPromise) studyPromise = fetch('historical-validation.json', { credentials: 'omit' }).then(r => {
       if (!r.ok) throw new Error('The validation summary is unavailable.'); return r.json();
     });

@@ -29,6 +29,21 @@ The $10,000 / 0.5% / 25% / four-slot account is a model assumption. Twenty settl
 plans would make a rate readable, not certify an edge. Read the
 [versioned evidence and blocked claims](docs/input-truthfulness/2026-09-28-validation-review.md)
 and [selected operating contract](docs/input-truthfulness/2026-09-28-operating-contract.md).
+October 2026 added the first outcomes on real bars, none of them an edge
+claim. Run 6 reproduced the red reading of 24 and 25 September on a later
+retrieval of every intended stock (10-session ratios 0.93 and 0.89 against
+the published 0.94 and 0.89); the signal-outcome study, which tickets every
+archived burst with the regime gate, the slot cap and the reader removed,
+found every stratum losing on the red nights -- the admitted stratum −0.235R
+per settled ticket over 202 on 2 October and −0.189R over 267 on the
+6 October re-read, a night read before its tickets' fifth session leaning
+toward losses -- and the owner's backtest over 158 archive sessions (100
+yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
+settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
+Record view replays those nights one at a time from
+`docs/historical-findings.json`, which `tools/build_historical_findings.py`
+builds from the committed evidence files and binds to their digests; the
+page computes nothing of it.
 
 ## What the page says
 
@@ -301,6 +316,17 @@ does not carry, falls back to Explore and says so.
    does not know what you hold. Then the bars-only scorecard (plans, fills,
    win rate, average R, SPY over the same days) and fourteen dots for the
    last fourteen exchange sessions: ok, degraded or missing; older recorded closure outcomes remain readable.
+   Under it, **What historical validation establishes** replays the record
+   night by night from `docs/historical-findings.json` (`docs/app-findings.js`,
+   `SCStock.findings`): a stepper over the seventeen published nights, the
+   10-session ratio the gate read on every session the records know with the
+   red and green lines of the regime rule drawn on it, and under it every
+   settled R of that night's counterfactual tickets by stratum on a compressed
+   axis with the night's mean -- then the owner's backtest, the run-6 check of
+   the red reading, the "Read it as" caveats and the 28 September frozen
+   cases. Every number it prints is a field of that file; it reads no record,
+   no clock and no storage, and a page over a fixture says the replay reads
+   the public findings.
 5. **Market.** Bonde's Market Monitor over usable fetched stock frames for the measured session:
    up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the
@@ -627,6 +653,7 @@ pytest tests/ -q                            # every boundary is a double
 node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
+node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
@@ -706,6 +733,16 @@ an edge claim.
 Its first confirmatory re-read, over nineteen publications under a spec that
 differs from the frozen one by appended publication entries only, is
 `docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md`.
+`python tools/build_historical_findings.py --check` holds the committed
+`docs/historical-findings.json`, which the Record view replays, to those
+evidence files and nothing else: the two study outputs, the publication
+records the spec names (read from git by commit and held to the blob), the
+owner's two pasted backtest summaries parsed by the exact line grammar
+`historical_backtest.summary_text()` emits, and the pasted run-6 summary
+with its public receipt. A difference exits 1, as `make_fixture.py --check`
+does; a line the grammar does not know is a refusal, never a skipped
+number; and a field name the secret scan would read as a credential is
+refused before anything is written.
 
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
@@ -874,8 +911,9 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
+                historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
@@ -885,6 +923,8 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
+                build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
+                findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 

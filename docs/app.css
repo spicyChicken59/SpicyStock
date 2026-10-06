@@ -865,3 +865,71 @@
 .ss-study-case summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
 [data-all-blockers] { padding-left: 20px; }
 [data-all-blockers] li + li { margin-top: 8px; }
+
+/* ---- the record night by night (docs/app-findings.js): the replay, its blocks ---- */
+.ss-find { display: grid; grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr); grid-template-areas: 'filter filter' 'stage index' 'caption index'; gap: var(--sc-s3) var(--sc-s4); align-items: start; margin-top: var(--sc-s2); }
+.ss-find__filter { grid-area: filter; margin: 0; }
+.ss-find__stage { grid-area: stage; min-width: 0; border-radius: var(--sc-r-sm); }
+.ss-find__stage:focus { outline: none; }
+.ss-find__stage:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 4px; }
+.ss-find__chart { position: relative; min-height: 200px; }
+.ss-find__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ss-find__svg text { font: 500 10.5px var(--sc-font-mono); fill: var(--sc-text-2); }
+.ss-find__tick, .ss-find__date { fill: var(--sc-text-3); }
+.ss-find__panel { fill: var(--sc-heading); font-weight: 600; }
+.ss-find__ref-text { fill: var(--sc-text-2); }
+.ss-find__note { fill: var(--sc-text-3); font-style: italic; }
+.ss-find__wash { fill: var(--sc-tone, var(--sc-chart-context)); fill-opacity: .07; }
+.ss-find__ref { stroke: var(--sc-border-strong); stroke-dasharray: 6 4; }
+.ss-find__grid { stroke: var(--sc-chart-grid); }
+.ss-find__zero { stroke: var(--sc-border-strong); }
+.ss-find__line { fill: none; stroke: var(--sc-tone, var(--sc-chart-emphasis)); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ss-find__dot { fill: var(--sc-tone, var(--sc-chart-context)); stroke: var(--sc-surface); stroke-width: 2; }
+.ss-find__r { fill: var(--sc-tone, var(--sc-chart-context)); stroke: var(--sc-surface); stroke-width: 1; }
+.ss-find__mean { fill: var(--sc-tone, var(--sc-chart-emphasis)); stroke: var(--sc-surface); stroke-width: 2; }
+.ss-find__mean--none { fill: none; stroke: var(--sc-tone, var(--sc-chart-context)); stroke-dasharray: 2 2; }
+.ss-find__night { transition: opacity var(--sc-motion-enter) var(--sc-ease); }
+.ss-find__night.is-ghost { opacity: .22; }
+.ss-find__night.is-current .ss-find__r { --sc-tone: var(--sc-chart-emphasis); }
+.ss-find__night.is-current .ss-find__dot { stroke-width: 3; }
+.ss-find__cursor { transition: transform var(--sc-motion-enter) var(--sc-ease); }
+.ss-find__cursor rect { fill: var(--sc-tone, var(--sc-chart-emphasis)); fill-opacity: .12; }
+.ss-find__pill rect { fill: var(--sc-raised); stroke: var(--sc-border-strong); stroke-width: 1; }
+.ss-find__pill-text { fill: var(--sc-heading); font-weight: 600; }
+.ss-find__bracket { fill: none; stroke: var(--sc-border-strong); stroke-width: 1.2; }
+.ss-find__bracket-text { fill: var(--sc-text-2); }
+.ss-find__hit { fill: transparent; cursor: pointer; }
+.ss-find__hits { pointer-events: all; }
+.ss-find__bands, .ss-find__axis, .ss-find__night, .ss-find__pill, .ss-find__cursor { pointer-events: none; }
+.ss-find__controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sc-s1) var(--sc-s2); margin-top: var(--sc-s2); }
+.ss-find__count { margin-left: auto; font: 500 11px/1 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-find__side { grid-area: index; min-width: 0; }
+.ss-find__index { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ss-find__index .sc-tab { width: 100%; display: flex; align-items: baseline; gap: 8px; text-align: left; }
+.ss-find__n { flex: 0 0 1.5em; color: var(--sc-text-3); font: 600 11px/1 var(--sc-font-mono); }
+.ss-find__index .sc-tab[aria-current="step"] .ss-find__n { color: inherit; opacity: .8; }
+.ss-find__caption { grid-area: caption; min-width: 0; padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-find__caption h4 { margin: 4px 0 6px; font-size: var(--sc-text-lg); line-height: var(--sc-lh-heading); color: var(--sc-heading); }
+.ss-find__caption > p { margin: 0; max-width: 70ch; }
+.ss-find__facts { margin: var(--sc-s2) 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.ss-find__facts li { position: relative; padding-left: 14px; font: 500 12px/1.55 var(--sc-font-mono); color: var(--sc-text-2); overflow-wrap: anywhere; }
+.ss-find__facts li::before { content: '·'; position: absolute; left: 2px; }
+.ss-find__facts .sc-chip { margin-right: 6px; }
+.ss-find__who { margin-top: var(--sc-s2); }
+.ss-find__tables .sc-details { margin-top: var(--sc-s2); }
+.ss-find__block { margin-top: var(--sc-s4); padding-top: var(--sc-s3); border-top: 1px solid var(--sc-border); }
+.ss-find__block h3 { margin: 4px 0 var(--sc-s2); }
+.ss-find__block > p { max-width: 78ch; }
+.ss-find__stats { --sc-stat-pad: var(--sc-s2); --sc-stat-size: 30px; margin: var(--sc-s2) 0; }
+.ss-find__block .sc-bars { max-width: 520px; }
+.ss-find__block .sc-table-scroll { margin-top: var(--sc-s2); }
+.ss-find__reading { margin: 0 0 var(--sc-s2); padding-left: 1.2em; display: grid; gap: 6px; max-width: 78ch; }
+.ss-find__reports { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.ss-study__h3 { margin-top: var(--sc-s4); padding-top: var(--sc-s3); border-top: 1px solid var(--sc-border); }
+@media (max-width: 960px) {
+  .ss-find { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'filter' 'stage' 'index' 'caption'; }
+  .ss-find__index { flex-direction: row; flex-wrap: wrap; }
+  .ss-find__index .sc-tab { width: auto; }
+}
+@media (pointer: coarse) { .ss-find__controls .sc-btn, .ss-find__index .sc-tab, .ss-find__filter .sc-tab { min-height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .ss-find__night, .ss-find__cursor { transition: none; } }
