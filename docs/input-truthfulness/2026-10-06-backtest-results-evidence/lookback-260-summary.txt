@@ -36,4 +36,4 @@ limitations:
 - Fills, exits and R are the daily-bar model of the published scorecard: a fill only at the next open inside the ticket, uncertain days scored nowhere, no fee, spread or slippage.
 - The counterfactual block removes the regime gate to show what it refused; it is not a policy.
 - Counts are not an edge claim; the public scorecard reads no rate under its own minimum.
-3/4 Exact-lookback replay saved to C:\Users\motah\Documents\Codex\private\SpicyStock\run6-evidence\backtest\lookback-260\summary.txt
+3/4 Exact-lookback replay saved to <private folder>\lookback-260\summary.txt

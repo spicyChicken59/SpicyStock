@@ -3984,13 +3984,15 @@ and one unread name. The branch was restarted from that tip. This checkpoint's
 PR carries documentation and evidence only: no code, no run, no mail, no
 dispatch, nothing under `src/` or `tools/`.
 
-**`main` is red on the page job since the merge, and not from #100.**
-`tools/continuity_check.mjs` drives its journey over two fixture records but
-its recovery step searches the LIVE `docs/history` index of the checkout and
-clicks the 11 September record by a hard-coded blob (`2c5ec387…`). The public
-history keeps a 21-calendar-day window; 11 September left it between the 2 and
-5 October publications, and a `GITHUB_TOKEN` push triggers no workflow, so the
-merge of #100 was the first CI run to see the new index. Pytest is green on the
+**`main` is red on the page job since the merge, and the likely cause is not
+#100's.** The job log's assertion is `control exists: [data-history-inspect=
+"2c5ec387…"]` in `tools/continuity_check.mjs`. The mechanism, read from the
+check's source and not reproduced here: the check drives its journey over two
+fixture records but its recovery step searches the LIVE `docs/history` index
+of the checkout and clicks the 11 September record by a hard-coded blob; the
+public history keeps a 21-calendar-day window, 11 September left it between
+the 2 and 5 October publications, and a `GITHUB_TOKEN` push triggers no
+workflow, so the merge of #100 was the first CI run to see the new index. Pytest is green on the
 same commit. It is the shape this file names worst, a test whose answer depends
 on the date, and it fails every pull request's page job until the check
 resolves the identity from the index it just searched or serves a frozen index
@@ -4000,32 +4002,37 @@ to four hours after its slot on both nights, the records landing at 9 and
 
 **The owner's backtest, recorded**
 (`docs/input-truthfulness/2026-10-06-backtest-results.md`, the two summaries
-verbatim beside it). The exact lookback: 28 sessions, 15 YELLOW then 13 RED,
-the records' own split; the production policy wrote 16 A+ tickets, 6 settled,
+verbatim beside it). The exact lookback: 28 sessions, 15 YELLOW and 13 RED,
+the counts the records' own history implied; the production policy wrote 16 A+ tickets, 6 settled,
 3/3, +1.94R. The 130-session lookback, equivalence PASS over 28 sessions with 0
 differences: 158 sessions from 10 February, **100 YELLOW, 58 RED, 0 GREEN**;
 99 A+ tickets at half size, 44 settled, 16/27/1, win rate 0.36, mean +0.08R,
-median −0.09R, net +3.72R (about $93 at the configured $25 half-size risk), 42
-uncertain, 13 not filled, SPY +0.37% over the same windows. The counterfactual
+median −0.09R, net +3.72R (at most about $46: the $25 YELLOW budget is halved
+again by the stop-risk rule on every stop-constrained ticket), 42 uncertain, 13 not filled, SPY +0.37% over the same windows. The counterfactual
 without the gate: 153 tickets, 69 settled, +17.40R; its RED nights 25 settled,
 7/18, +1.14R; A grade 23 settled +10.22R against A+ 46 settled +7.18R. The
-first readable rate the project has had, within noise and costs of zero; the
-reader NOT RUN, the universe the archive's later membership, daily-bar fills.
+first readable rate the mechanical policy has had, its own dispersion and costs
+unmeasured without the per-row file; the reader NOT RUN, the universe the archive's later membership, daily-bar fills.
 
 **The confirmatory read** (`2026-10-06-signal-outcomes-confirmatory.md`): the
 frozen code over nineteen publications under a spec that differs from the
-frozen one by two appended entries only (SHA `58b6d84e…`, the diff recorded).
-Exploratory admitted now 267 settled, −0.189, night CI [−0.431, −0.049]; the
-1 October night's 50 settled are 0 wins. Confirmatory admitted 132 rows, 5
-settled all at −1.0R on their first session, 81 pending; the reader's own A/A+
+frozen one by two appended entries only (SHA `688d552f…`, the byte-level diff
+retained as `spec-diff.txt`). Exploratory admitted now 267 settled, −0.189,
+night CI [−0.431, −0.049]: the 1 October night's 50 settled are 0 wins, and
+fifteen late-September tickets that settled since are 13 wins, +15.10R. **The
+re-read found a bias the first report did not name: a night read before its
+fifth session leans toward losses** (29 September −0.425R over 27 settled on
+2 October, −0.038R over 39 now). Confirmatory admitted 132 rows, 5 settled all
+at −1.0R on their first session, 81 pending; the reader's own A/A+
 admissions are two rows, DAC on 1 and 2 October, one uncertain, one holding.
 Nothing confirmatory is readable before the 9 October publication.
 
 **Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
 publications only, each extension committed with its hash and diff. Fix: the
-continuity check's dated identity. Defer to Astra: the A-grade-on-YELLOW
-question the counterfactual raises (23 settled is not a tuning input); GREEN,
-unobserved in 158 sessions. Omit: any rule change on these numbers; a second
+continuity check's dated identity. Record, not defer: the counterfactual's
+A/A+ split (23 and 46 settled, grade not split by regime) is not a tuning input
+and raises no method question at these counts; GREEN, unobserved in 158
+sessions. Omit: any rule change on these numbers; a second
 acquisition; an edge claim.
 
 **Next action.** Re-run the study after the 8 October publication (1 October's

@@ -117,3 +117,14 @@ either is a new spec. The owner's run of `tools/historical_backtest.py` over
 the run-6 archive is the complementary reading: the portfolio-capped decision
 over a year of bars, including the YELLOW stretch of August 2026 that no
 public record carries as signals.
+
+## Addendum, 6 October 2026
+
+The [re-read over nineteen publications](2026-10-06-signal-outcomes-confirmatory.md)
+found a bias this report did not name: a night read before its tickets' fifth
+session leans toward losses, because a stop settles on its first bad day and a
+winner at its exit or its horizon. The 25 to 30 September nights above had not
+reached their fifth session when this was written; the 29 September night read
+−0.425R over 27 settled here and −0.038R over 39 four sessions later. Every
+stratum is still negative at the re-read, and the admitted stratum still loses
+least; the night-level numbers above are the ones to re-read as nights complete.

@@ -1,5 +1,5 @@
 SpicyStock signal-outcome study (signal-outcomes-v1) — counterfactual: no reader, no regime gate, no slot
-spec 58b6d84ef97a; frozen through 2026-10-01; newest session 2026-10-05
+spec 688d552fc9dd; frozen through 2026-10-01; newest session 2026-10-05
 publications 19 (17 first-of-session); bars 60964 over 2221 symbols; revisions 2
 [ALL ROWS] rows 7128: settled 1803, open 276, pending 552, uncertain 2241, not_filled 806, unmeasured 77, unreadable 0, unscored 0, no_ticket 742, plan_error 0, basis_mismatch 631
   settled 1803: wins 308 losses 1467 breakeven 28; sum R -645.47; mean R -0.358; median R -0.69; scorecard rate readable=True (min 20)

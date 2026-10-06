@@ -677,9 +677,10 @@ R only). Both the storage and the output must sit outside any Git checkout. It
 makes no provider, model or network call, and it is not an edge claim: the
 summary reads no rate under the scorecard's own minimum.
 Its first real result -- the owner's run of 6 October 2026 over the run-6
-archive, 158 sessions with the equivalence check PASS -- is recorded from the two
-summaries the owner pasted in `docs/input-truthfulness/2026-10-06-backtest-results.md`;
-the per-row files stay on the owner's machine.
+archive, 158 sessions with the equivalence check reported PASS -- is recorded as
+pasted, from the two summaries, in
+`docs/input-truthfulness/2026-10-06-backtest-results.md`; the per-row files stay
+on the owner's machine.
 
 Its sibling over the public records is `python tools/signal_outcomes.py --spec
 <spec.json> --output <dir>`: every burst row in the first publication of each
