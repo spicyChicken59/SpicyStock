@@ -21,7 +21,7 @@ from tools import historical_backtest as backtest
 
 S1, S2, S3 = "2026-03-02", "2026-03-03", "2026-03-04"
 #: the names the private file carries; none may reach the output
-TICKERS = ("QQZ", "WXV", "KLM", "PRT", "ZZT", "RDN", "LST")
+TICKERS = ("QQZ", "WXV", "KLM", "PRT", "ZZT", "RDN", "LST", "NMO")
 #: the prices the private file carries, as the JSON text spells them
 PRICES = ("124.21", "126.47", "121.42", "505.88", "134.15", "149.05", "129.18", "99.99")
 PRODUCTION, UNGATED = backtest.PRODUCTION, backtest.NO_GATE
@@ -62,8 +62,9 @@ def night(session: str, reg: dict, counts: dict, *, gate: bool, eligible: int, t
           cut: dict, slots_held: int, candidates: list[dict]) -> dict:
     """``measure()``'s row with ``decide()``'s fields on top."""
     return {"session": session, "with_bars": 4001, "stale": 3, "gapped": 1, "unreadable": 0, "price_excluded": 7,
-            "regime": reg, "scan_errors": 0, **counts, "gate": gate, "eligible_plans": eligible,
-            "trades": list(trades), "cut": dict(cut), "slots_held": slots_held, "candidates": candidates}
+            "regime": copy.deepcopy(reg), "scan_errors": 0, **copy.deepcopy(counts), "gate": gate,
+            "eligible_plans": eligible, "trades": list(trades), "cut": dict(cut), "slots_held": slots_held,
+            "candidates": copy.deepcopy(candidates)}
 
 
 #: the three nights' measurements: the same market read for both gates
@@ -93,19 +94,21 @@ def build_private() -> dict:
               candidates=production_nights[0]["candidates"]),
         night(S2, *MEASURED[S2], gate=False, eligible=1, trades=["RDN"], cut={}, slots_held=3,
               candidates=[candidate("RDN", "A", True, buy)]),
-        night(S3, *MEASURED[S3], gate=False, eligible=4, trades=["QQZ", "KLM", "PRT", "LST"], cut={}, slots_held=2,
-              candidates=production_nights[2]["candidates"]),
+        night(S3, *MEASURED[S3], gate=False, eligible=5, trades=["QQZ", "KLM", "PRT", "LST", "NMO"], cut={},
+              slots_held=2, candidates=production_nights[2]["candidates"] + [candidate("NMO", "A", True, buy)]),
     ]
     production_rows = [row("QQZ", S1, "A+", "yellow", "settled", r=1.68, status="exit"),
                        row("WXV", S1, "A", "yellow", "settled", r=-0.80, status="stopped"),
                        row("QQZ", S3, "A+", "yellow", "uncertain", status="uncertain", uncertainty="stop_sequence"),
                        row("KLM", S3, "A+", "yellow", "settled", r=0.0, status="expired"),
                        row("PRT", S3, "A+", "yellow", "settled", r=-1.0, status="stopped")]
-    ungated_rows = (production_rows[:2]
+    # the two gates are two records: the same walk, but no row shared between them
+    ungated_rows = (copy.deepcopy(production_rows[:2])
                     + [row("ZZT", S1, "A", "yellow", "not_filled", status="not_filled"),
                        row("RDN", S2, "A", "red", "uncertain", status="uncertain", uncertainty="trigger_timing")]
-                    + production_rows[2:]
-                    + [row("LST", S3, "A+", "yellow", "pending")])
+                    + copy.deepcopy(production_rows[2:])
+                    + [row("LST", S3, "A+", "yellow", "pending"),
+                       row("NMO", S3, "A", "yellow", "settled", r=0.26, status="exit")])
     nights = {PRODUCTION: production_nights, UNGATED: ungated_nights}
     rows = {PRODUCTION: production_rows, UNGATED: ungated_rows}
     outcomes = {}
@@ -172,7 +175,7 @@ def test_every_night_row_copies_the_regime_and_the_counts_and_counts_its_tickets
             assert out["tickets"] == len(src["trades"])
             assert "trades" not in out and "candidates" not in out and out["reason"] is None
     assert [r["tickets"] for r in timeline["gates"][PRODUCTION]] == [2, 0, 3]
-    assert [r["tickets"] for r in timeline["gates"][UNGATED]] == [3, 1, 4]
+    assert [r["tickets"] for r in timeline["gates"][UNGATED]] == [3, 1, 5]
     assert rows_of(timeline, PRODUCTION)[S2]["verdict"] == "red" and rows_of(timeline, PRODUCTION)[S2]["ratio_10d"] == 0.86
 
 
@@ -180,17 +183,15 @@ def test_every_night_row_copies_the_regime_and_the_counts_and_counts_its_tickets
 def test_each_copied_field_is_read_off_the_night_not_assumed(private, tmp_path, key):
     """Prove the copy is live: move the night's value and the row follows."""
     mutated = copy.deepcopy(private)
+    in_regime = key in tl.REGIME_FIELDS
     for gate in backtest.GATES:
-        holder = mutated["nights"][gate][0]["regime"] if key in tl.REGIME_FIELDS else mutated["nights"][gate][0]
+        holder = mutated["nights"][gate][0]["regime"] if in_regime else mutated["nights"][gate][0]
         before = holder[key]
-        holder[key] = ({"Z": 1} if isinstance(before, dict) else "moved" if isinstance(before, str)
-                       else before + 1)
+        holder[key] = {"Z": 1} if isinstance(before, dict) else "moved" if isinstance(before, str) else before + 1
+    moved = mutated["nights"][PRODUCTION][0]["regime"] if in_regime else mutated["nights"][PRODUCTION][0]
+    original = private["nights"][PRODUCTION][0]["regime"] if in_regime else private["nights"][PRODUCTION][0]
     out = rows_of(tl.read(write(tmp_path, mutated)), PRODUCTION)[S1]
-    assert out[key] == mutated["nights"][PRODUCTION][0]["regime" if key in tl.REGIME_FIELDS else "session"
-                                                        if False else key] if key not in tl.REGIME_FIELDS \
-        else mutated["nights"][PRODUCTION][0]["regime"][key]
-    assert out[key] != private["nights"][PRODUCTION][0]["regime" if key in tl.REGIME_FIELDS else key][key] \
-        if key in tl.REGIME_FIELDS else out[key] != private["nights"][PRODUCTION][0][key]
+    assert out[key] == moved[key] != original[key]
 
 
 def test_the_settled_block_is_the_hand_arithmetic_over_the_nights_own_rows(timeline):
@@ -211,6 +212,13 @@ def test_the_settled_block_is_the_hand_arithmetic_over_the_nights_own_rows(timel
     ungated = rows_of(timeline, UNGATED)[S1]
     assert ungated["settled"] == first["settled"] and ungated["tickets"] == 3
     assert ungated["buckets"]["not_filled"] == 1 and ungated["buckets"]["settled"] == 2
+    # the ungated third night settles three: KLM 0.0, PRT -1.0, NMO +0.26.
+    #   sum = 0.0 + (-1.0) + 0.26 = -0.74; mean = -0.74 / 3 = -0.24666... -> -0.247 at three places
+    #   (-0.25 at two, which is why the mean keeps one place more than the sum); median of three = 0.0
+    last = rows_of(timeline, UNGATED)[S3]
+    assert last["r"] == [-1.0, 0.0, 0.26]
+    assert last["settled"] == {"n": 3, "wins": 1, "losses": 1, "breakeven": 1,
+                               "sum_r": -0.74, "mean_r": -0.247, "median_r": 0.0}
 
 
 def test_a_changed_r_moves_the_nights_block_and_nothing_else(private, tmp_path, timeline):
@@ -239,7 +247,7 @@ def test_an_uncertain_row_is_counted_by_bucket_and_by_kind_and_scored_nowhere(ti
     assert red["settled"] == {"n": 0, "wins": 0, "losses": 0, "breakeven": 0,
                               "sum_r": None, "mean_r": None, "median_r": None}
     last = rows_of(timeline, UNGATED)[S3]
-    assert last["buckets"]["pending"] == 1 and last["tickets"] == 4 and sum(last["buckets"].values()) == 4
+    assert last["buckets"]["pending"] == 1 and last["tickets"] == 5 and sum(last["buckets"].values()) == 5
 
 
 def test_a_night_with_no_plan_has_an_empty_settled_block_and_zero_buckets(timeline):
@@ -419,7 +427,7 @@ def test_the_cli_writes_the_file_and_prints_the_counts(path, tmp_path, capsys):
     printed = capsys.readouterr().out
     assert printed.count("\n") == 1
     assert printed == ("timeline backtest-timeline-v1 over backtest.json: production: 3 sessions, 5 tickets, 4 settled; "
-                       f"no_regime_gate: 3 sessions, 8 tickets, 4 settled; written {out}\n")
+                       f"no_regime_gate: 3 sessions, 9 tickets, 5 settled; written {out}\n")
     assert tl.main(["--backtest", str(path)]) == 0
     assert capsys.readouterr().out == expected
     assert path.read_text(encoding="utf-8") == backtest._encode(build_private()), "the private file is read, never rewritten"

@@ -29,6 +29,7 @@ import { checkReaderCoverage } from './reader_coverage_cases.mjs';
 import { checkPageChartKeyboard } from './chart_keyboard_cases.mjs';
 import { checkHistoricalJourneys } from './historical_cases.mjs';
 import { checkWaitExplanations } from './wait_explanation_cases.mjs';
+import { checkFindings } from './findings_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -52,7 +53,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough/findings). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -3709,6 +3710,7 @@ async function main() {
     if (runs('inputs')) await checkInputCoverage(browser, base);
     if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
     if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
+    if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
   } finally {
     await browser.close();
     server.close();
