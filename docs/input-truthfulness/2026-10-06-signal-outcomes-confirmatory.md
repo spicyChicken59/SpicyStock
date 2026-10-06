@@ -16,7 +16,7 @@ Every rule, threshold, estimand and the freeze date are therefore the frozen
 ones, and the frozen file is untouched. Python 3.12.3, pandas 2.2.3, exit 0,
 10 seconds of wall time, no provider, model or network call; the command,
 interpreter, exit code and timing are in
-[`run.log`](2026-10-06-signal-outcomes-confirmatory-evidence/run.log). The
+[`run-record.txt`](2026-10-06-signal-outcomes-confirmatory-evidence/run-record.txt). The
 summary is
 [verbatim](2026-10-06-signal-outcomes-confirmatory-evidence/summary.txt) and
 every row is in
