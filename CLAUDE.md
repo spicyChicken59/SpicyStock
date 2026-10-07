@@ -4341,11 +4341,12 @@ against 0. 22 September stays degraded (no reading accepted), 6 October too
 (the credit). Not one night would be degraded on coverage.
 
 **The review, worked.** A workflow by execution over the first pushed tip, six
-dimensions, two skeptics per finding: 39 findings, none refuted. Thirty-three
-were upheld by both skeptics and one by the only skeptic that finished. The
-five test holes were never verified (the sandbox's disk filled under the
-review's own copies of the tree); they were fixed as if upheld, and each is
-proved by a mutant of its own. The highs were sentences:
+dimensions, two skeptics per finding: 39 findings. Thirty-five were upheld by
+both skeptics and two by the only skeptic of theirs that finished (the disk
+filled under the review's own copies of the tree). The skeptics of the last
+two test holes ran after the fixes were pushed: they found both closed at
+`728e184c` and the review's own mutants killed there, an independent check of
+the fix rather than of the finding. The highs were sentences:
 - "so the run is not degraded" on a night degraded for another reason;
 - "each ending on the previous session" when one frame ended two back;
 - the problem sentence on a night whose only gap was a late match;
@@ -4369,7 +4370,15 @@ the #103 merge, so this PR's first CI run was cancelled at the cap with
 two lanes over one browser: lane A every suite that writes the smoke's shared
 scratch records or reads the clipboard (Chromium shares it between contexts),
 one after another; lane B the self-contained modules. No suite was dropped or
-changed (the calls diffed equal); each printed line carries its lane.
+changed (the calls diffed equal); each printed line carries its lane. CI's
+first two-lane run took the smoke's step from 14 m 38 s to 9 m 30 s, and found
+one suite that had leaned on the clock: `refresh` raced a 900 ms slow answer
+against fixed pauses, and with the other lane loading the runner, the click on
+the re-rendered control landed after the slow answer, so 7 checks failed. The
+slow answer is held now until the check releases it, every press waits for its
+request to be answered, and the page counts the answers it has read before
+the order is asserted. The sequence-guard mutant still fails it (6 checks), and
+three loaded runs at once pass 1149/1149.
 
 **Measured** (this sandbox, Python 3.12.3, pandas 2.2.3, Chromium through
 Playwright 1.56.1): 3026 tests collected, 2992 passed and 34

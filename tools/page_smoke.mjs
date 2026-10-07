@@ -3294,15 +3294,34 @@ async function checkRefresh(browser, base, full) {
   const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
   const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
   const said2 = (page) => text(page, '#refresh-said');
-  const press = async (page) => { await page.locator('#check-updates').click(); await page.waitForTimeout(450); };
-  // whatever the route is told to answer with next; null aborts the request
+  // A check is waited for by what it does, never by the clock: the smoke runs
+  // in two lanes, and a loaded runner can take longer than any fixed pause.
+  // `served` counts the requests the route has answered; a check is over when
+  // its request has been answered and the control has left its busy state.
+  const until = async (ok, what, ms = 15000) => {
+    const t0 = Date.now();
+    while (!(await ok())) {
+      if (Date.now() - t0 > ms) throw new Error(`refresh: timed out waiting for ${what}`);
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  };
+  const answered = async (page, before) => {
+    await until(() => (page.__served || 0) > before, 'the check to be answered');
+    await page.waitForFunction(() => { const b = document.getElementById('check-updates'); return !b || b.getAttribute('data-check') !== 'busy'; }, null, { timeout: 15000 });
+  };
+  const press = async (page) => { const before = page.__served || 0; await page.locator('#check-updates').click(); await answered(page, before); };
+  const checkNow = async (page) => { const before = page.__served || 0; await page.evaluate(() => window.SCStock.checkUpdates()); await answered(page, before); };
+  // whatever the route is told to answer with next; null aborts the request,
+  // and a `hold` keeps it in flight until the check releases it
   const serveWith = async (page, url, box) => {
     await page.route(url, async (route) => {
-      const answer = box.body;
-      if (answer === null) return route.abort('failed');
-      if (box.delayMs) await new Promise((r) => setTimeout(r, box.delayMs));
-      return route.fulfill({ status: box.status || 200, contentType: 'application/json',
-        body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+      const answer = box.body, hold = box.hold;
+      if (hold) await hold;
+      try {
+        if (answer === null) await route.abort('failed');
+        else await route.fulfill({ status: box.status || 200, contentType: 'application/json',
+          body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+      } finally { page.__served = (page.__served || 0) + 1; }
     });
   };
 
@@ -3358,19 +3377,35 @@ async function checkRefresh(browser, base, full) {
     eq(`${what}: with the reader still where they were`, await attr(page, '#detail', 'data-selected'), wasStock);
   }
 
-  // ---- out of order: a slow first answer cannot land over a fast second
+  // ---- out of order: a slow first answer cannot land over a fast second.
+  // The first answer is HELD until the second has been applied, so the order
+  // of arrival is this check's to set and never the runner's speed; the page
+  // counts the answers it has read, so the slow one is asserted only after
+  // the page has actually received it.
   {
-    box.body = next; box.delayMs = 900;
+    await page.evaluate(() => {
+      const f = window.fetch; window.__answersRead = 0;
+      window.fetch = (...a) => f(...a).then((r) => {
+        const read = r.text.bind(r);
+        r.text = () => read().then((x) => { setTimeout(() => { window.__answersRead++; }, 0); return x; });
+        return r;
+      });
+    });
+    let release; box.body = next; box.hold = new Promise((r) => { release = r; });
+    const before = page.__served || 0;
     await page.locator('#check-updates').click();
-    await page.waitForTimeout(120);
+    await page.waitForFunction(() => document.getElementById('check-updates').getAttribute('data-check') === 'busy', null, { timeout: 15000 }).catch(() => {});
     eq('a check in flight says so on the control', await attr(page, '#check-updates', 'data-check'), 'busy');
     check('and the control is still pressable, so a hanging check is not a dead end',
       !(await page.locator('#check-updates').isDisabled()), 'the control went dead while checking');
     // the second press answers at once, with the file's own bytes, so its
     // outcome ("unchanged") is unmistakably different from the slow one's
-    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.delayMs = 0;
+    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.hold = null;
     await page.locator('#check-updates').click();
-    await page.waitForTimeout(1600);
+    await answered(page, before);
+    release();
+    await until(() => (page.__served || 0) >= before + 2, 'the held answer to be served');
+    await page.waitForFunction(() => window.__answersRead >= 2, null, { timeout: 15000 });
     check('the answer that stands is the newest press, not the first to arrive',
       (await said2(page)).startsWith('No newer record'), await said2(page));
     eq('and the slow answer was dropped rather than applied', await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
@@ -3397,8 +3432,7 @@ async function checkRefresh(browser, base, full) {
         const b = document.getElementById('check-updates').getBoundingClientRect();
         return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
       }), true);
-    await page.evaluate(() => window.SCStock.checkUpdates());
-    await page.waitForTimeout(500);
+    await checkNow(page);
     check('a newer record is loaded', (await said2(page)).startsWith('A newer record loaded'), await said2(page));
     eq('the comparison is closed rather than remapped onto other stocks', await page.evaluate(() => document.getElementById('compare').open), false);
     check('and the reader is told why, in the same breath',
@@ -3462,8 +3496,7 @@ async function checkRefresh(browser, base, full) {
         const b = document.getElementById('check-updates').getBoundingClientRect();
         return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
       }), true);
-    await p2.evaluate(() => window.SCStock.checkUpdates());
-    await p2.waitForTimeout(500);
+    await checkNow(p2);
     eq('and is still open, on the same saved identity, after it',
       [await p2.evaluate(() => document.getElementById('saved').open), await attr(p2, '#saved [data-saved-id]', 'data-saved-id')], [true, id]);
     eq('older-and-revision page errors', e2, []);
