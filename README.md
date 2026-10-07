@@ -33,8 +33,9 @@ October 2026 added the first outcomes on real bars, none of them an edge
 claim. Run 6 reproduced the red reading of 24 and 25 September on a later
 retrieval of every intended stock (10-session ratios 0.93 and 0.89 against
 the published 0.94 and 0.89); the signal-outcome study, which runs the
-production ticket rules over every archived burst with the regime gate, the
-slot cap and the reader removed, found every stratum losing on the red
+production plan rules over every archived burst with the regime gate, the
+slot cap and the reader removed (and, outside the admitted stratum, the
+grade's or the veto's own refusal), found every stratum losing on the red
 nights -- the admitted stratum's exploratory rows −0.235R per settled ticket
 over 202 on 2 October and −0.189R over 267 on the 6 October re-read, the
 whole stratum −0.204R over 272 with the five confirmatory tickets settled
@@ -322,23 +323,38 @@ does not carry, falls back to Explore and says so.
    as it loads, **What historical validation establishes** replays the record
    night by night from `docs/historical-findings.json` (`docs/app-findings.js`,
    `SCStock.findings`): a stepper over every published night the study carries, the
-   10-session ratio the gate read on every session the records know with the
-   two thresholds of its ratio rule drawn and named at the axis (a key says
-   that green also needs every other breadth rule quiet), and under it every
-   settled R of that night's counterfactual tickets by stratum on a compressed
-   axis with the night's mean -- then the owner's backtest, the run-6 check of
-   the red reading, the "Read it as" caveats and the 28 September frozen
-   cases. Every figure it prints is a field of that file at the precision the
-   file writes it (a mean at three places, a sum at two); its own arithmetic
-   is a night's place in the list, the length of a list the file carries,
-   the comparisons that choose a sentence (every stratum under zero, only red
-   nights in the record) and the drawing. It reads no record, no
-   clock and no storage, checks the file's shape before it draws and says in
-   one sentence what it refused; both historical files are fetched only when
-   the Record view is first shown, and a page over a fixture says the replay
-   reads the public findings. On a phone a tap within a finger of more than
-   one night asks which, nearest first, and the list of nights is the precise
-   way to one.
+   10-session ratio on every session the records know -- the gate's own
+   reading on a published night, a later record's history on any other, and a
+   later history that reads a night's counts or ratio differently named beside
+   it -- with the two thresholds of its ratio rule drawn and named at the axis
+   (a key says that green also needs every other breadth rule quiet) and a
+   dotted line at the study's freeze; under it every settled R of that night's
+   counterfactual tickets by stratum on a compressed axis with the night's
+   mean. Each stratum's caption says what its counterfactual removed: the gate
+   and the reader for A-quality, and for the graded B, C and skip or vetoed
+   bursts the grade's or the veto's own refusal too. A night's mean is printed
+   and drawn as a rate only from the record's minimum of settled tickets
+   (`record.SCORECARD_MIN_PLANS`, 20); under it the night shows its count and
+   its sum and its mark is hollow. A night whose hold is over can still move
+   while rows a later record can settle remain, and says so; every hold word
+   is dated by the records the study read. Three table twins carry the nights,
+   every settled R and the market. Then the owner's backtest, the run-6 check
+   of the red reading, the "Read it as" caveats -- the exploratory reading
+   pooled over the red nights only, the confirmatory split from the study's own
+   figure against its minimum, the nights left out counted -- and the 28
+   September frozen cases. Every figure it prints is a field of that file at
+   the precision the file writes it (a mean at three places, a sum at two);
+   its own arithmetic is a night's place in the list, the length of a list the
+   file carries, the comparisons that choose a sentence (a count against the
+   minimum, every readable stratum under zero, a night's verdict) and the
+   drawing. It reads no record, no clock and no storage, checks the file's
+   shape before it draws and says in one sentence what it refused; both
+   historical files are fetched only when the Record view is first shown, say
+   they are loading while in flight and end in a sentence if they stall, and a
+   page over a fixture says the replay reads the public findings. On a phone a
+   tap within a finger of more than one night asks which, nearest first, and
+   stops Play; the list of nights is the precise way to one, and a narrow chart
+   shows no tooltip because the caption and the tables carry the values.
 5. **Market.** Bonde's Market Monitor over usable fetched stock frames for the measured session:
    up and down 4% on volume, the 5- and 10-day ratios, the
    25%-in-a-quarter and 25%/50%-in-a-month counts, the share above the
@@ -753,8 +769,9 @@ owner's two pasted backtest summaries parsed by the exact line grammar
 `historical_backtest.summary_text()` emits, and the pasted run-6 summary
 with its public receipt. A difference exits 1, as `make_fixture.py --check`
 does; a line the grammar does not know is a refusal, never a skipped
-number; and a field name the secret scan would read as a credential is
-refused before anything is written.
+number, and so are a missing or repeated line, a line before the block it
+belongs to and a printed bool that is not True or False; and a field name the
+secret scan would read as a credential is refused before anything is written.
 
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per

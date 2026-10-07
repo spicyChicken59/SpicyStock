@@ -109,12 +109,16 @@ def source(path: Path, **extra) -> dict:
 # --------------------------------------------------------------- market ----
 
 
+LATER_FIELDS = ("up4", "down4", "ratio_10d")   # the fields of a session row the page prints
+
+
 def market_series(pubs: list[dict], nights: dict[str, dict]) -> dict:
     """One row per session the records know, oldest first. A session the
     gate read (a publication night) carries what THAT night's own first
     publication read; a session no publication measured carries the newest
-    publication's history of it. Each row names its source, and a night
-    whose later histories re-measured it says so."""
+    publication whose history carries it. Each row names its source, and a
+    night a later history reads differently -- its counts or its ratio --
+    carries that later reading beside its own."""
     ordered = sorted(pubs, key=lambda p: (p["session"], p["data"]["run"].get("published_at") or ""))
     thresholds = None
     history: dict[str, dict] = {}
@@ -135,17 +139,18 @@ def market_series(pubs: list[dict], nights: dict[str, dict]) -> dict:
             row = {"date": day, "up4": night["regime"]["up4"], "down4": night["regime"]["down4"],
                    "ratio_10d": night["regime"]["ratio_10d"], "source": night["commit"][:8],
                    "basis": "publication", "verdict": night["regime"]["verdict"]}
-            if later and later["ratio_10d"] != row["ratio_10d"]:
-                row["later_ratio_10d"] = later["ratio_10d"]
-                row["later_source"] = later["source"]
+            # a later history that reads any printed field of the night differently
+            # is named beside it, the counts as well as the ratio
+            if later and any(later[k] != row[k] for k in LATER_FIELDS):
+                row["later"] = {**{k: later[k] for k in LATER_FIELDS}, "source": later["source"]}
         else:
             row = dict(later, verdict=None)
         sessions.append(row)
     return {"from": sessions[0]["date"], "through": sessions[-1]["date"], "thresholds": thresholds,
             "sessions": sessions,
             "basis": "A publication night carries the ratio and counts its own first publication read; "
-                     "any other session carries the newest publication's history of it, and a night a later "
-                     "history re-measured names the later value beside its own."}
+                     "any other session carries the newest publication's history of it, and a night whose counts "
+                     "or ratio a later history reads differently names the later reading beside its own."}
 
 
 # --------------------------------------------------------------- nights ----
@@ -161,6 +166,10 @@ def settled_block(rs: list[float]) -> dict:
 
 
 UNTICKETED = ("no_ticket", "plan_error")   # the two buckets with no ticket the rules wrote
+# the buckets a later record can still move: a hold still running, a ticket not yet
+# triggered, bars missing, or a signal bar the gathered records do not reproduce yet.
+# A night whose hold is over is FINAL only when none of its rows sits in one of these.
+MOVABLE = ("open", "pending", "unmeasured", "basis_mismatch")
 
 
 def stratum_of_night(rows: list[dict]) -> dict:
@@ -170,14 +179,16 @@ def stratum_of_night(rows: list[dict]) -> dict:
     refused and a ``plan_error`` one whose plan could not be formed, so every
     other row carries a ticket the rules wrote -- the ``basis_mismatch`` rows
     included, whose tickets the study set aside unwalked because the bars do
-    not reproduce the signal's own close. A bucket the study did not name is
-    a refusal, never a dropped row."""
+    not reproduce the signal's own close. ``movable`` counts the rows a later
+    record can still move (``MOVABLE``). A bucket the study did not name is a
+    refusal, never a dropped row."""
     buckets = Counter(r["bucket"] for r in rows)
     unknown = sorted(set(buckets) - set(BUCKETS))
     if unknown:
         raise FindingsError(f"a bucket the study does not name: {unknown}")
     rs = sorted(r["r"] for r in rows if r["bucket"] == "settled")
     return {"rows": len(rows), "tickets": sum(1 for r in rows if r["bucket"] not in UNTICKETED),
+            "movable": sum(buckets.get(b, 0) for b in MOVABLE),
             "buckets": {b: buckets.get(b, 0) for b in BUCKETS}, "settled": settled_block(rs), "r": rs}
 
 
@@ -186,6 +197,17 @@ def night_rows(study: dict) -> dict[str, list[dict]]:
     for r in study["rows"]:
         by[r["session"]].append(r)
     return by
+
+
+def phase_of(session: str, study: dict) -> str:
+    """The spec's freeze rule: a session up to the freeze is exploratory."""
+    return "exploratory" if session <= study["frozen_through_session"] else "confirmatory"
+
+
+def moved(first_rows: list[dict], now_rows: list[dict]) -> int:
+    """How many of the first read's rows the re-read puts in another bucket or at another R."""
+    now = {r["ticker"]: (r["bucket"], r.get("r")) for r in now_rows}
+    return sum(1 for r in first_rows if now.get(r["ticker"]) != (r["bucket"], r.get("r")))
 
 
 def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
@@ -204,7 +226,7 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
         if len(horizons) > 1:
             raise FindingsError(f"{p['session']}: one night, {len(horizons)} horizons")
         horizon = horizons.pop() if horizons else None
-        phases = {r["phase"] for r in rows}
+        phases = {r["phase"] for r in rows} | {phase_of(p["session"], study)}
         if len(phases) != 1:
             raise FindingsError(f"{p['session']}: one night, {len(phases)} phases")
         strata = {s: stratum_of_night([r for r in rows if r["stratum"] == s]) for s in STRATA}
@@ -225,30 +247,37 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
             "reads": d["run"].get("reads"),
             "tickets_published": len(d.get("trades") or []),
             "phase": phases.pop(), "horizon": horizon,
-            "complete": bool(horizon) and horizon <= study["newest_session"],
+            # the hold is over: every ticket has had its sessions, or the night had no row to hold.
+            # A complete night can still move while a stratum has a movable row.
+            "complete": not rows or (bool(horizon) and horizon <= study["newest_session"]),
             "strata": strata, "all": stratum_of_night(rows),
         }
         if p["session"] in rows_first:
+            then = rows_first[p["session"]]
+            then_admitted = [r for r in then if r["stratum"] == "admitted"]
             night["first_read"] = {"as_of": first["newest_session"],
                                    # had every ticket of the night had its hold by the first read?
                                    "horizon_passed": bool(horizon) and horizon <= first["newest_session"],
-                                   "admitted": stratum_of_night([r for r in rows_first[p["session"]]
-                                                                 if r["stratum"] == "admitted"])["settled"],
-                                   "all": stratum_of_night(rows_first[p["session"]])["settled"]}
+                                   "admitted": stratum_of_night(then_admitted)["settled"],
+                                   "all": stratum_of_night(then)["settled"],
+                                   # the rows the re-read moved: after the hold, only bars can move one
+                                   "moved": {"admitted": moved(then_admitted, rows),
+                                             "all": moved(then, rows)}}
         out.append(night)
     return out
 
 
+# the rule numbers the page's captions read, and only those: the ratio thresholds
+# come from the market block, where the gate itself recorded them
 RULE_FIELDS = (("record", "open_plan_sessions"), ("record", "scorecard_min_plans"), ("pipeline", "trade_grades"),
-               ("pipeline", "yellow_grades"), ("pipeline", "max_reads"), ("breadth", "size_multiplier"),
-               ("breadth", "red_ratio_10d"), ("breadth", "yellow_ratio_10d"), ("breadth", "burst_pct"),
-               ("breadth", "ratio_long_sessions"), ("breadth", "ratio_short_sessions"))
+               ("pipeline", "yellow_grades"), ("breadth", "size_multiplier"), ("breadth", "burst_pct"),
+               ("breadth", "ratio_long_sessions"))
 
 
 def rules_of(pubs: list[dict]) -> dict:
-    """The few rule numbers the page's captions name, read off the records'
-    own archived rules and held equal across every publication the study
-    read: a caption never types a strategy number."""
+    """The rule numbers the page's captions name, read off the records' own
+    archived rules and held equal across every publication the study read:
+    a caption never types a strategy number."""
     out: dict = {}
     for p in pubs:
         for module, name in RULE_FIELDS:
@@ -257,6 +286,26 @@ def rules_of(pubs: list[dict]) -> dict:
             if name in found and found[name] != value:
                 raise FindingsError(f"{p['commit'][:8]}: rules.{module}.{name} moved: {value} after {found[name]}")
             found[name] = value
+    return out
+
+
+def reading_of(nights: list[dict], study: dict) -> dict:
+    """The pooled reading the page's "Read it as" prints, split by the spec's
+    phases and kept to the RED nights, the only nights whose counterfactual
+    tickets the gate refused in full: a yellow night published some of its
+    A-quality tickets and a green night all of them, so their tickets measure
+    no refusal. Each stratum is pooled from the nights' own settled R, and the
+    nights left out are counted, never dropped silently."""
+    out = {"freeze": study["frozen_through_session"], "as_of": study["newest_session"], "phases": {}}
+    for phase in ("exploratory", "confirmatory"):
+        these = [n for n in nights if n["phase"] == phase]
+        red = [n for n in these if n["regime"]["verdict"] == "red"]
+        block = {"nights": len(these), "red_nights": len(red),
+                 "from": these[0]["session"] if these else None, "through": these[-1]["session"] if these else None,
+                 "inside_hold": sum(1 for n in red if not n["complete"]),
+                 "strata": {s: settled_block(sorted(r for n in red for r in n["strata"][s]["r"])) for s in STRATA}}
+        block["strata"]["all"] = settled_block(sorted(r for n in red for r in n["all"]["r"]))
+        out["phases"][phase] = block
     return out
 
 
@@ -292,7 +341,7 @@ BT = {
     "tickets": re.compile(r"^tickets (\d+), by the night's regime (\{.*\})$"),
     "plans": re.compile(r"^plans (\d+): settled (\d+), open (\d+), pending (\d+), uncertain (\d+) (\[.*\]), not filled (\d+), unmeasured (\d+), unreadable (\d+), unscored (\d+)$"),
     "settled": re.compile(r"^settled (\d+): wins (\d+), losses (\d+), breakeven (\d+); sum R " + _NUM + "; avg R " + _NUM
-                          + "; median R " + _NUM + "; win rate " + _NUM + r" \(rates read only at (\d+)\+ settled: readable=(True|False)\); SPY avg % over (\d+) pairs " + _NUM + "$"),
+                          + "; median R " + _NUM + "; win rate " + _NUM + r" \(rates read only at (\d+)\+ settled: readable=(\w+)\); SPY avg % over (\d+) pairs " + _NUM + "$"),
     "by": re.compile(r"^  by (grade|regime) (\S+): plans (\d+), settled (\d+), wins (\d+), losses (\d+), sum R " + _NUM + "$"),
     "limitations": re.compile(r"^limitations:$"),
     "limitation": re.compile(r"^- (.+)$"),
@@ -313,6 +362,25 @@ def _literal(s: str):
     return ast.literal_eval(s)
 
 
+def _bool(s: str, where: str) -> bool:
+    """A printed bool is True or False; any other token is a refusal, never False."""
+    if s not in ("True", "False"):
+        raise FindingsError(f"{where}: {s!r} is not True or False")
+    return s == "True"
+
+
+class _Once:
+    """Each single-occurrence line of a summary, held to one occurrence in its scope."""
+
+    def __init__(self, where: str):
+        self.where, self.seen = where, set()
+
+    def __call__(self, *key) -> None:
+        if key in self.seen:
+            raise FindingsError(f"{self.where}: a second {' '.join(key)} line")
+        self.seen.add(key)
+
+
 def parse_backtest_summary(text: str) -> dict:
     """The pasted summary back into the counts ``summary_text`` printed.
     Every line must match one grammar line; '—' stays None and is never a
@@ -321,6 +389,15 @@ def parse_backtest_summary(text: str) -> dict:
     out: dict = {"progress": [], "gates": {}, "limitations": []}
     gate = None
     mode = "head"
+    once = _Once("backtest summary")
+
+    def in_gate(kind: str) -> dict:
+        # a gate's lines belong to the header above them: one before any header has no gate
+        if gate is None:
+            raise FindingsError(f"backtest summary: a {kind} line before its gate header")
+        once(gate, kind)
+        return out["gates"][gate]
+
     for raw in text.splitlines():
         line = raw.rstrip("\r")
         if not line.strip():
@@ -341,61 +418,80 @@ def parse_backtest_summary(text: str) -> dict:
         if (m := BT["progress"].match(line)) and mode == "head" and "version" not in out:
             out["progress"].append({"session": m.group(1), "verdict": m.group(2), "ratio_10d": _num(m.group(3)),
                                     "counted": int(m.group(4)), "bursts": int(m.group(5)), "tickets": int(m.group(6))})
+        elif BT["progress"].match(line):
+            raise FindingsError(f"backtest summary: a progress line after the summary began: {line!r}")
         elif m := BT["head"].match(line):
+            once("head")
             out["version"] = m.group(1)
         elif m := BT["archive"].match(line):
+            once("archive")
             out["archive"] = {"symbols": int(m.group(1)), "intended": int(m.group(2)),
                               "sessions": {"from": m.group(3), "through": m.group(4), "count": int(m.group(5))},
                               "statuses": _literal(m.group(6))}
         elif m := BT["evaluated"].match(line):
+            once("evaluated")
             out["evaluated"] = {"count": int(m.group(1)), "from": m.group(2), "through": m.group(3),
                                 "seconds": _num(m.group(4))}
             out["lookback"] = {"sessions": int(m.group(5)), "production": int(m.group(6))}
             out["rules_version"] = m.group(7)
         elif m := BT["equivalence"].match(line):
+            once("equivalence")
+            if "lookback" not in out:
+                raise FindingsError("backtest summary: the equivalence line before the evaluated line")
             out["lookback"]["equivalence"] = {"status": m.group(1), "compared": int(m.group(2)),
                                               "differences": int(m.group(3))}
         elif m := BT["account"].match(line):
+            once("account")
             out["account"] = _literal(m.group(1))
         elif m := BT["reader"].match(line):
+            once("reader")
             out["reader"] = m.group(1)
         elif m := BT["regimes"].match(line):
+            once("regimes")
             out["regimes"] = {"verdicts": _literal(m.group(1)),
                               "ratio_10d": {"min": _num(m.group(2)), "median": _num(m.group(3)),
                                             "max": _num(m.group(4)), "defined": int(m.group(5))}}
         elif m := BT["candidates"].match(line):
+            once("candidates")
             out["candidates"] = {"bursts": int(m.group(1)), "sessions": int(m.group(2)),
                                  "grades_mechanical": _literal(m.group(3))}
         elif m := BT["gate"].match(line):
             gate = GATE_NAMES[m.group(1)]
+            once("gate", gate)
             out["gates"][gate] = {"label": m.group(1), "by_grade": {}, "by_regime": {}}
         elif m := BT["tickets"].match(line):
-            out["gates"][gate]["tickets"] = int(m.group(1))
-            out["gates"][gate]["tickets_by_regime"] = _literal(m.group(2))
+            g = in_gate("tickets")
+            g["tickets"] = int(m.group(1))
+            g["tickets_by_regime"] = _literal(m.group(2))
         elif m := BT["plans"].match(line):
-            out["gates"][gate]["plans"] = {
+            in_gate("plans")["plans"] = {
                 "plans": int(m.group(1)), "settled": int(m.group(2)), "open": int(m.group(3)),
                 "pending": int(m.group(4)), "uncertain": int(m.group(5)),
                 "uncertain_reasons": [{"kind": k, "count": n} for k, n in _literal(m.group(6))],
                 "not_filled": int(m.group(7)), "unmeasured": int(m.group(8)), "unreadable": int(m.group(9)),
                 "unscored": int(m.group(10))}
         elif m := BT["settled"].match(line):
-            out["gates"][gate]["settled"] = {
+            in_gate("settled")["settled"] = {
                 "n": int(m.group(1)), "wins": int(m.group(2)), "losses": int(m.group(3)), "breakeven": int(m.group(4)),
                 "sum_r": _num(m.group(5)), "avg_r": _num(m.group(6)), "median_r": _num(m.group(7)),
-                "win_rate": _num(m.group(8)), "min_read": int(m.group(9)), "readable": m.group(10) == "True",
+                "win_rate": _num(m.group(8)), "min_read": int(m.group(9)), "readable": _bool(m.group(10), "backtest summary"),
                 "spy_pairs": int(m.group(11)), "spy_avg_pct": _num(m.group(12))}
         elif m := BT["by"].match(line):
-            out["gates"][gate]["by_" + m.group(1)][m.group(2)] = {
+            in_gate("by " + m.group(1) + " " + m.group(2))["by_" + m.group(1)][m.group(2)] = {
                 "plans": int(m.group(3)), "settled": int(m.group(4)), "wins": int(m.group(5)),
                 "losses": int(m.group(6)), "sum_r": _num(m.group(7))}
         elif BT["limitations"].match(line):
+            once("limitations")
             mode = "limitations"
         else:
             raise FindingsError(f"backtest summary: a line the grammar does not know: {line!r}")
     for needed in ("version", "archive", "evaluated", "lookback", "account", "reader", "regimes", "candidates"):
         if needed not in out:
             raise FindingsError(f"backtest summary: no {needed} line")
+    if "equivalence" not in out["lookback"]:
+        raise FindingsError("backtest summary: no lookback equivalence line")
+    if mode == "head" or not out["limitations"]:
+        raise FindingsError("backtest summary: no limitations")
     if set(out["gates"]) != set(GATE_NAMES.values()):
         raise FindingsError(f"backtest summary: gates {sorted(out['gates'])}")
     for g in out["gates"].values():
@@ -436,76 +532,128 @@ def _names(s: str) -> list[str]:
     return [] if s.strip() == "none" else [n.strip() for n in re.sub(r"\s*\(\+\d+ more\)$", "", s).split(",")]
 
 
+# what each block of the run-6 summary must carry: every field the page prints
+RUN6_SESSION_NEEDS = ("status", "stock_statuses", "partial", "diagnostic_scan_matches")
+RUN6_POLICY_NEEDS = ("independent_verdict", "up4_10d", "up4", "production_verdict", "regime_established",
+                     "ratio_10d_bounds", "unknown_up50_names")
+RUN6_POLICIES = ("C", "D")
+
+
 def parse_run6_summary(text: str) -> dict:
+    """The owner's pasted run-6 summary. Every line matches one grammar line
+    and belongs to the block above it: a session line before any session
+    header, or a policy line before its policy, is a refusal, as is a second
+    single-occurrence line, a missing one, or a printed bool that is not
+    True or False."""
     out: dict = {"sessions": {}}
     session = policy = None
+    once = _Once("run-6 summary")
     lines = text.splitlines()
     if not lines or not lines[0].startswith("SpicyStock run 6 evidence summary"):
         raise FindingsError("run-6 summary: not the owner's summary")
+
+    def in_session(kind: str) -> dict:
+        if session is None:
+            raise FindingsError(f"run-6 summary: a {kind} line before any session header")
+        once(session["date"], kind)
+        return session
+
+    def in_policy(kind: str) -> dict:
+        if policy is None:
+            raise FindingsError(f"run-6 summary: a {kind} line before its policy")
+        once(session["date"], policy["name"], kind)
+        return policy
+
     for raw in lines[1:]:
         line = raw.rstrip("\r")
         if not line.strip():
             continue
         if m := R6["status"].match(line):
+            once("status")
             out["status"] = m.group(1)
         elif m := R6["download"].match(line):
+            once("download")
             out["download"] = {"status": m.group(1), "queries_completed": int(m.group(2)),
                                "queries_total": int(m.group(3))}
         elif m := R6["ledger"].match(line):
+            once("ledger")
             out["ledger"] = _literal(m.group(1))
         elif m := R6["session"].match(line):
+            once("session", m.group(1))
             session = out["sessions"][m.group(1)] = {"date": m.group(1), "policies": {}}
             policy = None
         elif m := R6["s_status"].match(line):
-            session.update(status=m.group(1), formula_check=m.group(2), regime_established=m.group(3) == "True")
+            in_session("status").update(status=m.group(1), formula_check=m.group(2),
+                                        regime_established=_bool(m.group(3), "run-6 summary"))
         elif m := R6["stocks"].match(line):
-            session["stock_statuses"] = _literal(m.group(1))
+            in_session("stock statuses")["stock_statuses"] = _literal(m.group(1))
         elif m := R6["window"].match(line):
-            session["full_window_every_stock"] = m.group(1) == "True"
+            in_session("full window")["full_window_every_stock"] = _bool(m.group(1), "run-6 summary")
         elif m := R6["partial"].match(line):
-            session["partial"] = int(m.group(1))
-            session["partial_sample"] = _names(m.group(2))
+            s = in_session("partial")
+            s["partial"] = int(m.group(1))
+            s["partial_sample"] = _names(m.group(2))
         elif m := R6["missing"].match(line):
-            session["missing_sessions"] = int(m.group(1))
+            in_session("missing sessions")["missing_sessions"] = int(m.group(1))
         elif m := R6["policy"].match(line):
-            policy = session["policies"][m.group(1)] = {"label": m.group(2), "check": m.group(3)}
+            if session is None:
+                raise FindingsError("run-6 summary: a policy line before any session header")
+            once(session["date"], "policy", m.group(1))
+            policy = session["policies"][m.group(1)] = {"name": m.group(1), "label": m.group(2), "check": m.group(3)}
         elif m := R6["calc"].match(line):
-            policy["independent_verdict"] = m.group(1).lower()
-            policy["rules_fired"] = [r.strip() for r in m.group(2).split(",")]
+            pol = in_policy("independent calculator")
+            pol["independent_verdict"] = m.group(1).lower()
+            pol["rules_fired"] = [r.strip() for r in m.group(2).split(",")]
         elif m := R6["ratios"].match(line):
-            policy.update(up4_10d=int(m.group(1)), down4_10d=int(m.group(2)), ratio_10d=_num(m.group(3)),
-                          up4_5d=int(m.group(4)), down4_5d=int(m.group(5)), ratio_5d=_num(m.group(6)))
+            in_policy("10-day up/down").update(up4_10d=int(m.group(1)), down4_10d=int(m.group(2)),
+                                               ratio_10d=_num(m.group(3)), up4_5d=int(m.group(4)),
+                                               down4_5d=int(m.group(5)), ratio_5d=_num(m.group(6)))
         elif m := R6["day"].match(line):
-            policy.update(up4=int(m.group(1)), down4=int(m.group(2)), counted_universe=int(m.group(3)))
+            in_policy("that day").update(up4=int(m.group(1)), down4=int(m.group(2)), counted_universe=int(m.group(3)))
         elif m := R6["own"].match(line):
-            policy["production_verdict"] = m.group(1).lower()
+            in_policy("app's own code")["production_verdict"] = m.group(1).lower()
         elif m := R6["established"].match(line):
-            policy["regime_established"] = m.group(1) == "True"
+            in_policy("regime established")["regime_established"] = _bool(m.group(1), "run-6 summary")
         elif m := R6["unknown_events"].match(line):
-            policy["unknown_event_counts"] = _literal(m.group(2))
+            in_policy("unknown event counts")["unknown_event_counts"] = _literal(m.group(2))
         elif m := R6["unknown_4pct"].match(line):
-            policy["unknown_4pct_names"] = _names(m.group(2))
-            if len(policy["unknown_4pct_names"]) != int(m.group(1)):
+            pol = in_policy("unknown 4%")
+            pol["unknown_4pct_names"] = _names(m.group(2))
+            if len(pol["unknown_4pct_names"]) != int(m.group(1)):
                 raise FindingsError("run-6 summary: the unknown-4% count and its names disagree")
         elif m := R6["unknown_up50"].match(line):
-            policy["unknown_up50_names"] = _names(m.group(3))
-            if len(policy["unknown_up50_names"]) != int(m.group(2)):
+            pol = in_policy("unknown up-50%")
+            pol["unknown_up50_names"] = _names(m.group(3))
+            if len(pol["unknown_up50_names"]) != int(m.group(2)):
                 raise FindingsError("run-6 summary: the unknown-up-50% count and its names disagree")
         elif m := R6["bounds"].match(line):
-            policy["ratio_10d_bounds"] = [_num(m.group(1)), _num(m.group(2))]
-            policy["unknown_contributors"] = int(m.group(3))
+            pol = in_policy("ratio bounds")
+            pol["ratio_10d_bounds"] = [_num(m.group(1)), _num(m.group(2))]
+            pol["unknown_contributors"] = int(m.group(3))
         elif m := R6["population"].match(line):
-            policy["population"] = _literal(m.group(2))
+            in_policy("population reasons")["population"] = _literal(m.group(2))
         elif m := R6["matches"].match(line):
-            session["diagnostic_scan_matches"] = int(m.group(1))
+            in_session("diagnostic scan matches")["diagnostic_scan_matches"] = int(m.group(1))
         else:
             raise FindingsError(f"run-6 summary: a line the grammar does not know: {line!r}")
-    if not out["sessions"] or "download" not in out:
+    for needed in ("status", "download", "ledger"):
+        if needed not in out:
+            raise FindingsError(f"run-6 summary: no {needed} line")
+    if not out["sessions"]:
         raise FindingsError("run-6 summary: no session block")
     names = set()
-    for s in out["sessions"].values():
+    for day, s in out["sessions"].items():
+        for needed in RUN6_SESSION_NEEDS:
+            if needed not in s:
+                raise FindingsError(f"run-6 summary: {day} has no {needed} line")
+        if tuple(sorted(s["policies"])) != RUN6_POLICIES:
+            raise FindingsError(f"run-6 summary: {day} carries policies {sorted(s['policies'])}, not C and D")
         for pol in s["policies"].values():
-            names.update(pol.get("unknown_up50_names", []))
+            for needed in RUN6_POLICY_NEEDS:
+                if needed not in pol:
+                    raise FindingsError(f"run-6 summary: {day} policy {pol['name']} has no {needed} line")
+            del pol["name"]
+            names.update(pol["unknown_up50_names"])
     out["blocking_names"] = sorted(names)
     return out
 
@@ -598,11 +746,9 @@ def build() -> dict:
                            "verdicts": dict(Counter(n["regime"]["verdict"] for n in nights)),
                            "tickets_published": sum(n["tickets_published"] for n in nights),
                            "bursts": sum(n["bursts"] for n in nights),
-                           # the nights whose A-quality tickets settled to a mean above zero,
-                           # counted here so the reading can name them without counting
-                           "admitted_positive_nights": sum(1 for n in nights if math.fsum(n["strata"]["admitted"]["r"]) > 0),
-                           # the nights whose tickets have not all had their hold, inside every pooled figure
+                           # the nights whose tickets have not all had their hold
                            "inside_hold": sum(1 for n in nights if not n["complete"])},
+        "reading": reading_of(nights, study),
         "backtest": backtests,
         "run6": run6,
         "reports": reports_of(),

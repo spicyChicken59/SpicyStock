@@ -3061,13 +3061,15 @@
   // The two historical files load when the Record view is first shown, never
   // on another route: the findings are the largest file the page reads after
   // the record. A stalled request ends in a sentence rather than a spinner,
-  // and a continuation whose block has left the page writes nothing.
+  // and a continuation whose block has left the page writes nothing. Tests
+  // inject a shorter wait as SCStock.evidenceTimeout, as they inject the replay's
+  // findingsInterval.
   const EVIDENCE_TIMEOUT_MS = 20000;
   let studyPromise = null, findingsPromise = null, evidencePending = null;
   function shownError(message) { const e = new Error(message); e.shown = true; return e; }
   function evidenceJSON(path, unavailable) {
     const ctl = w.AbortController ? new w.AbortController() : null;
-    const timer = ctl ? w.setTimeout(() => ctl.abort(), EVIDENCE_TIMEOUT_MS) : 0;
+    const timer = ctl ? w.setTimeout(() => ctl.abort(), Number(SCStock.evidenceTimeout) || EVIDENCE_TIMEOUT_MS) : 0;
     return fetch(path, { credentials: 'omit', signal: ctl ? ctl.signal : undefined })
       .then(r => { if (!r.ok) throw shownError(unavailable); return r.json(); })
       .catch(error => { throw error && error.shown ? error : shownError(unavailable); })
@@ -3077,14 +3079,26 @@
   // the record replayed night by night, the owner's backtest, the fresh-bar
   // check of the red reading. The file is fetched here; the module reads
   // nothing and checks the file's shape before it draws.
+  // while a file is in flight its host says so in one line and is marked busy;
+  // the content or the one-sentence error replaces the line
+  function evidenceLoading(host, text) {
+    host.setAttribute('aria-busy', 'true');
+    host.appendChild(el('p', { 'class': 'sc-hint', 'data-evidence-loading': '', text }));
+  }
+  function evidenceSettled(host) {
+    host.removeAttribute('aria-busy');
+    host.querySelectorAll('[data-evidence-loading]').forEach(n => n.remove());
+  }
   function loadFindings(replay) {
     replay.dataset.findings = 'loading';
+    evidenceLoading(replay, 'Loading the replay of the published nights…');
     if (!findingsPromise) findingsPromise = evidenceJSON('historical-findings.json', 'The validation findings did not load. Reload the page to try again.');
     findingsPromise.then(F => {
       if (!w.document || !replay.isConnected) return;
       const engine = SCStock.findings;
       const problem = engine ? engine.shapeProblem(F) : 'The replay module did not load.';
       if (problem) throw shownError(problem);
+      evidenceSettled(replay);
       if (demo) replay.appendChild(el('p', { 'class': 'sc-note', 'data-findings-demo': '', text: 'This replay reads the public findings, not the sample record on this page.' }));
       if (!engine.mount(replay, F, { interval: SCStock.findingsInterval })) throw shownError('The replay could not be drawn.');
       engine.renderBacktest(replay, F);
@@ -3094,6 +3108,7 @@
     }).catch(error => {
       if (!w.document || !replay.isConnected) return;
       clear(replay);
+      evidenceSettled(replay);
       replay.dataset.findings = 'error';
       replay.appendChild(el('p', { role: 'alert', text: error && error.shown ? error.message : 'The validation findings could not be read.' }));
     });
@@ -3121,10 +3136,12 @@
   }
   function loadStudy(host) {
     host.dataset.study = 'loading';
+    evidenceLoading(host, 'Loading the frozen decisions…');
     if (!studyPromise) studyPromise = evidenceJSON('historical-validation.json', 'The validation summary did not load. Reload the page to try again.');
     studyPromise.then(study => {
       if (!w.document || !host.isConnected) return;
       if (study.version !== 'historical-validation-v1') throw shownError('Unknown study version.');
+      evidenceSettled(host);
       host.dataset.study = 'ready';
       host.appendChild(el('p', { 'data-study-population': '', text: study.from + ' through ' + study.through + ': ' +
         study.publications + ' publications across ' + study.unique_sessions + ' unique sessions; ' +
@@ -3181,6 +3198,7 @@
       });
     }).catch(error => {
       if (!w.document || !host.isConnected) return;
+      evidenceSettled(host);
       host.dataset.study = 'error';
       host.appendChild(el('p', { role: 'alert', text: error && error.shown ? error.message : 'The validation summary could not be read.' }));
     });

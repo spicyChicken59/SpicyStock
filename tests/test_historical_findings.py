@@ -6,8 +6,10 @@ records through the study's spec; the headline strata are held equal to the
 study file's; the two pasted backtest summaries and the owner's run-6
 summary are re-read under the tools' own line grammars and by independent
 regexes; and the builder's refusals are driven, each with the evidence that
-does not reconcile. Nothing here writes inside the checkout: ``--check``
-compares, and the copies it is pointed at live in tmp_path."""
+does not reconcile. ``--check`` compares, and the copies it is pointed at
+live in tmp_path; the one write that can reach the checkout is git's own,
+when a shallow clone lacks the publications the spec names and the
+``history`` fixture fetches exactly those commits into its object store."""
 from __future__ import annotations
 
 from collections import Counter, defaultdict
@@ -51,9 +53,10 @@ GRADES = ("A+", "A", "B", "C", "skip")
 REGIME_FIELDS = ("ratio_10d", "ratio_5d", "up4", "down4", "up4_10d", "down4_10d", "universe")
 #: the rule numbers the page's captions name, read off every record's archived rules
 RULE_FIELDS = {"record": ("open_plan_sessions", "scorecard_min_plans"),
-               "pipeline": ("trade_grades", "yellow_grades", "max_reads"),
-               "breadth": ("size_multiplier", "red_ratio_10d", "yellow_ratio_10d", "burst_pct",
-                           "ratio_long_sessions", "ratio_short_sessions")}
+               "pipeline": ("trade_grades", "yellow_grades"),
+               "breadth": ("size_multiplier", "burst_pct", "ratio_long_sessions")}
+#: the buckets a later record can still move, written out rather than read off the builder
+MOVABLE = ("open", "pending", "unmeasured", "basis_mismatch")
 CREDENTIAL = re.compile(r"(api|key|token|secret|auth|access|credential|passw)", re.I)
 BLOCKING_NAMES = ["ETRA", "GIXI", "OIG", "TEVA", "TRBG", "WCCB"]
 
@@ -80,7 +83,8 @@ def settled_of(rs: list[float]) -> dict:
 def check_stratum(block: dict, rows: list[dict], where: str) -> None:
     counts = Counter(r["bucket"] for r in rows)
     assert set(counts) <= set(BUCKETS), (where, sorted(counts))
-    assert set(block) == {"rows", "tickets", "buckets", "settled", "r"}, (where, sorted(block))
+    assert set(block) == {"rows", "tickets", "movable", "buckets", "settled", "r"}, (where, sorted(block))
+    assert block["movable"] == sum(counts.get(b, 0) for b in MOVABLE), (where, block["movable"], dict(counts))
     assert block["rows"] == len(rows), (where, block["rows"], len(rows))
     # a row is a burst; the study plans every burst before it checks the bars, so the
     # tickets the rules wrote are every row but the refused and the unformed ones --
@@ -202,6 +206,8 @@ def test_every_night_is_rederived_from_the_studys_own_rows(committed, study, fir
         assert sum(night["strata"][s]["rows"] for s in STRATA) == night["all"]["rows"] == len(rows), where
         phases = {r["phase"] for r in rows}
         assert len(phases) == 1 and night["phase"] == phases.pop(), (where, night["phase"], phases)
+        # the spec's freeze rule names the phase the rows carry
+        assert night["phase"] == ("exploratory" if where <= study_doc["frozen_through_session"] else "confirmatory"), where
         horizons = {r.get("horizon") for r in rows} - {None}
         assert len(horizons) == 1, (where, horizons)
         horizon = horizons.pop()
@@ -210,7 +216,12 @@ def test_every_night_is_rederived_from_the_studys_own_rows(committed, study, fir
         if night["session"] in rows_first:
             frows = rows_first[night["session"]]
             read = night["first_read"]
-            assert set(read) == {"as_of", "admitted", "all", "horizon_passed"}, (where, sorted(read))
+            assert set(read) == {"as_of", "admitted", "all", "horizon_passed", "moved"}, (where, sorted(read))
+            # the rows the re-read moved, matched by ticker: another bucket or another R
+            now = {r["ticker"]: (r["bucket"], r.get("r")) for r in rows}
+            changed = [r for r in frows if now[r["ticker"]] != (r["bucket"], r.get("r"))]
+            assert read["moved"] == {"admitted": sum(1 for r in changed if r["stratum"] == "admitted"),
+                                     "all": len(changed)}, (where, read["moved"], len(changed))
             assert read["as_of"] == first_doc["newest_session"]
             # whether the first read came after every ticket's hold: the night's horizon against the read's own date
             assert read["horizon_passed"] is (horizon <= first_doc["newest_session"]), (where, read["horizon_passed"], horizon)
@@ -232,6 +243,11 @@ def test_every_night_is_rederived_from_the_studys_own_rows(committed, study, fir
     moved = [n["session"] for n in nights if "first_read" in n
              and n["first_read"]["admitted"] != n["strata"]["admitted"]["settled"]]
     assert moved, "no night's admitted block moved between the two reads"
+    # and a night whose hold was over at the first read moved anyway: the hold is not finality
+    after = [n["session"] for n in nights if "first_read" in n and n["first_read"]["horizon_passed"] and n["first_read"]["moved"]["all"]]
+    assert after, "no night moved after its hold: the moved-after-the-hold branch is never read"
+    assert any(n["complete"] and n["strata"]["admitted"]["movable"] for n in nights), \
+        "no complete night with a movable row: the still-moving branch is never read"
 
 
 # ----------------------------------------------------------- the market ----
@@ -278,8 +294,6 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
         "verdicts": dict(Counter(d["breadth"]["regime"]["verdict"] for d in records)),
         "tickets_published": sum(len(d.get("trades") or []) for d in records),
         "bursts": sum(len(d["bursts"]) for d in records),
-        "admitted_positive_nights": sum(1 for n in committed["nights"] if n["strata"]["admitted"]["settled"]["n"]
-                                        and math.fsum(n["strata"]["admitted"]["r"]) > 0),
         "inside_hold": sum(1 for n in committed["nights"] if n["horizon"] > study_doc["newest_session"])}, committed["nights_summary"]
     # the rules the captions name are every record's own, and the same in every record
     assert {(m, k) for m, ks in RULE_FIELDS.items() for k in ks} == set(bf.RULE_FIELDS), sorted(bf.RULE_FIELDS)
@@ -290,9 +304,8 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
             for p in pubs:
                 assert rules[module][name] == p["data"]["rules"][module][name], \
                     (module, name, rules[module][name], p["commit"][:8], p["data"]["rules"][module][name])
-    assert rules["breadth"]["red_ratio_10d"] == breadth.RED_RATIO_10D == 1.0
-    assert rules["breadth"]["yellow_ratio_10d"] == breadth.YELLOW_RATIO_10D == 2.0
     assert rules["breadth"]["size_multiplier"] == breadth.SIZE_MULTIPLIER
+    assert rules["breadth"]["burst_pct"] == breadth.BURST_PCT
     # the market: thresholds, then one row per session the records know
     market = committed["market"]
     thresholds = {json.dumps({k: p["data"]["breadth"]["regime"]["thresholds"][k] for k in ("ratio_10d_red", "ratio_10d_yellow")},
@@ -308,7 +321,7 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
     assert dates == sorted(set(newest) | set(nights)), (dates[:3], dates[-3:], len(dates))
     assert (market["from"], market["through"]) == (dates[0], dates[-1])
     assert set(nights) < set(dates)
-    re_measured = []
+    re_measured, counts_only = [], []
     for row in market["sessions"]:
         day = row["date"]
         if day in nights:
@@ -317,18 +330,22 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
             assert (row["up4"], row["down4"], row["ratio_10d"]) == (b["up4"], b["down4"], b["ratio_10d"]), row
             assert (row["source"], row["verdict"]) == (firsts[day]["commit"][:8], b["regime"]["verdict"]), row
             p, later = newest.get(day, (None, None))
-            if later and later["ratio_10d"] != b["ratio_10d"]:
-                assert (row["later_ratio_10d"], row["later_source"]) == (later["ratio_10d"], p["commit"][:8]), row
+            # a later history that reads the counts OR the ratio differently is named beside the night
+            if later and (later["up4"], later["down4"], later["ratio_10d"]) != (b["up4"], b["down4"], b["ratio_10d"]):
+                assert row["later"] == {"up4": later["up4"], "down4": later["down4"], "ratio_10d": later["ratio_10d"],
+                                        "source": p["commit"][:8]}, row
                 re_measured.append(day)
-                assert set(row) == {"date", "up4", "down4", "ratio_10d", "source", "basis", "verdict",
-                                    "later_ratio_10d", "later_source"}, sorted(row)
+                if later["ratio_10d"] == b["ratio_10d"]:
+                    counts_only.append(day)
+                assert set(row) == {"date", "up4", "down4", "ratio_10d", "source", "basis", "verdict", "later"}, sorted(row)
             else:
                 assert set(row) == {"date", "up4", "down4", "ratio_10d", "source", "basis", "verdict"}, sorted(row)
         else:
             p, later = newest[day]
             assert row == {"date": day, "up4": later["up4"], "down4": later["down4"], "ratio_10d": later["ratio_10d"],
                            "source": p["commit"][:8], "basis": "history", "verdict": None}, (row, later, p["commit"][:8])
-    assert re_measured, "no publication night was re-measured by a later history: the later_ratio_10d branch was never read"
+    assert re_measured, "no publication night was re-measured by a later history: the later branch was never read"
+    assert counts_only, "no night whose later history moved only its counts: the ratio-only trigger would pass"
 
 
 # ------------------------------------------------------- the headlines ----
@@ -396,10 +413,12 @@ def backtest_result() -> dict:
     """A result in the shape ``summary_text`` prints: two gates that differ
     in every count, a None avg R, two by-grade rows, one int among floats."""
     def gate(plans, settled, open_, pending, uncertain, reasons, not_filled, wins, losses, breakeven,
-             sum_r, avg_r, median_r, win_rate, readable, pairs, spy, picks, by_grade, by_regime):
+             sum_r, avg_r, median_r, win_rate, readable, pairs, spy, picks, by_grade, by_regime, rare=(4, 6, 9)):
+        # unmeasured, unreadable and unscored distinct and non-zero, so a parser that
+        # swapped two of them, or read one into another, could not pass
         return {"summary": {"plans": plans, "settled": settled, "open": open_, "pending": pending,
                             "uncertain": uncertain, "uncertain_reasons": [{"kind": k, "count": n} for k, n in reasons],
-                            "not_filled": not_filled, "unmeasured": 0, "unreadable": 0, "unscored": 0,
+                            "not_filled": not_filled, "unmeasured": rare[0], "unreadable": rare[1], "unscored": rare[2],
                             "wins": wins, "losses": losses, "breakeven": breakeven, "sum_r": sum_r, "avg_r": avg_r,
                             "median_r": median_r, "win_rate": win_rate, "min_read": 20, "readable": readable,
                             "benchmark_pairs": pairs, "spy_avg_pct": spy},
@@ -432,7 +451,7 @@ def backtest_result() -> dict:
                                    -0.5, -0.1, 0.0, 0.6, True, 5, 0.31,
                                    [{"regime": "yellow"}] * 3 + [{"regime": "red"}] * 2,
                                    {"A+": row(8, 3, 2, 1, 2), "A": row(4, 2, 1, 0, -2.5)},
-                                   {"yellow": row(7, 3, 2, 1, 1.25), "red": row(5, 2, 1, 0, -1.75)}),
+                                   {"yellow": row(7, 3, 2, 1, 1.25), "red": row(5, 2, 1, 0, -1.75)}, rare=(11, 13, 17)),
         },
         "limitations": ["The reader is not run.", "Counts are not an edge claim."],
     }
@@ -500,6 +519,8 @@ def test_the_backtest_block_is_the_pasted_summary_under_the_tools_own_grammar(co
         assert g["by_grade"] == o["by_grade"], (name, g["by_grade"], o["by_grade"])
         assert g["by_regime"] == o["by_regime"], (name, g["by_regime"], o["by_regime"])
     assert (parsed["gates"]["production"]["tickets"], parsed["gates"]["no_regime_gate"]["tickets"]) == (3, 5)
+    assert [parsed["gates"][g]["plans"][k] for g in backtest.GATES for k in ("not_filled", "unmeasured", "unreadable", "unscored")] == \
+        [0, 4, 6, 9, 2, 11, 13, 17]
     assert parsed["gates"]["production"]["settled"]["avg_r"] is None
     assert parsed["gates"]["production"]["settled"]["win_rate"] is None
     assert parsed["gates"]["no_regime_gate"]["settled"]["avg_r"] == -0.1
@@ -529,9 +550,33 @@ def test_the_backtest_block_is_the_pasted_summary_under_the_tools_own_grammar(co
     with pytest.raises(bf.FindingsError, match="no reader line"):
         bf.parse_backtest_summary("\n".join(l for l in text.splitlines() if not l.startswith("reader: ")) + "\n")
     with pytest.raises(bf.FindingsError, match=r"gates \['production'\]"):
-        bf.parse_backtest_summary(text.split("\n[COUNTERFACTUAL")[0] + "\n\nlimitations:\n")
+        bf.parse_backtest_summary(text.split("\n[COUNTERFACTUAL")[0] + "\n\nlimitations:\n- The reader is not run.\n")
     with pytest.raises(bf.FindingsError, match="a gate without its tickets line"):
         bf.parse_backtest_summary("\n".join(l for l in text.splitlines() if not l.startswith("tickets ")) + "\n")
+    # every single-occurrence line is required once, in its place
+    lines = text.splitlines()
+    without = lambda prefix: "\n".join(l for l in lines if not l.startswith(prefix)) + "\n"   # noqa: E731
+    with pytest.raises(bf.FindingsError, match="no lookback equivalence line"):
+        bf.parse_backtest_summary(without("lookback equivalence: "))
+    archive = next(l for l in lines if l.startswith("archive: "))
+    with pytest.raises(bf.FindingsError, match="a second archive line"):
+        bf.parse_backtest_summary(text.replace(archive, archive + "\n" + archive.replace("archive: 5 ", "archive: 9999 "), 1))
+    first_tickets = next(l for l in lines if l.startswith("tickets "))
+    with pytest.raises(bf.FindingsError, match="a tickets line before its gate header"):
+        bf.parse_backtest_summary(text.replace("\n[PRODUCTION POLICY]", "\n" + first_tickets + "\n[PRODUCTION POLICY]", 1))
+    with pytest.raises(bf.FindingsError, match="a second production tickets line"):
+        bf.parse_backtest_summary(text.replace(first_tickets, first_tickets + "\n" + first_tickets, 1))
+    equivalence = next(l for l in lines if l.startswith("lookback equivalence: "))
+    with pytest.raises(bf.FindingsError, match="the equivalence line before the evaluated line"):
+        bf.parse_backtest_summary(equivalence + "\n" + without("lookback equivalence: "))
+    with pytest.raises(bf.FindingsError, match="no limitations"):
+        bf.parse_backtest_summary(text.split("\nlimitations:")[0] + "\n")
+    with pytest.raises(bf.FindingsError, match="'Maybe' is not True or False"):
+        bf.parse_backtest_summary(text.replace("readable=True", "readable=Maybe", 1))
+    # a progress line is read only before the summary begins; after it, it is a refusal
+    head = lines[0]
+    with pytest.raises(bf.FindingsError, match="a progress line after the summary began"):
+        bf.parse_backtest_summary(text.replace(head, head + "\n" + progress.rstrip("\n"), 1))
     # and '—' is never a number
     assert bf._num("—") is None and bf._num("3.72") == 3.72 and bf._num("-0.09") == -0.09 and bf._num("44") == 44
     assert isinstance(bf._num("44"), int)
@@ -625,6 +670,39 @@ def test_the_run6_block_is_the_owners_summary_and_the_public_receipt(committed):
         bf.parse_run6_summary(text.replace("(6): ETRA, GIXI, OIG, TEVA, TRBG, WCCB", "(5): ETRA, GIXI, OIG, TEVA, TRBG, WCCB", 1))
     with pytest.raises(bf.FindingsError, match="not the owner's summary"):
         bf.parse_run6_summary("a summary\n" + text)
+    # the '(+N more)' tail the summary prints is stripped: the sample is bare symbols
+    for day in sessions:
+        sample = run6["sessions"][day]["partial_sample"]
+        assert all(re.fullmatch(r"[A-Z][A-Z0-9.]*", n) for n in sample), (day, sample[-2:])
+    # a 4% count that disagrees with its names, as the up-50% one does
+    with pytest.raises(bf.FindingsError, match="the unknown-4% count and its names disagree"):
+        bf.parse_run6_summary(text.replace("(4): ETRA, OIG, TEVA, WCCB", "(5): ETRA, OIG, TEVA, WCCB", 1))
+    # every line the page prints is required, once, inside its own block
+    lines = text.splitlines()
+    first_ratio = next(l for l in lines if "10-day up/down" in l)
+    with pytest.raises(bf.FindingsError, match="policy C has no up4_10d line"):
+        bf.parse_run6_summary(text.replace(first_ratio + "\n", "", 1))
+    with pytest.raises(bf.FindingsError, match="a second 2026-09-24 C 10-day up/down line"):
+        bf.parse_run6_summary(text.replace(first_ratio, first_ratio + "\n" + first_ratio, 1))
+    d_block = text.split("\n  D  ", 1)[1].split("\n  diagnostic", 1)[0]
+    with pytest.raises(bf.FindingsError, match=r"2026-09-24 carries policies \['C'\], not C and D"):
+        bf.parse_run6_summary(text.replace("\n  D  " + d_block, "", 1))
+    first_status = next(l for l in lines if l.lstrip().startswith("status "))
+    with pytest.raises(bf.FindingsError, match="2026-09-24 has no status line"):
+        bf.parse_run6_summary(text.replace(first_status + "\n", "", 1))
+    with pytest.raises(bf.FindingsError, match="'Unknown' is not True or False"):
+        bf.parse_run6_summary(text.replace("regime established False", "regime established Unknown", 1))
+    with pytest.raises(bf.FindingsError, match="'Maybe' is not True or False"):
+        bf.parse_run6_summary(text.replace("regime established: False", "regime established: Maybe", 1))
+    # a line before the block it belongs to is a sentence, never a traceback
+    head = lines[0]
+    with pytest.raises(bf.FindingsError, match="a status line before any session header"):
+        bf.parse_run6_summary(text.replace(head, head + "\n" + first_status, 1))
+    first_calc = next(l for l in lines if "independent calculator:" in l)
+    with pytest.raises(bf.FindingsError, match="an? independent calculator line before its policy"):
+        bf.parse_run6_summary(text.replace("=== 2026-09-24 ===", "=== 2026-09-24 ===\n" + first_calc, 1))
+    with pytest.raises(bf.FindingsError, match="no download line"):
+        bf.parse_run6_summary("\n".join(l for l in lines if not l.startswith("download: ")) + "\n")
     with pytest.raises(bf.FindingsError, match="not the run-6 public record"):
         bf.run6_public(Path(STUDY_SPEC))
 
@@ -718,3 +796,82 @@ def test_the_builder_refuses_evidence_that_does_not_reconcile(pubs, study, first
     monkeypatch.setattr(bf, "RUN6_SUMMARY", summary)          # ROOT / an absolute path is that path
     with pytest.raises(bf.FindingsError, match="run 6 measured 2026-01-02, a session no publication carries"):
         bf.build()
+
+
+# ------------------------------------------------------------ the reading ----
+def test_the_reading_pools_red_nights_by_phase_and_counts_what_it_leaves_out(committed, study):
+    study_doc, _ = study
+    reading = committed["reading"]
+    assert set(reading) == {"freeze", "as_of", "phases"} and set(reading["phases"]) == {"exploratory", "confirmatory"}
+    assert (reading["freeze"], reading["as_of"]) == (study_doc["frozen_through_session"], study_doc["newest_session"])
+    rows = study_doc["rows"]
+    for phase, block in reading["phases"].items():
+        nights = [n for n in committed["nights"] if n["phase"] == phase]
+        red = {n["session"] for n in nights if n["regime"]["verdict"] == "red"}
+        assert (block["nights"], block["red_nights"]) == (len(nights), len(red)), (phase, block)
+        assert (block["from"], block["through"]) == (nights[0]["session"], nights[-1]["session"]), phase
+        assert block["inside_hold"] == sum(1 for n in nights if n["session"] in red and n["horizon"] > study_doc["newest_session"])
+        # pooled from the study's own rows, by the rows' own phase and night verdict
+        assert set(block["strata"]) == set(STRATA) | {"all"}
+        for s in STRATA:
+            rs = sorted(r["r"] for r in rows if r["phase"] == phase and r["night_regime"] == "red"
+                        and r["stratum"] == s and r["bucket"] == "settled")
+            assert block["strata"][s] == settled_of(rs), (phase, s, block["strata"][s], settled_of(rs))
+        rs = sorted(r["r"] for r in rows if r["phase"] == phase and r["night_regime"] == "red" and r["bucket"] == "settled")
+        assert block["strata"]["all"] == settled_of(rs), (phase, block["strata"]["all"])
+    # on an all-red record the exploratory A-quality figure is the study's own E2 split
+    own = study_doc["summary"]["phases"]["exploratory"]["settled"]
+    assert {k: reading["phases"]["exploratory"]["strata"]["admitted"][k] for k in ("n", "sum_r", "mean_r")} == \
+        {k: own[k] for k in ("n", "sum_r", "mean_r")}, (reading["phases"]["exploratory"]["strata"]["admitted"], own)
+    # a night the gate did not call red is counted and left out, never pooled: its tickets
+    # were partly the gate's own. Drive it with a yellow night and a green one
+    nights = copy.deepcopy(committed["nights"])
+    yellow = next(n for n in nights if n["phase"] == "exploratory" and n["strata"]["admitted"]["settled"]["n"])
+    green = next(n for n in nights if n["phase"] == "confirmatory" and n["all"]["settled"]["n"])
+    yellow["regime"]["verdict"], green["regime"]["verdict"] = "yellow", "green"
+    driven = bf.reading_of(nights, study_doc)
+    ex, co = driven["phases"]["exploratory"], driven["phases"]["confirmatory"]
+    assert (ex["nights"], ex["red_nights"]) == (reading["phases"]["exploratory"]["nights"], reading["phases"]["exploratory"]["red_nights"] - 1)
+    assert (co["nights"], co["red_nights"]) == (reading["phases"]["confirmatory"]["nights"], reading["phases"]["confirmatory"]["red_nights"] - 1)
+    assert ex["strata"]["admitted"]["n"] == reading["phases"]["exploratory"]["strata"]["admitted"]["n"] - yellow["strata"]["admitted"]["settled"]["n"]
+    assert co["strata"]["all"]["n"] == reading["phases"]["confirmatory"]["strata"]["all"]["n"] - green["all"]["settled"]["n"]
+
+
+def test_a_night_with_no_burst_has_nothing_to_hold(pubs, study, first):
+    """A published night whose scan found nothing has no row, no horizon and no
+    hold: it is complete, takes its phase from the spec's freeze rule, and the
+    page has nothing to wait for on it."""
+    study_doc, _ = study
+    first_doc, _ = first
+    last = max((p for p in pubs if any(q["commit"] == p["commit"] and q["first"] for q in study_doc["publications"])),
+               key=lambda p: p["session"])
+    empty = copy.deepcopy(last)
+    empty.update(commit="e" * 40, blob="b" * 40, session="2026-10-06")
+    empty["data"]["bursts"] = []
+    doc = {**study_doc, "publications": study_doc["publications"] + [{"commit": empty["commit"], "first": True}]}
+    nights = bf.nights_of(pubs + [empty], doc, first_doc)
+    night = nights[-1]
+    assert night["session"] == "2026-10-06" and night["bursts"] == 0
+    assert (night["horizon"], night["complete"], night["phase"]) == (None, True, "confirmatory"), night
+    assert night["all"] == {"rows": 0, "tickets": 0, "movable": 0, "buckets": {b: 0 for b in BUCKETS},
+                            "settled": settled_of([]), "r": []}
+    assert "first_read" not in night
+
+
+def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, monkeypatch):
+    """Every committed record published no ticket and requested twelve reads,
+    so the file cannot tell a constant from the record's own count: a
+    publication given a ticket and another reads block must carry them."""
+    study_doc, _ = study
+    firsts = {p["commit"] for p in study_doc["publications"] if p["first"]}
+    changed = copy.deepcopy(pubs)
+    target = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-09-22")
+    target["data"]["trades"] = [{"ticker": "TKTA"}, {"ticker": "TKTB"}]
+    target["data"]["run"]["reads"] = {"requested": 7, "done": 3}
+    monkeypatch.setattr(bf.so, "load_publications", lambda spec: changed)
+    built = bf.build()
+    night = next(n for n in built["nights"] if n["session"] == "2026-09-22")
+    assert (night["tickets_published"], night["reads"]) == (2, {"requested": 7, "done": 3}), night["reads"]
+    assert built["nights_summary"]["tickets_published"] == 2
+    others = [n for n in built["nights"] if n["session"] != "2026-09-22"]
+    assert all(n["tickets_published"] == 0 for n in others)

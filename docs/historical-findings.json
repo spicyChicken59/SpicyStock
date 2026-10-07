@@ -494,7 +494,7 @@
   }
  },
  "market": {
-  "basis": "A publication night carries the ratio and counts its own first publication read; any other session carries the newest publication's history of it, and a night a later history re-measured names the later value beside its own.",
+  "basis": "A publication night carries the ratio and counts its own first publication read; any other session carries the newest publication's history of it, and a night whose counts or ratio a later history reads differently names the later reading beside its own.",
   "from": "2026-07-31",
   "sessions": [
    {
@@ -762,8 +762,12 @@
     "basis": "publication",
     "date": "2026-09-11",
     "down4": 72,
-    "later_ratio_10d": 0.76,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 69,
+     "ratio_10d": 0.76,
+     "source": "178956b4",
+     "up4": 141
+    },
     "ratio_10d": 0.74,
     "source": "7380a976",
     "up4": 141,
@@ -773,8 +777,12 @@
     "basis": "publication",
     "date": "2026-09-14",
     "down4": 253,
-    "later_ratio_10d": 0.87,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 253,
+     "ratio_10d": 0.87,
+     "source": "178956b4",
+     "up4": 197
+    },
     "ratio_10d": 0.86,
     "source": "fbaed5cd",
     "up4": 201,
@@ -784,8 +792,12 @@
     "basis": "publication",
     "date": "2026-09-15",
     "down4": 189,
-    "later_ratio_10d": 0.83,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 188,
+     "ratio_10d": 0.83,
+     "source": "178956b4",
+     "up4": 83
+    },
     "ratio_10d": 0.8,
     "source": "442db489",
     "up4": 86,
@@ -795,6 +807,12 @@
     "basis": "publication",
     "date": "2026-09-16",
     "down4": 145,
+    "later": {
+     "down4": 146,
+     "ratio_10d": 0.89,
+     "source": "178956b4",
+     "up4": 93
+    },
     "ratio_10d": 0.89,
     "source": "58080548",
     "up4": 95,
@@ -804,8 +822,12 @@
     "basis": "publication",
     "date": "2026-09-17",
     "down4": 59,
-    "later_ratio_10d": 0.91,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 56,
+     "ratio_10d": 0.91,
+     "source": "178956b4",
+     "up4": 249
+    },
     "ratio_10d": 0.92,
     "source": "ebcdea34",
     "up4": 253,
@@ -815,8 +837,12 @@
     "basis": "publication",
     "date": "2026-09-18",
     "down4": 150,
-    "later_ratio_10d": 0.84,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 149,
+     "ratio_10d": 0.84,
+     "source": "178956b4",
+     "up4": 139
+    },
     "ratio_10d": 0.85,
     "source": "8387cced",
     "up4": 142,
@@ -826,6 +852,12 @@
     "basis": "publication",
     "date": "2026-09-21",
     "down4": 28,
+    "later": {
+     "down4": 29,
+     "ratio_10d": 0.82,
+     "source": "178956b4",
+     "up4": 62
+    },
     "ratio_10d": 0.82,
     "source": "25eb5b26",
     "up4": 63,
@@ -835,6 +867,12 @@
     "basis": "publication",
     "date": "2026-09-22",
     "down4": 108,
+    "later": {
+     "down4": 107,
+     "ratio_10d": 0.91,
+     "source": "178956b4",
+     "up4": 196
+    },
     "ratio_10d": 0.91,
     "source": "e2dee988",
     "up4": 207,
@@ -844,6 +882,12 @@
     "basis": "publication",
     "date": "2026-09-23",
     "down4": 270,
+    "later": {
+     "down4": 263,
+     "ratio_10d": 0.85,
+     "source": "178956b4",
+     "up4": 39
+    },
     "ratio_10d": 0.85,
     "source": "6ff292d7",
     "up4": 40,
@@ -853,8 +897,12 @@
     "basis": "publication",
     "date": "2026-09-24",
     "down4": 141,
-    "later_ratio_10d": 0.92,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 142,
+     "ratio_10d": 0.92,
+     "source": "178956b4",
+     "up4": 87
+    },
     "ratio_10d": 0.94,
     "source": "6822dddd",
     "up4": 92,
@@ -864,8 +912,12 @@
     "basis": "publication",
     "date": "2026-09-25",
     "down4": 67,
-    "later_ratio_10d": 0.88,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 68,
+     "ratio_10d": 0.88,
+     "source": "178956b4",
+     "up4": 82
+    },
     "ratio_10d": 0.89,
     "source": "8be007f6",
     "up4": 84,
@@ -875,8 +927,12 @@
     "basis": "publication",
     "date": "2026-09-28",
     "down4": 187,
-    "later_ratio_10d": 0.83,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 183,
+     "ratio_10d": 0.83,
+     "source": "178956b4",
+     "up4": 81
+    },
     "ratio_10d": 0.84,
     "source": "786ade70",
     "up4": 81,
@@ -886,8 +942,12 @@
     "basis": "publication",
     "date": "2026-09-29",
     "down4": 68,
-    "later_ratio_10d": 0.92,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 70,
+     "ratio_10d": 0.92,
+     "source": "178956b4",
+     "up4": 91
+    },
     "ratio_10d": 0.93,
     "source": "6284cb97",
     "up4": 93,
@@ -897,8 +957,12 @@
     "basis": "publication",
     "date": "2026-09-30",
     "down4": 98,
-    "later_ratio_10d": 0.96,
-    "later_source": "178956b4",
+    "later": {
+     "down4": 97,
+     "ratio_10d": 0.96,
+     "source": "178956b4",
+     "up4": 91
+    },
     "ratio_10d": 0.95,
     "source": "a9002369",
     "up4": 90,
@@ -908,6 +972,12 @@
     "basis": "publication",
     "date": "2026-10-01",
     "down4": 108,
+    "later": {
+     "down4": 110,
+     "ratio_10d": 0.82,
+     "source": "178956b4",
+     "up4": 135
+    },
     "ratio_10d": 0.82,
     "source": "a930ca0f",
     "up4": 135,
@@ -917,6 +987,12 @@
     "basis": "publication",
     "date": "2026-10-02",
     "down4": 59,
+    "later": {
+     "down4": 62,
+     "ratio_10d": 0.91,
+     "source": "178956b4",
+     "up4": 163
+    },
     "ratio_10d": 0.91,
     "source": "58e0f384",
     "up4": 166,
@@ -958,6 +1034,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 298,
     "r": [
      -1.0,
      -1.0,
@@ -1025,7 +1102,11 @@
      "wins": 7
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 1,
+     "all": 16
+    }
    },
    "grades_final": {
     "A": 51,
@@ -1080,6 +1161,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 67,
      "r": [
       -1.0,
       -1.0,
@@ -1119,6 +1201,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 49,
      "r": [
       -1.0,
       -1.0,
@@ -1151,6 +1234,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 30,
      "r": [
       -1.0,
       -1.0,
@@ -1189,6 +1273,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 22,
      "r": [],
      "rows": 26,
      "settled": {
@@ -1216,6 +1301,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 130,
      "r": [
       -1.0,
       -0.85,
@@ -1257,6 +1343,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 409,
     "r": [
      -1.0,
      -1.0,
@@ -1320,7 +1407,11 @@
      "wins": 5
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 2,
+     "all": 25
+    }
    },
    "grades_final": {
     "A": 53,
@@ -1375,6 +1466,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 100,
      "r": [
       -1.0,
       -1.0,
@@ -1410,6 +1502,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 113,
      "r": [
       -1.0,
       -1.0,
@@ -1444,6 +1537,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 28,
      "r": [
       -1.0,
       -1.0,
@@ -1479,6 +1573,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 34,
      "r": [
       -0.83,
       0.38
@@ -1509,6 +1604,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 134,
      "r": [
       -1.0,
       -1.0,
@@ -1549,6 +1645,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.13,
      -1.0,
@@ -1690,7 +1787,11 @@
      "wins": 31
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 29,
@@ -1745,6 +1846,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -1796,6 +1898,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.13,
       -1.0,
@@ -1844,6 +1947,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -1885,6 +1989,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -1923,6 +2028,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -1997,6 +2103,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.48,
      -1.42,
@@ -2152,7 +2259,11 @@
      "wins": 20
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 9,
@@ -2207,6 +2318,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.42,
       -1.0,
@@ -2277,6 +2389,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -2320,6 +2433,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.03,
       -0.87,
@@ -2355,6 +2469,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -0.32,
@@ -2388,6 +2503,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.48,
       -1.0,
@@ -2473,6 +2589,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.59,
      -1.29,
@@ -2666,7 +2783,11 @@
      "wins": 30
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 18,
@@ -2721,6 +2842,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.29,
       -1.17,
@@ -2790,6 +2912,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -2856,6 +2979,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.59,
       -1.0,
@@ -2892,6 +3016,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -2939,6 +3064,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3025,6 +3151,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.0,
      -1.0,
@@ -3228,7 +3355,11 @@
      "wins": 54
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 41,
@@ -3283,6 +3414,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3346,6 +3478,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3398,6 +3531,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3462,6 +3596,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3500,6 +3635,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3597,6 +3733,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -2.06,
      -1.92,
@@ -3799,7 +3936,11 @@
      "wins": 36
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 34,
@@ -3854,6 +3995,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3926,6 +4068,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -3977,6 +4120,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4028,6 +4172,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4062,6 +4207,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -2.06,
       -1.92,
@@ -4167,6 +4313,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -13.13,
      -3.91,
@@ -4329,7 +4476,11 @@
      "wins": 14
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 45,
@@ -4384,6 +4535,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4438,6 +4590,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4494,6 +4647,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4533,6 +4687,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.03,
       -1.0,
@@ -4571,6 +4726,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -13.13,
       -3.91,
@@ -4657,6 +4813,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.73,
      -1.54,
@@ -4772,7 +4929,11 @@
      "wins": 11
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 7,
@@ -4827,6 +4988,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -4887,6 +5049,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.02,
       -1.0,
@@ -4929,6 +5092,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -0.65,
       -0.64,
@@ -4965,6 +5129,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.73,
       -1.0,
@@ -4997,6 +5162,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.54,
       -1.0,
@@ -5053,6 +5219,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.45,
      -1.33,
@@ -5280,7 +5447,11 @@
      "wins": 19
     },
     "as_of": "2026-10-01",
-    "horizon_passed": true
+    "horizon_passed": true,
+    "moved": {
+     "admitted": 0,
+     "all": 0
+    }
    },
    "grades_final": {
     "A": 49,
@@ -5335,6 +5506,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.33,
       -1.2,
@@ -5410,6 +5582,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -5461,6 +5634,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.01,
       -1.0,
@@ -5519,6 +5693,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -5555,6 +5730,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.45,
       -1.16,
@@ -5673,6 +5849,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.07,
      -1.01,
@@ -5771,7 +5948,11 @@
      "wins": 8
     },
     "as_of": "2026-10-01",
-    "horizon_passed": false
+    "horizon_passed": false,
+    "moved": {
+     "admitted": 0,
+     "all": 3
+    }
    },
    "grades_final": {
     "A": 64,
@@ -5826,6 +6007,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -5866,6 +6048,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.01,
       -1.0,
@@ -5915,6 +6098,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.07,
       -1.0,
@@ -5955,6 +6139,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [],
      "rows": 25,
      "settled": {
@@ -5982,6 +6167,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6034,6 +6220,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 0,
     "r": [
      -1.0,
      -1.0,
@@ -6199,7 +6386,11 @@
      "wins": 6
     },
     "as_of": "2026-10-01",
-    "horizon_passed": false
+    "horizon_passed": false,
+    "moved": {
+     "admitted": 2,
+     "all": 17
+    }
    },
    "grades_final": {
     "A": 47,
@@ -6254,6 +6445,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6314,6 +6506,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6367,6 +6560,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6406,6 +6600,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6445,6 +6640,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 0,
      "r": [
       -1.0,
       -1.0,
@@ -6530,6 +6726,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 16,
     "r": [
      -3.14,
      -2.1,
@@ -6745,7 +6942,11 @@
      "wins": 4
     },
     "as_of": "2026-10-01",
-    "horizon_passed": false
+    "horizon_passed": false,
+    "moved": {
+     "admitted": 12,
+     "all": 34
+    }
    },
    "grades_final": {
     "A": 58,
@@ -6800,6 +7001,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 7,
      "r": [
       -2.1,
       -1.36,
@@ -6866,6 +7068,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 3,
      "r": [
       -1.0,
       -1.0,
@@ -6917,6 +7120,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 2,
      "r": [
       -1.0,
       -1.0,
@@ -6984,6 +7188,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 1,
      "r": [
       -1.0,
       -1.0,
@@ -7018,6 +7223,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 3,
      "r": [
       -3.14,
       -1.8,
@@ -7126,6 +7332,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 27,
     "r": [
      -1.0,
      -1.0,
@@ -7223,7 +7430,11 @@
      "wins": 0
     },
     "as_of": "2026-10-01",
-    "horizon_passed": false
+    "horizon_passed": false,
+    "moved": {
+     "admitted": 0,
+     "all": 33
+    }
    },
    "grades_final": {
     "A": 6,
@@ -7278,6 +7489,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 5,
      "r": [
       -1.0,
       -1.0,
@@ -7320,6 +7532,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 5,
      "r": [
       -1.0,
       -1.0,
@@ -7358,6 +7571,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 1,
      "r": [
       -1.0,
       -1.0
@@ -7388,6 +7602,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 3,
      "r": [
       -1.0,
       -1.0,
@@ -7424,6 +7639,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 13,
      "r": [
       -1.0,
       -1.0,
@@ -7486,6 +7702,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 99,
     "r": [
      -1.83,
      -1.38,
@@ -7694,7 +7911,11 @@
      "wins": 0
     },
     "as_of": "2026-10-01",
-    "horizon_passed": false
+    "horizon_passed": false,
+    "moved": {
+     "admitted": 149,
+     "all": 579
+    }
    },
    "grades_final": {
     "A": 144,
@@ -7749,6 +7970,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 29,
      "r": [
       -1.04,
       -1.03,
@@ -7821,6 +8043,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 6,
      "r": [
       -1.83,
       -1.0,
@@ -7868,6 +8091,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 31,
      "r": [
       -1.38,
       -1.0,
@@ -7946,6 +8170,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 5,
      "r": [
       -1.0,
       -1.0,
@@ -7986,6 +8211,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 28,
      "r": [
       -1.0,
       -1.0,
@@ -8068,6 +8294,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 135,
     "r": [
      -1.0,
      -1.0,
@@ -8201,6 +8428,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 34,
      "r": [
       -1.0,
       -1.0,
@@ -8242,6 +8470,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 23,
      "r": [
       -1.0,
       -1.0,
@@ -8289,6 +8518,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 15,
      "r": [
       -1.0,
       -1.0,
@@ -8322,6 +8552,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 10,
      "r": [
       -1.0,
       -1.0,
@@ -8358,6 +8589,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 53,
      "r": [
       -1.0,
       -1.0,
@@ -8412,6 +8644,7 @@
      "unreadable": 0,
      "unscored": 0
     },
+    "movable": 552,
     "r": [],
     "rows": 607,
     "settled": {
@@ -8482,6 +8715,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 134,
      "r": [],
      "rows": 149,
      "settled": {
@@ -8509,6 +8743,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 100,
      "r": [],
      "rows": 109,
      "settled": {
@@ -8536,6 +8771,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 81,
      "r": [],
      "rows": 87,
      "settled": {
@@ -8563,6 +8799,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 39,
      "r": [],
      "rows": 45,
      "settled": {
@@ -8590,6 +8827,7 @@
       "unreadable": 0,
       "unscored": 0
      },
+     "movable": 198,
      "r": [],
      "rows": 217,
      "settled": {
@@ -8609,7 +8847,6 @@
   }
  ],
  "nights_summary": {
-  "admitted_positive_nights": 3,
   "bursts": 7128,
   "from": "2026-09-11",
   "inside_hold": 5,
@@ -8618,6 +8855,138 @@
   "tickets_published": 0,
   "verdicts": {
    "red": 17
+  }
+ },
+ "reading": {
+  "as_of": "2026-10-05",
+  "freeze": "2026-10-01",
+  "phases": {
+   "confirmatory": {
+    "from": "2026-10-02",
+    "inside_hold": 2,
+    "nights": 2,
+    "red_nights": 2,
+    "strata": {
+     "B": {
+      "breakeven": 0,
+      "losses": 13,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 13,
+      "sum_r": -13.0,
+      "wins": 0
+     },
+     "C": {
+      "breakeven": 0,
+      "losses": 19,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 19,
+      "sum_r": -19.0,
+      "wins": 0
+     },
+     "admitted": {
+      "breakeven": 0,
+      "losses": 5,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 5,
+      "sum_r": -5.0,
+      "wins": 0
+     },
+     "all": {
+      "breakeven": 0,
+      "losses": 62,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 62,
+      "sum_r": -62.0,
+      "wins": 0
+     },
+     "skip": {
+      "breakeven": 0,
+      "losses": 8,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 8,
+      "sum_r": -8.0,
+      "wins": 0
+     },
+     "vetoed": {
+      "breakeven": 0,
+      "losses": 17,
+      "mean_r": -1.0,
+      "median_r": -1.0,
+      "n": 17,
+      "sum_r": -17.0,
+      "wins": 0
+     }
+    },
+    "through": "2026-10-05"
+   },
+   "exploratory": {
+    "from": "2026-09-11",
+    "inside_hold": 3,
+    "nights": 15,
+    "red_nights": 15,
+    "strata": {
+     "B": {
+      "breakeven": 5,
+      "losses": 369,
+      "mean_r": -0.399,
+      "median_r": -0.7,
+      "n": 448,
+      "sum_r": -178.83,
+      "wins": 74
+     },
+     "C": {
+      "breakeven": 5,
+      "losses": 236,
+      "mean_r": -0.322,
+      "median_r": -0.78,
+      "n": 293,
+      "sum_r": -94.37,
+      "wins": 52
+     },
+     "admitted": {
+      "breakeven": 9,
+      "losses": 208,
+      "mean_r": -0.189,
+      "median_r": -0.4,
+      "n": 267,
+      "sum_r": -50.56,
+      "wins": 50
+     },
+     "all": {
+      "breakeven": 28,
+      "losses": 1405,
+      "mean_r": -0.335,
+      "median_r": -0.66,
+      "n": 1741,
+      "sum_r": -583.47,
+      "wins": 308
+     },
+     "skip": {
+      "breakeven": 0,
+      "losses": 93,
+      "mean_r": -0.374,
+      "median_r": -1.0,
+      "n": 111,
+      "sum_r": -41.52,
+      "wins": 18
+     },
+     "vetoed": {
+      "breakeven": 9,
+      "losses": 499,
+      "mean_r": -0.351,
+      "median_r": -0.63,
+      "n": 622,
+      "sum_r": -218.19,
+      "wins": 114
+     }
+    },
+    "through": "2026-10-01"
+   }
   }
  },
  "reports": [
@@ -8650,17 +9019,13 @@
   "breadth": {
    "burst_pct": 4.0,
    "ratio_long_sessions": 10,
-   "ratio_short_sessions": 5,
-   "red_ratio_10d": 1.0,
    "size_multiplier": {
     "green": 1.0,
     "red": 0.0,
     "yellow": 0.5
-   },
-   "yellow_ratio_10d": 2.0
+   }
   },
   "pipeline": {
-   "max_reads": 12,
    "trade_grades": [
     "A+",
     "A"

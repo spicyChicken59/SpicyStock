@@ -4110,10 +4110,11 @@ settled R over the study's own rows, re-derived by `tests/test_historical_findin
 `docs/app-findings.js` (`SCStock.findings`) is the walkthrough's sibling: a stepper
 over the published nights (Back, Play, Next, the arrow keys, Space,
 `SCStock.findingsInterval` for tests, reduced motion honoured); one SVG with two
-panels over the same sessions -- the 10-session ratio the gate read on every
-session the records know, each night its own publication's value and the sessions
-before 11 September from the newest record's thirty-day history (a later history
-that re-measured a night is named beside it), the two thresholds of its ratio
+panels over the same sessions -- the 10-session ratio on every session the records
+know, each published night its own publication's value and every other session
+read from the newest publication whose history carries it (only 24 August to 10
+September from the 5 October record; the rest from older ones), a later history
+that reads a night differently named beside it, the two thresholds of its ratio
 rule named at the axis with a key that says green also needs every other breadth
 rule quiet, the backtest's 28-session exact-lookback pass bracketed under the
 dates; and under it every settled R of that night's counterfactual tickets for
@@ -4153,14 +4154,15 @@ inside it, "after the chart reader N stayed" on the night it gave no usable read
 −0.085), a wash claiming green off the ratio alone. The builder now counts what
 the page used to add up (`tickets`, `a_quality`, `first_read.horizon_passed`,
 `admitted_positive_nights`, `inside_hold`), refuses a bucket it does not know, a
-night with two horizons and a report the checkout lacks, and carries no field
-nothing reads. The module checks the file's shape before it draws
+night with two horizons and a report the checkout lacks; it also carries
+provenance and summary fields the page does not print. The module checks the file's shape before it draws
 (`shapeProblem()`), every field the drawing and the blocks index into, and ends
 in one sentence; a failure one level further down takes the half-drawn replay
 away. Both historical files load only when the Record view is first shown, under
 a timeout, and a continuation whose block has left the page writes nothing: that
 is what crashed `continuity_check.mjs` on four of six runs (the fetch resolving
-after jsdom closed), ten of ten green since. The second review, over the fixed
+after jsdom closed); `continuity_check.mjs` closes a window with both files in
+flight to hold that guard. The second review, over the fixed
 tip, found three more of substance. The rules wrote 58 A-quality tickets on 11
 September and the page said 30: the study plans every burst before it checks the
 bars, so its 28 set-aside rows carried tickets it never walked (named now as some

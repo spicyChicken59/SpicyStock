@@ -16,8 +16,11 @@
    every fill and stroke as var(--sc-tone, fallback), so a theme flip
    re-resolves with no script. The outcome axis is COMPRESSED (a signed
    log1p, like the map's volume axis): it is a position and never a value,
-   its ticks are real multiples, nothing is clipped, and every R stays in
-   the table twin. */
+   its ticks are real multiples, nothing is clipped, and every settled R is
+   printed in the third table twin. A night's mean is a rate, so it is
+   printed and drawn as one only from the record's own minimum of settled
+   tickets (rules.record.scorecard_min_plans); under it a night shows its
+   count and its sum, never a mean read as a rate. */
 (function (w) {
   'use strict';
   const S = w.SCStock = w.SCStock || {};
@@ -70,33 +73,51 @@
     const obj = (v) => v && typeof v === 'object' && !Array.isArray(v);
     const str = (v) => typeof v === 'string' && v.length > 0;
     const nums = (o, keys) => obj(o) && keys.every((k) => isNum(o[k]));
-    const settled = (b) => obj(b) && obj(b.settled) && obj(b.buckets) && Array.isArray(b.r) && b.r.every(isNum) && isNum(b.rows) && isNum(b.tickets);
+    const block = (b) => obj(b) && ['n', 'wins', 'losses', 'breakeven'].every((k) => isNum(b[k])) && ['sum_r', 'mean_r', 'median_r'].every((k) => isNum(b[k]) || b[k] === null);
+    const settled = (b) => obj(b) && block(b.settled) && obj(b.buckets) && Array.isArray(b.r) && b.r.every(isNum) && nums(b, ['rows', 'tickets', 'movable']);
+    const later = (s) => s.later === undefined || (obj(s.later) && nums(s.later, ['up4', 'down4']) && (isNum(s.later.ratio_10d) || s.later.ratio_10d === null) && str(s.later.source));
     if (!obj(F) || F.version !== VERSION) return 'Unknown findings version.';
-    if (!obj(F.rules) || !nums(F.rules.breadth, ['ratio_long_sessions', 'burst_pct']) || !obj(F.rules.breadth.size_multiplier) ||
-        !nums(F.rules.record, ['open_plan_sessions']) || !obj(F.rules.pipeline) || !Array.isArray(F.rules.pipeline.yellow_grades)) return 'The findings carry no rules.';
+    if (!obj(F.rules) || !nums(F.rules.breadth, ['ratio_long_sessions', 'burst_pct']) || !nums(F.rules.breadth.size_multiplier, ['yellow']) ||
+        !nums(F.rules.record, ['open_plan_sessions', 'scorecard_min_plans']) || !obj(F.rules.pipeline) || !Array.isArray(F.rules.pipeline.yellow_grades)) return 'The findings carry no rules.';
     if (!obj(F.market) || !Array.isArray(F.market.sessions) || !F.market.sessions.length || !nums(F.market.thresholds, ['ratio_10d_red', 'ratio_10d_yellow']) ||
-        F.market.sessions.some((s) => !obj(s) || !str(s.date) || !(isNum(s.ratio_10d) || s.ratio_10d === null))) return 'The findings carry no market.';
+        F.market.sessions.some((s) => !obj(s) || !str(s.date) || !str(s.source) || !str(s.basis) || !(isNum(s.ratio_10d) || s.ratio_10d === null) || !later(s))) return 'The findings carry no market.';
     if (!Array.isArray(F.nights) || !F.nights.length) return 'The findings carry no nights.';
     const dates = {};
     F.market.sessions.forEach((s) => { dates[s.date] = true; });
     for (const nt of F.nights) {
-      if (!obj(nt) || !dates[nt.session] || !obj(nt.regime) || !str(nt.regime.verdict) || !Array.isArray(nt.regime.reasons) ||
+      if (!obj(nt) || !dates[nt.session] || !obj(nt.regime) || !str(nt.regime.verdict) || !Array.isArray(nt.regime.reasons) || !nt.regime.reasons.every(str) ||
           !obj(nt.reads) || !nums(nt.a_quality, ['mechanical', 'final']) || !settled(nt.all) || !str(nt.commit) || !str(nt.phase) || !str(nt.status) ||
+          typeof nt.complete !== 'boolean' || !(str(nt.horizon) || nt.horizon === null) || (!nt.complete && !str(nt.horizon)) ||
+          (nt.first_read !== undefined && !(obj(nt.first_read) && str(nt.first_read.as_of) && block(nt.first_read.admitted) && block(nt.first_read.all) &&
+            nums(nt.first_read.moved, ['admitted', 'all']))) ||
           ['bursts', 'vetoed', 'tickets_published'].some((k) => !isNum(nt[k]))) return 'A night of the findings is malformed.';
       if (!obj(nt.strata) || STRATA.slice(0, -1).some((s) => !settled(nt.strata[s]))) return 'A night of the findings has a malformed stratum.';
     }
-    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'bursts', 'admitted_positive_nights', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
+    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'bursts', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
+    const rd = F.reading;
+    if (!obj(rd) || !str(rd.freeze) || !str(rd.as_of) || !obj(rd.phases) || ['exploratory', 'confirmatory'].some((ph) => {
+      const b = rd.phases[ph];
+      return !nums(b, ['nights', 'red_nights', 'inside_hold']) || !obj(b.strata) || STRATA.some((s) => !block(b.strata[s]));
+    })) return 'The findings carry no reading.';
     const bt = F.backtest || {};
     for (const k of ['lookback_130', 'lookback_260']) {
       const b = bt[k];
       if (!obj(b) || !obj(b.gates) || !obj(b.gates.production) || !obj(b.gates.no_regime_gate) || !nums(b.evaluated, ['count']) || !obj(b.regimes) ||
-          !obj(b.regimes.verdicts) || !obj(b.candidates) || !obj(b.lookback) || !obj(b.lookback.equivalence) || !obj(b.source) || !Array.isArray(b.limitations)) return 'The findings carry no backtest.';
+          !obj(b.regimes.verdicts) || !obj(b.candidates) || !obj(b.lookback) || !obj(b.lookback.equivalence) || !str(b.lookback.equivalence.status) ||
+          !str(b.rules_version) || !obj(b.source) || !str(b.source.sha256) || !Array.isArray(b.limitations) ||
+          ['production', 'no_regime_gate'].some((g) => !obj(b.gates[g].settled) || !obj(b.gates[g].plans) || typeof b.gates[g].settled.readable !== 'boolean')) return 'The findings carry no backtest.';
     }
     const R = F.run6;
-    if (!obj(R) || !obj(R.sessions) || !obj(R.download) || !Array.isArray(R.blocking_names) || !obj(R.public) || !obj(R.public.artifact) || !obj(R.source) ||
-        Object.keys(R.sessions).some((d) => !obj(R.sessions[d].original) || !obj(R.sessions[d].policies) || !obj(R.sessions[d].policies.C) ||
-          !Array.isArray(R.sessions[d].policies.C.ratio_10d_bounds) || !Array.isArray(R.sessions[d].policies.C.rules_fired))) return 'The findings carry no fresh-bar reading.';
-    if (!obj(F.study) || !obj(F.study.summary) || !obj(F.study.summary.strata) || STRATA.slice(0, -1).some((s) => !obj((F.study.summary.strata[s] || {}).settled))) return 'The findings carry no study summary.';
+    const policy = (c) => obj(c) && Array.isArray(c.ratio_10d_bounds) && Array.isArray(c.rules_fired) && c.rules_fired.every(str) && str(c.independent_verdict);
+    if (!obj(R) || !obj(R.sessions) || !obj(R.download) || !Array.isArray(R.blocking_names) || !obj(R.public) || !obj(R.public.artifact) ||
+        !(str(R.public.artifact.id) || isNum(R.public.artifact.id)) || !obj(R.source) || !str(R.source.sha256) ||
+        Object.keys(R.sessions).some((d) => !obj(R.sessions[d]) || !obj(R.sessions[d].original) || !str(R.sessions[d].original.verdict) ||
+          !obj(R.sessions[d].policies) || !policy(R.sessions[d].policies.C))) return 'The findings carry no fresh-bar reading.';
+    const phases = obj(F.study) && obj(F.study.summary) ? F.study.summary.phases : null;
+    if (!obj(F.study) || !str(F.study.newest_session) || !obj(F.study.summary) || !obj(F.study.summary.strata) ||
+        STRATA.slice(0, -1).some((s) => !obj((F.study.summary.strata[s] || {}).settled)) ||
+        !obj(phases) || !obj(phases.confirmatory) || (phases.confirmatory.rows && !(block(phases.confirmatory.settled) && obj(phases.confirmatory.scorecard) &&
+          typeof phases.confirmatory.scorecard.readable === 'boolean' && isNum(phases.confirmatory.scorecard.min_read)))) return 'The findings carry no study summary.';
     if (!Array.isArray(F.reports)) return 'The findings carry no reports.';
     return null;
   }
@@ -141,8 +162,10 @@
     const nights = F.nights.map((nt) => Object.assign({}, nt, { i: index[nt.session], block: stratumOf(nt, stratum) }));
     const outcomes = [];
     nights.forEach((nt) => { outcomes.push.apply(outcomes, nt.block.r); });
+    const confirmatory = F.reading.phases.confirmatory.nights > 0;
+    const freezeAt = confirmatory && isNum(index[F.reading.freeze]) ? index[F.reading.freeze] : null;
     return { sessions: F.market.sessions, thresholds: F.market.thresholds, nights, outcomes, stratum,
-             window: F.backtest.lookback_260.evaluated, index };
+             window: F.backtest.lookback_260.evaluated, index, min: F.rules.record.scorecard_min_plans, freeze: F.reading.freeze, freezeAt };
   }
 
   // ---- the SVG ------------------------------------------------------------
@@ -151,12 +174,14 @@
     const rules = F.rules.breadth, th = model.thresholds;
     const svg = SC.svg('svg', { 'class': 'ss-find__svg', viewBox: [0, 0, G.W, G.H].join(' '), width: G.W, height: G.H,
                                 role: 'img', 'aria-labelledby': ids.title + ' ' + ids.desc });
-    svg.appendChild(SC.svg('title', { id: ids.title }, 'The market the gate read, and what each night’s tickets did'));
+    svg.appendChild(SC.svg('title', { id: ids.title }, 'The breadth ratio the records carry, and what each night’s tickets did'));
     svg.appendChild(SC.svg('desc', { id: ids.desc }, 'Upper panel: the ' + plain(rules.ratio_long_sessions) + '-session ratio of stocks up ' +
       plain(rules.burst_pct) + '% to stocks down, every session from ' + words(model.sessions[0].date) + ' to ' +
-      words(model.sessions[model.sessions.length - 1].date) + ', with dashed lines where the ratio rule changes its verdict, ' +
-      fixed(th.ratio_10d_red, 1) + ' and ' + fixed(th.ratio_10d_yellow, 1) + '. Lower panel: for every published night, the settled R of its ' +
-      STRATUM_WORDS[model.stratum] + ' tickets on a compressed axis, and their mean. The tables under the chart carry every value.'));
+      words(model.sessions[model.sessions.length - 1].date) + ', as the gate read it on a published night and as a later record’s history carries it on any other, ' +
+      'with dashed lines where the ratio rule changes its verdict, ' + fixed(th.ratio_10d_red, 1) + ' and ' + fixed(th.ratio_10d_yellow, 1) +
+      '. Lower panel: for every published night, the settled R of its ' + STRATUM_WORDS[model.stratum] + ' tickets on a compressed axis, and their mean, ' +
+      'drawn hollow where fewer than ' + plain(model.min) + ' settled.' + (model.freezeAt === null ? '' : ' A dotted line after ' + words(model.freeze) +
+      ' marks the study’s freeze: the nights to its right are confirmatory.') + ' The tables under the chart carry every value, every settled R included.'));
     const bands = SC.svg('g', { 'class': 'ss-find__bands' });
     const under = SC.svg('g'), marks = SC.svg('g'), over = SC.svg('g'), axis = SC.svg('g', { 'class': 'ss-find__axis' });
     svg.appendChild(bands); svg.appendChild(under); svg.appendChild(marks); svg.appendChild(over); svg.appendChild(axis);
@@ -202,9 +227,22 @@
     axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.bTop - 6 }, G.narrow
       ? 'R per ticket, compressed axis'
       : 'what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') + ' did: R per ticket, compressed axis'));
+    // the note names the sessions before the first published night, inside their own
+    // columns and on its own ground, so no gridline strikes it and no night sits under it;
+    // where neither wording fits that space it is left out (the tables say the same)
     if (model.nights.length && model.nights[0].i > 0) {
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y: G.bTop + 12, 'data-note': 'before' },
-        G.narrow ? 'no published scan yet' : 'no published scan before ' + short(model.nights[0].session)));
+      const room = G.x(model.nights[0].i) - G.slot / 2 - G.left - 8;
+      const note = ['no published scan before ' + short(model.nights[0].session), 'no published scan yet'].find((s) => s.length * CHAR <= room);
+      if (note) {
+        const y = G.bTop + 12;
+        axis.appendChild(SC.svg('rect', { 'class': 'ss-find__note-ground', x: G.left + 2, y: y - 9, width: r1(note.length * CHAR + 4), height: 12 }));
+        axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y, 'data-note': 'before' }, note));
+      }
+    }
+    // the study's freeze: one dotted line between the last exploratory session and the next
+    if (model.freezeAt !== null) {
+      const fx = r1(G.x(model.freezeAt) + G.slot / 2);
+      under.appendChild(SC.svg('line', { 'class': 'ss-find__freeze', x1: fx, x2: fx, y1: G.aTop, y2: G.bBottom, 'data-freeze': model.freeze }));
     }
     // the cursor: one band through both panels, moved with the step
     const cursor = SC.svg('g', { 'class': 'ss-find__cursor', 'data-cursor': '' });
@@ -223,9 +261,12 @@
         const off = ((j * GOLDEN) % 1 - 0.5) * G.slot * 0.8;
         g.appendChild(SC.svg('circle', { 'class': 'ss-find__r', cx: r1(cx + off), cy: G.yb(v), r: G.dot, style: tone('chart-context'), 'data-r': v }));
       });
-      // a night with nothing settled has no mean and draws none: a mark on the zero line would read as a mean of zero
+      // a night with nothing settled has no mean and draws none: a mark on the zero line would read as a mean of zero.
+      // Under the record's minimum the mean is drawn hollow, a position and not a rate
       if (isNum(b.settled.mean_r)) {
-        g.appendChild(SC.svg('circle', { 'class': 'ss-find__mean', cx, cy: G.yb(b.settled.mean_r), r: 4.5, style: tone('chart-emphasis'), 'data-mean': b.settled.mean_r }));
+        const thin = b.settled.n < model.min;
+        g.appendChild(SC.svg('circle', { 'class': 'ss-find__mean' + (thin ? ' is-thin' : ''), cx, cy: G.yb(b.settled.mean_r), r: 4.5, style: tone('chart-emphasis'),
+          'data-mean': b.settled.mean_r, 'data-readable': thin ? 'false' : 'true' }));
       }
       marks.appendChild(g);
       nightMarks[nt.session] = g;
@@ -263,7 +304,7 @@
     function place(k) {
       const nt = model.nights[k];
       cursor.style.transform = 'translateX(' + r1(G.x(nt.i) - G.slot / 2) + 'px)';
-      const text = pillText_(nt.block);
+      const text = pillText_(nt.block, model.min);
       const width = text.length * 6.4 + 14;
       const cx = Math.min(plotRight - width / 2 - 2, Math.max(G.left + width / 2 + 2, G.x(nt.i)));
       const yPill = G.aBottom + 6;
@@ -287,31 +328,56 @@
     }
     return { svg, G, place, reveal, hits, nightMarks, near };
   }
-  function pillText_(b) {
-    if (isNum(b.settled.mean_r)) return R3(b.settled.mean_r) + ' · ' + num(b.settled.n) + ' settled';
+  // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
+  function pillText_(b, min) {
+    const st = b.settled;
+    if (isNum(st.mean_r)) return (st.n >= min ? R3(st.mean_r) : R2(st.sum_r) + ' in all') + ' · ' + num(st.n) + ' settled';
     return b.buckets.pending ? plural(b.buckets.pending, 'ticket') + ' pending' : 'nothing settled';
+  }
+  // a settled block in words: a rate from the minimum, a count and a sum under it, never a dash in a sentence
+  function outcome(st, min) {
+    if (!st.n) return 'none settled';
+    return st.n >= min ? R3(st.mean_r) + ' per settled ticket over ' + num(st.n)
+      : num(st.n) + ' settled, ' + R2(st.sum_r) + ' in all, too few for a rate';
   }
 
   // ---- captions: the night in words, every number the file's ---------------
+  // what each stratum's counterfactual removed: the gate and the reader for every one,
+  // and, for the bursts the rules refuse whatever the gate says, the grade's or the
+  // veto's own refusal. The study plans every burst directly (signal_outcomes.ticket),
+  // so outside A-quality the production pipeline writes none of these tickets.
+  const REMOVED = {
+    admitted: ['Gate removed, reader not run', ''],
+    B: ['Gate and grade removed, reader not run', ' had the grade not refused them'],
+    C: ['Gate and grade removed, reader not run', ' had the grade not refused them'],
+    skip: ['Gate and grade removed, reader not run', ' had the grade not refused them'],
+    vetoed: ['Gate and veto removed, reader not run', ' had the veto not refused them'],
+    all: ['Gate, grade and veto removed, reader not run', ' had nothing refused them'],
+  };
   function factsOf(F, nt, stratum) {
     const rules = F.rules, b = stratumOf(nt, stratum);
     const reg = nt.regime, bk = b.buckets, st = b.settled;
-    const hold = plain(rules.record.open_plan_sessions);
+    const hold = plain(rules.record.open_plan_sessions), min = rules.record.scorecard_min_plans;
+    const asOf = words(F.study.newest_session);
+    const final = nt.complete && !b.movable;
     const facts = [];
     facts.push({ chip: [reg.verdict, VERDICT_TONE[reg.verdict] || 'neutral'],
                  text: sizeWords(reg.size_multiplier) + ' · ' + num(reg.up4) + ' up ' + plain(rules.breadth.burst_pct) + '% against ' +
                        num(reg.down4) + ' down on the day · ' + num(reg.up4_10d) + ' against ' + num(reg.down4_10d) + ' over ' +
                        plain(rules.breadth.ratio_long_sessions) + ' sessions, ratio ' + fixed(reg.ratio_10d, 2) + '.' });
-    // the study's rows are bursts; the file counts the tickets the production rules wrote for
+    // the study's rows are bursts; the file counts the tickets the plan rules wrote for
     // them, the set-aside ones included, and says separately which of those were never walked
-    let cf = 'Gate removed, reader not run: of ' + plural(b.rows, stratum === 'all' ? 'burst' : STRATUM_WORDS[stratum] + ' burst') +
-             ' the rules wrote ' + plural(b.tickets, 'ticket') + ' at full size';
+    const removed = REMOVED[stratum];
+    let cf = removed[0] + ': of ' + plural(b.rows, stratum === 'all' ? 'burst' : STRATUM_WORDS[stratum] + ' burst') + ' the plan rules ' +
+             (removed[1] ? 'would have written ' : 'wrote ') + plural(b.tickets, 'ticket') + ' at full size' + removed[1];
     if (bk.basis_mismatch) cf += ', ' + num(bk.basis_mismatch) + ' of them set aside unwalked because the later records do not carry the signal’s own bar as it was published';
     if (st.n) {
-      cf += '; ' + num(st.n) + ' settled' + (nt.complete ? '' : ' so far') + ' · ' + num(st.wins) + ' won, ' + num(st.losses) + ' lost, ' +
-            num(st.breakeven) + ' even · ' + R2(st.sum_r) + ' in all, ' + R3(st.mean_r) + ' per settled ticket, median ' + R2(st.median_r);
+      cf += '; ' + num(st.n) + ' settled' + (final ? '' : ' so far') + ' · ' + num(st.wins) + ' won, ' + num(st.losses) + ' lost, ' +
+            num(st.breakeven) + ' even · ' + R2(st.sum_r) + ' in all' + (st.n >= min
+              ? ', ' + R3(st.mean_r) + ' per settled ticket, median ' + R2(st.median_r)
+              : ', too few for a rate, which the record reads from ' + plural(min, 'settled ticket'));
     } else {
-      cf += nt.complete ? '; none settled' : '; none settled yet';
+      cf += final ? '; none settled' : '; none settled yet';
     }
     const rest = [];
     if (bk.uncertain) rest.push(num(bk.uncertain) + ' uncertain on daily bars');
@@ -323,19 +389,25 @@
     if (bk.unscored) rest.push(num(bk.unscored) + ' unscored');
     facts.push(cf + (rest.length ? ' · ' + rest.join(', ') : '') + '.');
     const none = [];
-    if (bk.no_ticket) none.push(num(bk.no_ticket) + ' the rules would not write a ticket for');
+    if (bk.no_ticket) none.push(num(bk.no_ticket) + ' the plan rules would not write a ticket for');
     if (bk.plan_error) none.push(num(bk.plan_error) + ' whose ticket could not be formed');
     if (none.length) facts.push('Without a ticket: ' + none.join('; ') + '.');
     const fr = nt.first_read && (stratum === 'admitted' ? nt.first_read.admitted : stratum === 'all' ? nt.first_read.all : null);
-    if (fr && fr.n) {
-      const then = R3(fr.mean_r) + ' per settled ticket over ' + num(fr.n);
-      const now = R3(st.mean_r) + ' over ' + num(st.n);
-      const same = fr.n === st.n && fr.mean_r === st.mean_r;
-      facts.push('The first read, with records through ' + short(nt.first_read.as_of) +
-        (nt.first_read.horizon_passed ? '' : ', before every ticket had had its ' + hold + ' sessions') + ': ' + then +
-        (same ? '; unchanged since.' : '; read now, ' + now + '.'));
+    if (fr && (fr.n || st.n)) {
+      const same = fr.n === st.n && fr.sum_r === st.sum_r;
+      const moved = nt.first_read.moved[stratum === 'admitted' ? 'admitted' : 'all'];
+      let line = 'The first read, with records through ' + words(nt.first_read.as_of) +
+        (nt.first_read.horizon_passed ? '' : ', before every ticket had had its ' + hold + ' sessions') + ': ' + outcome(fr, min);
+      if (same) line += '; unchanged on the records through ' + asOf;
+      else {
+        line += '; on the records through ' + asOf + ', ' + outcome(st, min);
+        // once the hold is over only the bars the records carry can move a row
+        if (nt.first_read.horizon_passed && moved) line += ', ' + plural(moved, 'row') + ' having moved after the hold as later records carried bars the first read lacked';
+      }
+      facts.push(line + '.');
     }
-    if (!nt.complete) facts.push('The ' + hold + '-session hold runs through ' + words(nt.horizon) + '; nothing here is final before then.');
+    if (!nt.complete) facts.push('The ' + hold + '-session hold runs through ' + words(nt.horizon) + '; the records read here end on ' + asOf + ', so nothing here is final.');
+    else if (b.movable) facts.push('The hold is over, but ' + plural(b.movable, 'row') + ' can still move as later records carry bars the records read here do not.');
     return facts;
   }
 
@@ -358,26 +430,38 @@
     if (scroll) { scroll.tabIndex = 0; scroll.setAttribute('role', 'region'); scroll.setAttribute('aria-label', spec.summary); }
     return table;
   }
-  function twins(SC, host, F, model) {
-    const who = model.stratum === 'all' ? 'every burst' : 'the ' + STRATUM_WORDS[model.stratum] + ' bursts';
+  // a later history's reading of a published night, named beside the night's own
+  const laterWords = (s) => s.later ? ' (a later history, ' + s.later.source + ', reads ' + num(s.later.up4) + ' / ' + num(s.later.down4) +
+    ', ratio ' + fixed(s.later.ratio_10d, 2) + ')' : '';
+  // the two twins that follow the stratum; the market's does not, and is never rebuilt with it
+  function stratumTwins(SC, host, F, model) {
+    const who = model.stratum === 'all' ? 'every burst' : 'the ' + STRATUM_WORDS[model.stratum] + ' bursts', min = model.min;
     twin(SC, host, {
-      caption: 'Every published night: the market, the scan, and the counterfactual tickets of ' + who,
+      caption: 'Every published night: the market, the scan, and the counterfactual tickets of ' + who + '; a mean prints from ' + plural(min, 'settled ticket'),
       summary: 'Nights as a table',
       head: ['night', 'verdict', 'ratio', 'bursts', 'A-quality, checklist', 'A-quality, after the reader', 'tickets published',
-             'bursts in the stratum', 'tickets written', 'set aside unwalked', 'settled', 'won', 'lost', 'even', 'sum R', 'mean R', 'uncertain', 'not filled', 'open', 'pending'],
+             'bursts in the stratum', 'tickets the plan rules wrote', 'set aside unwalked', 'settled', 'won', 'lost', 'even', 'sum R', 'mean R', 'uncertain', 'not filled', 'open', 'pending'],
       rows: model.nights.map((nt) => {
         const b = nt.block, s = b.settled;
         return [words(nt.session), nt.regime.verdict, fixed(nt.regime.ratio_10d, 2), num(nt.bursts), num(nt.a_quality.mechanical), num(nt.a_quality.final),
-                num(nt.tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven), signed(s.sum_r, 2), signed(s.mean_r, 3),
-                num(b.buckets.uncertain), num(b.buckets.not_filled), num(b.buckets.open), num(b.buckets.pending)];
+                num(nt.tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven),
+                signed(s.sum_r, 2), s.n >= min ? signed(s.mean_r, 3) : '—', num(b.buckets.uncertain), num(b.buckets.not_filled), num(b.buckets.open), num(b.buckets.pending)];
       }),
     }, 'table-nights');
     twin(SC, host, {
-      caption: 'Every session the records know: the counts and the ratio the gate read, oldest first',
+      caption: 'Every settled R of ' + who + ', night by night, as the study wrote it: the values the lower panel draws',
+      summary: 'Every settled R as a table',
+      head: ['night', 'settled', 'R per settled ticket, lowest first'],
+      rows: model.nights.map((nt) => [words(nt.session), num(nt.block.settled.n), nt.block.r.length ? nt.block.r.map((v) => signed(v, 2)).join(' ') : 'none']),
+    }, 'table-r');
+  }
+  function marketTwin(SC, host, model) {
+    twin(SC, host, {
+      caption: 'Every session the records know, oldest first: on a published night the counts and the ratio its own gate read, on any other a later record’s history of the session',
       summary: 'Market sessions as a table',
       head: ['session', 'up', 'down', 'ratio', 'verdict', 'read from'],
       rows: model.sessions.map((s) => [words(s.date), num(s.up4), num(s.down4), fixed(s.ratio_10d, 2), s.verdict || 'no publication',
-        (s.basis === 'publication' ? 'its own publication ' + s.source : 'the history of ' + s.source) + (isNum(s.later_ratio_10d) ? ' (a later history reads ' + fixed(s.later_ratio_10d, 2) + ')' : '')]),
+        (s.basis === 'publication' ? 'its own publication ' + s.source : 'the history of ' + s.source) + laterWords(s)]),
     }, 'table-market');
   }
 
@@ -419,7 +503,10 @@
       el('span', null, [el('i', { 'class': 'ss-find__key ss-find__key--line' }), plain(F.rules.breadth.ratio_long_sessions) + '-session ratio'])]
       .concat(present.map((v) => el('span', { 'data-find-key': v }, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--' + VERDICT_TONE[v] }), v + ' night'])))
       .concat([el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--dot' }), 'one settled ticket']),
-               el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--mean' }), 'the night’s mean'])]));
+               el('span', null, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--mean' }), 'the night’s mean']),
+               el('span', { 'data-find-key': 'thin' }, [el('i', { 'class': 'is-swatch ss-find__key ss-find__key--thin' }), 'a mean of fewer than ' + plural(F.rules.record.scorecard_min_plans, 'settled ticket') + ', not a rate'])])
+      .concat(model.freezeAt === null ? [] : [el('span', { 'data-find-key': 'freeze' }, [el('i', { 'class': 'ss-find__key ss-find__key--freeze' }),
+        'the study’s freeze after ' + short(F.reading.freeze) + ': confirmatory nights to its right'])]));
     const th = F.market.thresholds, br = F.rules.breadth;
     const regimeKey = el('p', { 'class': 'sc-hint ss-find__regime-key', 'data-find': 'regime-key', text: 'Dashed lines, the ' + plain(br.ratio_long_sessions) +
       '-session ratio rule: under ' + fixed(th.ratio_10d_red, 1) + ' it says red, no new longs; under ' + fixed(th.ratio_10d_yellow, 1) +
@@ -431,7 +518,7 @@
     const index = el('ol', { 'class': 'ss-find__index', 'aria-label': 'Nights' });
     model.nights.forEach((nt, k) => {
       index.appendChild(el('li', null, el('button', { type: 'button', 'class': 'sc-tab sc-tab--case', 'data-find-night': nt.session, 'aria-current': 'false',
-        onclick: () => { stopPlay(); go(k); } }, [el('span', { 'class': 'ss-find__n', text: String(k + 1) }), el('span', { text: short(nt.session) + ' · ' + nt.regime.verdict })])));
+        'aria-label': 'Night ' + (k + 1) + ', ' + words(nt.session) + ', ' + nt.regime.verdict, onclick: () => { stopPlay(); go(k); } }, [el('span', { 'class': 'ss-find__n', text: String(k + 1) }), el('span', { text: short(nt.session) + ' · ' + nt.regime.verdict })])));
     });
     const side = el('div', { 'class': 'ss-find__side' }, index);
     const eyebrow = el('p', { 'class': 'sc-eyebrow', 'data-find': 'eyebrow' });
@@ -444,10 +531,14 @@
     host.appendChild(el('h3', { 'class': 'ss-find__h', id: ids.head, text: 'The record, night by night' }));
     host.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'lead', text: 'Over the ' + plural(ns.nights, 'published night') + ' from ' + words(ns.from) + ' to ' + words(ns.through) +
       ' the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned. ' +
-      'The study then ran the production ticket rules over every burst, the gate removed and the reader not run, to see what the refusals were worth. Step through the nights or press Play; on a phone the list of nights is the precise way to one.' }));
+      'The study then ran the production plan rules over every burst, with the gate removed and the reader not run, and for the bursts graded B, C or skip or vetoed with ' +
+      'the grade’s or the veto’s own refusal removed too, to see what each refusal was worth. Its figures are as of the records through ' + words(F.study.newest_session) +
+      '. Step through the nights or press Play; on a phone the list of nights is the precise way to one.' }));
     const root = el('div', { 'class': 'ss-find', 'data-find-root': '', 'data-stratum': stratum, 'aria-labelledby': ids.head, role: 'region' }, [filter, stage, side, caption]);
     host.appendChild(root);
-    const tables = el('div', { 'class': 'ss-find__tables', 'data-find': 'tables' });
+    // the twins: the stratum's two rebuilt with it, the market's built once
+    const stratumTables = el('div', { 'data-find': 'stratum-tables' }), marketTables = el('div', { 'data-find': 'market-tables' });
+    const tables = el('div', { 'class': 'ss-find__tables', 'data-find': 'tables' }, [stratumTables, marketTables]);
     host.appendChild(tables);
 
     function paint(animate) {
@@ -455,7 +546,7 @@
       if (view) { view.reveal(step); view.place(step); }
       index.querySelectorAll('[data-find-night]').forEach((b) => b.setAttribute('aria-current', b.getAttribute('data-find-night') === nt.session ? 'step' : 'false'));
       eyebrow.textContent = 'night ' + (step + 1) + ' of ' + model.nights.length + ' · ' + nt.phase + ' · ' +
-        (nt.complete ? hold + ' sessions complete' : 'inside its hold');
+        (nt.complete ? hold + ' sessions complete' : 'inside its hold') + ' as of ' + short(F.study.newest_session);
       title.textContent = words(nt.session) + ' · ' + nt.regime.verdict + ' · ratio ' + fixed(nt.regime.ratio_10d, 2);
       text.textContent = textOf(F, nt);
       facts.textContent = '';
@@ -464,7 +555,7 @@
         else facts.appendChild(el('li', null, [el('span', { 'class': 'sc-chip sc-chip--' + f.chip[1], text: f.chip[0] }), ' ' + f.text]));
       });
       who.textContent = 'Source: publication ' + nt.commit.slice(0, 8) + ' (' + nt.status + '); the study’s rows over the records’ own bars.';
-      count.textContent = 'Night ' + (step + 1) + ' of ' + model.nights.length + ' · ' + short(nt.session) + ' · ' + nt.regime.verdict + ' · ' + pillText_(nt.block);
+      count.textContent = 'Night ' + (step + 1) + ' of ' + model.nights.length + ' · ' + short(nt.session) + ' · ' + nt.regime.verdict + ' · ' + pillText_(nt.block, model.min);
       back.setAttribute('aria-disabled', step === 0 ? 'true' : 'false');
       next.setAttribute('aria-disabled', step === model.nights.length - 1 ? 'true' : 'false');
       root.setAttribute('data-night', nt.session);
@@ -526,7 +617,7 @@
         list.appendChild(el('button', { type: 'button', 'class': 'sc-pick__item', 'data-pick-night': nt.session, 'aria-pressed': c.k === step ? 'true' : 'false',
           onclick: () => { stopPlay(); go(c.k); stage.focus(); } }, [
           el('span', { 'class': 'sc-pick__name', text: words(nt.session) }),
-          el('span', { 'class': 'sc-pick__meta', text: nt.regime.verdict + ' · ' + pillText_(nt.block) })]));
+          el('span', { 'class': 'sc-pick__meta', text: nt.regime.verdict + ' · ' + pillText_(nt.block, model.min) })]));
       });
       const close = el('button', { type: 'button', 'class': 'sc-btn sc-btn--ghost sc-btn--sm', 'data-pick': 'close', text: 'Close', onclick: () => closePick(true) });
       pick = el('div', { 'class': 'sc-pick ss-find__pick', role: 'dialog', 'aria-labelledby': ids.pick, 'data-find': 'pick' }, [
@@ -549,19 +640,33 @@
       draw();
       retable();
     }
+    // a stratum change rebuilds its two twins and keeps each one open, and scrolled, as the reader left it
     function retable() {
-      tables.textContent = '';
-      twins(SC, tables, F, model);
+      const kept = {};
+      stratumTables.querySelectorAll('details[data-find]').forEach((d) => {
+        const s = d.querySelector('.sc-table-scroll');
+        kept[d.getAttribute('data-find')] = { open: d.open, left: s ? s.scrollLeft : 0 };
+      });
+      stratumTables.textContent = '';
+      stratumTwins(SC, stratumTables, F, model);
+      stratumTables.querySelectorAll('details[data-find]').forEach((d) => {
+        const k = kept[d.getAttribute('data-find')], s = d.querySelector('.sc-table-scroll');
+        if (!k) return;
+        d.open = k.open;
+        if (s) s.scrollLeft = k.left;
+      });
     }
     function tooltipFor(i) {
       const s = model.sessions[i];
       const rows = [{ value: fixed(s.ratio_10d, 2), label: 'ratio' }, { value: num(s.up4) + ' / ' + num(s.down4), label: 'up / down' }];
+      if (s.later) rows.push({ value: num(s.later.up4) + ' / ' + num(s.later.down4) + ', ' + fixed(s.later.ratio_10d, 2), label: 'a later history, ' + s.later.source });
       const nt = model.nights.find((x) => x.i === i);
       let meta = s.verdict ? 'verdict ' + s.verdict : 'no publication; from the history of ' + s.source;
       if (nt) {
-        const b = nt.block;
-        rows.push({ value: num(b.tickets), label: 'tickets written, ' + STRATUM_WORDS[stratum] });
-        rows.push({ value: R3(b.settled.mean_r), label: 'mean R, ' + num(b.settled.n) + ' settled' });
+        const b = nt.block, st = b.settled;
+        rows.push({ value: num(b.tickets), label: 'tickets the plan rules wrote, ' + STRATUM_WORDS[stratum] });
+        rows.push(st.n >= model.min ? { value: R3(st.mean_r), label: 'mean R, ' + num(st.n) + ' settled' }
+          : { value: R2(st.sum_r), label: 'R in all, ' + num(st.n) + ' settled, too few for a rate' });
         meta += ' · ' + plural(nt.bursts, 'burst');
       }
       return { title: words(s.date), rows, meta };
@@ -578,9 +683,11 @@
       chart.appendChild(view.svg);
       if (SC.tooltip) {
         tip = SC.tooltip(chart, { live: false, top: 6, flip: 0.55, offsetX: 14 });
+        // a narrow chart has no room beside a column for the tip, which would run off the
+        // screen; there, and under a finger, the caption and the tables carry the values
         view.hits.addEventListener('pointermove', (e) => {
           const hit = e.target && e.target.getAttribute && e.target.getAttribute('data-i');
-          if (hit === null || hit === undefined) return;
+          if (hit === null || hit === undefined || view.G.narrow || e.pointerType === 'touch') { tip.hide(); return; }
           tip.show(tooltipFor(Number(hit)), e);
         });
         view.hits.addEventListener('pointerleave', () => tip.hide());
@@ -589,7 +696,8 @@
         // a mouse takes the nearest night; a finger that has more than one within reach is asked
         const cands = view.near(e.clientX);
         if (!cands.length) return;
-        if (e.pointerType === 'touch' && cands.length > 1) { if (tip) tip.hide(); openPick(cands); return; }
+        // the chooser stops Play first, as every other control that moves the night does
+        if (e.pointerType === 'touch' && cands.length > 1) { if (tip) tip.hide(); stopPlay(); openPick(cands); return; }
         stopPlay(); go(cands[0].k);
       });
       paint(false);
@@ -599,6 +707,7 @@
     if (w.ResizeObserver) new w.ResizeObserver(redraw).observe(chart); else w.addEventListener('resize', redraw);
     draw();
     retable();
+    marketTwin(SC, marketTables, model);
     paint(false);
     const handle = { go: (n) => go(n, false), step: () => step, play: startPlay, pause: stopPlay, playing: () => !!timer, root,
                      stratum: () => stratum, setStratum, redraw: () => { drawnWidth = 0; draw(); } };
@@ -647,7 +756,10 @@
     ]);
     sec.appendChild(strip);
     const s = prod.settled;
-    sec.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'backtest-rates', text: 'Win rate ' + share(s.win_rate) + ' · mean ' + R2(s.avg_r) + ' · median ' + R2(s.median_r) +
+    // the summary's own readable flag decides whether its rates are printed as rates
+    const rates = s.readable ? 'Win rate ' + share(s.win_rate) + ' · mean ' + R2(s.avg_r) + ' · median ' + R2(s.median_r)
+      : plural(s.n, 'settled ticket') + ', too few for a rate (the summary reads one from ' + plain(s.min_read) + ')';
+    sec.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'backtest-rates', text: rates +
       ' · ' + num(prod.plans.uncertain) + ' uncertain on daily bars · ' + num(prod.plans.not_filled) + ' not filled · SPY ' + pct2(s.spy_avg_pct) + ' over ' + plural(s.spy_pairs, 'matched pair') +
       ' · ' + plural(L.candidates.bursts, 'burst') + ' scanned · rules ' + L.rules_version + ' · lookback equivalence ' + L.lookback.equivalence.status + ' over ' +
       plural(L.lookback.equivalence.compared, 'shared session') + ' with ' + plural(L.lookback.equivalence.differences, 'difference') + '.' }));
@@ -701,21 +813,53 @@
     const SC = w.SC, el = SC.el;
     const sec = el('section', { 'class': 'ss-find__block', 'data-find-block': 'reading', 'aria-labelledby': 'ss-find-reading-h' });
     sec.appendChild(el('h3', { id: 'ss-find-reading-h', text: 'Read it as' }));
-    const strata = F.study.summary.strata, ns = F.nights_summary;
-    const pooled = STRATA.slice(0, -1).map((s) => STRATUM_WORDS[s] + ' ' + R3(strata[s].settled.mean_r) + ' over ' + num(strata[s].settled.n)).join('; ');
-    const onlyRed = VERDICTS.every((v) => v === 'red' || !ns.verdicts[v]);
-    const positive = ns.admitted_positive_nights;
-    const allUnder = STRATA.slice(0, -1).every((s) => isNum(strata[s].settled.mean_r) && strata[s].settled.mean_r < 0);
-    const items = [
-      'Pooled over the ' + plural(ns.nights, 'published night') + ' (' + verdictCount(ns.verdicts) + ') to ' + words(F.study.newest_session) +
-        (ns.inside_hold ? ', ' + num(ns.inside_hold) + ' of them still inside their hold,' : '') + ' the mean R per settled counterfactual ticket by stratum: ' + pooled + '. ' +
-        (allUnder ? 'Every stratum is under zero, so over these nights the refusals had value in sum' +
-          (positive ? ', though ' + num(positive) + ' of the nights had a positive A-quality mean' : '') : 'Not every stratum is under zero, so the refusals did not have value in every grade') +
-        (onlyRed ? '; what yellow or green nights would do is not in this record, which has carried none.' : '.'),
-      'A night read before its tickets have had their hold leans toward losses, because a stop settles on its first bad day and a winner at its exit; the nights above are re-read as they complete, and the caption says when a night is still inside its hold.',
-      'The chart reader is not run in either study; the mechanical grade is the ceiling of what it could have admitted, so the live policy would have written no more tickets than any counterfactual here.',
-      'The study is exploratory where every next close was public before its spec was frozen, confirmatory only for nights published after it; nothing confirmatory is readable before its own minimum of settled tickets.',
-    ];
+    const rd = F.reading, ex = rd.phases.exploratory, co = rd.phases.confirmatory, ns = F.nights_summary;
+    const min = F.rules.record.scorecard_min_plans;
+    // a pooled stratum in words: its mean from the record's minimum, its count and sum under it
+    const pooled = (b) => STRATA.slice(0, -1).map((s) => STRATUM_WORDS[s] + ' ' + (b.strata[s].n >= min
+      ? R3(b.strata[s].mean_r) + ' over ' + num(b.strata[s].n) : num(b.strata[s].n) + ' settled, too few for a rate')).join('; ');
+    const readable = STRATA.slice(0, -1).filter((s) => ex.strata[s].n >= min);
+    const allUnder = readable.length > 0 && readable.every((s) => ex.strata[s].mean_r < 0);
+    const anyOver = readable.some((s) => ex.strata[s].mean_r >= 0);
+    const span = (b) => words(b.from) + (b.from === b.through ? '' : ' to ' + words(b.through));
+    const items = [];
+    // 1. the exploratory reading, red nights only: the nights whose tickets the gate refused in full
+    if (ex.red_nights) {
+      items.push('Exploratory: ' + (ex.red_nights === ex.nights ? 'the ' + plural(ex.nights, 'night') + ' from ' + span(ex) + ', every one red'
+        : plural(ex.red_nights, 'red night') + ' of the ' + num(ex.nights) + ' from ' + span(ex)) +
+        ', whose every next close was public before the study’s spec was frozen after ' + words(rd.freeze) + (ex.inside_hold ? ', ' + num(ex.inside_hold) +
+        ' of them still inside their hold on the records through ' + words(rd.as_of) : '') + '. The mean R per settled counterfactual ticket: ' + pooled(ex) + '. ' +
+        (allUnder ? (readable.length === STRATA.length - 1 ? 'Every stratum is under zero' : 'Every stratum with enough settled tickets to read is under zero') +
+          ': on the nights the gate refused, its refusals had value in sum. This is the exploratory reading, not evidence.'
+          : anyOver ? 'Not every stratum is under zero, so the refusals did not have value in every grade. This is the exploratory reading, not evidence.'
+          : 'No stratum has enough settled tickets to read.'));
+    }
+    // 2. the confirmatory split, the only one the spec reads as evidence, from the study's own figure
+    const cs = F.study.summary.phases.confirmatory;
+    if (!co.nights) {
+      items.push('Confirmatory: no night has been published after the freeze yet; the spec reads only that split as evidence.');
+    } else {
+      const sc = cs.scorecard || {}, st = cs.settled || { n: 0 };
+      items.push('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co) + (co.inside_hold ? ', ' + num(co.inside_hold) +
+        ' of them still inside their hold' : '') + '. The spec reads only this split as evidence, for the A-quality stratum, and only from ' +
+        plural(sc.min_read, 'settled ticket') + ': ' + (sc.readable ? 'the study’s confirmatory result is ' + R3(st.mean_r) + ' per settled ticket over ' + num(st.n) + '.'
+          : num(st.n) + ' of the ' + num(sc.min_read) + ' have settled, so nothing confirmatory is readable yet.') +
+        (co.nights > co.red_nights ? ' ' + plural(co.nights - co.red_nights, 'night') + ' of them ' + (co.nights - co.red_nights === 1 ? 'was' : 'were') +
+          ' not red, so the gate published some of their tickets.' : ''));
+    }
+    // 3. the hold, dated with the as-of the file carries
+    items.push('A night read before its tickets have had their hold leans toward losses, because a stop settles on its first bad day and a winner at its exit. ' +
+      'Every figure here is as of the records through ' + words(rd.as_of) + ', when ' + plural(ns.inside_hold, 'night') + ' still had tickets inside their hold; ' +
+      'the replay is rebuilt as the study is re-run on later publications.');
+    // 4. the reader, and what each study can and cannot bound
+    items.push('The chart reader is not run in either study, so every ticket here is one it could still have refused. The signal-outcome study has no slots: its A-quality ' +
+      'stratum bounds the names the live policy could ticket. The backtest keeps the slot cap, so its ticket set is not a superset of the live run’s: a reader ' +
+      'downgrade frees a slot the next-ranked name takes.');
+    // 5. the nights the reading leaves out
+    const other = ns.nights - ex.red_nights - co.red_nights;
+    items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red and ' + (other === 1 ? 'is' : 'are') +
+      ' left out of the exploratory reading: on them the gate published some of the tickets, so their outcomes measure no refusal.'
+      : 'Every published night here was red: what yellow or green nights would do is not in this record, which has carried none.');
     sec.appendChild(el('ul', { 'class': 'ss-find__reading', 'data-find': 'read-as' }, items.map((t) => el('li', { text: t }))));
     sec.appendChild(el('p', { 'class': 'sc-hint', text: 'The reports behind these numbers, served as the Markdown files they are:' }));
     // a report is linked only by the path the builder names; anything else is its title, unlinked

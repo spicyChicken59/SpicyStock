@@ -25,12 +25,15 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
-# The records app.js fetches at run time. index.html does not link them, so
-# they are the only public files that cannot be read off the page: the two the
-# run writes, and the two historical findings files the Record view reads.
-# Before the findings files were named here, a JSON fetched only from app.js
-# was never verified, and the gate printed "Verified" over a served site that
-# could have lacked it.
+# The records app.js fetches at run time and index.html does not link: the two
+# the run writes, and the two historical findings files the Record view reads.
+# They are the only unlinked files this gate verifies. The archived history and
+# evidence objects the page also fetches (docs/history, docs/evidence) are not
+# listed: each is named by its SHA-256 and the page checks that digest itself
+# (publicJSON), so a stale served copy is refused rather than shown. Before the
+# findings files were named here, a JSON fetched only from app.js was never
+# verified, and the gate printed "Verified" over a served site that could have
+# lacked it.
 RECORD_FILES = ("data.json", "picks.json", "historical-validation.json", "historical-findings.json")
 WAIT_SECONDS = 480
 

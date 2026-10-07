@@ -97,6 +97,76 @@ def test_the_module_quotes_no_number_it_does_not_print_from_the_file():
     assert stray(string_literals("el('p', { text: 'Run 6 as a table', 'aria-label': 'SHA-256 of 2 files' })")) == ["Run 6 as a table", "SHA-256 of 2 files"]
 
 
+def code_only(source: str) -> str:
+    """The source with every comment removed and every string literal and
+    regex replaced by one placeholder token, ``S``, so what is left is code."""
+    out, i, n, last = [], 0, len(source), ""
+    while i < n:
+        c = source[i]
+        if c == "/" and source.startswith("//", i):
+            i = source.find("\n", i)
+            i = n if i < 0 else i
+            continue
+        if c == "/" and source.startswith("/*", i):
+            i = source.find("*/", i) + 2
+            continue
+        if c in "'\"`":
+            j = i + 1
+            while j < n and source[j] != c:
+                j += 2 if source[j] == "\\" else 1
+            out.append(" S ")
+            i = j + 1
+            last = c
+            continue
+        if c == "/" and (last == "" or last in "(,=:[!&|?{};+-*%<>~^"):
+            j = i + 1
+            while j < n and source[j] != "/":
+                if source[j] == "\\":
+                    j += 1
+                elif source[j] == "[":
+                    j = source.find("]", j)
+                j += 1
+            i = j + 1
+            while i < n and source[i].isalpha():
+                i += 1
+            out.append(" R ")
+            last = "/"
+            continue
+        if not c.isspace():
+            last = c
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+NUMBER = r"-?\d+(?:\.\d+)?"
+# the formatters a caption prints a value through; a number typed as the value is a typed number
+FORMATTERS = r"\b(?:num|plural|plain|fixed|signed|R2|R3|pct2|share|words|short|thousands)\("
+
+
+def typed_numbers(source: str) -> list[str]:
+    """Every numeric literal the code concatenates with a string, or hands a
+    formatter as the value it prints: a number typed into a caption."""
+    code = code_only(source)
+    spans = {}
+    for pattern in (r"\bS\s*\+\s*(" + NUMBER + r")\b", r"(?<![\w.])(" + NUMBER + r")\s*\+\s*S\b",
+                    FORMATTERS + r"\s*(" + NUMBER + r")\b"):
+        for m in re.finditer(pattern, code):
+            spans[m.span(1)] = m.group(1)      # one literal, however many shapes it matches
+    return [spans[k] for k in sorted(spans)]
+
+
+def test_the_module_types_no_number_into_a_caption_as_a_numeric_literal():
+    assert typed_numbers(BODY) == [], typed_numbers(BODY)
+    # the guard can fail, on each of the three shapes a typed number takes
+    assert typed_numbers("t = ' up ' + 4 + '% against ';") == ["4"]
+    assert typed_numbers("t = 10 + '-session ratio';") == ["10"]
+    assert typed_numbers("t = 'size × ' + 0.5;") == ["0.5"]
+    assert typed_numbers("t = plural(17, 'published night');") == ["17"]
+    # and reads code, not words: a digit inside a string or a comment is the other guard's
+    assert typed_numbers("t = 'x' + n; // 4 + 'x'\nu = fixed(v, 2);") == []
+
+
 def test_the_module_reads_nothing_itself_and_tells_no_time():
     for forbidden in ("fetch(", "SCStock.data", "S.data", "SCStock.model", "S.model", "localStorage",
                       "picks.json", "data.json", "Date.now", "new Date()", "sessionStorage", "indexedDB", "XMLHttpRequest"):
