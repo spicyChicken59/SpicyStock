@@ -200,8 +200,11 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   if (frozen) {
     eq('the freeze is one dotted line, after the freeze session', await p.locator('#historical-evidence line[data-freeze]').evaluateAll((e) => e.map((l) => l.dataset.freeze)), [F.reading.freeze]);
     check('the freeze line sits between the last exploratory night and the first confirmatory one', await p.evaluate(([last, next]) => {
-      const x = +document.querySelector('#historical-evidence line[data-freeze]').getAttribute('x1');
-      const cx = (s) => +document.querySelector('#historical-evidence .ss-find__night[data-night="' + s + '"] .ss-find__dot').getAttribute('cx');
+      // a missing line or dot is a failed check, never a thrown one that stops the suite
+      const line = document.querySelector('#historical-evidence line[data-freeze]');
+      const dot = (s) => document.querySelector('#historical-evidence .ss-find__night[data-night="' + s + '"] .ss-find__dot');
+      if (!line || !dot(last) || !dot(next)) return false;
+      const x = +line.getAttribute('x1'), cx = (s) => +dot(s).getAttribute('cx');
       return cx(last) < x && x < cx(next);
     }, [F.nights.filter((n) => n.phase === 'exploratory').pop().session, F.nights.find((n) => n.phase === 'confirmatory').session]));
     check('the freeze key and the chart\'s description name its date', (await txt(p, '#historical-evidence [data-find-key="freeze"]')).includes(shortDate(F.reading.freeze))
@@ -306,7 +309,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     const drawn = await p.locator('#historical-evidence .ss-find__night.is-current .ss-find__r').evaluateAll((e) => e.map((c) => Number(c.dataset.r)));
     const list = nt.strata.admitted.r;
     check(`night ${k + 1}: every drawn R is one the file lists, and all of them`, drawn.length === list.length && drawn.every((v) => list.includes(v)), JSON.stringify([drawn, list]));
-    eq(`night ${k + 1}: the mean mark carries the file's mean`, await attr(p, '#historical-evidence .ss-find__night.is-current .ss-find__mean', 'data-mean'), nt.strata.admitted.settled.mean_r === null ? null : String(nt.strata.admitted.settled.mean_r));
+    eq(`night ${k + 1}: the mean mark carries the file's mean`, await p.locator('#historical-evidence .ss-find__night.is-current .ss-find__mean').evaluateAll((e) => e.map((c) => c.dataset.mean)),
+      nt.strata.admitted.settled.mean_r === null ? [] : [String(nt.strata.admitted.settled.mean_r)]);
   }
   eq('a night with nothing settled draws no mean, so nothing reads as a mean of zero', await p.locator('#historical-evidence .ss-find__mean').count(), F.nights.filter((n) => n.strata.admitted.settled.mean_r !== null).length);
   check('the file has a night with nothing settled, so the line above can fail', F.nights.some((n) => n.strata.admitted.settled.mean_r === null));
