@@ -865,3 +865,93 @@
 .ss-study-case summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
 [data-all-blockers] { padding-left: 20px; }
 [data-all-blockers] li + li { margin-top: 8px; }
+
+/* ---- the record night by night (docs/app-findings.js): the replay, its blocks ---- */
+.ss-find { display: grid; grid-template-columns: minmax(0, 3fr) minmax(220px, 1fr); grid-template-rows: auto auto 1fr; grid-template-areas: 'filter filter' 'stage index' 'caption index'; gap: var(--sc-s3) var(--sc-s4); align-items: start; margin-top: var(--sc-s2); }   /* a long list of nights grows the caption's row, never the gap under the stage */
+.ss-find__filter { grid-area: filter; margin: 0; }
+.ss-find__stage { grid-area: stage; min-width: 0; border-radius: var(--sc-r-sm); }
+.ss-find__stage:focus { outline: none; }
+.ss-find__stage:focus-visible { outline: 2px solid var(--sc-focus); outline-offset: 4px; }
+.ss-find__chart { position: relative; min-height: 200px; }
+.ss-find__svg { display: block; width: 100%; height: auto; overflow: visible; }
+:where(.ss-find__svg) text { font: 500 10.5px var(--sc-font-mono); fill: var(--sc-text-2); }   /* :where: the base yields to every named text rule below */
+.ss-find__tick, .ss-find__date { fill: var(--sc-text-3); }
+.ss-find__panel { fill: var(--sc-heading); font-weight: 600; }
+.ss-find__ref-text { fill: var(--sc-text-2); }
+.ss-find__note { fill: var(--sc-text-3); font-style: italic; }
+.ss-find__note-ground { fill: var(--sc-surface); }
+.ss-find__freeze { stroke: var(--sc-text-3); stroke-width: 1.2; stroke-dasharray: 1 3; stroke-linecap: round; }
+.ss-find__wash { fill: var(--sc-tone, var(--sc-chart-context)); fill-opacity: .07; }
+.ss-find__ref { stroke: var(--sc-border-strong); stroke-dasharray: 6 4; }
+.ss-find__grid { stroke: var(--sc-chart-grid); }
+.ss-find__zero { stroke: var(--sc-border-strong); }
+.ss-find__line { fill: none; stroke: var(--sc-tone, var(--sc-chart-emphasis)); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ss-find__dot { fill: var(--sc-tone, var(--sc-chart-context)); stroke: var(--sc-surface); stroke-width: 2; }
+.ss-find__r { fill: var(--sc-tone, var(--sc-chart-context)); stroke: var(--sc-surface); stroke-width: 1; }
+.ss-find__mean { fill: var(--sc-tone, var(--sc-chart-emphasis)); stroke: var(--sc-surface); stroke-width: 2; }
+.ss-find__mean.is-thin { fill: var(--sc-surface); stroke: var(--sc-tone, var(--sc-chart-emphasis)); stroke-width: 1.6; }   /* under the minimum: a position, not a rate */
+/* a step animates; a redraw, a stratum change and the first paint do not */
+.ss-find.is-animated .ss-find__night { transition: opacity var(--sc-motion-enter) var(--sc-ease); }
+.ss-find__night.is-ghost { opacity: .38; }
+.ss-find__night.is-current .ss-find__r { stroke: var(--sc-heading); stroke-width: 1.2; }   /* a ring, never the mean's colour */
+.ss-find__night.is-current .ss-find__dot { stroke-width: 3; }
+.ss-find.is-animated .ss-find__cursor { transition: transform var(--sc-motion-enter) var(--sc-ease); }
+.ss-find__cursor rect { fill: var(--sc-tone, var(--sc-chart-emphasis)); fill-opacity: .12; }
+.ss-find__pill rect { fill: var(--sc-raised); stroke: var(--sc-border-strong); stroke-width: 1; }
+.ss-find__pill-text { fill: var(--sc-heading); font-weight: 600; }
+.ss-find__bracket { fill: none; stroke: var(--sc-border-strong); stroke-width: 1.2; }
+.ss-find__bracket-text { fill: var(--sc-text-2); }
+.ss-find__hit { fill: transparent; cursor: pointer; }
+.ss-find__hits { pointer-events: all; }
+.ss-find__bands, .ss-find__axis, .ss-find__night, .ss-find__pill, .ss-find__cursor { pointer-events: none; }
+.ss-find__controls { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sc-s1) var(--sc-s2); margin-top: var(--sc-s2); }
+.ss-find__legend { margin: var(--sc-s1) 0 0; }
+.ss-find__key--line { background: var(--sc-chart-emphasis); }
+.sc-legend .ss-find__key.is-swatch { width: 9px; height: 9px; border-radius: 50%; }   /* every mark it names is round */
+.ss-find__key--good { background: var(--sc-good); }
+.ss-find__key--warn { background: var(--sc-warn); }
+.ss-find__key--danger { background: var(--sc-danger); }
+.ss-find__key--dot { background: var(--sc-chart-context); }
+.ss-find__key--mean { background: var(--sc-chart-emphasis); box-shadow: 0 0 0 2px var(--sc-surface); }
+.ss-find__key--thin { background: var(--sc-surface); box-shadow: inset 0 0 0 1.6px var(--sc-chart-emphasis); }
+.sc-legend .ss-find__key--freeze { width: 0; height: 12px; background: none; border-left: 2px dotted var(--sc-text-3); }   /* the legend's line keys are 2px tall; this one stands upright, as the line it names */
+.ss-find__count { margin-left: auto; font: 500 11px/1.45 var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-find__side { grid-area: index; min-width: 0; }
+.ss-find__index { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ss-find__index .sc-tab { width: 100%; display: flex; align-items: baseline; gap: 8px; text-align: left; }
+.ss-find__n { flex: 0 0 1.5em; color: var(--sc-text-3); font: 600 11px/1 var(--sc-font-mono); }
+.ss-find__index .sc-tab[aria-current="step"] { background: var(--sc-brand-line); border-color: var(--sc-brand-line); color: var(--sc-white); }
+.ss-find__index .sc-tab[aria-current="step"] .ss-find__n { color: inherit; opacity: .8; }
+.ss-find__caption { grid-area: caption; min-width: 0; padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
+.ss-find__caption h4 { margin: 4px 0 6px; font-size: var(--sc-text-lg); line-height: var(--sc-lh-heading); color: var(--sc-heading); }
+.ss-find__caption > p { margin: 0; max-width: 70ch; }
+.ss-find__facts { margin: var(--sc-s2) 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.ss-find__facts li { position: relative; padding-left: 14px; font: 500 12px/1.55 var(--sc-font-mono); color: var(--sc-text-2); overflow-wrap: anywhere; }
+.ss-find__facts li::before { content: '·'; position: absolute; left: 2px; }
+.ss-find__facts .sc-chip { margin-right: 6px; }
+.ss-find__who { margin-top: var(--sc-s2); }
+.ss-find__tables .sc-details { margin-top: var(--sc-s2); }
+.ss-find__block { margin-top: var(--sc-s4); padding-top: var(--sc-s3); border-top: 1px solid var(--sc-border); }
+.ss-find__block h3 { margin: 4px 0 var(--sc-s2); }
+.ss-find__block > p { max-width: 78ch; }
+.ss-find__stats { --sc-stat-pad: var(--sc-s2); --sc-stat-size: 30px; margin: var(--sc-s2) 0; }
+.ss-find__stats .sc-stat__value { white-space: nowrap; overflow-wrap: normal; }   /* a figure never breaks inside itself */
+.ss-find__bt td:first-child, .ss-find__bt th:first-child { min-width: 9.5em; overflow-wrap: normal; }
+.ss-find__block .sc-bars { max-width: 520px; }
+.ss-find__block .sc-table-scroll { margin-top: var(--sc-s2); }
+.ss-find__reading { margin: 0 0 var(--sc-s2); padding-left: 1.2em; display: grid; gap: 6px; max-width: 78ch; }
+.ss-find__reports { margin: 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.ss-find__h { margin: var(--sc-s3) 0 var(--sc-s1); }
+.ss-find__regime-key { margin: var(--sc-s1) 0 0; max-width: 78ch; }
+.ss-find__pick { max-width: calc(100% - 12px); }
+.ss-find__pick .sc-pick__head .sc-btn { flex: none; white-space: nowrap; }
+.ss-study__h3 { margin-top: var(--sc-s4); padding-top: var(--sc-s3); border-top: 1px solid var(--sc-border); }
+@media (max-width: 960px) {
+  .ss-find { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; grid-template-areas: 'filter' 'stage' 'caption' 'index'; }   /* the words a step changes stay under the stage */
+  .ss-find__index { flex-direction: row; flex-wrap: wrap; }
+  .ss-find__index .sc-tab { width: auto; }
+}
+@media (max-width: 860px) { .ss-find__filter { flex-direction: column; align-items: flex-start; gap: var(--sc-s1); } }   /* the caption over its tabs whenever they wrap, never between two rows of them */
+@media (max-width: 480px) { .ss-find__stats { --sc-stat-size: 24px; } }
+@media (pointer: coarse) { .ss-find__controls .sc-btn, .ss-find__index .sc-tab, .ss-find__filter .sc-tab { min-height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .ss-find.is-animated .ss-find__night, .ss-find.is-animated .ss-find__cursor { transition: none; } }

@@ -24,6 +24,7 @@
 <script src="app-follow.js"></script>
 <script src="app-reading.js"></script>
 <script src="app-method.js"></script>
+<script src="app-findings.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -156,7 +157,6 @@
       </div>
     </header>
     <div class="sc-card" id="record-card"></div>
-    <section class="sc-card ss-study" id="historical-evidence" aria-label="Historical validation"></section>
     <div class="sc-card" id="hold" aria-labelledby="hold-h3">
       <div class="sc-card__head">
         <div>
@@ -166,6 +166,8 @@
       </div>
       <div id="hold-rows"></div>
     </div>
+    <!-- research last: it loads when the view is first shown and grows, so nothing a link lands on sits under it -->
+    <section class="sc-card ss-study" id="historical-evidence" aria-label="Historical validation"></section>
   </section>
 
   <!-- 03 · Market: Bonde's Market Monitor in full -->

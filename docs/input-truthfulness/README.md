@@ -1,5 +1,17 @@
 # Input truthfulness milestone
 
+[6 October 2026: the findings file the Record view replays](../historical-findings.json)
+is `docs/historical-findings.json`, built by `tools/build_historical_findings.py`
+from the evidence in this directory and nothing else -- the two signal-outcome
+study outputs of 2 and 6 October, the publication records the study's spec
+names (read from git by commit, held to the blob), the owner's two pasted
+backtest summaries parsed by `historical_backtest.summary_text()`'s own line
+grammar, and the pasted run-6 summary with its public receipt -- every number
+bound to its source digest, `--check` holding the committed file to them. The
+Record view (`docs/app-findings.js`) replays it night by night and prints its
+figures as the file writes them, adding none of its own; it adds no finding to
+the reports below and is not an edge claim.
+
 [6 October 2026: the backtest's first real result](2026-10-06-backtest-results.md)
 records the two price-free summaries the owner pasted from his run over the
 run-6 archive: 158 sessions from 10 February to 25 September 2026, equivalence

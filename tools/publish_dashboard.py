@@ -2,10 +2,12 @@
 
 GitHub documents that GITHUB_TOKEN pushes do not trigger Pages builds. The
 publication workflow requests one explicitly, then checks every public file
-against the committed checkout: the HTML, the two records, each script and
-stylesheet the page loads, and the vendored design system it is drawn on. The
-list is read off ``docs/index.html`` (``public_files``) so it cannot fall
-behind the page. No market-data, scoring or delivery credentials are used, and
+against the committed checkout: the HTML, the records app.js fetches (the two
+the run writes and the two historical findings files the Record view reads),
+each script and stylesheet the page loads, and the vendored design system it
+is drawn on. The list is read off ``docs/index.html`` (``public_files``) so it
+cannot fall behind the page; the fetched records are named in ``RECORD_FILES``
+because the page does not link them. No market-data, scoring or delivery credentials are used, and
 no scan artifacts are read.
 """
 from __future__ import annotations
@@ -23,9 +25,16 @@ from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 
-# The two records app.js fetches at run time. index.html does not link them,
-# so they are the only public files that cannot be read off the page.
-RECORD_FILES = ("data.json", "picks.json")
+# The records app.js fetches at run time and index.html does not link: the two
+# the run writes, and the two historical findings files the Record view reads.
+# They are the only unlinked files this gate verifies. The archived history and
+# evidence objects the page also fetches (docs/history, docs/evidence) are not
+# listed: each is named by its SHA-256 and the page checks that digest itself
+# (publicJSON), so a stale served copy is refused rather than shown. Before the
+# findings files were named here, a JSON fetched only from app.js was never
+# verified, and the gate printed "Verified" over a served site that could have
+# lacked it.
+RECORD_FILES = ("data.json", "picks.json", "historical-validation.json", "historical-findings.json")
 WAIT_SECONDS = 480
 
 
