@@ -796,7 +796,8 @@ def _under(data, fraction):
     by the block's own check rather than by validate().)"""
     rules = dict(data['rules']['pipeline'], stale_tolerance_fraction=fraction)
     run = data['run']
-    tol = inputs.stale_tolerance(run['coverage'], fraction, names=run['input_tolerance']['names'], names_max=100)
+    tol = inputs.stale_tolerance(run['coverage'], fraction, names=run['input_tolerance']['names'],
+                                 benchmark=run['input_tolerance']['benchmark'], names_max=100)
     run['input_tolerance'] = tol
     tol['sentence'] = inputs.coverage_sentence(run)
     return run, rules
@@ -825,11 +826,17 @@ def test_validate_holds_the_tolerance_to_the_records_own_constant(stale_night):
     (lambda t: t.update(held=['QZZZ']), 'holds a stock it does not name'),
     (lambda t: t.update(held=['QAAA']), 'does not hold the open model plans among the stale stocks'),
     (lambda t: t.update(limit=3), 'does not re-derive from the ledger'),
+    (lambda t: t.update(stale_stocks=1), 'does not re-derive from the ledger'),
+    (lambda t: t.update(benchmark='QAAA'), 'does not re-derive from the ledger'),
+    (lambda t: t.update(stale=3), 'does not re-derive from the ledger'),
+    (lambda t: t.update(evaluated='2026-09-11'), 'does not re-derive from the ledger'),
+    (lambda t: t.update(previous='2026-09-08'), 'does not re-derive from the ledger'),
     (lambda t: t.update(verdict='complete'), 'does not re-derive from the ledger'),
     (lambda t: t.update(sentence=t['sentence'].replace('2 stocks', '3 stocks')), 'sentence is not the coverage sentence'),
     (lambda t: t.update(version=2), 'version or verdict unknown'),
     (lambda t: t.pop('reasons'), 'malformed'),
-], ids=['names-swapped', 'names-short', 'names-dropped', 'held-unnamed', 'held-without-a-plan', 'limit', 'verdict',
+], ids=['names-swapped', 'names-short', 'names-dropped', 'held-unnamed', 'held-without-a-plan', 'limit', 'stale-stocks',
+        'benchmark', 'stale', 'evaluated', 'previous', 'verdict',
         'sentence', 'version', 'malformed'])
 def test_validate_refuses_a_forged_tolerance(stale_night, forge, message):
     data = _copy(stale_night)
@@ -888,9 +895,9 @@ def _matched(block):
 @pytest.mark.parametrize('forge,message', [
     (lambda b: b['outcomes'].update(no_match=1, unmeasurable=1), 'outcomes are not its rows'),
     (lambda b: b.update(count=3), 'counts do not reconcile'),
-    (_matched, 'a late bar that matched a scan is not named coverage_thin'),
+    (_matched, 'a late bar that would have been listed is not named coverage_thin'),
     (lambda b: b.update(for_session='2026-09-09'), 'not for the session before this one'),
-    (lambda b: b.update(sentence=b['sentence'].replace('none of them matches', 'one matches')), 'sentence is not its own'),
+    (lambda b: b.update(sentence=b['sentence'].replace('none of them would have been listed', 'one would have been listed')), 'sentence is not its own'),
     (lambda b: b['rows'][0].update(volume=-1), 'volume or flat is malformed'),
     (lambda b: b.update(status='not_applicable'), 'status and reason disagree'),
 ], ids=['outcomes', 'count', 'matched-unnamed', 'for-session', 'sentence', 'volume', 'status'])
@@ -936,7 +943,7 @@ def test_the_mail_on_the_thin_fixture_says_its_reads_outside_the_problems():
     validate(data)
     text = _mail_text(data)
     assert 'what went wrong' not in text
-    assert data['run']['reads']['sentence'] in text and '1 reply refused by reader authority' in text
+    assert data['run']['reads']['sentence'] in text and '1 reply (PLUG) refused by reader authority' in text
     assert data['run']['stale_followup']['sentence'] in text
 
 

@@ -502,12 +502,14 @@ session. The run:
   At least half but less than all leaves the ledger's acceptance degraded, as
   does any capacity cut or scan/quality error. The run itself is degraded too,
   unless the only gap is stale frames ending on the previous session -- at most
-  1% of the intended stocks, the benchmark not among them and no stock under an
-  open model plan among them -- which `run.input_tolerance` names; the next run
-  reads each of them again from its own fetch with no extra provider call
-  (`run.stale_followup`, `src/followup.py`), and a late bar that would have
-  matched a scan makes that night degraded and is named. A late bar is never a
-  signal, plan or ticket. A fully evaluated selection can be complete without being the
+  1% of the intended stocks, no stock under an open model plan among them (SPY
+  is outside the stock count here, as in acceptance) -- which
+  `run.input_tolerance` names; the next session's run, when it publishes, reads
+  each of them again from its own split-adjusted fetch with no extra provider
+  call (`run.stale_followup`, `src/followup.py`), and a late bar that the
+  previous publication would have listed (a 4% or $ scan match, or a setting-up
+  name) makes the night that finds it degraded and is named. A late bar is never
+  a signal, plan or ticket. A fully evaluated selection can be complete without being the
   complete listed market. The existing $3 session-close policy now reads actual
   cent-rounded bars, with seed/explicit exemptions preserved; actual scan volume
   remains the scanner's rule. Known non-session runs skip before universe/provider work and preserve the prior publication.
@@ -571,9 +573,10 @@ session. The run:
   Reader authority v1 additionally requires a permitted criterion/source/observation
   and exact citations to structured checklist evidence for any downgrade. Missing,
   unknown, contradictory or unauthorized evidence rejects the whole judgement
-  without retry and leaves the mechanical grade standing; refusals degrade the
-  night only past a quarter of the night's reads, when none is accepted, or when
-  the refused name would otherwise have been planned. A reply that never arrived
+  without retry and leaves the mechanical grade standing; such refusals, and the
+  discovery contract's, degrade the night only past a quarter of the night's
+  reads, when none is accepted, or when the refused name would otherwise have
+  been planned. A reply that never arrived
   or could not be read always degrades it, and an empty credit balance stops the
   calls the way a refused key does. `run.reads` counts the shortfall by cause.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
@@ -695,6 +698,13 @@ node tools/page_smoke.mjs --only reading      # recorded meanings, help and revi
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
+
+The page smoke runs its suites in two lanes over one browser, each line it
+prints marked `[A]` or `[B]`: lane A holds every suite that writes the
+smoke's own scratch records under `tests/fixtures/page/` or reads the
+clipboard (Chromium shares it between contexts), one after another; lane B
+holds the self-contained modules beside them. In one line they took 14 m 54 s
+of the CI page job's fifteen minutes. `--only` still runs the suites it names.
 
 One tool is not a check but a reading. `python tools/entry_limit_study.py
 [record.json ...]` puts three readings of every burst in an already-written
@@ -940,9 +950,10 @@ The `closed` fixture is an unchanged Sep 4, 2026 publication viewed on Labor Day
 over one docs directory and a 100-stock selection: on the first, two stocks are a
 session behind (over the limit of one, so the night is degraded and names
 both); on the second, one stays behind (within the limit, so the night is ok
-and names it), the follow-up reads last night's two again from tonight's
-fetch -- each now carries a flat, zero-volume bar and matches no scan -- and
-reader authority refuses one reply, within the night's limit of one. These
+and names it), the follow-up reads the first evening's two again from the
+second's fetch -- each now carries a flat, zero-volume bar the first
+publication would not have listed -- and reader authority refuses one reply,
+within the night's limit of one. These
 are offline fixtures, not historical point-in-time universe or profitability
 evidence.
 
@@ -953,7 +964,7 @@ src/            history.py (public recovery and coverage)
                 provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 input_diagnostics.py (run-scoped exception membership and observations)
-                followup.py (the next night's read of last night's stale stocks, from tonight's own fetch; never a signal)
+                followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)

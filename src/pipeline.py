@@ -35,14 +35,16 @@ MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publ
 #: behind and nothing else missing -- before the night is degraded. Every
 #: degraded night from 16 Sep to 6 Oct 2026 had 10-24 stale stocks of ~4,790
 #: (0.21%-0.50%), each one session behind; before #69 there were 0-1. 1% is
-#: twice the worst of them; the next run reads each one again (src/followup.py).
+#: twice the worst of them; the next session's run reads each one again (src/followup.py).
 STALE_TOLERANCE_FRACTION = 0.01
-STALE_NAMES_MAX = 100          # stale stocks a record names in full and the next run reads again (plumbing)
-#: (P) The fraction of the night's reads reader authority may refuse before the
-#: night is degraded, while every other read was accepted and no refused name
-#: is one the regime would otherwise have planned. 16 Sep - 6 Oct 2026: 13
-#: refusals in 114 answered replies (11.4%), at most 3 of 12 on a night.
-#: A refused name keeps its checklist grade and never earns a ticket either way.
+STALE_NAMES_MAX = 100          # stale stocks a record names in full and the next session's run reads again (plumbing)
+#: (P) The fraction of the night's reads the reply checks (reader authority and
+#: the discovery contract) may refuse before the night is degraded, while every
+#: other read was accepted and no refused name is one the regime would otherwise
+#: have planned. 16 Sep - 6 Oct 2026: 25 refusals in 186 answered replies, 12 of
+#: them on 22 Sep (all twelve, the format defect #88 fixed); the other fifteen
+#: publications at most 3 of 12. A refused name keeps its checklist grade and
+#: never earns a ticket either way.
 READER_REFUSAL_FRACTION = 0.25
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
@@ -728,7 +730,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                "no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)")
         # a degraded acceptance is a problem unless its only gap is the stale tail
         # the run tolerates; the ledger and its acceptance stay exactly as built
-        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale),
+        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
                                            names_max=STALE_NAMES_MAX)
         if (coverage["acceptance"]["status"] == "degraded" and tolerance["verdict"] != inputs.TOLERATED
                 and not any(p["kind"] == "coverage_thin" for p in rep.problems)):
@@ -738,13 +740,13 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             log.info("Stale tolerance: %d frames one session behind, within %d; not a problem",
                      tolerance["stale"], tolerance["limit"])
 
-        # last night's stale stocks, read again from tonight's frames: no provider call
+        # the previous publication's stale stocks, read again from this run's frames: no provider call
         rep.stage = "followup"
         followed = followup.night(previous.get("run"), frames, session, uni, closed=closed,
                                   benchmark=BENCHMARK_SYMBOL, names_max=STALE_NAMES_MAX, feed=stats.feed)
         if followed["matched"]:
-            rep.problem("coverage_thin", f"late bars for {followed['for_session']} match a scan the "
-                        f"{followed['for_session']} publication did not include: " + ", ".join(followed["matched"]))
+            rep.problem("coverage_thin", f"late bars for {followed['for_session']} would have been listed in the "
+                        f"{followed['for_session']} publication, which did not include them: " + ", ".join(followed["matched"]))
         # a closed night re-presents the plans the previous session published,
         # when the record on disk is that session's; the tickets still stand
         carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}
@@ -799,7 +801,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if faults:
             raise ValueError("; ".join(faults))
         log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
-        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale),
+        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
                                            held=held_stale, names_max=STALE_NAMES_MAX)
         tolerance["sentence"] = inputs.coverage_sentence({"coverage": coverage, "input_tolerance": tolerance})
         elapsed = round(time.monotonic() - started, 1)

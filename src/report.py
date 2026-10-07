@@ -55,7 +55,7 @@ PROBLEM_KINDS: tuple[str, ...] = (
 #: text from outside the codebase reaches either surface through a problem.
 PROBLEM_SENTENCES: dict[str, str] = {
     "universe_cached": "The stock directory could not be refreshed; tonight's universe is the cached one.",
-    "coverage_thin": "Some intended stocks lack usable session bars. Missing inputs are unknown, not measured non-matches.",
+    "coverage_thin": "Some inputs were missing, could not be evaluated or arrived late; a missing input is unknown, not a measured non-match.",
     "claude_unavailable": "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
     "claude_partial": "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     "chart_missing": "A chart did not render; the grade stands on the numbers.",
@@ -125,8 +125,8 @@ CONTRACT: dict[str, str] = {
            "record without it is one published before the field existed, and the page says entry timing is "
            "unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded "
            "acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance "
-           "degraded means exactly that -- and names those stocks; run.stale_followup reads last night's "
-           "stale stocks again from tonight's fetch and never turns a late bar into a signal.",
+           "degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's "
+           "stale stocks again from this run's fetch and never turns a late bar into a signal.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -1003,7 +1003,7 @@ def _problems_block(problems: Any) -> str:
 
 
 def _inputs_block(run: dict) -> str:
-    """The stale stocks tonight's run tolerated, by name, what last night's
+    """The stale stocks tonight's run tolerated, by name, what the previous publication's
     stale stocks turned out to be, and the chart reader's shortfall by cause:
     muted, beside the problems, so a night that is not degraded still says
     what it did not read."""

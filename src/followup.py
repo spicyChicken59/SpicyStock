@@ -1,21 +1,23 @@
-"""The next night's read of the previous night's stale stocks.
+"""The next session's read of the previous session's stale stocks.
 
 A stock the evening fetch returned without a bar for its session is stale:
-its inputs that night are unknown, never a measured non-match. The run that
-follows reads each of last night's stale stocks again, from the frames it
-fetched for its OWN session, with no extra provider call: did the previous
-session's bar arrive since, how much volume does it carry, and measured at
-that session by the evening's own rules (the session rules, the price
-policy, ``scans.scan_all``), would it have matched a scan?
+its inputs that night are unknown, never a measured non-match. The run for
+the next session reads each of the previous publication's stale stocks again,
+from the frames it fetched for its OWN session, with no extra provider call:
+did the previous session's bar arrive since, how much volume does it carry, and
+measured at that session by the evening's own rules (the session rules, the
+price policy, ``scans.scan_all`` for the 4% and $ scans, ``watchlist.build``
+for the setting-up list), would the previous publication have listed it?
 
 It is accounting about a previous publication, never a signal: the previous
 session's entry window has passed, so a late bar never becomes a burst, an
 observation, a plan or a ticket, and the previous record, its history and its
-ledger entry are never touched. A late bar that WOULD have matched a scan is
+ledger entry are never touched. A late bar that WOULD have been listed is
 named, and makes the night that finds it degraded. A stock that left tonight's
-selection is not re-requested; its bar stays unknown. No sentence states a
-cause (a halt, a delisting, a name that did not trade): the bar is what the
-provider served at tonight's check, and nothing more is known.
+selection is not re-requested; its bar stays unknown. The bars are this run's,
+split-adjusted as of this run, which is what the sentence says. No sentence
+states a cause (a halt, a delisting, a name that did not trade): the bar is
+what the provider served at this run's check, and nothing more is known.
 
 ``night()`` never raises: a defect anywhere in it is a ``failed`` block with
 the error's class, and the night publishes as it would have without it.
@@ -29,14 +31,14 @@ import math
 
 import pandas as pd
 
-from src import market_data, scans, sessions, universe
+from src import market_data, scans, sessions, universe, watchlist
 
 log = logging.getLogger("spicystock.followup")
 
 VERSION = 1
 APPLIED, NOT_APPLICABLE, FAILED = "applied", "not_applicable", "failed"
 STATUSES = (APPLIED, NOT_APPLICABLE, FAILED)
-#: what became of each of last night's stale stocks
+#: what became of each of the previous publication's stale stocks
 OUTCOMES = ("no_match", "match", "unmeasurable", "price_excluded", "still_missing", "no_frame", "not_selected")
 #: the outcomes of a stock whose bar for the previous session has arrived
 ARRIVED = ("no_match", "match", "unmeasurable", "price_excluded")
@@ -44,7 +46,9 @@ ARRIVED = ("no_match", "match", "unmeasurable", "price_excluded")
 REASONS = ("none_missing", "closed_session", "no_previous_record", "previous_not_open",
            "previous_not_adjacent", "rerun_without_block", "membership_not_recorded",
            "membership_over_bound", "membership_mismatch", "error", "invalid_block")
-ROUTES = ("both", "burst", "dollar")
+ROUTES = ("both", "burst", "dollar", "setting_up")
+#: each route in the sentence's words
+ROUTE_WORDS = {"both": "4% and $ scans", "burst": "4% scan", "dollar": "$ scan", "setting_up": "setting up"}
 #: a late bar's prices compared at cents, as a published price is
 CENTS = 2
 
@@ -92,7 +96,7 @@ def _block(status: str, reason: str | None, for_session: str | None, rows: list[
 
 
 def _membership(previous_run: dict, benchmark: str) -> tuple[str | None, list[str]]:
-    """Last night's full stale membership, checked against its own ledger;
+    """The previous publication's full stale membership, checked against its own ledger;
     a reason when it cannot be read, the stocks otherwise."""
     tol = previous_run.get("input_tolerance")
     if not isinstance(tol, dict) or "names" not in tol:
@@ -139,6 +143,17 @@ def _read(stocks: list[str], frames: dict, day: date, uni, benchmark: str, feed:
             if found is not None:
                 burst, dollar = found.get("burst"), found.get("dollar")
                 route = "both" if burst and dollar else "burst" if burst else "dollar" if dollar else None
+                if route is None:
+                    # the setting-up list as the evening builds it: the one frame,
+                    # listed among its names or among the also-quiet ones
+                    try:
+                        lists = watchlist.build({t: eligible[t]})
+                        listed = {r["ticker"] for r in lists.get("top", []) + lists.get("also_quiet", [])}
+                        route = "setting_up" if t in listed else None
+                    except Exception as exc:  # noqa: BLE001 -- one stock's defect is that stock's outcome
+                        log.debug("follow-up setting-up read raised for %s: %s", t, exc)
+                        rows[t] = row
+                        continue
                 row.update(outcome="match" if route else "no_match", route=route)
         rows[t] = row
     return list(rows.values())
@@ -146,7 +161,7 @@ def _read(stocks: list[str], frames: dict, day: date, uni, benchmark: str, feed:
 
 def night(previous_run, frames: dict, session: date, uni, *, closed: bool, benchmark: str,
           names_max: int, feed: str) -> dict:
-    """Last night's stale stocks read again from tonight's fetch. Never raises."""
+    """The previous publication's stale stocks read again from this run's fetch. Never raises."""
     day = None
     try:
         if closed:
@@ -156,12 +171,19 @@ def night(previous_run, frames: dict, session: date, uni, *, closed: bool, bench
         if previous_run.get("session_state") != "open":
             return _block(NOT_APPLICABLE, "previous_not_open", None, [])
         if previous_run.get("session") == session.isoformat():
-            # a re-run of the same session: the record it replaces carries the
-            # follow-up of the session before, which this run cannot re-read
+            # a re-run of the same session: the record it replaces read the
+            # session before; its stocks are read again from THIS fetch, so a
+            # late bar that arrived since is seen. A block it did not apply is
+            # carried as it stands: there was nothing to read.
             carried = previous_run.get("stale_followup")
-            if isinstance(carried, dict) and not shape_faults(carried, session, names_max):
+            if not isinstance(carried, dict) or shape_faults(carried, session, names_max):
+                return _block(NOT_APPLICABLE, "rerun_without_block", None, [])
+            if carried["status"] != APPLIED:
                 return deepcopy(carried)
-            return _block(NOT_APPLICABLE, "rerun_without_block", None, [])
+            day = sessions.previous_session(session)
+            stocks = [r["ticker"] for r in carried["rows"]]
+            block = _block(APPLIED, None, day.isoformat(), _read(stocks, frames, day, uni, benchmark, feed))
+            return _block(FAILED, "invalid_block", day.isoformat(), []) if shape_faults(block, session, names_max) else block
         day = sessions.previous_session(session)
         if previous_run.get("session") != day.isoformat():
             return _block(NOT_APPLICABLE, "previous_not_adjacent", None, [])
@@ -194,12 +216,12 @@ def sentence_of(block: dict) -> str | None:
         what = f"without a {day} bar" if day else "without a bar"
         why = f"the check stopped on an error ({block['error_class']})" if block.get("error_class") \
             else "the check's own result was malformed"
-        return f"Last night's stocks {what} could not be checked tonight; {why}."
+        return f"The previous publication's stocks {what} could not be read again by this run; {why}."
     if status == NOT_APPLICABLE:
         return {
-            "membership_not_recorded": "Last night's run did not record which stocks lacked a bar, so none was checked tonight.",
-            "membership_over_bound": "Last night's stocks without a bar were more than this check reads, so none was checked tonight.",
-            "membership_mismatch": "Last night's list of stocks without a bar did not match its own count and digest, so none was checked tonight.",
+            "membership_not_recorded": "The previous publication did not record which stocks lacked a bar, so none was read again.",
+            "membership_over_bound": "The previous publication's stocks without a bar were more than this check reads, so none was read again.",
+            "membership_mismatch": "The previous publication's list of stocks without a bar did not match its own count and digest, so none was read again.",
         }.get(reason)
     o = block["outcomes"]
     arrived = sum(o[k] for k in ARRIVED)
@@ -208,13 +230,13 @@ def sentence_of(block: dict) -> str | None:
         parts.append(f"{_n(arrived, 'now carries', 'now carry')} a {day} bar ({block['zero_volume']} with zero volume)")
         if block["matched"]:
             routes = {r["ticker"]: r["route"] for r in block["rows"] if r["outcome"] == "match"}
-            named = ", ".join(f"{t} ({routes[t]})" for t in block["matched"])
-            parts.append(f"{named} {'matches' if len(block['matched']) == 1 else 'match'} a scan on it, "
-                         f"which the {day} publication did not include")
-        elif o["no_match"] == arrived:
-            parts.append("none of them matches a scan")
+            named = ", ".join(f"{t} ({ROUTE_WORDS[routes[t]]})" for t in block["matched"])
+            parts.append(f"{named} would have been listed in that publication, which did not include "
+                         f"{'it' if len(block['matched']) == 1 else 'them'}")
+        if o["no_match"] == arrived:
+            parts.append("none of them would have been listed")
         elif o["no_match"]:
-            parts.append(f"{_n(o['no_match'], 'matches', 'match')} no scan on it")
+            parts.append(f"{_n(o['no_match'], 'would', 'would')} not have been listed")
         if o["unmeasurable"]:
             parts.append(f"{_n(o['unmeasurable'], 'cannot', 'cannot')} be measured on it (a missing or unreadable bar beside it)")
         if o["price_excluded"]:
@@ -222,13 +244,13 @@ def sentence_of(block: dict) -> str | None:
     if o["still_missing"]:
         parts.append(f"{_n(o['still_missing'], 'still has', 'still have')} no {day} bar")
     if o["no_frame"]:
-        parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame tonight")
+        parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame this run")
     if o["not_selected"]:
-        parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in tonight's selection, so "
+        parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in this run's selection, so "
                      f"{'its' if o['not_selected'] == 1 else 'their'} {day} bar is unknown")
-    return (f"Last night's {_n(block['count'], 'stock', 'stocks')} without a {day} bar, read again from "
-            f"tonight's fetch: " + "; ".join(parts) + ". A late bar is the bar the provider served at "
-            "tonight's check; it never becomes a signal, plan or ticket.")
+    return (f"The {day} publication's {_n(block['count'], 'stock', 'stocks')} without a {day} bar, read again "
+            f"from this run's split-adjusted fetch: " + "; ".join(parts) + ". A late bar is the bar the provider "
+            "served at this run's check; it never becomes a signal, plan or ticket.")
 
 
 # ------------------------------------------------------------ validation ----
@@ -259,11 +281,12 @@ def shape_faults(block, session: date, names_max: int) -> list[str]:
                 return ["stale follow-up row reads a bar that did not arrive"]
             if o[r["outcome"]] != sum(1 for x in rows if x["outcome"] == r["outcome"]):
                 return ["stale follow-up outcomes are not its rows'"]
-        arrived = sum(o[k] for k in ARRIVED)
         if block["matched"] != sorted(r["ticker"] for r in rows if r["outcome"] == "match"):
             return ["stale follow-up matched is not its matching rows"]
-        if block["zero_volume"] > arrived or block["flat"] > arrived:
-            return ["stale follow-up counts more late bars than arrived"]
+        arrived_rows = [r for r in rows if r["outcome"] in ARRIVED]
+        if (block["zero_volume"] != sum(1 for r in arrived_rows if r["volume"] == 0)
+                or block["flat"] != sum(1 for r in arrived_rows if r["flat"] is True)):
+            return ["stale follow-up zero-volume or flat counts are not its rows'"]
         if block["status"] == APPLIED and block["for_session"] != sessions.previous_session(session).isoformat():
             return ["stale follow-up is not for the session before this one"]
         if block["status"] != APPLIED and rows:
@@ -277,7 +300,7 @@ def shape_faults(block, session: date, names_max: int) -> list[str]:
 
 def faults(run: dict, pipeline_rules) -> list[str]:
     """The follow-up held to the record it sits in: present under rules that
-    write it, well formed, and a late bar that matched a scan named
+    write it, well formed, and a late bar that would have been listed named
     coverage_thin. A record made under older rules is not asked for one."""
     if not isinstance(pipeline_rules, dict) or "stale_tolerance_fraction" not in pipeline_rules:
         return []
@@ -296,5 +319,5 @@ def faults(run: dict, pipeline_rules) -> list[str]:
         return found
     kinds = {p.get("kind") for p in run.get("problems") or [] if isinstance(p, dict)}
     if block["matched"] and "coverage_thin" not in kinds:
-        return ["a late bar that matched a scan is not named coverage_thin"]
+        return ["a late bar that would have been listed is not named coverage_thin"]
     return []

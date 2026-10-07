@@ -317,11 +317,16 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         # the page and the mail print one sentence per kind, the same one
         assert report.PROBLEM_SENTENCES[kind] == sentence, kind
     # and neither guesses why a frame was missing or stale: "the fetch ran out
-    # of time" was the mail's sentence on nights whose fetch took a minute
+    # of time" was the mail's sentence on nights whose fetch took a minute; and
+    # the one sentence is true of every path that raises the word -- stocks
+    # without session bars, scan or checklist errors, and a late bar that the
+    # previous publication would have listed (src.followup)
     page_thin = json.loads(re.search(r"    coverage_thin: (\"[^\n]+\"),?\n", page).group(1))
     for sentence in (page_thin, report.PROBLEM_SENTENCES["coverage_thin"]):
-        assert "lack usable session bars" in sentence and "Missing inputs are unknown, not measured non-matches" in sentence
+        assert all(w in sentence for w in ("missing", "could not be evaluated", "arrived late",
+                                           "unknown, not a measured non-match")), sentence
         assert "ran out of time" not in sentence and "answered late" not in sentence
+        assert "lack usable session bars" not in sentence, "not true of a late bar or a scan error"
 
 
 def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_modules():

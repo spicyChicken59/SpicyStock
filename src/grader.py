@@ -196,8 +196,14 @@ def is_fatal_credit_failure(error_text: str) -> bool:
 
 def is_run_fatal(error_text: str) -> bool:
     """An answer every remaining call of the run would get too: a refused key
-    or an empty credit balance. Neither merits a retry or another call."""
-    return is_fatal_auth_failure(error_text) or is_fatal_credit_failure(error_text)
+    or an empty credit balance. Neither merits a retry or another call. An
+    error made of the reply's own text (a score that is not a number, a reply
+    the checks refused) is never one, whatever words the reply put in it."""
+    text = error_text or ""
+    if any(text.startswith(error_label(c) + ":") for c in (ScoreFormatError, DiscoveryConflict,
+                                                            reader_authority.ReaderAuthorityError)):
+        return False
+    return is_fatal_auth_failure(text) or is_fatal_credit_failure(text)
 
 
 def grade_for(score: float) -> str:

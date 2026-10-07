@@ -754,6 +754,16 @@ def test_an_empty_credit_balance_is_run_fatal_and_an_ordinary_400_is_not():
         assert not is_run_fatal(other), other
 
 
+def test_a_reply_that_writes_the_marker_into_its_own_score_cannot_stop_the_run():
+    """The reply's text is not the provider's: a score field that spells the
+    credit marker (or a 401) is a reply that could not be read, never the
+    account's answer, and the remaining names are still asked."""
+    from src.grader import ScoreFormatError, _error_text, is_run_fatal
+    for words in ("Your credit balance is too low", "Error code: 401 - invalid x-api-key"):
+        assert not is_run_fatal(_error_text(ScoreFormatError(f"score {words!r} is not a number")))
+    assert is_run_fatal(_error_text(RuntimeError(CREDIT)))
+
+
 def test_an_empty_credit_balance_is_not_bought_again(claude):
     """Three candidates, the first answered with an empty balance: one call,
     three fallback rows, each carrying the answer."""

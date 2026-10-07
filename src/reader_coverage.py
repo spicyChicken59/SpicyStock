@@ -39,21 +39,19 @@ def state(row, *, selected=None):
 
 # ------------------------------------------------- the night's reads ----
 # run.reads counts the chart reader's shortfall by cause, so a night can tell
-# a reply reader authority refused (the reader answered; its answer broke the
-# contract, and the name keeps its checklist grade and earns no ticket) from
-# a reply that never arrived or could not be read. The fraction of the night's
-# reads that may be refused before the night is degraded is a strategy number
-# and lives in pipeline.RULES; these are the block's own words.
+# a reply the reply checks refused (the reader answered; reader authority or
+# the discovery contract refused its answer, and the name keeps its checklist
+# grade and earns no ticket) from a reply that never arrived or could not be
+# read. The fraction of the night's reads that may be refused before the night
+# is degraded is a strategy number and lives in pipeline.RULES; these are the
+# block's own words.
 READS_VERSION = 1
 #: why a selected name has no accepted reading, one word each; no word names a
 #: gitleaks keyword ("credential", "key") as a JSON key
 FAILURES = ("refused", "format", "account", "credit", "transport")
 VERDICTS = ("not_asked", "complete", "tolerated", "partial", "unavailable")
-#: the errors that are reader authority refusing a reply that arrived
+#: the errors that are the reply checks refusing a reply that arrived
 REFUSED_BY = (grader.DiscoveryConflict, reader_authority.ReaderAuthorityError)
-#: the words the page and the mail print for each cause
-FAILURE_WORDS = {"refused": "refused by reader authority", "format": "an unreadable reply",
-                 "account": "the account refused", "credit": "credit balance too low", "transport": "no reply"}
 
 
 def admitted(verdict, trade, yellow):
@@ -118,8 +116,9 @@ def reads(rows, *, admitted_grades, refusal_fraction):
     verdict = _verdict(requested, done, causes, limit, refused_admissible)
     out = {"requested": requested, "done": done,
            "unavailable_reason": None if verdict in ("not_asked", "complete") else
-           "refused by reader authority" if verdict == "tolerated" else "see problems",
+           "refused within the tolerance" if verdict == "tolerated" else "see problems",
            "version": READS_VERSION, "causes": causes, "refusal_limit": limit,
+           "refused_names": sorted(b["ticker"] for b in refused),
            "refused_admissible": refused_admissible, "verdict": verdict}
     out["sentence"] = reads_sentence(out)
     return out
@@ -135,13 +134,17 @@ def reads_sentence(r):
     if r.get("verdict") in (None, "not_asked", "complete"):
         return None
     c, limit = r["causes"], r["refusal_limit"]
-    parts = [f"Chart reader: {r['done']} of {r['requested']} judgements accepted."]
+    parts = [f"Chart reader: {r['done']} of {_names(r['requested'], 'judgement', 'judgements')} accepted."]
     if c["refused"]:
-        within = ("within" if c["refused"] <= limit else "over")
-        s = (f"{_names(c['refused'], 'reply', 'replies')} refused by reader authority, {within} this run's "
-             f"tolerance of {limit}")
+        names = ", ".join(r.get("refused_names") or [])
+        s = (f"{_names(c['refused'], 'reply', 'replies')} ({names}) refused by reader authority or the discovery "
+             "contract")
         if r["verdict"] == "tolerated":
-            s += f"; {'that name stays' if c['refused'] == 1 else 'those names stay'} research only, without a ticket"
+            s += (f", within this run's tolerance of {limit}; "
+                  f"{'that name stays' if c['refused'] == 1 else 'those names stay'} research only, without a ticket")
+        else:
+            s += (f"; the tolerance of {limit} applies only while every other read is accepted and no refused "
+                  "name would otherwise have been planned")
         if r["refused_admissible"]:
             s += f"; {', '.join(r['refused_admissible'])} would otherwise have been planned"
         parts.append(s + ".")
@@ -158,8 +161,6 @@ def reads_sentence(r):
     if c["format"]:
         parts.append(f"{_names(c['format'], 'reply', 'replies')} could not be read as a score in "
                      f"{grader.ATTEMPTS} attempts.")
-    if r["verdict"] == "unavailable":
-        parts.append("With none accepted, every grade tonight is the checklist's alone.")
     return " ".join(parts)
 
 
@@ -181,6 +182,8 @@ def reads_faults(data):
             return ["run.reads causes are malformed"]
         if r["requested"] != r["done"] + sum(c.values()):
             return ["run.reads counts do not reconcile"]
+        if len(r["refused_names"]) != c["refused"] or not set(r["refused_admissible"]) <= set(r["refused_names"]):
+            return ["run.reads refused names are not its refusals"]
         if r["refusal_limit"] != _limit(r["requested"], rules["reader_refusal_fraction"]):
             return ["run.reads refusal limit is not the archived reader_refusal_fraction"]
         if r["verdict"] != _verdict(r["requested"], r["done"], c, r["refusal_limit"], r["refused_admissible"]):
@@ -190,7 +193,7 @@ def reads_faults(data):
             reg = (((data.get("breadth") or {}).get("regime") or {}).get("verdict"))
             again = reads(selected, admitted_grades=admitted(reg, rules["trade_grades"], rules["yellow_grades"]),
                           refusal_fraction=rules["reader_refusal_fraction"])
-            if any(again[k] != r[k] for k in ("requested", "done", "causes", "refused_admissible", "verdict")):
+            if any(again[k] != r[k] for k in ("requested", "done", "causes", "refused_names", "refused_admissible", "verdict")):
                 return ["run.reads is not the bursts' own"]
         if r.get("sentence") != reads_sentence(r):
             return ["run.reads sentence is not its own"]

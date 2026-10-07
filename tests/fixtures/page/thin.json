@@ -8,7 +8,7 @@
  },
  "cover": {
   "h1": "Stand aside.",
-  "dek": "Breadth is red: 5 up 4% vs 19 down, 10-day ratio 0.48. No new positions. down 4%: 19 >= the scaled alarm of 10.7 (700 of 6,500): major deterioration; 10-session ratio 0.48 (11 up, 23 down) < 1.0: more breakdowns than breakouts; 5-session ratio 0.38 (8 up, 21 down) < 0.5 with 19 down vs 5 up today: a fast selling phase. Incomplete input coverage: 99 of 100 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset. 1 returned frame had no bar for 2026-09-10, ending on the previous session, 2026-09-09. Its 2026-09-10 input is unknown, not a measured non-match. That is within this run's stale tolerance of 1 stock (1% of the intended stocks), so the run is not degraded; the next run reads its 2026-09-10 bar.",
+  "dek": "Breadth is red: 5 up 4% vs 19 down, 10-day ratio 0.48. No new positions. down 4%: 19 >= the scaled alarm of 10.7 (700 of 6,500): major deterioration; 10-session ratio 0.48 (11 up, 23 down) < 1.0: more breakdowns than breakouts; 5-session ratio 0.38 (8 up, 21 down) < 0.5 with 19 down vs 5 up today: a fast selling phase. Incomplete input coverage: 99 of 100 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset. 1 returned frame had no bar for 2026-09-10, ending on the previous session, 2026-09-09. Its 2026-09-10 input is unknown, not a measured non-match. That is within this run's stale tolerance of 1 stock (1% of the intended stocks), so the stale frames do not degrade the run; the next session's run, when it publishes, reads its 2026-09-10 bar again.",
   "action_label": "Open model plans",
   "action_target": "#hold",
   "verb": "stand aside"
@@ -197,13 +197,15 @@
    "fraction": 0.01,
    "limit": 1,
    "stale": 1,
+   "stale_stocks": 1,
+   "benchmark": "SPY",
    "evaluated": "2026-09-10",
    "previous": "2026-09-09",
    "names": [
     "QAA"
    ],
    "held": [],
-   "sentence": "Incomplete input coverage: 99 of 100 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset. 1 returned frame had no bar for 2026-09-10, ending on the previous session, 2026-09-09. Its 2026-09-10 input is unknown, not a measured non-match. That is within this run's stale tolerance of 1 stock (1% of the intended stocks), so the run is not degraded; the next run reads its 2026-09-10 bar."
+   "sentence": "Incomplete input coverage: 99 of 100 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset. 1 returned frame had no bar for 2026-09-10, ending on the previous session, 2026-09-09. Its 2026-09-10 input is unknown, not a measured non-match. That is within this run's stale tolerance of 1 stock (1% of the intended stocks), so the stale frames do not degrade the run; the next session's run, when it publishes, reads its 2026-09-10 bar again."
   },
   "stale_followup": {
    "version": 1,
@@ -239,7 +241,7 @@
      "route": null
     }
    ],
-   "sentence": "Last night's 2 stocks without a 2026-09-09 bar, read again from tonight's fetch: 2 now carry a 2026-09-09 bar (2 with zero volume); none of them matches a scan. A late bar is the bar the provider served at tonight's check; it never becomes a signal, plan or ticket."
+   "sentence": "The 2026-09-09 publication's 2 stocks without a 2026-09-09 bar, read again from this run's split-adjusted fetch: 2 now carry a 2026-09-09 bar (2 with zero volume); none of them would have been listed. A late bar is the bar the provider served at this run's check; it never becomes a signal, plan or ticket."
   },
   "bursts": 6,
   "graded": {
@@ -252,7 +254,7 @@
   "reads": {
    "requested": 6,
    "done": 5,
-   "unavailable_reason": "refused by reader authority",
+   "unavailable_reason": "refused within the tolerance",
    "version": 1,
    "causes": {
     "refused": 1,
@@ -262,9 +264,12 @@
     "transport": 0
    },
    "refusal_limit": 1,
+   "refused_names": [
+    "PLUG"
+   ],
    "refused_admissible": [],
    "verdict": "tolerated",
-   "sentence": "Chart reader: 5 of 6 judgements accepted. 1 reply refused by reader authority, within this run's tolerance of 1; that name stays research only, without a ticket."
+   "sentence": "Chart reader: 5 of 6 judgements accepted. 1 reply (PLUG) refused by reader authority or the discovery contract, within this run's tolerance of 1; that name stays research only, without a ticket."
   },
   "email": "skipped",
   "published_at": "2026-09-10T22:30:00+00:00",
@@ -10848,7 +10853,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads last night's stale stocks again from tonight's fetch and never turns a late bar into a signal.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

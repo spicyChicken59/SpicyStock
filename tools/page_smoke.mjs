@@ -32,6 +32,7 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -58,11 +59,17 @@ const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : 
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
 
+// The suites run in two lanes over one browser (main()); every line a lane
+// prints carries its letter, so a FAIL reads under its own suite's heading.
+const lane = new AsyncLocalStorage();
+const say = console.log.bind(console);
+console.log = (...a) => { const l = lane.getStore(); return l ? say(`[${l}]`, ...a) : say(...a); };
+
 let checks = 0, failures = 0;
 const results = [];
 function check(name, ok, detail) {
   checks++;
-  results.push({name, status: ok ? 'PASS' : 'FAIL', ...(!ok ? {detail} : {})});
+  results.push({name, status: ok ? 'PASS' : 'FAIL', ...(lane.getStore() ? {lane: lane.getStore()} : {}), ...(!ok ? {detail} : {})});
   if (!ok) { failures++; console.log(`  FAIL  ${name}${detail === undefined ? '' : ' -- ' + detail}`); }
 }
 const eq = (name, got, want) => check(name, JSON.stringify(got) === JSON.stringify(want), `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
@@ -1104,7 +1111,7 @@ async function checkFollowing(browser, base, data) {
 
 const SENTENCES = {
   universe_cached: 'The stock directory could not ',
-  coverage_thin: 'Some intended stocks lack usable session bars',
+  coverage_thin: 'Some inputs were missing, could not be evaluated',
   claude_unavailable: 'No usable chart-reader judgement',
   claude_partial: 'Chart-reader judgements were accepted',
   chart_missing: 'A chart did not render; the gr',
@@ -3567,7 +3574,7 @@ async function checkInputCoverage(browser, base) {
         await page.locator('#cover-record > summary').click();
         const coverage = await said(page, '#cover-coverage');
         check('full coverage counts and scope remain inspectable in Method', coverage.includes(cov.unfetched_budget + ' fetch names were never attempted') && coverage.includes('fetch counts include the benchmark'));
-        check('incomplete-input meaning stays visible', coverText.includes('Incomplete coverage.') && (await said(page, '#status-line')).includes('Missing inputs are unknown'));
+        check('incomplete-input meaning stays visible', coverText.includes('Incomplete coverage.') && (await said(page, '#status-line')).includes('a missing input is unknown'));
         check('empty workspace retains coverage warning', (await said(page, '[data-empty=bursts]')).includes('Incomplete input coverage'));
         check('next-action message retains coverage warning', (await said(page, '#next-p')).includes('Incomplete input coverage'));
       }
@@ -3578,6 +3585,8 @@ async function checkInputCoverage(browser, base) {
         check(variant + ' ' + width + ': Method says ' + words, method.includes(words), method);
       }
       check('Method reports ready denominator', (await said(page, '#run-strip')).includes(a.ready_stocks + ' of ' + a.intended_stocks));
+      // a shortfall with no stale stock gives the stale tolerance nothing to judge
+      check(variant + ' ' + width + ': no stale tolerance line without a stale stock', !method.includes('Stale tolerance:'), method);
       check('Method has no horizontal overflow at ' + width, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       eq('input page has no browser errors', errors.length, 0);
       if (shotsDir && variant === 'partial') {
@@ -3637,7 +3646,7 @@ async function checkStaleTolerance(browser, base) {
       check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + follow.sentence), coverage.slice(-300));
       const method = await said(page, '#run-meta');
       check(tag + ': Method quotes the archived tolerance', method.includes(pct), method.slice(0, 400));
-      check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale + ' stale frame against a limit of ' + tol.limit + '.'), method);
+      check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
       check(tag + ': Method quotes the reader rule and prints the reads', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && method.includes(reads.sentence), method);
       const strip = await said(page, '#run-strip');
@@ -3659,6 +3668,10 @@ async function checkStaleTolerance(browser, base) {
     },
     // the rule is quoted from the rules THIS record archived, never from a number the page carries
     'another archived rule': (d) => { d.rules.pipeline.stale_tolerance_fraction = 0.02; d.rules.pipeline.reader_refusal_fraction = 0.5; },
+    // only the benchmark a session behind: the stocks are complete, so the tolerance has nothing to say
+    'only the benchmark stale': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'complete', reasons: [], stale: 1, stale_stocks: 0, names: ['SPY'] });
+    },
     'a late match': (d) => { d.run.stale_followup.sentence = 'Last night\'s 2 stocks without a 2026-09-09 bar, read again from tonight\'s fetch: QAB (dollar) matches a scan on it.'; },
     'a record from before the tolerance': (d) => {
       delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
@@ -3679,7 +3692,9 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the chip says degraded', /^degraded/.test(chip), chip);
         check('thin ' + name + ': the status line is the problem\'s sentence', (await said(page, '#status-line')).includes(SENTENCES.coverage_thin), await said(page, '#status-line'));
         check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes('1 fetched frame was stale.'), dek);
-        check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale frames than the limit'), method);
+        check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale stocks than the limit'), method);
+      } else if (name === 'only the benchmark stale') {
+        check('thin ' + name + ': Method prints no tolerance verdict for it', !method.includes('Stale tolerance:'), method.slice(0, 900));
       } else if (name === 'another archived rule') {
         check('thin ' + name + ': Method quotes the record\'s own tolerance', method.includes('at most 2% of the intended stocks') && !method.includes('at most 1% of'), method.slice(0, 600));
         check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('past 50% of the night'), method);
@@ -3767,44 +3782,59 @@ async function main() {
   const browser = await chromium.launch();
   try {
     let full = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
-    for (const v of VARIANTS) {
-      if (!runs(v)) continue;
-      const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
-      await checkVariant(browser, base, v, data);
-    }
-    if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
-    if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
-    if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
-    if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
-    if (runs('calendar')) await checkExchangeCalendar(browser, base);
-    if (runs('provenance')) await checkPlanEvidence(browser, base);
-    if (runs('mobile')) await checkMobile(browser, base, full);
-    if (runs('modes')) await checkModes(browser, base, full);
-    if (runs('lens')) await checkLens(browser, base, full);
-    if (runs('compare')) await checkCompare(browser, base, full);
-    if (runs('evidence')) await checkEvidence(browser, base, full);
-    if (runs('map')) await checkMap(browser, base, full);
-    if (runs('reach')) await checkReach(browser, base, full);
-    if (runs('volume')) await checkVolumeReadings(browser, base, full);
-    if (runs('mapscale')) await checkMapScale(browser, base, full);
-    if (runs('following')) await checkFollowing(browser, base, full);
-    if (runs('through')) await checkFollowThrough(browser, base, full);
-    if (runs('session')) await checkSession(browser, base, full);
-    if (runs('refresh')) await checkRefresh(browser, base, full);
-    if (runs('ticket')) await checkTicketPrices(browser, base, full);
-    if (runs('states')) await checkStates(browser, base, full);
-    if (runs('grading')) await checkGradingHistory(browser, base);
-    if (runs('reader')) await checkReaderCommentary(browser, base);
-    if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
-    if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
-    if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
-    if (runs('inputs')) await checkInputCoverage(browser, base);
-    if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
-    if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
-    if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
+    // Two lanes over one browser, each its own contexts. Lane A is every suite
+    // that writes the smoke's own scratch records under tests/fixtures/page/
+    // (several share a name) or reads the clipboard, which Chromium shares
+    // between contexts: they run one after another, as they always have. Lane B
+    // is the self-contained modules, which write nothing but their own
+    // screenshots and measurements. One line of suites took 14 m 54 s of the
+    // page job's fifteen minutes on main at 42258ace.
+    const laneA = async () => {
+      for (const v of VARIANTS) {
+        if (!runs(v)) continue;
+        const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
+        await checkVariant(browser, base, v, data);
+      }
+      if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+      if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
+      if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
+      if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
+      if (runs('calendar')) await checkExchangeCalendar(browser, base);
+      if (runs('provenance')) await checkPlanEvidence(browser, base);
+      if (runs('mobile')) await checkMobile(browser, base, full);
+      if (runs('modes')) await checkModes(browser, base, full);
+      if (runs('lens')) await checkLens(browser, base, full);
+      if (runs('compare')) await checkCompare(browser, base, full);
+      if (runs('evidence')) await checkEvidence(browser, base, full);
+      if (runs('map')) await checkMap(browser, base, full);
+      if (runs('reach')) await checkReach(browser, base, full);
+      if (runs('volume')) await checkVolumeReadings(browser, base, full);
+      if (runs('mapscale')) await checkMapScale(browser, base, full);
+      if (runs('following')) await checkFollowing(browser, base, full);
+      if (runs('through')) await checkFollowThrough(browser, base, full);
+      if (runs('session')) await checkSession(browser, base, full);
+      if (runs('refresh')) await checkRefresh(browser, base, full);
+      if (runs('ticket')) await checkTicketPrices(browser, base, full);
+      if (runs('states')) await checkStates(browser, base, full);
+      if (runs('grading')) await checkGradingHistory(browser, base);
+      if (runs('reader')) await checkReaderCommentary(browser, base);
+      if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
+      if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
+      if (runs('inputs')) await checkInputCoverage(browser, base);
+    };
+    const laneB = async () => {
+      if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
+      if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
+      if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
+      if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
+    };
+    // both lanes finish before the browser closes; the first to throw is the error
+    const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);
+    const thrown = settled.find((r) => r.status === 'rejected');
+    if (thrown) throw thrown.reason;
   } finally {
     await browser.close();
     server.close();

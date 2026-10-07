@@ -7,15 +7,17 @@ always exactly one XNYS session behind, with the benchmark printed. The ledger
 is unchanged: acceptance stays `degraded`, every stale stock is still counted,
 its inputs still unknown and never a measured non-match. What changed is the run
 status: `run.input_tolerance` (`inputs.stale_tolerance()`) says whether that
-degraded acceptance is ONLY a stale tail -- every frame one session behind, the
-benchmark not among them, no stock under an unfinished open model plan among
-them, at most `pipeline.STALE_TOLERANCE_FRACTION` (1%) of the intended stocks,
-floored -- and names each one. `run.status` ok beside acceptance degraded means
-exactly that and nothing more. The next run reads last night's stale stocks
-again from its own frames (`run.stale_followup`, `src/followup.py`): no extra
-provider request, the evening's own session rules, price policy and scans at
-last night's session. A late bar that would have matched a scan degrades the
-night that finds it and is named; a late bar is never a signal, plan or ticket,
+degraded acceptance is ONLY a stale tail -- every frame one session behind, no
+stock under an unfinished open model plan among them, at most
+`pipeline.STALE_TOLERANCE_FRACTION` (1%) of the intended stocks, floored, the
+benchmark outside that count as it is outside acceptance -- and names each one.
+`run.status` ok beside acceptance degraded means exactly that and nothing more.
+The next session's run, when it publishes, reads the previous publication's
+stale stocks again from its own split-adjusted frames (`run.stale_followup`,
+`src/followup.py`): no extra provider request, the evening's own session rules,
+price policy, scans and setting-up list at that session. A late bar the previous
+publication would have listed degrades the night that finds it and is named; a
+late bar is never a signal, plan or ticket,
 and the previous record, its history and its ledger entry are never rewritten.
 Every late bar the archive retains so far is the provider's placeholder: one
 price, zero volume. The sentences name no cause (a halt, a delisting, a name

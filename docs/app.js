@@ -161,7 +161,7 @@
   // recorded never reaches the page.
   const PROBLEMS = {
     universe_cached: "The stock directory could not be refreshed; tonight's universe is the cached one.",
-    coverage_thin: "Some intended stocks lack usable session bars. Missing inputs are unknown, not measured non-matches.",
+    coverage_thin: "Some inputs were missing, could not be evaluated or arrived late; a missing input is unknown, not a measured non-match.",
     claude_unavailable: "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
     claude_partial: "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     chart_missing: "A chart did not render; the grade stands on the numbers.",
@@ -567,7 +567,7 @@
         (cov.stale ? ' ' + num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
     $('cover-original').textContent = 'Original published summary: ' + (cover.dek || 'not recorded');
     // the coverage sentence the run stored, then the stale stocks by name, then
-    // what last night's stale stocks turned out to be: each the record's own words
+    // what the previous publication's stale stocks turned out to be: each the record's own words
     const follow = text((run.stale_followup || {}).sentence);
     $('cover-coverage').textContent = (warning || 'The record reports complete input coverage.') +
       (tol && Array.isArray(tol.names) && tol.names.length && cov.stale ? ' Without a ' + dateWords(tol.evaluated) + ' bar: ' + tol.names.join(', ') + '.' : '') +
@@ -626,8 +626,8 @@
     const t = (run || {}).input_tolerance;
     return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
   }
-  const TOLERANCE_WORDS = { other_exceptions: 'other inputs missing too', benchmark: 'the benchmark had no bar',
-    behind_more: 'frames more than one session back', over_limit: 'more stale frames than the limit', open_plan: 'an open model plan among them' };
+  const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames', behind_more: 'not every stale frame ends on the previous session',
+    over_limit: 'more stale stocks than the limit', open_plan: 'an open model plan among them' };
   function inputWarning(run) {
     const cov = (run || {}).coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
     if (!cov.version) return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.';
@@ -776,7 +776,7 @@
   }
   // the chart reader's shortfall by cause, in the record's own counts; a record
   // made before the reads carried causes keeps the note it was published under
-  const READ_CAUSES = { refused: 'refused', format: 'unreadable reply', account: 'account refused', credit: 'credit balance too low', transport: 'no reply' };
+  const READ_CAUSES = { refused: 'refused', format: 'unreadable', account: 'unread (account refused)', credit: 'unread (credit balance too low)', transport: 'without a reply' };
   function readsNote(reads) {
     const c = reads.causes;
     if (reads.version && c && typeof c === 'object') {
@@ -795,8 +795,8 @@
     const floor = 'Coverage below ' + plain(+(100 * a.minimum_fraction).toFixed(4)) + '% refuses publication';
     if (!isNum(f)) return floor + '; any missing stocks or capacity cuts degrade it.';
     return floor + '. A shortfall degrades the run unless its only gap is stale frames ending on the previous session — at most ' +
-      plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark not among them and no open model plan among them; that tail is counted, ' +
-      'named and read again by the next run, and the run is not degraded.';
+      plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
+      'that tail is counted and named, the next session\u2019s run reads it again, and it does not degrade the run.';
   }
   function renderMethod(data) {
     renderStrip(data);
@@ -820,10 +820,12 @@
       line('Coverage / input basis: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars (' +
         (isNum(a.fraction) ? (100 * a.fraction).toFixed(1) + '%' : 'unknown') + '); acceptance ' + a.status +
         '. The benchmark is excluded from this denominator. ' + coverageRule(data, a));
+      // the tolerance judges stale STOCKS on a degraded acceptance; a night with
+      // none, or one whose only stale frame is the benchmark, has nothing for it to say
       const tol = tolerance(run);
-      if (tol) {
-        line('Stale tolerance: ' + (tol.verdict === 'tolerated' ? 'tolerated' : tol.verdict === 'complete' ? 'nothing stale' : 'not tolerated') +
-          ' — ' + num(tol.stale) + ' stale frame' + (tol.stale === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
+      if (tol && tol.verdict !== 'complete' && isNum(tol.stale_stocks) && tol.stale_stocks > 0) {
+        line('Stale tolerance: ' + (tol.verdict === 'tolerated' ? 'tolerated' : 'not tolerated') +
+          ' — ' + num(tol.stale_stocks) + ' stale stock' + (tol.stale_stocks === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
           (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => TOLERANCE_WORDS[r] || words(r)).join('; ') + ')' : '') + '.');
       }
       const follow = text((run.stale_followup || {}).sentence);
@@ -840,7 +842,7 @@
     line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
     const refusal = ((data.rules || {}).pipeline || {}).reader_refusal_fraction;
     if (isNum(refusal)) {
-      line('Chart reader: a reply refused by reader authority leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
+      line('Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
         plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
     }
     if (text((run.reads || {}).sentence)) line(run.reads.sentence);

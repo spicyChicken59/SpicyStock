@@ -2,6 +2,7 @@
 from collections import Counter
 from copy import deepcopy
 import json
+import re
 
 import pytest
 
@@ -194,9 +195,13 @@ def test_refusals_within_the_limit_are_counted_not_problems(tmp_path, monkeypatc
     for ticker, how in script.items():
         row = rows[ticker]
         assert row["grade"] == row["grade_mechanical"] and row["reader_coverage"] == "fallback", row["claude"]
+    assert reads["refused_names"] == sorted(t for t, how in script.items() if how == "refuse")
     if verdict == "tolerated":
-        assert reads["sentence"] == ("Chart reader: 3 of 4 judgements accepted. 1 reply refused by reader authority, "
-                                     "within this run's tolerance of 1; that name stays research only, without a ticket.")
+        assert reads["sentence"] == ("Chart reader: 3 of 4 judgements accepted. 1 reply (BBB) refused by reader "
+                                     "authority or the discovery contract, within this run's tolerance of 1; that "
+                                     "name stays research only, without a ticket.")
+    elif reads["causes"]["refused"]:
+        assert "within this run's tolerance" not in reads["sentence"], reads["sentence"]
 
 
 def test_an_empty_credit_balance_stops_the_calls_and_says_so(tmp_path, monkeypatch):
@@ -205,14 +210,28 @@ def test_an_empty_credit_balance_stops_the_calls_and_says_so(tmp_path, monkeypat
     assert len(calls) == 1, "an empty balance answers every call the same way: one call, not eight"
     assert (reads["verdict"], reads["causes"]["credit"], kinds) == ("unavailable", 4, ["claude_unavailable"])
     assert "Top up the Anthropic account before the next run." in reads["sentence"]
+    # the problem's own sentence already says every grade is the checklist's; the reads do not say it twice
+    assert "checklist's alone" not in reads["sentence"]
 
 
 def test_a_refusal_that_cost_a_ticket_degrades(tmp_path, monkeypatch):
     reads, kinds, _, _ = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=tuple(pipeline.TRADE_GRADES))
     assert (reads["verdict"], reads["refused_admissible"], kinds) == ("partial", ["BBB"], ["claude_partial"])
     assert "BBB would otherwise have been planned" in reads["sentence"]
+    assert "within this run's tolerance" not in reads["sentence"], "a refusal the tolerance did not cover is not 'within' it"
     reads, kinds, _, _ = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=None)
     assert reads["refused_admissible"] == ["BBB"], "None admits every grade"
+
+
+@pytest.mark.parametrize("vetoes,admissible,verdict", [([], ["T0"], "partial"), (["up_days"], [], "tolerated")])
+def test_a_refused_name_a_veto_already_refuses_cost_no_ticket(vetoes, admissible, verdict):
+    """The planner refuses a vetoed burst whatever its grade, so its refused
+    reading cost no ticket: the same rule, one place each side."""
+    rows = [{"ticker": "T0", "grade": "A+", "vetoes": vetoes,
+             "claude": {"source": "fallback", "error": "src.ReaderAuthorityError: refused"}}]
+    rows += [{"ticker": f"T{i}", "grade": "B", "vetoes": [], "claude": {"source": "claude"}} for i in range(1, 4)]
+    reads = reader_coverage.reads(rows, admitted_grades=tuple(pipeline.TRADE_GRADES), refusal_fraction=0.25)
+    assert (reads["refused_admissible"], reads["verdict"]) == (admissible, verdict), reads
 
 
 @pytest.mark.parametrize("fraction,refused,requested,verdict", [
@@ -241,22 +260,48 @@ def test_admitted_grades_is_one_rule_for_planning_and_the_reader(market, claude,
     report.validate(data)
 
 
+@pytest.mark.parametrize("moved,admissible", [(False, ["AAA"]), (True, [])], ids=["shipped", "moved"])
+def test_the_evening_hands_the_reads_the_same_rule_as_the_planner(market, claude, fake_resend, tmp_path,
+                                                                  monkeypatch, moved, admissible):
+    """The reader half of the one rule: a refused A+ on the evening's own regime
+    is one the planner would have planned, and it stops being one exactly when
+    the rule moves -- so the evening cannot hand the reads a rule of its own."""
+    scripted(monkeypatch, {"AAA": "refuse"})
+    if moved:
+        monkeypatch.setattr(reader_coverage, "admitted", lambda verdict, trade, yellow: ())
+    rep, data, _ = evening(tmp_path, market)
+    reads = data["run"]["reads"]
+    assert reads["refused_names"] == ["AAA"] and reads["refused_admissible"] == admissible, reads
+    assert data["bursts"][0]["grade_mechanical"] == "A+" and data["breadth"]["regime"]["verdict"] == "green"
+    report.validate(data)
+
+
 def test_validate_refuses_forged_reads(market, claude, fake_resend, tmp_path):
     rep, data, _ = evening(tmp_path, market)
     report.validate(data)
+    # each forge names the one check it is for: a forge another check also
+    # refuses would pass with its own check deleted
     cases = {
-        "a cause count": lambda r: r["run"]["reads"]["causes"].update(refused=1),
-        "the limit": lambda r: r["run"]["reads"].update(refusal_limit=3),
-        "the verdict": lambda r: r["run"]["reads"].update(verdict="tolerated"),
-        "the sentence": lambda r: r["run"]["reads"].update(sentence="All read."),
-        "the bursts' own causes": lambda r: (r["run"]["reads"].update(
+        "a cause count": (lambda r: r["run"]["reads"]["causes"].update(refused=1),
+                          "run.reads counts do not reconcile"),
+        "the limit": (lambda r: r["run"]["reads"].update(refusal_limit=3),
+                      "run.reads refusal limit is not the archived reader_refusal_fraction"),
+        "the verdict": (lambda r: r["run"]["reads"].update(verdict="tolerated"),
+                        "run.reads verdict does not re-derive from its counts"),
+        "the sentence": (lambda r: r["run"]["reads"].update(sentence="All read."),
+                         "run.reads sentence is not its own"),
+        "the refused names": (lambda r: r["run"]["reads"].update(refused_names=["AAA"]),
+                              "run.reads refused names are not its refusals"),
+        "the bursts' own causes": (lambda r: (r["run"]["reads"].update(
             done=0, causes=dict(r["run"]["reads"]["causes"], transport=1), verdict="unavailable",
-            sentence=None), r["run"]["problems"].append({"stage": "grade", "kind": "claude_unavailable",
-                                                         "message": "forged"})),
-        "the block": lambda r: r["run"].pop("reads"),
+            sentence=reader_coverage.reads_sentence(dict(r["run"]["reads"], done=0, verdict="unavailable",
+                causes=dict(r["run"]["reads"]["causes"], transport=1)))),
+            r["run"]["problems"].append({"stage": "grade", "kind": "claude_unavailable", "message": "forged"})),
+            "run.reads is not the bursts' own"),
+        "the block": (lambda r: r["run"].pop("reads"), "run.reads is missing"),
     }
-    for name, forge in cases.items():
+    for name, (forge, message) in cases.items():
         forged = json.loads(json.dumps(data))
         forge(forged)
-        with pytest.raises(ValueError, match="run.reads"):
+        with pytest.raises(ValueError, match=re.escape(message)):
             report.validate(forged)

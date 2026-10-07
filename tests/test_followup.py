@@ -70,6 +70,29 @@ def test_the_late_bar_is_read_at_its_own_session(frame, outcome, volume, flat, r
     assert (row['outcome'], row['volume'], row['flat'], row['route']) == (outcome, volume, flat, route), row
 
 
+def coiled(end=DAY):
+    """The watchlist's own coiled tape, dated to end on ``end``: the evening's
+    setting-up list takes it."""
+    from tests.test_watchlist import coil
+    df = coil()
+    return df.set_axis(pd.DatetimeIndex(sessions.sessions_before(end + timedelta(days=1), len(df))))
+
+
+def test_a_late_bar_the_setting_up_list_would_have_taken_is_a_match():
+    """The previous publication listed setting-up names as well as bursts: a
+    late bar the evening's own watchlist would have listed is a match too."""
+    row = read({'COIL': coiled()})['COIL']
+    assert (row['outcome'], row['route']) == ('match', 'setting_up'), row
+    # the anticipation scan alone is not the list: GRAL's retained placeholder
+    # passes the scan and the list's own stages refuse it
+    address, day = RETAINED['GRAL']
+    frame = provenance.frame_of(json.loads(gzip.decompress((ROOT / 'docs' / 'evidence' / f'{address}.json.gz').read_bytes())))
+    upto = followup._through(frame, date.fromisoformat(day))
+    from src import scans, watchlist
+    assert scans.anticipation(upto) is not None and not watchlist.build({'GRAL': upto})['top']
+    assert followup._read(['GRAL'], {'GRAL': frame}, date.fromisoformat(day), explicit(['GRAL']), 'SPY', 'sip')[0]['outcome'] == 'no_match'
+
+
 def test_the_late_bar_meets_the_session_close_price_policy():
     cheap = with_bar(tape(end=DAY, close=2.5)[:-1], DAY, [2.5, 2.5, 2.5, 2.5, 0.0])
     assert read({'LATE': cheap})['LATE']['outcome'] == 'price_excluded'
@@ -145,8 +168,9 @@ def test_the_next_night_records_last_nights_stale_stocks(wide, claude, fake_rese
     assert (block['status'], block['reason'], block['for_session'], block['count']) == ('applied', None, '2026-09-10', 2)
     assert block['outcomes']['no_match'] == 2 and block['zero_volume'] == block['flat'] == 2 and block['matched'] == []
     assert [(r['ticker'], r['volume']) for r in block['rows']] == [('QAAA', 0), ('QAAB', 0)]
-    assert block['sentence'].startswith("Last night's 2 stocks without a 2026-09-10 bar, read again from tonight's fetch: "
-                                        "2 now carry a 2026-09-10 bar (2 with zero volume); none of them matches a scan.")
+    assert block['sentence'].startswith("The 2026-09-10 publication's 2 stocks without a 2026-09-10 bar, read again from "
+                                        "this run's split-adjusted fetch: 2 now carry a 2026-09-10 bar (2 with zero "
+                                        "volume); none of them would have been listed.")
     assert data['run']['input_tolerance']['names'] == ['QAAA']
     # no request of its own: tonight asked exactly what last night asked
     assert len(fake_alpaca.bar_requests) - asked == asked
@@ -169,8 +193,8 @@ def test_a_late_scan_match_degrades_the_night_that_finds_it(wide, claude, fake_r
     block = data['run']['stale_followup']
     assert block['matched'] == ['QAAA'] and block['rows'][0]['route'] == 'dollar', block
     assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
-        ['late bars for 2026-09-10 match a scan the 2026-09-10 publication did not include: QAAA']
-    assert 'QAAA (dollar) matches a scan on it, which the 2026-09-10 publication did not include' in block['sentence']
+        ['late bars for 2026-09-10 would have been listed in the 2026-09-10 publication, which did not include them: QAAA']
+    assert 'QAAA ($ scan) would have been listed in that publication, which did not include it' in block['sentence']
     # accounting, never a signal: no burst, observation, plan or pick for it
     assert 'QAAA' not in {b['ticker'] for b in data['bursts']}
     assert not [s for s in data['observations']['signals'].values() if s['ticker'] == 'QAAA']
@@ -180,7 +204,7 @@ def test_a_late_scan_match_degrades_the_night_that_finds_it(wide, claude, fake_r
     # the record cannot drop the problem its own late match names
     forged = json.loads(json.dumps(data))
     forged['run']['problems'] = []
-    with pytest.raises(ValueError, match='late bar that matched a scan is not named coverage_thin'):
+    with pytest.raises(ValueError, match='late bar that would have been listed is not named coverage_thin'):
         report.validate(forged)
 
 
@@ -209,8 +233,8 @@ def test_followup_never_raises(wide, claude, fake_resend, fake_alpaca, tmp_path,
         assert block['status'] == 'applied' and block['rows'][0]['outcome'] == 'unmeasurable', block
     else:
         assert (block['status'], block['reason'], block['error_class']) == ('failed', 'error', 'RuntimeError'), block
-        assert block['sentence'] == ("Last night's stocks without a 2026-09-10 bar could not be checked tonight; "
-                                     "the check stopped on an error (RuntimeError).")
+        assert block['sentence'] == ("The previous publication's stocks without a 2026-09-10 bar could not be read "
+                                     "again by this run; the check stopped on an error (RuntimeError).")
     report.validate(data)
 
 
@@ -254,10 +278,19 @@ def test_followup_applicability(prev, kw, status, reason):
     assert (block['rows'] != []) == (status == 'applied')
 
 
-def test_a_rerun_of_the_same_session_carries_the_block_it_replaces():
+def test_a_rerun_of_the_same_session_reads_the_same_stocks_again():
     applied = night(previous())
-    rerun = night(previous(session=TONIGHT.isoformat(), stale_followup=applied))
-    assert json.dumps(rerun, sort_keys=True) == json.dumps(applied, sort_keys=True)
+    assert applied['outcomes']['no_match'] == 1
+    # the same session re-run on later bars: QAAA's late bar has changed since,
+    # and the re-run reads it from ITS fetch rather than carrying the first read
+    later = {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
+    rerun = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=applied), later, TONIGHT,
+                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip')
+    assert (rerun['status'], rerun['matched'], rerun['for_session']) == ('applied', ['QAAA'], DAY.isoformat()), rerun
+    assert followup.shape_faults(rerun, TONIGHT, 100) == []
+    # a block that did not apply has nothing to read again and is carried as it stands
+    nothing = night(None)
+    assert night(previous(session=TONIGHT.isoformat(), stale_followup=nothing)) == nothing
     # a carried block that does not hold is not carried
     broken = dict(applied, count=5)
     assert night(previous(session=TONIGHT.isoformat(), stale_followup=broken))['reason'] == 'rerun_without_block'
@@ -271,9 +304,10 @@ def scenario_blocks():
     frames = {'A': with_bar(tape(end=DAY)[:-1], DAY, PLACEHOLDER), 'B': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR),
               'C': tape(end=DAY).drop(pd.Timestamp(sessions.previous_session(DAY))),
               'D': tape(end=sessions.previous_session(DAY)),
-              'E': with_bar(tape(end=DAY, close=2.5)[:-1], DAY, [2.5, 2.5, 2.5, 2.5, 0.0])}
-    uni = live(['A', 'B', 'C', 'D', 'E', 'F'])
-    stocks = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+              'E': with_bar(tape(end=DAY, close=2.5)[:-1], DAY, [2.5, 2.5, 2.5, 2.5, 0.0]),
+              'H': coiled()}
+    uni = live(['A', 'B', 'C', 'D', 'E', 'F', 'H'])
+    stocks = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
     rows = followup._read(stocks, frames, DAY, uni, 'SPY', 'sip')
     blocks = [followup._block(followup.APPLIED, None, DAY.isoformat(), rows)]
     blocks += [followup._block(followup.APPLIED, None, DAY.isoformat(), [r]) for r in rows]
@@ -289,13 +323,16 @@ def test_followup_sentences_state_no_cause():
         assert not [w for w in CAUSES if w in sentence.lower()], sentence
         assert not [w for w in ('None', 'undefined', 'nan', '{', '[') if w in sentence], sentence
     full = blocks[0]['sentence']
-    assert full == ("Last night's 7 stocks without a 2026-09-09 bar, read again from tonight's fetch: "
-                    "4 now carry a 2026-09-09 bar (2 with zero volume); B (dollar) matches a scan on it, which the "
-                    "2026-09-09 publication did not include; 1 cannot be measured on it (a missing or unreadable "
-                    "bar beside it); 1 falls under the $3 session-close policy; 1 still has no 2026-09-09 bar; "
-                    "1 returned no frame tonight; 1 is not in tonight's selection, so its 2026-09-09 bar is unknown. "
-                    "A late bar is the bar the provider served at tonight's check; it never becomes a signal, plan "
-                    "or ticket."), full
+    assert full == ("The 2026-09-09 publication's 8 stocks without a 2026-09-09 bar, read again from this run's "
+                    "split-adjusted fetch: 5 now carry a 2026-09-09 bar (2 with zero volume); B ($ scan), H (setting "
+                    "up) would have been listed in that publication, which did not include them; 1 would not have "
+                    "been listed; 1 cannot be measured on it (a missing or unreadable bar beside it); 1 falls under "
+                    "the $3 session-close policy; 1 still has no 2026-09-09 bar; 1 returned no frame this run; 1 is "
+                    "not in this run's selection, so its 2026-09-09 bar is unknown. A late bar is the bar the "
+                    "provider served at this run's check; it never becomes a signal, plan or ticket."), full
+    # a sentence for any day says the publication's date, never "last night": a
+    # Monday reads Friday's, and the run after a holiday reads the session before it
+    assert not [b for b in blocks if 'ast night' in (b['sentence'] or '')]
 
 
 @pytest.mark.parametrize('field,value,message', [
@@ -303,7 +340,9 @@ def test_followup_sentences_state_no_cause():
     ('matched', [], 'matched is not its matching rows'),
     ('for_session', '2026-09-08', 'not for the session before this one'),
     ('sentence', 'All clear.', 'sentence is not its own'),
-    ('zero_volume', 9, 'counts more late bars than arrived'),
+    ('zero_volume', 9, 'zero-volume or flat counts are not its rows'),
+    ('zero_volume', 0, 'zero-volume or flat counts are not its rows'),
+    ('flat', 0, 'zero-volume or flat counts are not its rows'),
 ])
 def test_the_block_holds_its_own_shape(field, value, message):
     frames = {'A': with_bar(tape(end=DAY)[:-1], DAY, PLACEHOLDER), 'B': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
