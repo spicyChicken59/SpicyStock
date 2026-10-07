@@ -4142,12 +4142,16 @@ real file). The publication gate's `RECORD_FILES` names both study files, so
 Pages is verified serving them, which it was not before.
 
 **Measured** (this sandbox, Python 3.12.3 and pandas 2.2.3, Chromium through
-Playwright 1.56.1): 2809 tests collected, 2775 passed, 34 environment-gated
+Playwright 1.56.1, at the first pushed tip): 2809 tests collected, 2775 passed, 34 environment-gated
 skips; 12 fixtures current; the findings file current; continuity 128 on every
 one of fifteen runs, the last five on this tree; the chart check 378/378; the
 `findings` suite 598/598 at 1280, 390 and 320, both themes; the full smoke with
 `--shots` 9813/9813.
-gitleaks 8.24.3 over the tree with the repository's config: no leaks.
+gitleaks 8.24.3 over the tree with the repository's config: no leaks. After the
+third review (CI's own runners at `5b94f01b`): 2886 tests pass; continuity 134;
+the chart check 378/378; the full smoke with `--shots` 10059/10059, the
+`findings` suite 844 of them; gitleaks green. Here: 12 fixtures current, the
+findings file current, and gitleaks over the tree finds no leaks.
 
 **Two reviews by execution, every upheld finding reproduced before it was
 touched.** The first, over the first pushed tip, returned 54. The page said
