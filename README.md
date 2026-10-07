@@ -799,7 +799,7 @@ compares what it reads back with the record it was handed — every stock in
 both stages, the search, the chooser and the rail on a phone, the keyboard,
 deep links and Back, the old anchors, unknown routes and symbols, rapid
 switching — then views the `full` record at three later instants for the
-stale states, drops fourteen fields in turn (a burst without browser bars must
+stale states, drops twenty fields in turn (a burst without browser bars must
 offer its matching retained source or say *Chart unavailable*), and opens it
 once with no record at all.
 

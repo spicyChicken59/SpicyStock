@@ -757,3 +757,194 @@ def test_a_record_without_an_observation_block_or_with_a_malformed_one_is_refuse
     data["observations"] = {"as_of": "2026-09-10", "days": 21, "symbols": {"AAA": {"date": "2026-09-10", "c": 1.0}}}
     report.validate(data)
     assert "observations.symbols" in contract_paths(data)
+
+
+# ---------------------------------- the stale tolerance and the follow-up ---
+# Each block is held to the record it sits in: the record's OWN archived
+# rules, the ledger's own stale population, the sentence it was written with,
+# and a shortfall it did not tolerate named by its problem word.
+from tests.test_inputs import wide, behind  # noqa: E402,F401
+from tests.test_pipeline import market, claude, evening  # noqa: E402,F401
+from src import inputs  # noqa: E402
+from src.report import validate  # noqa: E402
+
+PAGE_FIXTURES = Path(__file__).resolve().parent / 'fixtures' / 'page'
+
+
+def _copy(data):
+    return json.loads(json.dumps(data))
+
+
+def _refuses(data, message):
+    with pytest.raises(ValueError, match=message):
+        validate(data)
+
+
+@pytest.fixture
+def stale_night(wide, claude, fake_resend, fake_alpaca, tmp_path):
+    """A 200-stock night whose only gap is two stocks a session behind: tolerated."""
+    behind(fake_alpaca, ['QAAA', 'QAAB'])
+    rep, data, _ = evening(tmp_path, wide)
+    assert rep.status == 'ok' and data['run']['input_tolerance']['verdict'] == 'tolerated', rep.problems
+    return data
+
+
+def _under(data, fraction):
+    """The same night as a record made under another archived fraction would
+    say it: its rules, its block and its sentence all agree with each other.
+    (A record's rules are sealed into its provenance context, so this is held
+    by the block's own check rather than by validate().)"""
+    rules = dict(data['rules']['pipeline'], stale_tolerance_fraction=fraction)
+    run = data['run']
+    tol = inputs.stale_tolerance(run['coverage'], fraction, names=run['input_tolerance']['names'], names_max=100)
+    run['input_tolerance'] = tol
+    tol['sentence'] = inputs.coverage_sentence(run)
+    return run, rules
+
+
+def test_validate_holds_the_tolerance_to_the_records_own_constant(stale_night):
+    validate(stale_night)
+    run, rules = _under(_copy(stale_night), 0.005)
+    assert (run['input_tolerance']['verdict'], run['input_tolerance']['limit']) == ('not_tolerated', 1)
+    assert inputs.tolerance_faults(run, rules, set()) == \
+        ['an input shortfall outside the recorded tolerance is not named coverage_thin']
+    run['problems'].append({'stage': 'session', 'kind': 'coverage_thin', 'message': 'two stale'})
+    assert inputs.tolerance_faults(run, rules, set()) == []
+    # the block is held to the fraction the record archived, not to the one the code carries now
+    assert inputs.tolerance_faults(_copy(stale_night)['run'], rules, set()) == \
+        ['input tolerance is not the archived stale_tolerance_fraction']
+    forged = _copy(stale_night)
+    forged['run']['input_tolerance']['fraction'] = 0.02
+    _refuses(forged, 'not the archived stale_tolerance_fraction')
+
+
+@pytest.mark.parametrize('forge,message', [
+    (lambda t: t.update(names=['QAAA', 'QAAC']), 'names are not the stale population the ledger counted'),
+    (lambda t: t.update(names=['QAAA']), 'names are not the stale population the ledger counted'),
+    (lambda t: t.update(names=None), 'drops a stale membership it could carry'),
+    (lambda t: t.update(held=['QZZZ']), 'holds a stock it does not name'),
+    (lambda t: t.update(held=['QAAA']), 'does not hold the open model plans among the stale stocks'),
+    (lambda t: t.update(limit=3), 'does not re-derive from the ledger'),
+    (lambda t: t.update(verdict='complete'), 'does not re-derive from the ledger'),
+    (lambda t: t.update(sentence=t['sentence'].replace('2 stocks', '3 stocks')), 'sentence is not the coverage sentence'),
+    (lambda t: t.update(version=2), 'version or verdict unknown'),
+    (lambda t: t.pop('reasons'), 'malformed'),
+], ids=['names-swapped', 'names-short', 'names-dropped', 'held-unnamed', 'held-without-a-plan', 'limit', 'verdict',
+        'sentence', 'version', 'malformed'])
+def test_validate_refuses_a_forged_tolerance(stale_night, forge, message):
+    data = _copy(stale_night)
+    forge(data['run']['input_tolerance'])
+    _refuses(data, message)
+
+
+def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_night):
+    from src import followup, reader_coverage
+    data = _copy(stale_night)
+    data['run'].pop('input_tolerance')
+    _refuses(data, 'input tolerance block missing')
+    data = _copy(stale_night)
+    data['run'].pop('stale_followup')
+    _refuses(data, 'stale follow-up block missing')
+    data = _copy(stale_night)
+    data['run'].pop('reads')
+    _refuses(data, 'run.reads is missing')
+    # a record made under the rules before them is not asked for any of the three
+    data = _copy(stale_night)
+    for key in ('input_tolerance', 'stale_followup', 'reads'):
+        data['run'].pop(key)
+    for key in ('stale_tolerance_fraction', 'stale_names_max', 'reader_refusal_fraction'):
+        data['rules']['pipeline'].pop(key)
+    assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
+    assert followup.faults(data['run'], data['rules']['pipeline']) == []
+    assert reader_coverage.reads_faults(data) == []
+
+
+@pytest.fixture
+def followed_night(wide, claude, fake_resend, fake_alpaca, tmp_path):
+    """The night after a stale one: last night's two stale stocks read again."""
+    from datetime import timedelta
+    from tests.test_followup import late
+    from tests.test_pipeline import EVENING
+    behind(fake_alpaca, ['QAAA', 'QAAB'])
+    evening(tmp_path, wide)
+    for name in ('QAAA', 'QAAB'):
+        c = float(fake_alpaca.history[name]['Close'].iloc[-1])
+        late(fake_alpaca, name, [[c, c, c, c, 0.0], [c, c, c, c, 9_000.0]], still_behind=False)
+    rep, data, _ = evening(tmp_path, wide, now=EVENING + timedelta(days=1))
+    assert rep.status == 'ok' and data['run']['stale_followup']['status'] == 'applied', rep.problems
+    return data
+
+
+def _matched(block):
+    """The block rewritten, consistently, as though its first stock's late bar matched a scan."""
+    from src import followup
+    row = block['rows'][0]
+    row.update(outcome='match', route='dollar')
+    block['outcomes'] = {o: sum(1 for r in block['rows'] if r['outcome'] == o) for o in followup.OUTCOMES}
+    block['matched'] = [row['ticker']]
+    block['sentence'] = followup.sentence_of(block)
+
+
+@pytest.mark.parametrize('forge,message', [
+    (lambda b: b['outcomes'].update(no_match=1, unmeasurable=1), 'outcomes are not its rows'),
+    (lambda b: b.update(count=3), 'counts do not reconcile'),
+    (_matched, 'a late bar that matched a scan is not named coverage_thin'),
+    (lambda b: b.update(for_session='2026-09-09'), 'not for the session before this one'),
+    (lambda b: b.update(sentence=b['sentence'].replace('none of them matches', 'one matches')), 'sentence is not its own'),
+    (lambda b: b['rows'][0].update(volume=-1), 'volume or flat is malformed'),
+    (lambda b: b.update(status='not_applicable'), 'status and reason disagree'),
+], ids=['outcomes', 'count', 'matched-unnamed', 'for-session', 'sentence', 'volume', 'status'])
+def test_validate_refuses_a_forged_followup(followed_night, forge, message):
+    validate(followed_night)
+    data = _copy(followed_night)
+    forge(data['run']['stale_followup'])
+    _refuses(data, message)
+
+
+def _mail_text(data):
+    class Text(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.parts = []
+
+        def handle_data(self, d):
+            self.parts.append(d)
+    p = Text()
+    p.feed(digest_html(data))
+    return ' '.join(' '.join(p.parts).split())
+
+
+def test_the_mail_on_a_tolerated_night_names_the_stale_stocks_and_no_problem(stale_night):
+    text = _mail_text(stale_night)
+    assert 'what went wrong' not in text
+    assert "within this run's stale tolerance of 2 stocks" in text
+    assert '// inputs and reads Without a 2026-09-10 bar: QAAA, QAAB.' in text
+
+
+def test_the_mail_past_the_tolerance_prints_the_problem_sentence(wide, claude, fake_resend, fake_alpaca, tmp_path):
+    behind(fake_alpaca, ['QAAA', 'QAAB', 'QAAC'])
+    rep, data, _ = evening(tmp_path, wide)
+    text = _mail_text(data)
+    assert 'what went wrong' in text and PROBLEM_SENTENCES['coverage_thin'] in text
+    assert 'ran out of time' not in text and 'answered late' not in text
+    assert 'Without a 2026-09-10 bar: QAAA, QAAB, QAAC.' in text
+
+
+def test_the_mail_on_the_thin_fixture_says_its_reads_outside_the_problems():
+    data = json.loads((PAGE_FIXTURES / 'thin.json').read_text())
+    data.pop('fixture', None)
+    validate(data)
+    text = _mail_text(data)
+    assert 'what went wrong' not in text
+    assert data['run']['reads']['sentence'] in text and '1 reply refused by reader authority' in text
+    assert data['run']['stale_followup']['sentence'] in text
+
+
+def test_the_mail_on_an_empty_credit_balance_says_to_top_up(market, claude, fake_resend, tmp_path):
+    from tests.test_reader_coverage import CREDIT
+    claude.set_error(RuntimeError(CREDIT))
+    rep, data, _ = evening(tmp_path, market)
+    assert [p['kind'] for p in data['run']['problems']] == ['claude_unavailable'], rep.problems
+    assert len(claude.calls) == 1
+    text = _mail_text(data)
+    assert "the account's credit balance is too low" in text and 'Top up the Anthropic account before the next run.' in text

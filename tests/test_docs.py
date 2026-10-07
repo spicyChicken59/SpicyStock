@@ -487,3 +487,15 @@ def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
     for name in publish_dashboard.RECORD_FILES:
         (docs / name).write_text("{}")
     assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES)
+
+
+def test_the_readme_counts_the_fields_the_smoke_drops():
+    """README says how many fields the page smoke drops in turn; that is the
+    length of the list the smoke walks, read off the smoke itself."""
+    smoke = (ROOT / "tools" / "page_smoke.mjs").read_text()
+    head = smoke.index("console.log('-- a field missing');")
+    listed = re.search(r"for \(const field of \[([^\]]*)\]\)", smoke[head:]).group(1)
+    fields = re.findall(r"'([^']+)'", listed)
+    assert len(fields) == len(set(fields)) and {"run.input_tolerance", "run.stale_followup", "run.reads.causes"} <= set(fields)
+    words = {17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty", 21: "twenty-one", 22: "twenty-two"}
+    assert f"drops {words[len(fields)]} fields in turn" in README, len(fields)

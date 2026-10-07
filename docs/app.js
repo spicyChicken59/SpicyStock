@@ -564,7 +564,7 @@
     $('cover-dek').textContent = 'Found ' + num(run.bursts) + ' burst candidates. ' +
       (cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars.' +
         (a.status !== 'ok' ? ' Incomplete coverage.' : '') +
-        (cov.stale ? ' ' + num(cov.stale) + ' fetched frames were stale' + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
+        (cov.stale ? ' ' + num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
     $('cover-original').textContent = 'Original published summary: ' + (cover.dek || 'not recorded');
     // the coverage sentence the run stored, then the stale stocks by name, then
     // what last night's stale stocks turned out to be: each the record's own words

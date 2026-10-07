@@ -37,7 +37,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
-const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next'];
+const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
 // the sequels a follow-through reading needs beside the nights: the same
 // market one session on, and that session re-run on later bars
 const SEQUELS = ['next', 'revised'];
@@ -1159,7 +1159,7 @@ async function checkStates(browser, base, data) {
   } finally { await unlink(path.join(ROOT, failedPath)); }
   // a record missing a cosmetic field still renders, with no undefined or NaN in sight
   console.log('-- a field missing');
-  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations']) {
+  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations', 'run.input_tolerance', 'run.stale_followup', 'run.reads.causes']) {
     const copy = JSON.parse(JSON.stringify(data));
     const parts = field.split('.'); let o = copy;
     for (let i = 0; i < parts.length - 1; i++) { o = o[parts[i]]; if (Array.isArray(o)) o = o[0]; }
@@ -3589,6 +3589,7 @@ async function checkInputCoverage(browser, base) {
       await context.close();
     }
   }
+  await checkStaleTolerance(browser, base);
   const legacy = JSON.parse(await readFile(path.join(FIXTURES, 'empty.json'), 'utf8'));
   delete legacy.run.coverage.version; delete legacy.run.coverage.acceptance; delete legacy.run.input_basis;
   legacy.cover.dek = 'No reaction candidates were recorded.';
@@ -3603,6 +3604,94 @@ async function checkInputCoverage(browser, base) {
     eq('legacy inputs browser errors', errors.length, 0);
     await context.close();
   } finally { await unlink(filename); }
+}
+
+// A night whose only gap is a stale tail the recorded tolerance allows: not
+// degraded, the tail counted and named, last night's stale stocks read again,
+// and the chart reader's one refusal counted beside the rest. Every sentence
+// is the record's own; the page decides nothing about any of it.
+async function checkStaleTolerance(browser, base) {
+  console.log('-- the stale tolerance');
+  const thin = JSON.parse(await readFile(path.join(FIXTURES, 'thin.json'), 'utf8'));
+  const tol = thin.run.input_tolerance, follow = thin.run.stale_followup, reads = thin.run.reads;
+  check('thin: the fixture is the case it names', thin.run.status === 'ok' && tol.verdict === 'tolerated' && tol.names.length === 1 &&
+    follow.status === 'applied' && reads.verdict === 'tolerated', [thin.run.status, tol.verdict, follow.status, reads.verdict]);
+  const pct = 'at most ' + (100 * thin.rules.pipeline.stale_tolerance_fraction) + '% of the intended stocks';
+  for (const width of [1280, 390, 320]) {
+    for (const theme of ['dark', 'light']) {
+      const tag = 'thin ' + width + '/' + theme;
+      const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin.json', FRESH_NOW, width, { theme });
+      const chip = await text(page, '#status-slot .sc-chip');
+      check(tag + ': a tolerated night is fresh, not degraded', /^fresh/.test(chip), chip);
+      eq(tag + ': no problem line', (await said(page, '#status-line')).trim(), '');
+      eq(tag + ': the verdict is the record\'s', await said(page, '#cover-h1'), thin.cover.h1);
+      const dek = await said(page, '#cover-dek');
+      check(tag + ': the dek says the coverage was incomplete and the tail tolerated',
+        dek.includes('Incomplete coverage.') && dek.includes(tol.stale + (tol.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + ', within the recorded tolerance.'), dek);
+      if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.screenshot({ path: path.join(shotsDir, `thin-explore-${width}-${theme}.png`) }); }
+      await go(page, '#/method');
+      await page.locator('#cover-record > summary').click();
+      const coverage = await said(page, '#cover-coverage');
+      check(tag + ': the coverage line is the sentence the run stored', coverage.startsWith(tol.sentence), coverage.slice(0, 160));
+      check(tag + ': it names the stale stock', coverage.includes(' bar: ' + tol.names.join(', ') + '.'), coverage);
+      check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + follow.sentence), coverage.slice(-300));
+      const method = await said(page, '#run-meta');
+      check(tag + ': Method quotes the archived tolerance', method.includes(pct), method.slice(0, 400));
+      check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale + ' stale frame against a limit of ' + tol.limit + '.'), method);
+      check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
+      check(tag + ': Method quotes the reader rule and prints the reads', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && method.includes(reads.sentence), method);
+      const strip = await said(page, '#run-strip');
+      check(tag + ': the strip says incomplete, tolerated', strip.includes('incomplete, tolerated'), strip);
+      check(tag + ': the strip counts the refusal', strip.includes(reads.causes.refused + ' refused, within ' + reads.refusal_limit + ' tolerated'), strip);
+      check(tag + ': no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+      if (shotsDir) await page.screenshot({ path: path.join(shotsDir, `thin-method-${width}-${theme}.png`), fullPage: true });
+      eq(tag + ': page errors', errors, []);
+      await context.close();
+    }
+  }
+  // the same night past the tolerance: the record names the problem, the page says degraded
+  const scratch = path.join(ROOT, 'tests/fixtures/page/.thin-variant.json');
+  const variants = {
+    'past the tolerance': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'not_tolerated', reasons: ['over_limit'] });
+      d.run.status = 'degraded';
+      d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (over_limit)' }];
+    },
+    'a late match': (d) => { d.run.stale_followup.sentence = 'Last night\'s 2 stocks without a 2026-09-09 bar, read again from tonight\'s fetch: QAB (dollar) matches a scan on it.'; },
+    'a record from before the tolerance': (d) => {
+      delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
+      delete d.rules.pipeline.stale_tolerance_fraction; delete d.rules.pipeline.reader_refusal_fraction;
+    },
+  };
+  for (const [name, change] of Object.entries(variants)) {
+    const d = JSON.parse(JSON.stringify(thin));
+    change(d);
+    await writeFile(scratch, JSON.stringify(d));
+    try {
+      const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/.thin-variant.json', FRESH_NOW, 390);
+      const chip = await text(page, '#status-slot .sc-chip'), dek = await said(page, '#cover-dek');
+      await go(page, '#/method');
+      await page.locator('#cover-record > summary').click();
+      const method = await said(page, '#run-meta'), coverage = await said(page, '#cover-coverage');
+      if (name === 'past the tolerance') {
+        check('thin ' + name + ': the chip says degraded', /^degraded/.test(chip), chip);
+        check('thin ' + name + ': the status line is the problem\'s sentence', (await said(page, '#status-line')).includes(SENTENCES.coverage_thin), await said(page, '#status-line'));
+        check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes('1 fetched frame was stale.'), dek);
+        check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale frames than the limit'), method);
+      } else if (name === 'a late match') {
+        check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
+      } else {
+        check('thin ' + name + ': the dek makes no tolerance claim', !dek.includes('tolerance'), dek);
+        check('thin ' + name + ': the coverage line is the composed warning', coverage.startsWith('Incomplete input coverage:') && !coverage.includes('stale tolerance'), coverage.slice(0, 200));
+        check('thin ' + name + ': Method keeps the rule it was published under', method.includes('any missing stocks or capacity cuts degrade it.') && !method.includes('Stale tolerance:') && !method.includes('Chart reader: a reply refused'), method);
+        check('thin ' + name + ': the strip keeps its old note', !(await said(page, '#run-strip')).includes('tolerated'));
+      }
+      const body = await page.locator('body').innerText();
+      check('thin ' + name + ': nothing prints undefined or NaN', !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
+      eq('thin ' + name + ': page errors', errors, []);
+      await context.close();
+    } finally { await unlink(scratch); }
+  }
 }
 
 async function checkExchangeCalendar(browser, base) {

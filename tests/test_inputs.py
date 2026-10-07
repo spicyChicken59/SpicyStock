@@ -350,3 +350,267 @@ def test_permanent_refusal_accounts_for_attempts_and_unrequested_tail(
     assert cov['dropped'] == cov['no_bars'] == 0
     assert cov['scan_unattempted'] == 3 and cov['acceptance']['fraction'] == .75
     assert cov['acceptance']['status'] == 'fail' and inputs.faults(cov) == []
+
+
+# ----------------------------------------------------- the stale tolerance ---
+# A night whose ONLY gap is a small tail of stocks one session behind is not
+# degraded; everything else keeps the rule above. The ledger and its
+# acceptance stay exactly as built: the tolerance reads them and writes nothing.
+TAPE_DATES = pd.to_datetime(['2026-09-04', '2026-09-08', '2026-09-09', '2026-09-10'])
+
+
+def tape(behind=0, *, dates=TAPE_DATES):
+    """A quiet four-session tape ending `behind` sessions before 10 Sep."""
+    df = pd.DataFrame([[10.0, 10.2, 9.9, 10.1, 200_000]] * len(dates), columns=market_data.OHLCV, index=dates)
+    return df.iloc[:len(df) - behind]
+
+
+def q_names(count):
+    return [f"Q{a}{b}{c}" for a in "ABCDE" for b in "ABCDEFGHIJ" for c in "ABCDEFGHIJ"][:count]
+
+
+def ledger(stocks=200, *, stale=('QAAA', 'QAAB'), frames=None, capacity=0, **stats_kw):
+    """A reconciled ledger over `stocks` quiet names and SPY, `stale` of them one
+    session behind; `frames` replaces or adds any frame by name."""
+    from src import inputs
+    names = q_names(stocks)
+    tapes = {s: tape(1 if s in stale else 0) for s in names + ['SPY']}
+    tapes.update(frames or {})
+    extra = [s for s in stats_kw.get('no_bars', []) + stats_kw.get('dropped_symbols', []) + stats_kw.get('unfetched', [])]
+    uni = universe.build(None, explicit=names + extra)
+    if capacity:
+        uni.counts[universe.CAPACITY_REASON] = capacity
+    held_back = len(stats_kw.get('unfetched', []))
+    stats = market_data.DownloadStats(session=date(2026, 9, 10), feed='sip',
+                                      requested=len(tapes) + len(extra) - held_back, with_bars=len(tapes),
+                                      dropped=len(stats_kw.get('dropped_symbols', [])), batch_attempts=1, **stats_kw)
+    ready = market_data.apply_session_rules(tapes, stats.session, stats)
+    cov = inputs.build(uni, uni.symbols + ['SPY'], tapes, stats, ready, stats.session, stats.session,
+                       closed=False, minimum=pipeline.MIN_COVERAGE_FRACTION, benchmark='SPY')
+    cov['scan_ready'] = cov['scan_unattempted'] = cov['acceptance']['ready_stocks']
+    inputs.evaluated(cov)
+    return cov, stats
+
+
+def tolerance_of(cov, stats, fraction=0.01, held=()):
+    from src import inputs
+    return inputs.stale_tolerance(cov, fraction, names=sorted(stats.stale), held=held,
+                                  names_max=pipeline.STALE_NAMES_MAX)
+
+
+def with_scan_error(cov):
+    cov['scan_errors'], cov['errors'], cov['scan_unattempted'] = 1, 1, cov['scan_unattempted'] - 1
+    return cov
+
+
+NAN_HIGH = tape()
+NAN_HIGH.iloc[-1, NAN_HIGH.columns.get_loc('High')] = float('nan')
+
+
+@pytest.mark.parametrize('build,fraction,held,verdict,reasons', [
+    (lambda: ledger(), 0.01, (), 'tolerated', []),
+    (lambda: ledger(stale=('QAAA', 'QAAB', 'QAAC')), 0.01, (), 'not_tolerated', ['over_limit']),
+    # 270 stocks: 1% is 2.7, floored to 2; a ceiling or a rounding would admit 3
+    (lambda: ledger(270, stale=('QAAA', 'QAAB', 'QAAC')), 0.01, (), 'not_tolerated', ['over_limit']),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(2)}), 0.01, (), 'not_tolerated', ['behind_more']),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=pd.DatetimeIndex(['2026-09-08', pd.NaT]))}),
+     0.01, (), 'not_tolerated', ['behind_more']),
+    (lambda: ledger(no_bars=['QZZZ']), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(dropped_symbols=['QZZZ']), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(unfetched=['QZZZ']), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(frames={'QAAC': tape(dates=TAPE_DATES.delete(2))}), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(frames={'QAAC': NAN_HIGH}), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(capacity=1), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: (with_scan_error(ledger()[0]), ledger()[1]), 0.01, (), 'not_tolerated', ['other_exceptions']),
+    (lambda: ledger(stale=('QAAA', 'SPY')), 0.01, (), 'not_tolerated', ['benchmark']),
+    (lambda: ledger(), 0.01, ('QAAA',), 'not_tolerated', ['open_plan']),
+    (lambda: ledger(stale=()), 0.01, (), 'complete', []),
+    (lambda: ledger(), None, (), 'not_tolerated', ['over_limit']),
+], ids=['two-of-200', 'three-of-200', 'three-of-270', 'two-sessions-back', 'unreadable-stamp', 'no-bars',
+        'dropped', 'unfetched', 'gapped', 'unreadable-bar', 'capacity', 'scan-error', 'benchmark',
+        'open-plan', 'complete', 'no-fraction'])
+def test_stale_tolerance_reads_only_the_ledger(build, fraction, held, verdict, reasons):
+    from src import inputs
+    cov, stats = build()
+    assert inputs.faults(cov) == [], 'the case must reconcile, or it tests a broken ledger'
+    before = json.dumps(cov, sort_keys=True, default=str)
+    tol = tolerance_of(cov, stats, fraction, held)
+    assert (tol['verdict'], tol['reasons']) == (verdict, reasons), tol
+    assert json.dumps(cov, sort_keys=True, default=str) == before, 'the tolerance wrote the ledger'
+    assert cov['acceptance']['status'] == ('ok' if verdict == 'complete' else 'degraded')
+    assert tol['names'] == sorted(stats.stale) and tol['held'] == sorted(held)
+
+
+@pytest.mark.parametrize('stocks,fraction,limit', [(100, 0.29, 29), (270, 0.01, 2), (99, 0.01, 0),
+                                                   (100, 0.01, 1), (4793, 0.01, 47), (200, 0, 0), (200, None, 0)])
+def test_the_stale_limit_is_the_fraction_floored_in_exact_arithmetic(stocks, fraction, limit):
+    """0.29 * 100 is 28.999999999999996 in binary floating point; floored that
+    way the limit would be 28 where the rule says 29."""
+    from src import inputs
+    assert inputs.stale_limit(stocks, fraction) == limit
+
+
+def test_the_tolerance_names_its_stocks_only_up_to_its_bound():
+    from src import inputs
+    cov, stats = ledger(stale=('QAAA', 'QAAB', 'QAAC'))
+    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), names_max=3)['names'] == ['QAAA', 'QAAB', 'QAAC']
+    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), names_max=2)['names'] is None
+
+
+# -------------------------------------- the tolerance over a whole night ----
+WIDE = 187   # quiet names beside the 13 of `market`: a 200-stock night, whose limit is 2
+
+
+@pytest.fixture
+def wide(market, fake_alpaca, seed):
+    """`market` and 187 quiet names: 200 intended stocks, so the stale limit is two."""
+    from tests.synthetic import make_ohlcv
+    names = q_names(WIDE)
+    for i, name in enumerate(names):
+        fake_alpaca.add_history(name, make_ohlcv('flat', seed=[seed, 500 + i], days=260))
+    return market + names
+
+
+def behind(fake_alpaca, names, sessions=1):
+    for name in names:
+        fake_alpaca.add_history(name, fake_alpaca.history[name], stale_sessions=sessions)
+
+
+def test_a_stale_only_night_is_ok_and_still_counts_every_missing_stock(
+        wide, claude, fake_resend, fake_alpaca, tmp_path):
+    from src import inputs, report
+    rep0, complete, _ = evening(tmp_path / 'complete', wide)
+    behind(fake_alpaca, ['QAAA', 'QAAB'])
+    rep, data, _ = evening(tmp_path / 'stale', wide)
+    assert rep.exit_code() == 0 and rep.status == 'ok', rep.problems
+    run = data['run']
+    assert run['status'] == 'ok' and run['problems'] == []
+    cov = run['coverage']
+    assert cov['acceptance']['status'] == 'degraded' and cov['stale'] == 2 and inputs.faults(cov) == []
+    assert cov['reasons']['stale'] == universe.population(['QAAA', 'QAAB'])
+    tol = run['input_tolerance']
+    assert (tol['verdict'], tol['names'], tol['limit'], tol['held']) == ('tolerated', ['QAAA', 'QAAB'], 2, [])
+    assert data['nights'] == [{'session': '2026-09-10', 'status': 'ok', 'published_at': data['generated']}]
+    dek = data['cover']['dek']
+    assert ('2 returned frames had no bar for 2026-09-10, each ending on the previous session, 2026-09-09' in dek
+            and "within this run's stale tolerance of 2 stocks" in dek), dek
+    assert tol['sentence'] == inputs.coverage_sentence(run) and tol['sentence'] in dek
+    report.validate(data)
+    # the tolerance moved the run's status and nothing it decided
+    assert rep0.exit_code() == 0 and complete['run']['input_tolerance']['verdict'] == 'complete'
+    assert data['trades'] == complete['trades'] == ['AAA'] and run['graded'] == complete['run']['graded']
+    assert data['breadth']['regime']['verdict'] == complete['breadth']['regime']['verdict']
+
+    def decided(record):
+        return [(b['ticker'], b['grade'], b['grade_mechanical'], (b.get('plan') or {}).get('limit'),
+                 (b.get('plan') or {}).get('stop'), (b.get('plan') or {}).get('shares')) for b in record['bursts']]
+    assert decided(data) == decided(complete)
+
+
+@pytest.mark.parametrize('arrange,reasons', [
+    (lambda fake: behind(fake, ['QAAA', 'QAAB', 'QAAC']), ['over_limit']),
+    (lambda fake: behind(fake, ['QAAA'], sessions=2), ['behind_more']),
+    (lambda fake: behind(fake, ['QAAA', 'SPY']), ['benchmark']),
+    (None, ['other_exceptions']),
+], ids=['three-stale', 'two-sessions-back', 'benchmark-stale', 'and-a-name-with-no-bars'])
+def test_past_the_stale_tolerance_the_night_is_degraded(wide, claude, fake_resend, fake_alpaca, tmp_path,
+                                                         arrange, reasons):
+    from src import report
+    tickers = wide
+    if arrange is None:
+        behind(fake_alpaca, ['QAAA'])
+        tickers = wide + ['NOBAR']   # registered with no history: the provider returns nothing for it
+    else:
+        arrange(fake_alpaca)
+    rep, data, _ = evening(tmp_path, tickers)
+    assert rep.exit_code() == pipeline.EXIT_DEGRADED and rep.status == 'degraded', rep.problems
+    thin = [p for p in data['run']['problems'] if p['kind'] == 'coverage_thin']
+    assert len(thin) == 1 and thin[0]['message'].startswith(f"stale tolerance not met ({', '.join(reasons)})"), thin
+    tol = data['run']['input_tolerance']
+    assert tol['verdict'] == 'not_tolerated' and tol['reasons'] == reasons, tol
+    assert "Outside this run's stale tolerance" in tol['sentence']
+    report.validate(data)
+
+
+NEXT_EVENING = EVENING + pd.Timedelta(days=1)   # Friday 11 Sep, the session after
+
+
+@pytest.mark.parametrize('late,status', [('AAA', 'degraded'), ('QAAA', 'ok')], ids=['under-an-open-plan', 'control'])
+def test_a_stale_frame_under_an_open_model_plan_keeps_the_night_degraded(
+        wide, claude, fake_resend, fake_alpaca, tmp_path, late, status):
+    from src import record, report
+    rep, data, _ = evening(tmp_path, wide)
+    assert rep.status == 'ok' and data['trades'] == ['AAA'], rep.problems
+    behind(fake_alpaca, [late])
+    rep, data, _ = evening(tmp_path, wide, now=NEXT_EVENING)
+    assert rep.status == status, rep.problems
+    tol = data['run']['input_tolerance']
+    assert tol['names'] == [late] and tol['stale'] == 1
+    held = {p['ticker']: p['status'] for p in data['open_plans']}
+    assert 'AAA' in held and held['AAA'] not in record.FINISHED
+    if status == 'degraded':
+        assert (tol['verdict'], tol['reasons'], tol['held']) == ('not_tolerated', ['open_plan'], ['AAA'])
+        assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
+            ['stale frames under open model plans: AAA']
+    else:
+        assert (tol['verdict'], tol['held']) == ('tolerated', []) and data['run']['problems'] == []
+    report.validate(data)
+
+
+def test_the_tolerance_moves_the_status_and_no_decision(wide, claude, fake_resend, fake_alpaca, tmp_path, monkeypatch):
+    """The same tolerated night under a tolerance of zero: only its status, its
+    problems, its night row, its tolerance block and its rules digest differ."""
+    behind(fake_alpaca, ['QAAA', 'QAAB'])
+    rep, shipped, docs = evening(tmp_path / 'shipped', wide)
+    monkeypatch.setattr(pipeline, 'STALE_TOLERANCE_FRACTION', 0)
+    monkeypatch.setitem(pipeline.RULES, 'pipeline.stale_tolerance_fraction', 0)
+    rep0, zero, docs0 = evening(tmp_path / 'zero', wide)
+    assert (rep.status, rep0.status) == ('ok', 'degraded')
+    assert [p['kind'] for p in zero['run']['problems']] == ['coverage_thin']
+    assert shipped['app']['rules_version'] != zero['app']['rules_version']
+    assert shipped['run']['input_tolerance']['limit'] == 2 and zero['run']['input_tolerance']['limit'] == 0
+
+    # everything else is equal once the identities that digest the rules are set aside
+    identity = {'evidence', 'evidence_ref', 'rules_version', 'replay_rules_version', 'context_sha256'}
+
+    def plain(node):
+        if isinstance(node, dict):
+            return {k: plain(v) for k, v in node.items() if k not in identity}
+        return [plain(v) for v in node] if isinstance(node, list) else node
+
+    def decided(data):
+        data = plain(json.loads(json.dumps(data)))
+        for key in ('app', 'rules', 'generated', 'nights'):
+            data.pop(key)
+        for key in ('status', 'problems', 'input_tolerance', 'elapsed_seconds', 'published_at', 'fetch_seconds'):
+            data['run'].pop(key)
+        data['cover'].pop('dek')
+        # observations are keyed by signal identity, which carries the rules digest
+        data['observations']['signals'] = sorted(data['observations']['signals'].values(), key=json.dumps)
+        return data
+    assert decided(shipped) == decided(zero)
+    picks = [plain(json.loads((d / 'picks.json').read_text())['picks']) for d in (docs, docs0)]
+    assert picks[0] == picks[1] and picks[0]
+
+
+def test_the_tolerance_functions_spell_no_bare_number():
+    """The literal guard test_plan keeps over plan.py, over the functions this
+    contract added: every number they compare against is a named constant."""
+    import ast
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / 'src'
+    scope = {'followup.py': None, 'reader_coverage.py': None,
+             'inputs.py': {'stale_limit', 'stale_tolerance', '_stocks', '_tolerance_clause', 'coverage_sentence',
+                           'tolerance_faults'}}
+    literals, seen = {}, set()
+    for name, functions in scope.items():
+        for node in ast.walk(ast.parse((root / name).read_text())):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and (functions is None or node.name in functions):
+                seen.add((name, node.name))
+                for inner in ast.walk(ast.Module(body=node.body, type_ignores=[])):
+                    if isinstance(inner, ast.Constant) and isinstance(inner.value, (int, float)) \
+                            and not isinstance(inner.value, bool) and inner.value not in (0, 1, 2, 100):
+                        literals.setdefault(f'{name}:{node.name}', []).append(inner.value)
+    assert {('inputs.py', f) for f in scope['inputs.py']} <= seen, 'a named function was renamed away from the guard'
+    assert sum(1 for n, _ in seen if n == 'followup.py') >= 8 and sum(1 for n, _ in seen if n == 'reader_coverage.py') >= 8
+    assert not literals, literals
