@@ -3657,6 +3657,8 @@ async function checkStaleTolerance(browser, base) {
       d.run.status = 'degraded';
       d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (over_limit)' }];
     },
+    // the rule is quoted from the rules THIS record archived, never from a number the page carries
+    'another archived rule': (d) => { d.rules.pipeline.stale_tolerance_fraction = 0.02; d.rules.pipeline.reader_refusal_fraction = 0.5; },
     'a late match': (d) => { d.run.stale_followup.sentence = 'Last night\'s 2 stocks without a 2026-09-09 bar, read again from tonight\'s fetch: QAB (dollar) matches a scan on it.'; },
     'a record from before the tolerance': (d) => {
       delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
@@ -3678,6 +3680,9 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the status line is the problem\'s sentence', (await said(page, '#status-line')).includes(SENTENCES.coverage_thin), await said(page, '#status-line'));
         check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes('1 fetched frame was stale.'), dek);
         check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale frames than the limit'), method);
+      } else if (name === 'another archived rule') {
+        check('thin ' + name + ': Method quotes the record\'s own tolerance', method.includes('at most 2% of the intended stocks') && !method.includes('at most 1% of'), method.slice(0, 600));
+        check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('past 50% of the night'), method);
       } else if (name === 'a late match') {
         check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
       } else {
