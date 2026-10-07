@@ -20,7 +20,7 @@ import pandas as pd
 
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
-from src import universe, reader_coverage
+from src import universe, reader_coverage, followup
 from src import watchlist
 
 log = logging.getLogger("spicystock.pipeline")
@@ -31,6 +31,21 @@ FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
 MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publish (P)
+#: (P) The most of the intended stocks a run tolerates stale -- each one session
+#: behind and nothing else missing -- before the night is degraded. Every
+#: degraded night from 16 Sep to 6 Oct 2026 had 10-24 stale stocks of ~4,790
+#: (0.21%-0.50%), each one session behind; before #69 there were 0-1. 1% is
+#: twice the worst of them; the next session's run reads each one again (src/followup.py).
+STALE_TOLERANCE_FRACTION = 0.01
+STALE_NAMES_MAX = 100          # stale stocks a record names in full and the next session's run reads again (plumbing)
+#: (P) The fraction of the night's reads the reply checks (reader authority and
+#: the discovery contract) may refuse before the night is degraded, while every
+#: other read was accepted and no refused name is one the regime would otherwise
+#: have planned. 16 Sep - 6 Oct 2026: 25 refusals in 186 answered replies, 12 of
+#: them on 22 Sep (all twelve, the format defect #88 fixed); the other fifteen
+#: publications at most 3 of 12. A refused name keeps its checklist grade and
+#: never earns a ticket either way.
+READER_REFUSAL_FRACTION = 0.25
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
 SERIES_TOP = 24                # bursts, by rank, that carry a chart beside the trades and the cut names (plumbing)
@@ -56,10 +71,13 @@ RULES = {
     "pipeline.fetch_budget_seconds": FETCH_BUDGET_SECONDS,
     "pipeline.lookback_days": LOOKBACK_DAYS,
     "pipeline.min_coverage_fraction": MIN_COVERAGE_FRACTION,
+    "pipeline.stale_tolerance_fraction": STALE_TOLERANCE_FRACTION,
+    "pipeline.stale_names_max": STALE_NAMES_MAX,
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
     "pipeline.yellow_grades": list(YELLOW_GRADES),
     "pipeline.reader_policy": reader_coverage.POLICY,
+    "pipeline.reader_refusal_fraction": READER_REFUSAL_FRACTION,
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
     "pipeline.observation_days": OBSERVATION_DAYS,
@@ -400,8 +418,13 @@ def rank(bursts: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------- grading ---
+def admitted_grades(verdict: str) -> tuple[str, ...]:
+    """The grades the night's regime admits to a plan: one rule for the planner and the reads."""
+    return reader_coverage.admitted(verdict, TRADE_GRADES, YELLOW_GRADES)
+
+
 def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], rep: RunReport,
-                          charts_dir: Path, system_prompt: str, dry_run: bool) -> dict:
+                          charts_dir: Path, system_prompt: str, dry_run: bool, admitted=None) -> dict:
     """Render a chart and ask Claude for the top MAX_READS bursts by mechanical
     grade; clamp the reply to at most the mechanical grade."""
     ordered = sorted(bursts, key=lambda b: (GRADE_ORDER.get(b["grade_mechanical"], 9),
@@ -470,14 +493,20 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         b["claude"]["discovery_version"] = discovery.VERSION
         b["reader_coverage"] = reader_coverage.state(b, selected=True)
         provenance.seal_reader(b)
-    if candidates and done == 0:
-        rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names")
-    elif unavailable:
-        rep.problem("claude_partial", f"{unavailable} of {len(candidates)} names not read")
+    reads = reader_coverage.reads([b for b in bursts if b["ticker"] in selected], admitted_grades=admitted,
+                                  refusal_fraction=READER_REFUSAL_FRACTION)
+    causes = ", ".join(f"{v} {k}" for k, v in reads["causes"].items() if v)
+    if reads["verdict"] == "unavailable":
+        rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names ({causes})")
+    elif reads["verdict"] == "partial":
+        planned = reads["refused_admissible"]
+        rep.problem("claude_partial", f"{len(candidates) - done} of {len(candidates)} names without an accepted "
+                    f"reading: {causes}" + (f"; would otherwise have been planned: {', '.join(planned)}" if planned else ""))
+    elif reads["verdict"] == "tolerated":
+        log.info("Reader refusals within the night's tolerance: %s", causes)
     if usage:
         log.info("Claude usage: %s", usage)
-    return {"requested": len(candidates), "done": done,
-            "unavailable_reason": None if done == len(candidates) else "see problems"}
+    return reads
 
 
 # ------------------------------------------------------------------ plans ---
@@ -498,7 +527,7 @@ def _make_plans(bursts, account, regime, open_count, session, *, require_reader)
     and the cash budget over them, with every cut plan named and its reason."""
     verdict = regime.get("verdict", "green")
     multiplier = float(regime.get("size_multiplier", 1.0))
-    admitted = () if verdict == "red" else (YELLOW_GRADES if verdict == "yellow" else TRADE_GRADES)
+    admitted = admitted_grades(verdict)
     plans = []
     for b in bursts:
         b["plan"] = None
@@ -699,8 +728,25 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             raise RuntimeError(f"insufficient usable coverage: {coverage['acceptance']['ready_stocks']} of "
                                f"{coverage['acceptance']['intended_stocks']} intended stocks; "
                                "no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)")
-        if coverage["acceptance"]["status"] == "degraded" and not any(p["kind"] == "coverage_thin" for p in rep.problems):
-            rep.problem("coverage_thin", inputs.coverage_sentence({"coverage": coverage}))
+        # a degraded acceptance is a problem unless its only gap is the stale tail
+        # the run tolerates; the ledger and its acceptance stay exactly as built
+        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
+                                           names_max=STALE_NAMES_MAX)
+        if (coverage["acceptance"]["status"] == "degraded" and tolerance["verdict"] != inputs.TOLERATED
+                and not any(p["kind"] == "coverage_thin" for p in rep.problems)):
+            rep.problem("coverage_thin", f"stale tolerance not met ({', '.join(tolerance['reasons'])}): "
+                        + inputs.coverage_sentence({"coverage": coverage}))
+        elif tolerance["verdict"] == inputs.TOLERATED:
+            log.info("Stale tolerance: %d frames one session behind, within %d; not a problem",
+                     tolerance["stale"], tolerance["limit"])
+
+        # the previous publication's stale stocks, read again from this run's frames: no provider call
+        rep.stage = "followup"
+        followed = followup.night(previous.get("run"), frames, session, uni, closed=closed,
+                                  benchmark=BENCHMARK_SYMBOL, names_max=STALE_NAMES_MAX, feed=stats.feed)
+        if followed["matched"]:
+            rep.problem("coverage_thin", f"late bars for {followed['for_session']} would have been listed in the "
+                        f"{followed['for_session']} publication, which did not include them: " + ", ".join(followed["matched"]))
         # a closed night re-presents the plans the previous session published,
         # when the record on disk is that session's; the tickets still stand
         carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}
@@ -725,6 +771,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             log.warning("picks.json: %s", rec["problem"])
         open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
         held = slots_held(open_now)
+        # a stale frame under an unfinished open model plan leaves that plan
+        # unwalked tonight: never tolerated, whatever the count
+        held_stale = sorted({o["ticker"] for o in open_now if o.get("ticker") and o.get("status") not in record.FINISHED}
+                            & set(stats.stale))
+        if held_stale and not any(p["kind"] == "coverage_thin" for p in rep.problems):
+            rep.problem("coverage_thin", "stale frames under open model plans: " + ", ".join(held_stale))
         # Private preview only: preserve the stop/chart supplied to the reader.
         # These plans are discarded by make_plans after grading; preview tickets
         # and budgets are never recorded, published, or used as final permission.
@@ -732,10 +784,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 
         rep.stage = "grade"
         charts_dir = docs / CHARTS_DIR_NAME
-        reads = {"requested": 0, "done": 0, "unavailable_reason": None}
+        reads = reader_coverage.reads([], admitted_grades=(), refusal_fraction=READER_REFUSAL_FRACTION)
         if bursts:
             system_prompt = grader_prompt()
-            reads = read_charts_and_grade(bursts, fresh, rep, charts_dir, system_prompt, dry_run)
+            reads = read_charts_and_grade(bursts, fresh, rep, charts_dir, system_prompt, dry_run,
+                                          admitted=admitted_grades(regime.get("verdict", "green")))
         rank(bursts)
         trades, beyond_cap, budget = make_plans(bursts, fresh, account, regime, held, session)
 
@@ -748,6 +801,9 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if faults:
             raise ValueError("; ".join(faults))
         log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
+        tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
+                                           held=held_stale, names_max=STALE_NAMES_MAX)
+        tolerance["sentence"] = inputs.coverage_sentence({"coverage": coverage, "input_tolerance": tolerance})
         elapsed = round(time.monotonic() - started, 1)
         run_block = {
             "session": session.isoformat(), "session_state": "closed" if closed else "open",
@@ -759,7 +815,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                             "adjustment": market_data.BAR_ADJUSTMENT.value,
                             "timeframe": "1Day", "expected_session": expected.isoformat(),
                             "evaluated_session": session.isoformat()},
-            "coverage": coverage, "bursts": len(bursts), "graded": graded, "reads": reads,
+            "coverage": coverage, "input_tolerance": tolerance, "stale_followup": followed,
+            "bursts": len(bursts), "graded": graded, "reads": reads,
             "email": "skipped", "published_at": generated,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),

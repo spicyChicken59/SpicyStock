@@ -68,12 +68,23 @@ from tests.test_quality import burst_bar, frame as qframe, ideal_bars, quiet as 
 from tests.test_watchlist import coil  # noqa: E402
 
 FIXTURES = ROOT / "tests" / "fixtures" / "page"
-VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed", "empty", "partial", "early")
+VARIANTS = ("full", "degraded", "notrade", "yellow", "red", "closed", "empty", "partial", "early", "thin")
 #: the sequels, each run over the docs the `full` night wrote
 SEQUELS = ("next", "revised")
 EVENING = datetime(2026, 9, 10, 22, 30, tzinfo=timezone.utc)   # Thursday, after the close
 SESSION = date(2026, 9, 10)
 FOLLOW_EVENING = datetime(2026, 9, 11, 22, 30, tzinfo=timezone.utc)   # Friday, one session on
+#: the thin night's first evening, the session before the fixture's own
+THIN_FIRST_EVENING = datetime(2026, 9, 9, 22, 30, tzinfo=timezone.utc)
+#: the thin night's selection: exactly this many stocks, so the stale
+#: tolerance's limit is pipeline.STALE_TOLERANCE_FRACTION of it, floored
+THIN_STOCKS = 100
+#: the two stocks the first evening serves one session behind: the first
+#: stays behind on the fixture's night, the second catches up
+THIN_STALE = ("QAA", "QAB")
+#: the thin night's one reply reader authority refuses: a burst graded below
+#: A-quality, so on its red night no plan waited on it
+THIN_REFUSED = "PLUG"
 FOLLOW_SESSION = date(2026, 9, 11)
 #: cents the revised run's AAPL close sits off the one `next` published: the
 #: same session on later bars, which is a correction and not a new day
@@ -303,6 +314,43 @@ def sequel_frames(revised: bool) -> dict[str, pd.DataFrame]:
     return {name: append_bar(df, tails[name]) for name, df in frames.items()}
 
 
+def thin_fillers(count: int) -> dict[str, pd.DataFrame]:
+    """Quiet names that only make the thin night's selection the size its
+    limit needs: letter-only tickers (QAA, QAB, ...), each its own flat tape,
+    a fifth of them closing 5% down on the session so the market reads red
+    for a universe this size, as the red variant's does for its own."""
+    names = [f"Q{a}{b}" for a in "ABCDEFGHIJ" for b in "ABCDEFGHIJ"][:count]
+    frames = {}
+    for i, name in enumerate(names):
+        df = make_ohlcv("flat", seed=[SEED, 700 + i], days=280)
+        if i % 5 == 4:
+            prev = float(df["Close"].iloc[-2])
+            close = round(prev * 0.95, 2)
+            df.iloc[-1, df.columns.get_loc("Open")] = round(prev * 0.99, 2)
+            df.iloc[-1, df.columns.get_loc("High")] = round(prev * 0.995, 2)
+            df.iloc[-1, df.columns.get_loc("Low")] = round(close * 0.995, 2)
+            df.iloc[-1, df.columns.get_loc("Close")] = close
+            df.iloc[-1, df.columns.get_loc("Volume")] = float(df["Volume"].iloc[-2]) * 2
+        frames[name] = df
+    return frames
+
+
+def thin_next(fake: FakeAlpaca) -> None:
+    """The thin night's second evening, as the double serves it: each stock
+    the first evening served one session behind now carries that session's
+    bar -- a flat placeholder with no volume, the shape every late bar
+    retained so far has had. The first stays a session behind; the second
+    adds a quiet bar for the night itself and is ready."""
+    first, second = THIN_STALE
+    for name, ready in ((first, False), (second, True)):
+        df = fake.history[name]
+        c = float(df["Close"].iloc[-1])
+        df = append_bar(df, [c, c, c, c, 0.0])
+        if ready:
+            df = append_bar(df, quiet_tail(df))
+        fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS), stale_sessions=0 if ready else 1)
+
+
 def register(fake: FakeAlpaca, variant: str) -> list[str]:
     if variant in SEQUELS:
         frames = sequel_frames(variant == "revised")
@@ -311,10 +359,16 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
         hold_tape(frames)
         if variant == "yellow":
             red_tape(frames, 3)
-        elif variant == "red":
+        elif variant in ("red", "thin"):
             red_tape(frames, 6)
+        if variant == "thin":
+            fillers = thin_fillers(THIN_STOCKS - len(frames))
+            assert not set(fillers) & set(frames) and set(THIN_STALE) <= set(fillers)
+            frames.update(fillers)
+            assert len(frames) == THIN_STOCKS
     for name, df in frames.items():
-        fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS))
+        fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS),
+                         stale_sessions=1 if variant == "thin" and name in THIN_STALE else 0)
     fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0).round(FIXTURE_INPUT_DECIMALS))
     return list(frames)
 
@@ -370,13 +424,19 @@ def run_variant(variant: str, docs: Path) -> dict:
     docs.mkdir(parents=True, exist_ok=True)
     # a sequel inherits the record and the picks the full night wrote, the way
     # a real night inherits the last one; seeding it again would throw them away
-    if variant not in SEQUELS:
+    if variant not in SEQUELS and variant != "thin":
         record.save(prior_picks(fake, measured), docs)
     claude = type("FixtureClaude", (FakeAnthropic,), {"calls": [], "payload": {}, "raw": None, "raises": None})
 
     def answer(metrics: dict) -> dict:
         from tests.test_reader_authority import finding
         grade = metrics.get("quality_grade")
+        if variant == "thin" and metrics.get("ticker") == THIN_REFUSED:
+            # cites the base check with a status its record does not carry, so
+            # reader authority refuses the reply: one refusal of the night's reads
+            status = metrics["reader_evidence"]["checks"]["C"]["status"]
+            wrong = next(s for s in ("PASS", "FAIL", "PARTIAL") if s != status)
+            return {**CLAUDE["C"], "findings": [finding(evidence=[{"path": "checks.C.status", "value": wrong}])]}
         if variant == "notrade" or grade not in ("A+", "A"):
             # Scripted subjective judgement, not a claim a real model saw it.
             status = metrics["reader_evidence"]["checks"]["C"]["status"]
@@ -422,6 +482,12 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch.object(charts, "render_chart", render), \
             mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"), \
             mock.patch.object(pipeline, "FETCH_CHUNK", max(1, len(tickers) * 2 // 3) if variant == "partial" else pipeline.FETCH_CHUNK):
+        if variant == "thin":
+            # the first evening: two stocks one session behind is over the
+            # limit of one, so it publishes degraded and records both by name
+            first = pipeline.run_evening(tickers=tickers, docs=docs, now=THIN_FIRST_EVENING)
+            assert first.published and first.status == "degraded", (first.status, first.failure, first.problems)
+            thin_next(fake)
         rep = pipeline.run_evening(tickers=tickers, docs=docs,
                                    now=at,
                                    fetch_budget=-1 if variant == "partial" else pipeline.FETCH_BUDGET_SECONDS)
@@ -509,6 +575,24 @@ def expected_shape(variant: str, data: dict) -> None:
     elif variant == "closed":
         assert data["run"]["session"] == "2026-09-04" and data["run"]["timing"]["applicable_session"] == "2026-09-08"
         assert data["run"]["status"] == "ok", data["run"]["problems"]
+    elif variant == "thin":
+        # a night whose only gap is one stock a session behind, within the
+        # limit of one: not degraded, the stock named, and last night's two
+        # stale stocks read again from tonight's fetch
+        run = data["run"]
+        assert run["status"] == "ok" and problems == [], (run["status"], run["problems"])
+        assert run["coverage"]["acceptance"]["status"] == "degraded" and run["coverage"]["stale"] == 1
+        tol = run["input_tolerance"]
+        assert (tol["verdict"], tol["names"], tol["limit"], tol["held"]) == ("tolerated", [THIN_STALE[0]], 1, []), tol
+        follow = run["stale_followup"]
+        assert (follow["status"], follow["for_session"], follow["count"]) == ("applied", "2026-09-09", 2), follow
+        assert follow["outcomes"]["no_match"] == 2 and follow["zero_volume"] == 2 and follow["matched"] == [], follow
+        # and one reply refused by reader authority, within the night's limit
+        reads = run["reads"]
+        assert (reads["verdict"], reads["causes"]["refused"], reads["refused_admissible"]) == ("tolerated", 1, []), reads
+        assert reads["done"] == reads["requested"] - 1 and reads["refusal_limit"] >= 1, reads
+        plug = next(b for b in data["bursts"] if b["ticker"] == THIN_REFUSED)
+        assert plug["claude"]["source"] == "fallback" and plug["claude"]["error"].startswith("src.ReaderAuthorityError:"), plug["claude"]
     elif variant == "early":
         assert data["run"]["timing"]["closes_at"] == "2024-11-29T13:00:00-05:00"
         assert data["run"]["timing"]["shortened"] is True

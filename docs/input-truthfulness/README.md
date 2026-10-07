@@ -1,5 +1,28 @@
 # Input truthfulness milestone
 
+7 October 2026: a night whose only gap is a stale tail is not degraded. Every
+publication from 16 September to 6 October was `degraded`; each carried 10-24
+stock frames (0.21%-0.50% of about 4,790) that ended on the previous session,
+always exactly one XNYS session behind, with the benchmark printed. The ledger
+is unchanged: acceptance stays `degraded`, every stale stock is still counted,
+its inputs still unknown and never a measured non-match. What changed is the run
+status: `run.input_tolerance` (`inputs.stale_tolerance()`) says whether that
+degraded acceptance is ONLY a stale tail -- every frame one session behind, no
+stock under an unfinished open model plan among them, at most
+`pipeline.STALE_TOLERANCE_FRACTION` (1%) of the intended stocks, floored, the
+benchmark outside that count as it is outside acceptance -- and names each one.
+`run.status` ok beside acceptance degraded means exactly that and nothing more.
+The next session's run, when it publishes, reads the previous publication's
+stale stocks again from its own split-adjusted frames (`run.stale_followup`,
+`src/followup.py`): no extra provider request, the evening's own session rules,
+price policy, scans and setting-up list at that session. A late bar the previous
+publication would have listed degrades the night that finds it and is named; a
+late bar is never a signal, plan or ticket,
+and the previous record, its history and its ledger entry are never rewritten.
+Every late bar the archive retains so far is the provider's placeholder: one
+price, zero volume. The sentences name no cause (a halt, a delisting, a name
+that did not trade); nothing more is known than the bar the provider served.
+
 [6 October 2026: the findings file the Record view replays](../historical-findings.json)
 is `docs/historical-findings.json`, built by `tools/build_historical_findings.py`
 from the evidence in this directory and nothing else -- the two signal-outcome

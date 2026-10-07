@@ -61,6 +61,8 @@ def build(data, publication_sha256, outcome_rows, *, exceptions=None, revision=N
         'rules': deepcopy(data.get('rules')),
         'input': {'universe': deepcopy(run.get('universe')), 'basis': deepcopy(run.get('input_basis')),
                   'coverage': deepcopy(run.get('coverage')),
+                  'tolerance': deepcopy(run.get('input_tolerance')),
+                  'followup': deepcopy(run.get('stale_followup')),
                   'exception_membership': deepcopy(exceptions)},
         'signal': {'reads': deepcopy(run.get('reads')), 'final_grade_counts': deepcopy(run.get('graded')),
                    'regime': deepcopy(data.get('breadth', {}).get('regime')),

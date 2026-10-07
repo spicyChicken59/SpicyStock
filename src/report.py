@@ -55,7 +55,7 @@ PROBLEM_KINDS: tuple[str, ...] = (
 #: text from outside the codebase reaches either surface through a problem.
 PROBLEM_SENTENCES: dict[str, str] = {
     "universe_cached": "The stock directory could not be refreshed; tonight's universe is the cached one.",
-    "coverage_thin": "Part of the universe was not read: the bars fetch ran out of time or names answered late.",
+    "coverage_thin": "Some inputs were missing, could not be evaluated or arrived late; a missing input is unknown, not a measured non-match.",
     "claude_unavailable": "No usable chart-reader judgement; every grade tonight is the checklist's alone.",
     "claude_partial": "Chart-reader judgements were accepted for some names; the rest are graded by the checklist alone.",
     "chart_missing": "A chart did not render; the grade stands on the numbers.",
@@ -123,7 +123,10 @@ CONTRACT: dict[str, str] = {
            "scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, "
            "actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A "
            "record without it is one published before the field existed, and the page says entry timing is "
-           "unavailable rather than guessing at a deadline.",
+           "unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded "
+           "acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance "
+           "degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's "
+           "stale stocks again from this run's fetch and never turns a late bar into a signal.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -655,6 +658,16 @@ def validate(data: dict) -> None:
     faults.extend(timing_faults(run.get("timing")))
     faults.extend(inputs.record_faults(run))
     faults.extend(sessions.record_faults(run))
+    from src import followup, reader_coverage, record   # lazy: each sits under the pipeline, which imports this module
+    rules_pipeline = _get(data, "rules", "pipeline")
+    # the unfinished open model plans, on an open night; a closed night carries the previous plans
+    plans = data.get("open_plans")
+    plan_tickers = ({o["ticker"] for o in plans if isinstance(o, dict) and isinstance(o.get("ticker"), str)
+                     and o.get("status") not in record.FINISHED}
+                    if run.get("session_state") == "open" and isinstance(plans, list) else None)
+    faults.extend(inputs.tolerance_faults(run, rules_pipeline, plan_tickers))
+    faults.extend(followup.faults(run, rules_pipeline))
+    faults.extend(reader_coverage.reads_faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -989,6 +1002,28 @@ def _problems_block(problems: Any) -> str:
             f'what went wrong tonight</p><ul style="margin:0;padding-left:18px">{items}</ul></div>')
 
 
+def _inputs_block(run: dict) -> str:
+    """The stale stocks tonight's run tolerated, by name, what the previous publication's
+    stale stocks turned out to be, and the chart reader's shortfall by cause:
+    muted, beside the problems, so a night that is not degraded still says
+    what it did not read."""
+    tol = run.get("input_tolerance") if isinstance(run.get("input_tolerance"), dict) else {}
+    lines = []
+    names, stale = tol.get("names"), tol.get("stale")
+    if isinstance(names, list) and names and isinstance(stale, int) and stale:
+        lines.append(f"Without a {tol.get('evaluated')} bar: {', '.join(str(n) for n in names)}.")
+    follow = _text(_get(run, "stale_followup", "sentence"))
+    if follow:
+        lines.append(follow)
+    reads = _text(_get(run, "reads", "sentence"))
+    if reads:
+        lines.append(reads)
+    if not lines:
+        return ""
+    body = "".join(f'<p style="{_S_MUTED}">{esc(s)}</p>' for s in lines)
+    return f'<div><p style="{_S_MUTED}">// inputs and reads</p>{body}</div>'
+
+
 def _breadth_line(breadth: Any) -> str:
     verdict = _get(breadth, "regime", "verdict")
     if verdict not in REGIMES:
@@ -1078,6 +1113,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     if not alerts:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))
+    out.append(_inputs_block(run))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')
     foot = [f"model {model}" if (model := _text(run.get("model"))) else None,

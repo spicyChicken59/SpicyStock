@@ -32,12 +32,13 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
-const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next'];
+const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
 // the sequels a follow-through reading needs beside the nights: the same
 // market one session on, and that session re-run on later bars
 const SEQUELS = ['next', 'revised'];
@@ -58,11 +59,17 @@ const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : 
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
 
+// The suites run in two lanes over one browser (main()); every line a lane
+// prints carries its letter, so a FAIL reads under its own suite's heading.
+const lane = new AsyncLocalStorage();
+const say = console.log.bind(console);
+console.log = (...a) => { const l = lane.getStore(); return l ? say(`[${l}]`, ...a) : say(...a); };
+
 let checks = 0, failures = 0;
 const results = [];
 function check(name, ok, detail) {
   checks++;
-  results.push({name, status: ok ? 'PASS' : 'FAIL', ...(!ok ? {detail} : {})});
+  results.push({name, status: ok ? 'PASS' : 'FAIL', ...(lane.getStore() ? {lane: lane.getStore()} : {}), ...(!ok ? {detail} : {})});
   if (!ok) { failures++; console.log(`  FAIL  ${name}${detail === undefined ? '' : ' -- ' + detail}`); }
 }
 const eq = (name, got, want) => check(name, JSON.stringify(got) === JSON.stringify(want), `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
@@ -1104,7 +1111,7 @@ async function checkFollowing(browser, base, data) {
 
 const SENTENCES = {
   universe_cached: 'The stock directory could not ',
-  coverage_thin: 'Some intended stocks lack usable session bars',
+  coverage_thin: 'Some inputs were missing, could not be evaluated',
   claude_unavailable: 'No usable chart-reader judgement',
   claude_partial: 'Chart-reader judgements were accepted',
   chart_missing: 'A chart did not render; the gr',
@@ -1159,7 +1166,7 @@ async function checkStates(browser, base, data) {
   } finally { await unlink(path.join(ROOT, failedPath)); }
   // a record missing a cosmetic field still renders, with no undefined or NaN in sight
   console.log('-- a field missing');
-  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations']) {
+  for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations', 'run.input_tolerance', 'run.stale_followup', 'run.reads.causes']) {
     const copy = JSON.parse(JSON.stringify(data));
     const parts = field.split('.'); let o = copy;
     for (let i = 0; i < parts.length - 1; i++) { o = o[parts[i]]; if (Array.isArray(o)) o = o[0]; }
@@ -3287,15 +3294,34 @@ async function checkRefresh(browser, base, full) {
   const next = JSON.parse(await readFile(path.join(FIXTURES, 'next.json'), 'utf8'));
   const revised = JSON.parse(await readFile(path.join(FIXTURES, 'revised.json'), 'utf8'));
   const said2 = (page) => text(page, '#refresh-said');
-  const press = async (page) => { await page.locator('#check-updates').click(); await page.waitForTimeout(450); };
-  // whatever the route is told to answer with next; null aborts the request
+  // A check is waited for by what it does, never by the clock: the smoke runs
+  // in two lanes, and a loaded runner can take longer than any fixed pause.
+  // `served` counts the requests the route has answered; a check is over when
+  // its request has been answered and the control has left its busy state.
+  const until = async (ok, what, ms = 15000) => {
+    const t0 = Date.now();
+    while (!(await ok())) {
+      if (Date.now() - t0 > ms) throw new Error(`refresh: timed out waiting for ${what}`);
+      await new Promise((r) => setTimeout(r, 25));
+    }
+  };
+  const answered = async (page, before) => {
+    await until(() => (page.__served || 0) > before, 'the check to be answered');
+    await page.waitForFunction(() => { const b = document.getElementById('check-updates'); return !b || b.getAttribute('data-check') !== 'busy'; }, null, { timeout: 15000 });
+  };
+  const press = async (page) => { const before = page.__served || 0; await page.locator('#check-updates').click(); await answered(page, before); };
+  const checkNow = async (page) => { const before = page.__served || 0; await page.evaluate(() => window.SCStock.checkUpdates()); await answered(page, before); };
+  // whatever the route is told to answer with next; null aborts the request,
+  // and a `hold` keeps it in flight until the check releases it
   const serveWith = async (page, url, box) => {
     await page.route(url, async (route) => {
-      const answer = box.body;
-      if (answer === null) return route.abort('failed');
-      if (box.delayMs) await new Promise((r) => setTimeout(r, box.delayMs));
-      return route.fulfill({ status: box.status || 200, contentType: 'application/json',
-        body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+      const answer = box.body, hold = box.hold;
+      if (hold) await hold;
+      try {
+        if (answer === null) await route.abort('failed');
+        else await route.fulfill({ status: box.status || 200, contentType: 'application/json',
+          body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
+      } finally { page.__served = (page.__served || 0) + 1; }
     });
   };
 
@@ -3351,19 +3377,35 @@ async function checkRefresh(browser, base, full) {
     eq(`${what}: with the reader still where they were`, await attr(page, '#detail', 'data-selected'), wasStock);
   }
 
-  // ---- out of order: a slow first answer cannot land over a fast second
+  // ---- out of order: a slow first answer cannot land over a fast second.
+  // The first answer is HELD until the second has been applied, so the order
+  // of arrival is this check's to set and never the runner's speed; the page
+  // counts the answers it has read, so the slow one is asserted only after
+  // the page has actually received it.
   {
-    box.body = next; box.delayMs = 900;
+    await page.evaluate(() => {
+      const f = window.fetch; window.__answersRead = 0;
+      window.fetch = (...a) => f(...a).then((r) => {
+        const read = r.text.bind(r);
+        r.text = () => read().then((x) => { setTimeout(() => { window.__answersRead++; }, 0); return x; });
+        return r;
+      });
+    });
+    let release; box.body = next; box.hold = new Promise((r) => { release = r; });
+    const before = page.__served || 0;
     await page.locator('#check-updates').click();
-    await page.waitForTimeout(120);
+    await page.waitForFunction(() => document.getElementById('check-updates').getAttribute('data-check') === 'busy', null, { timeout: 15000 }).catch(() => {});
     eq('a check in flight says so on the control', await attr(page, '#check-updates', 'data-check'), 'busy');
     check('and the control is still pressable, so a hanging check is not a dead end',
       !(await page.locator('#check-updates').isDisabled()), 'the control went dead while checking');
     // the second press answers at once, with the file's own bytes, so its
     // outcome ("unchanged") is unmistakably different from the slow one's
-    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.delayMs = 0;
+    box.body = await readFile(path.join(FIXTURES, 'full.json'), 'utf8'); box.hold = null;
     await page.locator('#check-updates').click();
-    await page.waitForTimeout(1600);
+    await answered(page, before);
+    release();
+    await until(() => (page.__served || 0) >= before + 2, 'the held answer to be served');
+    await page.waitForFunction(() => window.__answersRead >= 2, null, { timeout: 15000 });
     check('the answer that stands is the newest press, not the first to arrive',
       (await said2(page)).startsWith('No newer record'), await said2(page));
     eq('and the slow answer was dropped rather than applied', await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
@@ -3390,8 +3432,7 @@ async function checkRefresh(browser, base, full) {
         const b = document.getElementById('check-updates').getBoundingClientRect();
         return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
       }), true);
-    await page.evaluate(() => window.SCStock.checkUpdates());
-    await page.waitForTimeout(500);
+    await checkNow(page);
     check('a newer record is loaded', (await said2(page)).startsWith('A newer record loaded'), await said2(page));
     eq('the comparison is closed rather than remapped onto other stocks', await page.evaluate(() => document.getElementById('compare').open), false);
     check('and the reader is told why, in the same breath',
@@ -3455,8 +3496,7 @@ async function checkRefresh(browser, base, full) {
         const b = document.getElementById('check-updates').getBoundingClientRect();
         return document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) !== document.getElementById('check-updates');
       }), true);
-    await p2.evaluate(() => window.SCStock.checkUpdates());
-    await p2.waitForTimeout(500);
+    await checkNow(p2);
     eq('and is still open, on the same saved identity, after it',
       [await p2.evaluate(() => document.getElementById('saved').open), await attr(p2, '#saved [data-saved-id]', 'data-saved-id')], [true, id]);
     eq('older-and-revision page errors', e2, []);
@@ -3567,7 +3607,7 @@ async function checkInputCoverage(browser, base) {
         await page.locator('#cover-record > summary').click();
         const coverage = await said(page, '#cover-coverage');
         check('full coverage counts and scope remain inspectable in Method', coverage.includes(cov.unfetched_budget + ' fetch names were never attempted') && coverage.includes('fetch counts include the benchmark'));
-        check('incomplete-input meaning stays visible', coverText.includes('Incomplete coverage.') && (await said(page, '#status-line')).includes('Missing inputs are unknown'));
+        check('incomplete-input meaning stays visible', coverText.includes('Incomplete coverage.') && (await said(page, '#status-line')).includes('a missing input is unknown'));
         check('empty workspace retains coverage warning', (await said(page, '[data-empty=bursts]')).includes('Incomplete input coverage'));
         check('next-action message retains coverage warning', (await said(page, '#next-p')).includes('Incomplete input coverage'));
       }
@@ -3578,6 +3618,8 @@ async function checkInputCoverage(browser, base) {
         check(variant + ' ' + width + ': Method says ' + words, method.includes(words), method);
       }
       check('Method reports ready denominator', (await said(page, '#run-strip')).includes(a.ready_stocks + ' of ' + a.intended_stocks));
+      // a shortfall with no stale stock gives the stale tolerance nothing to judge
+      check(variant + ' ' + width + ': no stale tolerance line without a stale stock', !method.includes('Stale tolerance:'), method);
       check('Method has no horizontal overflow at ' + width, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       eq('input page has no browser errors', errors.length, 0);
       if (shotsDir && variant === 'partial') {
@@ -3589,6 +3631,7 @@ async function checkInputCoverage(browser, base) {
       await context.close();
     }
   }
+  await checkStaleTolerance(browser, base);
   const legacy = JSON.parse(await readFile(path.join(FIXTURES, 'empty.json'), 'utf8'));
   delete legacy.run.coverage.version; delete legacy.run.coverage.acceptance; delete legacy.run.input_basis;
   legacy.cover.dek = 'No reaction candidates were recorded.';
@@ -3603,6 +3646,105 @@ async function checkInputCoverage(browser, base) {
     eq('legacy inputs browser errors', errors.length, 0);
     await context.close();
   } finally { await unlink(filename); }
+}
+
+// A night whose only gap is a stale tail the recorded tolerance allows: not
+// degraded, the tail counted and named, last night's stale stocks read again,
+// and the chart reader's one refusal counted beside the rest. Every sentence
+// is the record's own; the page decides nothing about any of it.
+async function checkStaleTolerance(browser, base) {
+  console.log('-- the stale tolerance');
+  const thin = JSON.parse(await readFile(path.join(FIXTURES, 'thin.json'), 'utf8'));
+  const tol = thin.run.input_tolerance, follow = thin.run.stale_followup, reads = thin.run.reads;
+  check('thin: the fixture is the case it names', thin.run.status === 'ok' && tol.verdict === 'tolerated' && tol.names.length === 1 &&
+    follow.status === 'applied' && reads.verdict === 'tolerated', [thin.run.status, tol.verdict, follow.status, reads.verdict]);
+  const pct = 'at most ' + (100 * thin.rules.pipeline.stale_tolerance_fraction) + '% of the intended stocks';
+  for (const width of [1280, 390, 320]) {
+    for (const theme of ['dark', 'light']) {
+      const tag = 'thin ' + width + '/' + theme;
+      const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin.json', FRESH_NOW, width, { theme });
+      const chip = await text(page, '#status-slot .sc-chip');
+      check(tag + ': a tolerated night is fresh, not degraded', /^fresh/.test(chip), chip);
+      eq(tag + ': no problem line', (await said(page, '#status-line')).trim(), '');
+      eq(tag + ': the verdict is the record\'s', await said(page, '#cover-h1'), thin.cover.h1);
+      const dek = await said(page, '#cover-dek');
+      check(tag + ': the dek says the coverage was incomplete and the tail tolerated',
+        dek.includes('Incomplete coverage.') && dek.includes(tol.stale + (tol.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + ', within the recorded tolerance.'), dek);
+      if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.screenshot({ path: path.join(shotsDir, `thin-explore-${width}-${theme}.png`) }); }
+      await go(page, '#/method');
+      await page.locator('#cover-record > summary').click();
+      const coverage = await said(page, '#cover-coverage');
+      check(tag + ': the coverage line is the sentence the run stored', coverage.startsWith(tol.sentence), coverage.slice(0, 160));
+      check(tag + ': it names the stale stock', coverage.includes(' bar: ' + tol.names.join(', ') + '.'), coverage);
+      check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + follow.sentence), coverage.slice(-300));
+      const method = await said(page, '#run-meta');
+      check(tag + ': Method quotes the archived tolerance', method.includes(pct), method.slice(0, 400));
+      check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
+      check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
+      check(tag + ': Method quotes the reader rule and prints the reads', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && method.includes(reads.sentence), method);
+      const strip = await said(page, '#run-strip');
+      check(tag + ': the strip says incomplete, tolerated', strip.includes('incomplete, tolerated'), strip);
+      check(tag + ': the strip counts the refusal', strip.includes(reads.causes.refused + ' refused, within ' + reads.refusal_limit + ' tolerated'), strip);
+      check(tag + ': no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+      if (shotsDir) await page.screenshot({ path: path.join(shotsDir, `thin-method-${width}-${theme}.png`), fullPage: true });
+      eq(tag + ': page errors', errors, []);
+      await context.close();
+    }
+  }
+  // the same night past the tolerance: the record names the problem, the page says degraded
+  const scratch = path.join(ROOT, 'tests/fixtures/page/.thin-variant.json');
+  const variants = {
+    'past the tolerance': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'not_tolerated', reasons: ['over_limit'] });
+      d.run.status = 'degraded';
+      d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (over_limit)' }];
+    },
+    // the rule is quoted from the rules THIS record archived, never from a number the page carries
+    'another archived rule': (d) => { d.rules.pipeline.stale_tolerance_fraction = 0.02; d.rules.pipeline.reader_refusal_fraction = 0.5; },
+    // only the benchmark a session behind: the stocks are complete, so the tolerance has nothing to say
+    'only the benchmark stale': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'complete', reasons: [], stale: 1, stale_stocks: 0, names: ['SPY'] });
+    },
+    'a late match': (d) => { d.run.stale_followup.sentence = 'Last night\'s 2 stocks without a 2026-09-09 bar, read again from tonight\'s fetch: QAB (dollar) matches a scan on it.'; },
+    'a record from before the tolerance': (d) => {
+      delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
+      delete d.rules.pipeline.stale_tolerance_fraction; delete d.rules.pipeline.reader_refusal_fraction;
+    },
+  };
+  for (const [name, change] of Object.entries(variants)) {
+    const d = JSON.parse(JSON.stringify(thin));
+    change(d);
+    await writeFile(scratch, JSON.stringify(d));
+    try {
+      const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/.thin-variant.json', FRESH_NOW, 390);
+      const chip = await text(page, '#status-slot .sc-chip'), dek = await said(page, '#cover-dek');
+      await go(page, '#/method');
+      await page.locator('#cover-record > summary').click();
+      const method = await said(page, '#run-meta'), coverage = await said(page, '#cover-coverage');
+      if (name === 'past the tolerance') {
+        check('thin ' + name + ': the chip says degraded', /^degraded/.test(chip), chip);
+        check('thin ' + name + ': the status line is the problem\'s sentence', (await said(page, '#status-line')).includes(SENTENCES.coverage_thin), await said(page, '#status-line'));
+        check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes('1 fetched frame was stale.'), dek);
+        check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale stocks than the limit'), method);
+      } else if (name === 'only the benchmark stale') {
+        check('thin ' + name + ': Method prints no tolerance verdict for it', !method.includes('Stale tolerance:'), method.slice(0, 900));
+      } else if (name === 'another archived rule') {
+        check('thin ' + name + ': Method quotes the record\'s own tolerance', method.includes('at most 2% of the intended stocks') && !method.includes('at most 1% of'), method.slice(0, 600));
+        check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('past 50% of the night'), method);
+      } else if (name === 'a late match') {
+        check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
+      } else {
+        check('thin ' + name + ': the dek makes no tolerance claim', !dek.includes('tolerance'), dek);
+        check('thin ' + name + ': the coverage line is the composed warning', coverage.startsWith('Incomplete input coverage:') && !coverage.includes('stale tolerance'), coverage.slice(0, 200));
+        check('thin ' + name + ': Method keeps the rule it was published under', method.includes('any missing stocks or capacity cuts degrade it.') && !method.includes('Stale tolerance:') && !method.includes('Chart reader: a reply refused'), method);
+        check('thin ' + name + ': the strip keeps its old note', !(await said(page, '#run-strip')).includes('tolerated'));
+      }
+      const body = await page.locator('body').innerText();
+      check('thin ' + name + ': nothing prints undefined or NaN', !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
+      eq('thin ' + name + ': page errors', errors, []);
+      await context.close();
+    } finally { await unlink(scratch); }
+  }
 }
 
 async function checkExchangeCalendar(browser, base) {
@@ -3673,44 +3815,59 @@ async function main() {
   const browser = await chromium.launch();
   try {
     let full = JSON.parse(await readFile(path.join(FIXTURES, 'full.json'), 'utf8'));
-    for (const v of VARIANTS) {
-      if (!runs(v)) continue;
-      const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
-      await checkVariant(browser, base, v, data);
-    }
-    if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
-    if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
-    if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
-    if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
-    if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
-    if (runs('calendar')) await checkExchangeCalendar(browser, base);
-    if (runs('provenance')) await checkPlanEvidence(browser, base);
-    if (runs('mobile')) await checkMobile(browser, base, full);
-    if (runs('modes')) await checkModes(browser, base, full);
-    if (runs('lens')) await checkLens(browser, base, full);
-    if (runs('compare')) await checkCompare(browser, base, full);
-    if (runs('evidence')) await checkEvidence(browser, base, full);
-    if (runs('map')) await checkMap(browser, base, full);
-    if (runs('reach')) await checkReach(browser, base, full);
-    if (runs('volume')) await checkVolumeReadings(browser, base, full);
-    if (runs('mapscale')) await checkMapScale(browser, base, full);
-    if (runs('following')) await checkFollowing(browser, base, full);
-    if (runs('through')) await checkFollowThrough(browser, base, full);
-    if (runs('session')) await checkSession(browser, base, full);
-    if (runs('refresh')) await checkRefresh(browser, base, full);
-    if (runs('ticket')) await checkTicketPrices(browser, base, full);
-    if (runs('states')) await checkStates(browser, base, full);
-    if (runs('grading')) await checkGradingHistory(browser, base);
-    if (runs('reader')) await checkReaderCommentary(browser, base);
-    if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
-    if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
-    if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
-    if (runs('inputs')) await checkInputCoverage(browser, base);
-    if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
-    if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
-    if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
+    // Two lanes over one browser, each its own contexts. Lane A is every suite
+    // that writes the smoke's own scratch records under tests/fixtures/page/
+    // (several share a name) or reads the clipboard, which Chromium shares
+    // between contexts: they run one after another, as they always have. Lane B
+    // is the self-contained modules, which write nothing but their own
+    // screenshots and measurements. One line of suites took 14 m 54 s of the
+    // page job's fifteen minutes on main at 42258ace.
+    const laneA = async () => {
+      for (const v of VARIANTS) {
+        if (!runs(v)) continue;
+        const data = JSON.parse(await readFile(path.join(FIXTURES, `${v}.json`), 'utf8'));
+        await checkVariant(browser, base, v, data);
+      }
+      if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+      if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
+      if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
+      if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
+      if (runs('calendar')) await checkExchangeCalendar(browser, base);
+      if (runs('provenance')) await checkPlanEvidence(browser, base);
+      if (runs('mobile')) await checkMobile(browser, base, full);
+      if (runs('modes')) await checkModes(browser, base, full);
+      if (runs('lens')) await checkLens(browser, base, full);
+      if (runs('compare')) await checkCompare(browser, base, full);
+      if (runs('evidence')) await checkEvidence(browser, base, full);
+      if (runs('map')) await checkMap(browser, base, full);
+      if (runs('reach')) await checkReach(browser, base, full);
+      if (runs('volume')) await checkVolumeReadings(browser, base, full);
+      if (runs('mapscale')) await checkMapScale(browser, base, full);
+      if (runs('following')) await checkFollowing(browser, base, full);
+      if (runs('through')) await checkFollowThrough(browser, base, full);
+      if (runs('session')) await checkSession(browser, base, full);
+      if (runs('refresh')) await checkRefresh(browser, base, full);
+      if (runs('ticket')) await checkTicketPrices(browser, base, full);
+      if (runs('states')) await checkStates(browser, base, full);
+      if (runs('grading')) await checkGradingHistory(browser, base);
+      if (runs('reader')) await checkReaderCommentary(browser, base);
+      if (runs('risk')) await checkRiskAttribution({ browser, base, open, check, eq, shotsDir });
+      if (runs('coverage')) await checkReaderCoverage({ browser, base, open, check, eq, shotsDir });
+      if (runs('inputs')) await checkInputCoverage(browser, base);
+    };
+    const laneB = async () => {
+      if (runs('focus')) await checkEvidenceFocus({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('panes')) await checkExplorePanes({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('chart-keyboard')) await checkPageChartKeyboard({ browser, base, open, check, eq, shotsDir });
+      if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
+      if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
+      if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
+    };
+    // both lanes finish before the browser closes; the first to throw is the error
+    const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);
+    const thrown = settled.find((r) => r.status === 'rejected');
+    if (thrown) throw thrown.reason;
   } finally {
     await browser.close();
     server.close();

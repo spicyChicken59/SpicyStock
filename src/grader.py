@@ -142,6 +142,10 @@ FATAL_AUTH_MARKERS = (
     "could not resolve authentication", "invalid x-api-key",
     "error code: 401", "error code: 403",
 )
+#: The provider's answer when the account has no credit left: a 400 the next
+#: call answers the same way (6 Oct 2026: six names asked twice each after
+#: it, twelve calls bought nothing). Matched as the auth markers are.
+FATAL_CREDIT_MARKERS = ("credit balance is too low",)
 
 
 class ScoreFormatError(ValueError):
@@ -167,19 +171,39 @@ def _b64(path: str) -> str:
     return base64.standard_b64encode(Path(path).read_bytes()).decode()
 
 
+def error_label(cls: type) -> str:
+    """`module.ClassName`, the prefix `_error_text()` gives an error of `cls`."""
+    module = getattr(cls, "__module__", "")
+    return cls.__qualname__ if module in ("", "builtins") else f"{module.split('.')[0]}.{cls.__qualname__}"
+
+
 def _error_text(exc: BaseException) -> str:
     """`module.ClassName: message`, the shape docs/data.json's provenance uses."""
-    cls = type(exc)
-    module = getattr(cls, "__module__", "")
-    name = (cls.__qualname__ if module in ("", "builtins")
-            else f"{module.split('.')[0]}.{cls.__qualname__}")
-    return f"{name}: {exc}"
+    return f"{error_label(type(exc))}: {exc}"
 
 
 def is_fatal_auth_failure(error_text: str) -> bool:
-    """Will every remaining call fail the way this one did?"""
+    """Will every remaining call fail the way this one did -- a refused key?"""
     lowered = (error_text or "").lower()
     return any(marker in lowered for marker in FATAL_AUTH_MARKERS)
+
+
+def is_fatal_credit_failure(error_text: str) -> bool:
+    """Did the provider answer that the account has no credit left?"""
+    lowered = (error_text or "").lower()
+    return any(marker in lowered for marker in FATAL_CREDIT_MARKERS)
+
+
+def is_run_fatal(error_text: str) -> bool:
+    """An answer every remaining call of the run would get too: a refused key
+    or an empty credit balance. Neither merits a retry or another call. An
+    error made of the reply's own text (a score that is not a number, a reply
+    the checks refused) is never one, whatever words the reply put in it."""
+    text = error_text or ""
+    if any(text.startswith(error_label(c) + ":") for c in (ScoreFormatError, DiscoveryConflict,
+                                                            reader_authority.ReaderAuthorityError)):
+        return False
+    return is_fatal_auth_failure(text) or is_fatal_credit_failure(text)
 
 
 def grade_for(score: float) -> str:
@@ -483,8 +507,8 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
             last_error = e
             log.warning("Claude grading attempt %d/%d failed for %s: %s",
                         attempt, attempts, ticker, _error_text(e))
-            if isinstance(e, (DiscoveryConflict, reader_authority.ReaderAuthorityError)) or is_fatal_auth_failure(_error_text(e)):
-                break  # neither an admission conflict nor a rejected key merits a retry
+            if isinstance(e, (DiscoveryConflict, reader_authority.ReaderAuthorityError)) or is_run_fatal(_error_text(e)):
+                break  # neither an admission conflict, a rejected key nor an empty balance merits a retry
             if isinstance(e, ScoreFormatError):
                 # Ask again, differently. A transport error keeps the
                 # original request: there was nothing wrong with it.
@@ -523,7 +547,7 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
     it) and every later one is a `not_graded` row. A credential the API
     refuses is a fact about the run: after one, the remaining candidates
     within the budget are fallback rows carrying the refusal, with no further
-    call. Every row carries its `ticker`. One log line says what the prompt
+    call; so is an empty credit balance. Every row carries its `ticker`. One log line says what the prompt
     cache did, written whenever a call was made.
     """
     cache = usage if usage is not None else {}
@@ -542,9 +566,9 @@ def grade_all(candidates: list[dict], system_prompt: str, max_calls: int,
             row = grade_candidate(ticker, metrics, cand.get("chart"), system_prompt,
                                   usage=cache)
             error = row["provenance"]["error"]
-            if row["provenance"]["source"] != SOURCE_CLAUDE and is_fatal_auth_failure(error):
+            if row["provenance"]["source"] != SOURCE_CLAUDE and is_run_fatal(error):
                 outage = error
-                log.error("Claude refused the credential (%s) -- grading the remaining "
+                log.error("Claude refused the account or its billing (%s) -- grading the remaining "
                           "candidates from the checklist without calling again", error)
         rows.append({"ticker": ticker, **row})
 

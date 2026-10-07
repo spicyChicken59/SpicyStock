@@ -97,10 +97,15 @@ CI holds the committed fixtures to it.
 ## The shape now
 
 `pipeline.run_evening()`: preflight → universe → fetch (chunked, budgeted)
-→ session state from the bars → breadth → scan and checklist → charts and
-Claude (down-only) → plans and the cash budget → the record (`picks.json`,
-open plans, scorecard) → `report.build()` and validate → email. Exit codes
-0/1/2/3; seven problem words; `run.status` closed on a closed night.
+→ session state from the bars → the stale tolerance (`run.input_tolerance`)
+and the previous publication's stale stocks read again from this run's frames
+(`run.stale_followup`, `src/followup.py`) → breadth → scan and checklist →
+charts and Claude (down-only; `run.reads` by cause) → plans and the cash
+budget → the record (`picks.json`, open plans, scorecard) → `report.build()`
+and validate → email. Exit codes 0/1/2/3; seven problem words; `run.status`
+closed on a closed night. `run.status` ok beside a degraded acceptance means
+exactly one thing: the only gap was a stale tail the record's own archived
+tolerance allows, named in full.
 `run_intraday()` is dispatch-only and never commits.
 
 The page (`docs/app.js`) is a small hash-routed application over the
@@ -278,7 +283,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2886 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3026 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4273,3 +4278,137 @@ Verified on the merge, and CI on this branch until the pull request runs.
 publications, append them to the spec, re-run `tools/signal_outcomes.py` and then
 `tools/build_historical_findings.py`, and the replay shows the first confirmatory
 nights.
+
+## Checkpoint, 7 Oct 2026 — green nights when only a few stocks are a session behind
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `42258ace` (the merge of #103), pushed as **PR #104**. The owner
+asked, going to sleep, for the nightly runs that "literally always end in
+degraded" over 10-20 stocks to finish green, or for a way to handle the stocks
+that did not get data after the run. `docs/data.json`, `docs/picks.json`, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no pinned file is edited; no run, mail or
+dispatch.
+
+**What the record said** (all 16 publications from 16 September to 6 October,
+read from git). Every one was `degraded`. Each carried 10-24 stale stock frames
+of about 4,790 (0.21%-0.50%), every one ending on the previous XNYS session,
+the benchmark printed. On nine of the 16 the reader also had one to three
+replies refused by reader authority; on 22 September all twelve (the format
+defect #88 fixed); on 6 October the Anthropic balance ran out after six
+answered reads and the run spent twelve more calls on six names. The late bars
+the archive retains for six of those stocks (GRAL, GURE, HBNB, LBTYB, SANG,
+SPHL) are all the provider's placeholder: one price, zero volume. And the
+mail's `coverage_thin` sentence -- "the bars fetch ran out of time or names
+answered late" -- was never true of any of them.
+
+**The rule.** The ledger is untouched: acceptance stays `degraded`, every stale
+stock counted and its inputs unknown. `inputs.stale_tolerance()` writes
+`run.input_tolerance`: a degraded acceptance whose ONLY gap is stale frames,
+each one session behind, no stock under an unfinished open model plan among
+them, and at most `pipeline.STALE_TOLERANCE_FRACTION` (1%, floored in exact
+arithmetic: 47 of 4,793) of the intended stocks, is tolerated and named, and
+the stale frames do not degrade the run. The benchmark is counted beside the
+stocks and never among them: it feeds only the scorecard's comparison line.
+`src/followup.py` reads the previous publication's stale stocks again from the
+next session's own frames -- no provider request, the evening's own session
+rules, price policy, `scans.scan_all` and `watchlist.build`, at the previous
+session -- into `run.stale_followup`; a late bar that would have been listed
+degrades the night that finds it and is named, and is never a signal, plan or
+ticket. A same-session re-run reads the same stocks again from its own fetch.
+`reader_coverage.reads()` counts the reader's shortfall by cause (`refused`,
+`format`, `account`, `credit`, `transport`), names the refused tickers, and
+tolerates refusals within `READER_REFUSAL_FRACTION` (a quarter) of the night's
+reads while every other read was accepted and no refused name is one the
+regime would have planned (`admitted_grades()`, one rule for the planner and
+the reads; a vetoed name costs no ticket either way). An empty credit balance
+stops the calls like a refused key and says to top up; an error made of the
+reply's own text can never stop the run. The mail's `coverage_thin` sentence
+is the page's now, and it names late inputs as well as missing ones. Each
+block is held one level in by `report.validate()` to the record's OWN archived
+constants, and asked for only under rules that write it.
+
+**The owner's decision, shipped as yes.** May a night be green when reader
+authority refused at most a quarter of its reads, none on a stock that would
+otherwise have had a ticket? Yes is what is merged; a refused name keeps its
+checklist grade and earns no ticket either way. `READER_REFUSAL_FRACTION = 0`
+restores the old rule for refusals and keeps the cause names and the credit
+stop.
+
+**Projected over the record** (the reviewed code over each publication's own
+blocks, read-only from git): 14 of 16 publications and 13 of 15 sessions green,
+against 0. 22 September stays degraded (no reading accepted), 6 October too
+(the credit). Not one night would be degraded on coverage.
+
+**The review, worked.** A workflow by execution over the first pushed tip, six
+dimensions, two skeptics per finding: 39 findings. Thirty-five were upheld by
+both skeptics and two by the only skeptic of theirs that finished (the disk
+filled under the review's own copies of the tree). The skeptics of the last
+two test holes ran after the fixes were pushed: they found both closed at
+`728e184c` and the review's own mutants killed there, an independent check of
+the fix rather than of the finding. The highs were sentences:
+- "so the run is not degraded" on a night degraded for another reason;
+- "each ending on the previous session" when one frame ended two back;
+- the problem sentence on a night whose only gap was a late match;
+- a late bar the setting-up list would have taken read as `no_match`;
+- a same-session re-run carrying the replaced record's block verbatim.
+
+The tests named five holes:
+- a forged-reads test matching only `run.reads`, so three of its checks could be deleted green;
+- the one-rule test held only the planner's half;
+- no test held the unfinished-plan filter on either side, or the veto exemption;
+- the tolerance's re-derivation compared no `stale`, `evaluated` or `previous`.
+
+Each is pinned by the test it named. One is stated rather than fixed: the
+follow-up reads the late bar on the next run's split-adjusted basis and says
+so, so a reverse split on that one night could make it name a match the
+original basis would not; it degrades, never greens.
+
+**The page job.** `main`'s own page job ran 14 m 54 s of its fifteen minutes on
+the #103 merge, so this PR's first CI run was cancelled at the cap with
+10599/10599 checks passed. `tests.yml` is a pinned source, so the smoke runs in
+two lanes over one browser: lane A every suite that writes the smoke's shared
+scratch records or reads the clipboard (Chromium shares it between contexts),
+one after another; lane B the self-contained modules. No suite was dropped or
+changed (the calls diffed equal); each printed line carries its lane. CI's
+first two-lane run took the smoke's step from 14 m 38 s to 9 m 30 s, and found
+one suite that had leaned on the clock: `refresh` raced a 900 ms slow answer
+against fixed pauses, and with the other lane loading the runner, the click on
+the re-rendered control landed after the slow answer, so 7 checks failed. The
+slow answer is held now until the check releases it, every press waits for its
+request to be answered, and the page counts the answers it has read before
+the order is asserted. The sequence-guard mutant still fails it (6 checks), and
+three loaded runs at once pass 1149/1149.
+
+**Measured** (this sandbox, Python 3.12.3, pandas 2.2.3, Chromium through
+Playwright 1.56.1): 3026 tests collected, 2992 passed and 34
+environment-gated skips; 13 fixtures current, `thin`
+new; continuity 134; the chart check 378/378; the full smoke with `--shots`
+10608/10608 in its two lanes, 12 m 36 s here beside a running mutation pass.
+Screenshots at 1280, 390 and 320 in both themes were looked at; the first pass
+found "1 fetched frames were stale". gitleaks 8.24.3 over the 45 changed files
+with the repository's config: no leaks.
+
+**Mutation passes**, every mutant in its own copy of the tree, judged by the
+test naming its rule, a control green each time:
+- before the review, 38 mutants: 37 died first, and the 38th (a hard-coded 1% on the page) died once a fixture archived 2%;
+- over the tests the review asked for, 10 mutants, all dead;
+- over the review's fixes, 10 mutants, all dead: the setting-up route, the re-run re-read, the zero-volume re-derivation, the publication's day in the sentence, the ending's dates, the benchmark count, the clause's wording (its anchor respelled once before it could run), the run-fatal guard, the veto exemption, and "within" only when it applied.
+
+**Keep / fix / defer / omit.** Keep: the ledger's acceptance as built; the
+tolerance a status rule only. Fix if it bites: there is no trend alarm if the
+stale count climbs toward 1% behind a green chip (every stale stock is named
+nightly and the follow-up keeps what its bar turned out to be); a lane-B suite
+that one day writes a shared scratch record must move to lane A. Defer: a
+stale walk under an open model plan stops a session short (pre-existing; the
+guard degrades such a night instead). Omit: suppressing a stale stock,
+re-fetching it, or treating its late bar as a signal.
+
+**Not claimable:** a live night. The first evening after the merge is the only
+test of the tolerance on real data; until the Anthropic credit is topped up
+every night reads `claude_unavailable` with the credit sentence, after one
+call.
+
+**Next action.** Top up the Anthropic credit; read the first live night's chip,
+its `run.input_tolerance`, `run.stale_followup` and `run.reads`, and record
+them here.

@@ -167,7 +167,9 @@ def collected_tests() -> int:
 def test_claude_md_is_short_and_names_the_fixture_count():
     assert len(CLAUDE_MD.splitlines()) <= 150
     every = make_fixture.VARIANTS + make_fixture.SEQUELS
-    assert "over eleven fixtures" in CLAUDE_MD and len(every) == 11
+    # the current count is the sentence that names the suite's own; the
+    # historical measurement beside it keeps the count it was made over
+    assert "the page smoke walks twelve fixtures" in CLAUDE_MD and len(every) == 12
 
 
 # --------------------------------------------- the page's chart anchors ----
@@ -312,13 +314,31 @@ def test_the_page_smoke_reads_the_same_problem_sentences_the_page_prints():
         sentence = json.loads(re.search(rf"    {kind}: (\"[^\n]+\"),?\n", page).group(1))
         head = re.search(rf"{kind}: '([^']+)'", smoke).group(1)
         assert sentence.startswith(head), (kind, sentence, head)
-        if kind == "coverage_thin":
-            # The page no longer guesses why a frame was missing or stale.
-            # The producer's archived sentence remains inspectable unchanged.
-            assert "lack usable session bars" in sentence and "Missing inputs are unknown, not measured non-matches" in sentence
-            assert "ran out of time" not in sentence and "answered late" not in sentence
-        else:
-            assert report.PROBLEM_SENTENCES[kind] == sentence, kind
+        # the page and the mail print one sentence per kind, the same one
+        assert report.PROBLEM_SENTENCES[kind] == sentence, kind
+    # and neither guesses why a frame was missing or stale: "the fetch ran out
+    # of time" was the mail's sentence on nights whose fetch took a minute; and
+    # the one sentence is true of every path that raises the word -- stocks
+    # without session bars, scan or checklist errors, and a late bar that the
+    # previous publication would have listed (src.followup)
+    page_thin = json.loads(re.search(r"    coverage_thin: (\"[^\n]+\"),?\n", page).group(1))
+    for sentence in (page_thin, report.PROBLEM_SENTENCES["coverage_thin"]):
+        assert all(w in sentence for w in ("missing", "could not be evaluated", "arrived late",
+                                           "unknown, not a measured non-match")), sentence
+        assert "ran out of time" not in sentence and "answered late" not in sentence
+        assert "lack usable session bars" not in sentence, "not true of a late bar or a scan error"
+
+
+def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_modules():
+    """The stale tolerance and the reader's refusal limit are each one constant;
+    the prose that tells a reader what keeps a night green quotes them."""
+    stale = f"at most {pipeline.STALE_TOLERANCE_FRACTION:.0%} of the intended stocks"
+    assert stale in README, stale
+    refusal = {0.25: "a quarter"}[pipeline.READER_REFUSAL_FRACTION] + " of the night's reads"
+    assert refusal in README, refusal
+    env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
+    assert "credit balance is too low" in env and refusal in env
+    assert f"{pipeline.STALE_TOLERANCE_FRACTION:.0%} of the intended stocks" in env
 
 
 def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
@@ -472,3 +492,15 @@ def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
     for name in publish_dashboard.RECORD_FILES:
         (docs / name).write_text("{}")
     assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES)
+
+
+def test_the_readme_counts_the_fields_the_smoke_drops():
+    """README says how many fields the page smoke drops in turn; that is the
+    length of the list the smoke walks, read off the smoke itself."""
+    smoke = (ROOT / "tools" / "page_smoke.mjs").read_text()
+    head = smoke.index("console.log('-- a field missing');")
+    listed = re.search(r"for \(const field of \[([^\]]*)\]\)", smoke[head:]).group(1)
+    fields = re.findall(r"'([^']+)'", listed)
+    assert len(fields) == len(set(fields)) and {"run.input_tolerance", "run.stale_followup", "run.reads.causes"} <= set(fields)
+    words = {17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty", 21: "twenty-one", 22: "twenty-two"}
+    assert f"drops {words[len(fields)]} fields in turn" in README, len(fields)

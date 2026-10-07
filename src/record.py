@@ -61,6 +61,8 @@ BENCHMARK = "SPY"                          # the one comparison line
 KINDS = plan.KINDS
 SETTLED = ("stopped", "exit", "expired")   # the walk ended; the plan has a result
 NOT_FILLED = "not_filled"                  # the ticket could not have filled: no result, no R
+#: a plan in one of these no longer depends on the next session's bar
+FINISHED = SETTLED + (NOT_FILLED,)
 UNREADABLE = "unreadable"                  # a later bar the walk refused
 UNCERTAIN = "uncertain"                    # the bars cannot say whether, when or in what order the ticket filled
 #: (P) the one fill a daily bar can establish: the open, at or over the trigger

@@ -102,7 +102,8 @@ def test_unknowns_and_unmeasured_checks_are_not_zero_or_fail():
                                                 'a_plus': False, 'values': {'er': None}}]}}],
          'trades': []}
     saved = ledger.build(d, 'a' * 64, None)
-    assert saved['input'] == {'universe': None, 'basis': None, 'coverage': None, 'exception_membership': None}
+    assert saved['input'] == {'universe': None, 'basis': None, 'coverage': None, 'tolerance': None,
+                              'followup': None, 'exception_membership': None}
     assert saved['outcome'] == {'summary': None, 'rows': None}
     c = saved['signal']['candidates'][0]
     assert c['score'] is None and c['grade'] is None
