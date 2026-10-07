@@ -35,7 +35,7 @@ async function open(data, shared=hub()) {
  w.ResizeObserver=class{observe(){}disconnect(){}};w.IntersectionObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new w.Event('close'))};
  w.fetch=async url=>{shared.requests.push(String(url));const u=new URL(url,w.location.href);if(u.host!=='stock.test')return {ok:false,json:async()=>({})};let body;
- if(shared.delay&&/historical-(findings|validation)\.json$/.test(u.pathname))await new Promise(r=>setTimeout(r,shared.delay));
+ if(shared.delay&&/historical-(findings|validation)\.json$/.test(u.pathname)){await new Promise(r=>setTimeout(r,shared.delay));if(shared.refuse)return {ok:false,status:404};}
  if(u.pathname.endsWith('/data.json'))body=Buffer.from(JSON.stringify(data));
  else if(u.pathname.startsWith('/docs/history/')){const rel=u.pathname.slice('/docs/history/'.length);if(!(rel in HISTORY))return {ok:false,status:404};body=Buffer.from(HISTORY[rel],'utf8');}
  else {try{body=await readFile(path.join(ROOT,u.pathname));}catch{return {ok:false,status:404}}}
@@ -185,13 +185,16 @@ try{
  }
  // a continuation whose block has left the page writes nothing: a window closed while the
  // Record view's historical files are in flight raises nothing when they answer
- const late=[];const onLate=e=>late.push(String(e&&e.message||e));process.on('unhandledRejection',onLate);process.on('uncaughtException',onLate);
- const slowHub=hub();slowHub.delay=200;
- const gone=await open(records['2026-09-14'],slowHub);await route(gone.w,'#/record');
- check(slowHub.requests.some(u=>/historical-findings\.json/.test(u))&&slowHub.requests.some(u=>/historical-validation\.json/.test(u)),'the Record view asked for both historical files');
- gone.close();await new Promise(r=>setTimeout(r,500));
- process.off('unhandledRejection',onLate);process.off('uncaughtException',onLate);
- check(late.length===0&&gone.errors.length===0,'a window closed with the historical files in flight raises nothing: '+late.concat(gone.errors).join(';'));
+ // when they answer, and again when they fail (the error path writes a sentence too)
+ for(const refuse of [false,true]){
+  const late=[];const onLate=e=>late.push(String(e&&e.message||e));process.on('unhandledRejection',onLate);process.on('uncaughtException',onLate);
+  const slowHub=hub();slowHub.delay=200;slowHub.refuse=refuse;
+  const gone=await open(records['2026-09-14'],slowHub);await route(gone.w,'#/record');
+  check(slowHub.requests.some(u=>/historical-findings\.json/.test(u))&&slowHub.requests.some(u=>/historical-validation\.json/.test(u)),'the Record view asked for both historical files');
+  gone.close();await new Promise(r=>setTimeout(r,500));
+  process.off('unhandledRejection',onLate);process.off('uncaughtException',onLate);
+  check(late.length===0&&gone.errors.length===0,'a window closed with the historical files in flight raises nothing when they '+(refuse?'fail':'answer')+': '+late.concat(gone.errors).join(';'));
+ }
  check(errors.length===0,'no DOM runtime errors: '+errors.join(';'));
  console.log(JSON.stringify({status:'PASS: offline DOM/store checks; not browser/layout acceptance',checks,requests:shared.requests.filter(u=>u.includes('history/'))}));
  }
