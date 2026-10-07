@@ -97,10 +97,15 @@ CI holds the committed fixtures to it.
 ## The shape now
 
 `pipeline.run_evening()`: preflight → universe → fetch (chunked, budgeted)
-→ session state from the bars → breadth → scan and checklist → charts and
-Claude (down-only) → plans and the cash budget → the record (`picks.json`,
-open plans, scorecard) → `report.build()` and validate → email. Exit codes
-0/1/2/3; seven problem words; `run.status` closed on a closed night.
+→ session state from the bars → the stale tolerance (`run.input_tolerance`)
+and last night's stale stocks read again from tonight's frames
+(`run.stale_followup`, `src/followup.py`) → breadth → scan and checklist →
+charts and Claude (down-only; `run.reads` by cause) → plans and the cash
+budget → the record (`picks.json`, open plans, scorecard) → `report.build()`
+and validate → email. Exit codes 0/1/2/3; seven problem words; `run.status`
+closed on a closed night. `run.status` ok beside a degraded acceptance means
+exactly one thing: the only gap was a stale tail the record's own archived
+tolerance allows, named in full.
 `run_intraday()` is dispatch-only and never commits.
 
 The page (`docs/app.js`) is a small hash-routed application over the
@@ -278,7 +283,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2886 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3004 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the

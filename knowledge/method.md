@@ -79,6 +79,17 @@ miss a qualitative defect; the reader can still name that defect with the
 chart present. Code validates authority and cited facts, not subjective visual
 truth. Free commentary does not create order terms or an executable rule.
 
+## Run status (`src/inputs.py`, `src/followup.py`, `src/reader_coverage.py`)
+
+Two tolerances decide whether a night is called degraded, and nothing else
+(P): no grade, gate, plan, ticket or measurement reads them. A stale tail of at
+most 1% of the intended stocks, each one session behind, is counted and named
+and read again by the next run; refusals by reader authority within a quarter
+of the night's reads, with every other read accepted and none on a name the
+regime would have planned, are counted by cause. A stale stock is still an
+unknown input and a refused reading still leaves the checklist's grade and no
+ticket. An empty credit balance stops the calls like a refused key.
+
 ## Market Monitor (`src/breadth.py`)
 
 His Telechart v12.4 formulas (B): up/down 4% with `V >= 100000 and V > V1`;
