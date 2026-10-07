@@ -4208,13 +4208,57 @@ when they are missing and fails with the reason, never skips: proved green in a
 depth-1 clone of a remote that serves commits by id, as GitHub does, with no
 stray file, and red with all eight erroring when the remote cannot be reached.
 
+**A third review, over the merge-ready tip, returned 52 findings, each upheld by
+two verifiers; all 52 are fixed.** Six were high, and all six were sentences the
+page could not support. "The live policy would have written no more tickets than
+any counterfactual here" is false of the backtest, whose slot cap a reader
+downgrade frees. It now says the signal-outcome study bounds the names and the
+backtest's ticket set is not a superset of the live run's. "Gate removed" over the
+graded B, C and skip and the vetoed strata hid that the study's `ticket()` also
+bypasses the grade's and the veto's own refusals; each stratum now names what its
+counterfactual removed. The pooled reading mixed the five confirmatory first-day
+stops into the exploratory figure and would have called the refusals valuable
+over a green night. The builder now writes a `reading` block: the exploratory
+nights pooled over RED nights only, and the nights left out counted. The
+confirmatory split is printed from the study's own E2 figure against its minimum.
+And no test held the market line, the gate's reasons or most table cells.
+
+The mediums:
+- A later history that moved a night's counts but not its ratio went unnamed; the `later` block now carries all three.
+- A night past its hold was printed as final while 30 of its rows could still move; `movable` counts them, so "so far" and "yet" hold until none can.
+- Means of 2 or 11 settled tickets were read as rates; under `record.SCORECARD_MIN_PLANS` a night now shows its count and sum, and its mark is hollow.
+- A tap during Play let the next tick close the chooser.
+- A stratum change collapsed the twins.
+- The tooltip ran off a 320 px chart.
+- The caption drifted screens under the stage as the list of nights grew.
+- The literal guard could not see a number typed as a numeric literal; a guard over the code now refuses one, and a routed file moves every rule number a caption quotes.
+- The parsers now refuse a missing, repeated or misplaced line and a bool that is not True or False.
+- The timeline's privacy sweep rested on fixture facts. It now places one name in each source alone and allowlists the output schema field by field.
+
+The lows were wording, CSS specificity, an index name that ran digits together,
+and a loading line.
+
+**Its mutation passes.** Twelve builder mutants were run in a scratch clone, each
+regenerating the file with the mutated builder: all twelve died in the test naming
+their rule, and the control stayed green. Twenty-four page mutants were run
+through routed copies: all died, and two controls stayed green. One was a no-op of mine (a
+duplicate `rows` key, which a later key overrides) and dies once sharpened.
+Another died by a throw that stopped the suite, so a missing mark now fails its
+check instead. The continuity check now closes a window with both historical
+files in flight, once answering and once failing. Removing the catch-side guard,
+or the study's, kills it. Removing the then-side guard alone is equivalent: the
+catch-side guard swallows what it would have prevented. Fifty-one timeline
+mutants (the agent's) all died; three were re-run here and died, with a control
+green.
+
 **Keep / fix / defer / omit.** Keep: the builder reads and the page prints; the
 study's spec stays frozen and extended by appended publications only, the
 findings file rebuilt after each extension with `--check` holding it. Fix if it
 bites: on a phone 29 of the 46 sessions precede the first night, so the 17 nights
 share about 100 px at 390 and a tap at 320 offers nine (the list of nights is the
 precise way); future nights are ghosted to about 1.5:1, by design during Play; a
-page with no record leaves the section an empty card, as on `main`. Defer: the
+page with no record leaves the section an empty card, as on `main`; on a 320 px
+chart the note before the first night has no room and is left out. Defer: the
 three frozen cases leaving the public window on the 16 and 19 October
 publications; the February-to-September nights, which wait on the owner running
 `tools/backtest_timeline.py`. Omit: any rule change on these numbers; a claim of
