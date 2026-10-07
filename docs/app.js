@@ -560,13 +560,18 @@
     $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
       (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
-    const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {};
+    const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
     $('cover-dek').textContent = 'Found ' + num(run.bursts) + ' burst candidates. ' +
       (cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars.' +
         (a.status !== 'ok' ? ' Incomplete coverage.' : '') +
-        (cov.stale ? ' ' + num(cov.stale) + ' fetched frames were stale.' : '') : warning);
+        (cov.stale ? ' ' + num(cov.stale) + ' fetched frames were stale' + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
     $('cover-original').textContent = 'Original published summary: ' + (cover.dek || 'not recorded');
-    $('cover-coverage').textContent = warning || 'The record reports complete input coverage.';
+    // the coverage sentence the run stored, then the stale stocks by name, then
+    // what last night's stale stocks turned out to be: each the record's own words
+    const follow = text((run.stale_followup || {}).sentence);
+    $('cover-coverage').textContent = (warning || 'The record reports complete input coverage.') +
+      (tol && Array.isArray(tol.names) && tol.names.length && cov.stale ? ' Without a ' + dateWords(tol.evaluated) + ' bar: ' + tol.names.join(', ') + '.' : '') +
+      (follow ? ' ' + follow : '');
     const facts = clear($('market-facts'));
     // the chip sits beside the LABEL, not after the value: it qualifies that
     // fact and says so by where it is, and the fact is two rows rather than
@@ -615,10 +620,19 @@
     const b = (run || {}).input_basis || {};
     return b.adjustment === 'split' ? 'split-adjusted (not dividend-adjusted)' : 'adjustment basis not recorded';
   }
+  // the stale tolerance block a run wrote, or null for a record made before it
+  // existed; the page reads its verdict and its words, and decides nothing
+  function tolerance(run) {
+    const t = (run || {}).input_tolerance;
+    return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
+  }
+  const TOLERANCE_WORDS = { other_exceptions: 'other inputs missing too', benchmark: 'the benchmark had no bar',
+    behind_more: 'frames more than one session back', over_limit: 'more stale frames than the limit', open_plan: 'an open model plan among them' };
   function inputWarning(run) {
-    const cov = (run || {}).coverage || {}, a = cov.acceptance || {};
+    const cov = (run || {}).coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
     if (!cov.version) return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.';
     if (a.status === 'ok') return '';
+    if (tol && text(tol.sentence)) return tol.sentence;
     return 'Incomplete input coverage: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) +
       ' intended stocks had usable session bars. ' + num(cov.unfetched_budget) + ' fetch names were never attempted ' +
       '(fetch counts include the benchmark); stocks excluded by capacity: ' + num(a.capacity_excluded) + '; ' + num(cov.errors) +
@@ -751,12 +765,38 @@
     const strip = clear($('run-strip'));
     strip.appendChild(stat('session', dateWords(run.session), run.session_state === 'closed' ? 'closed on ' + dateWords(run.expected_session) : 'evening run · ' + (run.status || '—')));
     const a = cov.acceptance || {};
+    const tol = tolerance(run);
     strip.appendChild(stat('session bars ready', cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) : 'not recorded',
-      cov.version ? num(cov.measured) + ' measured · ' + num(cov.unfetched_budget) + ' unfetched · ' + (a.status || 'unknown') : 'legacy record; completeness unknown'));
+      cov.version ? num(cov.measured) + ' measured · ' + num(cov.unfetched_budget) + ' unfetched · ' +
+        (tol && tol.verdict === 'tolerated' ? 'incomplete, tolerated' : (a.status || 'unknown')) : 'legacy record; completeness unknown'));
     strip.appendChild(stat('bursts', num(run.bursts), 'Bonde’s median night is ' + BONDE_MEDIAN_NIGHT));
     strip.appendChild(stat('graded', num(g.a) + ' A · ' + num(g.a_plus) + ' A+', num(g.b) + ' B · ' + num(g.c) + ' C · ' + num(g.skip) + ' skip'));
-    strip.appendChild(stat('claude', num(reads.done) + ' of ' + num(reads.requested) + ' read', reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade'));
+    strip.appendChild(stat('claude', num(reads.done) + ' of ' + num(reads.requested) + ' read', readsNote(reads)));
     strip.appendChild(stat('published', timeET(run.published_at), 'email ' + (run.email || '—')));
+  }
+  // the chart reader's shortfall by cause, in the record's own counts; a record
+  // made before the reads carried causes keeps the note it was published under
+  const READ_CAUSES = { refused: 'refused', format: 'unreadable reply', account: 'account refused', credit: 'credit balance too low', transport: 'no reply' };
+  function readsNote(reads) {
+    const c = reads.causes;
+    if (reads.version && c && typeof c === 'object') {
+      if (reads.verdict === 'complete') return 'chart + numbers, may only lower a grade';
+      if (reads.verdict === 'not_asked') return 'nothing to read';
+      if (reads.verdict === 'tolerated') return num(c.refused) + ' refused, within ' + num(reads.refusal_limit) + ' tolerated';
+      const parts = Object.keys(READ_CAUSES).filter((k) => isNum(c[k]) && c[k] > 0).map((k) => num(c[k]) + ' ' + READ_CAUSES[k]);
+      return parts.length ? parts.join(' · ') : 'unavailable';
+    }
+    return reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade';
+  }
+  // the run's coverage rule, quoted from the rules the record archived: a record
+  // made before the stale tolerance keeps the sentence it was published under
+  function coverageRule(data, a) {
+    const rules = (data.rules || {}).pipeline || {}, f = rules.stale_tolerance_fraction;
+    const floor = 'Coverage below ' + plain(+(100 * a.minimum_fraction).toFixed(4)) + '% refuses publication';
+    if (!isNum(f)) return floor + '; any missing stocks or capacity cuts degrade it.';
+    return floor + '. A shortfall degrades the run unless its only gap is stale frames ending on the previous session — at most ' +
+      plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark not among them and no open model plan among them; that tail is counted, ' +
+      'named and read again by the next run, and the run is not degraded.';
   }
   function renderMethod(data) {
     renderStrip(data);
@@ -779,7 +819,15 @@
     if (cov.version) {
       line('Coverage / input basis: ' + num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars (' +
         (isNum(a.fraction) ? (100 * a.fraction).toFixed(1) + '%' : 'unknown') + '); acceptance ' + a.status +
-        '. The benchmark is excluded from this denominator. Coverage below ' + (100 * a.minimum_fraction) + '% refuses publication; any missing stocks or capacity cuts degrade it.');
+        '. The benchmark is excluded from this denominator. ' + coverageRule(data, a));
+      const tol = tolerance(run);
+      if (tol) {
+        line('Stale tolerance: ' + (tol.verdict === 'tolerated' ? 'tolerated' : tol.verdict === 'complete' ? 'nothing stale' : 'not tolerated') +
+          ' — ' + num(tol.stale) + ' stale frame' + (tol.stale === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
+          (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => TOLERANCE_WORDS[r] || words(r)).join('; ') + ')' : '') + '.');
+      }
+      const follow = text((run.stale_followup || {}).sentence);
+      if (follow) line('Stale follow-up: ' + follow);
       line('Fetch, including benchmark: ' + num(cov.intended) + ' intended = ' + num(cov.requested) + ' requested + ' + num(cov.unfetched_budget) +
         ' budget-unfetched. Requested = ' + num(cov.with_bars) + ' returned + ' + num(cov.no_bars) + ' no bars + ' + num(cov.dropped) + ' failed after retry.');
       line('Returned frames: ' + num(cov.stale) + ' stale; ' + num(cov.gapped) + ' missing required previous session; ' + num(cov.unreadable) +
@@ -790,6 +838,12 @@
         ' measured; ' + num(cov.errors) + ' scan/quality errors. Reaction matches: ' + Object.entries(cov.matched || {}).map(([k, n]) => k + ': ' + num(n)).join('; ') + '.');
     } else line(inputWarning(run));
     line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
+    const refusal = ((data.rules || {}).pipeline || {}).reader_refusal_fraction;
+    if (isNum(refusal)) {
+      line('Chart reader: a reply refused by reader authority leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
+        plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
+    }
+    if (text((run.reads || {}).sentence)) line(run.reads.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // what the record says about WHEN its plans apply, and what its calendar

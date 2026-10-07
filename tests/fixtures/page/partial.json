@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "7e15f9c97146"
+  "rules_version": "7013dd055f3e"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -202,6 +202,43 @@
     }
    }
   },
+  "input_tolerance": {
+   "version": 1,
+   "verdict": "not_tolerated",
+   "reasons": [
+    "other_exceptions",
+    "benchmark"
+   ],
+   "fraction": 0.01,
+   "limit": 0,
+   "stale": 0,
+   "evaluated": "2026-09-10",
+   "previous": "2026-09-09",
+   "names": [],
+   "held": [],
+   "sentence": "Incomplete input coverage: 20 of 31 intended stocks had usable session bars. 12 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset."
+  },
+  "stale_followup": {
+   "version": 1,
+   "status": "not_applicable",
+   "reason": "no_previous_record",
+   "for_session": null,
+   "count": 0,
+   "outcomes": {
+    "no_match": 0,
+    "match": 0,
+    "unmeasurable": 0,
+    "price_excluded": 0,
+    "still_missing": 0,
+    "no_frame": 0,
+    "not_selected": 0
+   },
+   "zero_volume": 0,
+   "flat": 0,
+   "matched": [],
+   "rows": [],
+   "sentence": null
+  },
   "bursts": 0,
   "graded": {
    "a_plus": 0,
@@ -213,7 +250,19 @@
   "reads": {
    "requested": 0,
    "done": 0,
-   "unavailable_reason": null
+   "unavailable_reason": null,
+   "version": 1,
+   "causes": {
+    "refused": 0,
+    "format": 0,
+    "account": 0,
+    "credit": 0,
+    "transport": 0
+   },
+   "refusal_limit": 0,
+   "refused_admissible": [],
+   "verdict": "not_asked",
+   "sentence": null
   },
   "email": "skipped",
   "published_at": "2026-09-10T22:30:00+00:00",
@@ -745,7 +794,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "35de71aeabe6c44e5ecc397e84be9c5ecbd970cd53203fe7219230d8478bf04a"
+   "context_sha256": "cc75f545dbc59df6dad5da635a39eb5e86a5337ad4569e51a766d7a4b9860f67"
   },
   "sanitised": {
    "replaced": 0,
@@ -1055,6 +1104,8 @@
    "fetch_budget_seconds": 900,
    "lookback_days": 260,
    "min_coverage_fraction": 0.5,
+   "stale_tolerance_fraction": 0.01,
+   "stale_names_max": 100,
    "max_error_fraction": 0.05,
    "trade_grades": [
     "A+",
@@ -1064,6 +1115,7 @@
     "A+"
    ],
    "reader_policy": "accepted_required_v1",
+   "reader_refusal_fraction": 0.25,
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1616,7 +1668,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "7e15f9c97146"
+  "replay_rules_version": "7013dd055f3e"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -1653,7 +1705,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads last night's stale stocks again from tonight's fetch and never turns a late bar into a signal.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

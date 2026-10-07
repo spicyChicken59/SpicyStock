@@ -499,8 +499,15 @@ session. The run:
   of a holiday. Each frame needs the evaluated session and the required previous
   session with readable OHLCV. Fewer than half the intended stocks with usable
   session bars refuses publication before grading; the denominator excludes SPY.
-  At least half but less than all is degraded, as is any capacity cut or scan/
-  quality error. A fully evaluated selection can be complete without being the
+  At least half but less than all leaves the ledger's acceptance degraded, as
+  does any capacity cut or scan/quality error. The run itself is degraded too,
+  unless the only gap is stale frames ending on the previous session -- at most
+  1% of the intended stocks, the benchmark not among them and no stock under an
+  open model plan among them -- which `run.input_tolerance` names; the next run
+  reads each of them again from its own fetch with no extra provider call
+  (`run.stale_followup`, `src/followup.py`), and a late bar that would have
+  matched a scan makes that night degraded and is named. A late bar is never a
+  signal, plan or ticket. A fully evaluated selection can be complete without being the
   complete listed market. The existing $3 session-close policy now reads actual
   cent-rounded bars, with seed/explicit exemptions preserved; actual scan volume
   remains the scanner's rule. Known non-session runs skip before universe/provider work and preserve the prior publication.
@@ -564,7 +571,11 @@ session. The run:
   Reader authority v1 additionally requires a permitted criterion/source/observation
   and exact citations to structured checklist evidence for any downgrade. Missing,
   unknown, contradictory or unauthorized evidence rejects the whole judgement
-  without retry and leaves the mechanical grade standing with degraded status.
+  without retry and leaves the mechanical grade standing; refusals degrade the
+  night only past a quarter of the night's reads, when none is accepted, or when
+  the refused name would otherwise have been planned. A reply that never arrived
+  or could not be read always degrades it, and an empty credit balance stops the
+  calls the way a refused key does. `run.reads` counts the shortfall by cause.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -776,7 +787,7 @@ secret scan would read as a credential is refused before anything is written.
 The fixtures under `tests/fixtures/page/` are records the real pipeline wrote
 over a synthetic market through the same doubles the tests use, one per
 state the page can be in (`full`, `degraded`, `notrade`, `yellow`, `red`,
-`closed`, `empty`, `partial`, `early`), plus two sequels of the `full` night (`next`, `revised`) run over
+`closed`, `empty`, `partial`, `early`, `thin`), plus two sequels of the `full` night (`next`, `revised`) run over
 the docs that night wrote, so a setup followed then can be read against a
 genuinely newer record: `next` is the same market one session on, where the
 ticket and the withheld setup have left the record, one burst has burst
@@ -925,8 +936,15 @@ Sep 2 (Labor Day), Aug 30→Sep 3 (adjacent sessions), Nov 29 (13:00 ET close),
 Dec 2 (the following session), Mar 8→11 and Nov 1→4 (DST offsets). Historical
 1992-11-27 closes at 14:00 ET, proving shortened hours are not a fixed 13:00 rule.
 The `closed` fixture is an unchanged Sep 4, 2026 publication viewed on Labor Day;
-`early` is the Nov 27, 2024 signal for Black Friday. These are offline fixtures,
-not historical point-in-time universe or profitability evidence.
+`early` is the Nov 27, 2024 signal for Black Friday. `thin` is two evenings
+over one docs directory and a 100-stock selection: on the first, two stocks are a
+session behind (over the limit of one, so the night is degraded and names
+both); on the second, one stays behind (within the limit, so the night is ok
+and names it), the follow-up reads last night's two again from tonight's
+fetch -- each now carries a flat, zero-volume bar and matches no scan -- and
+reader authority refuses one reply, within the night's limit of one. These
+are offline fixtures, not historical point-in-time universe or profitability
+evidence.
 
 ## Layout
 
@@ -935,6 +953,7 @@ src/            history.py (public recovery and coverage)
                 provenance.py (immutable evidence receipts and offline verification)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 input_diagnostics.py (run-scoped exception membership and observations)
+                followup.py (the next night's read of last night's stale stocks, from tonight's own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)

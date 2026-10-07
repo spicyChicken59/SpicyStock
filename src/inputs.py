@@ -5,10 +5,33 @@ transported but excluded from the stock coverage denominator and strategy scan.
 An incomplete input is never counted as a measured non-match.
 """
 from collections import Counter
+from fractions import Fraction
+import math
 
 from src import market_data, universe
 
 VERSION = 1
+
+# The stale tolerance (run.input_tolerance). A degraded acceptance whose ONLY
+# gap is a small tail of stocks one session behind is counted, named and read
+# again by the next run, and does not make the run degraded; anything else
+# keeps today's rule. The fraction itself is a strategy number and lives in
+# pipeline.RULES; these are the block's own words.
+TOLERANCE_VERSION = 1
+COMPLETE, TOLERATED, NOT_TOLERATED = "complete", "tolerated", "not_tolerated"
+TOLERANCE_VERDICTS = (COMPLETE, TOLERATED, NOT_TOLERATED)
+TOLERANCE_REASONS = ("other_exceptions", "benchmark", "behind_more", "over_limit", "open_plan")
+#: the ledger's gaps other than a stale frame: any one of them is not the stale tail
+OTHER_EXCEPTIONS = ("no_bars", "dropped", "unfetched_budget", "unfetched_failure", "refused",
+                    "gapped", "unreadable", "errors")
+#: what the stored sentence says when the tolerance does not hold, by reason
+TOLERANCE_WORDS = {
+    "other_exceptions": "other inputs are missing too",
+    "benchmark": "the benchmark has no bar for the session",
+    "behind_more": "some frames end more than one session back or carry an unreadable date",
+    "over_limit": "{stale} stale stocks are more than the limit",
+    "open_plan": "an open model plan's stock is among them ({held})",
+}
 
 
 def build(uni, symbols, frames, stats, ready, expected, session, *, closed,
@@ -132,15 +155,133 @@ def record_faults(run):
     return errors
 
 
+def stale_limit(intended_stocks, fraction):
+    """The most stale stocks a run tolerates: the fraction of the intended
+    stocks, floored, in exact arithmetic so the boundary never rounds up.
+    A missing fraction tolerates nothing."""
+    return math.floor(int(intended_stocks) * Fraction(str(fraction or 0)))
+
+
+def stale_tolerance(cov, fraction, *, names, held=(), names_max):
+    """Whether a degraded acceptance is ONLY the stale tail the run tolerates.
+
+    Pure: it reads the ledger and never writes it, so acceptance stays
+    'degraded' and every count stays exactly what build() wrote. The tail is
+    tolerated when every gap is a stale frame, every stale frame ends on the
+    previous session, the benchmark printed, no open model plan's stock is
+    among them, and there are no more than ``stale_limit()`` of them."""
+    a = cov['acceptance']
+    limit = stale_limit(a['intended_stocks'], fraction)
+    sess = cov['sessions']
+    reasons = []
+    if a['status'] == 'ok':
+        verdict = COMPLETE
+    else:
+        if (any(cov[k] for k in OTHER_EXCEPTIONS) or a['capacity_excluded']
+                or a['status'] != 'degraded'):
+            reasons.append('other_exceptions')
+        if cov['benchmark_ready'] == 0:
+            reasons.append('benchmark')
+        # every frame that does not end on the evaluated session ends on the previous one
+        if cov['stale'] and set(sess['latest_bar_dates']) - {sess['evaluated']} != {sess['previous']}:
+            reasons.append('behind_more')
+        if cov['stale'] > limit:
+            reasons.append('over_limit')
+        if held:
+            reasons.append('open_plan')
+        verdict = NOT_TOLERATED if reasons else TOLERATED
+    names = sorted(names)
+    return {'version': TOLERANCE_VERSION, 'verdict': verdict, 'reasons': reasons,
+            'fraction': fraction, 'limit': limit, 'stale': cov['stale'],
+            'evaluated': sess['evaluated'], 'previous': sess['previous'],
+            'names': names if len(names) <= names_max else None, 'held': sorted(held)}
+
+
+def _stocks(n):
+    return f"{n} stock" if n == 1 else f"{n} stocks"
+
+
+def _tolerance_clause(cov, tol):
+    """The stale tail in words, appended to the incomplete-coverage sentence."""
+    one = cov['stale'] == 1
+    s = (f" {cov['stale']} returned frame{'' if one else 's'} had no bar for {tol['evaluated']}, "
+         f"{'ending' if one else 'each ending'} on the previous session, {tol['previous']}. "
+         f"{'Its' if one else 'Their'} {tol['evaluated']} input{' is' if one else 's are'} unknown, "
+         f"not {'a measured non-match' if one else 'measured non-matches'}.")
+    if tol['verdict'] == TOLERATED:
+        return s + (f" That is within this run's stale tolerance of {_stocks(tol['limit'])} "
+                    f"({tol['fraction']:.0%} of the intended stocks), so the run is not degraded; "
+                    f"the next run reads {'its' if one else 'their'} {tol['evaluated']} bar{'' if one else 's'}.")
+    why = "; ".join(TOLERANCE_WORDS[r].format(stale=cov['stale'], held=", ".join(tol['held']))
+                    for r in tol['reasons'])
+    return s + f" Outside this run's stale tolerance ({_stocks(tol['limit'])}, {tol['fraction']:.0%}): {why}."
+
+
 def coverage_sentence(run):
-    """Published scope: complete means this selection, never the whole market."""
+    """Published scope: complete means this selection, never the whole market.
+
+    A record that carries a stale tolerance block (run.input_tolerance) adds
+    what its stale frames were and whether the tolerance held; a record
+    without one reads exactly as it was published."""
     cov = run.get('coverage') or {}
     accept = cov.get('acceptance') or {}
     if accept.get('status') in ('degraded', 'fail'):
+        tol = run.get('input_tolerance')
+        clause = (_tolerance_clause(cov, tol) if isinstance(tol, dict) and 'version' in tol
+                  and accept.get('status') == 'degraded' and cov.get('stale') else "")
         return (f"Incomplete input coverage: {accept['ready_stocks']} of {accept['intended_stocks']} "
                 f"intended stocks had usable session bars. {cov.get('unfetched_budget', 0)} fetch names were never attempted "
                 f"(fetch counts include the benchmark); stocks excluded by capacity: {accept.get('capacity_excluded', 0)}; "
-                f"{cov.get('errors', 0)} scan/quality errors occurred. Results describe only the evaluated subset.")
+                f"{cov.get('errors', 0)} scan/quality errors occurred. Results describe only the evaluated subset.") + clause
     if accept.get('status') == 'ok':
         return f"All {accept['intended_stocks']} intended stocks had usable session bars; {cov['measured']} were measured after session price eligibility. Coverage is of this selection, not every listed security."
     return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.'
+
+
+def tolerance_faults(run, pipeline_rules, plan_tickers):
+    """The stale tolerance block held to the record it sits in, one level in.
+
+    A record made under rules without the tolerance is not asked for one.
+    Otherwise the block must carry the record's OWN archived fraction, name
+    exactly the stale population the ledger counted, re-derive to the same
+    verdict, and print the sentence it was written with; and a shortfall it
+    did not tolerate must be named coverage_thin. ``plan_tickers`` are the
+    tickers of the record's unfinished open model plans, or None when the
+    caller cannot say (a closed night carries the previous plans)."""
+    if not isinstance(pipeline_rules, dict) or 'stale_tolerance_fraction' not in pipeline_rules:
+        return []
+    cov = run.get('coverage')
+    if not isinstance(cov, dict) or 'version' not in cov:
+        return []
+    tol = run.get('input_tolerance')
+    if tol is None:
+        return ['input tolerance block missing']
+    try:
+        if tol['version'] != TOLERANCE_VERSION or tol['verdict'] not in TOLERANCE_VERDICTS:
+            return ['input tolerance version or verdict unknown']
+        if tol['fraction'] != pipeline_rules['stale_tolerance_fraction']:
+            return ['input tolerance is not the archived stale_tolerance_fraction']
+        names, held = tol['names'], tol['held']
+        faults = []
+        if names is None:
+            if cov['stale'] <= pipeline_rules['stale_names_max']:
+                faults.append('input tolerance drops a stale membership it could carry')
+        elif (names != sorted(set(names)) or not all(isinstance(n, str) for n in names)
+              or len(names) != cov['stale'] or universe.identity(names) != cov['reasons']['stale']['identity']):
+            faults.append('input tolerance names are not the stale population the ledger counted')
+        if held != sorted(set(held)) or (names is not None and not set(held) <= set(names)):
+            faults.append('input tolerance holds a stock it does not name')
+        if plan_tickers is not None and names is not None and held != sorted(set(names) & set(plan_tickers)):
+            faults.append('input tolerance does not hold the open model plans among the stale stocks')
+        again = stale_tolerance(cov, tol['fraction'], names=names or [], held=held,
+                                names_max=pipeline_rules['stale_names_max'])
+        if any(again[k] != tol[k] for k in ('verdict', 'reasons', 'limit', 'stale', 'evaluated', 'previous')):
+            faults.append('input tolerance does not re-derive from the ledger')
+        if tol.get('sentence') != coverage_sentence(run):
+            faults.append('input tolerance sentence is not the coverage sentence it was written with')
+        kinds = {p.get('kind') for p in run.get('problems') or [] if isinstance(p, dict)}
+        if cov['acceptance']['status'] == 'degraded' and tol['verdict'] != TOLERATED and 'coverage_thin' not in kinds:
+            faults.append('an input shortfall outside the recorded tolerance is not named coverage_thin')
+        return faults
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return ['input tolerance block is malformed']
