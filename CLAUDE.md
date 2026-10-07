@@ -278,7 +278,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 2809 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 2886 tests, the chart check remains separate. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4132,10 +4132,13 @@ own heading, the section last in the Record view. It reads no record, no clock
 and no storage; `loadFindings()` in app.js fetches the file when the Record view
 is first shown and the shape check passes or one sentence says why not; a
 fixture page says the replay reads the public findings; the page adds no figure
-of its own. `tools/backtest_timeline.py` is the price-free,
-ticker-free per-session export the owner can run on the private backtest record
-so the February-to-September nights could one day be drawn the same way (NOT RUN on
-the real file). The publication gate's `RECORD_FILES` names both study files, so
+of its own. `tools/backtest_timeline.py` is the per-session export the owner can
+run on the private backtest record -- each night's breadth and how each gate's
+tickets came out, every field copied by type from a fixed list, a ticker or a
+private key anywhere a refusal -- so the February-to-September nights' breadth
+and outcomes could one day be drawn beside the published ones; it carries no
+grade per R and no fired reasons, so not the stratum control (NOT RUN on the
+real file). The publication gate's `RECORD_FILES` names both study files, so
 Pages is verified serving them, which it was not before.
 
 **Measured** (this sandbox, Python 3.12.3 and pandas 2.2.3, Chromium through

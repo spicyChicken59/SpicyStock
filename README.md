@@ -951,7 +951,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
-                backtest_timeline.py (offline: the owner's private backtest record read into one price-free, ticker-free row per night per gate, so the site could draw the backtest's nights as it draws the published ones; a private key or a ticker in the output is a refusal)
+                backtest_timeline.py (offline: the owner's private backtest record read into one row per night per gate -- the night's breadth and its tickets' outcomes by scorecard bucket, uncertainty kind and settled R -- every field copied by type from a fixed list; a private key, or a ticker the record names as a whole word in any case in a key or string that is not one of the tool's own words, is a refusal, as are a night or gate whose counts do not reconcile, a malformed file and an --output over the private file)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
