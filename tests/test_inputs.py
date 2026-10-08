@@ -482,8 +482,15 @@ def test_the_stale_limit_is_the_fraction_floored_in_exact_arithmetic(stocks, fra
 def test_the_tolerance_names_its_stocks_only_up_to_its_bound():
     from src import inputs
     cov, stats = ledger(stale=('QAAA', 'QAAB', 'QAAC'))
-    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=3)['names'] == ['QAAA', 'QAAB', 'QAAC']
-    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=2)['names'] is None
+
+    def named(names_max):
+        return inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=names_max,
+                                      endings=endings_of(stats), sessions_max=pipeline.STALE_SESSIONS_MAX)
+    carried = named(3)
+    assert carried['names'] == ['QAAA', 'QAAB', 'QAAC']
+    assert carried['endings'] == {'QAAA': '2026-09-09', 'QAAB': '2026-09-09', 'QAAC': '2026-09-09'}
+    over = named(2)
+    assert over['names'] is None and over['endings'] is None, 'the endings go with the names, carried or not'
 
 
 @pytest.mark.parametrize('build,fraction,says,never', [
