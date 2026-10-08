@@ -626,7 +626,7 @@
     const t = (run || {}).input_tolerance;
     return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
   }
-  const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames', behind_more: 'not every stale frame ends on the previous session',
+  const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames', behind_more: 'a stale frame ends further back than the allowed sessions, or on an unreadable date',
     over_limit: 'more stale stocks than the limit', open_plan: 'an open model plan among them' };
   function inputWarning(run) {
     const cov = (run || {}).coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
@@ -791,12 +791,17 @@
   // the run's coverage rule, quoted from the rules the record archived: a record
   // made before the stale tolerance keeps the sentence it was published under
   function coverageRule(data, a) {
-    const rules = (data.rules || {}).pipeline || {}, f = rules.stale_tolerance_fraction;
+    const rules = (data.rules || {}).pipeline || {}, f = rules.stale_tolerance_fraction, n = rules.stale_sessions_max;
     const floor = 'Coverage below ' + plain(+(100 * a.minimum_fraction).toFixed(4)) + '% refuses publication';
     if (!isNum(f)) return floor + '; any missing stocks or capacity cuts degrade it.';
-    return floor + '. A shortfall degrades the run unless its only gap is stale frames ending on the previous session — at most ' +
+    // a record from the rule's first version held every stale frame to the previous
+    // session and read that session alone; one that archives a session bound says
+    // the bound, and its follow-up reads every session each frame missed
+    const ending = isNum(n) ? 'ending within the ' + plain(n) + ' sessions before it' : 'ending on the previous session';
+    const reads = isNum(n) ? 'reads every session each of them missed again' : 'reads it again';
+    return floor + '. A shortfall degrades the run unless its only gap is stale frames ' + ending + ' — at most ' +
       plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
-      'that tail is counted and named, the next session\u2019s run reads it again, and it does not degrade the run.';
+      'that tail is counted and named, the next session\u2019s run ' + reads + ', and it does not degrade the run.';
   }
   function renderMethod(data) {
     renderStrip(data);

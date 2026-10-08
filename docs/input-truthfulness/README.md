@@ -1,5 +1,18 @@
 # Input truthfulness milestone
 
+8 October 2026: the first live night under the tolerance (session 7 October)
+was degraded anyway, on `behind_more`: of sixteen stale frames fifteen ended on
+the previous session and one on the session before that. Thin names skip days,
+and the first version held every frame to the previous session because the
+sixteen nights it was written from had never shown anything else. Version 2 of
+the block tolerates a frame ending within `pipeline.STALE_SESSIONS_MAX` (5)
+sessions before the evaluated one, records where each stale frame ends
+(`endings`), and the next session's run reads every session each stock missed,
+one reading per stock and session (`followup.missed_sessions()`), so a late bar
+on any skipped session is still checked against the publication for that
+session. A publication from version 1 is read at its own session alone, as it
+was; nothing it published is rewritten.
+
 7 October 2026: a night whose only gap is a stale tail is not degraded. Every
 publication from 16 September to 6 October was `degraded`; each carried 10-24
 stock frames (0.21%-0.50% of about 4,790) that ended on the previous session,

@@ -501,13 +501,14 @@ session. The run:
   session bars refuses publication before grading; the denominator excludes SPY.
   At least half but less than all leaves the ledger's acceptance degraded, as
   does any capacity cut or scan/quality error. The run itself is degraded too,
-  unless the only gap is stale frames ending on the previous session -- at most
+  unless the only gap is stale frames ending within the last 5 sessions -- at most
   1% of the intended stocks, no stock under an open model plan among them (SPY
   is outside the stock count here, as in acceptance) -- which
-  `run.input_tolerance` names; the next session's run, when it publishes, reads
-  each of them again from its own split-adjusted fetch with no extra provider
-  call (`run.stale_followup`, `src/followup.py`), and a late bar that the
-  previous publication would have listed (a 4% or $ scan match, or a setting-up
+  `run.input_tolerance` names, with where each frame ends; the next session's
+  run, when it publishes, reads each of them again from its own split-adjusted
+  fetch at every session it missed, one reading per stock and session, with no
+  extra provider call (`run.stale_followup`, `src/followup.py`), and a late bar
+  that the publication for that session would have listed (a 4% or $ scan match, or a setting-up
   name) makes the night that finds it degraded and is named. A late bar is never
   a signal, plan or ticket. A fully evaluated selection can be complete without being the
   complete listed market. The existing $3 session-close policy now reads actual
@@ -947,13 +948,14 @@ Dec 2 (the following session), Mar 8→11 and Nov 1→4 (DST offsets). Historica
 1992-11-27 closes at 14:00 ET, proving shortened hours are not a fixed 13:00 rule.
 The `closed` fixture is an unchanged Sep 4, 2026 publication viewed on Labor Day;
 `early` is the Nov 27, 2024 signal for Black Friday. `thin` is two evenings
-over one docs directory and a 100-stock selection: on the first, two stocks are a
-session behind (over the limit of one, so the night is degraded and names
-both); on the second, one stays behind (within the limit, so the night is ok
-and names it), the follow-up reads the first evening's two again from the
-second's fetch -- each now carries a flat, zero-volume bar the first
-publication would not have listed -- and reader authority refuses one reply,
-within the night's limit of one. These
+over one docs directory and a 100-stock selection: on the first, two stocks are
+behind -- one by two sessions, one by one -- (over the limit of one, so the
+night is degraded and names both, with where each frame ends); on the second,
+the first stays a session behind (within the limit, so the night is ok and
+names it), the follow-up reads the first evening's two again from the second's
+fetch at every session each missed -- three readings over two stocks, each a
+flat, zero-volume bar the publication for that session would not have listed --
+and reader authority refuses one reply, within the night's limit of one. These
 are offline fixtures, not historical point-in-time universe or profitability
 evidence.
 
