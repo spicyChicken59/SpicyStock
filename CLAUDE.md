@@ -4481,12 +4481,17 @@ The rest were real and are fixed:
   without names, an unreadable ending accepted, the page's new rule strings, and
   `allowed_endings` sitting outside the literal guard.
 
-**Measured** (this sandbox, Python 3.11 and 3.12, Chromium through Playwright
-1.56.1): PYTEST_RESULT; 13 fixtures current; continuity 134; the chart check
-CHART_RESULT; the page smoke SMOKE_RESULT, the `inputs` suite 216/216.
+**Measured** (this sandbox, Python 3.11.15, Chromium through Playwright 1.56.1):
+3070 tests, 3036 passed and 34 environment-gated skips; 13 fixtures current;
+continuity 134; the chart check 378/378; the page smoke 10623/10623 with
+`--shots`, the `inputs` suite 216/216.
 Screenshots of Method at 1280 and 390, over the current rule, a frame past it and
-the first version's record, were looked at. MUTANT_RESULT. gitleaks 8.24.3 over
-the changed files: GITLEAKS_RESULT.
+the first version's record, were looked at. Twenty mutants, each in its own copy
+of a snapshot taken before the pass and judged by the full test files that name
+the rule (no `-k` filter, the gap a reviewer found in the last harness): all
+eighteen die, both controls green. Over the first tip, before the review, eleven
+mutants died the same way. gitleaks 8.24.3 over the tree and over the branch's
+commits: no leaks.
 
 **Projected over 7 Oct's own record:** green under this rule (16 within 47, the
 furthest two sessions back, 3 refusals within 3).
