@@ -280,17 +280,31 @@ def test_a_price_that_stopped_moving_is_pinned_and_not_coiled(recent, compress, 
     assert got["admitted"] is passes, got["reasons_failed"]
 
 
+def test_the_floor_reads_the_printed_ratio_and_not_the_raw_one():
+    """Seven sessions ranging 2.96% raw, printed 3.0, over a base printed
+    10.0: the record says 0.30, and 0.30 is not pinned. The raw means give
+    0.296, which would be -- a refusal the record's own numbers cannot show."""
+    df = compress_boundary_frame((110.0, 111.63, 108.37, 110.0, 150_000))
+    assert by_hand(df)["compress"] == 0.30
+    got = watchlist.measure(df)
+    assert (got["range_recent_pct"], got["range_base_pct"], got["compress"]) == (3.0, 10.0, 0.30)
+    assert "pinned" not in got["reasons_failed"] and got["admitted"] is True
+
+
 def test_a_pinned_name_is_never_on_the_list_however_it_ranks():
     """The pin ranks first by every key the list sorts on (TTT, then the
     TI65, then the LOWEST compress), so the floor is what keeps it off the
-    top; short by that rule alone it is shown in the also-quiet rows with
-    its reason, and carries no plan of the top's."""
+    top -- and a pin is no near miss, so it is not in the also-quiet rows
+    either, where the same key would put it ahead of every real one."""
     pinned, textbook = coil(coil_range=0.4), coil()
     assert watchlist.rank_key({**watchlist.measure(pinned), "ticker": "PIN"}) < \
         watchlist.rank_key({**watchlist.measure(textbook), "ticker": "TXT"})
-    got = watchlist.build({"PIN": pinned, "TXT": textbook})
+    near = coil(coil_highs=[110.5, 114.0, 110.5, 114.0, 110.5])                # short by its box alone
+    pins = {f"PIN{c}": coil(coil_range=0.4) for c in "ABCDEFGHIJKL"}          # more pins than also_n
+    got = watchlist.build({"TXT": textbook, "NEAR": near, **pins})
     assert [r["ticker"] for r in got["top"]] == ["TXT"]
-    assert [(r["ticker"], r["why"]) for r in got["also_quiet"]] == [("PIN", "failed pinned")]
+    assert [(r["ticker"], r["why"]) for r in got["also_quiet"]] == [("NEAR", "failed box")]
+    assert got["counts"]["quiet"] == 14, "a pin is still counted among the quiet names it was read from"
 
 
 def test_compress_divides_the_printed_means_and_not_the_raw_ones():
@@ -522,7 +536,7 @@ def night() -> dict[str, pd.DataFrame]:
     frames = {t: coil(base_range=r) for t, r in zip("ABCDEF", (3.3, 3.25, 3.2, 3.15, 3.1, 3.0))}
     frames["G"] = coil(coil_lows=[109.5, 109.5, 106.30, 109.5, 109.5])   # admitted, risk 4.1%
     frames["H"] = coil(base_range=0.9)                                    # short by compress alone
-    frames["N"] = coil(base_range=3.5)                                    # short by pinned alone
+    frames["N"] = coil(base_range=3.5)                                    # pinned alone: no near miss
     frames["I"] = coil(breakdown_at=(-9, -7), coil_closes=[110.0, 108.4, 108.9, 109.4, 110.0])  # short by two
     frames["J"] = coil(coil_closes=[110.0, 110.0, 110.0, 110.0, 112.5])   # momentum, not quiet
     frames["K"] = frame([bar(100.0)] * SESSIONS)                          # nothing
@@ -537,7 +551,7 @@ def test_build_splits_the_night_into_top_also_quiet_and_counts():
     got = watchlist.build(night())
     assert [row["ticker"] for row in got["top"]] == ["A", "B", "C", "D", "E"]
     assert [(row["ticker"], row["why"]) for row in got["also_quiet"]] == [
-        ("F", "outside the top 5"), ("G", "stop wider than 4%"), ("N", "failed pinned"), ("H", "failed compress")]
+        ("F", "outside the top 5"), ("G", "stop wider than 4%"), ("H", "failed compress")]
     assert got["counts"] == {"momentum": 12, "quiet": 11, "admitted": 7, "eligible": 6}
     assert got["rules"] == watchlist.RULES
     assert all(row["admitted"] and row["eligible"] for row in got["top"])

@@ -283,7 +283,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3075 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3076 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4526,7 +4526,9 @@ merger spread.
 **The rule.** `watchlist.MIN_COMPRESS = 0.30` (P, archived as
 `watchlist.min_compress`, so `rules_version` moves): a name whose last seven
 sessions range under three tenths of the sixty before them fails Stage C as
-`pinned`. Every name under 0.30 on the lists from 11 Sep to 7 Oct 2026, 17 in
+`pinned`, and is left out of the also-quiet rows too: it is no near miss, and
+the list's own key (lowest compress first) would rank it ahead of every real
+one. Every name under 0.30 on the lists from 11 Sep to 7 Oct 2026, 17 in
 all, was checked against filings and the press, and each was a pending cash or
 mostly-cash takeover. Every other name was at 0.37 or above, including the two
 nearest, which were not cash pins. The textbook coil the tests draw is 0.33.

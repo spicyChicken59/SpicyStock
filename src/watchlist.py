@@ -54,8 +54,9 @@ MAX_COMPRESS = 0.75        # (P)
 #: TI65 from the deal's gap, the lowest compress). Every name under 0.30 on the
 #: lists from 11 Sep to 7 Oct 2026 (0.04-0.28: ACVA, ARX, BWIN, DV, PRTH among
 #: them) was such a pin; every other name was at 0.37 or above, and the
-#: textbook coil this module's tests draw is about 0.34. It reads the bars, not
-#: the news, so a pin it misses or a quiet name it refuses is possible.
+#: textbook coil this module's tests draw is 0.33. A pinned name is not a near
+#: miss either, so it is left out of the also-quiet rows too. It reads the bars,
+#: not the news, so a pin it misses or a quiet name it refuses is possible.
 MIN_COMPRESS = 0.30
 # --- volume: "low volume pullback" (B); the two windows are this module's
 VOL_DRY_RECENT = 5         # (P)
@@ -394,7 +395,8 @@ def build(frames: dict[str, pd.DataFrame], top_n: int = TOP_N, also_n: int = ALS
     ranked, at most ``top_n``), ``also_quiet`` (what the cut left, ranked
     within three tiers: eligible names past ``top_n``, admitted names whose
     stop is wider than MAX_RISK_PCT, and Stage A+B matches short by exactly
-    one Stage C rule; at most ``also_n``, each with ``why``), ``counts``
+    one Stage C rule other than ``pinned``, a price that stopped moving and so
+    no near miss; at most ``also_n``, each with ``why``), ``counts``
     (momentum: Stage A; quiet: Stage A+B; admitted; eligible: admitted and
     within the risk) and ``rules``."""
     counts = {"momentum": 0, "quiet": 0, "admitted": 0, "eligible": 0}
@@ -421,5 +423,6 @@ def build(frames: dict[str, pd.DataFrame], top_n: int = TOP_N, also_n: int = ALS
     also = [{**row, "why": f"outside the top {top_n}"} for row in picked[top_n:]]
     also += [{**row, "why": STOP_WIDER} for row in rows if row["admitted"] and not row["eligible"]]
     also += [{**row, "why": "failed " + row["reasons_failed"][0]}
-             for row in rows if not row["admitted"] and len(row["reasons_failed"]) == 1]
+             for row in rows if not row["admitted"] and len(row["reasons_failed"]) == 1
+             and "pinned" not in row["reasons_failed"]]
     return {"top": picked[:top_n], "also_quiet": also[:also_n], "counts": counts, "rules": dict(RULES)}
