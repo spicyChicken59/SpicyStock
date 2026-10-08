@@ -136,7 +136,9 @@ over the 20-day average (P).
 
 His three scans on a quiet day (B), then range contraction made numeric (all
 P): three tight days at 70% of the 20-day range, a 7-session range ≤ 0.75 of
-the norm, dry volume, ≤ 1 breakdown, not up two days, not extended. Trigger =
+the norm and ≥ 0.30 of it (under that the price is pinned, not coiled: every
+name below it on the lists from 11 Sep to 7 Oct 2026 was a pending cash
+takeover), dry volume, ≤ 1 breakdown, not up two days, not extended. Trigger =
 box high + a few cents (B), stop = the low of the last 2–3 days (B), refused
 over 4% (B). "Most good anticipation setups break out in the first 10 to 15
 minutes" (B), so the order is placed the night before.

@@ -108,7 +108,7 @@ def by_hand(df: pd.DataFrame) -> dict:
     trigger = None if box_len is None else round(px["High"].iloc[-box_len:].max() + max(0.02, 0.001 * c.iloc[-1]), 2)
     stop = px["Low"].iloc[-3:].min()
     risk = None if trigger is None else round(100 * (trigger / stop - 1), 1)
-    passing = {"tight": ttt or tight_n >= 3, "compress": compress <= 0.75, "breakdowns": breakdowns <= 1,
+    passing = {"tight": ttt or tight_n >= 3, "compress": compress <= 0.75, "pinned": compress >= 0.30, "breakdowns": breakdowns <= 1,
                "up_run": up_run <= 2, "extension": extension <= 1.10, "box": box_len is not None}
     return {"adr20_pct": adr, "tight_limit_pct": limit, "tight_n": tight_n, "ttt": ttt, "tt": tt,
             "compress": compress, "volume_ratio": volume_ratio, "breakdowns": breakdowns,
@@ -213,9 +213,10 @@ def test_stage_a_values_pass_through_from_scans():
 ALONE = {
     "tight": dict(coil_range=2.42, shelf_h=114.24, shelf_l=111.76),
     "compress": dict(base_range=0.9),
+    "pinned": dict(coil_range=0.4),
     "breakdowns": dict(breakdown_at=(-9, -7)),
     "up_run": dict(coil_closes=[110.0, 108.4, 108.9, 109.4, 110.0]),
-    "extension": dict(base_c=81.0),
+    "extension": dict(base_c=81.0, base_range=2.4),   # the textbook's 3% base, drawn at 81
     "box": dict(coil_highs=[110.5, 114.0, 110.5, 114.0, 110.5]),
 }
 
@@ -263,6 +264,49 @@ def test_compress_passes_at_the_limit_and_fails_one_hundredth_over(recent, compr
     assert ("compress" not in got["reasons_failed"]) is passes
 
 
+@pytest.mark.parametrize("recent,compress,passes", [
+    ((110.0, 111.65, 108.35, 110.0, 150_000), 0.30, True),   # 3.3/110 = 3.0%
+    ((110.0, 111.6, 108.41, 110.0, 150_000), 0.29, False),   # 3.19/110 = 2.9%
+])
+def test_a_price_that_stopped_moving_is_pinned_and_not_coiled(recent, compress, passes):
+    """Under three tenths of its base the range is a pin, not a coil: a
+    pending cash takeover holds the price, which this list would otherwise
+    rank first. The floor passes at 0.30 and fails one hundredth under."""
+    df = compress_boundary_frame(recent)
+    assert by_hand(df)["compress"] == compress
+    got = watchlist.measure(df)
+    assert got["range_base_pct"] == 10.0 and got["compress"] == compress
+    assert ("pinned" not in got["reasons_failed"]) is passes
+    assert got["admitted"] is passes, got["reasons_failed"]
+
+
+def test_the_floor_reads_the_printed_ratio_and_not_the_raw_one():
+    """Seven sessions ranging 2.96% raw, printed 3.0, over a base printed
+    10.0: the record says 0.30, and 0.30 is not pinned. The raw means give
+    0.296, which would be -- a refusal the record's own numbers cannot show."""
+    df = compress_boundary_frame((110.0, 111.63, 108.37, 110.0, 150_000))
+    assert by_hand(df)["compress"] == 0.30
+    got = watchlist.measure(df)
+    assert (got["range_recent_pct"], got["range_base_pct"], got["compress"]) == (3.0, 10.0, 0.30)
+    assert "pinned" not in got["reasons_failed"] and got["admitted"] is True
+
+
+def test_a_pinned_name_is_never_on_the_list_however_it_ranks():
+    """The pin ranks first by every key the list sorts on (TTT, then the
+    TI65, then the LOWEST compress), so the floor is what keeps it off the
+    top -- and a pin is no near miss, so it is not in the also-quiet rows
+    either, where the same key would put it ahead of every real one."""
+    pinned, textbook = coil(coil_range=0.4), coil()
+    assert watchlist.rank_key({**watchlist.measure(pinned), "ticker": "PIN"}) < \
+        watchlist.rank_key({**watchlist.measure(textbook), "ticker": "TXT"})
+    near = coil(coil_highs=[110.5, 114.0, 110.5, 114.0, 110.5])                # short by its box alone
+    pins = {f"PIN{c}": coil(coil_range=0.4) for c in "ABCDEFGHIJKL"}          # more pins than also_n
+    got = watchlist.build({"TXT": textbook, "NEAR": near, **pins})
+    assert [r["ticker"] for r in got["top"]] == ["TXT"]
+    assert [(r["ticker"], r["why"]) for r in got["also_quiet"]] == [("NEAR", "failed box")]
+    assert got["counts"]["quiet"] == 14, "a pin is still counted among the quiet names it was read from"
+
+
 def test_compress_divides_the_printed_means_and_not_the_raw_ones():
     """Coil bars ranging 1.1 dollars: the recent seven average 1.068% raw,
     printed 1.1, over a base printed 3.0 -- 0.37 off the record's own
@@ -276,7 +320,7 @@ def test_compress_divides_the_printed_means_and_not_the_raw_ones():
 
 @pytest.mark.parametrize("base_c,extension,passes", [(82.4, 1.10, True), (81.0, 1.11, False)])
 def test_extension_passes_at_ten_percent_over_the_average_and_fails_at_eleven(base_c, extension, passes):
-    df = coil(base_c=base_c)
+    df = coil(base_c=base_c, base_range=2.4)   # a 3% base at ~81, as the textbook's is at 100
     only_failing(df, *([] if passes else ["extension"]))
     got = watchlist.measure(df)
     assert got["extension"] == extension
@@ -287,7 +331,7 @@ def test_extension_divides_the_printed_average_and_not_the_raw_one():
     """Twenty closes averaging 99.5455: printed 99.55, and 110 over that is
     1.10 (admitted) where 110 over the raw mean is 1.11 (refused). The
     record's own two numbers decide, not a third the reader cannot see."""
-    df = coil(base_c=80.81, shelf_c=113.49)
+    df = coil(base_c=80.81, shelf_c=113.49, base_range=2.4)
     only_failing(df)
     got = watchlist.measure(df)
     assert got["close_avg"] == 99.55 and got["extension"] == 1.10 == by_hand(df)["extension"]
@@ -468,12 +512,12 @@ def test_ttt_ranks_first_then_ti65_descending_then_compress_ascending():
         "A": watchlist.measure(coil()),                              # ttt, TI65 1.085, compress 0.33
         "B": watchlist.measure(coil(base_c=95.0, coil_highs=[110.5, 110.5, 110.5, 111.9, 110.5],
                                     coil_lows=[109.5, 109.5, 109.5, 108.1, 109.5])),  # no ttt, TI65 1.13
-        "C": watchlist.measure(coil(base_range=3.5)),                # ttt, TI65 1.085, compress 0.29
+        "C": watchlist.measure(coil(base_range=3.2)),                # ttt, TI65 1.085, compress 0.31
         "D": watchlist.measure(coil(base_c=99.0)),                   # ttt, TI65 1.0938
     }
     assert rows["B"]["ttt"] is False and rows["B"]["ti65"] == 1.1301
     assert rows["A"]["ti65"] == rows["C"]["ti65"] == 1.085 and rows["D"]["ti65"] == 1.0938
-    assert rows["C"]["compress"] == 0.29 < rows["A"]["compress"] == 0.33
+    assert watchlist.MIN_COMPRESS <= rows["C"]["compress"] == 0.31 < rows["A"]["compress"] == 0.33
     assert all(row["admitted"] for row in rows.values())
     ranked = sorted(rows, key=lambda t: watchlist.rank_key(rows[t]))
     assert ranked == ["D", "C", "A", "B"]
@@ -489,9 +533,10 @@ def test_rank_key_reads_a_missing_ti65_as_zero():
 
 
 def night() -> dict[str, pd.DataFrame]:
-    frames = {t: coil(base_range=r) for t, r in zip("ABCDEF", (3.5, 3.4, 3.3, 3.2, 3.1, 3.0))}
+    frames = {t: coil(base_range=r) for t, r in zip("ABCDEF", (3.3, 3.25, 3.2, 3.15, 3.1, 3.0))}
     frames["G"] = coil(coil_lows=[109.5, 109.5, 106.30, 109.5, 109.5])   # admitted, risk 4.1%
     frames["H"] = coil(base_range=0.9)                                    # short by compress alone
+    frames["N"] = coil(base_range=3.5)                                    # pinned alone: no near miss
     frames["I"] = coil(breakdown_at=(-9, -7), coil_closes=[110.0, 108.4, 108.9, 109.4, 110.0])  # short by two
     frames["J"] = coil(coil_closes=[110.0, 110.0, 110.0, 110.0, 112.5])   # momentum, not quiet
     frames["K"] = frame([bar(100.0)] * SESSIONS)                          # nothing
@@ -507,7 +552,7 @@ def test_build_splits_the_night_into_top_also_quiet_and_counts():
     assert [row["ticker"] for row in got["top"]] == ["A", "B", "C", "D", "E"]
     assert [(row["ticker"], row["why"]) for row in got["also_quiet"]] == [
         ("F", "outside the top 5"), ("G", "stop wider than 4%"), ("H", "failed compress")]
-    assert got["counts"] == {"momentum": 11, "quiet": 10, "admitted": 7, "eligible": 6}
+    assert got["counts"] == {"momentum": 12, "quiet": 11, "admitted": 7, "eligible": 6}
     assert got["rules"] == watchlist.RULES
     assert all(row["admitted"] and row["eligible"] for row in got["top"])
     keys = [watchlist.rank_key(row) for row in got["top"]]
@@ -621,7 +666,7 @@ def test_no_function_spells_a_threshold_as_a_literal():
 
 
 def test_stage_c_names_every_rule_reasons_failed_can_carry():
-    assert watchlist.STAGE_C == ("tight", "compress", "breakdowns", "up_run", "extension", "box")
+    assert watchlist.STAGE_C == ("tight", "compress", "pinned", "breakdowns", "up_run", "extension", "box")
     seen = set()
     for kw in ALONE.values():
         seen.update(watchlist.measure(coil(**kw))["reasons_failed"])

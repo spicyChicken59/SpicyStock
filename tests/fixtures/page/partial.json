@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "6e1e1001f888"
+  "rules_version": "379fcc54af52"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -800,7 +800,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "2a61f2fb4718b9cd81b5c78ea76bf4e1286087c6eb03e5eb676032b0a277c171"
+   "context_sha256": "77e2e781fa765d053c69aa335438bc0f50790640fd869ff8e7131fdc67cf1062"
   },
   "sanitised": {
    "replaced": 0,
@@ -1022,6 +1022,7 @@
    "compress_recent_sessions": 7,
    "compress_base_sessions": 60,
    "max_compress": 0.75,
+   "min_compress": 0.3,
    "vol_dry_recent_sessions": 5,
    "vol_dry_base_sessions": 50,
    "breakdown_lookback": 10,
@@ -1489,6 +1490,7 @@
    "watchlist.compress_recent_sessions": 7,
    "watchlist.compress_base_sessions": 60,
    "watchlist.max_compress": 0.75,
+   "watchlist.min_compress": 0.3,
    "watchlist.vol_dry_recent_sessions": 5,
    "watchlist.vol_dry_base_sessions": 50,
    "watchlist.breakdown_lookback": 10,
@@ -1675,7 +1677,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "6e1e1001f888"
+  "replay_rules_version": "379fcc54af52"
  },
  "observations": {
   "as_of": "2026-09-10",

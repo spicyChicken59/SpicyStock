@@ -289,6 +289,15 @@ def test_the_rulebook_bands_are_the_graders():
     assert "may only lower" in STRATEGY.lower() or "never raise" in STRATEGY.lower()
 
 
+def test_the_pinned_floor_is_quoted_from_the_watchlist():
+    """The floor under which a price is pinned rather than coiled is one
+    constant; the README and the method file quote it from the module."""
+    from src import watchlist
+    floor = f"{watchlist.MIN_COMPRESS:.2f}"
+    assert f"under {floor} of its sixty-session base is pinned" in re.sub(r"\s+", " ", README), floor
+    assert f"\u2265 {floor} of it (under that the price is pinned" in re.sub(r"\s+", " ", METHOD), floor
+
+
 def test_the_method_file_names_every_module_that_holds_a_rule():
     for module in ("universe", "scans", "quality", "breadth", "watchlist", "plan", "record"):
         assert f"src/{module}.py" in METHOD, module

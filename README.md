@@ -95,7 +95,10 @@ does not carry, falls back to Explore and says so.
    breadth numbers, the regime chip and the size rule, the session, and the
    record's own call to action. Then two stage cards, **Bursts · N** (the
    range-expansion days the scan graded) and **Setting up · N** (the
-   anticipation list: quiet, coiled names inside established momentum),
+   anticipation list: quiet, coiled names inside established momentum; a
+   name whose last seven sessions range under 0.30 of its sixty-session
+   base is pinned, not coiled -- a pending cash takeover looks exactly like
+   that -- and is kept off it, and off the near misses beside it),
    each under its count saying how many of them carry a ticket — the line
    a phone keeps, because that is the stage's own action state —
    and inside the chosen stage one selectable card per stock with its grade
