@@ -387,9 +387,15 @@ def test_a_rerun_of_the_same_session_reads_the_same_stocks_again():
                          {'QAAA': with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, PLACEHOLDER), DAY, PLACEHOLDER)}, TONIGHT,
                          live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
     assert two['sessions'] == [BEFORE.isoformat(), DAY.isoformat()]
+    # `later` carries a quiet bar at the earlier session and the $ bar at the later one
     again = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=two), later, TONIGHT,
                            live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
-    assert [(r['session'], r['outcome']) for r in again['rows']] == [(BEFORE.isoformat(), 'still_missing'), (DAY.isoformat(), 'match')]
+    assert [(r['session'], r['outcome']) for r in again['rows']] == [(BEFORE.isoformat(), 'no_match'), (DAY.isoformat(), 'match')]
+    # and a frame that lost its earlier bar reads still_missing there, the match untouched
+    gone = {'QAAA': later['QAAA'].drop(pd.Timestamp(BEFORE))}
+    again = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=two), gone, TONIGHT,
+                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
+    assert [(r['session'], r['outcome']) for r in again['rows']] == [(BEFORE.isoformat(), 'still_missing'), (DAY.isoformat(), 'unmeasurable')]
     # a block that did not apply has nothing to read again and is carried as it stands
     nothing = night(None)
     assert night(previous(session=TONIGHT.isoformat(), stale_followup=nothing)) == nothing
