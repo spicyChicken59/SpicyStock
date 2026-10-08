@@ -47,6 +47,16 @@ MIN_TIGHT = 3              # (P) tight days needed in the lookback when they are
 COMPRESS_RECENT = 7        # (P) SpicyStock's existing compression proxy, kept for continuity of the record
 COMPRESS_BASE = 60         # (P)
 MAX_COMPRESS = 0.75        # (P)
+#: (P) The least a coil may compress: under this the last seven sessions range
+#: below three tenths of the sixty before them, and the price is PINNED, not
+#: coiled. A pending all-cash takeover holds a price just under its deal price
+#: and stops it moving, which is exactly what this list ranks first (TTT, a high
+#: TI65 from the deal's gap, the lowest compress). Every name under 0.30 on the
+#: lists from 11 Sep to 7 Oct 2026 (0.04-0.28: ACVA, ARX, BWIN, DV, PRTH among
+#: them) was such a pin; every other name was at 0.37 or above, and the
+#: textbook coil this module's tests draw is about 0.34. It reads the bars, not
+#: the news, so a pin it misses or a quiet name it refuses is possible.
+MIN_COMPRESS = 0.30
 # --- volume: "low volume pullback" (B); the two windows are this module's
 VOL_DRY_RECENT = 5         # (P)
 VOL_DRY_BASE = 50          # (P)
@@ -88,6 +98,7 @@ RULES = {
     "watchlist.compress_recent_sessions": COMPRESS_RECENT,
     "watchlist.compress_base_sessions": COMPRESS_BASE,
     "watchlist.max_compress": MAX_COMPRESS,
+    "watchlist.min_compress": MIN_COMPRESS,
     "watchlist.vol_dry_recent_sessions": VOL_DRY_RECENT,
     "watchlist.vol_dry_base_sessions": VOL_DRY_BASE,
     "watchlist.breakdown_lookback": BREAKDOWN_LOOKBACK,
@@ -120,6 +131,7 @@ PROVENANCE = {
     "watchlist.compress_recent_sessions": "P",
     "watchlist.compress_base_sessions": "P",
     "watchlist.max_compress": "P",
+    "watchlist.min_compress": "P",
     "watchlist.vol_dry_recent_sessions": "P",
     "watchlist.vol_dry_base_sessions": "P",
     "watchlist.breakdown_lookback": "P",
@@ -144,7 +156,7 @@ PROVENANCE = {
 #: The Stage C rules, in the order ``reasons_failed`` names them. ``vol_dry``
 #: is measured and published beside them and decides nothing: the admission
 #: line the spec gives does not carry it, and a column is not a filter.
-STAGE_C = ("tight", "compress", "breakdowns", "up_run", "extension", "box")
+STAGE_C = ("tight", "compress", "pinned", "breakdowns", "up_run", "extension", "box")
 #: The also-quiet reason for an admitted name whose stop is too wide.
 STOP_WIDER = f"stop wider than {MAX_RISK_PCT:g}%"
 
@@ -307,6 +319,8 @@ def _stage_c(f: _Frame, df: pd.DataFrame, ant: dict) -> dict | None:
         failed.append("tight")
     if compress > MAX_COMPRESS:
         failed.append("compress")
+    if compress < MIN_COMPRESS:
+        failed.append("pinned")
     if breakdowns > MAX_BREAKDOWNS:
         failed.append("breakdowns")
     if up_run > MAX_UP_RUN:

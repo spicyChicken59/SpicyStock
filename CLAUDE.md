@@ -283,7 +283,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3070 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3075 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4508,3 +4508,33 @@ re-fetching it, or treating its late bar as a signal.
 **Not claimable:** a live night under this rule. The first evening after the
 merge is the test: read its chip and `run.input_tolerance.endings`, and the
 night after, a `run.stale_followup` with more than one session.
+
+## Checkpoint, 8 Oct 2026 — a pinned price is not a coil
+
+**Found by the owner's first trade.** The owner drafted a first live trade from
+the 7 Oct record's two top setting-up names, PRTH and ARX, at the record's own
+trigger, limit and stop. Both are pending all-cash takeovers: PRTH at $8.05 (a
+CEO-led take-private, announced 21 Sep, closing H1 2027) and ARX at $20.25
+(Thoma Bravo, signed 13 Aug, go-shop ended 22 Sep with no bid). So are the
+other three names of that top five: BWIN ($32.50), ACVA ($10.50) and MG
+($20.35, trading above it in its go-shop). A price a deal holds stops moving,
+and the list ranks exactly that first: TTT, a high TI65 from the deal's own
+gap, the lowest compress. The plans' +8% targets sat above the deal prices,
+and a broken deal gaps far through any stop. Nothing in the method trades a
+merger spread.
+
+**The rule.** `watchlist.MIN_COMPRESS = 0.30` (P, archived as
+`watchlist.min_compress`, so `rules_version` moves): a name whose last seven
+sessions range under three tenths of the sixty before them fails Stage C as
+`pinned`. Every name under 0.30 on the lists from 11 Sep to 7 Oct 2026, 17 in
+all, was checked against filings and the press, and each was a pending cash or
+mostly-cash takeover. Every other name was at 0.37 or above, including the two
+nearest, which were not cash pins. The textbook coil the tests draw is 0.33.
+It reads the bars, not the news: MG, at 0.46, stays on the list, and only a
+corporate-actions source could take it off. The tests' frames that sat under
+the floor were redrawn above it, with each test's subject unchanged; the
+sequel fixtures' AMD, short by its box alone, is now short by two and leaves
+the also-quiet rows.
+
+**Not run here:** a live night under the rule. The burst scan is untouched: an
+announcement day is a real 4% day, and only the day after shows the pin.
