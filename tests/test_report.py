@@ -797,7 +797,8 @@ def _under(data, fraction):
     rules = dict(data['rules']['pipeline'], stale_tolerance_fraction=fraction)
     run = data['run']
     tol = inputs.stale_tolerance(run['coverage'], fraction, names=run['input_tolerance']['names'],
-                                 benchmark=run['input_tolerance']['benchmark'], names_max=100)
+                                 benchmark=run['input_tolerance']['benchmark'], names_max=100,
+                                 endings=run['input_tolerance']['endings'], sessions_max=rules['stale_sessions_max'])
     run['input_tolerance'] = tol
     tol['sentence'] = inputs.coverage_sentence(run)
     return run, rules
@@ -833,11 +834,18 @@ def test_validate_holds_the_tolerance_to_the_records_own_constant(stale_night):
     (lambda t: t.update(previous='2026-09-08'), 'does not re-derive from the ledger'),
     (lambda t: t.update(verdict='complete'), 'does not re-derive from the ledger'),
     (lambda t: t.update(sentence=t['sentence'].replace('2 stocks', '3 stocks')), 'sentence is not the coverage sentence'),
-    (lambda t: t.update(version=2), 'version or verdict unknown'),
+    (lambda t: t.update(version=1), 'version or verdict unknown'),
     (lambda t: t.pop('reasons'), 'malformed'),
+    (lambda t: t.update(sessions_max=t['sessions_max'] + 1), 'not the archived stale_sessions_max'),
+    (lambda t: t.update(endings={'QAAA': t['endings']['QAAA'], 'QAAC': t['endings']['QAAB']}), 'endings are not its names'),
+    (lambda t: t.update(endings=None), 'endings are not its names'),
+    (lambda t: t.update(endings={'QAAA': '2026-09-08', 'QAAB': t['endings']['QAAB']}), "endings are not the ledger's stale dates"),
+    (lambda t: t.update(endings={'QAAA': None, 'QAAB': t['endings']['QAAB']}), "endings are not the ledger's stale dates"),
+    (lambda t: t.pop('endings'), 'malformed'),
 ], ids=['names-swapped', 'names-short', 'names-dropped', 'held-unnamed', 'held-without-a-plan', 'limit', 'stale-stocks',
         'benchmark', 'stale', 'evaluated', 'previous', 'verdict',
-        'sentence', 'version', 'malformed'])
+        'sentence', 'version', 'malformed', 'sessions-max', 'endings-renamed', 'endings-dropped', 'ending-moved',
+        'ending-unreadable', 'endings-missing'])
 def test_validate_refuses_a_forged_tolerance(stale_night, forge, message):
     data = _copy(stale_night)
     forge(data['run']['input_tolerance'])
@@ -859,11 +867,19 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     data = _copy(stale_night)
     for key in ('input_tolerance', 'stale_followup', 'reads'):
         data['run'].pop(key)
-    for key in ('stale_tolerance_fraction', 'stale_names_max', 'reader_refusal_fraction'):
+    for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction'):
         data['rules']['pipeline'].pop(key)
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
     assert reader_coverage.reads_faults(data) == []
+    # a record made under the tolerance's first version (a fraction but no session
+    # bound, 7 Oct 2026's publication) is not asked for the second version's blocks
+    data = _copy(stale_night)
+    data['rules']['pipeline'].pop('stale_sessions_max')
+    for block in ('input_tolerance', 'stale_followup'):
+        data['run'][block]['version'] = 1
+    assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
+    assert followup.faults(data['run'], data['rules']['pipeline']) == []
 
 
 @pytest.fixture

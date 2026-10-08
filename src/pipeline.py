@@ -31,12 +31,21 @@ FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
 MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publish (P)
-#: (P) The most of the intended stocks a run tolerates stale -- each one session
-#: behind and nothing else missing -- before the night is degraded. Every
-#: degraded night from 16 Sep to 6 Oct 2026 had 10-24 stale stocks of ~4,790
-#: (0.21%-0.50%), each one session behind; before #69 there were 0-1. 1% is
-#: twice the worst of them; the next session's run reads each one again (src/followup.py).
+#: (P) The most of the intended stocks a run tolerates stale -- each ending
+#: within STALE_SESSIONS_MAX sessions before the evaluated one, and nothing else
+#: missing -- before the night is degraded. Every degraded night from 16 Sep to
+#: 6 Oct 2026 had 10-24 stale stocks of ~4,790 (0.21%-0.50%), each one session
+#: behind; before #69 there were 0-1. 1% is twice the worst of them; the next
+#: session's run reads every session each one missed again (src/followup.py).
 STALE_TOLERANCE_FRACTION = 0.01
+#: (P) The most sessions a tolerated stale frame may end before the evaluated
+#: session. The first live night under the tolerance (7 Oct 2026) had sixteen
+#: stale stocks, fifteen one session behind and ONE two behind: thin names skip
+#: days. Each missed session is read again by the next session's run
+#: (src/followup.py), one reading per stock and session, so nothing inside this
+#: bound goes unchecked; a frame further back is a different kind of gap and
+#: degrades the night. A trading week.
+STALE_SESSIONS_MAX = 5
 STALE_NAMES_MAX = 100          # stale stocks a record names in full and the next session's run reads again (plumbing)
 #: (P) The fraction of the night's reads the reply checks (reader authority and
 #: the discovery contract) may refuse before the night is degraded, while every
@@ -72,6 +81,7 @@ RULES = {
     "pipeline.lookback_days": LOOKBACK_DAYS,
     "pipeline.min_coverage_fraction": MIN_COVERAGE_FRACTION,
     "pipeline.stale_tolerance_fraction": STALE_TOLERANCE_FRACTION,
+    "pipeline.stale_sessions_max": STALE_SESSIONS_MAX,
     "pipeline.stale_names_max": STALE_NAMES_MAX,
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
@@ -418,6 +428,12 @@ def rank(bursts: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------- grading ---
+def stale_endings(stats: market_data.DownloadStats) -> dict[str, str | None]:
+    """Where each stale frame ends, as the record carries it: the ISO date of
+    its last bar, None when that stamp was unreadable."""
+    return {t: (d.isoformat() if d else None) for t, d in stats.stale.items()}
+
+
 def admitted_grades(verdict: str) -> tuple[str, ...]:
     """The grades the night's regime admits to a plan: one rule for the planner and the reads."""
     return reader_coverage.admitted(verdict, TRADE_GRADES, YELLOW_GRADES)
@@ -731,22 +747,24 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         # a degraded acceptance is a problem unless its only gap is the stale tail
         # the run tolerates; the ledger and its acceptance stay exactly as built
         tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
-                                           names_max=STALE_NAMES_MAX)
+                                           names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
+                                           sessions_max=STALE_SESSIONS_MAX)
         if (coverage["acceptance"]["status"] == "degraded" and tolerance["verdict"] != inputs.TOLERATED
                 and not any(p["kind"] == "coverage_thin" for p in rep.problems)):
             rep.problem("coverage_thin", f"stale tolerance not met ({', '.join(tolerance['reasons'])}): "
                         + inputs.coverage_sentence({"coverage": coverage}))
         elif tolerance["verdict"] == inputs.TOLERATED:
-            log.info("Stale tolerance: %d frames one session behind, within %d; not a problem",
-                     tolerance["stale"], tolerance["limit"])
+            log.info("Stale tolerance: %d frames within %d sessions behind, %d stocks within the limit of %d; not a problem",
+                     tolerance["stale"], STALE_SESSIONS_MAX, tolerance["stale_stocks"], tolerance["limit"])
 
-        # the previous publication's stale stocks, read again from this run's frames: no provider call
+        # the previous publication's stale stocks, read again from this run's frames
+        # at every session each one missed: no provider call
         rep.stage = "followup"
         followed = followup.night(previous.get("run"), frames, session, uni, closed=closed,
-                                  benchmark=BENCHMARK_SYMBOL, names_max=STALE_NAMES_MAX, feed=stats.feed)
+                                  benchmark=BENCHMARK_SYMBOL, names_max=STALE_NAMES_MAX, feed=stats.feed,
+                                  sessions_max=STALE_SESSIONS_MAX)
         if followed["matched"]:
-            rep.problem("coverage_thin", f"late bars for {followed['for_session']} would have been listed in the "
-                        f"{followed['for_session']} publication, which did not include them: " + ", ".join(followed["matched"]))
+            rep.problem("coverage_thin", followup.problem_message(followed))
         # a closed night re-presents the plans the previous session published,
         # when the record on disk is that session's; the tickets still stand
         carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}
@@ -802,7 +820,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             raise ValueError("; ".join(faults))
         log.info("Final input coverage: %s", json.dumps(coverage, sort_keys=True))
         tolerance = inputs.stale_tolerance(coverage, STALE_TOLERANCE_FRACTION, names=sorted(stats.stale), benchmark=BENCHMARK_SYMBOL,
-                                           held=held_stale, names_max=STALE_NAMES_MAX)
+                                           held=held_stale, names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
+                                           sessions_max=STALE_SESSIONS_MAX)
         tolerance["sentence"] = inputs.coverage_sentence({"coverage": coverage, "input_tolerance": tolerance})
         elapsed = round(time.monotonic() - started, 1)
         run_block = {

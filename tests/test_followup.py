@@ -13,13 +13,19 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
-from src import followup, market_data, provenance, quality_ledger, record, report, sessions, universe
+from src import followup, market_data, pipeline, provenance, quality_ledger, record, report, sessions, universe
 from tests.test_inputs import behind, q_names, wide  # noqa: F401
 from tests.test_pipeline import market, claude, evening, EVENING  # noqa: F401
 
 DAY = date(2026, 9, 9)          # last night's session
 TONIGHT = date(2026, 9, 10)     # the session that reads it again
+BEFORE = sessions.previous_session(DAY)   # 8 Sep: the session before last night's
 ROOT = Path(__file__).resolve().parents[1]
+BOUND = pipeline.STALE_SESSIONS_MAX
+
+
+def faults_of(block, session=TONIGHT, names_max=100, sessions_max=BOUND):
+    return followup.shape_faults(block, session, names_max, sessions_max)
 
 
 def tape(end=TONIGHT, n=30, close=50.0, volume=200_000.0):
@@ -102,8 +108,54 @@ def test_the_late_bar_meets_the_session_close_price_policy():
 
 def test_a_stock_tonight_did_not_return_or_select_stays_unknown():
     rows = read({'HERE': tape(end=DAY)}, live(['HERE', 'GONE']), stocks=['HERE', 'GONE', 'LEFT'])
-    assert rows['GONE'] == {'ticker': 'GONE', 'outcome': 'no_frame', 'volume': None, 'flat': None, 'route': None}
-    assert rows['LEFT'] == {'ticker': 'LEFT', 'outcome': 'not_selected', 'volume': None, 'flat': None, 'route': None}
+    assert rows['GONE'] == {'ticker': 'GONE', 'session': '2026-09-09', 'outcome': 'no_frame', 'volume': None, 'flat': None, 'route': None}
+    assert rows['LEFT'] == {'ticker': 'LEFT', 'session': '2026-09-09', 'outcome': 'not_selected', 'volume': None, 'flat': None, 'route': None}
+
+
+# ----------------------------------------------- every session a stock missed ---
+@pytest.mark.parametrize('ending,sessions_max,expected', [
+    (BEFORE, BOUND, [DAY]),                                              # one behind: the previous session alone
+    (sessions.previous_session(BEFORE), BOUND, [BEFORE, DAY]),           # two behind: both missed sessions
+    (sessions.sessions_before(DAY, 4)[0], BOUND, sessions.sessions_before(TONIGHT, 4)),   # four behind: all four
+    (sessions.sessions_before(DAY, 9)[0], BOUND, sessions.sessions_before(TONIGHT, BOUND)),   # past the bound: the most recent five
+    (None, BOUND, [DAY]),                                                # an unreadable or unrecorded ending: the previous session
+    (DAY, BOUND, [DAY]),                                                 # an ending not before the previous session: that session
+    (sessions.previous_session(BEFORE), 0, [DAY]),                       # no bound reads one session, never none
+], ids=['one-behind', 'two-behind', 'four-behind', 'past-the-bound', 'unknown-ending', 'ending-at-previous', 'zero-bound'])
+def test_the_sessions_a_stock_missed_run_from_its_last_bar_to_the_previous_session(ending, sessions_max, expected):
+    assert followup.missed_sessions(ending, DAY, sessions_max) == expected
+
+
+def test_a_stock_two_sessions_behind_is_read_at_both_sessions_it_missed():
+    """Last night's record says QAAA's frame ended two sessions before last
+    night; tonight's frame carries the provider's placeholder at both sessions
+    it missed: two readings, one per session, each at its own session."""
+    frame = with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, PLACEHOLDER), DAY, DOLLAR)
+    prev = previous(input_tolerance={'names': ['QAAA'], 'endings': {'QAAA': sessions.previous_session(BEFORE).isoformat()}})
+    block = followup.night(prev, {'QAAA': frame}, TONIGHT, live(['QAAA']), closed=False, benchmark='SPY',
+                           names_max=100, feed='sip', sessions_max=BOUND)
+    assert (block['status'], block['for_session'], block['sessions'], block['stocks'], block['count']) == \
+        ('applied', DAY.isoformat(), [BEFORE.isoformat(), DAY.isoformat()], 1, 2), block
+    assert [(r['session'], r['outcome'], r['route']) for r in block['rows']] == \
+        [(BEFORE.isoformat(), 'no_match', None), (DAY.isoformat(), 'match', 'dollar')]
+    assert block['matched'] == ['QAAA'] and followup.matches_named(block) == f'QAAA ({DAY.isoformat()}, $ scan)'
+    assert faults_of(block) == []
+    assert block['sentence'] == (
+        f"The {DAY} publication's 1 stock without a bar, read again from this run's split-adjusted fetch at each of "
+        f"the 2 sessions missed ({BEFORE} to {DAY}), one reading per stock and session, 2 readings in all: 2 readings "
+        f"now carry the session's bar (1 with zero volume); QAAA ({DAY}, $ scan) would have been listed in the "
+        "publication for that session, which did not include it; 1 would not have been listed. A late bar is the "
+        "bar the provider served at this run's check; it never becomes a signal, plan or ticket."), block['sentence']
+
+
+def test_a_first_version_membership_is_read_at_the_previous_session_alone():
+    """A publication from the tolerance's first version named its stale stocks
+    and not where each frame ended: the previous session is the one read, as
+    that version read it, whatever the frame shows further back."""
+    frame = with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, DOLLAR), DAY, PLACEHOLDER)
+    block = night(previous(input_tolerance={'names': ['QAAA']}), frames={'QAAA': frame})
+    assert (block['status'], block['sessions'], block['count'], block['matched']) == ('applied', [DAY.isoformat()], 1, []), block
+    assert block['rows'][0]['outcome'] == 'no_match' and faults_of(block) == []
 
 
 # The six frames the evidence archive already retains for a stock that was a
@@ -193,7 +245,7 @@ def test_a_late_scan_match_degrades_the_night_that_finds_it(wide, claude, fake_r
     block = data['run']['stale_followup']
     assert block['matched'] == ['QAAA'] and block['rows'][0]['route'] == 'dollar', block
     assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
-        ['late bars for 2026-09-10 would have been listed in the 2026-09-10 publication, which did not include them: QAAA']
+        ['1 late bar over 1 stock would have been listed in the publication for its session, which did not include it: QAAA']
     assert 'QAAA ($ scan) would have been listed in that publication, which did not include it' in block['sentence']
     # accounting, never a signal: no burst, observation, plan or pick for it
     assert 'QAAA' not in {b['ticker'] for b in data['bursts']}
@@ -209,8 +261,44 @@ def test_a_late_scan_match_degrades_the_night_that_finds_it(wide, claude, fake_r
 
 
 def pipeline_exit_degraded():
-    from src import pipeline
     return pipeline.EXIT_DEGRADED
+
+
+@pytest.mark.parametrize('earlier_row,status,matched', [
+    ([None, None, None, None, 0.0], 'ok', []),                       # the placeholder at both missed sessions
+    ([None, 1.6, -0.1, 1.5, 300_000.0], 'degraded', ['QAAA']),        # a $-scan bar at the EARLIER missed session
+], ids=['two-placeholders', 'a-match-two-sessions-back'])
+def test_the_next_night_reads_every_session_a_stock_missed(wide, claude, fake_resend, fake_alpaca, tmp_path,
+                                                           earlier_row, status, matched):
+    """A stock two sessions behind on Thursday night is within the bound, so the
+    night is ok and the record says where its frame ended; Friday's run reads
+    it at BOTH sessions it missed, and a bar at the earlier one that the
+    Wednesday publication would have listed degrades Friday and is named with
+    its session."""
+    behind(fake_alpaca, ['QAAA'], sessions=2)
+    rep, first, docs = evening(tmp_path, wide)
+    assert rep.status == 'ok', rep.problems
+    before = sessions.sessions_before(date(2026, 9, 10), 2)[0].isoformat()   # 8 Sep
+    assert first['run']['input_tolerance']['endings'] == {'QAAA': before}
+    c = float(fake_alpaca.history['QAAA']['Close'].iloc[-1])
+    earlier = [c + (v or 0) if i < 4 else v for i, v in enumerate(earlier_row)]
+    late(fake_alpaca, 'QAAA', [earlier, [c, c, c, c, 0.0], [c, c * 1.001, c * 0.999, c, 5_000.0]], still_behind=False)
+    rep, data, _ = evening(tmp_path, wide, now=NEXT_EVENING)
+    assert rep.status == status, rep.problems
+    block = data['run']['stale_followup']
+    assert (block['status'], block['for_session'], block['sessions'], block['stocks'], block['count']) == \
+        ('applied', '2026-09-10', ['2026-09-09', '2026-09-10'], 1, 2), block
+    assert [(r['ticker'], r['session'], r['outcome']) for r in block['rows']] == \
+        [('QAAA', '2026-09-09', 'match' if matched else 'no_match'), ('QAAA', '2026-09-10', 'no_match')]
+    assert block['matched'] == matched
+    assert 'at each of the 2 sessions missed (2026-09-09 to 2026-09-10), one reading per stock and session, 2 readings in all' in block['sentence']
+    if matched:
+        assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
+            ['1 late bar over 1 stock would have been listed in the publication for its session, which did not include it: QAAA']
+        assert 'QAAA (2026-09-09, $ scan) would have been listed in the publication for that session' in block['sentence']
+    else:
+        assert data['run']['problems'] == [] and 'none of them would have been listed' in block['sentence']
+    report.validate(data)
 
 
 @pytest.mark.parametrize('breakage', ['scan', 'through'])
@@ -244,15 +332,15 @@ def previous(**over):
     names = ['QAAA']
     run = {'session': DAY.isoformat(), 'session_state': 'open',
            'coverage': {'reasons': {'stale': universe.population(names)}},
-           'input_tolerance': {'names': names}}
+           'input_tolerance': {'names': names, 'endings': {'QAAA': BEFORE.isoformat()}}}
     run.update(over)
     return run
 
 
-def night(prev, *, closed=False, session=TONIGHT, names_max=100):
-    frames = {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, PLACEHOLDER)}
+def night(prev, *, closed=False, session=TONIGHT, names_max=100, frames=None):
+    frames = frames if frames is not None else {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, PLACEHOLDER)}
     return followup.night(prev, frames, session, live(['QAAA']), closed=closed, benchmark='SPY',
-                          names_max=names_max, feed='sip')
+                          names_max=names_max, feed='sip', sessions_max=BOUND)
 
 
 @pytest.mark.parametrize('prev,kw,status,reason', [
@@ -269,13 +357,19 @@ def night(prev, *, closed=False, session=TONIGHT, names_max=100):
     (previous(input_tolerance={'names': ['SPY']}, coverage={'reasons': {'stale': universe.population(['SPY'])}}), {},
      'not_applicable', 'none_missing'),
     (previous(session=TONIGHT.isoformat()), {}, 'not_applicable', 'rerun_without_block'),
+    (previous(input_tolerance={'names': ['QAAA']}), {}, 'applied', None),
+    (previous(input_tolerance={'names': ['QAAA'], 'endings': {'QAAA': None}}), {}, 'applied', None),
+    (previous(input_tolerance={'names': ['QAAA'], 'endings': {'QAAA': 'not a date'}}), {}, 'applied', None),
 ], ids=['applied', 'closed-tonight', 'no-previous', 'previous-closed', 'previous-not-adjacent', 'not-recorded',
-        'over-bound', 'tampered-membership', 'none-missing', 'only-the-benchmark', 'rerun-without-block'])
+        'over-bound', 'tampered-membership', 'none-missing', 'only-the-benchmark', 'rerun-without-block',
+        'first-version-membership', 'unreadable-ending', 'malformed-ending'])
 def test_followup_applicability(prev, kw, status, reason):
     block = night(prev, **kw)
     assert (block['status'], block['reason']) == (status, reason), block
-    assert followup.shape_faults(block, TONIGHT, 100) == []
+    assert faults_of(block) == []
     assert (block['rows'] != []) == (status == 'applied')
+    if status == 'applied':
+        assert block['sessions'] == [DAY.isoformat()], 'a membership without a readable ending is read at the previous session alone'
 
 
 def test_a_rerun_of_the_same_session_reads_the_same_stocks_again():
@@ -285,9 +379,23 @@ def test_a_rerun_of_the_same_session_reads_the_same_stocks_again():
     # and the re-run reads it from ITS fetch rather than carrying the first read
     later = {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
     rerun = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=applied), later, TONIGHT,
-                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip')
+                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
     assert (rerun['status'], rerun['matched'], rerun['for_session']) == ('applied', ['QAAA'], DAY.isoformat()), rerun
-    assert followup.shape_faults(rerun, TONIGHT, 100) == []
+    assert faults_of(rerun) == []
+    # a block over two sessions is re-read at the same two sessions
+    two = followup.night(previous(input_tolerance={'names': ['QAAA'], 'endings': {'QAAA': sessions.previous_session(BEFORE).isoformat()}}),
+                         {'QAAA': with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, PLACEHOLDER), DAY, PLACEHOLDER)}, TONIGHT,
+                         live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
+    assert two['sessions'] == [BEFORE.isoformat(), DAY.isoformat()]
+    # `later` carries a quiet bar at the earlier session and the $ bar at the later one
+    again = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=two), later, TONIGHT,
+                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
+    assert [(r['session'], r['outcome']) for r in again['rows']] == [(BEFORE.isoformat(), 'no_match'), (DAY.isoformat(), 'match')]
+    # and a frame that lost its earlier bar reads still_missing there, the match untouched
+    gone = {'QAAA': later['QAAA'].drop(pd.Timestamp(BEFORE))}
+    again = followup.night(previous(session=TONIGHT.isoformat(), stale_followup=two), gone, TONIGHT,
+                           live(['QAAA']), closed=False, benchmark='SPY', names_max=100, feed='sip', sessions_max=BOUND)
+    assert [(r['session'], r['outcome']) for r in again['rows']] == [(BEFORE.isoformat(), 'still_missing'), (DAY.isoformat(), 'unmeasurable')]
     # a block that did not apply has nothing to read again and is carried as it stands
     nothing = night(None)
     assert night(previous(session=TONIGHT.isoformat(), stale_followup=nothing)) == nothing
@@ -312,6 +420,10 @@ def scenario_blocks():
     blocks = [followup._block(followup.APPLIED, None, DAY.isoformat(), rows)]
     blocks += [followup._block(followup.APPLIED, None, DAY.isoformat(), [r]) for r in rows]
     blocks += [followup._block(followup.NOT_APPLICABLE, r, DAY.isoformat(), []) for r in followup.REASONS]
+    # the same stocks read at two sessions: every outcome, in the multi-session words
+    earlier = followup._read(stocks, frames, BEFORE, uni, 'SPY', 'sip')
+    blocks.append(followup._block(followup.APPLIED, None, DAY.isoformat(), rows + earlier))
+    blocks += [followup._block(followup.APPLIED, None, DAY.isoformat(), [r, e]) for r, e in zip(rows, earlier)]
     return blocks
 
 
@@ -322,6 +434,10 @@ def test_followup_sentences_state_no_cause():
         sentence = block['sentence'] or ''
         assert not [w for w in CAUSES if w in sentence.lower()], sentence
         assert not [w for w in ('None', 'undefined', 'nan', '{', '[') if w in sentence], sentence
+        assert faults_of(block) == [], (block['sessions'], faults_of(block))
+    multi = [b for b in blocks if len(b['sessions']) == 2]
+    assert multi and all('one reading per stock and session' in b['sentence'] and f'({BEFORE} to {DAY})' in b['sentence'] for b in multi)
+    assert not [b for b in multi if ' a 2026-09-09 bar' in b['sentence']], 'a two-session block never names one session as the bar'
     full = blocks[0]['sentence']
     assert full == ("The 2026-09-09 publication's 8 stocks without a 2026-09-09 bar, read again from this run's "
                     "split-adjusted fetch: 5 now carry a 2026-09-09 bar (2 with zero volume); B ($ scan), H (setting "
@@ -343,11 +459,111 @@ def test_followup_sentences_state_no_cause():
     ('zero_volume', 9, 'zero-volume or flat counts are not its rows'),
     ('zero_volume', 0, 'zero-volume or flat counts are not its rows'),
     ('flat', 0, 'zero-volume or flat counts are not its rows'),
+    ('sessions', ['2026-09-08'], 'sessions are not its rows'),
+    ('sessions', ['2026-09-08', '2026-09-09'], 'sessions are not its rows'),
+    ('stocks', 1, 'stock count is not its rows'),
+    ('version', 1, 'version or status unknown'),
 ])
 def test_the_block_holds_its_own_shape(field, value, message):
     frames = {'A': with_bar(tape(end=DAY)[:-1], DAY, PLACEHOLDER), 'B': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
     block = followup._block(followup.APPLIED, None, DAY.isoformat(),
                             followup._read(['A', 'B'], frames, DAY, live(['A', 'B']), 'SPY', 'sip'))
-    assert followup.shape_faults(block, TONIGHT, 100) == []
+    assert faults_of(block) == []
     forged = dict(block, **{field: value})
-    assert any(message in f for f in followup.shape_faults(forged, TONIGHT, 100)), followup.shape_faults(forged, TONIGHT, 100)
+    assert any(message in f for f in faults_of(forged)), faults_of(forged)
+
+
+def test_the_row_bound_is_the_names_the_record_carries_times_the_sessions():
+    """Each named stock may be read at every session it missed, so a block may
+    hold more rows than the names a record carries -- up to that many times the
+    session bound, and no more."""
+    frames = {t: with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, PLACEHOLDER), DAY, PLACEHOLDER) for t in 'ABC'}
+    rows = [r for d in (BEFORE, DAY) for r in followup._read(list('ABC'), frames, d, live(list('ABC')), 'SPY', 'sip')]
+    block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    assert (block['stocks'], block['count']) == (3, 6)
+    assert faults_of(block, names_max=2) == [], 'six readings of three stocks under two names times five sessions'
+    assert faults_of(block, names_max=1) == ['stale follow-up counts do not reconcile'], 'six readings over one name times five'
+
+
+def test_a_rerun_over_a_first_version_block_reads_it_as_this_version_does():
+    """A same-session re-run of a night first published under the first
+    version: an applied block's stocks are read again at its own session, where
+    that version read every stock, and a block it did not apply keeps its
+    status, its reason and its words."""
+    def first_version(block):
+        old = {k: v for k, v in block.items() if k not in ('sessions', 'stocks')}
+        old['rows'] = [{k: v for k, v in r.items() if k != 'session'} for r in block['rows']]
+        return dict(old, version=1)
+    later = {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
+
+    def rerun(carried, frames=None):
+        return night(previous(session=TONIGHT.isoformat(), stale_followup=carried), frames=frames)
+    applied = rerun(first_version(night(previous())), later)
+    assert (applied['version'], applied['status'], applied['sessions'], applied['matched']) == \
+        (followup.VERSION, 'applied', [DAY.isoformat()], ['QAAA']), applied
+    assert faults_of(applied) == []
+    recorded = night(previous(input_tolerance=None))
+    assert recorded['reason'] == 'membership_not_recorded'
+    carried = rerun(first_version(recorded))
+    assert (carried['status'], carried['reason'], carried['sentence']) == \
+        ('not_applicable', 'membership_not_recorded', recorded['sentence']) and faults_of(carried) == []
+    stopped = dict(first_version(followup._block(followup.FAILED, 'error', DAY.isoformat(), [])), error_class='KeyError')
+    failed = rerun(stopped)
+    assert (failed['status'], failed['error_class']) == ('failed', 'KeyError') and '(KeyError)' in failed['sentence']
+    assert faults_of(failed) == []
+    assert rerun({'version': 1, 'status': 'applied'})['reason'] == 'rerun_without_block'
+
+
+def test_over_more_than_one_session_a_stock_out_of_reach_is_said_in_stocks():
+    """No frame, or no place in the selection, is a fact about a stock at every
+    session it missed: the sentence counts the stocks and puts their readings
+    beside them, so one stock is never said to be three."""
+    uni = live(['A'])
+    for stocks, outcome, words in ((['A'], 'no_frame', '1 stock returned no frame this run (3 readings)'),
+                                   (['B'], 'not_selected', "1 stock is not in this run's selection, so its missed "
+                                                           "bars are unknown (3 readings)")):
+        days = sessions.sessions_before(TONIGHT, 3)
+        rows = [r for d in days for r in followup._read(stocks, {}, d, uni, 'SPY', 'sip')]
+        block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+        assert (block['stocks'], block['count'], block['outcomes'][outcome]) == (1, 3, 3)
+        assert words in block['sentence'], block['sentence']
+        assert faults_of(block) == []
+
+
+def test_the_late_bar_problem_leads_with_its_counts():
+    """The problem a late match raises is held to the record's message bound:
+    its counts come first, so the bound cuts tickers and never the number."""
+    frames = {t: with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, DOLLAR), DAY, DOLLAR) for t in q_names(40)}
+    rows = [r for d in (BEFORE, DAY) for r in followup._read(q_names(40), frames, d, live(q_names(40)), 'SPY', 'sip')]
+    block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    assert len(block['matched']) == 40 and block['outcomes']['match'] == 80
+    message = followup.problem_message(block)
+    assert message.startswith('80 late bars over 40 stocks would have been listed in the publication for their session')
+    kept = report.problem('followup', 'coverage_thin', message)['message']
+    assert len(kept) <= report.MESSAGE_MAX_CHARS and kept.startswith('80 late bars over 40 stocks'), kept
+
+
+def test_a_block_cannot_read_outside_the_bound_before_its_night():
+    """A row at a session the bound does not reach, or a row that is not for
+    the publication's own stock-sessions, is refused one level in."""
+    far = sessions.sessions_before(TONIGHT, BOUND + 1)[0]
+    frames = {'A': with_bar(tape(end=far)[:-1], far, PLACEHOLDER)}
+    rows = followup._read(['A'], frames, far, live(['A']), 'SPY', 'sip')
+    block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    assert faults_of(block) == ['stale follow-up reads a session outside the bound before this one']
+    assert faults_of(block, sessions_max=BOUND + 1) == []
+    # the near edge too: a row at the record's OWN session is no session it missed
+    own = followup._block(followup.APPLIED, None, DAY.isoformat(),
+                          followup._read(['A'], {'A': tape(end=TONIGHT)}, TONIGHT, live(['A']), 'SPY', 'sip'))
+    assert faults_of(own) == ['stale follow-up reads a session outside the bound before this one']
+    # a bound the rules do not carry asks for no block; one they carry asks for a well-formed one
+    run = {'session': TONIGHT.isoformat(), 'coverage': {'version': 1}, 'stale_followup': block, 'problems': []}
+    assert followup.faults(run, {'stale_tolerance_fraction': 0.01, 'stale_names_max': 100}) == []
+    assert followup.faults(run, {'stale_tolerance_fraction': 0.01, 'stale_names_max': 100, 'stale_sessions_max': BOUND}) == \
+        ['stale follow-up reads a session outside the bound before this one']
+    # rows out of order or doubled are refused before anything is counted
+    doubled = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    doubled['rows'] = rows + rows
+    doubled['count'] = 2
+    doubled['outcomes']['no_match'] = 2
+    assert faults_of(doubled, sessions_max=BOUND + 1) == ['stale follow-up rows are not sorted and unique']

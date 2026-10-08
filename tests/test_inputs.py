@@ -357,6 +357,14 @@ def test_permanent_refusal_accounts_for_attempts_and_unrequested_tail(
 # degraded; everything else keeps the rule above. The ledger and its
 # acceptance stay exactly as built: the tolerance reads them and writes nothing.
 TAPE_DATES = pd.to_datetime(['2026-09-04', '2026-09-08', '2026-09-09', '2026-09-10'])
+#: a tape ending 1 Sep: six sessions before 10 Sep (7 Sep is Labor Day), one past the bound of five
+FAR_DATES = pd.to_datetime(['2026-08-27', '2026-08-28', '2026-08-31', '2026-09-01'])
+#: a tape ending 2 Sep: five sessions before 10 Sep across Labor Day, the furthest the bound allows;
+#: counted in weekdays (7 Sep among them) it would be six, and refused
+EDGE_DATES = pd.to_datetime(['2026-08-28', '2026-08-31', '2026-09-01', '2026-09-02'])
+#: a tape whose last stamp is Labor Day itself: a date that is no session is never an allowed ending,
+#: though a count of weekdays would take it
+HOLIDAY_DATES = pd.to_datetime(['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07'])
 
 
 def tape(behind=0, *, dates=TAPE_DATES):
@@ -392,10 +400,19 @@ def ledger(stocks=200, *, stale=('QAAA', 'QAAB'), frames=None, capacity=0, **sta
     return cov, stats
 
 
-def tolerance_of(cov, stats, fraction=0.01, held=()):
+def endings_of(stats):
+    """Where each stale frame ends, as the pipeline hands it to the tolerance."""
+    return {t: (d.isoformat() if d else None) for t, d in stats.stale.items()}
+
+
+ARCHIVED = object()   # the code's own bound, unless a test names another (None included)
+
+
+def tolerance_of(cov, stats, fraction=0.01, held=(), sessions_max=ARCHIVED):
     from src import inputs
     return inputs.stale_tolerance(cov, fraction, names=sorted(stats.stale), benchmark='SPY', held=held,
-                                  names_max=pipeline.STALE_NAMES_MAX)
+                                  names_max=pipeline.STALE_NAMES_MAX, endings=endings_of(stats),
+                                  sessions_max=pipeline.STALE_SESSIONS_MAX if sessions_max is ARCHIVED else sessions_max)
 
 
 def with_scan_error(cov):
@@ -412,7 +429,11 @@ NAN_HIGH.iloc[-1, NAN_HIGH.columns.get_loc('High')] = float('nan')
     (lambda: ledger(stale=('QAAA', 'QAAB', 'QAAC')), 0.01, (), 'not_tolerated', ['over_limit']),
     # 270 stocks: 1% is 2.7, floored to 2; a ceiling or a rounding would admit 3
     (lambda: ledger(270, stale=('QAAA', 'QAAB', 'QAAC')), 0.01, (), 'not_tolerated', ['over_limit']),
-    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(2)}), 0.01, (), 'not_tolerated', ['behind_more']),
+    # a frame two sessions back is within the bound of five; one six back is not
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(2)}), 0.01, (), 'tolerated', []),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=FAR_DATES)}), 0.01, (), 'not_tolerated', ['behind_more']),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=EDGE_DATES)}), 0.01, (), 'tolerated', []),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=HOLIDAY_DATES)}), 0.01, (), 'not_tolerated', ['behind_more']),
     (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=pd.DatetimeIndex(['2026-09-08', pd.NaT]))}),
      0.01, (), 'not_tolerated', ['behind_more']),
     (lambda: ledger(no_bars=['QZZZ']), 0.01, (), 'not_tolerated', ['other_exceptions']),
@@ -429,7 +450,8 @@ NAN_HIGH.iloc[-1, NAN_HIGH.columns.get_loc('High')] = float('nan')
     (lambda: ledger(), 0.01, ('QAAA',), 'not_tolerated', ['open_plan']),
     (lambda: ledger(stale=()), 0.01, (), 'complete', []),
     (lambda: ledger(), None, (), 'not_tolerated', ['over_limit']),
-], ids=['two-of-200', 'three-of-200', 'three-of-270', 'two-sessions-back', 'unreadable-stamp', 'no-bars',
+], ids=['two-of-200', 'three-of-200', 'three-of-270', 'two-sessions-back', 'six-sessions-back', 'five-sessions-back-across-a-holiday',
+        'ending-on-a-holiday', 'unreadable-stamp', 'no-bars',
         'dropped', 'unfetched', 'gapped', 'unreadable-bar', 'capacity', 'scan-error', 'benchmark-outside-the-count',
         'benchmark-and-three-stocks', 'open-plan', 'complete', 'no-fraction'])
 def test_stale_tolerance_reads_only_the_ledger(build, fraction, held, verdict, reasons):
@@ -442,7 +464,19 @@ def test_stale_tolerance_reads_only_the_ledger(build, fraction, held, verdict, r
     assert json.dumps(cov, sort_keys=True, default=str) == before, 'the tolerance wrote the ledger'
     assert cov['acceptance']['status'] == ('ok' if verdict == 'complete' else 'degraded')
     assert tol['names'] == sorted(stats.stale) and tol['held'] == sorted(held)
+    assert tol['endings'] == endings_of(stats) and tol['sessions_max'] == pipeline.STALE_SESSIONS_MAX
     assert tol['stale_stocks'] == cov['stale'] - int('SPY' in stats.stale)
+
+
+@pytest.mark.parametrize('sessions_max,verdict', [(5, 'tolerated'), (2, 'tolerated'), (1, 'not_tolerated'),
+                                                  (0, 'not_tolerated'), (None, 'not_tolerated')])
+def test_the_session_bound_is_the_archived_number(sessions_max, verdict):
+    """A frame two sessions back is tolerated under a bound of two or more and
+    refused under one; a bound of zero or none allows no stale frame at all."""
+    cov, stats = ledger(stale=('QAAA',), frames={'QAAB': tape(2)})
+    tol = tolerance_of(cov, stats, sessions_max=sessions_max)
+    assert tol['verdict'] == verdict and tol['sessions_max'] == sessions_max, tol
+    assert ('behind_more' in tol['reasons']) == (verdict == 'not_tolerated')
 
 
 @pytest.mark.parametrize('stocks,fraction,limit', [(100, 0.29, 29), (270, 0.01, 2), (99, 0.01, 0),
@@ -457,8 +491,71 @@ def test_the_stale_limit_is_the_fraction_floored_in_exact_arithmetic(stocks, fra
 def test_the_tolerance_names_its_stocks_only_up_to_its_bound():
     from src import inputs
     cov, stats = ledger(stale=('QAAA', 'QAAB', 'QAAC'))
-    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=3)['names'] == ['QAAA', 'QAAB', 'QAAC']
-    assert inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=2)['names'] is None
+
+    def named(names_max):
+        return inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=names_max,
+                                      endings=endings_of(stats), sessions_max=pipeline.STALE_SESSIONS_MAX)
+    carried = named(3)
+    assert carried['names'] == ['QAAA', 'QAAB', 'QAAC']
+    assert carried['endings'] == {'QAAA': '2026-09-09', 'QAAB': '2026-09-09', 'QAAC': '2026-09-09'}
+    over = named(2)
+    assert over['names'] is None and over['endings'] is None, 'the endings go with the names, carried or not'
+
+
+def checked(cov, tol, names_max=pipeline.STALE_NAMES_MAX):
+    """The tolerance's faults as validate() asks for them, over a run whose
+    sentence is the block's and whose shortfall, if any, is named."""
+    from src import inputs
+    run = {'coverage': cov, 'input_tolerance': tol, 'problems': [{'kind': 'coverage_thin'}]}
+    tol['sentence'] = inputs.coverage_sentence(run)
+    return inputs.tolerance_faults(run, {'stale_tolerance_fraction': 0.01, 'stale_names_max': names_max,
+                                         'stale_sessions_max': pipeline.STALE_SESSIONS_MAX}, set())
+
+
+def test_endings_go_with_the_names_and_an_unreadable_ending_is_one():
+    """A block past the names it carries carries no endings either, and the
+    validator says so on its own; a frame whose last stamp is unreadable is
+    recorded as None and accepted, the ledger counting it under 'None'."""
+    from src import inputs
+    cov, stats = ledger()
+    tol = inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=1,
+                                 endings=endings_of(stats), sessions_max=pipeline.STALE_SESSIONS_MAX)
+    assert (tol['names'], tol['endings']) == (None, None)
+    assert checked(cov, tol, names_max=1) == []
+    assert checked(cov, dict(tol, endings=endings_of(stats)), names_max=1) == ['input tolerance endings are not its names']
+    cov, stats = ledger(stale=('QAAA',), frames={'QAAB': tape(dates=pd.DatetimeIndex(['2026-09-08', pd.NaT]))})
+    tol = tolerance_of(cov, stats)
+    assert tol['endings'] == {'QAAA': '2026-09-09', 'QAAB': None} and 'None' in cov['sessions']['latest_bar_dates']
+    assert checked(cov, tol) == []
+
+
+LONG_TAIL = tuple(q_names(pipeline.STALE_NAMES_MAX + 1))   # one more stale stock than a block names
+
+
+@pytest.mark.parametrize('stale,gaps,said,tells', [
+    (LONG_TAIL + ('SPY',), {}, 1, True),                       # not ready, and no other gap could hold it: stale
+    (LONG_TAIL, {}, 0, True),                                  # ready: not stale
+    (LONG_TAIL, {'no_bars': ['QZZZ']}, 0, True),               # ready beside another gap: still not stale
+    (LONG_TAIL + ('SPY',), {'no_bars': ['QZZZ']}, 1, False),   # not ready beside another gap: the block's count is read
+], ids=['benchmark-stale', 'benchmark-ready', 'benchmark-ready-beside-a-gap', 'benchmark-stale-beside-a-gap'])
+def test_a_tail_too_long_to_name_counts_the_benchmark_off_the_ledger(stale, gaps, said, tells):
+    """A block past the names it carries keeps no membership, but the ledger
+    still says whether the benchmark is stale: the block the run writes is
+    accepted, and a count that moves the benchmark in or out of the stocks is
+    refused wherever the ledger can tell."""
+    from src import inputs
+    cov, stats = ledger(len(LONG_TAIL) + 2, stale=stale, **gaps)
+    assert inputs.faults(cov) == [], 'the case must reconcile, or it tests a broken ledger'
+    tol = tolerance_of(cov, stats)
+    assert tol['names'] is None and tol['stale_stocks'] == cov['stale'] - said
+    assert checked(cov, tol) == [], 'the validator refuses the block the run wrote'
+
+    def faults_at(stale_stocks):
+        return checked(cov, dict(tol, stale_stocks=stale_stocks))
+    refused = ['input tolerance does not re-derive from the ledger']
+    # the other reading of the benchmark: refused where the ledger can tell, accepted where it cannot
+    assert faults_at(cov['stale'] - (1 - said)) == (refused if tells else [])
+    assert faults_at(cov['stale'] - 2) == refused, 'no ledger has two benchmarks'
 
 
 @pytest.mark.parametrize('build,fraction,says,never', [
@@ -466,21 +563,29 @@ def test_the_tolerance_names_its_stocks_only_up_to_its_bound():
     # not degraded", which another problem on the same night can make false
     (lambda: ledger(), 0.01, ["2 returned frames had no bar for 2026-09-10, each ending on the previous session, "
                               "2026-09-09", "within this run's stale tolerance of 2 stocks (1% of the intended stocks), "
+                              f"each ending within the {pipeline.STALE_SESSIONS_MAX} sessions before, "
                               "so the stale frames do not degrade the run; the next session's run, when it publishes, "
-                              "reads their 2026-09-10 bars again."], ["run is not degraded"]),
-    # one frame two sessions back: the dates are each said, never "each ending on the previous session"
+                              "reads every session they missed again."], ["run is not degraded"]),
+    # one frame two sessions back: the dates are each said, never "each ending on the previous session", and it is within the bound
     (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(2)}), 0.01,
      ["2 returned frames had no bar for 2026-09-10, ending 1 on 2026-09-08, 1 on 2026-09-09",
-      "not every stale frame ends on the previous session"], ["each ending on the previous session"]),
+      "within this run's stale tolerance"], ["each ending on the previous session", "Outside"]),
+    # one frame six sessions back is past the bound, and the sentence names the bound and the date
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=FAR_DATES)}), 0.01,
+     ["ending 1 on 2026-09-01, 1 on 2026-09-09",
+      f"not every stale frame ends within the {pipeline.STALE_SESSIONS_MAX} sessions before 2026-09-10 on a readable date"],
+     ["each ending on the previous session", "do not degrade"]),
     # one stale stock against a limit of zero reads in the singular
-    (lambda: ledger(99, stale=('QAAA',)), 0.01, ["1 stale stock is more than the limit", "(0 stocks, 1%)"],
+    (lambda: ledger(99, stale=('QAAA',)), 0.01, ["1 stale stock is more than the limit",
+                                                 f"(0 stocks, 1%, within {pipeline.STALE_SESSIONS_MAX} sessions)"],
      ["1 stale stocks"]),
     # a scan error is not a missing input, and the sentence says which gap it was
     (lambda: (with_scan_error(ledger()[0]), ledger()[1]), 0.01,
      ["other gaps beside the stale frames (scan or checklist errors: 1)"], ["missing too"]),
     # the archived fraction as it is, never re-rounded to a whole percent
-    (lambda: ledger(), 0.005, ["tolerance (1 stock, 0.5%)", "2 stale stocks are more than the limit"], [" 0%", "1%"]),
-], ids=['tolerated', 'two-sessions-back', 'one-stock', 'scan-error', 'half-a-percent'])
+    (lambda: ledger(), 0.005, [f"tolerance (1 stock, 0.5%, within {pipeline.STALE_SESSIONS_MAX} sessions)",
+                               "2 stale stocks are more than the limit"], [" 0%", "1%"]),
+], ids=['tolerated', 'two-sessions-back', 'six-sessions-back', 'one-stock', 'scan-error', 'half-a-percent'])
 def test_the_tolerance_sentence_says_only_what_the_ledger_shows(build, fraction, says, never):
     from src import inputs
     cov, stats = build()
@@ -544,9 +649,9 @@ def test_a_stale_only_night_is_ok_and_still_counts_every_missing_stock(
 
 @pytest.mark.parametrize('arrange,reasons', [
     (lambda fake: behind(fake, ['QAAA', 'QAAB', 'QAAC']), ['over_limit']),
-    (lambda fake: behind(fake, ['QAAA'], sessions=2), ['behind_more']),
+    (lambda fake: behind(fake, ['QAAA'], sessions=pipeline.STALE_SESSIONS_MAX + 1), ['behind_more']),
     (None, ['other_exceptions']),
-], ids=['three-stale', 'two-sessions-back', 'and-a-name-with-no-bars'])
+], ids=['three-stale', 'past-the-session-bound', 'and-a-name-with-no-bars'])
 def test_past_the_stale_tolerance_the_night_is_degraded(wide, claude, fake_resend, fake_alpaca, tmp_path,
                                                          arrange, reasons):
     from src import report
@@ -564,7 +669,28 @@ def test_past_the_stale_tolerance_the_night_is_degraded(wide, claude, fake_resen
     assert tol['verdict'] == 'not_tolerated' and tol['reasons'] == reasons, tol
     assert "Outside this run's stale tolerance" in tol['sentence']
     if 'behind_more' in reasons:
-        assert 'each ending on the previous session' not in tol['sentence'] and '1 on 2026-09-08' in tol['sentence']
+        from src import sessions
+        far = sessions.sessions_before(date(2026, 9, 10), pipeline.STALE_SESSIONS_MAX + 1)[0].isoformat()
+        assert 'each ending on the previous session' not in tol['sentence'] and f'1 on {far}' in tol['sentence']
+        assert tol['endings'] == {'QAAA': far}
+    report.validate(data)
+
+
+def test_a_frame_two_sessions_behind_is_within_the_bound(wide, claude, fake_resend, fake_alpaca, tmp_path):
+    """The first live night under the tolerance (7 Oct 2026) had one of sixteen
+    stale frames two sessions behind and was degraded for it; a thin name skips
+    days. Within the bound the night is ok, and the record says where the frame
+    ends so the next session's run can read both sessions it missed."""
+    from src import report, sessions
+    behind(fake_alpaca, ['QAAA'], sessions=2)
+    rep, data, _ = evening(tmp_path, wide)
+    assert rep.status == 'ok' and data['run']['problems'] == [], rep.problems
+    tol = data['run']['input_tolerance']
+    second = sessions.sessions_before(date(2026, 9, 10), 2)[0].isoformat()
+    assert (tol['verdict'], tol['names'], tol['endings'], tol['sessions_max']) == \
+        ('tolerated', ['QAAA'], {'QAAA': second}, pipeline.STALE_SESSIONS_MAX), tol
+    assert f'ending 1 on {second}' in tol['sentence'] and 'each ending within' in tol['sentence'], tol['sentence']
+    assert data['cover']['dek'].endswith(tol['sentence']) or tol['sentence'] in data['cover']['dek']
     report.validate(data)
 
 
@@ -691,8 +817,8 @@ def test_the_tolerance_functions_spell_no_bare_number():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1] / 'src'
     scope = {'followup.py': None, 'reader_coverage.py': None,
-             'inputs.py': {'stale_limit', 'stale_tolerance', '_count', '_percent', '_ending', '_why',
-                           '_tolerance_clause', 'coverage_sentence', 'tolerance_faults'}}
+             'inputs.py': {'stale_limit', 'allowed_endings', 'stale_tolerance', '_count', '_percent', '_ending', '_why',
+                           '_tolerance_clause', 'coverage_sentence', '_benchmark_stale', 'tolerance_faults'}}
     literals, seen = {}, set()
     for name, functions in scope.items():
         for node in ast.walk(ast.parse((root / name).read_text())):

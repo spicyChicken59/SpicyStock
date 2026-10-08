@@ -3679,6 +3679,9 @@ async function checkStaleTolerance(browser, base) {
       check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + follow.sentence), coverage.slice(-300));
       const method = await said(page, '#run-meta');
       check(tag + ': Method quotes the archived tolerance', method.includes(pct), method.slice(0, 400));
+      check(tag + ': Method quotes the archived session bound and reads every missed session',
+        method.includes('ending within the ' + thin.rules.pipeline.stale_sessions_max + ' sessions before it') &&
+        method.includes('reads every session each of them missed again') && !method.includes('ending on the previous session'), method.slice(0, 900));
       check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
       check(tag + ': Method quotes the reader rule and prints the reads', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && method.includes(reads.sentence), method);
@@ -3705,6 +3708,22 @@ async function checkStaleTolerance(browser, base) {
     'only the benchmark stale': (d) => {
       Object.assign(d.run.input_tolerance, { verdict: 'complete', reasons: [], stale: 1, stale_stocks: 0, names: ['SPY'] });
     },
+    // the rule's first version (a fraction archived, no session bound): 7 Oct 2026's record
+    'the first version of the rule': (d) => {
+      delete d.rules.pipeline.stale_sessions_max; d.run.input_tolerance.version = 1; d.run.stale_followup.version = 1;
+    },
+    // a frame past the bound, said in the words of the rule each record archived
+    'a frame past the bound': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'not_tolerated', reasons: ['behind_more'] });
+      d.run.status = 'degraded';
+      d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (behind_more)' }];
+    },
+    'past the bound under the first version': (d) => {
+      Object.assign(d.run.input_tolerance, { verdict: 'not_tolerated', reasons: ['behind_more'], version: 1 });
+      delete d.rules.pipeline.stale_sessions_max;
+      d.run.status = 'degraded';
+      d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (behind_more)' }];
+    },
     'a late match': (d) => { d.run.stale_followup.sentence = 'Last night\'s 2 stocks without a 2026-09-09 bar, read again from tonight\'s fetch: QAB (dollar) matches a scan on it.'; },
     'a record from before the tolerance': (d) => {
       delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
@@ -3726,6 +3745,15 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the status line is the problem\'s sentence', (await said(page, '#status-line')).includes(SENTENCES.coverage_thin), await said(page, '#status-line'));
         check('thin ' + name + ': the dek does not claim the tolerance', !dek.includes('within the recorded tolerance') && dek.includes('1 fetched frame was stale.'), dek);
         check('thin ' + name + ': Method names why', method.includes('Stale tolerance: not tolerated') && method.includes('more stale stocks than the limit'), method);
+      } else if (name === 'the first version of the rule') {
+        check('thin ' + name + ': Method keeps the first version\'s words', method.includes('ending on the previous session') &&
+          method.includes('the next session\u2019s run reads it again') && !method.includes('sessions before it') && !method.includes('every session each'), method.slice(0, 900));
+      } else if (name === 'a frame past the bound') {
+        check('thin ' + name + ': Method names the archived bound', method.includes('Stale tolerance: not tolerated') &&
+          method.includes('(not every stale frame ends within the ' + d.rules.pipeline.stale_sessions_max + ' sessions before it on a readable date)'), method);
+      } else if (name === 'past the bound under the first version') {
+        check('thin ' + name + ': Method says it in the first version\'s words', method.includes('(not every stale frame ends on the previous session)') &&
+          !method.includes('sessions before it'), method);
       } else if (name === 'only the benchmark stale') {
         check('thin ' + name + ': Method prints no tolerance verdict for it', !method.includes('Stale tolerance:'), method.slice(0, 900));
       } else if (name === 'another archived rule') {

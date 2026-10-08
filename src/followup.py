@@ -3,21 +3,27 @@
 A stock the evening fetch returned without a bar for its session is stale:
 its inputs that night are unknown, never a measured non-match. The run for
 the next session reads each of the previous publication's stale stocks again,
-from the frames it fetched for its OWN session, with no extra provider call:
-did the previous session's bar arrive since, how much volume does it carry, and
-measured at that session by the evening's own rules (the session rules, the
-price policy, ``scans.scan_all`` for the 4% and $ scans, ``watchlist.build``
-for the setting-up list), would the previous publication have listed it?
+from the frames it fetched for its OWN session, with no extra provider call,
+at EVERY session the stock missed -- from the session after its last bar up to
+the previous publication's own, at most ``sessions_max`` of them, one reading
+per stock and session: did that session's bar arrive since, how much volume
+does it carry, and measured at that session by the evening's own rules (the
+session rules, the price policy, ``scans.scan_all`` for the 4% and $ scans,
+``watchlist.build`` for the setting-up list), would the publication for that
+session have listed it?
 
-It is accounting about a previous publication, never a signal: the previous
-session's entry window has passed, so a late bar never becomes a burst, an
+It is accounting about previous publications, never a signal: those sessions'
+entry windows have passed, so a late bar never becomes a burst, an
 observation, a plan or a ticket, and the previous record, its history and its
 ledger entry are never touched. A late bar that WOULD have been listed is
-named, and makes the night that finds it degraded. A stock that left tonight's
-selection is not re-requested; its bar stays unknown. The bars are this run's,
-split-adjusted as of this run, which is what the sentence says. No sentence
-states a cause (a halt, a delisting, a name that did not trade): the bar is
-what the provider served at this run's check, and nothing more is known.
+named with its session, and makes the night that finds it degraded. A stock
+that left tonight's selection is not re-requested; its bars stay unknown. The
+bars are this run's, split-adjusted as of this run, which is what the sentence
+says. No sentence states a cause (a halt, a delisting, a name that did not
+trade): the bar is what the provider served at this run's check, and nothing
+more is known. A previous publication that recorded only which stocks were
+stale and not where each frame ended (the tolerance's version 1) is read at
+its own session alone.
 
 ``night()`` never raises: a defect anywhere in it is a ``failed`` block with
 the error's class, and the night publishes as it would have without it.
@@ -25,7 +31,7 @@ the error's class, and the night publishes as it would have without it.
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date
+from datetime import date, timedelta
 import logging
 import math
 
@@ -35,12 +41,12 @@ from src import market_data, scans, sessions, universe, watchlist
 
 log = logging.getLogger("spicystock.followup")
 
-VERSION = 1
+VERSION = 2
 APPLIED, NOT_APPLICABLE, FAILED = "applied", "not_applicable", "failed"
 STATUSES = (APPLIED, NOT_APPLICABLE, FAILED)
-#: what became of each of the previous publication's stale stocks
+#: what became of each of the previous publication's stale stocks at each session it missed
 OUTCOMES = ("no_match", "match", "unmeasurable", "price_excluded", "still_missing", "no_frame", "not_selected")
-#: the outcomes of a stock whose bar for the previous session has arrived
+#: the outcomes of a stock whose bar for the session read has arrived
 ARRIVED = ("no_match", "match", "unmeasurable", "price_excluded")
 #: why a block is not applied, or why it failed
 REASONS = ("none_missing", "closed_session", "no_previous_record", "previous_not_open",
@@ -80,58 +86,105 @@ def _bar_facts(df: pd.DataFrame) -> tuple[int | None, bool | None]:
     return volume, flat
 
 
+def _row_key(row: dict) -> tuple:
+    return (row["ticker"], row["session"])
+
+
 def _block(status: str, reason: str | None, for_session: str | None, rows: list[dict]) -> dict:
-    rows = sorted(rows, key=lambda r: r["ticker"])
+    rows = sorted(rows, key=_row_key)
     arrived = [r for r in rows if r["outcome"] in ARRIVED]
     block = {
         "version": VERSION, "status": status, "reason": reason, "for_session": for_session,
+        "sessions": sorted({r["session"] for r in rows}),
+        "stocks": len({r["ticker"] for r in rows}),
         "count": len(rows), "outcomes": {o: sum(1 for r in rows if r["outcome"] == o) for o in OUTCOMES},
         "zero_volume": sum(1 for r in arrived if r["volume"] == 0),
         "flat": sum(1 for r in arrived if r["flat"] is True),
-        "matched": sorted(r["ticker"] for r in rows if r["outcome"] == "match"),
+        "matched": sorted({r["ticker"] for r in rows if r["outcome"] == "match"}),
         "rows": rows,
     }
     block["sentence"] = sentence_of(block)
     return block
 
 
-def _membership(previous_run: dict, benchmark: str) -> tuple[str | None, list[str]]:
-    """The previous publication's full stale membership, checked against its own ledger;
-    a reason when it cannot be read, the stocks otherwise."""
+def _membership(previous_run: dict, benchmark: str) -> tuple[str | None, list[str], dict[str, date | None]]:
+    """The previous publication's full stale membership, checked against its own ledger,
+    and where each frame ended when the publication recorded it; a reason when
+    the membership cannot be read, the stocks and their endings otherwise."""
     tol = previous_run.get("input_tolerance")
     if not isinstance(tol, dict) or "names" not in tol:
-        return "membership_not_recorded", []
+        return "membership_not_recorded", [], {}
     names = tol["names"]
     if names is None:
-        return "membership_over_bound", []
+        return "membership_over_bound", [], {}
     stale = ((previous_run.get("coverage") or {}).get("reasons") or {}).get("stale") or {}
     if (not isinstance(names, list) or not all(isinstance(n, str) for n in names)
             or len(names) != stale.get("count") or universe.identity(names) != stale.get("identity")):
-        return "membership_mismatch", []
+        return "membership_mismatch", [], {}
     stocks = sorted(set(names) - {benchmark})
-    return (None, stocks) if stocks else ("none_missing", [])
+    endings: dict[str, date | None] = {}
+    recorded = tol.get("endings")
+    if isinstance(recorded, dict):
+        for t in stocks:
+            try:
+                endings[t] = date.fromisoformat(recorded[t]) if isinstance(recorded.get(t), str) else None
+            except ValueError:
+                endings[t] = None
+    return (None, stocks, endings) if stocks else ("none_missing", [], {})
+
+
+def _from_first_version(block: dict) -> dict | None:
+    """A first-version block in this version's shape: its status, its reason,
+    its error, and its rows as readings at its own session, which is where the
+    first version read every stock. None when it cannot be read as one; the
+    result is held to this version's shape by the caller."""
+    try:
+        day = block["for_session"]
+        rows = [{"ticker": r["ticker"], "session": day, "outcome": r["outcome"], "volume": r["volume"],
+                 "flat": r["flat"], "route": r["route"]} for r in block["rows"]]
+        out = _block(block["status"], block["reason"], day, rows)
+        if block.get("error_class"):
+            out["error_class"] = block["error_class"]
+            out["sentence"] = sentence_of(out)
+        return out
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return None
+
+
+def missed_sessions(ending: date | None, previous: date, sessions_max: int) -> list[date]:
+    """The sessions a stale stock missed: after its last recorded bar, up to and
+    including the previous publication's session, the most recent
+    ``sessions_max`` of them. A stock whose ending is unknown (an unreadable
+    stamp, or a publication that recorded none) is read at the previous
+    session alone, as the first version of this check read every stock."""
+    bound = max(int(sessions_max or 0), 1)
+    window = sessions.sessions_before(previous + timedelta(days=1), bound)
+    if ending is None or ending >= previous:
+        return [previous]
+    return [d for d in window if d > ending] or [previous]
 
 
 def _read(stocks: list[str], frames: dict, day: date, uni, benchmark: str, feed: str) -> list[dict]:
     """Each stock's outcome at ``day``, read from tonight's frames by the
     evening's own rules for that session."""
+    stamp = day.isoformat()
     rows, arrived = {}, {}
     for t in stocks:
         if t not in uni.symbols:
-            rows[t] = {"ticker": t, "outcome": "not_selected", "volume": None, "flat": None, "route": None}
+            rows[t] = {"ticker": t, "session": stamp, "outcome": "not_selected", "volume": None, "flat": None, "route": None}
         elif t not in frames:
-            rows[t] = {"ticker": t, "outcome": "no_frame", "volume": None, "flat": None, "route": None}
+            rows[t] = {"ticker": t, "session": stamp, "outcome": "no_frame", "volume": None, "flat": None, "route": None}
         else:
             upto = _through(frames[t], day)
             if upto is None:
-                rows[t] = {"ticker": t, "outcome": "still_missing", "volume": None, "flat": None, "route": None}
+                rows[t] = {"ticker": t, "session": stamp, "outcome": "still_missing", "volume": None, "flat": None, "route": None}
             else:
                 arrived[t] = upto
     ready = market_data.apply_session_rules(arrived, day, market_data.DownloadStats(session=day, feed=feed))
     eligible, excluded = universe.session_eligible(ready, uni, exempt=(benchmark,))
     for t, upto in arrived.items():
         volume, flat = _bar_facts(upto)
-        row = {"ticker": t, "outcome": "unmeasurable", "volume": volume, "flat": flat, "route": None}
+        row = {"ticker": t, "session": stamp, "outcome": "unmeasurable", "volume": volume, "flat": flat, "route": None}
         if t in excluded:
             row["outcome"] = "price_excluded"
         elif t in eligible:
@@ -159,9 +212,18 @@ def _read(stocks: list[str], frames: dict, day: date, uni, benchmark: str, feed:
     return list(rows.values())
 
 
+def _read_plan(plan: dict[date, list[str]], frames: dict, uni, benchmark: str, feed: str) -> list[dict]:
+    """Every (stock, session) pair the plan names, read session by session."""
+    rows: list[dict] = []
+    for day in sorted(plan):
+        rows.extend(_read(sorted(set(plan[day])), frames, day, uni, benchmark, feed))
+    return rows
+
+
 def night(previous_run, frames: dict, session: date, uni, *, closed: bool, benchmark: str,
-          names_max: int, feed: str) -> dict:
-    """The previous publication's stale stocks read again from this run's fetch. Never raises."""
+          names_max: int, feed: str, sessions_max: int) -> dict:
+    """The previous publication's stale stocks read again from this run's fetch,
+    at every session each one missed. Never raises."""
     day = None
     try:
         if closed:
@@ -172,26 +234,35 @@ def night(previous_run, frames: dict, session: date, uni, *, closed: bool, bench
             return _block(NOT_APPLICABLE, "previous_not_open", None, [])
         if previous_run.get("session") == session.isoformat():
             # a re-run of the same session: the record it replaces read the
-            # session before; its stocks are read again from THIS fetch, so a
-            # late bar that arrived since is seen. A block it did not apply is
-            # carried as it stands: there was nothing to read.
+            # sessions before; its stock-sessions are read again from THIS
+            # fetch, so a late bar that arrived since is seen. A block it did
+            # not apply is carried as it stands: there was nothing to read. A
+            # block of the first version is read as this version reads it.
             carried = previous_run.get("stale_followup")
-            if not isinstance(carried, dict) or shape_faults(carried, session, names_max):
+            if isinstance(carried, dict) and carried.get("version") == 1:
+                carried = _from_first_version(carried)
+            if not isinstance(carried, dict) or shape_faults(carried, session, names_max, sessions_max):
                 return _block(NOT_APPLICABLE, "rerun_without_block", None, [])
             if carried["status"] != APPLIED:
                 return deepcopy(carried)
             day = sessions.previous_session(session)
-            stocks = [r["ticker"] for r in carried["rows"]]
-            block = _block(APPLIED, None, day.isoformat(), _read(stocks, frames, day, uni, benchmark, feed))
-            return _block(FAILED, "invalid_block", day.isoformat(), []) if shape_faults(block, session, names_max) else block
+            plan: dict[date, list[str]] = {}
+            for r in carried["rows"]:
+                plan.setdefault(date.fromisoformat(r["session"]), []).append(r["ticker"])
+            block = _block(APPLIED, None, day.isoformat(), _read_plan(plan, frames, uni, benchmark, feed))
+            return _block(FAILED, "invalid_block", day.isoformat(), []) if shape_faults(block, session, names_max, sessions_max) else block
         day = sessions.previous_session(session)
         if previous_run.get("session") != day.isoformat():
             return _block(NOT_APPLICABLE, "previous_not_adjacent", None, [])
-        reason, stocks = _membership(previous_run, benchmark)
+        reason, stocks, endings = _membership(previous_run, benchmark)
         if reason:
             return _block(NOT_APPLICABLE, reason, day.isoformat(), [])
-        block = _block(APPLIED, None, day.isoformat(), _read(stocks, frames, day, uni, benchmark, feed))
-        if shape_faults(block, session, names_max):
+        plan = {}
+        for t in stocks:
+            for d in missed_sessions(endings.get(t), day, sessions_max):
+                plan.setdefault(d, []).append(t)
+        block = _block(APPLIED, None, day.isoformat(), _read_plan(plan, frames, uni, benchmark, feed))
+        if shape_faults(block, session, names_max, sessions_max):
             return _block(FAILED, "invalid_block", day.isoformat(), [])
         return block
     except Exception as exc:  # noqa: BLE001 -- accounting about a previous night never stops this one
@@ -208,9 +279,35 @@ def _n(count: int, one: str, many: str) -> str:
     return f"{count} {one if count == 1 else many}"
 
 
+def _match_rows(block: dict) -> list[dict]:
+    return [r for r in block["rows"] if r["outcome"] == "match"]
+
+
+def _stocks_with(block: dict, outcome: str) -> int:
+    return len({r["ticker"] for r in block["rows"] if r["outcome"] == outcome})
+
+
+def matches_named(block: dict) -> str:
+    """Every late bar that would have been listed, as ticker (session, route),
+    in row order: the problem's words and the sentence's."""
+    return ", ".join(f"{r['ticker']} ({r['session']}, {ROUTE_WORDS[r['route']]})" for r in _match_rows(block))
+
+
+def problem_message(block: dict) -> str:
+    """The coverage_thin message for late bars that would have been listed:
+    the counts first and the tickers after, so a message held to the record's
+    length bound still says how many; each reading's session is in the block."""
+    late, stocks = len(_match_rows(block)), block["matched"]
+    return (f"{_n(late, 'late bar', 'late bars')} over {_n(len(stocks), 'stock', 'stocks')} would have been listed "
+            f"in the publication for {'its' if late == 1 else 'their'} session, which did not include "
+            f"{'it' if late == 1 else 'them'}: " + ", ".join(stocks))
+
+
 def sentence_of(block: dict) -> str | None:
-    """The block in words, composed from its counts and tickers only; it
-    names no cause for a missing bar and never calls a late bar a signal."""
+    """The block in words, composed from its counts, sessions and tickers only;
+    it names no cause for a missing bar and never calls a late bar a signal.
+    One session read keeps the words of the first version; more than one says
+    the span and counts readings, one per stock and session."""
     status, reason, day = block.get("status"), block.get("reason"), block.get("for_session")
     if status == FAILED:
         what = f"without a {day} bar" if day else "without a bar"
@@ -224,15 +321,25 @@ def sentence_of(block: dict) -> str | None:
             "membership_mismatch": "The previous publication's list of stocks without a bar did not match its own count and digest, so none was read again.",
         }.get(reason)
     o = block["outcomes"]
+    read = block.get("sessions") or []
+    single = len(read) <= 1
     arrived = sum(o[k] for k in ARRIVED)
     parts = []
     if arrived:
-        parts.append(f"{_n(arrived, 'now carries', 'now carry')} a {day} bar ({block['zero_volume']} with zero volume)")
-        if block["matched"]:
-            routes = {r["ticker"]: r["route"] for r in block["rows"] if r["outcome"] == "match"}
-            named = ", ".join(f"{t} ({ROUTE_WORDS[routes[t]]})" for t in block["matched"])
-            parts.append(f"{named} would have been listed in that publication, which did not include "
-                         f"{'it' if len(block['matched']) == 1 else 'them'}")
+        if single:
+            parts.append(f"{_n(arrived, 'now carries', 'now carry')} a {day} bar ({block['zero_volume']} with zero volume)")
+        else:
+            parts.append(f"{_n(arrived, 'reading now carries', 'readings now carry')} the session's bar "
+                         f"({block['zero_volume']} with zero volume)")
+        matches = _match_rows(block)
+        if matches:
+            if single:
+                named = ", ".join(f"{r['ticker']} ({ROUTE_WORDS[r['route']]})" for r in matches)
+                parts.append(f"{named} would have been listed in that publication, which did not include "
+                             f"{'it' if len(matches) == 1 else 'them'}")
+            else:
+                parts.append(f"{matches_named(block)} would have been listed in the publication for that session, "
+                             f"which did not include {'it' if len(matches) == 1 else 'them'}")
         if o["no_match"] == arrived:
             parts.append("none of them would have been listed")
         elif o["no_match"]:
@@ -242,21 +349,44 @@ def sentence_of(block: dict) -> str | None:
         if o["price_excluded"]:
             parts.append(f"{_n(o['price_excluded'], 'falls', 'fall')} under the ${universe.MIN_PRICE:g} session-close policy")
     if o["still_missing"]:
-        parts.append(f"{_n(o['still_missing'], 'still has', 'still have')} no {day} bar")
+        parts.append(f"{_n(o['still_missing'], 'still has', 'still have')} no {day} bar" if single
+                     else f"{_n(o['still_missing'], 'reading still finds', 'readings still find')} no bar for the session")
+    # a stock with no frame, or out of the selection, is so at every session it
+    # missed: over more than one session these two are said in stocks, with
+    # their readings beside them, never readings spoken of as stocks
     if o["no_frame"]:
-        parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame this run")
+        if single:
+            parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame this run")
+        else:
+            k = _stocks_with(block, "no_frame")
+            parts.append(f"{_n(k, 'stock', 'stocks')} returned no frame this run "
+                         f"({_n(o['no_frame'], 'reading', 'readings')})")
     if o["not_selected"]:
-        parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in this run's selection, so "
-                     f"{'its' if o['not_selected'] == 1 else 'their'} {day} bar is unknown")
-    return (f"The {day} publication's {_n(block['count'], 'stock', 'stocks')} without a {day} bar, read again "
-            f"from this run's split-adjusted fetch: " + "; ".join(parts) + ". A late bar is the bar the provider "
-            "served at this run's check; it never becomes a signal, plan or ticket.")
+        if single:
+            one = o["not_selected"] == 1
+            parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in this run's selection, so "
+                         f"{'its' if one else 'their'} {day} bar{'' if one else 's'} {'is' if one else 'are'} unknown")
+        else:
+            k = _stocks_with(block, "not_selected")
+            parts.append(f"{_n(k, 'stock is', 'stocks are')} not in this run's selection, so "
+                         f"{'its' if k == 1 else 'their'} missed bars are unknown "
+                         f"({_n(o['not_selected'], 'reading', 'readings')})")
+    if single:
+        head = (f"The {day} publication's {_n(block['count'], 'stock', 'stocks')} without a {day} bar, read again "
+                f"from this run's split-adjusted fetch: ")
+    else:
+        head = (f"The {day} publication's {_n(block['stocks'], 'stock', 'stocks')} without a bar, read again from this "
+                f"run's split-adjusted fetch at each of the {_n(len(read), 'session', 'sessions')} missed "
+                f"({read[0]} to {read[-1]}), one reading per stock and session, {_n(block['count'], 'reading', 'readings')} in all: ")
+    return head + "; ".join(parts) + (". A late bar is the bar the provider served at this run's check; it never "
+                                       "becomes a signal, plan or ticket.")
 
 
 # ------------------------------------------------------------ validation ----
 
-def shape_faults(block, session: date, names_max: int) -> list[str]:
-    """The block's own shape, one level in: its words, its counts, its rows."""
+def shape_faults(block, session: date, names_max: int, sessions_max: int) -> list[str]:
+    """The block's own shape, one level in: its words, its counts, its rows,
+    and that every session it read lies within the bound before this one."""
     try:
         if block.get("version") != VERSION or block.get("status") not in STATUSES:
             return ["stale follow-up version or status unknown"]
@@ -267,11 +397,15 @@ def shape_faults(block, session: date, names_max: int) -> list[str]:
         o, rows = block["outcomes"], block["rows"]
         if set(o) != set(OUTCOMES) or any(type(v) is not int or v < 0 for v in o.values()):
             return ["stale follow-up outcomes are malformed"]
-        if not (sum(o.values()) == block["count"] == len(rows)) or block["count"] > names_max:
+        if not (sum(o.values()) == block["count"] == len(rows)) or block["count"] > names_max * max(int(sessions_max or 0), 1):
             return ["stale follow-up counts do not reconcile"]
-        tickers = [r["ticker"] for r in rows]
-        if tickers != sorted(set(tickers)) or not all(isinstance(t, str) for t in tickers):
+        keys = [_row_key(r) for r in rows]
+        if keys != sorted(set(keys)) or not all(isinstance(t, str) and isinstance(s, str) for t, s in keys):
             return ["stale follow-up rows are not sorted and unique"]
+        if block["stocks"] != len({t for t, _ in keys}):
+            return ["stale follow-up stock count is not its rows'"]
+        if block["sessions"] != sorted({s for _, s in keys}):
+            return ["stale follow-up sessions are not its rows'"]
         for r in rows:
             if r["outcome"] not in OUTCOMES or (r["route"] in ROUTES) != (r["outcome"] == "match"):
                 return ["stale follow-up row outcome or route is malformed"]
@@ -281,14 +415,19 @@ def shape_faults(block, session: date, names_max: int) -> list[str]:
                 return ["stale follow-up row reads a bar that did not arrive"]
             if o[r["outcome"]] != sum(1 for x in rows if x["outcome"] == r["outcome"]):
                 return ["stale follow-up outcomes are not its rows'"]
-        if block["matched"] != sorted(r["ticker"] for r in rows if r["outcome"] == "match"):
+        if block["matched"] != sorted({r["ticker"] for r in rows if r["outcome"] == "match"}):
             return ["stale follow-up matched is not its matching rows"]
         arrived_rows = [r for r in rows if r["outcome"] in ARRIVED]
         if (block["zero_volume"] != sum(1 for r in arrived_rows if r["volume"] == 0)
                 or block["flat"] != sum(1 for r in arrived_rows if r["flat"] is True)):
             return ["stale follow-up zero-volume or flat counts are not its rows'"]
-        if block["status"] == APPLIED and block["for_session"] != sessions.previous_session(session).isoformat():
-            return ["stale follow-up is not for the session before this one"]
+        if block["status"] == APPLIED:
+            previous = sessions.previous_session(session)
+            if block["for_session"] != previous.isoformat():
+                return ["stale follow-up is not for the session before this one"]
+            allowed = {d.isoformat() for d in sessions.sessions_before(previous + timedelta(days=1), max(int(sessions_max or 0), 1))}
+            if not set(block["sessions"]) <= allowed:
+                return ["stale follow-up reads a session outside the bound before this one"]
         if block["status"] != APPLIED and rows:
             return ["stale follow-up carries rows it did not apply"]
         if block.get("sentence") != sentence_of(block):
@@ -302,7 +441,8 @@ def faults(run: dict, pipeline_rules) -> list[str]:
     """The follow-up held to the record it sits in: present under rules that
     write it, well formed, and a late bar that would have been listed named
     coverage_thin. A record made under older rules is not asked for one."""
-    if not isinstance(pipeline_rules, dict) or "stale_tolerance_fraction" not in pipeline_rules:
+    if (not isinstance(pipeline_rules, dict) or "stale_tolerance_fraction" not in pipeline_rules
+            or "stale_sessions_max" not in pipeline_rules):
         return []
     cov = run.get("coverage")
     if not isinstance(cov, dict) or "version" not in cov:
@@ -312,7 +452,7 @@ def faults(run: dict, pipeline_rules) -> list[str]:
         return ["stale follow-up block missing"]
     try:
         session = date.fromisoformat(run["session"])
-        found = shape_faults(block, session, pipeline_rules["stale_names_max"])
+        found = shape_faults(block, session, pipeline_rules["stale_names_max"], pipeline_rules["stale_sessions_max"])
     except (KeyError, TypeError, ValueError, AttributeError):
         return ["stale follow-up block is malformed"]
     if found:

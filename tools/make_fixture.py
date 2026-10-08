@@ -79,9 +79,12 @@ THIN_FIRST_EVENING = datetime(2026, 9, 9, 22, 30, tzinfo=timezone.utc)
 #: the thin night's selection: exactly this many stocks, so the stale
 #: tolerance's limit is pipeline.STALE_TOLERANCE_FRACTION of it, floored
 THIN_STOCKS = 100
-#: the two stocks the first evening serves one session behind: the first
-#: stays behind on the fixture's night, the second catches up
+#: the two stocks the first evening serves behind -- the first two sessions,
+#: the second one: on the fixture's night the first has caught up to one
+#: session behind and the second is ready, so the follow-up reads the first at
+#: both sessions it missed and the second at its one
 THIN_STALE = ("QAA", "QAB")
+THIN_BEHIND = {"QAA": 2, "QAB": 1}
 #: the thin night's one reply reader authority refuses: a burst graded below
 #: A-quality, so on its red night no plan waited on it
 THIN_REFUSED = "PLUG"
@@ -337,15 +340,17 @@ def thin_fillers(count: int) -> dict[str, pd.DataFrame]:
 
 def thin_next(fake: FakeAlpaca) -> None:
     """The thin night's second evening, as the double serves it: each stock
-    the first evening served one session behind now carries that session's
-    bar -- a flat placeholder with no volume, the shape every late bar
-    retained so far has had. The first stays a session behind; the second
-    adds a quiet bar for the night itself and is ready."""
+    the first evening served behind now carries the bars for the sessions it
+    missed -- flat placeholders with no volume, the shape every late bar
+    retained so far has had. The first, two sessions behind on the first
+    evening, carries both and stays a session behind the night itself; the
+    second adds a quiet bar for the night itself and is ready."""
     first, second = THIN_STALE
     for name, ready in ((first, False), (second, True)):
         df = fake.history[name]
         c = float(df["Close"].iloc[-1])
-        df = append_bar(df, [c, c, c, c, 0.0])
+        for _ in range(THIN_BEHIND[name]):
+            df = append_bar(df, [c, c, c, c, 0.0])
         if ready:
             df = append_bar(df, quiet_tail(df))
         fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS), stale_sessions=0 if ready else 1)
@@ -368,7 +373,7 @@ def register(fake: FakeAlpaca, variant: str) -> list[str]:
             assert len(frames) == THIN_STOCKS
     for name, df in frames.items():
         fake.add_history(name, df.round(FIXTURE_INPUT_DECIMALS),
-                         stale_sessions=1 if variant == "thin" and name in THIN_STALE else 0)
+                         stale_sessions=THIN_BEHIND.get(name, 0) if variant == "thin" else 0)
     fake.add_history("SPY", make_ohlcv("base", seed=[SEED, 999], days=280, start_price=560.0).round(FIXTURE_INPUT_DECIMALS))
     return list(frames)
 
@@ -483,8 +488,9 @@ def run_variant(variant: str, docs: Path) -> dict:
             mock.patch.object(pipeline.grader, "MODEL", "claude-sonnet-4-6"), \
             mock.patch.object(pipeline, "FETCH_CHUNK", max(1, len(tickers) * 2 // 3) if variant == "partial" else pipeline.FETCH_CHUNK):
         if variant == "thin":
-            # the first evening: two stocks one session behind is over the
-            # limit of one, so it publishes degraded and records both by name
+            # the first evening: two stocks behind (one by two sessions, one by
+            # one) is over the limit of one, so it publishes degraded and
+            # records both by name with where each frame ended
             first = pipeline.run_evening(tickers=tickers, docs=docs, now=THIN_FIRST_EVENING)
             assert first.published and first.status == "degraded", (first.status, first.failure, first.problems)
             thin_next(fake)
@@ -577,16 +583,22 @@ def expected_shape(variant: str, data: dict) -> None:
         assert data["run"]["status"] == "ok", data["run"]["problems"]
     elif variant == "thin":
         # a night whose only gap is one stock a session behind, within the
-        # limit of one: not degraded, the stock named, and last night's two
-        # stale stocks read again from tonight's fetch
+        # limit of one: not degraded, the stock named with where its frame
+        # ends, and last night's two stale stocks read again from tonight's
+        # fetch at every session each missed -- the first at two, the second
+        # at one, three readings over two stocks
         run = data["run"]
         assert run["status"] == "ok" and problems == [], (run["status"], run["problems"])
         assert run["coverage"]["acceptance"]["status"] == "degraded" and run["coverage"]["stale"] == 1
         tol = run["input_tolerance"]
         assert (tol["verdict"], tol["names"], tol["limit"], tol["held"]) == ("tolerated", [THIN_STALE[0]], 1, []), tol
+        assert tol["endings"] == {THIN_STALE[0]: "2026-09-09"} and tol["sessions_max"] == pipeline.STALE_SESSIONS_MAX, tol
         follow = run["stale_followup"]
-        assert (follow["status"], follow["for_session"], follow["count"]) == ("applied", "2026-09-09", 2), follow
-        assert follow["outcomes"]["no_match"] == 2 and follow["zero_volume"] == 2 and follow["matched"] == [], follow
+        assert (follow["status"], follow["for_session"], follow["sessions"], follow["stocks"], follow["count"]) == \
+            ("applied", "2026-09-09", ["2026-09-08", "2026-09-09"], 2, 3), follow
+        assert [(r["ticker"], r["session"]) for r in follow["rows"]] == \
+            [(THIN_STALE[0], "2026-09-08"), (THIN_STALE[0], "2026-09-09"), (THIN_STALE[1], "2026-09-09")], follow["rows"]
+        assert follow["outcomes"]["no_match"] == 3 and follow["zero_volume"] == 3 and follow["matched"] == [], follow
         # and one reply refused by reader authority, within the night's limit
         reads = run["reads"]
         assert (reads["verdict"], reads["causes"]["refused"], reads["refused_admissible"]) == ("tolerated", 1, []), reads
