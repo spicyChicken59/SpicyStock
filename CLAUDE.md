@@ -283,7 +283,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3059 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3070 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4412,3 +4412,94 @@ call.
 **Next action.** Top up the Anthropic credit; read the first live night's chip,
 its `run.input_tolerance`, `run.stale_followup` and `run.reads`, and record
 them here.
+
+## Checkpoint, 8 Oct 2026 — the first live night under the tolerance, and the bound it needed
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `a8f9a36f` (the 7 Oct publication over the #104 merge), pushed
+as **PR #105**. `docs/data.json`, `docs/picks.json`, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; no pinned file is edited; no run, mail or dispatch.
+
+**The first live night, read.** Session 7 Oct published at 01:54 UTC on 8 Oct
+(the primary cron slot fired 3 h 38 min late), `degraded` on `behind_more`:
+sixteen stale stocks (ATGL, BEBE, BLIV, ELLO, ELTK, GYRO, HFBL, IOR, MAYS,
+MDRR, MFI, NCEW, PFX, ROMA, TULP, WBD), fifteen ending on 6 Oct and ONE on
+5 Oct, against a limit of 47. The rest of #104 held: `run.reads` 9 of 12
+accepted, 3 refused (ASMB, CMND, VSTM) within the limit of 3, `tolerated`; no
+credit failure on the topped-up balance, exactly 12 calls (cache_write 3,336,
+cache_read 36,696, uncached 48,562: about $0.26); `run.stale_followup`
+`not_applicable` / `membership_not_recorded`, because the 6 Oct record predates
+the rule. Regime RED (ratio 0.96, 54 up 4% against 196 down); mechanical A+ 1
+(ROKU, lowered to C), A 28; no ticket. The rule did what it said; what it said
+was too narrow.
+
+**The bound.** `pipeline.STALE_SESSIONS_MAX = 5` (P, archived as
+`pipeline.stale_sessions_max`; `rules_version` moves). `inputs.stale_tolerance()`
+tolerates a frame ending within the five XNYS sessions before the evaluated one
+on a readable date (`allowed_endings()`), and `run.input_tolerance` is version 2:
+`sessions_max`, and `endings`, where each named frame ends, held by
+`tolerance_faults()` to the names and to the ledger's `latest_bar_dates`.
+`followup.missed_sessions()` gives the sessions a stock missed, from the one
+after its recorded last bar to the previous publication's, the most recent five
+at most; `night()` reads every one, one row per stock and session
+(`rows[].session`, `block.sessions`, `block.stocks` beside `count`). A
+version-1 membership is read at the previous session alone, so the 8 Oct run
+reads 7 Oct's sixteen names at 7 Oct only; a same-session re-run re-reads the
+same stock-sessions, a version-1 block among them. The page's Method quotes the
+archived bound and keeps the first version's words for a record without it.
+The `thin` fixture's first evening serves one stock two sessions behind and one
+a session behind; its second evening reads three stock-sessions.
+
+**The review, worked.** A workflow over the first pushed tip returned 21
+findings. Five were upheld by both skeptics; sixteen were left unverified when
+the skeptics hit a usage limit, which is not "refuted", so each was checked here
+by execution. One of those was refuted by a skeptic that did finish (the ledger's
+date histogram is not reconciled against `stale`; pre-existing, out of scope)
+and one is an equivalent mutant (`ending >= previous` in `missed_sessions()`).
+The rest were real and are fixed:
+- **The validator refused the block the run wrote** when more than
+  `STALE_NAMES_MAX` frames were stale and the benchmark was one of them:
+  `names=names or []` re-derived the stock count with the benchmark among the
+  stocks. Reproduced at 102 stale frames, then fixed. `_benchmark_stale()` reads
+  the benchmark off the ledger: ready means not stale; not ready with no other
+  gap that could hold it means stale; only beside another gap is the block's own
+  count read, as one benchmark or none. Pre-existing on `main`.
+- A frame ending on Labor Day, or five sessions back across it, decided nothing
+  in the suite, so a weekday count survived. Both cases now hold the calendar.
+- A same-session re-run over a version-1 block re-read nothing. It reads that
+  block at its own session now, and keeps a not-applied block's reason and words.
+- The multi-session sentence counted readings as stocks ("1 stock ... 3 are not
+  in this run's selection"). No frame and out of selection are said in stocks
+  now, with their readings beside them.
+- The late-bar problem named two readings before the 200-character bound cut it.
+  It leads with its counts now and names tickers (`followup.problem_message()`).
+- The page said a version-1 record's `behind_more` in version-2 words; it says
+  each in its own words now. The README, `.env.example` and `method.md` said "the
+  last 5 sessions"; they say "the 5 sessions before the session evaluated" now.
+- Untested until now: the row bound, the near edge of the session bound, endings
+  without names, an unreadable ending accepted, the page's new rule strings, and
+  `allowed_endings` sitting outside the literal guard.
+
+**Measured** (this sandbox, Python 3.11 and 3.12, Chromium through Playwright
+1.56.1): PYTEST_RESULT; 13 fixtures current; continuity 134; the chart check
+CHART_RESULT; the page smoke SMOKE_RESULT, the `inputs` suite 216/216.
+Screenshots of Method at 1280 and 390, over the current rule, a frame past it and
+the first version's record, were looked at. MUTANT_RESULT. gitleaks 8.24.3 over
+the changed files: GITLEAKS_RESULT.
+
+**Projected over 7 Oct's own record:** green under this rule (16 within 47, the
+furthest two sessions back, 3 refusals within 3).
+
+**Keep / fix / defer / omit.** Keep: the ledger's acceptance as built; the bound
+a status rule only. Fix if it bites: a stock stale for more than a week degrades
+the night as a different kind of gap, by design, and nothing yet says how many
+nights that costs. Defer: the evening cron fires 2-6 hours late every night and
+the primary slot has no already-published guard (a late primary re-ran 21 Sep's
+session after a dispatch had published it: two full runs, two mails); a
+two-line guard, in its own pull request. Omit: suppressing a stale stock,
+re-fetching it, or treating its late bar as a signal.
+
+**Not claimable:** a live night under this rule. The first evening after the
+merge is the test: read its chip and `run.input_tolerance.endings`, and the
+night after, a `run.stale_followup` with more than one session.

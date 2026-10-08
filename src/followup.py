@@ -133,6 +133,24 @@ def _membership(previous_run: dict, benchmark: str) -> tuple[str | None, list[st
     return (None, stocks, endings) if stocks else ("none_missing", [], {})
 
 
+def _from_first_version(block: dict) -> dict | None:
+    """A first-version block in this version's shape: its status, its reason,
+    its error, and its rows as readings at its own session, which is where the
+    first version read every stock. None when it cannot be read as one; the
+    result is held to this version's shape by the caller."""
+    try:
+        day = block["for_session"]
+        rows = [{"ticker": r["ticker"], "session": day, "outcome": r["outcome"], "volume": r["volume"],
+                 "flat": r["flat"], "route": r["route"]} for r in block["rows"]]
+        out = _block(block["status"], block["reason"], day, rows)
+        if block.get("error_class"):
+            out["error_class"] = block["error_class"]
+            out["sentence"] = sentence_of(out)
+        return out
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return None
+
+
 def missed_sessions(ending: date | None, previous: date, sessions_max: int) -> list[date]:
     """The sessions a stale stock missed: after its last recorded bar, up to and
     including the previous publication's session, the most recent
@@ -218,8 +236,11 @@ def night(previous_run, frames: dict, session: date, uni, *, closed: bool, bench
             # a re-run of the same session: the record it replaces read the
             # sessions before; its stock-sessions are read again from THIS
             # fetch, so a late bar that arrived since is seen. A block it did
-            # not apply is carried as it stands: there was nothing to read.
+            # not apply is carried as it stands: there was nothing to read. A
+            # block of the first version is read as this version reads it.
             carried = previous_run.get("stale_followup")
+            if isinstance(carried, dict) and carried.get("version") == 1:
+                carried = _from_first_version(carried)
             if not isinstance(carried, dict) or shape_faults(carried, session, names_max, sessions_max):
                 return _block(NOT_APPLICABLE, "rerun_without_block", None, [])
             if carried["status"] != APPLIED:
@@ -262,10 +283,24 @@ def _match_rows(block: dict) -> list[dict]:
     return [r for r in block["rows"] if r["outcome"] == "match"]
 
 
+def _stocks_with(block: dict, outcome: str) -> int:
+    return len({r["ticker"] for r in block["rows"] if r["outcome"] == outcome})
+
+
 def matches_named(block: dict) -> str:
     """Every late bar that would have been listed, as ticker (session, route),
     in row order: the problem's words and the sentence's."""
     return ", ".join(f"{r['ticker']} ({r['session']}, {ROUTE_WORDS[r['route']]})" for r in _match_rows(block))
+
+
+def problem_message(block: dict) -> str:
+    """The coverage_thin message for late bars that would have been listed:
+    the counts first and the tickers after, so a message held to the record's
+    length bound still says how many; each reading's session is in the block."""
+    late, stocks = len(_match_rows(block)), block["matched"]
+    return (f"{_n(late, 'late bar', 'late bars')} over {_n(len(stocks), 'stock', 'stocks')} would have been listed "
+            f"in the publication for {'its' if late == 1 else 'their'} session, which did not include "
+            f"{'it' if late == 1 else 'them'}: " + ", ".join(stocks))
 
 
 def sentence_of(block: dict) -> str | None:
@@ -316,12 +351,26 @@ def sentence_of(block: dict) -> str | None:
     if o["still_missing"]:
         parts.append(f"{_n(o['still_missing'], 'still has', 'still have')} no {day} bar" if single
                      else f"{_n(o['still_missing'], 'reading still finds', 'readings still find')} no bar for the session")
+    # a stock with no frame, or out of the selection, is so at every session it
+    # missed: over more than one session these two are said in stocks, with
+    # their readings beside them, never readings spoken of as stocks
     if o["no_frame"]:
-        parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame this run")
+        if single:
+            parts.append(f"{_n(o['no_frame'], 'returned', 'returned')} no frame this run")
+        else:
+            k = _stocks_with(block, "no_frame")
+            parts.append(f"{_n(k, 'stock', 'stocks')} returned no frame this run "
+                         f"({_n(o['no_frame'], 'reading', 'readings')})")
     if o["not_selected"]:
-        parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in this run's selection, so "
-                     f"{'its' if o['not_selected'] == 1 else 'their'} {day if single else 'missed'} "
-                     f"bar{'' if single and o['not_selected'] == 1 else 's'} {'is' if single and o['not_selected'] == 1 else 'are'} unknown")
+        if single:
+            one = o["not_selected"] == 1
+            parts.append(f"{_n(o['not_selected'], 'is', 'are')} not in this run's selection, so "
+                         f"{'its' if one else 'their'} {day} bar{'' if one else 's'} {'is' if one else 'are'} unknown")
+        else:
+            k = _stocks_with(block, "not_selected")
+            parts.append(f"{_n(k, 'stock is', 'stocks are')} not in this run's selection, so "
+                         f"{'its' if k == 1 else 'their'} missed bars are unknown "
+                         f"({_n(o['not_selected'], 'reading', 'readings')})")
     if single:
         head = (f"The {day} publication's {_n(block['count'], 'stock', 'stocks')} without a {day} bar, read again "
                 f"from this run's split-adjusted fetch: ")

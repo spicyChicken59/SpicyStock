@@ -11,7 +11,10 @@ sessions before the evaluated one, records where each stale frame ends
 one reading per stock and session (`followup.missed_sessions()`), so a late bar
 on any skipped session is still checked against the publication for that
 session. A publication from version 1 is read at its own session alone, as it
-was; nothing it published is rewritten.
+was, and so is a version-1 block a same-session re-run replaces; nothing it
+published is rewritten. A block whose stale tail is too long to name its stocks
+is still held to the ledger: whether the benchmark is among them is read off the
+ledger's own counts, so the validator never refuses the block the run wrote.
 
 7 October 2026: a night whose only gap is a stale tail is not degraded. Every
 publication from 16 September to 6 October was `degraded`; each carried 10-24

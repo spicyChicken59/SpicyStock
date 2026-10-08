@@ -359,6 +359,12 @@ def test_permanent_refusal_accounts_for_attempts_and_unrequested_tail(
 TAPE_DATES = pd.to_datetime(['2026-09-04', '2026-09-08', '2026-09-09', '2026-09-10'])
 #: a tape ending 1 Sep: six sessions before 10 Sep (7 Sep is Labor Day), one past the bound of five
 FAR_DATES = pd.to_datetime(['2026-08-27', '2026-08-28', '2026-08-31', '2026-09-01'])
+#: a tape ending 2 Sep: five sessions before 10 Sep across Labor Day, the furthest the bound allows;
+#: counted in weekdays (7 Sep among them) it would be six, and refused
+EDGE_DATES = pd.to_datetime(['2026-08-28', '2026-08-31', '2026-09-01', '2026-09-02'])
+#: a tape whose last stamp is Labor Day itself: a date that is no session is never an allowed ending,
+#: though a count of weekdays would take it
+HOLIDAY_DATES = pd.to_datetime(['2026-09-02', '2026-09-03', '2026-09-04', '2026-09-07'])
 
 
 def tape(behind=0, *, dates=TAPE_DATES):
@@ -426,6 +432,8 @@ NAN_HIGH.iloc[-1, NAN_HIGH.columns.get_loc('High')] = float('nan')
     # a frame two sessions back is within the bound of five; one six back is not
     (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(2)}), 0.01, (), 'tolerated', []),
     (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=FAR_DATES)}), 0.01, (), 'not_tolerated', ['behind_more']),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=EDGE_DATES)}), 0.01, (), 'tolerated', []),
+    (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=HOLIDAY_DATES)}), 0.01, (), 'not_tolerated', ['behind_more']),
     (lambda: ledger(stale=('QAAA',), frames={'QAAB': tape(dates=pd.DatetimeIndex(['2026-09-08', pd.NaT]))}),
      0.01, (), 'not_tolerated', ['behind_more']),
     (lambda: ledger(no_bars=['QZZZ']), 0.01, (), 'not_tolerated', ['other_exceptions']),
@@ -442,7 +450,8 @@ NAN_HIGH.iloc[-1, NAN_HIGH.columns.get_loc('High')] = float('nan')
     (lambda: ledger(), 0.01, ('QAAA',), 'not_tolerated', ['open_plan']),
     (lambda: ledger(stale=()), 0.01, (), 'complete', []),
     (lambda: ledger(), None, (), 'not_tolerated', ['over_limit']),
-], ids=['two-of-200', 'three-of-200', 'three-of-270', 'two-sessions-back', 'six-sessions-back', 'unreadable-stamp', 'no-bars',
+], ids=['two-of-200', 'three-of-200', 'three-of-270', 'two-sessions-back', 'six-sessions-back', 'five-sessions-back-across-a-holiday',
+        'ending-on-a-holiday', 'unreadable-stamp', 'no-bars',
         'dropped', 'unfetched', 'gapped', 'unreadable-bar', 'capacity', 'scan-error', 'benchmark-outside-the-count',
         'benchmark-and-three-stocks', 'open-plan', 'complete', 'no-fraction'])
 def test_stale_tolerance_reads_only_the_ledger(build, fraction, held, verdict, reasons):
@@ -491,6 +500,62 @@ def test_the_tolerance_names_its_stocks_only_up_to_its_bound():
     assert carried['endings'] == {'QAAA': '2026-09-09', 'QAAB': '2026-09-09', 'QAAC': '2026-09-09'}
     over = named(2)
     assert over['names'] is None and over['endings'] is None, 'the endings go with the names, carried or not'
+
+
+def checked(cov, tol, names_max=pipeline.STALE_NAMES_MAX):
+    """The tolerance's faults as validate() asks for them, over a run whose
+    sentence is the block's and whose shortfall, if any, is named."""
+    from src import inputs
+    run = {'coverage': cov, 'input_tolerance': tol, 'problems': [{'kind': 'coverage_thin'}]}
+    tol['sentence'] = inputs.coverage_sentence(run)
+    return inputs.tolerance_faults(run, {'stale_tolerance_fraction': 0.01, 'stale_names_max': names_max,
+                                         'stale_sessions_max': pipeline.STALE_SESSIONS_MAX}, set())
+
+
+def test_endings_go_with_the_names_and_an_unreadable_ending_is_one():
+    """A block past the names it carries carries no endings either, and the
+    validator says so on its own; a frame whose last stamp is unreadable is
+    recorded as None and accepted, the ledger counting it under 'None'."""
+    from src import inputs
+    cov, stats = ledger()
+    tol = inputs.stale_tolerance(cov, 0.01, names=sorted(stats.stale), benchmark='SPY', names_max=1,
+                                 endings=endings_of(stats), sessions_max=pipeline.STALE_SESSIONS_MAX)
+    assert (tol['names'], tol['endings']) == (None, None)
+    assert checked(cov, tol, names_max=1) == []
+    assert checked(cov, dict(tol, endings=endings_of(stats)), names_max=1) == ['input tolerance endings are not its names']
+    cov, stats = ledger(stale=('QAAA',), frames={'QAAB': tape(dates=pd.DatetimeIndex(['2026-09-08', pd.NaT]))})
+    tol = tolerance_of(cov, stats)
+    assert tol['endings'] == {'QAAA': '2026-09-09', 'QAAB': None} and 'None' in cov['sessions']['latest_bar_dates']
+    assert checked(cov, tol) == []
+
+
+LONG_TAIL = tuple(q_names(pipeline.STALE_NAMES_MAX + 1))   # one more stale stock than a block names
+
+
+@pytest.mark.parametrize('stale,gaps,said,tells', [
+    (LONG_TAIL + ('SPY',), {}, 1, True),                       # not ready, and no other gap could hold it: stale
+    (LONG_TAIL, {}, 0, True),                                  # ready: not stale
+    (LONG_TAIL, {'no_bars': ['QZZZ']}, 0, True),               # ready beside another gap: still not stale
+    (LONG_TAIL + ('SPY',), {'no_bars': ['QZZZ']}, 1, False),   # not ready beside another gap: the block's count is read
+], ids=['benchmark-stale', 'benchmark-ready', 'benchmark-ready-beside-a-gap', 'benchmark-stale-beside-a-gap'])
+def test_a_tail_too_long_to_name_counts_the_benchmark_off_the_ledger(stale, gaps, said, tells):
+    """A block past the names it carries keeps no membership, but the ledger
+    still says whether the benchmark is stale: the block the run writes is
+    accepted, and a count that moves the benchmark in or out of the stocks is
+    refused wherever the ledger can tell."""
+    from src import inputs
+    cov, stats = ledger(len(LONG_TAIL) + 2, stale=stale, **gaps)
+    assert inputs.faults(cov) == [], 'the case must reconcile, or it tests a broken ledger'
+    tol = tolerance_of(cov, stats)
+    assert tol['names'] is None and tol['stale_stocks'] == cov['stale'] - said
+    assert checked(cov, tol) == [], 'the validator refuses the block the run wrote'
+
+    def faults_at(stale_stocks):
+        return checked(cov, dict(tol, stale_stocks=stale_stocks))
+    refused = ['input tolerance does not re-derive from the ledger']
+    # the other reading of the benchmark: refused where the ledger can tell, accepted where it cannot
+    assert faults_at(cov['stale'] - (1 - said)) == (refused if tells else [])
+    assert faults_at(cov['stale'] - 2) == refused, 'no ledger has two benchmarks'
 
 
 @pytest.mark.parametrize('build,fraction,says,never', [
@@ -752,8 +817,8 @@ def test_the_tolerance_functions_spell_no_bare_number():
     from pathlib import Path
     root = Path(__file__).resolve().parents[1] / 'src'
     scope = {'followup.py': None, 'reader_coverage.py': None,
-             'inputs.py': {'stale_limit', 'stale_tolerance', '_count', '_percent', '_ending', '_why',
-                           '_tolerance_clause', 'coverage_sentence', 'tolerance_faults'}}
+             'inputs.py': {'stale_limit', 'allowed_endings', 'stale_tolerance', '_count', '_percent', '_ending', '_why',
+                           '_tolerance_clause', 'coverage_sentence', '_benchmark_stale', 'tolerance_faults'}}
     literals, seen = {}, set()
     for name, functions in scope.items():
         for node in ast.walk(ast.parse((root / name).read_text())):

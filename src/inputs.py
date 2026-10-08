@@ -36,6 +36,8 @@ OTHER_WORDS = {"no_bars": "no bars", "dropped": "failed after retry", "unfetched
                "unfetched_failure": "not requested after a failure", "refused": "refused by the provider",
                "gapped": "missing the previous session", "unreadable": "unreadable bars",
                "errors": "scan or checklist errors", "capacity_excluded": "excluded by capacity"}
+#: the ledger's gaps a benchmark frame that is not ready can sit in, beside a stale frame
+BENCHMARK_GAPS = ("no_bars", "dropped", "unfetched_budget", "unfetched_failure", "refused", "gapped", "unreadable")
 
 def build(uni, symbols, frames, stats, ready, expected, session, *, closed,
           minimum, benchmark):
@@ -293,6 +295,20 @@ def coverage_sentence(run):
     return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.'
 
 
+def _benchmark_stale(cov, tol):
+    """Whether the benchmark is among the stale frames of a block that does not
+    carry their names (a tail longer than the names it carries), read off the
+    ledger: a benchmark that was ready is not stale, and one that was not ready
+    while no other gap could hold it is. Only when the ledger cannot tell (a
+    long stale tail beside another gap) is the block's own stock count read,
+    as one benchmark or none; any other count then fails to re-derive."""
+    if cov['benchmark_ready']:
+        return False
+    if not any(cov[k] for k in BENCHMARK_GAPS):
+        return True
+    return cov['stale'] - tol['stale_stocks'] == 1
+
+
 def tolerance_faults(run, pipeline_rules, plan_tickers):
     """The stale tolerance block held to the record it sits in, one level in.
 
@@ -339,7 +355,9 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
             faults.append('input tolerance holds a stock it does not name')
         if plan_tickers is not None and names is not None and held != sorted(set(names) & set(plan_tickers)):
             faults.append('input tolerance does not hold the open model plans among the stale stocks')
-        again = stale_tolerance(cov, tol['fraction'], names=names or [], benchmark=tol['benchmark'], held=held,
+        # without its names the block is re-derived over the one fact they carried: the benchmark's
+        carried = names if names is not None else ([tol['benchmark']] if _benchmark_stale(cov, tol) else [])
+        again = stale_tolerance(cov, tol['fraction'], names=carried, benchmark=tol['benchmark'], held=held,
                                 names_max=pipeline_rules['stale_names_max'], endings=endings or {},
                                 sessions_max=tol['sessions_max'])
         if any(again[k] != tol[k] for k in ('verdict', 'reasons', 'limit', 'sessions_max', 'stale', 'stale_stocks',

@@ -245,7 +245,7 @@ def test_a_late_scan_match_degrades_the_night_that_finds_it(wide, claude, fake_r
     block = data['run']['stale_followup']
     assert block['matched'] == ['QAAA'] and block['rows'][0]['route'] == 'dollar', block
     assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
-        ['late bars would have been listed in the publication for their session, which did not include them: QAAA (2026-09-10, $ scan)']
+        ['1 late bar over 1 stock would have been listed in the publication for its session, which did not include it: QAAA']
     assert 'QAAA ($ scan) would have been listed in that publication, which did not include it' in block['sentence']
     # accounting, never a signal: no burst, observation, plan or pick for it
     assert 'QAAA' not in {b['ticker'] for b in data['bursts']}
@@ -294,7 +294,7 @@ def test_the_next_night_reads_every_session_a_stock_missed(wide, claude, fake_re
     assert 'at each of the 2 sessions missed (2026-09-09 to 2026-09-10), one reading per stock and session, 2 readings in all' in block['sentence']
     if matched:
         assert [p['message'] for p in data['run']['problems'] if p['kind'] == 'coverage_thin'] == \
-            ['late bars would have been listed in the publication for their session, which did not include them: QAAA (2026-09-09, $ scan)']
+            ['1 late bar over 1 stock would have been listed in the publication for its session, which did not include it: QAAA']
         assert 'QAAA (2026-09-09, $ scan) would have been listed in the publication for that session' in block['sentence']
     else:
         assert data['run']['problems'] == [] and 'none of them would have been listed' in block['sentence']
@@ -473,6 +473,76 @@ def test_the_block_holds_its_own_shape(field, value, message):
     assert any(message in f for f in faults_of(forged)), faults_of(forged)
 
 
+def test_the_row_bound_is_the_names_the_record_carries_times_the_sessions():
+    """Each named stock may be read at every session it missed, so a block may
+    hold more rows than the names a record carries -- up to that many times the
+    session bound, and no more."""
+    frames = {t: with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, PLACEHOLDER), DAY, PLACEHOLDER) for t in 'ABC'}
+    rows = [r for d in (BEFORE, DAY) for r in followup._read(list('ABC'), frames, d, live(list('ABC')), 'SPY', 'sip')]
+    block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    assert (block['stocks'], block['count']) == (3, 6)
+    assert faults_of(block, names_max=2) == [], 'six readings of three stocks under two names times five sessions'
+    assert faults_of(block, names_max=1) == ['stale follow-up counts do not reconcile'], 'six readings over one name times five'
+
+
+def test_a_rerun_over_a_first_version_block_reads_it_as_this_version_does():
+    """A same-session re-run of a night first published under the first
+    version: an applied block's stocks are read again at its own session, where
+    that version read every stock, and a block it did not apply keeps its
+    status, its reason and its words."""
+    def first_version(block):
+        old = {k: v for k, v in block.items() if k not in ('sessions', 'stocks')}
+        old['rows'] = [{k: v for k, v in r.items() if k != 'session'} for r in block['rows']]
+        return dict(old, version=1)
+    later = {'QAAA': with_bar(tape(end=DAY)[:-1], DAY, DOLLAR)}
+
+    def rerun(carried, frames=None):
+        return night(previous(session=TONIGHT.isoformat(), stale_followup=carried), frames=frames)
+    applied = rerun(first_version(night(previous())), later)
+    assert (applied['version'], applied['status'], applied['sessions'], applied['matched']) == \
+        (followup.VERSION, 'applied', [DAY.isoformat()], ['QAAA']), applied
+    assert faults_of(applied) == []
+    recorded = night(previous(input_tolerance=None))
+    assert recorded['reason'] == 'membership_not_recorded'
+    carried = rerun(first_version(recorded))
+    assert (carried['status'], carried['reason'], carried['sentence']) == \
+        ('not_applicable', 'membership_not_recorded', recorded['sentence']) and faults_of(carried) == []
+    stopped = dict(first_version(followup._block(followup.FAILED, 'error', DAY.isoformat(), [])), error_class='KeyError')
+    failed = rerun(stopped)
+    assert (failed['status'], failed['error_class']) == ('failed', 'KeyError') and '(KeyError)' in failed['sentence']
+    assert faults_of(failed) == []
+    assert rerun({'version': 1, 'status': 'applied'})['reason'] == 'rerun_without_block'
+
+
+def test_over_more_than_one_session_a_stock_out_of_reach_is_said_in_stocks():
+    """No frame, or no place in the selection, is a fact about a stock at every
+    session it missed: the sentence counts the stocks and puts their readings
+    beside them, so one stock is never said to be three."""
+    uni = live(['A'])
+    for stocks, outcome, words in ((['A'], 'no_frame', '1 stock returned no frame this run (3 readings)'),
+                                   (['B'], 'not_selected', "1 stock is not in this run's selection, so its missed "
+                                                           "bars are unknown (3 readings)")):
+        days = sessions.sessions_before(TONIGHT, 3)
+        rows = [r for d in days for r in followup._read(stocks, {}, d, uni, 'SPY', 'sip')]
+        block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+        assert (block['stocks'], block['count'], block['outcomes'][outcome]) == (1, 3, 3)
+        assert words in block['sentence'], block['sentence']
+        assert faults_of(block) == []
+
+
+def test_the_late_bar_problem_leads_with_its_counts():
+    """The problem a late match raises is held to the record's message bound:
+    its counts come first, so the bound cuts tickers and never the number."""
+    frames = {t: with_bar(with_bar(tape(end=BEFORE)[:-1], BEFORE, DOLLAR), DAY, DOLLAR) for t in q_names(40)}
+    rows = [r for d in (BEFORE, DAY) for r in followup._read(q_names(40), frames, d, live(q_names(40)), 'SPY', 'sip')]
+    block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
+    assert len(block['matched']) == 40 and block['outcomes']['match'] == 80
+    message = followup.problem_message(block)
+    assert message.startswith('80 late bars over 40 stocks would have been listed in the publication for their session')
+    kept = report.problem('followup', 'coverage_thin', message)['message']
+    assert len(kept) <= report.MESSAGE_MAX_CHARS and kept.startswith('80 late bars over 40 stocks'), kept
+
+
 def test_a_block_cannot_read_outside_the_bound_before_its_night():
     """A row at a session the bound does not reach, or a row that is not for
     the publication's own stock-sessions, is refused one level in."""
@@ -482,6 +552,10 @@ def test_a_block_cannot_read_outside_the_bound_before_its_night():
     block = followup._block(followup.APPLIED, None, DAY.isoformat(), rows)
     assert faults_of(block) == ['stale follow-up reads a session outside the bound before this one']
     assert faults_of(block, sessions_max=BOUND + 1) == []
+    # the near edge too: a row at the record's OWN session is no session it missed
+    own = followup._block(followup.APPLIED, None, DAY.isoformat(),
+                          followup._read(['A'], {'A': tape(end=TONIGHT)}, TONIGHT, live(['A']), 'SPY', 'sip'))
+    assert faults_of(own) == ['stale follow-up reads a session outside the bound before this one']
     # a bound the rules do not carry asks for no block; one they carry asks for a well-formed one
     run = {'session': TONIGHT.isoformat(), 'coverage': {'version': 1}, 'stale_followup': block, 'problems': []}
     assert followup.faults(run, {'stale_tolerance_fraction': 0.01, 'stale_names_max': 100}) == []

@@ -31,11 +31,12 @@ FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
 MIN_COVERAGE_FRACTION = 0.5    # usable intended stock coverage required to publish (P)
-#: (P) The most of the intended stocks a run tolerates stale -- each one session
-#: behind and nothing else missing -- before the night is degraded. Every
-#: degraded night from 16 Sep to 6 Oct 2026 had 10-24 stale stocks of ~4,790
-#: (0.21%-0.50%), each one session behind; before #69 there were 0-1. 1% is
-#: twice the worst of them; the next session's run reads each one again (src/followup.py).
+#: (P) The most of the intended stocks a run tolerates stale -- each ending
+#: within STALE_SESSIONS_MAX sessions before the evaluated one, and nothing else
+#: missing -- before the night is degraded. Every degraded night from 16 Sep to
+#: 6 Oct 2026 had 10-24 stale stocks of ~4,790 (0.21%-0.50%), each one session
+#: behind; before #69 there were 0-1. 1% is twice the worst of them; the next
+#: session's run reads every session each one missed again (src/followup.py).
 STALE_TOLERANCE_FRACTION = 0.01
 #: (P) The most sessions a tolerated stale frame may end before the evaluated
 #: session. The first live night under the tolerance (7 Oct 2026) had sixteen
@@ -763,8 +764,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                   benchmark=BENCHMARK_SYMBOL, names_max=STALE_NAMES_MAX, feed=stats.feed,
                                   sessions_max=STALE_SESSIONS_MAX)
         if followed["matched"]:
-            rep.problem("coverage_thin", "late bars would have been listed in the publication for their session, "
-                        "which did not include them: " + followup.matches_named(followed))
+            rep.problem("coverage_thin", followup.problem_message(followed))
         # a closed night re-presents the plans the previous session published,
         # when the record on disk is that session's; the tickets still stand
         carried = previous if (closed and (previous.get("run") or {}).get("session") == session.isoformat()) else {}

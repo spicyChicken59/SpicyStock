@@ -501,9 +501,10 @@ session. The run:
   session bars refuses publication before grading; the denominator excludes SPY.
   At least half but less than all leaves the ledger's acceptance degraded, as
   does any capacity cut or scan/quality error. The run itself is degraded too,
-  unless the only gap is stale frames ending within the last 5 sessions -- at most
-  1% of the intended stocks, no stock under an open model plan among them (SPY
-  is outside the stock count here, as in acceptance) -- which
+  unless the only gap is stale frames each ending within the 5 sessions before
+  the session evaluated -- at most 1% of the intended stocks, no stock under an
+  open model plan among them (SPY is outside the stock count here, as in
+  acceptance) -- which
   `run.input_tolerance` names, with where each frame ends; the next session's
   run, when it publishes, reads each of them again from its own split-adjusted
   fetch at every session it missed, one reading per stock and session, with no

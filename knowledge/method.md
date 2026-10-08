@@ -83,9 +83,9 @@ truth. Free commentary does not create order terms or an executable rule.
 
 Two tolerances decide whether a night is called degraded, and nothing else
 (P): no grade, gate, plan, ticket or measurement reads them. A stale tail of at
-most 1% of the intended stocks, each ending within the last 5 sessions, is
-counted and named with where each frame ends, and read again by the next
-session's run at every session it missed; refusals by reader authority or the
+most 1% of the intended stocks, each ending within the 5 sessions before the
+session evaluated, is counted and named with where each frame ends, and read
+again by the next session's run at every session it missed; refusals by reader authority or the
 discovery contract within a quarter
 of the night's reads, with every other read accepted and none on a name the
 regime would have planned, are counted by cause. A stale stock is still an

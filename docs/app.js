@@ -626,8 +626,16 @@
     const t = (run || {}).input_tolerance;
     return t && typeof t === 'object' && typeof t.verdict === 'string' ? t : null;
   }
-  const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames', behind_more: 'a stale frame ends further back than the allowed sessions, or on an unreadable date',
+  const TOLERANCE_WORDS = { other_exceptions: 'other gaps beside the stale frames',
     over_limit: 'more stale stocks than the limit', open_plan: 'an open model plan among them' };
+  // a frame too far back, in the words of the rule the record archived: the first
+  // version held every stale frame to the previous session; the second to a bound
+  function toleranceWords(reason, data) {
+    if (reason !== 'behind_more') return TOLERANCE_WORDS[reason] || words(reason);
+    const n = ((data.rules || {}).pipeline || {}).stale_sessions_max;
+    return isNum(n) ? 'not every stale frame ends within the ' + plain(n) + ' sessions before it on a readable date'
+      : 'not every stale frame ends on the previous session';
+  }
   function inputWarning(run) {
     const cov = (run || {}).coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
     if (!cov.version) return 'Input completeness was not recorded for this publication; an empty result does not establish that no setups existed.';
@@ -831,7 +839,7 @@
       if (tol && tol.verdict !== 'complete' && isNum(tol.stale_stocks) && tol.stale_stocks > 0) {
         line('Stale tolerance: ' + (tol.verdict === 'tolerated' ? 'tolerated' : 'not tolerated') +
           ' — ' + num(tol.stale_stocks) + ' stale stock' + (tol.stale_stocks === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
-          (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => TOLERANCE_WORDS[r] || words(r)).join('; ') + ')' : '') + '.');
+          (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => toleranceWords(r, data)).join('; ') + ')' : '') + '.');
       }
       const follow = text((run.stale_followup || {}).sentence);
       if (follow) line('Stale follow-up: ' + follow);
