@@ -4838,7 +4838,9 @@ one staged companion installer, preserving rollback of fixed records. The
 publisher verifies exact canonical-to-reader-to-sidecar derivation before a
 Pages request, and evening artifacts include the companions. The owned
 `reader-observations/retention.json` preserves the currently served object and
-21 calendar days of grace after supersession. It removes only verified,
+21 calendar days measured against advancing publication-session dates, with
+the old current object's session refreshed on supersession. This is not a
+wall-clock grace guarantee after a late publication. It removes only verified,
 previously indexed derived objects after successful publication; unrelated
 files and canonical/history/evidence remain untouched. Capacity is bounded to
 84 retained objects and 128 MiB, with one additional 32 MiB installation
@@ -4863,3 +4865,83 @@ entry-window quote service. Broker confirmation and the first actual trade
 remain outstanding. The read-only opportunity audit for #109 found that the
 only whole-share-feasible A+ pre-review candidate was already reviewed and
 then downgraded; no missed executable candidate was established in that scan.
+
+## Checkpoint, 9 Oct 2026 — combined morning release accepted on the public site
+
+**Released.** PR #114 merged as `37fd449f552247ba41e7b09df16e1e6f0d6f444d`.
+It includes the complete morning-observation work and compact reader. PR #113
+was closed as incorporated; its unfinished central replay was cancelled as
+superseded, not counted as a passing run. All release gates passed on the
+actual integrated head `484cf8b1998f2769536d034140a2cb790f809e67` before merge.
+Merged-main Tests `37964050670` also passed the full Python, fixture, browser
+and chart checks at the deployed merge commit.
+The design-system repository remains connected and unchanged; the existing
+local, pinned SpicyChicken assets continue to style the page.
+
+**Hosted checks.** Tests run `37960437440` passed 3,368 Python tests, fixture
+reproduction and clean-tree checks, 11,204 browser assertions and 378 chart
+checks. Secret scan `37960436448` passed. Both native historical cases passed
+with enforced 12 GiB memory and zero swap: central took about 18m04s at 7.09 GiB
+peak; stress 27m49s at 8.24 GiB. Each recovered all 390 originals byte-identically,
+kept ledger accounting unchanged and reproduced both offline dates with zero
+provider requests. Positive and negative controls passed. This establishes
+runtime/recovery behavior, not live strategy profitability. Local execution
+used Python 3.12.14; the hosted Python jobs use 3.12 and native cases pin 3.12.14.
+
+**Actual sources.** Rehearsal `37964077963` ran on merged main with dry-run and
+fixed-symbol source probing enabled; persistence was skipped. At 17:08:31 UTC,
+the IEX request succeeded with a quote about 0.35 seconds old and a trade about
+7.63 seconds old. Delayed SIP also succeeded; its latest trade was about 15
+minutes behind. The diagnostic is explicitly outside publication/order
+correctness and does not prove pre-open availability. A separate actual Nasdaq
+RSS capture at 16:40:43 UTC parsed 49 events, had a source age of about 22.55
+seconds, and validated ten sampled symbols including halt and resumption
+cases. Unmatched symbols remained unverified. Exact diagnostic bytes and results
+are retained in [the release evidence](release-evidence/2026-10-09-morning/acceptance.json)
+and its neighboring `nasdaq-source.xml`; no provider credentials are included.
+
+**Production and publication.** Morning run `37964299335` persisted only
+`docs/morning.json` in commit `2fa9773f046299de78c95d1b513c05880a3eefdb`.
+Its actual 17:10:18 UTC collection was after the entry cutoff, so it truthfully
+reports `inapplicable / entry_window_ended`, zero rows and no provider lookup.
+It binds canonical source run `37928234562`, canonical SHA
+`36e3ac12a53d78d7f9adccfb302793aa8fad2e2fb00548ed1d2124538350b1bd`
+and reader SHA `fd24d85a0a32ba26d550b5840ff80b9be6db4453c55c1ca7c1ca4a9e7faf70ca`.
+Publisher `37964465703` verified all 28 public files against committed main;
+Pages `37964497884` built and deployed successfully. No email or broker order
+was sent in this release work.
+
+**Public browser acceptance.** The actual site passed at 1280 and 390 pixels;
+all four captured screenshots were inspected. Both visits loaded 5,606,909
+reader bytes (690,230 encoded response-body bytes), with zero initial canonical,
+sidecar or historical requests. A later explicit shared read verified the
+5,040,916-byte sidecar, restored 2,305 observed symbols and 7,944 retained signals,
+and preserved the morning binding, real chart node, cash input/value and focus.
+No browser provider request, horizontal overflow or page error occurred.
+First desk-ready measurements were about 1.37s and 1.02s in these single
+unthrottled hosted navigations; they are not a mobile-device or future latency
+guarantee. The page showed the $2,000 reference, Chicago window ended, unknown
+settled cash, zero tickets and $0 model commitment. The source record, picks
+and old evidence remain unchanged.
+
+**Documentation correction.** The sidecar retention clock uses advancing
+publication-session dates. A late manual publication need not occur on its
+measured session date, so README and the reader checkpoint now state that
+basis instead of promising 21 elapsed days after wall-clock replacement.
+Current sidecars are always retained; cleanup ownership and behavior did not
+change.
+
+**Next work.** Milestone 2 remains open for dependable entry-window delivery
+and broader issuer-news/earnings coverage. The concrete cached-backend proposal
+is in #108; no existing backend account has been identified. #109 records both
+the review-funnel audit and risk-sizing sensitivity: the only whole-share-feasible
+pre-review A+ at the baseline was already reviewed and downgraded, and raising
+base risk to 1% still yields no reaction candidate passing retained review and
+regime gates. The separate 2% anticipation sizing experiment is outside the
+archived risk band and is not a deployed recommendation or observed outcome.
+#110 now has a practical owner walkthrough and explicit personal-sizing and
+actual-fill/P&L gaps. The next expected stock open is October 12 at 8:30 Chicago;
+banking calendars differ that day, so cash still comes from the broker.
+Broker identity, pre-open operational acceptance, actual fills and the first
+successful trade remain outstanding. Continue from these gaps; do not mark the
+whole goal or milestone 2 complete.

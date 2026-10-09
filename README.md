@@ -778,14 +778,23 @@ redirects and enforce size/time bounds. The publication installs verified
 immutable sidecars before replacing fixed records and rolls fixed files back
 on installation failure. It refreshes companions after final publication
 restamping as well as the initial write. Owned derived transport files have a
-21-calendar-day grace period starting when the served sidecar is replaced;
-the currently served file is retained. Canonical history and evidence
+21-calendar-day retention window measured against advancing publication-session
+dates, with the prior current object's session refreshed when it is superseded.
+The currently served file is always retained. This is not a guarantee of 21
+elapsed days after a late publication. Canonical history and evidence
 are outside this cleanup. The committed-main publisher verifies the reader and
 its referenced sidecar before declaring the site updated.
 
 `python -m src.reader --docs docs --check` verifies committed companions without
 repairing them. Omitting `--check` derives companions from the existing canonical
 bytes; it makes no provider request and does not rewrite the canonical record.
+
+The combined morning/reader release shipped in [PR #114](https://github.com/spicyChicken59/SpicyStock/pull/114).
+Its [dated acceptance record](release-evidence/2026-10-09-morning/acceptance.json)
+retains hosted test counts, real-feed diagnostics, the production observation,
+public asset hashes and phone/desktop browser results. The October 9 production
+check is after the entry cutoff, with no quote rows or eligible orders. It is
+evidence of correct binding and publication, not pre-open delivery or a trade.
 
 ## One-time setup
 

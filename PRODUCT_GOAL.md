@@ -30,23 +30,28 @@ whole-share constraints remain binding. Its partial reader warning remains
 visible. The first actual successful trade has not been evidenced in this
 session.
 
-[PR #112](https://github.com/spicyChicken59/SpicyStock/pull/112) also shipped
-deferred rendering of the closed scan matrix. This improves the initial render;
-reducing the publication payload remains part of milestone 2.
+[PR #112](https://github.com/spicyChicken59/SpicyStock/pull/112) shipped deferred
+rendering of the closed scan matrix. The combined morning/reader release in
+[PR #114](https://github.com/spicyChicken59/SpicyStock/pull/114) is also deployed.
+It adds exact-publication-bound, dated IEX quote/trade observations, explicitly
+delayed SIP volume, Nasdaq halt evidence, retained known event exclusions,
+visible expiry and guarded publication. Its compact reader reduces the initial
+artifact from 14,918,679 to 5,606,909 bytes while deferring retained observations.
 
-Milestone **2: a verified morning check** is in progress. The next release adds
-exact-publication-bound, dated IEX quote/trade observations, explicitly delayed
-SIP volume, Nasdaq halt evidence, retained known event exclusions, visible
-expiry and guarded publication. It does not complete milestone 2: reliable
-on-time morning delivery and broader issuer-news/earnings coverage remain open.
-The compact-reader follow-up reduces the initial artifact from about 14.9 MB to
-5.6 MB while deferring retained observations; its public acceptance is recorded
-in the continuation checkpoint. Two best-effort pre-open Actions attempts cannot
-supply dependable sub-minute quotes during the entry window. Broker
-confirmation remains outstanding. Keep the milestone 3 candidate-funnel
-investigation separate from evidence that a real-money strategy has an
-established edge. Final hosted, real-provider and public-site release evidence
-belongs in the continuation checkpoint and release PR.
+Hosted tests, real IEX/delayed-SIP and Nasdaq diagnostics, all 28 public files,
+and phone/desktop browser acceptance passed. The [dated release evidence](release-evidence/2026-10-09-morning/acceptance.json)
+retains the exact identities and results. The real production morning receipt
+was collected after the October 9 cutoff: it correctly reports no quote rows,
+zero eligible orders and no entry authority. No pre-open delivery or actual
+successful trade is claimed.
+
+Milestone **2: a verified morning check** remains in progress. Reliable on-time
+delivery and broader issuer-news/earnings coverage remain open. Two best-effort
+pre-open Actions attempts cannot supply dependable sub-minute quotes during the
+entry window. The server-side delivery proposal is recorded in #108; an existing
+hosting account has not been identified. Broker confirmation remains outstanding.
+Keep the milestone 3 candidate-funnel and sizing studies separate from evidence
+that a real-money strategy has an established edge.
 
 Track the remaining work in the [GitHub milestone](https://github.com/spicyChicken59/SpicyStock/milestone/1):
 verified morning data [#108](https://github.com/spicyChicken59/SpicyStock/issues/108),
