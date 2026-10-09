@@ -1,4 +1,105 @@
 {
  "schema_version": 2,
- "picks": []
+ "picks": [
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "bbafaf7ec8c4168023515530d7a45d636019ddadbd86e521d0232c6afc4cbae4",
+    "context_sha256": "d8f6c9d7874b52ef638d66f45df90d121352bd843c9db9d54c8c260f3333e2aa",
+    "plan_sha256": "5cef097db06d1802bb03085ba4ab3b94eb2091518cfbd939be7e4371f21607e6",
+    "pick_sha256": "fd41d7ec4f966485bcfb20ef6b812fe9d2c0872dd44d50f4aaa0e9009db4999e"
+   },
+   "ticker": "MG",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.1358,
+   "entry_ref": 21.09,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 21.09,
+   "limit": 21.3,
+   "stop": 20.52,
+   "shares": 16,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 22.78,
+    "high": 25.31,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "MG",
+    "action": "buy",
+    "quantity": 16,
+    "order_type": "stop_limit",
+    "stop_price": 21.09,
+    "limit_price": 21.3,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 16,
+     "order_type": "stop",
+     "stop_price": 20.52,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-08",
+   "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "adb2ae0dcbeee8cd311f26a292630bd2bee52b1559fdb264a630d179b435f77e",
+    "context_sha256": "d8f6c9d7874b52ef638d66f45df90d121352bd843c9db9d54c8c260f3333e2aa",
+    "plan_sha256": "a43b12511a63192849ff39559b6160fa170bb6b216e05524c2513b094e54c416",
+    "pick_sha256": "4c5ebdf1b7cba729e4ee77bf7319e9371ba51b1d6519c58b6db5ee49a55507e5"
+   },
+   "ticker": "SN",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.065,
+   "entry_ref": 186.5,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 186.5,
+   "limit": 188.37,
+   "stop": 181.1,
+   "shares": 1,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 201.42,
+    "high": 223.8,
+    "note": "above $40 he measures the move in dollars: $5-25",
+    "dollar_low": 191.5,
+    "dollar_high": 211.5
+   },
+   "order_json": {
+    "symbol": "SN",
+    "action": "buy",
+    "quantity": 1,
+    "order_type": "stop_limit",
+    "stop_price": 186.5,
+    "limit_price": 188.37,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 1,
+     "order_type": "stop",
+     "stop_price": 181.1,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-08",
+   "regime": "yellow"
+  }
+ ]
 }
