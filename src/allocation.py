@@ -31,7 +31,21 @@ def reservation(rows, account):
 
 
 def budget(plans, account, open_plans):
-    return plan.cash_budget(plans, account, **reservation(open_plans, account))
+    out = plan.cash_budget(plans, account, **reservation(open_plans, account))
+    for candidate in plans:
+        cut = cut_for(candidate, out)
+        sizing = candidate.get("sizing") or {}
+        if cut and cut["kind"] == "no_shares" and all(
+                key in sizing for key in ("budget_usd", "risk_per_share", "cap_usd", "price")):
+            # The combined allocator explains the actual sizing constraints;
+            # the legacy cash-budget helper retains its archived wording.
+            cut["reason"] = (
+                "the configured account cannot size it: no whole share fits both the "
+                f"{plan._usd(sizing['budget_usd'])} effective risk budget after size multipliers "
+                f"({plan._usd(sizing['risk_per_share'])} risk per share) and the "
+                f"{plan._usd(sizing['cap_usd'])} position cap "
+                f"({plan._usd(sizing['price'])} sizing limit)")
+    return out
 
 
 def cut_for(p, cash_budget):

@@ -290,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3151 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3153 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4601,8 +4601,15 @@ tests and pinned actionlint. Chart checks 378/378; morning/risk/actionability
 and light screenshots were inspected. Independent review executed another 117
 pipeline/workflow/allocation/event checks with no blocking finding. Isolated
 rule-removal tests failed their intended controls; unrelated controls remained
-green. The full Python and hosted release gates are the remaining acceptance
-steps at this checkpoint. Local historical storage tests need unsandboxed
+green. The full Python suite passed all 3,151 tests locally and on GitHub.
+The hosted browser pass found a narrow masthead overflow and stale allocation
+and order-control assertions; those are repaired in the release follow-up.
+The combined allocator also explains zero-share refusals using the actual
+effective risk budget and position cap; two regression cases cover market/stop
+reductions and an independently binding position cap. Legacy record wording is
+preserved. The final suite collects 3,153 tests.
+Hosted browser and historical runtime gates remain required before merging.
+Local historical storage tests need unsandboxed
 execution because the sandbox can synthesize `/tmp/.git`; do not weaken their
 storage or authorization guards to accommodate that environment.
 
@@ -4613,5 +4620,14 @@ budget. At $2,000, MG is now event-excluded, SN sizes no whole share, and FTNT
 and VRNS have invalid stop geometry. Do not force a ticket from that list.
 Current publication and historical results are not edited by this code release;
 a real hosted publication is needed to accept the new settings on actual data.
+The no-email real-provider rehearsal (Actions run 37921303809) passed its
+publication gate and independent evidence replay with no missing objects or
+provenance breaks. It measured 4,774 of 4,775 intended stocks, published 728
+reaction candidates, accepted 11 of 12 chart readings, and retained a partial
+reader warning for HAE. The $2,000 account, $10 base risk, Chicago opening
+time, combined cash/slot membership and cleared refused orders all passed
+independent checks. It allocated no orders and refused MG with the archived
+cash-acquisition source. This dry run is a rehearsal, not a new live record.
+PR #107 records the final hosted gate and publication evidence.
 The next milestone is trustworthy morning quotes/event coverage and a smaller
 initial payload, followed by measured opportunity coverage.

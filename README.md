@@ -653,8 +653,9 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   share one allocation, with reactions considered first and anticipation in
   watchlist rank. Existing occupied model plans reserve their original model
   principal even after partial sales; uncertain observations do not create free
-  slots or cash. This
-  allocation is a model, never the owner's observed holdings or settled cash.
+  slots or cash. Zero-share refusals show the effective risk budget after size
+  reductions and the position cap. This allocation is a model, never the owner's
+  observed holdings or settled cash.
   A dated manual corporate-action registry with primary-source links withholds
   known cash-takeover candidates from both kinds of momentum ticket. Its
   evidence is part of the rules identity; a due review does not silently clear

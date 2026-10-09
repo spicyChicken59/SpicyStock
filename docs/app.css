@@ -8,7 +8,10 @@
 .ss-nav a[aria-current="page"] { opacity: 1; }
 .ss-status { display: inline-flex; align-items: center; gap: var(--sc-s2); }
 .ss-status .sc-chip { font-size: 11px; }
-@media (max-width: 720px) {
+/* Keep all navigation and preparation controls in view on tablet widths too;
+   squeezing the three header groups into one row can overflow before mobile. */
+@media (max-width: 1000px) {
+  .ss-masthead { flex-wrap: wrap; row-gap: var(--sc-s1); }
   .ss-masthead__right { width: 100%; flex-wrap: wrap; row-gap: var(--sc-s1); }
   .ss-nav { order: 3; width: 100%; justify-content: space-between; }
   .ss-nav a { padding-inline: 4px; }

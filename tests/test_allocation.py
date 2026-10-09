@@ -94,6 +94,36 @@ def test_money_comparison_uses_cents_at_the_exact_available_boundary():
     assert budget["within"] == ["AAA", "BBB"] and budget["committed_usd"] == 0.3
 
 
+def test_zero_share_explanation_uses_effective_budget_after_both_multipliers():
+    account = plan.Account(equity=2000)
+    watch = plan.anticipation_plan(ticker="SN", close=184.87, box_high=186.32, box_low=174.45,
+                                   lows_last3=[182.38, 181.96, 181.1], account=account,
+                                   size_multiplier=0.5)
+    assert watch["eligible"] and watch["shares"] == 0
+    assert watch["multipliers"]["stop_risk"] == 0.5
+    assert watch["sizing"]["budget_usd"] == 2.5 and watch["risk_per_share"] == 7.27
+    budget = allocation.budget([watch], account, [])
+    assert budget["within"] == [] and budget["cut"][0]["kind"] == "no_shares"
+    assert budget["cut"][0]["reason"] == (
+        "the configured account cannot size it: no whole share fits both the "
+        "$2.50 effective risk budget after size multipliers ($7.27 risk per share) "
+        "and the $500.00 position cap ($188.37 sizing limit)")
+    # Historical callers keep their original wording; only the combined path changes.
+    assert "$10.00 risk budget" in plan.cash_budget([watch], account)["cut"][0]["reason"]
+
+
+def test_zero_share_explanation_identifies_position_cap_when_risk_allows_shares():
+    account = plan.Account(equity=2000, max_position_pct=1)
+    watch = plan.anticipation_plan(ticker="BIG", close=100, box_high=100, box_low=99,
+                                   lows_last3=[99, 99, 99], account=account)
+    assert watch["eligible"] and watch["shares"] == 0
+    assert watch["sizing"]["budget_usd"] > watch["risk_per_share"]
+    budget = allocation.budget([watch], account, [])
+    assert budget["within"] == [] and budget["cut"][0]["kind"] == "no_shares"
+    assert "$20.00 position cap ($101.10 sizing limit)" in budget["cut"][0]["reason"]
+    assert "$5.00 effective risk budget" in budget["cut"][0]["reason"]
+
+
 def test_pipeline_retains_only_combined_admissions_and_verifies_them(market, claude, fake_resend, tmp_path, monkeypatch):
     monkeypatch.setenv("MAX_OPEN_POSITIONS", "1")
     rep, data, docs = evening(tmp_path, market)

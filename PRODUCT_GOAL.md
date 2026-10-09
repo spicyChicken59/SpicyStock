@@ -96,6 +96,14 @@ review spend and coverage, reproduce proposed improvements, and promote only
 an explicitly reviewed strategy version. A small account must be tested with
 whole shares and realistic entry/exit costs.
 
+The first real-provider rehearsal confirms that review acceptance alone is not
+the bottleneck. HAE's rejected reply attempted a C grade and cited paths outside
+the allowed evidence contract. Even without that review refusal, its $2,000
+model has only $1.25 effective risk after the existing market, burst and stop
+reductions, below its $4.84 risk per share. Constrain reader citations to the
+actual allowed paths and account for whole-share viability when studying review
+selection; never turn invalid evidence into a trade merely to fill the list.
+
 ### 4. First-trade walkthrough and review
 
 Provide one coherent journey from a qualified setup to broker verification,
