@@ -3,8 +3,12 @@
 The active [product goal and milestones](PRODUCT_GOAL.md) are a usable morning
 trading workspace for a $2,000 cash account in Chicago time: trustworthy data,
 clear conditional setups, bounded sizing and an explained wait when nothing
-qualifies. The first release focuses on morning preparation, combined cash
+qualifies. Milestone 1 is live with morning preparation, combined cash
 allocation, known corporate-action exclusions and dependable session handling.
+The next milestone is verified morning quotes/events and a smaller initial
+payload; [implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
+track the remaining work. The fresh October 9 morning publication has zero
+qualifying tickets; a successful real-money trade has not yet been recorded.
 
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The

@@ -4608,7 +4608,8 @@ The combined allocator also explains zero-share refusals using the actual
 effective risk budget and position cap; two regression cases cover market/stop
 reductions and an independently binding position cap. Legacy record wording is
 preserved. The final suite collects 3,153 tests.
-Hosted browser and historical runtime gates remain required before merging.
+Hosted browser and historical runtime gates subsequently passed; the
+production acceptance checkpoint below records the completed release.
 Local historical storage tests need unsandboxed
 execution because the sandbox can synthesize `/tmp/.git`; do not weaken their
 storage or authorization guards to accommodate that environment.
@@ -4619,7 +4620,8 @@ A+ only. Zero reaction tickets. MG and SN anticipation tickets bypassed its old
 budget. At $2,000, MG is now event-excluded, SN sizes no whole share, and FTNT
 and VRNS have invalid stop geometry. Do not force a ticket from that list.
 Current publication and historical results are not edited by this code release;
-a real hosted publication is needed to accept the new settings on actual data.
+the production acceptance checkpoint below records the real hosted
+publication that accepted the new settings on actual data.
 The no-email real-provider rehearsal (Actions run 37921303809) passed its
 publication gate and independent evidence replay with no missing objects or
 provenance breaks. It measured 4,774 of 4,775 intended stocks, published 728
@@ -4668,4 +4670,77 @@ unchanged (the public host previously transferred 1,528,683 gzip bytes).
 Opening the complete 730-row matrix took 1,343.3 / 1,344.3 ms through paint:
 the work is deferred, not eliminated. Loading with a scan deep link still pays
 that cost, deliberately. Payload separation and progressive matrix rendering
-remain separate future work. This follow-up has not yet passed hosted gates.
+remain separate future work. The production acceptance checkpoint below records
+the completed hosted gates and release of this follow-up.
+
+## Checkpoint, 9 Oct 2026 — morning milestone published on real data
+
+**Released.** [PR #107](https://github.com/spicyChicken59/SpicyStock/pull/107)
+merged as [1b6e9c24](https://github.com/spicyChicken59/SpicyStock/commit/1b6e9c24).
+The exact release head passed 3,153 Python tests, 10,881 browser assertions,
+378 chart assertions, and the historical central, stress and release gates.
+The local runtime was Python 3.12.14. This closes the earlier checkpoint's
+pending hosted core gates.
+
+**Production evidence.** The explicitly no-email
+[production scan](https://github.com/spicyChicken59/SpicyStock/actions/runs/37928234562)
+published the Oct 8 session at 12:10:20 UTC on Oct 9 (7:10 a.m. Chicago), with
+`dry_run=false`, `email=skipped`, rules identity `8e9ea8528b31`, and publication
+commit [e67f8cba](https://github.com/spicyChicken59/SpicyStock/commit/e67f8cba).
+The [dashboard publisher](https://github.com/spicyChicken59/SpicyStock/actions/runs/37928885283)
+and [Pages deployment](https://github.com/spicyChicken59/SpicyStock/actions/runs/37928913340)
+both succeeded. This is now real production evidence, superseding the earlier
+rehearsal-only acceptance gap.
+
+The published account is $2,000 cash-account model equity, 0.5% base risk
+($10 before reductions), 25% per-name cap and four model slots. Independent
+account/allocation verification passed; provenance replay passed all 732
+retained evidence objects with no missing evidence or breaks. Both reaction and
+anticipation allocated zero tickets and zero new commitment. MG remains
+excluded with its archived acquisition source; FTNT and VRNS fail final stop
+geometry; SN sizes no whole share. Its explanation now uses its actual reduced
+risk budget. The run remains explicitly degraded because 11 of 12 chart
+readings were accepted and HAE's reply violated the evidence contract. These
+outcomes do not justify relaxing the gates or claiming a winning trade.
+
+**Live browser acceptance.** At 12:21 UTC,
+[the public site](https://spicychicken59.github.io/SpicyStock/) passed browser
+checks at 1280 and 390 pixels against production run `37928234562`: matching
+$2,000 / 0.5% account, unknown settled cash, Chicago 8:30–9:00 entry window,
+zero tickets and $0 commitment, MG's SEC source with no order, restored dialog
+focus, no horizontal overflow and no JavaScript errors. The production mobile
+Morning desk and desktop site screenshots were inspected. The receipt and
+screenshots are under `/tmp/spicystock-live-37928234562/`; PR #107 retains the
+final acceptance summary and deployment links. Milestone 1 is accepted on live
+data. Browser verification used a task-scoped proxy CA pin without a persistent
+trust-store change.
+
+**Performance follow-up.** [PR #112](https://github.com/spicyChicken59/SpicyStock/pull/112)
+defers rendering the closed scan matrix until requested. Its reviewed head is
+[f45d917c](https://github.com/spicyChicken59/SpicyStock/commit/f45d917c), with
+3,153 Python tests, 10,961 browser assertions and 378 chart assertions passed.
+All historical central/stress and release gates passed in
+[Tests 37924303043](https://github.com/spicyChicken59/SpicyStock/actions/runs/37924303043).
+Merged as [12ea3b23](https://github.com/spicyChicken59/SpicyStock/commit/12ea3b23).
+[Publisher 37929813283](https://github.com/spicyChicken59/SpicyStock/actions/runs/37929813283)
+and [Pages 37929842050](https://github.com/spicyChicken59/SpicyStock/actions/runs/37929842050)
+succeeded. At 12:26 UTC the live 1280/390 browser checks again passed against
+run `37928234562`, including zero initial scan rows and all 728 rows after
+opening the scan. The cash/account, Chicago window, sourced event refusal,
+focus, overflow and browser-error checks remained green; final screenshots
+were inspected. Receipts are under `/tmp/spicystock-live-37928234562-deferred/`.
+PR #112 retains the hosted and public acceptance summary. Final documentation
+checks passed 37/37; README and `.env.example` were swept with no additional
+configuration change. Deferring the matrix does not reduce the initial JSON transfer:
+the production record is still 14,918,679 bytes before transport compression.
+
+**Continue at milestone 2.** Add a secure read-only morning quote/event check
+with actual feed entitlement, observation times, spread/liquidity coverage,
+trigger/limit/stop comparisons, named news/earnings/action/halt sources and
+explicit missing/stale/outage states. Verify it before the normal 8:30 a.m.
+Chicago open; keep credentials server-side and confirm the broker before
+adding broker-specific instructions. Split detailed retained evidence out of
+the initial payload without breaking provenance or old-record readability.
+Then improve review-path compliance and measure whole-share feasibility and
+the complete candidate funnel under milestone 3. The existing workflows provide
+scheduled scans; this checkpoint creates no unattended development process.

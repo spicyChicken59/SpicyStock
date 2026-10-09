@@ -15,6 +15,37 @@ daily ticket by dropping a market, data, event or account constraint. A more
 speculative idea may be useful research when its added risks, missing evidence
 and experimental status are explicit.
 
+## Release status — 9 October 2026
+
+Milestone 1's core changes are merged in
+[PR #107](https://github.com/spicyChicken59/SpicyStock/pull/107) and deployed to
+[SpicyStock](https://spicychicken59.github.io/SpicyStock/).
+The [real production publication](https://github.com/spicyChicken59/SpicyStock/actions/runs/37928234562)
+demonstrates $2,000 / 0.5% sizing and shared allocation, with all 732 retained evidence
+objects verified. Public browser acceptance passed at phone and desktop sizes,
+with the matching account, Chicago timing, unknown settled cash, zero available
+orders and readable MG exclusion evidence. **Milestone 1 is complete.**
+It offers zero tickets: the recorded market, event, stop and
+whole-share constraints remain binding. Its partial reader warning remains
+visible. The first actual successful trade has not been evidenced in this
+session.
+
+[PR #112](https://github.com/spicyChicken59/SpicyStock/pull/112) also shipped
+deferred rendering of the closed scan matrix. This improves the initial render;
+reducing the publication payload remains part of milestone 2.
+
+The next implementation milestone is **2: a verified morning check**, including
+provider entitlement and freshness, event/halt coverage, outage behavior and a
+smaller initial payload. Broker confirmation remains outstanding. Keep the
+milestone 3 HAE/candidate-funnel investigation separate from evidence that a
+real-money strategy has an established edge.
+
+Track the remaining work in the [GitHub milestone](https://github.com/spicyChicken59/SpicyStock/milestone/1):
+verified morning data [#108](https://github.com/spicyChicken59/SpicyStock/issues/108),
+opportunity coverage [#109](https://github.com/spicyChicken59/SpicyStock/issues/109),
+first-trade walkthrough [#110](https://github.com/spicyChicken59/SpicyStock/issues/110),
+and daily operations [#111](https://github.com/spicyChicken59/SpicyStock/issues/111).
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.
@@ -40,7 +71,7 @@ and experimental status are explicit.
 
 ## Milestones and acceptance
 
-### 1. Trustworthy morning preparation — current release
+### 1. Trustworthy morning preparation — accepted 9 October 2026
 
 Deliver a compact morning desk, opened from the masthead, with Chicago session times, publication and
 entry-window status, separate reaction/anticipation counts, the reason for
