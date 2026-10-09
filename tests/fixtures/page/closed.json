@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "379fcc54af52"
+  "rules_version": "633f6d0caeb4"
  },
  "cover": {
   "h1": "Trade next session. 1 A-quality burst.",
@@ -783,7 +783,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7"
+   "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1"
   },
   "sanitised": {
    "replaced": 0,
@@ -806,9 +806,9 @@
    "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
    "Position cap: $2,500.00 (25% of equity) in any one name.",
    "Max 4 open positions (100% of equity if all are at the cap).",
-   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
-   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
-   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
+   "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+   "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+   "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
   ]
  },
  "rules": {
@@ -993,7 +993,8 @@
    "gfv_restriction_days": 90,
    "precision.cents": 2,
    "precision.pct_decimals": 2,
-   "precision.cent_floor_epsilon": 1e-09
+   "precision.cent_floor_epsilon": 1e-09,
+   "allocation_policy": "combined_stages_reserved_principal_v1"
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -1088,6 +1089,147 @@
     "H"
    ],
    "quality_gate_cap": "B"
+  },
+  "event_risk": {
+   "version": 1,
+   "policy": "unresolved_cash_acquisitions_withhold_new_entries",
+   "coverage": "manual_known_events_only",
+   "max_events": 128,
+   "max_sources": 8,
+   "max_text_length": 2000,
+   "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+   "registry": {
+    "version": 1,
+    "coverage": "manual_known_events_only",
+    "reviewed_on": "2026-10-09",
+    "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Issuer SEC filings and recent submissions were reviewed on the stated date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
+    "events": [
+     {
+      "id": "mg-hig-cash-acquisition",
+      "symbol": "MG",
+      "issuer": "MISTRAS Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-18",
+      "active_from": "2026-09-18",
+      "active_until": null,
+      "evidence_as_of": "2026-09-18",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "MISTRAS enters definitive agreement to be acquired by H.I.G. Capital",
+        "published_on": "2026-09-18",
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
+        "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
+        "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+       }
+      ]
+     },
+     {
+      "id": "prth-priore-cash-acquisition",
+      "symbol": "PRTH",
+      "issuer": "Priority Technology Holdings, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-21",
+      "active_from": "2026-09-21",
+      "active_until": null,
+      "evidence_as_of": "2026-09-21",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Priority enters definitive agreement with Chairman and CEO Thomas Priore to take company private",
+        "published_on": "2026-09-21",
+        "url": "https://www.sec.gov/Archives/edgar/data/1653558/000121390026101651/ea030604701ex99-1.htm",
+        "sha256": "c0a74ecb966191496d0508919111e5e7e8056ea85914c2a4410f186d886622b2",
+        "quote": "Holders of Priority's common stock (other than shares held by the Investor Group) will receive $8.05 per share in cash at the closing of the transaction."
+       }
+      ]
+     },
+     {
+      "id": "arx-thoma-bravo-cash-acquisition",
+      "symbol": "ARX",
+      "issuer": "Accelerant Holdings",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-08-13",
+      "active_from": "2026-08-13",
+      "active_until": null,
+      "evidence_as_of": "2026-09-23",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Accelerant enters definitive agreement to be acquired by Thoma Bravo",
+        "published_on": "2026-08-13",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000119312526347925/d286225dex992.htm",
+        "sha256": "45c369ef926ca66f545db14f45cb6e203f59cd895658813031cb5a65ffdec896",
+        "quote": "Under the terms of the agreement, Accelerant Class A and Class B stockholders will receive $20.25 per share in cash."
+       },
+       {
+        "title": "Accelerant announces expiration of go-shop period",
+        "published_on": "2026-09-23",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000199735026000018/ex991-pressreleaseendofgox.htm",
+        "sha256": "99317e375541af8edc8d8775afe59ed298d09d91b4accef80e8e458753fbe285",
+        "quote": "The transaction is still expected to close in the first half of 2027, subject to customary closing conditions, including approval by Accelerant shareholders and receipt of required regulatory approvals."
+       }
+      ]
+     },
+     {
+      "id": "bwin-sequence-cash-acquisition",
+      "symbol": "BWIN",
+      "issuer": "The Baldwin Insurance Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-14",
+      "active_from": "2026-09-14",
+      "active_until": null,
+      "evidence_as_of": "2026-09-14",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Baldwin to be acquired by Sequence Holdings and Dell Family Office",
+        "published_on": "2026-09-14",
+        "url": "https://www.sec.gov/Archives/edgar/data/1781755/000095010326013874/dp253297_ex9901.htm",
+        "sha256": "ecf9c8914fde967d2cf4dcc3519aaa072beead75b00d206598e9d91e8c735f2d",
+        "quote": "Baldwin shareholders will receive $32.50 in cash for each share of Baldwin common stock they hold."
+       }
+      ]
+     },
+     {
+      "id": "acva-copart-cash-acquisition",
+      "symbol": "ACVA",
+      "issuer": "ACV Auctions Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-10",
+      "active_from": "2026-09-10",
+      "active_until": null,
+      "evidence_as_of": "2026-10-08",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-15",
+      "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "ACV Auctions Form 8-K: merger agreement with Copart",
+        "published_on": "2026-09-10",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000095010326013780/dp253207_8k.htm",
+        "sha256": "72a27b586f15ce8f38693c3ec717750eada2748ccede2695475ff6bc0a02462a",
+        "quote": "$10.50 per share, net to the seller in cash, without interest, subject to any required withholding of taxes"
+       },
+       {
+        "title": "ACV Auctions Schedule 14D-9 amendment: tender extension",
+        "published_on": "2026-10-08",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000119312526417485/d151127dsc14d9a.htm",
+        "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
+        "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
+       }
+      ]
+     }
+    ]
+   }
   },
   "pipeline": {
    "max_reads": 12,
@@ -1958,11 +2100,28 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-04",
+     "symbol": "AAPL",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": true,
+     "reason": null
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "7ed846c5579bd30b30c608800892434b4d2a2c08e4019ea611e0e7e147f1185f",
-     "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
-     "plan_sha256": "82bffeaaba91fe0b1831710e82de39c4a82e02cf384e5751c1967b7034b63846",
+     "id": "387507046a78e97f1607ef6d3aa81f2c91c340a58d37071213a02602dc651f9c",
+     "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
+     "plan_sha256": "afcd9efe7eeb15ada86b25e832e5028e62e1c1de3129c1cbc6098ee3ee1358ba",
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
     }
    },
@@ -2040,7 +2199,7 @@
      },
      "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
      "session": "2026-09-04",
-     "output_sha256": "82bffeaaba91fe0b1831710e82de39c4a82e02cf384e5751c1967b7034b63846",
+     "output_sha256": "afcd9efe7eeb15ada86b25e832e5028e62e1c1de3129c1cbc6098ee3ee1358ba",
      "error": null,
      "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
     },
@@ -2059,8 +2218,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2073,7 +2232,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "7ed846c5579bd30b30c608800892434b4d2a2c08e4019ea611e0e7e147f1185f"
+    "id": "387507046a78e97f1607ef6d3aa81f2c91c340a58d37071213a02602dc651f9c"
    },
    "series": [
     {
@@ -3258,9 +3417,9 @@
     "ticker": "AMD",
     "kind": "burst",
     "scan": "4pct",
-    "action": "buy_at_open",
+    "action": "refused",
     "eligible": true,
-    "reason": null,
+    "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out",
     "entry_ref": 123.27,
     "entry_low": 120.8,
     "entry_high": 128.2,
@@ -3417,31 +3576,10 @@
       "price": null
      }
     ],
-    "order_line": "Buy 4 AMD stop-limit: stop $123.27 limit $128.20, day · OTO sell 4 AMD stop-loss $123.10 GTC",
-    "order_json": {
-     "symbol": "AMD",
-     "action": "buy",
-     "quantity": 4,
-     "order_type": "stop_limit",
-     "stop_price": 123.27,
-     "limit_price": 128.2,
-     "time_in_force": "day",
-     "conditional": "one_triggers_the_other",
-     "then": {
-      "action": "sell",
-      "quantity": 4,
-      "order_type": "stop",
-      "stop_price": 123.1,
-      "time_in_force": "gtc"
-     }
-    },
-    "order_readback": "Buy 4 AMD stop limit 123.27 / 128.20 day, one-triggers-the-other sell 4 AMD stop loss 123.10 GTC",
-    "order_terms": [
-     "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
-     "An open above the $128.20 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $128.20 later in the day: cancel it rather than let it.",
-     "An open under $120.80 is the burst failing: do not place the order, or cancel it; the buy stop at $123.27 would still trigger if the price recovered.",
-     "The sell stop at $123.10 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
-    ],
+    "order_line": null,
+    "order_json": null,
+    "order_readback": null,
+    "order_terms": null,
     "burst": {
      "close": 123.27,
      "low": 123.1,
@@ -3503,12 +3641,29 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-04",
+     "symbol": "AMD",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": false,
+     "reason": "slot_cap"
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "8b87f981ddc38b88619788100aa3cc08215de246e60f5743e7f03d7c934d3513",
-     "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
-     "plan_sha256": "63a3f30550f05eb78f3fbbb689b03ba415b1ac8a3d20e657a21f8ad9ec8ab639",
-     "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
+     "id": "93d659bcb7573937edb1fed3191ec685e76967ddf5d55fd7702ab36cabbabbb9",
+     "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
+     "plan_sha256": "b814260287b1b0e4c7f2891c381239a3d9fe98b3104d8c4e1cbc9c24e3330392",
+     "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
     }
    },
    "chart": "charts/AMD.png",
@@ -3585,9 +3740,9 @@
      },
      "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
      "session": "2026-09-04",
-     "output_sha256": "63a3f30550f05eb78f3fbbb689b03ba415b1ac8a3d20e657a21f8ad9ec8ab639",
+     "output_sha256": "b814260287b1b0e4c7f2891c381239a3d9fe98b3104d8c4e1cbc9c24e3330392",
      "error": null,
-     "pick_sha256": "b759ef61981633aab098830db4f8cf5247b342a17e7f5a36f4925540930cd25f"
+     "pick_sha256": "8791448fea08a08339f01fec5d7b8f9dc3048b3c461320b8e5ad2b011c0b29b5"
     },
     "reader_input": {
      "metrics_sha256": "a887fd742941fa785374eeecb8586fd815c9f2f140ee81f559208bdf4c6c487c",
@@ -3604,8 +3759,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -3618,7 +3773,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "8b87f981ddc38b88619788100aa3cc08215de246e60f5743e7f03d7c934d3513"
+    "id": "93d659bcb7573937edb1fed3191ec685e76967ddf5d55fd7702ab36cabbabbb9"
    },
    "series": [
     {
@@ -4771,9 +4926,9 @@
     "ticker": "NVDA",
     "kind": "burst",
     "scan": "4pct",
-    "action": "buy_at_open",
+    "action": "refused",
     "eligible": true,
-    "reason": null,
+    "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out",
     "entry_ref": 126.88,
     "entry_low": 124.34,
     "entry_high": 128.12,
@@ -4930,31 +5085,10 @@
       "price": null
      }
     ],
-    "order_line": "Buy 4 NVDA stop-limit: stop $126.88 limit $128.12, day · OTO sell 4 NVDA stop-loss $123.00 GTC",
-    "order_json": {
-     "symbol": "NVDA",
-     "action": "buy",
-     "quantity": 4,
-     "order_type": "stop_limit",
-     "stop_price": 126.88,
-     "limit_price": 128.12,
-     "time_in_force": "day",
-     "conditional": "one_triggers_the_other",
-     "then": {
-      "action": "sell",
-      "quantity": 4,
-      "order_type": "stop",
-      "stop_price": 123.0,
-      "time_in_force": "gtc"
-     }
-    },
-    "order_readback": "Buy 4 NVDA stop limit 126.88 / 128.12 day, one-triggers-the-other sell 4 NVDA stop loss 123.00 GTC",
-    "order_terms": [
-     "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
-     "An open above the $128.12 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $128.12 later in the day: cancel it rather than let it.",
-     "An open under $124.34 is the burst failing: do not place the order, or cancel it; the buy stop at $126.88 would still trigger if the price recovered.",
-     "The sell stop at $123.00 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
-    ],
+    "order_line": null,
+    "order_json": null,
+    "order_readback": null,
+    "order_terms": null,
     "burst": {
      "close": 126.88,
      "low": 123.0,
@@ -5017,12 +5151,29 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-04",
+     "symbol": "NVDA",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": false,
+     "reason": "slot_cap"
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "9c4bebbe81d14c7ec5dd645e88dcc0d63aa2a5132e7a85240feadc4d7fe76f6c",
-     "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
-     "plan_sha256": "3e564d4316c04daf684703c84d7b8224b4fb5eeb5747d0d6d573309b0d85d3b7",
-     "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
+     "id": "4a7a09456abe20005f1a594178b1639c2fd141ef25a75e4a2393cd9d489abc38",
+     "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
+     "plan_sha256": "9ed7ee246465f24ce3b07a4e8ef96f238b87c176f94176472928c554020a4208",
+     "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
     }
    },
    "chart": "charts/NVDA.png",
@@ -5099,9 +5250,9 @@
      },
      "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
      "session": "2026-09-04",
-     "output_sha256": "3e564d4316c04daf684703c84d7b8224b4fb5eeb5747d0d6d573309b0d85d3b7",
+     "output_sha256": "9ed7ee246465f24ce3b07a4e8ef96f238b87c176f94176472928c554020a4208",
      "error": null,
-     "pick_sha256": "0b993a1134d7881ec632e2bdba7588e706419bc04f1d839af49d7ddaaceef863"
+     "pick_sha256": "9e72b4c052e89621468bcd96ecd0f750df8860cf900623561da6e4ba30bc9b7a"
     },
     "reader_input": {
      "metrics_sha256": "bac8b5b274bfbedbd030c16cc55be64d2d6c3bd83c7eb32a3967fd2c1643f6af",
@@ -5118,8 +5269,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -5132,7 +5283,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "9c4bebbe81d14c7ec5dd645e88dcc0d63aa2a5132e7a85240feadc4d7fe76f6c"
+    "id": "4a7a09456abe20005f1a594178b1639c2fd141ef25a75e4a2393cd9d489abc38"
    },
    "series": [
     {
@@ -6550,11 +6701,28 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-04",
+     "symbol": "TSLA",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": false,
+     "reason": "withheld"
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "8e0263aab1ffaa3bef2d8efce3b145e8602222617f2fee7a2384cc1d19676f2f",
-     "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
-     "plan_sha256": "7972317ea9c5c2127d984a97cf185a3c0fe84c3d0acd55dcf2348d59f7aa7bf2",
+     "id": "7eaa8236d10ccea9223add2b40ee932c3353b132273ec0e676046cf92b1a8681",
+     "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
+     "plan_sha256": "22963bd78941e04e8c4cd94d72bd191f0d4406fe1fb47f504d06faf7871d9642",
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
     }
    },
@@ -6632,7 +6800,7 @@
      },
      "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
      "session": "2026-09-04",
-     "output_sha256": "7972317ea9c5c2127d984a97cf185a3c0fe84c3d0acd55dcf2348d59f7aa7bf2",
+     "output_sha256": "22963bd78941e04e8c4cd94d72bd191f0d4406fe1fb47f504d06faf7871d9642",
      "error": null,
      "pick_sha256": "2cd8ba442340b9e81c517f18affaceb6a5c62b97d88cb26325ef13ee328ae974"
     },
@@ -6651,8 +6819,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -6665,7 +6833,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "8e0263aab1ffaa3bef2d8efce3b145e8602222617f2fee7a2384cc1d19676f2f"
+    "id": "7eaa8236d10ccea9223add2b40ee932c3353b132273ec0e676046cf92b1a8681"
    },
    "series": [
     {
@@ -7936,8 +8104,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -7950,7 +8118,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "1e9f0de87dc34e18c33a9280f8d454939cadd269ace998914ac62e9131c43d0a"
+    "id": "e5eafca8b4eeb3be002b20b0e734c44b0e48b05d27aa2e77c07d79871cce960b"
    },
    "series": [
     {
@@ -9221,8 +9389,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-04",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -9235,7 +9403,7 @@
      "reason": "quality_grade",
      "detail": null
     },
-    "id": "7e3d6555f8d9c77fa4d0097df79c65ac757c691a02ba9674e285d001958983ec"
+    "id": "25493ec3fd535e2760c66c5c4694f8dbdd1c5ac1e6a3d01372518a93cc260b1c"
    },
    "series": [
     {
@@ -10214,51 +10382,83 @@
   "committed_usd": 505.88,
   "at_risk_usd": 20.2,
   "equity": 10000.0,
+  "reserved_usd": 1762.98,
+  "available_usd": 8237.02,
+  "open_symbols": [
+   "NBIS",
+   "SMCI",
+   "VRT"
+  ],
   "slots_used": 4,
   "slots_max": 4,
   "open_positions": 3,
   "within": [
    "AAPL"
   ],
+  "admitted": [
+   {
+    "ticker": "AAPL",
+    "setup_kind": "burst"
+   }
+  ],
   "beyond": [
    {
     "ticker": "AMD",
+    "setup_kind": "burst",
     "rank": 2,
     "reason": "slot_cap",
     "position_usd": 512.8
    },
    {
     "ticker": "NVDA",
+    "setup_kind": "burst",
     "rank": 3,
     "reason": "slot_cap",
     "position_usd": 512.48
+   },
+   {
+    "ticker": "COIL",
+    "setup_kind": "anticipation",
+    "rank": 5,
+    "reason": "slot_cap",
+    "position_usd": 2457.84
    }
   ],
   "cut": [
    {
     "ticker": "TSLA",
+    "setup_kind": "burst",
     "kind": "withheld",
     "reason": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
    },
    {
     "ticker": "AMD",
+    "setup_kind": "burst",
     "kind": "slot_cap",
     "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
    },
    {
     "ticker": "NVDA",
+    "setup_kind": "burst",
     "kind": "slot_cap",
     "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
+   },
+   {
+    "ticker": "COIL",
+    "setup_kind": "anticipation",
+    "kind": "slot_cap",
+    "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
    }
   ],
   "skipped": [
    {
     "ticker": "TSLA",
+    "setup_kind": "burst",
     "rank": 4,
     "reason": "no_order"
    }
   ],
-  "sentence": "Model allocation: next-session tickets would commit $505.88 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
+  "sentence": "Model allocation: next-session tickets would commit $505.88 of the configured $10,000.00; 4 of 4 slots (3 open model plans); $1,762.98 reserved for unfinished model plans"
  },
  "watchlist": {
   "top": [
@@ -10312,9 +10512,9 @@
     "plan": {
      "ticker": "COIL",
      "kind": "anticipation",
-     "action": "place_buy_stop",
+     "action": "refused",
      "eligible": true,
-     "reason": null,
+     "reason": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out",
      "entry_ref": 110.61,
      "trigger": 110.61,
      "limit": 111.72,
@@ -10452,30 +10652,10 @@
        "price": null
       }
      ],
-     "order_line": "Buy 22 COIL stop-limit: stop $110.61 limit $111.72, day · OTO sell 22 COIL stop-loss $109.50 GTC",
-     "order_json": {
-      "symbol": "COIL",
-      "action": "buy",
-      "quantity": 22,
-      "order_type": "stop_limit",
-      "stop_price": 110.61,
-      "limit_price": 111.72,
-      "time_in_force": "day",
-      "conditional": "one_triggers_the_other",
-      "then": {
-       "action": "sell",
-       "quantity": 22,
-       "order_type": "stop",
-       "stop_price": 109.5,
-       "time_in_force": "gtc"
-      }
-     },
-     "order_readback": "Buy 22 COIL stop limit 110.61 / 111.72 day, one-triggers-the-other sell 22 COIL stop loss 109.50 GTC",
-     "order_terms": [
-      "A day order rests until the close unless you cancel it. The plan's entry is the first 30 minutes: if it has not filled by then, cancel it yourself; SpicyStock places and cancels nothing.",
-      "An open above the $111.72 limit does not fill at the open, but the resting order stays live and can fill on a pullback under $111.72 later in the day: cancel it rather than let it.",
-      "The sell stop at $109.50 is attached the moment the buy fills (OTO), as a stop-market order; nothing is protected before the fill."
-     ],
+     "order_line": null,
+     "order_json": null,
+     "order_readback": null,
+     "order_terms": null,
      "flags": [],
      "notes": [],
      "exit_schedule": [
@@ -10522,12 +10702,29 @@
        "instruction": "at the day 5 close: exit the remainder into strength."
       }
      ],
+     "event_risk": {
+      "version": 1,
+      "coverage": "manual_known_events_only",
+      "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+      "registry_reviewed_on": "2026-10-09",
+      "session": "2026-09-04",
+      "symbol": "COIL",
+      "blocked": false,
+      "status": "not_in_registry",
+      "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+      "matches": []
+     },
+     "allocation": {
+      "policy": "combined_stages_reserved_principal_v1",
+      "admitted": false,
+      "reason": "slot_cap"
+     },
      "evidence_ref": {
       "version": 1,
-      "id": "c6035deb7cece3f1ca1cb49232f512963538775f3317cfb8bd7e86d1323abf9a",
-      "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
-      "plan_sha256": "d4e5f8bdc688509df2197a19b9eb979d34c5461fa706fa873daaf4a6cc9d0117",
-      "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
+      "id": "317e3de7ae20206aaae554aff042faa8234ca32633539985157c74a5ca546ca1",
+      "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
+      "plan_sha256": "89e674ed0b83c11ab09975194bbe49303cb766ecaf9cc461fd27ad9db2fe2860",
+      "pick_sha256": "ee35be7c2467fd384e7258f64381c37bd2af9327638a86cc7de6a77583f2f2d5"
      }
     },
     "series": [
@@ -11525,25 +11722,25 @@
       },
       "regime_sha256": "4e4904ac037f342f67b3ce72dbd38dd529c3e3dc1ab632becc01272be6b0dea2",
       "session": "2026-09-04",
-      "output_sha256": "d4e5f8bdc688509df2197a19b9eb979d34c5461fa706fa873daaf4a6cc9d0117",
+      "output_sha256": "89e674ed0b83c11ab09975194bbe49303cb766ecaf9cc461fd27ad9db2fe2860",
       "error": null,
-      "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
+      "pick_sha256": "ee35be7c2467fd384e7258f64381c37bd2af9327638a86cc7de6a77583f2f2d5"
      },
      "version": 1,
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-04",
-     "rules_version": "379fcc54af52",
-     "context_sha256": "410cb35b58d0aa4774c7efef9ff3eccfdc2e33bb4714808579b03efbbb7605c7",
+     "rules_version": "633f6d0caeb4",
+     "context_sha256": "6111f00c40662e47a3cd1777aa3a3b2fc20104fe424d689a76266362183b59f1",
      "gate": {
       "regime": "green",
       "final_grade": "watch",
       "allowed_grades": null,
-      "ticket": true,
-      "reason": null,
-      "detail": null
+      "ticket": false,
+      "reason": "no_order",
+      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
      },
-     "id": "c6035deb7cece3f1ca1cb49232f512963538775f3317cfb8bd7e86d1323abf9a"
+     "id": "317e3de7ae20206aaae554aff042faa8234ca32633539985157c74a5ca546ca1"
     }
    }
   ],
@@ -11651,7 +11848,8 @@
     "dollar_high": 206.8
    },
    "fill": "filled at the open, $180.00",
-   "uncertainty": null
+   "uncertainty": null,
+   "limit": 183.85
   },
   {
    "ticker": "SMCI",
@@ -11671,6 +11869,7 @@
    "fill": "opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
    "uncertainty": "trigger_timing",
    "sessions": 3,
+   "limit": 25.32,
    "day": 3,
    "status": "uncertain",
    "instruction": "Day 1 (2026-09-02): opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $23.58; sell at least half by day 3's close and be out by day 5's close.",
@@ -11735,19 +11934,20 @@
     "dollar_high": null
    },
    "fill": "filled at the open, $25.52",
-   "uncertainty": null
+   "uncertainty": null,
+   "limit": 26.25
   }
  ],
  "scorecard": {
   "settled": 20,
   "open": 2,
-  "pending": 2,
+  "pending": 1,
   "uncertain": 12,
   "not_filled": 13,
   "unmeasured": 0,
   "unreadable": 0,
   "unscored": 0,
-  "plans": 49,
+  "plans": 48,
   "filled": 22,
   "uncertain_reasons": [
    {
@@ -11780,7 +11980,7 @@
    "from": "2026-06-10",
    "through": "2026-09-04",
    "includes_current": true,
-   "retained": 49,
+   "retained": 48,
    "outside_window": 0,
    "at_capacity": false,
    "problem": null
@@ -11793,7 +11993,7 @@
    "expected_session": "2026-09-04",
    "evaluated_session": "2026-09-04"
   },
-  "replay_rules_version": "379fcc54af52"
+  "replay_rules_version": "633f6d0caeb4"
  },
  "observations": {
   "as_of": "2026-09-04",
@@ -12011,53 +12211,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-04:379fcc54af52": {
+   "burst:AAPL:2026-09-04:633f6d0caeb4": {
     "ticker": "AAPL",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-04:379fcc54af52": {
+   "burst:AMD:2026-09-04:633f6d0caeb4": {
     "ticker": "AMD",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-04:379fcc54af52": {
+   "burst:NVDA:2026-09-04:633f6d0caeb4": {
     "ticker": "NVDA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-04:379fcc54af52": {
+   "burst:TSLA:2026-09-04:633f6d0caeb4": {
     "ticker": "TSLA",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-04:379fcc54af52": {
+   "burst:PLUG:2026-09-04:633f6d0caeb4": {
     "ticker": "PLUG",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-04:379fcc54af52": {
+   "burst:DLLR:2026-09-04:633f6d0caeb4": {
     "ticker": "DLLR",
     "session": "2026-09-04",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-04:379fcc54af52": {
+   "anticipation:COIL:2026-09-04:633f6d0caeb4": {
     "ticker": "COIL",
     "session": "2026-09-04",
     "kind": "anticipation",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    }
   },
@@ -12083,7 +12283,7 @@
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
   "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
-  "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
+  "cash_budget": "Combined reaction and anticipation model allocation, reaction rank first: new tickets, principal reserved for unfinished model plans, model slots used, and every cut ticket with its setup kind and reason. Partial model sales do not free capacity. Never a balance, settled cash or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",

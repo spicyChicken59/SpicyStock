@@ -268,13 +268,18 @@ def decide(m: Measurement, account: plan.Account, rec: dict, *, gate: bool,
     if m.regime is None:
         return rec, row
     verdict = m.regime["verdict"]
-    held = pipeline.slots_held(record.open_plans(rec, m.frames, m.session.isoformat(), verdict))
-    trades, cut, budget = pipeline._make_plans(m.bursts, account, m.regime if gate else UNGATED_REGIME, held,
-                                               m.session, require_reader=False)
+    open_rows = record.open_plans(rec, m.frames, m.session.isoformat(), verdict)
+    held = pipeline.slots_held(open_rows)
+    pipeline._make_plans(m.bursts, account, m.regime if gate else UNGATED_REGIME, held,
+                         m.session, require_reader=False)
+    eligible = sum(1 for b in m.bursts if (b.get("plan") or {}).get("eligible")
+                   and b["plan"].get("action") in plan.ORDER_ACTIONS)
+    # This study remains reaction-only, but uses production's same reservation
+    # and allocation path. A prior model plan cannot create extra buying power.
+    trades, cut, budget = pipeline.allocate_plans(m.bursts, {"top": []}, account, open_rows)
     picks = [pipeline.pick_of(b["plan"], "burst", b["grade"], b["score"]) for b in m.bursts if b["ticker"] in trades]
     rec = record.append(rec, m.session.isoformat(), picks, verdict, max_picks=max_picks)
-    row.update(eligible_plans=sum(1 for b in m.bursts if (b.get("plan") or {}).get("eligible")
-                                  and b["plan"].get("action") in plan.ORDER_ACTIONS),
+    row.update(eligible_plans=eligible,
                trades=list(trades), cut=dict(Counter(c["kind"] for c in budget.get("cut", []))),
                slots_held=held, candidates=[_slim(b) for b in m.bursts])
     return rec, row

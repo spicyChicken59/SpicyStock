@@ -143,9 +143,10 @@ CONTRACT: dict[str, str] = {
     "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the "
                   "limit, past the slots or the configured equity, or sized to no whole share. Each has a "
                   "reason in cash_budget.cut. Not checklist refusals.",
-    "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the "
-                   "model slots used (open model plans count), and every plan without a ticket with its kind "
-                   "and reason. Never a balance or buying power.",
+    "cash_budget": "Combined reaction and anticipation model allocation, reaction rank first: new tickets, "
+                   "principal reserved for unfinished model plans, model slots used, and every cut ticket "
+                   "with its setup kind and reason. Partial model sales do not free capacity. Never a balance, "
+                   "settled cash or buying power.",
     "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
     "open_plans": "Every published plan still inside its window, replayed to this session as a model: status "
                   "word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not "

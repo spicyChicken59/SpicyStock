@@ -272,6 +272,19 @@ def test_a_slot_cap_of_one_is_path_dependent_on_the_open_model_plan(archive):
     assert [p["ticker"] for p in out["outcomes"][backtest.PRODUCTION]["picks"]] == ["AAA"]
 
 
+def test_new_replays_reserve_original_model_principal_before_admitting_tickets(monkeypatch):
+    row = {"ticker": "NEW", "scan": "burst", "grade": "A+", "grade_mechanical": "A+", "score": 10,
+           "vetoes": [], "close": 50, "low": 49.95, "high": 50.20, "open": 49.98,
+           "prev_close": 47, "gain_pct": 6.38}
+    measured = backtest.Measurement(date(2026, 10, 8), {}, {}, {"verdict": "green", "size_multiplier": 1.0}, [row], {})
+    monkeypatch.setattr(record, "open_plans", lambda *args: [
+        {"ticker": "OLD", "status": "unmeasured", "entry_ref": 100, "limit": 100, "shares": 20}])
+    rec, decision = backtest.decide(measured, plan.Account(equity=2000), record.empty(), gate=True)
+    assert decision["eligible_plans"] == 1 and decision["slots_held"] == 1
+    assert decision["trades"] == [] and decision["cut"] == {"equity": 1}
+    assert rec["picks"] == [] and row["plan"]["order_json"] is None
+
+
 # ----------------------------------------------------------- equivalence ----
 def test_a_shortened_lookback_is_held_to_the_runs_own_on_every_overlapping_session(archive):
     with network_blocked():

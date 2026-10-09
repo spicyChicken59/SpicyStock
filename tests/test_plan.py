@@ -747,22 +747,28 @@ def test_cash_budget_reads_real_plans():
 # ------------------------------------------------------------- notes -------
 
 
-def test_account_notes_state_the_dollar_risk_the_cap_the_slots_and_the_broker_rules():
+def test_account_notes_state_sizing_and_cash_constraints_without_claiming_broker_access():
     notes = plan.account_notes(Account())
     assert notes[0] == "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%)."
     assert notes[1] == "Position cap: $2,500.00 (25% of equity) in any one name."
     assert notes[2] == "Max 4 open positions (100% of equity if all are at the cap)."
-    pdt = notes[3]
-    for phrase in ("2026-06-04", "2027-10-20", "as if the old rule binds", "at most 3 same-day round trips",
-                   "rolling 5 business days", "margin account under $25,000.00", "a same-day stop-out counts",
-                   "a position held overnight never counts"):
-        assert phrase in pdt, phrase
-    assert notes[4] == ("Account type: margin with debt protection (no borrowing, no good-faith violations). "
-                        "In a cash account buy only against settled cash (T+1); 3 good-faith violations in "
-                        "12 months means 90 days of settled-cash-only.")
-    assert notes[5] == ("Attach the protective stop the moment the buy fills, as a stop-MARKET order and "
-                        "never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active "
-                        "Trader Pro: OTO/OTOCO).")
+    assert notes[3] == ("Cash reuse: US stock trades generally settle T+1; a sale does not establish "
+                        "immediately spendable cash. Check availability and any cash-account restrictions "
+                        "with your broker.")
+    assert notes[4] == ("Cash-account planning reference: no leverage is assumed. The site does not read "
+                        "your broker's settled cash or buying power; confirm available settled cash before "
+                        "each buy.")
+    assert notes[5] == ("Plan a protective stop-market order as soon as the buy fills; verify your broker "
+                        "supports the intended entry and linked stop orders. Gaps and slippage can make "
+                        "the loss exceed planned risk.")
+    owner_notes = plan.account_notes(Account(equity=2000, risk_pct=0.5))
+    assert owner_notes[0].startswith('Risk per trade: $10.00 (0.5% of $2,000.00;')
+    assert owner_notes[3:] == notes[3:]
+    for rendered in (notes, owner_notes):
+        text = ' '.join(rendered)
+        for unsupported_claim in ('margin with debt protection', 'Fidelity', 'Active Trader Pro',
+                                  'no good-faith violations', '2026-06-04', '2027-10-20'):
+            assert unsupported_claim not in text
     assert len(notes) == len(plan.NOTE_TEMPLATES) == 6
 
 
@@ -932,7 +938,7 @@ def test_a_plan_whose_budget_cannot_buy_one_share_places_no_order():
     assert p["action"] == "no_order" and p["order_line"] is None and p["eligible"]
     assert any("cannot buy one share" in n for n in p["notes"])
     b = plan.cash_budget([p], Account())
-    assert b["cut"] == [{"ticker": "XYZ", "kind": "no_shares", "reason": ("the configured account cannot size it: $205.00 at risk "
+    assert b["cut"] == [{"ticker": "XYZ", "setup_kind": "burst", "kind": "no_shares", "reason": ("the configured account cannot size it: $205.00 at risk "
                                                                           "per share against a $50.00 risk budget comes to no whole share")}]
 
 

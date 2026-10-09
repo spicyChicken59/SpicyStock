@@ -4,12 +4,12 @@ name: Evening scan (6:16 PM ET)
 # commits them back so GitHub Pages can publish the plan for the next XNYS session.
 #
 # Two cron pairs, because GitHub crons are UTC and the US switches between
-# EDT and EST: the guard below runs only the slot that matches today's offset.
+# EDT and EST: the guard uses the offset at the nominal scheduled occurrence.
 #   6:16 PM ET  -> "16 22" (EDT) / "16 23" (EST)   the primary run
 #   8:16 PM ET  -> "16 0"  (EDT) / "16 1"  (EST)   the retry, next UTC day
-# The retry runs only when docs/data.json does not already hold tonight's
-# session (a failed or late primary), so a normal night runs once. Measured
-# lateness on this repository is 5-17 minutes per slot, never zero.
+# Both slots skip an already published session. A delayed event keeps the
+# session its nominal cron occurrence intended, including after ET midnight.
+# Observed delays have exceeded five hours; next-session open is the cutoff.
 run-name: >-
   ${{ github.event_name == 'workflow_dispatch'
       && (inputs.dry_run == true && 'Evening rehearsal'
@@ -53,43 +53,79 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-      - name: Guard — the slot for today's UTC offset; the retry only if tonight is unpublished
-        id: guard
-        run: |
-          set -o pipefail
-          OFFSET=$(TZ=America/New_York date +%z)   # -0400 = EDT, -0500 = EST
-          if [ "$OFFSET" = "-0400" ]; then PRIMARY="16 22 * * 1-5"; RETRY="16 0 * * 2-6"
-          else PRIMARY="16 23 * * 1-5"; RETRY="16 1 * * 2-6"; fi
-          FIRED="${{ github.event.schedule }}"
-          GO=false
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            GO=true
-          elif [ "$FIRED" = "$PRIMARY" ]; then
-            GO=true
-          elif [ "$FIRED" = "$RETRY" ]; then
-            # Tonight's session is today's date in market time (it is still the
-            # evening in New York at 8:16 PM). Run only if the committed record
-            # does not already carry it. The pipeline recognizes holidays
-            # before directory/bars/model work; both slots may log that skip.
-            SESSION=$(TZ=America/New_York date +%Y-%m-%d)
-            if jq -e --arg s "$SESSION" \
-              '(.run.session == $s) or (.run.expected_session == $s)' docs/data.json > /dev/null 2>&1; then
-              echo "Retry: tonight ($SESSION) is already published — skipping."
-            else
-              GO=true
-              echo "Retry: no record for $SESSION — running now."
-            fi
-          else
-            echo "Not this slot ($FIRED; offset $OFFSET) — skipping."
-          fi
-          echo "go=$GO" >> "$GITHUB_OUTPUT"
+        with:
+          # A queued slot must see the record the preceding scan committed.
+          ref: ${{ github.ref }}
       - uses: actions/setup-python@v5
-        if: steps.guard.outputs.go == 'true'
         with:
           python-version: "3.12"
       - name: Install dependencies
-        if: steps.guard.outputs.go == 'true'
         run: pip install -r requirements.txt
+      - name: Guard — resolve the scheduled session and skip published or expired slots
+        id: guard
+        env:
+          SCAN_EVENT_NAME: ${{ github.event_name }}
+          SCAN_EVENT_SCHEDULE: ${{ github.event.schedule }}
+          SCAN_REQUESTED_SESSION: ${{ inputs.session }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import date, datetime, timedelta, timezone
+          from pathlib import Path
+
+          from src import sessions
+
+          def decide():
+              if os.environ['SCAN_EVENT_NAME'] == 'workflow_dispatch':
+                  return True, os.environ.get('SCAN_REQUESTED_SESSION', ''), 'Manual dispatch'
+              slots = {
+                  '16 22 * * 1-5': (22, '-0400', range(0, 5)),
+                  '16 23 * * 1-5': (23, '-0500', range(0, 5)),
+                  '16 0 * * 2-6': (0, '-0400', range(1, 6)),
+                  '16 1 * * 2-6': (1, '-0500', range(1, 6)),
+              }
+              fired = os.environ.get('SCAN_EVENT_SCHEDULE', '')
+              if fired not in slots:
+                  return False, '', 'Unknown scheduled slot'
+              hour, offset, weekdays = slots[fired]
+              now = datetime.now(timezone.utc)
+              nominal = now.replace(hour=hour, minute=16, second=0, microsecond=0)
+              if nominal > now:
+                  nominal -= timedelta(days=1)
+              intended = nominal.astimezone(sessions.MARKET_TZ)
+              target = intended.date()
+              if nominal.weekday() not in weekdays or intended.strftime('%z') != offset:
+                  return False, '', 'Not the active UTC slot'
+              if not sessions.is_session(target):
+                  return False, '', f'{target} is not an exchange session'
+              next_open = sessions.hours(sessions.next_sessions(target, 1)[0])[0]
+              if now >= next_open:
+                  return False, '', f'{target} recovery expired at the next session open'
+              try:
+                  previous = json.loads(Path('docs/data.json').read_text())
+                  run = previous.get('run', {}) if isinstance(previous, dict) else {}
+                  if not isinstance(run, dict):
+                      run = {}
+              except (OSError, ValueError):
+                  run = {}
+              measured = run.get('session')
+              try:
+                  measured = date.fromisoformat(measured) if isinstance(measured, str) else None
+              except ValueError:
+                  measured = None
+              if measured and measured > target:
+                  return False, '', f'A newer session than {target} is already published'
+              if (measured == target and run.get('status') in ('ok', 'degraded')
+                      and run.get('dry_run') is False and not previous.get('fixture')):
+                  return False, '', f'{target} is already published'
+              return True, str(target), f'Scheduled session {target}; nominal slot {nominal.isoformat()}'
+
+          go, session, reason = decide()
+          print(reason)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'go={str(go).lower()}\nsession={session}\n')
+          PY
       - name: Run evening pipeline
         id: pipeline
         if: steps.guard.outputs.go == 'true'
@@ -101,14 +137,16 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          # Repository VARIABLES (not secrets): the feed, the universe mode and
-          # the account the plans are sized for. Unset expands to '' = default.
+          # Repository VARIABLES (not secrets): feed and universe mode.
+          # Unset expands to '' = default.
           SCAN_FEED: ${{ vars.SCAN_FEED }}
           SCAN_UNIVERSE: ${{ vars.SCAN_UNIVERSE }}
-          ACCOUNT_EQUITY: ${{ vars.ACCOUNT_EQUITY }}
-          RISK_PCT: ${{ vars.RISK_PCT }}
+          # Owner's cash-account reference, versioned here: $10 planned risk.
+          # Actual settled cash remains known only to the owner and broker.
+          ACCOUNT_EQUITY: '2000'
+          RISK_PCT: '0.5'
           SCAN_SEND_EMAIL: ${{ inputs.skip_email == true && 'false' || 'true' }}
-          SCAN_SESSION_DATE: ${{ inputs.session }}
+          SCAN_SESSION_DATE: ${{ steps.guard.outputs.session }}
           DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
           GITHUB_RUN_ID_FOR_RECORD: ${{ github.run_id }}
         # The exit code is captured here and raised at the end of the job, so

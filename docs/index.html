@@ -25,6 +25,7 @@
 <script src="app-reading.js"></script>
 <script src="app-method.js"></script>
 <script src="app-findings.js"></script>
+<script src="app-morning.js"></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -37,6 +38,7 @@
       <span class="sc-brand__sub">momentum burst desk</span>
     </span>
   </a>
+  <button type="button" class="sc-btn sc-btn--secondary sc-btn--sm ss-morning-open" id="morning-open" aria-haspopup="dialog" aria-controls="morning-desk" disabled>Morning desk</button>
   <div class="sc-masthead__right ss-masthead__right">
     <nav class="sc-nav ss-nav" id="nav" aria-label="Views">
       <a href="#/explore" data-view="explore">Latest scan</a>
@@ -55,6 +57,7 @@
   </div>
 </header>
 
+<dialog id="morning-desk"></dialog>
 <main class="sc-wrap sc-wrap--wide sc-page ss-page" id="main">
   <div id="status-line" hidden></div>
 

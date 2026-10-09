@@ -30,6 +30,7 @@ import { checkPageChartKeyboard } from './chart_keyboard_cases.mjs';
 import { checkHistoricalJourneys } from './historical_cases.mjs';
 import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
+import { checkMorning } from './morning_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -82,6 +83,7 @@ async function serve() {
       if ((await stat(file)).isDirectory()) file = path.join(file, 'index.html');
       // Read-only isolated source controls; never mutate the working tree.
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
+        : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       const body = await readFile(override || file);
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
@@ -3857,6 +3859,7 @@ async function main() {
         await checkVariant(browser, base, v, data);
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+      if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
       if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});

@@ -2026,9 +2026,9 @@
   {
    "evidence_ref": {
     "version": 1,
-    "id": "d776f2892565cb8a49593ddbd5a783ccc16e81cb72ae9248db8c8742a0e3841f",
-    "context_sha256": "88cdae2517e213e7429f59c430dac164cdbda0e7a3bfc1abb039fb59762a015c",
-    "plan_sha256": "686ba26c906a6986d9cce5c0aec50f610f6c5d679505876387f3b8421db984ef",
+    "id": "edc0ebe336975eae8d98dac0486d4f4b1191dadc01c98ac594f75c8d272063e5",
+    "context_sha256": "ec85b217bc8e02fafa4b72cc34bac4b2b4d74e397b34f0465b81ca13b46b5dfd",
+    "plan_sha256": "2dd13de7f67b811c59c955a7663de818d3af290b41017388e2a14a3d749ec3fe",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
    },
    "ticker": "AAPL",
@@ -2067,56 +2067,6 @@
      "quantity": 4,
      "order_type": "stop",
      "stop_price": 121.42,
-     "time_in_force": "gtc"
-    }
-   },
-   "date": "2026-09-10",
-   "regime": "green"
-  },
-  {
-   "evidence_ref": {
-    "version": 1,
-    "id": "28cfe6b148c692e75c3c50a56622939edd4003623011355b1a4ae8294ef35465",
-    "context_sha256": "88cdae2517e213e7429f59c430dac164cdbda0e7a3bfc1abb039fb59762a015c",
-    "plan_sha256": "02805406e094a6fe2efc60fcd35944fd6ce051fc0a8ebec74b704d75c24b9eb1",
-    "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
-   },
-   "ticker": "COIL",
-   "kind": "anticipation",
-   "grade": "watch",
-   "score": 1.085,
-   "entry_ref": 110.61,
-   "entry_low": null,
-   "entry_high": null,
-   "day2_spent_above": null,
-   "limit_basis": null,
-   "trigger": 110.61,
-   "limit": 111.72,
-   "stop": 109.5,
-   "shares": 22,
-   "targets": {
-    "low_pct": 8.0,
-    "high_pct": 20.0,
-    "low": 119.46,
-    "high": 132.73,
-    "note": "above $40 he measures the move in dollars: $5-25",
-    "dollar_low": 115.61,
-    "dollar_high": 135.61
-   },
-   "order_json": {
-    "symbol": "COIL",
-    "action": "buy",
-    "quantity": 22,
-    "order_type": "stop_limit",
-    "stop_price": 110.61,
-    "limit_price": 111.72,
-    "time_in_force": "day",
-    "conditional": "one_triggers_the_other",
-    "then": {
-     "action": "sell",
-     "quantity": 22,
-     "order_type": "stop",
-     "stop_price": 109.5,
      "time_in_force": "gtc"
     }
    },
