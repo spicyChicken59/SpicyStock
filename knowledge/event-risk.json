@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "coverage": "manual_known_events_only",
+  "reviewed_on": "2026-10-09",
+  "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Issuer SEC filings and recent submissions were reviewed on the stated date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
+  "events": [
+    {
+      "id": "mg-hig-cash-acquisition",
+      "symbol": "MG",
+      "issuer": "MISTRAS Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-18",
+      "active_from": "2026-09-18",
+      "active_until": null,
+      "evidence_as_of": "2026-09-18",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+        {
+          "title": "MISTRAS enters definitive agreement to be acquired by H.I.G. Capital",
+          "published_on": "2026-09-18",
+          "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
+          "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
+          "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+        }
+      ]
+    },
+    {
+      "id": "prth-priore-cash-acquisition",
+      "symbol": "PRTH",
+      "issuer": "Priority Technology Holdings, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-21",
+      "active_from": "2026-09-21",
+      "active_until": null,
+      "evidence_as_of": "2026-09-21",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+        {
+          "title": "Priority enters definitive agreement with Chairman and CEO Thomas Priore to take company private",
+          "published_on": "2026-09-21",
+          "url": "https://www.sec.gov/Archives/edgar/data/1653558/000121390026101651/ea030604701ex99-1.htm",
+          "sha256": "c0a74ecb966191496d0508919111e5e7e8056ea85914c2a4410f186d886622b2",
+          "quote": "Holders of Priority's common stock (other than shares held by the Investor Group) will receive $8.05 per share in cash at the closing of the transaction."
+        }
+      ]
+    },
+    {
+      "id": "arx-thoma-bravo-cash-acquisition",
+      "symbol": "ARX",
+      "issuer": "Accelerant Holdings",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-08-13",
+      "active_from": "2026-08-13",
+      "active_until": null,
+      "evidence_as_of": "2026-09-23",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+        {
+          "title": "Accelerant enters definitive agreement to be acquired by Thoma Bravo",
+          "published_on": "2026-08-13",
+          "url": "https://www.sec.gov/Archives/edgar/data/1997350/000119312526347925/d286225dex992.htm",
+          "sha256": "45c369ef926ca66f545db14f45cb6e203f59cd895658813031cb5a65ffdec896",
+          "quote": "Under the terms of the agreement, Accelerant Class A and Class B stockholders will receive $20.25 per share in cash."
+        },
+        {
+          "title": "Accelerant announces expiration of go-shop period",
+          "published_on": "2026-09-23",
+          "url": "https://www.sec.gov/Archives/edgar/data/1997350/000199735026000018/ex991-pressreleaseendofgox.htm",
+          "sha256": "99317e375541af8edc8d8775afe59ed298d09d91b4accef80e8e458753fbe285",
+          "quote": "The transaction is still expected to close in the first half of 2027, subject to customary closing conditions, including approval by Accelerant shareholders and receipt of required regulatory approvals."
+        }
+      ]
+    },
+    {
+      "id": "bwin-sequence-cash-acquisition",
+      "symbol": "BWIN",
+      "issuer": "The Baldwin Insurance Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-14",
+      "active_from": "2026-09-14",
+      "active_until": null,
+      "evidence_as_of": "2026-09-14",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+        {
+          "title": "Baldwin to be acquired by Sequence Holdings and Dell Family Office",
+          "published_on": "2026-09-14",
+          "url": "https://www.sec.gov/Archives/edgar/data/1781755/000095010326013874/dp253297_ex9901.htm",
+          "sha256": "ecf9c8914fde967d2cf4dcc3519aaa072beead75b00d206598e9d91e8c735f2d",
+          "quote": "Baldwin shareholders will receive $32.50 in cash for each share of Baldwin common stock they hold."
+        }
+      ]
+    },
+    {
+      "id": "acva-copart-cash-acquisition",
+      "symbol": "ACVA",
+      "issuer": "ACV Auctions Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-10",
+      "active_from": "2026-09-10",
+      "active_until": null,
+      "evidence_as_of": "2026-10-08",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-15",
+      "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+        {
+          "title": "ACV Auctions Form 8-K: merger agreement with Copart",
+          "published_on": "2026-09-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1637873/000095010326013780/dp253207_8k.htm",
+          "sha256": "72a27b586f15ce8f38693c3ec717750eada2748ccede2695475ff6bc0a02462a",
+          "quote": "$10.50 per share, net to the seller in cash, without interest, subject to any required withholding of taxes"
+        },
+        {
+          "title": "ACV Auctions Schedule 14D-9 amendment: tender extension",
+          "published_on": "2026-10-08",
+          "url": "https://www.sec.gov/Archives/edgar/data/1637873/000119312526417485/d151127dsc14d9a.htm",
+          "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
+          "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
+        }
+      ]
+    }
+  ]
+}

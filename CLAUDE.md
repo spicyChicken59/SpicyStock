@@ -1,5 +1,12 @@
 # SpicyStock — working notes
 
+**Active goal (9 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
+current product direction and milestone contract. The owner uses a $2,000 cash
+account and America/Chicago time; the broker is unspecified. New production
+workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
+default model assumptions retain their own values. Continue from the first
+unfinished milestone and record production evidence before calling it complete.
+
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
 `knowledge/method.md` says whose number every rule is, `README.md` says what
@@ -283,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3076 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3153 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4540,3 +4547,87 @@ the also-quiet rows.
 
 **Not run here:** a live night under the rule. The burst scan is untouched: an
 announcement day is a real 4% day, and only the day after shows the pin.
+
+## Checkpoint, 9 Oct 2026 — the $2,000 cash-account morning milestone
+
+**Goal.** `PRODUCT_GOAL.md` is the owner's active milestone contract. Cash
+account, Chicago time, broker unspecified. The first release improves reliable
+preparation; it does not assert a financial result or a daily supply of trades.
+
+**What changed.** `docs/app-morning.js` adds a native Morning desk dialog in the
+masthead, over the existing publication/model/availability authorities. Chicago
+window and preparation instants come from the archived schedule. The $2,000 /
+0.5% / 25% personal reference is compared with the publication, never used to
+rewrite an old ticket. Settled cash starts unknown, is tab-local, clears on
+reload/new session and is never treated as verified. Manual checks clear on a
+new publication. Clock repaint preserves an open dialog, cash draft and focus.
+Known corporate-event risk and its safe primary-source links are readable in
+the selected setup. The existing stock workspace keeps its first-screen space.
+
+`src/allocation.py` is the shared reaction/anticipation allocation. Reaction
+rank precedes watchlist rank. Existing hold, sell-half, sell-into-strength,
+pending, uncertain, unmeasured and unreadable model plans reserve their original
+principal; partial model sales do not free it. Missing commitment evidence
+reserves the configured equity conservatively. An occupied symbol or a second
+same-symbol ticket is refused. Every allocated-out order is cleared before
+retaining picks; raw structural eligibility is kept separate from allocation.
+`record.replay()` carries the original ticket limit so a pending or uncertain
+commitment uses the maximum permitted cost. `provenance` reconstructs both
+plan families, event refusals and the combined budget. The offline historical
+reaction study stays reaction-only but uses the same reservation; entry-limit
+comparisons read the record's account and archived gates.
+
+`knowledge/event-risk.json` contains dated SEC issuer sources for MG, PRTH,
+ARX, BWIN and ACVA. `src/event_risk.py` refuses their unresolved cash-acquisition
+momentum tickets, archives the bounded registry and its digest in the rules,
+keeps overdue reviews blocked, and requires a sourced resolution to end one.
+Evidence from after the evaluated date is not presented as then available.
+Unlisted stocks have not been cleared by live news; this is a manual registry.
+
+`evening.yml` explicitly configures $2,000 and 0.5%; local defaults retain the
+old model for compatibility. Both scheduled slots check the intended nominal
+session, not the delayed runner's calendar date. They skip current real
+ok/degraded publications, holidays, newer records and recovery after the next
+exchange open. The selected branch is checked out at its current tip. Manual
+session/rehearsal controls remain. New account notes state cash preparation,
+unknown broker balances, general T+1 timing and order-support checks; they no
+longer assert a Fidelity margin account.
+
+**Executed locally.** Python 3.12.14; source-backed synthetic pipeline fixture
+regeneration (13 JSON files), 199 core targeted tests, then 96 post-regeneration
+allocation/provenance tests, 158 research-tool compatibility tests, 41 workflow
+tests and pinned actionlint. Chart checks 378/378; morning/risk/actionability
+615/615; final focused morning 260/260; continuity 134/134. Phone/desktop dark
+and light screenshots were inspected. Independent review executed another 117
+pipeline/workflow/allocation/event checks with no blocking finding. Isolated
+rule-removal tests failed their intended controls; unrelated controls remained
+green. The full Python suite passed all 3,151 tests locally and on GitHub.
+The hosted browser pass found a narrow masthead overflow and stale allocation
+and order-control assertions; those are repaired in the release follow-up.
+The combined allocator also explains zero-share refusals using the actual
+effective risk budget and position cap; two regression cases cover market/stop
+reductions and an independently binding position cap. Legacy record wording is
+preserved. The final suite collects 3,153 tests.
+Hosted browser and historical runtime gates remain required before merging.
+Local historical storage tests need unsandboxed
+execution because the sandbox can synthesize `/tmp/.git`; do not weaken their
+storage or authorization guards to accommodate that environment.
+
+**Current evidence.** The Oct 8 record had 730 discovered reactions, 12 reviews
+and 11 accepted replies (all eleven below the trading grades); yellow admits
+A+ only. Zero reaction tickets. MG and SN anticipation tickets bypassed its old
+budget. At $2,000, MG is now event-excluded, SN sizes no whole share, and FTNT
+and VRNS have invalid stop geometry. Do not force a ticket from that list.
+Current publication and historical results are not edited by this code release;
+a real hosted publication is needed to accept the new settings on actual data.
+The no-email real-provider rehearsal (Actions run 37921303809) passed its
+publication gate and independent evidence replay with no missing objects or
+provenance breaks. It measured 4,774 of 4,775 intended stocks, published 728
+reaction candidates, accepted 11 of 12 chart readings, and retained a partial
+reader warning for HAE. The $2,000 account, $10 base risk, Chicago opening
+time, combined cash/slot membership and cleared refused orders all passed
+independent checks. It allocated no orders and refused MG with the archived
+cash-acquisition source. This dry run is a rehearsal, not a new live record.
+PR #107 records the final hosted gate and publication evidence.
+The next milestone is trustworthy morning quotes/event coverage and a smaller
+initial payload, followed by measured opportunity coverage.

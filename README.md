@@ -1,5 +1,11 @@
 # SpicyStock
 
+The active [product goal and milestones](PRODUCT_GOAL.md) are a usable morning
+trading workspace for a $2,000 cash account in Chicago time: trustworthy data,
+clear conditional setups, bounded sizing and an explained wait when nothing
+qualifies. The first release focuses on morning preparation, combined cash
+allocation, known corporate-action exclusions and dependable session handling.
+
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The
 method is Pradeep Bonde's (Stockbee) momentum burst: reaction candidates
@@ -49,6 +55,16 @@ builds from the committed evidence files and binds to their digests; the
 page prints its figures as the file writes them and adds no figure of its own.
 
 ## What the page says
+
+**Morning desk.** The masthead's preparation button opens the published session's entry
+window in America/Chicago, publication and market state, separate reaction and
+setting-up ticket counts, and the account assumptions beside the next step.
+The personal reference is a $2,000 cash account, $10 base planned risk and a
+$500 per-name cap before existing strategy reductions. An older publication
+sized for another account says so; the browser does not resize its tickets.
+Optional settled cash begins unknown and stays in this browser. Preparation
+checks do not establish live quotes, news coverage, broker buying power or
+execution, and cannot turn an unavailable setup into an order.
 
 The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
@@ -467,10 +483,14 @@ the problems and a link. Delivery failing never costs the page.
 
 ## How a night runs
 
-`evening.yml` fires at 6:16 PM ET on weekdays (two crons, one per UTC
-offset; the guard runs the right one) and again at 8:16 PM ET as a retry
-that runs only if `docs/data.json` does not already carry tonight's
-session. The run:
+`evening.yml` is scheduled at 6:16 PM ET on weekdays (two crons, one per UTC
+offset) and again at 8:16 PM ET as a retry. GitHub may deliver either job hours
+late. The guard resolves the intended occurrence and exchange session, checks
+the offset at that occurrence, skips holidays and refuses a delayed run once
+the next session opens. Both scheduled slots skip an already published real
+ok/degraded record for that session; a failed or rehearsal record cannot
+suppress recovery, and a newer publication cannot be replaced by a late job.
+Manual dispatch keeps its explicit session and rehearsal controls. The run:
 
 - **universe** — Nasdaq's security-name and industry classifier approximates
   common stock; it is not exact TC2000 membership. Blank-check exclusions use
@@ -629,7 +649,17 @@ session. The run:
   trigger is a ticket with no band), plans past the free slots or the
   equity, and a plan the account cannot size to a whole share, are listed
   as cut with the kind and the reason. An anticipation ticket is judged
-  and sized at its limit the same way.
+  and sized at its limit the same way. Reaction plans and anticipation plans
+  share one allocation, with reactions considered first and anticipation in
+  watchlist rank. Existing occupied model plans reserve their original model
+  principal even after partial sales; uncertain observations do not create free
+  slots or cash. Zero-share refusals show the effective risk budget after size
+  reductions and the position cap. This allocation is a model, never the owner's
+  observed holdings or settled cash.
+  A dated manual corporate-action registry with primary-source links withholds
+  known cash-takeover candidates from both kinds of momentum ticket. Its
+  evidence is part of the rules identity; a due review does not silently clear
+  an exclusion. Unknown names have not passed a comprehensive live news check.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.
@@ -665,9 +695,13 @@ its schedule on after the evening run has published ten nights in a row.
 ## One-time setup
 
 Six repository secrets: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
-`ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`. Four
-optional repository variables: `SCAN_FEED`, `SCAN_UNIVERSE`,
-`ACCOUNT_EQUITY`, `RISK_PCT`. GitHub Pages from `main` `/docs`. Until a
+`ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM`, `EMAIL_TO`. Two
+optional repository variables: `SCAN_FEED`, `SCAN_UNIVERSE`. The production
+evening workflow explicitly sets `ACCOUNT_EQUITY=2000` and `RISK_PCT=0.5`;
+edit that versioned configuration when the owner's sizing reference changes.
+Local `Account.from_env()` defaults remain the historical $10,000 model and
+accept local `ACCOUNT_EQUITY` / `RISK_PCT` overrides. GitHub Pages from `main`
+`/docs`. Until a
 domain is verified at Resend, `EMAIL_TO` has to be the address the Resend
 account is registered under, alone. `.env.example` explains each.
 
@@ -975,8 +1009,8 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · design-system/
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)

@@ -4,6 +4,8 @@ condition and of a cron pair, never a spelling. PyYAML reads `on:` as the
 boolean True, so the trigger block is looked up under both keys."""
 from __future__ import annotations
 
+import datetime as datetime_module
+import json
 from pathlib import Path
 
 import pytest
@@ -27,6 +29,36 @@ def steps(wf: dict, job: str) -> dict[str, dict]:
     return {s.get("name") or s.get("uses") or s.get("id"): s for s in wf["jobs"][job]["steps"]}
 
 
+def scheduled_guard() -> dict:
+    return next(step for step in load('evening.yml')['jobs']['scan']['steps'] if step.get('id') == 'guard')
+
+
+def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous=None,
+                        event='schedule', requested=''):
+    """Execute the workflow's actual Python body with a pinned UTC clock."""
+    instant = datetime_module.datetime.fromisoformat(at)
+
+    class FrozenDateTime(datetime_module.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return instant.astimezone(tz) if tz else instant.replace(tzinfo=None)
+
+    code = scheduled_guard()['run'].split("python - <<'PY'\n", 1)[1].rsplit('\nPY', 1)[0]
+    output = tmp_path / 'guard-output'
+    (tmp_path / 'docs').mkdir(exist_ok=True)
+    if previous is not None:
+        (tmp_path / 'docs' / 'data.json').write_text(json.dumps(previous))
+    with monkeypatch.context() as patch:
+        patch.chdir(tmp_path)
+        patch.setattr(datetime_module, 'datetime', FrozenDateTime)
+        patch.setenv('SCAN_EVENT_NAME', event)
+        patch.setenv('SCAN_EVENT_SCHEDULE', cron)
+        patch.setenv('SCAN_REQUESTED_SESSION', requested)
+        patch.setenv('GITHUB_OUTPUT', str(output))
+        exec(compile(code, 'evening.yml scheduled guard', 'exec'), {})
+    return dict(line.split('=', 1) for line in output.read_text().splitlines())
+
+
 def test_the_workflow_inventory_is_exactly_the_six_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
         ["evening.yml", "historical-input-proof.yml", "intraday.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
@@ -37,10 +69,79 @@ def test_the_evening_crons_are_the_two_pairs_and_the_guard_names_them():
     wf = load("evening.yml")
     crons = [c["cron"] for c in triggers(wf)["schedule"]]
     assert crons == ["16 22 * * 1-5", "16 23 * * 1-5", "16 0 * * 2-6", "16 1 * * 2-6"]
-    guard = steps(wf, "scan")["Guard — the slot for today's UTC offset; the retry only if tonight is unpublished"]["run"]
+    guard = scheduled_guard()['run']
     for cron in crons:
         assert cron in guard, cron
-    assert 'jq -e' in guard and '.run.session == $s' in guard and '.run.expected_session == $s' in guard
+    assert 'sessions.is_session(target)' in guard
+
+
+@pytest.mark.parametrize('at,cron,target', [
+    ('2026-10-08T22:24:00+00:00', '16 22 * * 1-5', '2026-10-08'),
+    ('2026-10-09T02:06:21+00:00', '16 22 * * 1-5', '2026-10-08'),
+    ('2026-10-09T06:03:02+00:00', '16 0 * * 2-6', '2026-10-08'),
+    ('2026-10-10T06:03:02+00:00', '16 0 * * 2-6', '2026-10-09'),
+    ('2026-11-03T23:24:00+00:00', '16 23 * * 1-5', '2026-11-03'),
+    ('2026-11-04T07:03:02+00:00', '16 1 * * 2-6', '2026-11-03'),
+])
+def test_delayed_slots_keep_the_nominal_evenings_session(monkeypatch, tmp_path, at, cron, target):
+    assert run_scheduled_guard(monkeypatch, tmp_path, at, cron) == {'go': 'true', 'session': target}
+
+
+@pytest.mark.parametrize('at,cron', [
+    ('2026-10-09T07:26:25+00:00', '16 1 * * 2-6'),  # inactive EST slot
+    ('2026-11-04T06:03:00+00:00', '16 0 * * 2-6'),  # inactive EDT slot
+    ('2026-10-09T13:30:00+00:00', '16 0 * * 2-6'),  # next market open
+    ('2026-10-09T15:00:00+00:00', '16 22 * * 1-5'),
+    ('2026-10-11T06:03:00+00:00', '16 0 * * 2-6'),  # no Saturday-evening slot
+    ('2026-11-26T23:24:00+00:00', '16 23 * * 1-5'),  # Thanksgiving
+    ('2026-10-09T06:03:00+00:00', 'not a scheduled cron'),
+])
+def test_inactive_holiday_and_expired_slots_never_run(monkeypatch, tmp_path, at, cron):
+    assert run_scheduled_guard(monkeypatch, tmp_path, at, cron) == {'go': 'false', 'session': ''}
+
+
+@pytest.mark.parametrize('status', ['ok', 'degraded'])
+@pytest.mark.parametrize('cron', ['16 22 * * 1-5', '16 0 * * 2-6'])
+def test_both_slots_skip_a_real_published_session(monkeypatch, tmp_path, status, cron):
+    previous = {'run': {'session': '2026-10-08', 'status': status, 'dry_run': False}}
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-09T06:03:00+00:00', cron,
+                               previous) == {'go': 'false', 'session': ''}
+
+
+@pytest.mark.parametrize('previous', [
+    {'run': {'session': '2026-10-08', 'status': 'failed', 'dry_run': False}},
+    {'run': {'session': '2026-10-08', 'status': 'ok', 'dry_run': True}},
+    {'fixture': True, 'run': {'session': '2026-10-08', 'status': 'ok', 'dry_run': False}},
+    {'run': {'session': '2026-10-07', 'expected_session': '2026-10-08', 'status': 'ok', 'dry_run': False}},
+    {'run': {'session': 'not a date', 'status': 'ok', 'dry_run': False}},
+    {'run': {'session': '2026-10-08', 'status': [], 'dry_run': False}},
+    {'run': []},
+    [],
+])
+def test_failed_rehearsal_expected_only_and_malformed_records_do_not_hide_a_missing_session(monkeypatch, tmp_path, previous):
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-09T06:03:00+00:00',
+                               previous=previous) == {'go': 'true', 'session': '2026-10-08'}
+
+
+def test_delayed_event_never_replaces_a_newer_session(monkeypatch, tmp_path):
+    previous = {'run': {'session': '2026-10-09', 'status': 'ok', 'dry_run': False}}
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-09T06:03:00+00:00',
+                               previous=previous) == {'go': 'false', 'session': ''}
+
+
+def test_unreadable_publication_does_not_suppress_recovery(monkeypatch, tmp_path):
+    (tmp_path / 'docs').mkdir()
+    (tmp_path / 'docs' / 'data.json').write_text('{incomplete')
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-09T06:03:00+00:00') == {
+        'go': 'true', 'session': '2026-10-08'}
+
+
+@pytest.mark.parametrize('requested', ['', '2026-09-15'])
+def test_manual_dispatch_keeps_its_explicit_or_unset_session(monkeypatch, tmp_path, requested):
+    previous = {'run': {'session': '2026-10-08', 'status': 'ok', 'dry_run': False}}
+    assert run_scheduled_guard(monkeypatch, tmp_path, '2026-10-09T15:00:00+00:00',
+                               previous=previous, event='workflow_dispatch', requested=requested) == {
+                                   'go': 'true', 'session': requested}
 
 
 def test_the_dispatch_form_has_the_three_boxes_and_forwards_each():
@@ -48,13 +149,16 @@ def test_the_dispatch_form_has_the_three_boxes_and_forwards_each():
     inputs = triggers(wf)["workflow_dispatch"]["inputs"]
     assert set(inputs) == {"session", "dry_run", "skip_email"}
     env = steps(wf, "scan")["Run evening pipeline"]["env"]
-    assert env["SCAN_SESSION_DATE"] == "${{ inputs.session }}"
+    assert env["SCAN_SESSION_DATE"] == "${{ steps.guard.outputs.session }}"
+    assert scheduled_guard()['env']['SCAN_REQUESTED_SESSION'] == '${{ inputs.session }}'
     assert "inputs.dry_run" in env["DRY_RUN_FLAG"] and "--dry-run" in env["DRY_RUN_FLAG"]
     assert "inputs.skip_email" in env["SCAN_SEND_EMAIL"]
     for secret in ("ANTHROPIC_API_KEY", "RESEND_API_KEY", "RESEND_FROM", "EMAIL_TO", "ALPACA_API_KEY", "ALPACA_SECRET_KEY"):
         assert env[secret] == f"${{{{ secrets.{secret} }}}}"
-    for var in ("SCAN_FEED", "SCAN_UNIVERSE", "ACCOUNT_EQUITY", "RISK_PCT"):
+    for var in ("SCAN_FEED", "SCAN_UNIVERSE"):
         assert env[var] == f"${{{{ vars.{var} }}}}"
+    assert env['ACCOUNT_EQUITY'] == '2000'
+    assert env['RISK_PCT'] == '0.5'
     assert env["GITHUB_RUN_ID_FOR_RECORD"] == "${{ github.run_id }}"
 
 
@@ -109,6 +213,8 @@ def test_the_evening_job_can_write_and_runs_alone():
     wf = load("evening.yml")
     assert wf["permissions"] == {"contents": "write", "actions": "read"}
     assert wf["concurrency"] == {"group": "evening-scan", "cancel-in-progress": False}
+    checkout = steps(wf, 'scan')['actions/checkout@v4']
+    assert checkout['with']['ref'] == '${{ github.ref }}'
 
 
 # ---------------------------------------------------------- intraday -----

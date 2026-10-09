@@ -21,7 +21,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs
+from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs, allocation, event_risk
 
 VERSION = 1
 OBJECT_DIR = "evidence"
@@ -162,7 +162,7 @@ def gate(data, row):
     allowed = [] if regime == "red" else rules["yellow_grades"] if regime == "yellow" else rules["trade_grades"]
     p = plain_plan(row)
     coverage_required = rules.get("reader_policy") == reader_coverage.POLICY
-    cut = next((c for c in data["cash_budget"].get("cut", []) if c["ticker"] == row["ticker"]), None)
+    cut = allocation.cut_for(p or {"ticker": row["ticker"], "kind": "burst"}, data["cash_budget"])
     reason = ("regime_gate" if regime == "red" or (regime == "yellow" and row["grade"] not in allowed)
               else "quality_grade" if row["grade"] not in allowed else "quality_veto" if row["vetoes"]
               else "reader_coverage" if coverage_required and not reader_coverage.accepted(row)
@@ -279,6 +279,10 @@ def _check_watch(data, row, e, objects, compatible=True):
             args["account"] = plan.Account(**args["account"])
             replay = plan.anticipation_plan(**args)
             replay["exit_schedule"] = plan.dated_schedule(replay, date.fromisoformat(planning["session"]))
+            if "event_risk" in data["rules"]:
+                replay = event_risk.apply(replay, row["ticker"], planning["session"], registry=data["rules"]["event_risk"]["registry"])
+            if data["rules"].get("plan", {}).get("allocation_policy") == allocation.POLICY:
+                replay = allocation.apply(replay, data["cash_budget"])
             _same(p, replay, "anticipation plan rules mismatch")
         _same(row["plan"].get("evidence_ref"), reference(e), "anticipation plan reference mismatch")
         _same(p["exit_schedule"][0]["date"], data["run"]["calendar"]["applicable_session"], "anticipation calendar mismatch")
@@ -382,6 +386,10 @@ def _check_plan(data, row, e, compatible=True):
             args["account"] = plan.Account(**args["account"])
             replay = plan.burst_plan(**args)
             replay["exit_schedule"] = plan.dated_schedule(replay, date.fromisoformat(planning["session"]))
+            if "event_risk" in data["rules"]:
+                replay = event_risk.apply(replay, row["ticker"], planning["session"], registry=data["rules"]["event_risk"]["registry"])
+            if data["rules"].get("plan", {}).get("allocation_policy") == allocation.POLICY:
+                replay = allocation.apply(replay, data["cash_budget"])
             _same(replay, p, "plan differs from production plan rules")
     pick = pick_of(p, "burst", row["grade"], row["score"]) if p is not None else None
     _same(digest(pick), planning["pick_sha256"], "plan/pick projection mismatch")
@@ -486,6 +494,14 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                 family, _, name = key.partition(".")
                 if digest(data["rules"].get(family, {}).get(name)) != digest(value):
                     mismatches.append(key)
+        if "event_risk" in data["rules"]:
+            event_rules = data["rules"]["event_risk"]
+            for key, value in event_risk.RULES.items():
+                name = key.partition(".")[2]
+                if name not in ("registry", "registry_sha256") and digest(event_rules.get(name)) != digest(value):
+                    mismatches.append(key)
+            registry = event_risk.validate_registry(event_rules["registry"])
+            _same(event_risk.registry_digest(registry), event_rules["registry_sha256"], "event registry digest mismatch")
         compatible = not mismatches
         if mismatches:
             missing.append("archived rules need a compatible verifier implementation: " + ", ".join(mismatches))
@@ -541,9 +557,20 @@ archive. Integrity-only callers explicitly disable the source replay requirement
             if {(p["kind"], p["ticker"]) for p in current} != expected:
                 breaks.append("persisted ticket membership differs from publication")
         if compatible:
-            plans = [plain_plan(r) for r in data["bursts"] if r.get("plan")]
             account = plan.Account(**{k: data["account"][k] for k in ACCOUNT_FIELDS})
-            replay_budget = plan.cash_budget(plans, account, open_positions=data["cash_budget"]["open_positions"])
+            plans = []
+            for kind, row in candidates:
+                if not row.get("plan"):
+                    continue
+                planning = row["evidence"]["planning"]
+                args = deepcopy(planning["inputs"])
+                args["account"] = account
+                factory = plan.burst_plan if kind == "burst" else plan.anticipation_plan
+                replay = factory(**args)
+                if "event_risk" in data["rules"]:
+                    replay = event_risk.apply(replay, row["ticker"], planning["session"], registry=data["rules"]["event_risk"]["registry"])
+                plans.append(replay)
+            replay_budget = allocation.budget(plans, account, data.get("open_plans", []))
             _same(replay_budget, data["cash_budget"], "cash-budget decision differs from candidate plans")
     except (ValueError, KeyError, TypeError, IndexError, AttributeError) as exc:
         breaks.append(str(exc))

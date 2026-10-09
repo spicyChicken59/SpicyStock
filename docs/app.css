@@ -8,7 +8,10 @@
 .ss-nav a[aria-current="page"] { opacity: 1; }
 .ss-status { display: inline-flex; align-items: center; gap: var(--sc-s2); }
 .ss-status .sc-chip { font-size: 11px; }
-@media (max-width: 720px) {
+/* Keep all navigation and preparation controls in view on tablet widths too;
+   squeezing the three header groups into one row can overflow before mobile. */
+@media (max-width: 1000px) {
+  .ss-masthead { flex-wrap: wrap; row-gap: var(--sc-s1); }
   .ss-masthead__right { width: 100%; flex-wrap: wrap; row-gap: var(--sc-s1); }
   .ss-nav { order: 3; width: 100%; justify-content: space-between; }
   .ss-nav a { padding-inline: 4px; }
@@ -31,6 +34,43 @@
 .ss-view > .sc-chapter { margin-bottom: var(--sc-s3); }
 
 /* ---- Explore: the compact market context ---------------------------------- */
+.ss-morning-open { flex-shrink: 0; }
+.sc-card.ss-morning { width: min(1040px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: var(--sc-s3); overflow-y: auto; color: var(--sc-text); }
+.ss-morning:not([open]) { display: none; }
+.ss-morning::backdrop { background: var(--sc-scrim, rgba(0, 0, 0, .6)); }
+.ss-morning__top { display: flex; align-items: start; gap: var(--sc-s2); }
+.ss-morning__head { display: flex; justify-content: space-between; gap: var(--sc-s2); align-items: start; }
+.ss-morning__head h2 { margin: var(--sc-s0) 0 0; font-size: var(--sc-h3); }
+.ss-morning__window { display: flex; flex-direction: column; gap: var(--sc-s0); text-align: right; font-size: var(--sc-text-sm); }
+.ss-morning__window span { color: var(--sc-text-2); }
+.ss-morning__facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sc-s2); margin: var(--sc-s2) 0; }
+.ss-morning__facts dt { font: 500 var(--sc-text-xs)/var(--sc-lh-body) var(--sc-font-mono); color: var(--sc-text-2); }
+.ss-morning__facts dd { margin: 0; font-size: var(--sc-text-sm); }
+.ss-morning__reason, .ss-morning__reference, .ss-morning__sizing { margin: var(--sc-s1) 0; font-size: var(--sc-text-sm); }
+.ss-morning__reference { color: var(--sc-heading); font-weight: 600; }
+.ss-morning__sizing { color: var(--sc-text-2); }
+.ss-morning[data-sizing-match="false"] .ss-morning__sizing { padding-left: var(--sc-s1); border-left: 2px solid var(--sc-warn); color: var(--sc-text); }
+.ss-morning__foot { display: flex; flex-wrap: wrap; gap: var(--sc-s1) var(--sc-s2); align-items: baseline; margin-top: var(--sc-s2); }
+.ss-morning__prep { flex: 1 1 60%; min-width: 0; }
+.ss-morning__prep summary { cursor: pointer; color: var(--sc-heading); font-size: var(--sc-text-sm); font-weight: 600; }
+.ss-morning__body { margin-top: var(--sc-s2); }
+.ss-morning__cash { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sc-s1); }
+.ss-morning__cash > label { font-size: var(--sc-text-sm); }
+.ss-morning__cash input { max-width: 16rem; width: 100%; }
+.ss-morning__cash p { margin: 0; }
+.ss-morning__checks { border: 0; padding: 0; margin: var(--sc-s2) 0; display: grid; gap: var(--sc-s1); }
+.ss-morning__checks legend { margin-bottom: var(--sc-s1); }
+.ss-morning__checks .sc-check { align-items: start; min-height: 44px; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-body); letter-spacing: normal; text-transform: none; }
+.ss-morning__checks input { flex-shrink: 0; margin-top: var(--sc-s0); }
+.ss-morning__body > p { font-size: var(--sc-text-sm); }
+@media (max-width: 720px) {
+  .sc-card.ss-morning { padding: var(--sc-s2); }
+  .ss-morning__head { flex-direction: column; }
+  .ss-morning__top { width: 100%; justify-content: space-between; }
+  .ss-morning__window { text-align: left; }
+  .ss-morning__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sc-s1) var(--sc-s2); }
+  .ss-morning__prep { flex-basis: 100%; }
+}
 .ss-market { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sc-s3) var(--sc-s4); align-items: start; }
 .ss-market__h1 { margin: var(--sc-s1) 0 0; font: 700 clamp(22px, 2.6vw, 30px)/1.15 var(--sc-font-display); letter-spacing: -.02em; color: var(--sc-heading); }
 .ss-market__dek { margin: var(--sc-s1) 0 0; color: var(--sc-text); font-size: var(--sc-text-md); max-width: 62ch; }

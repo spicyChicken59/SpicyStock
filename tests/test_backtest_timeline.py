@@ -462,7 +462,8 @@ def test_the_vocabularies_are_the_ones_the_backtest_writes():
     equivalence statuses also held to ``run()``'s own text."""
     assert set(tl.TALLIES) == {"grades", "cut"}
     assert tl.TALLIES["grades"] == ("A+", "A", "B", "C", "skip")
-    assert tl.TALLIES["cut"] == ("slot_cap", "equity", "no_new_longs", "no_shares", "withheld")
+    assert tl.TALLIES["cut"] == ("slot_cap", "equity", "no_new_longs", "no_shares", "withheld",
+                                 "existing_position", "duplicate")
     assert tl.VERDICT_KEYS == ("green", "yellow", "red", "null")
     assert tl.EQUIVALENCE_STATUSES == ("not required", "FAIL", "PASS", "BLOCKED: no session carries the full lookback")
     source = inspect.getsource(backtest.run)
@@ -748,7 +749,7 @@ MISPLACED = [
     ("ticker-as-grade", lambda p: _night0(p)["grades"].update(QQZ=1),
      "nights.production[0].grades key is not one of A+, A, B, C, skip"),
     ("ticker-as-cut", lambda p: _night0(p)["cut"].update(qqz=1),
-     "nights.production[0].cut key is not one of slot_cap, equity, no_new_longs, no_shares, withheld"),
+     "nights.production[0].cut key is not one of slot_cap, equity, no_new_longs, no_shares, withheld, existing_position, duplicate"),
     ("ticker-as-verdict-tally", lambda p: p["regimes"]["verdicts"].update(QQZ=1),
      "regimes.verdicts key is not one of green, yellow, red, null"),
     ("ticker-as-verdict", lambda p: _night0(p)["regime"].update(verdict="QQZ"),

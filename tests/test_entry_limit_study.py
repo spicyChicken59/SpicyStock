@@ -242,11 +242,11 @@ def test_the_budget_line_does_not_re_report_the_stop_rules_own_refusal():
     """`withheld` is burst_plan's refusal, carrying its reason verbatim; it is
     already counted in the stop-rule block, and counting it under the budget
     too would report one burst under two gates."""
-    assert study.BUDGET_CUT_KINDS == ("slot_cap", "equity")
+    assert study.BUDGET_CUT_KINDS == ("slot_cap", "equity", "existing_position", "duplicate")
     assert set(study.BUDGET_CUT_KINDS) < set(plan.CUT_KINDS)
     assert "withheld" not in study.BUDGET_CUT_KINDS
     data = json.loads((FIXTURES / "full.json").read_text())
-    kinds = [c["kind"] for c in data["cash_budget"]["cut"]]
+    kinds = [c["kind"] for c in data["cash_budget"]["cut"] if c.get("setup_kind", "burst") == "burst"]
     assert "withheld" in kinds and "slot_cap" in kinds, kinds
     x = study.study(data)["exclusions"]
     assert set(x["excluded_by_budget"]) <= set(study.BUDGET_CUT_KINDS)
@@ -387,6 +387,19 @@ def test_the_production_column_is_the_production_path_not_a_second_reading():
     carried = [b for b in data["bursts"] if b.get("plan")]
     assert carried, "the accepted-reader fixture should carry plans"
     assert study.verify(data) == []
+
+
+def test_both_entry_comparisons_use_the_recorded_small_account():
+    data = json.loads((FIXTURES / "full.json").read_text())
+    row = next(b for b in data["bursts"] if b.get("plan") and b["plan"]["shares"] > 0)
+    account = plan.Account(equity=2000)
+    row["plan"] = study.current_plan(row, 1.0, account)
+    small = {"account": account.to_dict(), "bursts": [row], "breadth": {"regime": {"verdict": "green", "size_multiplier": 1.0}}}
+    assert study.verify(small) == []
+    result = study.study(small)["rows"][0]
+    assert result["production"]["shares"] == row["plan"]["shares"]
+    assert result["production"]["shares"] < study.current_plan(row, 1.0)["shares"]
+    assert result["fixed"]["shares"] == study.fixed_ceiling_plan(row, 1.0, account)["shares"]
 
 
 def test_the_adopted_block_counts_the_indicative_entries_the_limit_capped():

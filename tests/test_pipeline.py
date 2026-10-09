@@ -98,8 +98,8 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert [row["day"] for row in burst["plan"]["exit_schedule"]][0] == 1
     assert burst["plan"]["exit_schedule"][0]["date"] == "2026-09-11"
     assert data["cover"]["h1"] == "Trade next session. 1 A-quality burst."
-    assert data["cash_budget"]["slots_used"] == 1 and data["cash_budget"]["cut"] == []
-    assert data["cash_budget"]["at_risk_usd"] == burst["plan"]["risk_usd"]
+    assert data["cash_budget"]["slots_used"] == 2 and data["cash_budget"]["cut"] == []
+    assert data["cash_budget"]["at_risk_usd"] == round(burst["plan"]["risk_usd"] + data["watchlist"]["top"][0]["plan"]["risk_usd"], 2)
     assert run["graded"] == {"a_plus": 1, "a": 0, "b": 0, "c": 0, "skip": 0}
 
     watch = data["watchlist"]
@@ -267,9 +267,9 @@ def test_the_committed_fixture_carries_the_dollar_scans_ratio_beside_the_checkli
 
 def test_the_slot_count_and_the_status_word_are_the_named_rules():
     plans = [{"status": s} for s in ("hold", "sell_half", "sell_into_strength", "pending", "stopped", "exit",
-                                      "expired", record.NOT_FILLED, record.UNCERTAIN, "unmeasured")]
-    assert pipeline.slots_held(plans) == 5
-    assert pipeline.SLOT_STATUSES == ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN)
+                                      "expired", record.NOT_FILLED, record.UNCERTAIN, "unmeasured", "unreadable")]
+    assert pipeline.slots_held(plans) == 7
+    assert pipeline.SLOT_STATUSES == ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN, "unmeasured", "unreadable")
     rep = pipeline.RunReport()
     assert pipeline.run_status(rep, closed=True) == "closed" and pipeline.run_status(rep, closed=False) == "ok"
     rep.problem("chart_missing", "x")
@@ -366,7 +366,7 @@ def test_a_burst_no_limit_can_hold_a_stop_under_is_published_without_a_ticket(fa
     assert p["eligible"] is False and p["action"] == "refused" and p["ticket_refusal"] == "no_room_above_the_trigger"
     assert p["reason"].startswith("ticket withheld: no limit above the") and p["order_json"] is None
     assert data["trades"] == [] and data["beyond_cap"] == ["WIDE"]
-    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "kind": "withheld", "reason": p["reason"]}]
+    assert data["cash_budget"]["cut"] == [{"ticker": "WIDE", "setup_kind": "burst", "kind": "withheld", "reason": p["reason"]}]
     assert data["cover"]["h1"] == report.H1_KEEP_CASH and "1 with a qualifying setup and no ticket" in data["cover"]["dek"]
     assert data["closest_miss"] is None                      # a withheld ticket is not a miss
     assert json.loads((docs / record.PICKS_FILE).read_text())["picks"] == []

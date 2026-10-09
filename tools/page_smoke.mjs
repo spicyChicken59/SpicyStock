@@ -30,6 +30,7 @@ import { checkPageChartKeyboard } from './chart_keyboard_cases.mjs';
 import { checkHistoricalJourneys } from './historical_cases.mjs';
 import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
+import { checkMorning } from './morning_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -82,6 +83,7 @@ async function serve() {
       if ((await stat(file)).isDirectory()) file = path.join(file, 'index.html');
       // Read-only isolated source controls; never mutate the working tree.
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
+        : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       const body = await readFile(override || file);
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
@@ -181,7 +183,7 @@ const ratioOf = (b) => { const own = b.volume_vs_prior, q = b.quality && b.quali
 const times = (v) => v === null ? '—' : v.toFixed(1);
 // what the record says each stock's status is (the page reads the same fields; the smoke reads them again, on its own)
 function burstStatus(b, data) {
-  const cut = (data.cash_budget.cut || []).find((c) => c.ticker === b.ticker);
+  const cut = (data.cash_budget.cut || []).find((c) => c.ticker === b.ticker && (!c.setup_kind || c.setup_kind === 'burst'));
   if (data.trades.includes(b.ticker) && b.plan && b.plan.order_json) return 'ticket';
   if (cut) return cut.kind;
   if (b.plan && b.plan.eligible === false) return 'withheld';
@@ -195,6 +197,7 @@ function burstStatus(b, data) {
 function coilStatus(r) {
   const p = r.plan;
   if (!p) return 'watch';
+  if (p.allocation && p.allocation.admitted === false && p.action === 'refused' && p.eligible !== false) return p.allocation.reason || 'no_order';
   if (p.eligible === false) return 'withheld';
   if (p.action === 'no_new_longs') return 'no_new_longs';
   if (p.order_json) return 'ticket';
@@ -370,6 +373,11 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
   } else {
     eq(`${variant} ${r.ticker} action status`, ticketAttr, status === 'ticket' ? 'blocked' : status);
     eq(`${variant} ${r.ticker} order block withheld`, await count(page, '#detail pre[data-order]'), 0);
+    if (['slot_cap', 'equity', 'existing_position', 'duplicate'].includes(status)) {
+      const cut = (data.cash_budget.cut || []).find(c => c.ticker === r.ticker && c.setup_kind === 'anticipation');
+      eq(`${variant} ${r.ticker} allocation refusal matches combined budget`, cut && cut.kind, status);
+      eq(`${variant} ${r.ticker} allocation refusal carries no executable order`, r.plan.order_json, null);
+    }
     if (status === 'no_new_longs') check(`${variant} ${r.ticker} says no new longs`, /no new longs|zero tonight/i.test(action), action);
     if (status === 'watch') check(`${variant} ${r.ticker} says it is watched, not ticketed`, /no ticket|no plan/i.test(action), action);
   }
@@ -3105,7 +3113,7 @@ async function checkSession(browser, base, full) {
   // ---- the same surfaces INSIDE the window: offered, and honest about what
   // the page cannot see
   await phaseAt(page, next, 'inside');
-  eq('inside the window the sheet offers its order again', await count(page, '#order-sheet tbody tr[data-ticker]'), 1);
+  eq('inside the window the sheet offers the selected order again', await count(page, `#order-sheet tbody tr[data-ticker="${order}"]`), 1);
   await openAll(page, '#disc-plan');
   eq('and the copy control is back', await count(page, '#disc-plan [data-copy]'), 1);
   check('the next action says the window is in progress, not that a trigger has been met',
@@ -3857,6 +3865,7 @@ async function main() {
         await checkVariant(browser, base, v, data);
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
+      if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
       if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});

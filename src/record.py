@@ -394,7 +394,8 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
     cannot establish is ``uncertain`` with its reason, and is never walked."""
     base = {"ticker": pick["ticker"], "kind": pick.get("kind", "burst"), "picked": pick["date"],
             "grade": pick.get("grade"), "stop": pick["stop"], "targets": pick.get("targets"),
-            "fill": None, "uncertainty": None, "sessions": len(bars)}
+            "fill": None, "uncertainty": None, "sessions": len(bars),
+            "limit": pick.get("limit") or pick.get("entry_high")}
     if pick.get("evidence_ref"):
         # The public replay keeps the original plan identity. Personal browser
         # selections can join it without changing this population or replay.

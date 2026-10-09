@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist
+from src import watchlist, allocation, event_risk
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -564,6 +564,7 @@ def _make_plans(bursts, account, regime, open_count, session, *, require_reader)
             continue
         if session is not None:
             p["exit_schedule"] = plan.dated_schedule(p, session)
+            p = event_risk.apply(p, b["ticker"], session)
         b["plan"] = p
         provenance.seal_plan(b, plan_inputs, regime, session)
         plans.append(p)
@@ -599,6 +600,7 @@ def make_watchlist(frames: dict[str, pd.DataFrame], account: plan.Account, regim
             row["plan"] = plan.anticipation_plan(**{**plan_inputs, "account": account})
             if session is not None:
                 row["plan"]["exit_schedule"] = plan.dated_schedule(row["plan"], session)
+                row["plan"] = event_risk.apply(row["plan"], row["ticker"], session)
             provenance.seal_plan(row, plan_inputs, regime, session)
         except (KeyError, ValueError) as exc:
             row["plan"] = None
@@ -614,6 +616,27 @@ def make_watchlist(frames: dict[str, pd.DataFrame], account: plan.Account, regim
     return lists
 
 
+def allocate_plans(bursts: list[dict], lists: dict, account: plan.Account,
+                   open_plans: list[dict]) -> tuple[list[str], list[str], dict]:
+    """Budget both stages together, reaction rank first, then watchlist rank.
+
+    The same decision removes executable orders, controls retained picks and
+    enters the evidence receipt. A stage never gets its own extra cash or slots.
+    """
+    rows = [row for row in bursts + lists.get("top", []) if row.get("plan")]
+    budget = allocation.budget([row["plan"] for row in rows], account, open_plans)
+    for row in rows:
+        row["plan"] = allocation.apply(row["plan"], budget)
+        evidence = row.get("_evidence")
+        if evidence and "planning" in evidence:
+            evidence["planning"]["output_sha256"] = provenance.digest(row["plan"])
+    trades = [row["ticker"] for row in bursts
+              if row.get("plan") and row["plan"]["allocation"]["admitted"]]
+    cuts = sorted(row["ticker"] for row in bursts
+                  if row.get("plan") and not row["plan"]["allocation"]["admitted"])
+    return trades, cuts, budget
+
+
 # ---------------------------------------------------------------- publish ---
 def et_now(now: datetime | None = None) -> datetime:
     return (now or datetime.now(timezone.utc)).astimezone(MARKET_TZ)
@@ -624,7 +647,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -813,6 +836,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         rep.stage = "watchlist"
         lists = (make_watchlist(fresh, account, regime, uni, session) if not closed
                  else {"top": [], "also_quiet": [], "counts": {}, "instruction": plan.ANTICIPATION_INSTRUCTION})
+        trades, beyond_cap, budget = allocate_plans(bursts, lists, account, open_now)
 
         graded = {key: sum(1 for b in bursts if b["grade"] == g) for key, g in GRADE_KEYS.items()}
         faults = inputs.faults(coverage)
@@ -944,7 +968,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 #: An open model plan in one of these states still occupies a slot: the
 #: model holds it, its ticket is live and may still fill, or the bars cannot
 #: say whether it filled (an uncertain plan is not freed capacity).
-SLOT_STATUSES = ("hold", "sell_half", "sell_into_strength", "pending", record.UNCERTAIN)
+SLOT_STATUSES = allocation.OCCUPIED_STATUSES
 
 
 def slots_held(open_plans: list[dict]) -> int:

@@ -4,10 +4,10 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "379fcc54af52"
+  "rules_version": "633f6d0caeb4"
  },
  "cover": {
-  "h1": "Trade next session. 1 A-quality burst.",
+  "h1": "Trade next session. 2 A-quality bursts.",
   "dek": "Breadth is green: 2 up 4% vs 0 down, 10-day ratio 4. Full size.",
   "action_label": "Next-session orders",
   "action_target": "#orders",
@@ -783,7 +783,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "ed6803fa44aa4e2a89d102ec76b3afb5692499080f3d172cd7efb7941dacc221"
+   "context_sha256": "92af4106e93bc04ca25fb8476341e0908a9218e959770572b0b837164a64623f"
   },
   "sanitised": {
    "replaced": 0,
@@ -811,9 +811,9 @@
    "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
    "Position cap: $2,500.00 (25% of equity) in any one name.",
    "Max 4 open positions (100% of equity if all are at the cap).",
-   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
-   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
-   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
+   "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+   "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+   "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
   ]
  },
  "rules": {
@@ -998,7 +998,8 @@
    "gfv_restriction_days": 90,
    "precision.cents": 2,
    "precision.pct_decimals": 2,
-   "precision.cent_floor_epsilon": 1e-09
+   "precision.cent_floor_epsilon": 1e-09,
+   "allocation_policy": "combined_stages_reserved_principal_v1"
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -1093,6 +1094,147 @@
     "H"
    ],
    "quality_gate_cap": "B"
+  },
+  "event_risk": {
+   "version": 1,
+   "policy": "unresolved_cash_acquisitions_withhold_new_entries",
+   "coverage": "manual_known_events_only",
+   "max_events": 128,
+   "max_sources": 8,
+   "max_text_length": 2000,
+   "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+   "registry": {
+    "version": 1,
+    "coverage": "manual_known_events_only",
+    "reviewed_on": "2026-10-09",
+    "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Issuer SEC filings and recent submissions were reviewed on the stated date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
+    "events": [
+     {
+      "id": "mg-hig-cash-acquisition",
+      "symbol": "MG",
+      "issuer": "MISTRAS Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-18",
+      "active_from": "2026-09-18",
+      "active_until": null,
+      "evidence_as_of": "2026-09-18",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "MISTRAS enters definitive agreement to be acquired by H.I.G. Capital",
+        "published_on": "2026-09-18",
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
+        "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
+        "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+       }
+      ]
+     },
+     {
+      "id": "prth-priore-cash-acquisition",
+      "symbol": "PRTH",
+      "issuer": "Priority Technology Holdings, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-21",
+      "active_from": "2026-09-21",
+      "active_until": null,
+      "evidence_as_of": "2026-09-21",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Priority enters definitive agreement with Chairman and CEO Thomas Priore to take company private",
+        "published_on": "2026-09-21",
+        "url": "https://www.sec.gov/Archives/edgar/data/1653558/000121390026101651/ea030604701ex99-1.htm",
+        "sha256": "c0a74ecb966191496d0508919111e5e7e8056ea85914c2a4410f186d886622b2",
+        "quote": "Holders of Priority's common stock (other than shares held by the Investor Group) will receive $8.05 per share in cash at the closing of the transaction."
+       }
+      ]
+     },
+     {
+      "id": "arx-thoma-bravo-cash-acquisition",
+      "symbol": "ARX",
+      "issuer": "Accelerant Holdings",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-08-13",
+      "active_from": "2026-08-13",
+      "active_until": null,
+      "evidence_as_of": "2026-09-23",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Accelerant enters definitive agreement to be acquired by Thoma Bravo",
+        "published_on": "2026-08-13",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000119312526347925/d286225dex992.htm",
+        "sha256": "45c369ef926ca66f545db14f45cb6e203f59cd895658813031cb5a65ffdec896",
+        "quote": "Under the terms of the agreement, Accelerant Class A and Class B stockholders will receive $20.25 per share in cash."
+       },
+       {
+        "title": "Accelerant announces expiration of go-shop period",
+        "published_on": "2026-09-23",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000199735026000018/ex991-pressreleaseendofgox.htm",
+        "sha256": "99317e375541af8edc8d8775afe59ed298d09d91b4accef80e8e458753fbe285",
+        "quote": "The transaction is still expected to close in the first half of 2027, subject to customary closing conditions, including approval by Accelerant shareholders and receipt of required regulatory approvals."
+       }
+      ]
+     },
+     {
+      "id": "bwin-sequence-cash-acquisition",
+      "symbol": "BWIN",
+      "issuer": "The Baldwin Insurance Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-14",
+      "active_from": "2026-09-14",
+      "active_until": null,
+      "evidence_as_of": "2026-09-14",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Baldwin to be acquired by Sequence Holdings and Dell Family Office",
+        "published_on": "2026-09-14",
+        "url": "https://www.sec.gov/Archives/edgar/data/1781755/000095010326013874/dp253297_ex9901.htm",
+        "sha256": "ecf9c8914fde967d2cf4dcc3519aaa072beead75b00d206598e9d91e8c735f2d",
+        "quote": "Baldwin shareholders will receive $32.50 in cash for each share of Baldwin common stock they hold."
+       }
+      ]
+     },
+     {
+      "id": "acva-copart-cash-acquisition",
+      "symbol": "ACVA",
+      "issuer": "ACV Auctions Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-10",
+      "active_from": "2026-09-10",
+      "active_until": null,
+      "evidence_as_of": "2026-10-08",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-15",
+      "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "ACV Auctions Form 8-K: merger agreement with Copart",
+        "published_on": "2026-09-10",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000095010326013780/dp253207_8k.htm",
+        "sha256": "72a27b586f15ce8f38693c3ec717750eada2748ccede2695475ff6bc0a02462a",
+        "quote": "$10.50 per share, net to the seller in cash, without interest, subject to any required withholding of taxes"
+       },
+       {
+        "title": "ACV Auctions Schedule 14D-9 amendment: tender extension",
+        "published_on": "2026-10-08",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000119312526417485/d151127dsc14d9a.htm",
+        "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
+        "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
+       }
+      ]
+     }
+    ]
+   }
   },
   "pipeline": {
    "max_reads": 12,
@@ -1963,11 +2105,28 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-11",
+     "symbol": "NVDA",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": true,
+     "reason": null
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "b640cf08067d2cc8c837ae36c0edf7753873939eb46d5ac01bfd588a7ba1b46f",
-     "context_sha256": "ed6803fa44aa4e2a89d102ec76b3afb5692499080f3d172cd7efb7941dacc221",
-     "plan_sha256": "91d552c55cfd64438b6a723aa30ee4a08474cc6e4fca00d2efcc4475319d8f0d",
+     "id": "adf5c23cc5c3bd1a40f8671ca59ff1bd607d0c0e6c6f78eed303ee047402e2f1",
+     "context_sha256": "92af4106e93bc04ca25fb8476341e0908a9218e959770572b0b837164a64623f",
+     "plan_sha256": "df0c40908a15d93b691cbc142fcba0cf9f88333ab4b5cbd8e826573fa63e0ad8",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     }
    },
@@ -2045,7 +2204,7 @@
      },
      "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
      "session": "2026-09-11",
-     "output_sha256": "91d552c55cfd64438b6a723aa30ee4a08474cc6e4fca00d2efcc4475319d8f0d",
+     "output_sha256": "df0c40908a15d93b691cbc142fcba0cf9f88333ab4b5cbd8e826573fa63e0ad8",
      "error": null,
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     },
@@ -2064,8 +2223,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "ed6803fa44aa4e2a89d102ec76b3afb5692499080f3d172cd7efb7941dacc221",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "92af4106e93bc04ca25fb8476341e0908a9218e959770572b0b837164a64623f",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2078,7 +2237,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "b640cf08067d2cc8c837ae36c0edf7753873939eb46d5ac01bfd588a7ba1b46f"
+    "id": "adf5c23cc5c3bd1a40f8671ca59ff1bd607d0c0e6c6f78eed303ee047402e2f1"
    },
    "series": [
     {
@@ -3526,11 +3685,28 @@
       "instruction": "at the day 5 close: exit the remainder into strength."
      }
     ],
+    "event_risk": {
+     "version": 1,
+     "coverage": "manual_known_events_only",
+     "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+     "registry_reviewed_on": "2026-10-09",
+     "session": "2026-09-11",
+     "symbol": "COIL",
+     "blocked": false,
+     "status": "not_in_registry",
+     "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+     "matches": []
+    },
+    "allocation": {
+     "policy": "combined_stages_reserved_principal_v1",
+     "admitted": true,
+     "reason": null
+    },
     "evidence_ref": {
      "version": 1,
-     "id": "6784c9dd7e359b2ea1ee515c44cc7fa5c4061204777f0fa7b0dde1a439c91254",
-     "context_sha256": "ed6803fa44aa4e2a89d102ec76b3afb5692499080f3d172cd7efb7941dacc221",
-     "plan_sha256": "fc600bc49d71a9de423f2c378315e02cff1477898fb38a468fffcb4fc70f009f",
+     "id": "c1100e6dbf43e9b1a235628f412ef7fe7e7bf28189ccfb0aab6168ab199f70e3",
+     "context_sha256": "92af4106e93bc04ca25fb8476341e0908a9218e959770572b0b837164a64623f",
+     "plan_sha256": "81a49a73535efdbbb77857ceeff6a51994eea3986f232e01684f37ddb3957a80",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     }
    },
@@ -3608,7 +3784,7 @@
      },
      "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
      "session": "2026-09-11",
-     "output_sha256": "fc600bc49d71a9de423f2c378315e02cff1477898fb38a468fffcb4fc70f009f",
+     "output_sha256": "81a49a73535efdbbb77857ceeff6a51994eea3986f232e01684f37ddb3957a80",
      "error": null,
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     },
@@ -3627,8 +3803,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "379fcc54af52",
-    "context_sha256": "ed6803fa44aa4e2a89d102ec76b3afb5692499080f3d172cd7efb7941dacc221",
+    "rules_version": "633f6d0caeb4",
+    "context_sha256": "92af4106e93bc04ca25fb8476341e0908a9218e959770572b0b837164a64623f",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -3637,11 +3813,11 @@
       "A+",
       "A"
      ],
-     "ticket": false,
-     "reason": "slot_cap",
-     "detail": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out"
+     "ticket": true,
+     "reason": null,
+     "detail": null
     },
-    "id": "6784c9dd7e359b2ea1ee515c44cc7fa5c4061204777f0fa7b0dde1a439c91254"
+    "id": "c1100e6dbf43e9b1a235628f412ef7fe7e7bf28189ccfb0aab6168ab199f70e3"
    },
    "series": [
     {
@@ -4609,38 +4785,41 @@
   }
  ],
  "trades": [
-  "NVDA"
- ],
- "beyond_cap": [
+  "NVDA",
   "COIL"
  ],
+ "beyond_cap": [],
  "cash_budget": {
-  "committed_usd": 547.4,
-  "at_risk_usd": 21.88,
+  "committed_usd": 1126.0,
+  "at_risk_usd": 44.98,
   "equity": 10000.0,
+  "reserved_usd": 1211.43,
+  "available_usd": 8788.57,
+  "open_symbols": [
+   "NBIS",
+   "SMCI"
+  ],
   "slots_used": 4,
   "slots_max": 4,
-  "open_positions": 3,
+  "open_positions": 2,
   "within": [
-   "NVDA"
+   "NVDA",
+   "COIL"
   ],
-  "beyond": [
+  "admitted": [
+   {
+    "ticker": "NVDA",
+    "setup_kind": "burst"
+   },
    {
     "ticker": "COIL",
-    "rank": 2,
-    "reason": "slot_cap",
-    "position_usd": 578.6
+    "setup_kind": "burst"
    }
   ],
-  "cut": [
-   {
-    "ticker": "COIL",
-    "kind": "slot_cap",
-    "reason": "the 4-slot model cap: 3 open model plans and NVDA take the rest; take COIL only if a plan above is not held or stops out"
-   }
-  ],
+  "beyond": [],
+  "cut": [],
   "skipped": [],
-  "sentence": "Model allocation: next-session tickets would commit $547.40 of the configured $10,000.00; 4 of 4 slots (3 open model plans)"
+  "sentence": "Model allocation: next-session tickets would commit $1,126.00 of the configured $10,000.00; 4 of 4 slots (2 open model plans); $1,211.43 reserved for unfinished model plans"
  },
  "watchlist": {
   "top": [],
@@ -4808,7 +4987,8 @@
     "dollar_high": 206.8
    },
    "fill": "filled at the open, $180.00",
-   "uncertainty": null
+   "uncertainty": null,
+   "limit": 183.85
   },
   {
    "ticker": "SMCI",
@@ -4828,6 +5008,7 @@
    "fill": "opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
    "uncertainty": "trigger_timing",
    "sessions": 4,
+   "limit": 25.32,
    "day": 4,
    "status": "uncertain",
    "instruction": "Day 1 (2026-09-08): opened at $24.44, under the $24.56 trigger; the day reached it (high $24.81) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $23.58; sell at least half by day 3's close and be out by day 5's close.",
@@ -4906,7 +5087,8 @@
     "dollar_high": null
    },
    "fill": "filled at the open, $25.52",
-   "uncertainty": null
+   "uncertainty": null,
+   "limit": 26.25
   },
   {
    "ticker": "AAPL",
@@ -4951,75 +5133,27 @@
    },
    "fill": "filled at the open, $124.21",
    "uncertainty": null,
+   "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "d776f2892565cb8a49593ddbd5a783ccc16e81cb72ae9248db8c8742a0e3841f",
-    "context_sha256": "88cdae2517e213e7429f59c430dac164cdbda0e7a3bfc1abb039fb59762a015c",
-    "plan_sha256": "686ba26c906a6986d9cce5c0aec50f610f6c5d679505876387f3b8421db984ef",
+    "id": "edc0ebe336975eae8d98dac0486d4f4b1191dadc01c98ac594f75c8d272063e5",
+    "context_sha256": "ec85b217bc8e02fafa4b72cc34bac4b2b4d74e397b34f0465b81ca13b46b5dfd",
+    "plan_sha256": "2dd13de7f67b811c59c955a7663de818d3af290b41017388e2a14a3d749ec3fe",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
-   }
-  },
-  {
-   "ticker": "COIL",
-   "kind": "anticipation",
-   "picked": "2026-09-10",
-   "day": 1,
-   "sessions": 1,
-   "status": "hold",
-   "instruction": "Day 1: hold 22 COIL with the stop at $111.10 (closed $115.50, +3.5%).",
-   "events": [
-    {
-     "day": 1,
-     "date": "2026-09-11",
-     "event": "stop_raised_to_entry_low",
-     "price": 111.1
-    }
-   ],
-   "regime": "green",
-   "entry_ref": 111.58,
-   "shares": 22,
-   "current_stop": 111.1,
-   "last_close": 115.5,
-   "last_date": "2026-09-11",
-   "unrealised_pct": 3.51,
-   "exit_price": null,
-   "result_pct": null,
-   "half_sold": false,
-   "sold": 0,
-   "remaining": 22,
-   "grade": "watch",
-   "stop": 109.5,
-   "targets": {
-    "low_pct": 8.0,
-    "high_pct": 20.0,
-    "low": 119.46,
-    "high": 132.73,
-    "note": "above $40 he measures the move in dollars: $5-25",
-    "dollar_low": 115.61,
-    "dollar_high": 135.61
-   },
-   "fill": "filled at the open, $111.58",
-   "uncertainty": null,
-   "evidence_ref": {
-    "version": 1,
-    "id": "28cfe6b148c692e75c3c50a56622939edd4003623011355b1a4ae8294ef35465",
-    "context_sha256": "88cdae2517e213e7429f59c430dac164cdbda0e7a3bfc1abb039fb59762a015c",
-    "plan_sha256": "02805406e094a6fe2efc60fcd35944fd6ce051fc0a8ebec74b704d75c24b9eb1",
-    "pick_sha256": "c95ebc7b827358954937b9b5dcb497276dec9cc22d3e83b2f6bb2459e9424f95"
    }
   }
  ],
  "scorecard": {
   "settled": 22,
-  "open": 2,
-  "pending": 1,
+  "open": 1,
+  "pending": 2,
   "uncertain": 12,
   "not_filled": 13,
   "unmeasured": 0,
   "unreadable": 0,
   "unscored": 0,
   "plans": 50,
-  "filled": 24,
+  "filled": 23,
   "uncertain_reasons": [
    {
     "kind": "trigger_timing",
@@ -5064,7 +5198,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "379fcc54af52"
+  "replay_rules_version": "633f6d0caeb4"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5372,74 +5506,74 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:379fcc54af52": {
+   "burst:AAPL:2026-09-10:633f6d0caeb4": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:379fcc54af52": {
+   "burst:AMD:2026-09-10:633f6d0caeb4": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:379fcc54af52": {
+   "burst:NVDA:2026-09-10:633f6d0caeb4": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:379fcc54af52": {
+   "burst:TSLA:2026-09-10:633f6d0caeb4": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:379fcc54af52": {
+   "burst:PLUG:2026-09-10:633f6d0caeb4": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:379fcc54af52": {
+   "burst:DLLR:2026-09-10:633f6d0caeb4": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:379fcc54af52": {
+   "anticipation:COIL:2026-09-10:633f6d0caeb4": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:379fcc54af52": {
+   "burst:NVDA:2026-09-11:633f6d0caeb4": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:379fcc54af52": {
+   "burst:COIL:2026-09-11:633f6d0caeb4": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:379fcc54af52": {
+   "anticipation:VRT:2026-09-11:633f6d0caeb4": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "379fcc54af52",
+    "rules_version": "633f6d0caeb4",
     "coverage": "observed"
    }
   },
@@ -5459,7 +5593,7 @@
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
   "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
-  "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
+  "cash_budget": "Combined reaction and anticipation model allocation, reaction rank first: new tickets, principal reserved for unfinished model plans, model slots used, and every cut ticket with its setup kind and reason. Partial model sales do not free capacity. Never a balance, settled cash or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",

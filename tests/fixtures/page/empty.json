@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "379fcc54af52"
+  "rules_version": "633f6d0caeb4"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -783,7 +783,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "d7698280a52977e72b4b4ba79e9f2728b1a7aaaba7c01bbe925e516691eaf07c"
+   "context_sha256": "27ca7824e3043813b7c21d9f751030890d40690d1e0b9210dfe6c91ac40e9621"
   },
   "sanitised": {
    "replaced": 0,
@@ -806,9 +806,9 @@
    "Risk per trade: $50.00 (0.5% of $10,000.00; his band is 0.25-1%).",
    "Position cap: $2,500.00 (25% of equity) in any one name.",
    "Max 4 open positions (100% of equity if all are at the cap).",
-   "Day trades: FINRA deleted the pattern-day-trader count on 2026-06-04, but Fidelity has announced no migration date and may keep applying it per account until 2027-10-20, so run the account as if the old rule binds: at most 3 same-day round trips per rolling 5 business days in a margin account under $25,000.00; a same-day stop-out counts; a position held overnight never counts.",
-   "Account type: margin with debt protection (no borrowing, no good-faith violations). In a cash account buy only against settled cash (T+1); 3 good-faith violations in 12 months means 90 days of settled-cash-only.",
-   "Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: OTO/OTOCO)."
+   "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+   "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+   "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
   ]
  },
  "rules": {
@@ -993,7 +993,8 @@
    "gfv_restriction_days": 90,
    "precision.cents": 2,
    "precision.pct_decimals": 2,
-   "precision.cent_floor_epsilon": 1e-09
+   "precision.cent_floor_epsilon": 1e-09,
+   "allocation_policy": "combined_stages_reserved_principal_v1"
   },
   "watchlist": {
    "adr_sessions": 20,
@@ -1088,6 +1089,147 @@
     "H"
    ],
    "quality_gate_cap": "B"
+  },
+  "event_risk": {
+   "version": 1,
+   "policy": "unresolved_cash_acquisitions_withhold_new_entries",
+   "coverage": "manual_known_events_only",
+   "max_events": 128,
+   "max_sources": 8,
+   "max_text_length": 2000,
+   "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+   "registry": {
+    "version": 1,
+    "coverage": "manual_known_events_only",
+    "reviewed_on": "2026-10-09",
+    "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Issuer SEC filings and recent submissions were reviewed on the stated date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
+    "events": [
+     {
+      "id": "mg-hig-cash-acquisition",
+      "symbol": "MG",
+      "issuer": "MISTRAS Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-18",
+      "active_from": "2026-09-18",
+      "active_until": null,
+      "evidence_as_of": "2026-09-18",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "MISTRAS announced an agreement for H.I.G. affiliates to acquire its shares for $20.35 in cash. The announced go-shop runs through October 27, 2026. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "MISTRAS enters definitive agreement to be acquired by H.I.G. Capital",
+        "published_on": "2026-09-18",
+        "url": "https://www.sec.gov/Archives/edgar/data/1436126/000114036126037107/ef20082419_ex99-1.htm",
+        "sha256": "82b440c1820daeb6a78c73b0bbc8d630dea5fc7d0731d4d15cfdccb9acfbe1d0",
+        "quote": "Under the terms of the agreement, MISTRAS stockholders will receive $20.35 per share in cash for each share of common stock they own."
+       }
+      ]
+     },
+     {
+      "id": "prth-priore-cash-acquisition",
+      "symbol": "PRTH",
+      "issuer": "Priority Technology Holdings, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-21",
+      "active_from": "2026-09-21",
+      "active_until": null,
+      "evidence_as_of": "2026-09-21",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Priority announced a CEO-led take-private agreement for $8.05 per share in cash, expected at announcement to close in the first half of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Priority enters definitive agreement with Chairman and CEO Thomas Priore to take company private",
+        "published_on": "2026-09-21",
+        "url": "https://www.sec.gov/Archives/edgar/data/1653558/000121390026101651/ea030604701ex99-1.htm",
+        "sha256": "c0a74ecb966191496d0508919111e5e7e8056ea85914c2a4410f186d886622b2",
+        "quote": "Holders of Priority's common stock (other than shares held by the Investor Group) will receive $8.05 per share in cash at the closing of the transaction."
+       }
+      ]
+     },
+     {
+      "id": "arx-thoma-bravo-cash-acquisition",
+      "symbol": "ARX",
+      "issuer": "Accelerant Holdings",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-08-13",
+      "active_from": "2026-08-13",
+      "active_until": null,
+      "evidence_as_of": "2026-09-23",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Accelerant announced an all-cash acquisition by Thoma Bravo at $20.25 per share. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Accelerant enters definitive agreement to be acquired by Thoma Bravo",
+        "published_on": "2026-08-13",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000119312526347925/d286225dex992.htm",
+        "sha256": "45c369ef926ca66f545db14f45cb6e203f59cd895658813031cb5a65ffdec896",
+        "quote": "Under the terms of the agreement, Accelerant Class A and Class B stockholders will receive $20.25 per share in cash."
+       },
+       {
+        "title": "Accelerant announces expiration of go-shop period",
+        "published_on": "2026-09-23",
+        "url": "https://www.sec.gov/Archives/edgar/data/1997350/000199735026000018/ex991-pressreleaseendofgox.htm",
+        "sha256": "99317e375541af8edc8d8775afe59ed298d09d91b4accef80e8e458753fbe285",
+        "quote": "The transaction is still expected to close in the first half of 2027, subject to customary closing conditions, including approval by Accelerant shareholders and receipt of required regulatory approvals."
+       }
+      ]
+     },
+     {
+      "id": "bwin-sequence-cash-acquisition",
+      "symbol": "BWIN",
+      "issuer": "The Baldwin Insurance Group, Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-14",
+      "active_from": "2026-09-14",
+      "active_until": null,
+      "evidence_as_of": "2026-09-14",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-16",
+      "reason": "Baldwin announced an acquisition by affiliates of Sequence Holdings and the Dell Family Office for $32.50 per share in cash, expected at announcement to close in the first quarter of 2027. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "Baldwin to be acquired by Sequence Holdings and Dell Family Office",
+        "published_on": "2026-09-14",
+        "url": "https://www.sec.gov/Archives/edgar/data/1781755/000095010326013874/dp253297_ex9901.htm",
+        "sha256": "ecf9c8914fde967d2cf4dcc3519aaa072beead75b00d206598e9d91e8c735f2d",
+        "quote": "Baldwin shareholders will receive $32.50 in cash for each share of Baldwin common stock they hold."
+       }
+      ]
+     },
+     {
+      "id": "acva-copart-cash-acquisition",
+      "symbol": "ACVA",
+      "issuer": "ACV Auctions Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-09-10",
+      "active_from": "2026-09-10",
+      "active_until": null,
+      "evidence_as_of": "2026-10-08",
+      "reviewed_on": "2026-10-09",
+      "review_due": "2026-10-15",
+      "reason": "ACV announced Copart's $10.50 per share cash tender offer and merger. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "ACV Auctions Form 8-K: merger agreement with Copart",
+        "published_on": "2026-09-10",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000095010326013780/dp253207_8k.htm",
+        "sha256": "72a27b586f15ce8f38693c3ec717750eada2748ccede2695475ff6bc0a02462a",
+        "quote": "$10.50 per share, net to the seller in cash, without interest, subject to any required withholding of taxes"
+       },
+       {
+        "title": "ACV Auctions Schedule 14D-9 amendment: tender extension",
+        "published_on": "2026-10-08",
+        "url": "https://www.sec.gov/Archives/edgar/data/1637873/000119312526417485/d151127dsc14d9a.htm",
+        "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
+        "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
+       }
+      ]
+     }
+    ]
+   }
   },
   "pipeline": {
    "max_reads": 12,
@@ -1442,14 +1584,21 @@
   "committed_usd": 0.0,
   "at_risk_usd": 0.0,
   "equity": 10000.0,
+  "reserved_usd": 1232.11,
+  "available_usd": 8767.89,
+  "open_symbols": [
+   "NBIS",
+   "SMCI"
+  ],
   "slots_used": 2,
   "slots_max": 4,
   "open_positions": 2,
   "within": [],
+  "admitted": [],
   "beyond": [],
   "cut": [],
   "skipped": [],
-  "sentence": "Model allocation: next-session tickets would commit $0.00 of the configured $10,000.00; 2 of 4 slots (2 open model plans)"
+  "sentence": "Model allocation: next-session tickets would commit $0.00 of the configured $10,000.00; 2 of 4 slots (2 open model plans); $1,232.11 reserved for unfinished model plans"
  },
  "watchlist": {
   "top": [],
@@ -1545,7 +1694,8 @@
     "dollar_high": null
    },
    "fill": "filled at the open, $25.88",
-   "uncertainty": null
+   "uncertainty": null,
+   "limit": 26.83
   },
   {
    "ticker": "SMCI",
@@ -1565,6 +1715,7 @@
    "fill": "opened at $25.83, under the $25.87 trigger; the day reached it (high $25.94) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
    "uncertainty": "trigger_timing",
    "sessions": 3,
+   "limit": 26.81,
    "day": 3,
    "status": "uncertain",
    "instruction": "Day 1 (2026-09-08): opened at $25.83, under the $25.87 trigger; the day reached it (high $25.94) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $24.84; sell at least half by day 3's close and be out by day 5's close.",
@@ -1607,6 +1758,7 @@
    "fill": "opened at $25.79, under the $25.80 trigger; the day reached it (high $25.93) at a time the bar cannot give, and the plan's entry is the first 30 minutes",
    "uncertainty": "trigger_timing",
    "sessions": 2,
+   "limit": 26.76,
    "day": 2,
    "status": "uncertain",
    "instruction": "Day 1 (2026-09-09): opened at $25.79, under the $25.80 trigger; the day reached it (high $25.93) at a time the bar cannot give, and the plan's entry is the first 30 minutes. The model books no fill. If you took this plan: the sell stop is $24.77; sell at least half by day 3's close and be out by day 5's close.",
@@ -1682,7 +1834,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "379fcc54af52"
+  "replay_rules_version": "633f6d0caeb4"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -1769,7 +1921,7 @@
   "bursts": "Every 4% or $ breakout the scan found, graded, with its plan when it has one, its summary sentence and its series (last 120 bars, trades and the closest miss only). Scored or refused, a burst is here; a name that never burst is not. volume_vs_prior is the session's volume over the previous session's for every row, the $-only ones included (null when the previous session printed none); quality.burst holds the checklist's copy at two places.",
   "trades": "Tickers of the bursts to trade next session, ranked; those with order lines first. On a red regime this is empty whatever the grades say.",
   "beyond_cap": "Tickers of A-quality bursts with a plan and no ticket: withheld by the stop rule at the limit, past the slots or the configured equity, or sized to no whole share. Each has a reason in cash_budget.cut. Not checklist refusals.",
-  "cash_budget": "Model allocation: what next-session tickets would commit against the configured equity, the model slots used (open model plans count), and every plan without a ticket with its kind and reason. Never a balance or buying power.",
+  "cash_budget": "Combined reaction and anticipation model allocation, reaction rank first: new tickets, principal reserved for unfinished model plans, model slots used, and every cut ticket with its setup kind and reason. Partial model sales do not free capacity. Never a balance, settled cash or buying power.",
   "watchlist": "Anticipation names: top (with a plan each) and also_quiet, with counts. Alerts, not trades.",
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",

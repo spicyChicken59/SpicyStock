@@ -1261,7 +1261,8 @@
   const STATUS_WORDS = {
     ticket: ['ticket', 'good'], vetoed: ['vetoed', 'danger'], below_grade: ['no ticket', 'neutral'], not_admitted: ['no ticket', 'neutral'],
     no_plan: ['no ticket', 'neutral'], no_order: ['no order', 'neutral'], watch: ['watch', 'neutral'],
-    reader_required: ['research only', 'neutral']
+    reader_required: ['research only', 'neutral'], existing_position: ['already reserved', 'neutral'],
+    duplicate: ['duplicate setup', 'neutral']
   };
   function readerCoverage(b) {
     const cl = b.claude || {}, recorded = b.reader_coverage;
@@ -1322,7 +1323,7 @@
   const listRule = (data, key, fallback) => { const r = ((data.rules || {}).pipeline || {})[key]; return Array.isArray(r) && r.length ? r : fallback; };
   function buildModel(data) {
     const trades = data.trades || [], cb = data.cash_budget || {}, cuts = {};
-    (cb.cut || []).forEach((c) => { if (c && c.ticker && !cuts[c.ticker]) cuts[c.ticker] = c; });
+    (cb.cut || []).forEach((c) => { if (c && c.ticker && (!c.setup_kind || c.setup_kind === 'burst') && !cuts[c.ticker]) cuts[c.ticker] = c; });
     const reg = (data.breadth || {}).regime || {}, verdict = reg.verdict;
     const tradeGrades = listRule(data, 'trade_grades', ['A+', 'A']), yellowGrades = listRule(data, 'yellow_grades', ['A+']);
     const bursts = (data.bursts || []).filter((b) => b && b.ticker).map((b, i) => {
@@ -1356,6 +1357,7 @@
       const plan = quiet ? null : (r.plan || null), box = r.box || {};
       let status, reason;
       if (quiet) { status = 'watch'; reason = 'also quiet: on no list tonight, no plan and no ticket'; }
+      else if (plan && plan.allocation && !plan.allocation.admitted && plan.action === 'refused' && plan.eligible !== false) { status = plan.allocation.reason || 'no_order'; reason = plan.reason || ''; }
       else if (plan && plan.eligible === false) { status = 'withheld'; reason = plan.reason || ''; }
       else if (plan && plan.action === 'no_new_longs') { status = 'no_new_longs'; reason = plan.reason || 'breadth sizes new positions at zero tonight; keep the alert, place nothing'; }
       else if (plan && plan.order_json) { status = 'ticket'; reason = plan.order_line || ''; }
@@ -3812,6 +3814,8 @@
   }
   function stockRisk(c) {
     const plan = c.plan || {}, reader = c.stage === 'bursts' ? readerRisk(c.row.claude) : '';
+    const event = plan.event_risk;
+    if (event && event.version === 1 && event.blocked === true && text(event.reason)) return 'Recorded corporate event: ' + sentence(event.reason);
     if (reader) return cap(sentence(reader));
     const risk = firstText(plan.stop_risk_reason, plan.hazards, plan.notes);
     return risk ? 'Plan-derived risk: ' + cap(sentence(risk))
@@ -3871,6 +3875,8 @@
     const section = el('section', { 'class': 'ss-decision', 'aria-label': 'Decision summary' }, items.map((it) =>
       el('div', { 'class': 'ss-decision__item', 'data-item': it[0] }, [el('h3', { 'class': 'sc-eyebrow', text: it[1] })].concat(it[2].filter(Boolean).map((p) => el('p', { text: p }))))));
     const warnings = screeningWarnings(c);
+    const eventSources = corporateEventSources(c);
+    if (eventSources) section.querySelector('[data-item="risk"]').appendChild(eventSources);
     if (warnings.length) section.querySelector('[data-item="risk"]').appendChild(el('div', { 'class': 'ss-screening-warnings' }, [
       el('h4', { 'class': 'sc-eyebrow', text: 'Recorded screening warnings' })
     ].concat(warnings.map(p => el('p', { text: p })))));
@@ -3881,6 +3887,30 @@
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
     }
     return section;
+  }
+  function corporateEventSources(c) {
+    const event = (c.plan || {}).event_risk;
+    if (!event || event.version !== 1 || event.blocked !== true) return null;
+    const sources = el('details', { 'data-event-sources': '', 'class': 'sc-disclosure' }, [
+      el('summary', { text: 'Corporate event sources · manual review' }),
+      el('p', { 'class': 'sc-hint', text: 'Recorded registry review: ' + (text(event.registry_reviewed_on) || 'unknown') + '. This is a manual list of known events, not a live or complete news screen.' })
+    ]);
+    (Array.isArray(event.matches) ? event.matches : []).forEach(match => {
+      if (!match || typeof match !== 'object') return;
+      sources.appendChild(el('p', { text: (text(match.issuer) || c.ticker) + ' · evidence through ' + (text(match.evidence_as_of) || 'unknown') +
+        ' · review due ' + (text(match.review_due) || 'unknown') + (match.review_overdue ? ' · overdue; entries remain withheld' : '') }));
+      (Array.isArray(match.sources) ? match.sources : []).forEach(source => {
+        if (!source || typeof source !== 'object') return;
+        let url = null;
+        try { const parsed = new URL(source.url); if (parsed.protocol === 'https:' && !parsed.username && !parsed.password) url = parsed.href; } catch (e) { /* an invalid link stays plain text */ }
+        sources.appendChild(el('p', null, [
+          url ? el('a', { href: url, target: '_blank', rel: 'noopener noreferrer', text: text(source.title) || 'Recorded source' }) : (text(source.title) || 'Recorded source; link unavailable'),
+          d.createTextNode(' · ' + (text(source.published_on) || 'date unknown'))
+        ]));
+        if (text(source.quote)) sources.appendChild(el('blockquote', { text: source.quote }));
+      });
+    });
+    return sources;
   }
   const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : s.state === 'unknown' ? 'without calendar evidence' : 'stale';
   function openDisclosure(id) {
@@ -4688,6 +4718,7 @@
     // lens re-read, no comparison closed, no saved sheet dismissed, and the
     // detail's chart instance is left standing while the words beside it change
     renderStatus(current, st);
+    SCStock.morning.render($('morning-desk'), current, av, model);
     renderMarketBar(current, st);
     renderTickets(current);
     renderNext(current, st);
@@ -4934,6 +4965,7 @@
       if (keep.query) { $('search').value = keep.query; state.query = keep.query.trim().toUpperCase(); }
     }
     renderStatus(data, st);
+    SCStock.morning.render($('morning-desk'), data, av, model);
     renderMarketBar(data, st);
     renderDecisionGates(data);
     renderMethod(data);

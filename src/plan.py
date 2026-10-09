@@ -260,6 +260,7 @@ RULES: dict[str, Any] = {
     "plan.precision.cents": CENTS,
     "plan.precision.pct_decimals": PCT_DECIMALS,
     "plan.precision.cent_floor_epsilon": CENT_FLOOR_EPSILON,
+    "plan.allocation_policy": "combined_stages_reserved_principal_v1",
 }
 
 #: The environment variables ``Account.from_env()`` reads, and the field each
@@ -275,7 +276,7 @@ ENV_VARS = {
 CAPPED_BY = ("risk", "position_cap", "multiplier", "none")
 #: Why a plan in the budget has no order: the slots, the equity, breadth's
 #: zero multiplier, a size of no whole share, or a ticket the stop rule withheld.
-CUT_KINDS = ("slot_cap", "equity", "no_new_longs", "no_shares", "withheld")
+CUT_KINDS = ("slot_cap", "equity", "no_new_longs", "no_shares", "withheld", "existing_position", "duplicate")
 #: What a plan tells the reader to do. Only the first two carry an order.
 ACTIONS = ("buy_at_open", "place_buy_stop", "no_new_longs", "no_order", "refused")
 ORDER_ACTIONS = ("buy_at_open", "place_buy_stop")
@@ -1315,71 +1316,94 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
 
 
 def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
-                open_positions: int = 0) -> dict[str, Any]:
+                open_positions: int = 0, *, open_committed_usd: float = 0,
+                open_symbols: Sequence[str] = ()) -> dict[str, Any]:
     """What next-session tickets would commit, in rank order, against the slot
     cap and the configured equity: a plan with no order takes no slot; a plan
     past the free slots or past the equity is listed under ``beyond`` with its
     reason. This is model allocation over configured sizing assumptions --
     ``open_positions`` is the count of open model plans -- never a balance,
-    settled cash or buying power. Every plan without an order is in ``cut``
+    settled cash or buying power. Open model principal remains reserved;
+    partial model sales do not increase this allocation. Each symbol can have
+    one new ticket, and an occupied symbol cannot receive another. Every plan without an order is in ``cut``
     with a ``kind`` from ``CUT_KINDS`` and a sentence."""
     if isinstance(open_positions, bool) or not isinstance(open_positions, int) or open_positions < 0:
         raise ValueError(f"open_positions must be a whole number, got {open_positions!r}")
+    reserved = _number(open_committed_usd, "open_committed_usd")
+    if reserved < 0:
+        raise ValueError("open_committed_usd cannot be negative")
+    reserved = _money(reserved)
+    available = _money(max(0, account.equity - reserved))
+    occupied = set(open_symbols)
     free = max(0, account.max_open_positions - open_positions)
     committed = 0.0
+    at_risk = 0.0
     within: list[str] = []
+    admitted: list[dict[str, Any]] = []
     beyond: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     for rank, plan in enumerate(plans, 1):
         ticker = plan.get("ticker")
         shares = plan.get("shares") or 0
         position = _money(plan.get("position_usd") or 0)
+        identity = {"ticker": ticker, **({"setup_kind": plan["kind"]} if plan.get("kind") else {})}
         if plan.get("action") not in ORDER_ACTIONS or shares <= 0:
-            skipped.append({"ticker": ticker, "rank": rank, "reason": "no_order"})
+            skipped.append({**identity, "rank": rank, "reason": "no_order"})
+        elif ticker in occupied or ticker in within:
+            beyond.append({**identity, "rank": rank, "reason": "existing_position" if ticker in occupied else "duplicate",
+                           "position_usd": position})
         elif len(within) >= free:
-            beyond.append({"ticker": ticker, "rank": rank, "reason": "slot_cap", "position_usd": position})
-        elif committed + position > account.equity:
-            beyond.append({"ticker": ticker, "rank": rank, "reason": "equity", "position_usd": position})
+            beyond.append({**identity, "rank": rank, "reason": "slot_cap", "position_usd": position})
+        elif _cents_int(committed) + _cents_int(position) > _cents_int(available):
+            beyond.append({**identity, "rank": rank, "reason": "equity", "position_usd": position})
         else:
             committed = _money(committed + position)
+            at_risk = _money(at_risk + _money(plan.get("risk_usd") or 0))
             within.append(ticker)
+            admitted.append(identity)
     used = open_positions + len(within)
     already = (f" ({open_positions} open model plan{'s' if open_positions != 1 else ''})"
                if open_positions else "")
-    at_risk = _money(sum(_money(p.get("risk_usd") or 0) for p in plans
-                         if p.get("ticker") in within))
     cut = []
     for row in skipped:
         # a plan with no order is cut, and says why: breadth, the stop rule, or the size
         src = plans[row["rank"] - 1]
+        identity = {k: row[k] for k in ("ticker", "setup_kind") if k in row}
         if src.get("action") == "no_new_longs":
-            cut.append({"ticker": row["ticker"], "kind": "no_new_longs",
+            cut.append({**identity, "kind": "no_new_longs",
                         "reason": "breadth sizes new positions at zero tonight"})
         elif src.get("action") == "refused" or src.get("eligible") is False:
-            cut.append({"ticker": row["ticker"], "kind": "withheld",
+            cut.append({**identity, "kind": "withheld",
                         "reason": src.get("reason") or "ticket withheld: the stop rule fails at the limit"})
         else:
             rps = src.get("risk_per_share")
-            cut.append({"ticker": row["ticker"], "kind": "no_shares",
+            cut.append({**identity, "kind": "no_shares",
                         "reason": (f"the configured account cannot size it: {_usd(rps)} at risk per share against a "
                                    f"{_usd(account.risk_usd)} risk budget comes to no whole share") if rps
                         else "the configured account cannot size it: the plan comes to no whole share"})
     for row in beyond:
+        identity = {k: row[k] for k in ("ticker", "setup_kind") if k in row}
         if row["reason"] == "slot_cap":
             holders = ", ".join(within) if within else "the open model plans"
             reason = (f"the {account.max_open_positions}-slot model cap: {open_positions} open model plans and "
                       f"{holders} take the rest; take {row['ticker']} only if a plan above is not held or "
                       f"stops out")
+        elif row["reason"] == "existing_position":
+            reason = "an unfinished model plan already reserves this symbol; no additional ticket"
+        elif row["reason"] == "duplicate":
+            reason = "a higher-ranked ticket already reserves this symbol in the combined allocation"
         else:
-            reason = (f"the configured equity: {_usd(row['position_usd'])} more than the {_usd(account.equity)} "
-                      f"can commit beside the tickets above")
-        cut.append({"ticker": row["ticker"], "kind": row["reason"], "reason": reason})
+            reason = (f"the configured equity: {_usd(row['position_usd'])} does not fit beside the tickets above "
+                      f"and {_usd(reserved)} reserved for unfinished model plans")
+        cut.append({**identity, "kind": row["reason"], "reason": reason})
     return {
         "committed_usd": committed, "at_risk_usd": at_risk, "equity": account.equity,
+        "reserved_usd": reserved, "available_usd": available, "open_symbols": sorted(occupied),
         "slots_used": used, "slots_max": account.max_open_positions, "open_positions": open_positions,
-        "within": within, "beyond": beyond, "cut": cut, "skipped": skipped,
+        "within": within, "admitted": admitted, "beyond": beyond, "cut": cut, "skipped": skipped,
         "sentence": (f"Model allocation: next-session tickets would commit {_usd(committed)} of the configured "
-                     f"{_usd(account.equity)}; {used} of {account.max_open_positions} slots{already}"),
+                     f"{_usd(account.equity)}; {used} of {account.max_open_positions} slots{already}"
+                     + (f"; {_usd(reserved)} reserved for unfinished model plans" if reserved else "")),
     }
 
 
@@ -1390,22 +1414,20 @@ def cash_budget(plans: Sequence[Mapping[str, Any]], account: Account,
 NOTE_RISK = "Risk per trade: {risk_usd} ({risk_pct:g}% of {equity}; his band is {band_low:g}-{band_high:g}%{band})."
 NOTE_POSITION_CAP = "Position cap: {cap_usd} ({max_position_pct:g}% of equity) in any one name."
 NOTE_MAX_OPEN = "Max {max_open} open positions ({invested:g}% of equity if all are at the cap)."
-NOTE_PDT = ("Day trades: FINRA deleted the pattern-day-trader count on {pdt_deleted}, but Fidelity has "
-            "announced no migration date and may keep applying it per account until {pdt_phase_in}, so run "
-            "the account as if the old rule binds: at most {pdt_trades} same-day round trips per rolling "
-            "{pdt_days} business days in a margin account under {pdt_equity}; a same-day stop-out counts; "
-            "a position held overnight never counts.")
-NOTE_ACCOUNT_TYPE = ("Account type: margin with debt protection (no borrowing, no good-faith violations). "
-                     "In a cash account buy only against settled cash (T+{settle}); {gfv_limit} good-faith "
-                     "violations in {gfv_months} months means {gfv_days} days of settled-cash-only.")
-NOTE_ATTACH_STOP = ("Attach the protective stop the moment the buy fills, as a stop-MARKET order and never a "
-                    "stop-limit (Fidelity mobile: \"Market + Stop Loss Protection\"; Active Trader Pro: "
-                    "OTO/OTOCO).")
-NOTE_TEMPLATES = (NOTE_RISK, NOTE_POSITION_CAP, NOTE_MAX_OPEN, NOTE_PDT, NOTE_ACCOUNT_TYPE, NOTE_ATTACH_STOP)
+NOTE_CASH_READINESS = ("Cash reuse: US stock trades generally settle T+{settle}; a sale does not establish "
+                       "immediately spendable cash. Check availability and any cash-account restrictions "
+                       "with your broker.")
+NOTE_ACCOUNT_TYPE = ("Cash-account planning reference: no leverage is assumed. The site does not read "
+                     "your broker's settled cash or buying power; confirm available settled cash before "
+                     "each buy.")
+NOTE_ATTACH_STOP = ("Plan a protective stop-market order as soon as the buy fills; verify your broker "
+                    "supports the intended entry and linked stop orders. Gaps and slippage can make "
+                    "the loss exceed planned risk.")
+NOTE_TEMPLATES = (NOTE_RISK, NOTE_POSITION_CAP, NOTE_MAX_OPEN, NOTE_CASH_READINESS, NOTE_ACCOUNT_TYPE, NOTE_ATTACH_STOP)
 
 
 def account_notes(account: Account) -> list[str]:
-    """Plain-English constraints for the page, one sentence each."""
+    """Configured sizing and cash-account guidance without claiming broker access."""
     values = {
         "risk_usd": _usd(account.risk_usd), "risk_pct": account.risk_pct, "equity": _usd(account.equity),
         "band_low": RISK_PCT_BAND_LOW, "band_high": RISK_PCT_BAND_HIGH,
@@ -1413,9 +1435,6 @@ def account_notes(account: Account) -> list[str]:
         "cap_usd": _usd(account.max_position_usd), "max_position_pct": account.max_position_pct,
         "max_open": account.max_open_positions,
         "invested": _pct(account.max_open_positions * account.max_position_pct),
-        "pdt_equity": _usd(PDT_EQUITY_USD), "pdt_trades": PDT_MAX_DAY_TRADES, "pdt_days": PDT_WINDOW_DAYS,
-        "pdt_deleted": PDT_RULE_DELETED_ON, "pdt_phase_in": PDT_PHASE_IN_ENDS,
-        "settle": SETTLEMENT_DAYS, "gfv_limit": GFV_LIMIT, "gfv_months": GFV_WINDOW_MONTHS,
-        "gfv_days": GFV_RESTRICTION_DAYS,
+        "settle": SETTLEMENT_DAYS,
     }
     return [template.format(**values) for template in NOTE_TEMPLATES]
