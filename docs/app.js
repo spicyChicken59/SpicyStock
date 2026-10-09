@@ -1628,7 +1628,7 @@
     if (w.location.hash !== canon && w.history && w.history.replaceState) { try { w.history.replaceState(null, '', canon); } catch (e) { /* a file: URL may refuse */ } }
     if (!route.followed) lastHash = canon;
     if (route.followed) openSaved(route.followed, first); else closeSaved();
-    if (route.open) { const det = $(route.open); if (det) det.open = true; }
+    if (route.open) { const det = $(route.open); if (det) det.open = true; if (route.open === 'scan') hydrateScan(); }
     if (route.topic) {
       const target = $('read-' + route.topic);
       if (target) { target.open = true; if (!first) target.querySelector('summary').focus({ preventScroll: true }); }
@@ -4310,6 +4310,15 @@
   }
 
   // ---------------------------------------------------------------- the scan, as a disclosure
+  // The closed matrix can contain tens of thousands of evidence nodes. Build
+  // it only when opened, once per render; an update invalidates its old rows
+  // even when the new publication has the same session or object identity.
+  let scanRendered = false;
+  function hydrateScan() {
+    if (!loaded || !$('scan').open || scanRendered) return;
+    renderScanRows(current);
+    scanRendered = true;
+  }
   function signalCell(c, vetoed) {
     const word = checkVerdict(c, vetoed), tone = VERDICT_SIGNAL[word];
     const info = reading.explain(c, (current.rules || {}).quality);
@@ -4321,13 +4330,20 @@
         el('p', { text: 'Original: ' + (c && c.display || 'not measured') + '. ' + (c && c.threshold || 'No rule recorded.') })])]);
   }
   function renderScan(data) {
+    scanRendered = false;
     const bursts = (data.bursts || []).filter((b) => b && b.ticker), trades = data.trades || [], body = clear($('scan-body')), run = data.run || {};
     const nCriteria = bursts.length && bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     $('scan-summary').textContent = 'Everything the scan found · ' + (bursts.length ? plural(bursts.length, 'burst') : 'no burst');
     $('scan-lede').textContent = 'Every burst against its ' + nCriteria + ' recorded criteria. Read evidence for the observed value and rule; a name opens the full explanation above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
     const cm = data.closest_miss;
     if (cm && cm.sentence && !trades.length) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
-    if (!bursts.length) { body.appendChild(empty('The scan found no burst.')); return; }
+    if (!bursts.length) body.appendChild(empty('The scan found no burst.'));
+    hydrateScan();
+  }
+  function renderScanRows(data) {
+    const bursts = (data.bursts || []).filter((b) => b && b.ticker), trades = data.trades || [], body = $('scan-body'), run = data.run || {};
+    if (!bursts.length) return;
+    const nCriteria = bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     const keys = Object.keys(CRITERIA_SHORT);
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
     body.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Open Read evidence for the full measurements and recorded rule; select the stock for its rationale and source notes.' }));
@@ -4624,6 +4640,7 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    $('scan').addEventListener('toggle', hydrateScan);
     // The clock, re-read where a page that was left alone comes back: a tab
     // brought forward, a window given focus, and a page the browser restored
     // from its back/forward cache -- which is served from a snapshot and would
@@ -5016,6 +5033,8 @@
     $('picks-status').textContent = 'No record loaded.';
     $('orders-summary').textContent = 'Tomorrow’s tickets · none';
     $('scan-summary').textContent = 'Everything the scan found · no record';
+    scanRendered = false;
+    clear($('scan-body'));
     clear($('hold-rows')).appendChild(empty('No record loaded.'));
     renderFollowing(); followJump();
     const fl = $('following-list');

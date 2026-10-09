@@ -74,6 +74,9 @@ anchors (`#hold`, `#orders`, `#trade-X`, `#burst-X`, `#closest-miss`) still
 land where they used to. Choosing a stock fetches nothing, grades nothing
 and sizes nothing; a route the page does not know, or a symbol the record
 does not carry, falls back to Explore and says so.
+The full scan's count is available immediately; its criterion table is built
+when the disclosure opens, from the record already loaded. Reopening keeps its
+sort and expanded evidence; loading a new record replaces the old scan rows.
 
 1. **The two clocks.** A record carries two different facts about time and
    the page keeps them apart, because freshness is not permission.

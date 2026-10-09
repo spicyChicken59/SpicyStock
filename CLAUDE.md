@@ -4631,3 +4631,41 @@ cash-acquisition source. This dry run is a rehearsal, not a new live record.
 PR #107 records the final hosted gate and publication evidence.
 The next milestone is trustworthy morning quotes/event coverage and a smaller
 initial payload, followed by measured opportunity coverage.
+
+## Checkpoint, 9 Oct 2026 — defer the closed scan matrix
+
+**Scope.** `renderScan()` now publishes the count, explanation and closest miss
+immediately, but `hydrateScan()` builds the criterion rows only when the native
+disclosure opens. It reuses that table across close/reopen so sorting and opened
+evidence survive. Every record render clears old rows, including same-object
+revisions; an already open scan rebuilds synchronously from the current record.
+Legacy scan routes hydrate before scrolling; legacy stock routes still open
+their stock without constructing the scan. The design system observes the added
+table and attaches its existing keyboard and criterion controls. No publication,
+schema, observations, plan, availability gate or provider request changes.
+
+**Executed.** Python 3.12.14, Node 24.19.0 and Playwright 1.56.1 Chromium.
+`tools/scan_cases.mjs` covers absent initial rows, native keyboard opening,
+record immutability, no extra record fetch, sorting, evidence, criterion and
+arrow navigation, reuse, open/closed refresh, same-object revisions, a queued
+toggle across replacement, empty records and legacy destinations. All 80 new
+checks passed; the focused fixture/reading/refresh/volume/chart-keyboard pass
+passed 2,246 checks. An isolated source override restoring eager construction
+failed six intended checks; an unrelated wording override passed all 80.
+`tests/test_docs.py` passed 37 tests; continuity passed 134/134. README and `.env.example` were swept;
+no environment configuration changes. Desktop and phone screenshots inspected.
+
+**Measured, not a mobile-device benchmark.** One cold Chromium context at each
+of 1280 and 390 pixels, height 900, on the same Linux host without CPU/network
+throttling, against the unchanged Oct 8 publication: 14,789,950 raw bytes,
+SHA-256 `f5d94ffc5cf10566c6debe7b0cb9bd946165d026c90d757fc494908e6f60cb5b`.
+First usable paint was the render marker followed by two animation frames.
+The earlier local baseline was 1,006.8 / 988.6 ms; deferred rendering measured
+512.8 / 516.2 ms. Work between JSON parse and the render marker fell from
+411.9 / 373.9 ms to 131.8 / 138.1 ms; initial DOM nodes fell from
+63,601 / 63,599 to 5,901 / 5,899. No browser errors. The payload remains
+unchanged (the public host previously transferred 1,528,683 gzip bytes).
+Opening the complete 730-row matrix took 1,343.3 / 1,344.3 ms through paint:
+the work is deferred, not eliminated. Loading with a scan deep link still pays
+that cost, deliberately. Payload separation and progressive matrix rendering
+remain separate future work. This follow-up has not yet passed hosted gates.
