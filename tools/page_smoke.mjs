@@ -31,6 +31,7 @@ import { checkHistoricalJourneys } from './historical_cases.mjs';
 import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
+import { checkDeferredScan } from './scan_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -156,7 +157,16 @@ const pctOf = (v, dec = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).t
 const hash = (page) => page.evaluate(() => location.hash);
 const go = async (page, h) => { await page.evaluate((h) => { location.hash = h; }, h); await page.waitForTimeout(120); };
 const visibleView = (page) => page.evaluate(() => Array.from(document.querySelectorAll('.ss-view')).filter((s) => !s.hidden).map((s) => s.id));
-const openAll = (page, sel) => page.evaluate((sel) => document.querySelectorAll(sel).forEach((d) => { d.open = true; }), sel);
+const openAll = async (page, sel) => {
+  const openMatching = () => page.evaluate((sel) => document.querySelectorAll(sel).forEach((d) => { d.open = true; }), sel);
+  await openMatching();
+  // Opening the scan hydrates its evidence disclosures on the native toggle.
+  // Wait for those rows before taking the second snapshot of matching details.
+  await page.waitForFunction(() => !document.getElementById('scan').open ||
+    document.documentElement.getAttribute('data-ss-rendered') === 'error' ||
+    document.querySelectorAll('#scan-table tbody tr').length === (SCStock.data.bursts || []).filter(b => b && b.ticker).length);
+  await openMatching();
+};
 const active = (page) => page.evaluate(() => { const a = document.activeElement; return a ? (a.id || '') + '/' + (a.className || '') + '/' + (a.dataset ? a.dataset.ticker || '' : '') : ''; });
 const clickPick = async (page, ticker) => { await page.locator(`#pick-list .ss-pick[data-ticker="${ticker}"]`).click(); await page.waitForTimeout(150); };
 // the lens: the page opens on A-quality when the record archived an A or A+
@@ -3866,6 +3876,7 @@ async function main() {
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
       if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
