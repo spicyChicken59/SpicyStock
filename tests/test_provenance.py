@@ -586,7 +586,8 @@ def test_real_evidence_writer_preserves_publication_order_and_rollback(
     else:
         provenance.publish_bundle(data, picks, tmp_path, objects)
         assert installs[-2:] == ["picks.json", "data.json"]
-        assert all(label == "evidence" for label in installs[:-2])
+        assert installs[-3] == "reader.json"
+        assert all(label == "evidence" for label in installs[:-3])
         assert json.loads((tmp_path / "data.json").read_bytes()) == data
         assert json.loads((tmp_path / "picks.json").read_bytes()) == picks
     assert not list(tmp_path.glob(".publication-*"))

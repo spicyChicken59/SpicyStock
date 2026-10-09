@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from src import morning, morning_halts
+from src import morning, morning_halts, reader
 
 NOW = datetime(2026, 9, 11, 13, 35, tzinfo=timezone.utc)
 SESSION = "2026-09-11"
@@ -211,6 +211,82 @@ def test_exact_record_bytes_bind_even_same_session_and_rules():
         morning.validate_observation(out, whitespace_changed)
 
 
+def test_reader_binding_is_derived_from_exact_canonical_bytes():
+    raw = publication()
+    out = collect()
+    projected, _ = reader.derive(raw)
+    assert out["publication"]["data_sha256"] == hashlib.sha256(raw).hexdigest()
+    assert out["publication"]["reader_projection_version"] == 1
+    assert out["publication"]["reader_sha256"] == hashlib.sha256(projected).hexdigest()
+    changed = morning.bind_record(raw + b"\n", allow_fixture=True)
+    assert changed["context_sha256"] == out["publication"]["context_sha256"]
+    assert changed["reader_sha256"] != out["publication"]["reader_sha256"]
+    # A copied canonical claim cannot bind altered projected candidates.
+    altered = json.loads(projected)
+    altered["data"]["bursts"][0]["plan"]["limit"] += 1
+    out["publication"]["reader_sha256"] = hashlib.sha256(json.dumps(altered).encode()).hexdigest()
+    with pytest.raises(ValueError, match="binding"):
+        morning.validate_observation(out, raw)
+
+
+@pytest.mark.parametrize("change", [
+    lambda binding: binding.pop("reader_sha256"),
+    lambda binding: binding.pop("reader_projection_version"),
+    lambda binding: binding.update(reader_projection_version=True),
+    lambda binding: binding.update(reader_projection_version=2),
+    lambda binding: binding.update(reader_sha256="0" * 64),
+    lambda binding: binding.update(reader_sha256=None),
+    lambda binding: binding.update(reader_bytes=123),
+])
+def test_reader_binding_rejects_partial_unknown_and_forged_extensions(change):
+    out = collect()
+    change(out["publication"])
+    with pytest.raises(ValueError, match="binding"):
+        morning.validate_observation(out, publication())
+
+
+@pytest.mark.parametrize("name,digest", [
+    ("observed", "efb553ccd84fbc0eafcff7f13ec1d45449310a179471f349ce89341b84f0d9f8"),
+    ("halted", "4e118271a3938a31713973b785d64d7ee42b499cd57eff926daf6084e4fa64df"),
+    ("corporate-excluded", "1863d7be06a135ee9c0373422bcf7bb81124353d1378eaf1f5f615a4a75da413"),
+    ("corporate-resolved", "ca42e825c6efc53fc92710cc772b03c2e94b0db9685a7bc96c66d08ed72c19e9"),
+])
+def test_original_legacy_controls_keep_exact_bytes_and_canonical_validation(name, digest):
+    previous = (MORNING_FIXTURES / f"{name}.json").read_bytes()
+    assert hashlib.sha256(previous).hexdigest() == digest
+    out = json.loads(previous)
+    assert "reader_sha256" not in out["publication"]
+    assert "reader_projection_version" not in out["publication"]
+    morning.validate_observation(out, (MORNING_FIXTURES / "full-publication.json").read_bytes())
+
+
+def test_legacy_halt_migration_keeps_exclusion_through_outage_until_sourced_resumption():
+    from tests.fixtures.morning.generate import events
+    raw = (MORNING_FIXTURES / "full-publication.json").read_bytes()
+    previous = (MORNING_FIXTURES / "halted.json").read_bytes()
+    later = NOW + timedelta(seconds=30)
+    out = morning.collect(raw, previous_raw=previous, client=Client(errors=("iex", "delayed_sip")),
+                          clock=lambda: later, event_observer=event_outage)
+    assert out["previous_observation_sha256"] == hashlib.sha256(previous).hexdigest()
+    assert out["publication"]["reader_sha256"] == reader.binding(raw)["reader_sha256"]
+    assert out["status"] == "provider_unavailable"
+    assert out["halt_memory"] == json.loads(previous)["halt_memory"]
+    assert out["rows"][0]["events"]["halt"]["blocks_entry"] is True
+    damaged = deepcopy(out)
+    damaged["halt_memory"] = {}
+    with pytest.raises(ValueError):
+        morning.validate_observation(damaged, raw, previous_raw=previous, require_continuity=True)
+    resumed_at = NOW + timedelta(seconds=45)
+    outage_raw = json.dumps(out).encode()
+    resumed = morning.collect(raw, previous_raw=outage_raw, client=Client(), clock=lambda: resumed_at,
+                              event_observer=events("resumed", resumed_at))
+    assert resumed["halt_memory"] == {}
+    assert resumed["rows"][0]["events"]["halt"]["status"] == "resumption_reported"
+    assert resumed["rows"][0]["events"]["halt"]["blocks_entry"] is None
+    assert resumed["previous_observation_sha256"] == hashlib.sha256(outage_raw).hexdigest()
+    assert resumed["rows"][0]["plan_sha256"] == json.loads(previous)["rows"][0]["plan_sha256"]
+
+
 def test_fixture_is_refused_for_production_before_any_provider_calls():
     client = Client()
     with pytest.raises(ValueError, match="real publication"):
@@ -291,6 +367,9 @@ def test_retained_corporate_exclusion_survives_registry_omission_and_no_ticket_r
     assert current["blocked"] is False and current["matches"] == []
     assert retained and retained[0]["event"]["id"] == "synthetic_cash_event"
     assert retained[0]["registry_sha256"] != current["registry_sha256"]
+    assert "reader_sha256" not in json.loads(previous)["publication"]
+    assert out["publication"]["reader_sha256"] == reader.binding(raw)["reader_sha256"]
+    assert out["previous_observation_sha256"] == hashlib.sha256(previous).hexdigest()
     damaged = deepcopy(out)
     damaged["corporate_memory"] = {}
     damaged["rows"][0]["events"]["retained_corporate_actions"] = []
@@ -345,13 +424,14 @@ def test_halt_memory_survives_inapplicable_receipt_and_continuity_rejects_erasur
         morning.validate_observation(out, raw, previous_raw=previous, require_continuity=True)
 
 
-def test_generated_browser_receipts_pass_the_same_persistence_validator():
+@pytest.mark.parametrize("prefix", ["", "reader-"])
+def test_generated_browser_receipts_pass_the_same_persistence_validator(prefix):
     full = (MORNING_FIXTURES / "full-publication.json").read_bytes()
     red = (MORNING_FIXTURES / "red-publication.json").read_bytes()
     for name in ("observed", "outage", "halted", "corporate-excluded", "no-tickets", "resumed", "corporate-retained", "corporate-resolution-carried"):
-        out = json.loads((MORNING_FIXTURES / f"{name}.json").read_bytes())
+        out = json.loads((MORNING_FIXTURES / f"{prefix}{name}.json").read_bytes())
         prior_name = {"resumed": "halted", "corporate-retained": "corporate-excluded", "corporate-resolution-carried": "corporate-resolved"}.get(name)
-        previous = (MORNING_FIXTURES / f"{prior_name}.json").read_bytes() if prior_name else None
+        previous = (MORNING_FIXTURES / f"{prefix}{prior_name}.json").read_bytes() if prior_name else None
         morning.validate_observation(out, red if name == "no-tickets" else full, previous_raw=previous,
                                      require_continuity=True)
 
@@ -363,6 +443,9 @@ def test_corporate_resolution_proof_survives_later_receipts_for_a_browser_that_m
                           event_observer=event_outage)
     assert out["corporate_memory"] == {}
     assert out["corporate_resolutions"] == json.loads(previous)["corporate_resolutions"]
+    assert "reader_sha256" not in json.loads(previous)["publication"]
+    assert out["publication"]["reader_sha256"] == reader.binding(raw)["reader_sha256"]
+    assert out["previous_observation_sha256"] == hashlib.sha256(previous).hexdigest()
     assert out["corporate_resolutions"][0]["resolution"]["url"] == "https://example.invalid/synthetic-event"
     for field, value in (("event_id", "other_event"), ("active_until", "2026-09-12"), ("observed_at", "2026-09-11T13:34:00Z")):
         damaged = deepcopy(out)

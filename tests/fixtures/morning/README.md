@@ -23,6 +23,23 @@ synthetic resolution source for the prior named exclusion. The follow-up
 `corporate-resolution-carried` completes at `13:35:45Z` and retains that source
 so a browser that missed the first resolution can still check it.
 
+These unprefixed receipt bytes freeze the original canonical-only binding and
+remain explicit legacy migration controls. The generator reproduces that original
+contract by removing only the new reader transport fields from a real collected
+receipt, then validating it. There is no production option to emit legacy receipts.
+The `reader-` prefixed versions are produced directly by the current collector and
+add the reader projection version and digest derived from the same exact canonical
+publication bytes. Their corresponding clocks and preceding receipts match the
+unprefixed scenarios. Derive their reader envelope and observation sidecar with
+`src.reader.derive(full_or_red_publication_bytes)`; the published input is unchanged.
+
+`reader-halt-outage` at `13:35:30Z` binds the exact legacy `halted.json` as its
+preceding receipt. Both quote feeds and the halt feed fail, but the known halt
+remains retained. `reader-halt-recovered` at `13:35:45Z` binds that new outage
+receipt and releases the halt only from the synthetic sourced trading resumption.
+Legacy receipts remain valid for direct canonical loads; a projected browser must
+require the new exact reader digest before treating their quotes as bound.
+
 `qeta-captured.json` is different: it is the halt adapter's normalized result
 from the retained actual Nasdaq RSS capture in `../morning_halts`, evaluated at
 `2026-10-09T15:26:22Z`. It exercises the reported QETA halt with its actual

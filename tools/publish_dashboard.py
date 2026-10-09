@@ -24,19 +24,63 @@ import time
 from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
+# The workflow runs this file directly with a standard-library-only Python.
+# Resolve the sibling source package from this checkout, never the caller's cwd.
+SOURCE_ROOT = Path(__file__).resolve().parent.parent
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+from src import reader
 
-# The records app.js fetches at run time and index.html does not link: the two
-# the run writes, and the two historical findings files the Record view reads.
-# They are the only unlinked files this gate verifies. The archived history and
+
+# Fixed records that runtime JavaScript fetches without an index.html link:
+# canonical and compact publications, picks, and the two historical findings
+# files. The currently referenced observation sidecar is validated separately.
+# The archived history and
 # evidence objects the page also fetches (docs/history, docs/evidence) are not
 # listed: each is named by its SHA-256 and the page checks that digest itself
 # (publicJSON), so a stale served copy is refused rather than shown. Before the
 # findings files were named here, a JSON fetched only from app.js was never
 # verified, and the gate printed "Verified" over a served site that could have
 # lacked it.
-RECORD_FILES = ("data.json", "picks.json", "historical-validation.json", "historical-findings.json")
+RECORD_FILES = ("data.json", "reader.json", "picks.json", "historical-validation.json", "historical-findings.json")
 OPTIONAL_RECORD_FILES = ("morning.json",)
 WAIT_SECONDS = 480
+
+
+def reader_asset(docs: Path, name: str, maximum: int) -> bytes:
+    """Read a bounded regular checkout asset without following any symlink."""
+    parts = Path(name).parts
+    if not parts or Path(name).is_absolute() or any(part in ('.', '..') for part in parts):
+        raise ValueError('invalid reader asset path')
+    path = docs
+    if path.is_symlink() or not path.is_dir():
+        raise ValueError('reader docs root must be a directory')
+    for part in parts:
+        path = path / part
+        if path.is_symlink():
+            raise ValueError('reader asset cannot follow a symlink')
+    if not path.is_file():
+        raise ValueError('reader asset must be a regular file')
+    with path.open('rb') as handle:
+        raw = handle.read(maximum + 1)
+    if not raw or len(raw) > maximum:
+        raise ValueError('reader asset bytes exceed bound')
+    return raw
+
+
+def reader_files(root: Path) -> tuple[str, ...]:
+    """Verify the exact source, projection and fixed-grammar sidecar first."""
+    docs = root / 'docs'
+    try:
+        canonical_raw = reader_asset(docs, 'data.json', reader.MAX_PUBLICATION_BYTES)
+        reader_raw = reader_asset(docs, reader.READER_FILE, reader.MAX_READER_BYTES)
+        ref = reader.parse_reader(reader_raw)['retained_observations']
+        # parse_reader permits only reader-observations/<lowercase SHA>.json.
+        observations_raw = reader_asset(docs, ref['path'], ref['bytes'])
+        reader.validate_bundle(canonical_raw, reader_raw, observations_raw)
+    except (OSError, ValueError, TypeError, KeyError):
+        raise RuntimeError('Reader companions do not match the committed canonical publication.') from None
+    return (ref['path'],)
 
 
 def public_files(root: Path) -> tuple[str, ...]:
@@ -50,6 +94,8 @@ def public_files(root: Path) -> tuple[str, ...]:
     Following shelf were never fetched while the gate printed "Verified". A
     referenced file the checkout does not have is a 404 for every reader, so it
     is named and raises here rather than being skipped."""
+    if (root / 'docs').is_symlink():
+        raise RuntimeError('Publication docs root must not be a symlink.')
     references = re.findall(r"""(?:src|href)\s*=\s*["']([^"']+)["']""",
                             (root / "docs" / "index.html").read_text())
     names = ["index.html", *RECORD_FILES]
@@ -69,6 +115,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     if absent:
         raise RuntimeError("docs/ does not carry files the page asks readers to load: "
                            + ", ".join(absent))
+    names.extend(name for name in reader_files(root) if name not in names)
     return tuple(names)
 
 

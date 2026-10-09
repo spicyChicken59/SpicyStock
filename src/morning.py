@@ -16,7 +16,7 @@ from pathlib import Path
 import re
 import tempfile
 
-from src import event_risk, market_data, morning_halts, plan, provenance, sessions, timing
+from src import event_risk, market_data, morning_halts, plan, provenance, reader, sessions, timing
 
 VERSION = 1
 MAX_PUBLICATION_BYTES = 32 * 1024 * 1024
@@ -108,12 +108,31 @@ def _publication(raw, *, allow_fixture=False):
     binding = {"data_sha256": hashlib.sha256(raw).hexdigest(),
                "context_sha256": run["evidence"]["context_sha256"], "run_id": run["run_id"],
                "rules_version": data["app"]["rules_version"], "measured_session": run["session"],
-               "applicable_session": run["timing"]["applicable_session"], "published_at": run["published_at"]}
+               "applicable_session": run["timing"]["applicable_session"], "published_at": run["published_at"],
+               **reader.binding(raw)}
     return data, binding
 
 
 def bind_record(raw, *, allow_fixture=False):
     return _publication(raw, allow_fixture=allow_fixture)[1]
+
+
+def _validate_publication_binding(actual, expected):
+    """Accept the exact original contract or its complete reader extension.
+
+    Legacy receipts remain evidence for canonical readers and event continuity.
+    New collection always derives the reader binding from canonical raw bytes;
+    a browser loading a projection must additionally require that extension.
+    """
+    reader_fields = {"reader_projection_version", "reader_sha256"}
+    legacy = {key: value for key, value in expected.items() if key not in reader_fields}
+    _require(isinstance(actual, dict), "observation publication binding differs")
+    if set(actual) == set(legacy):
+        _require(actual == legacy, "observation publication binding differs")
+    else:
+        _require(set(actual) == set(expected)
+                 and type(actual.get("reader_projection_version")) is int
+                 and actual == expected, "observation reader publication binding differs")
 
 
 def admitted_rows(data):
@@ -530,7 +549,7 @@ def _validate_observation(out, raw, *, previous_raw=None, require_continuity=Fal
     previous_sha = out["previous_observation_sha256"]
     _require(previous_sha is None or isinstance(previous_sha, str) and re.fullmatch(r"[0-9a-f]{64}", previous_sha), "invalid prior receipt binding")
     data, binding = _publication(raw, allow_fixture=out["dry_run"])
-    _require(out.get("publication") == binding, "observation publication binding differs")
+    _validate_publication_binding(out.get("publication"), binding)
     _require(provenance.digest(out.get("policy")) == provenance.digest(POLICY)
              and out.get("limits") == LIMITS, "observation policy differs")
     _require(_text(out.get("observation_run_id"), 128) is not None, "invalid observation run identity")

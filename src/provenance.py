@@ -645,7 +645,7 @@ def publish_bundle(data, rec, docs, objects, *, dry_run=False):
 Publish data last. Ordinary write/rename failures restore the previous pair;
 process death between filesystem renames is not a multi-file transaction.
 """
-    from src import record, report
+    from src import record, report, reader
     docs = Path(docs)
     require(data, None if dry_run else rec, objects, require_sources=True, require_picks=not dry_run)
     with tempfile.TemporaryDirectory(prefix=".publication-", dir=docs) as tmp:
@@ -656,19 +656,7 @@ process death between filesystem renames is not a multi-file transaction.
         staged = json.loads((stage / "data.json").read_bytes())
         persisted = None if dry_run else json.loads((stage / "picks.json").read_bytes())
         require(staged, persisted, objects, require_sources=False, require_picks=not dry_run)
+        reader.stage_assets(stage)
         write_objects(objects, docs / OBJECT_DIR)
         names = ["data.json"] if dry_run else ["picks.json", "data.json"]
-        previous = {n: (docs / n).read_bytes() if (docs / n).exists() else None for n in names}
-        installed = []
-        try:
-            for n in names:
-                os.replace(stage / n, docs / n)
-                installed.append(n)
-        except OSError:
-            for n in reversed(installed):
-                if previous[n] is None:
-                    (docs / n).unlink()
-                else:
-                    (stage / n).write_bytes(previous[n])
-                    os.replace(stage / n, docs / n)
-            raise
+        reader.install_publication(stage, docs, names)

@@ -288,11 +288,11 @@ def test_unknown_schedule_or_malformed_record_cannot_collect():
 
 def test_dashboard_publication_fetches_optional_morning_once_committed(tmp_path, monkeypatch):
     from tools import publish_dashboard
+    from tests.test_publish_dashboard import write_reader_records
     docs = tmp_path / 'docs'
     docs.mkdir()
     (docs / 'index.html').write_text('<html></html>')
-    for name in ('data.json', 'picks.json', 'historical-validation.json', 'historical-findings.json'):
-        (docs / name).write_bytes(b'{}')
+    write_reader_records(docs)
     assert 'morning.json' not in publish_dashboard.public_files(tmp_path)
     receipt = b'{"dated":"observation"}\n'
     (docs / 'morning.json').write_bytes(receipt)
@@ -307,7 +307,7 @@ def test_dashboard_publication_fetches_optional_morning_once_committed(tmp_path,
 
     def public_bytes(url, timeout):
         from urllib.parse import urlsplit
-        name = urlsplit(url).path.rsplit('/', 1)[-1]
+        name = urlsplit(url).path.removeprefix('/SpicyStock/')
         requests.append(name)
         return (docs / name).read_bytes()
 

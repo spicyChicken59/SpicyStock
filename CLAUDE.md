@@ -290,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3286 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3368 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4809,3 +4809,57 @@ Issuer news, earnings and comprehensive corporate-action coverage, the
 smaller reader payload, broker-specific guidance and an actual first-trade
 review remain unfinished. Continue milestone 2 without marking a first
 successful trade or dependable live-quote service complete.
+
+## Checkpoint, 9 Oct 2026 — compact reader and deferred research
+
+**Scope.** `src/reader.py` derives a compact `reader.json` and a shared,
+content-addressed complete observations object from exact canonical bytes.
+The browser keeps candidate evidence, plans, account, timing and embedded
+charts immediately available; it requests the larger public history only for
+saved research. `data.json`, `picks.json`, recommendation provenance and old
+historical bytes remain unchanged. Production run `37928234562` projects from
+14,918,679 to 5,606,909 bytes, with a 5,040,916-byte deferred object. Hydrating the
+projection reproduces the original parsed publication exactly.
+
+**Binding and continuity.** New morning receipts derive a reader SHA on the
+server. The browser hashes the actual loaded reader before attaching a quote
+receipt; a copied canonical SHA claim cannot substitute. Legacy receipts keep
+independently validated positive event facts through the migration, including
+halt, corporate exclusion and carried resolution evidence. They do not become
+reader-bound quote receipts. Missing or failed deferred research stays unknown.
+Verified sidecars merge once without resetting morning state or replacing
+saved chart/input nodes. Fallback bars never merge before hydration, avoiding
+an equal-close adjustment-basis conflict. Exact retained model outcomes stay
+readable without inventing prices or fills. Public requests carry no private
+saved symbols, notes or positions.
+
+**Publication.** Initial installation and both final evening restamp paths use
+one staged companion installer, preserving rollback of fixed records. The
+publisher verifies exact canonical-to-reader-to-sidecar derivation before a
+Pages request, and evening artifacts include the companions. The owned
+`reader-observations/retention.json` preserves the currently served object and
+21 calendar days of grace after supersession. It removes only verified,
+previously indexed derived objects after successful publication; unrelated
+files and canonical/history/evidence remain untouched. Capacity is bounded to
+84 retained objects and 128 MiB, with one additional 32 MiB installation
+allowance. Malformed ownership refuses mutation; cleanup failures warn and
+retain ownership for retry. Prior reader ownership must replay against its
+canonical bytes before adoption.
+
+**Verification.** Independent checks reproduce production and all 12 schema-2
+page fixtures with exact hydration and valid provenance. Failure injection
+covers staging, reader/data/index installation, final restamps, cleanup retry,
+unknown-file preservation, expired ownership, and capacity refusal. Browser
+acceptance covers deferred requests, digest/metadata tampering, publication
+races, retry, legacy event evidence, saved adjustment basis and private draft
+continuity. Local reader assertions passed 89/89, existing related browser
+flows 477/477, continuity 134/134 and evidence geometry 4/4. Full hosted and
+public acceptance belong to the final release PR; these local checks alone do
+not establish deployment.
+
+**Remaining goal.** Continue verified morning delivery and broader issuer-news
+and earnings coverage. Actions/Pages snapshots are still not a dependable
+entry-window quote service. Broker confirmation and the first actual trade
+remain outstanding. The read-only opportunity audit for #109 found that the
+only whole-share-feasible A+ pre-review candidate was already reviewed and
+then downgraded; no missed executable candidate was established in that scan.

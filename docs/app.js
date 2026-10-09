@@ -1629,6 +1629,7 @@
     // Keep the opener node through a saved sheet's open/close route changes.
     // Store changes and record loads already refresh this destination.
     if (state.view === 'setups' && previousView !== 'setups') renderFollowing();
+    if (state.view === 'setups') SCStock.reader.ensure();
     // the saved setup keeps its own hash, so a bookmark reopens it; every
     // other route is rewritten to the one it resolved to
     if (route.followed) canon = savedHash(route.followed);
@@ -2868,16 +2869,17 @@
   // nothing writes nothing, which is what makes a re-render, a reload and a
   // theme change cost no observation.
   async function recordObservations() {
-    const run = current.run || {}, app = current.app || {}, session = text(run.session);
+    const source = current, run = source.run || {}, app = source.app || {}, session = text(run.session);
     if (!session) return null;
     let items = [];
     try { items = SCStock.follow.list(); } catch (e) { return null; }
     const updates = [];
-    items.forEach((it) => {
+    if (SCStock.reader.mergeAllowed()) items.forEach((it) => {
       const bars = recordBarsFor(it.ticker);
       if (bars.length) updates.push({ id: it.id, bars: bars, from_session: session, from_rules: text(app.rules_version), basis: basisOf(it, bars, session) });
     });
     const res = updates.length ? await SCStock.follow.commit('observe', updates) : null;
+    if (source !== current) return res;
     const plans = [];
     items.forEach(item => (current.open_plans || []).forEach(row => {
       if (SCStock.follow.matchesPlan(item, row)) plans.push({id:item.id, row, from_session:session, published_at:run.published_at, rules_version:app.rules_version});
@@ -2885,6 +2887,33 @@
     if (plans.length) await SCStock.follow.commit('observePlans', plans);
     if (res && res.changed) invalidateFollow();
     return res;
+  }
+
+  function researchCoverage() {
+    const coverage = SCStock.reader.status();
+    if (!coverage.projected || coverage.state === 'complete') return '';
+    return ({ deferred: 'Public research coverage has not been loaded.', loading: 'Loading public research coverage…', unavailable: 'Public research coverage is unavailable. ' + coverage.reason })[coverage.state] + ' Your saved originals and earlier observations remain available.';
+  }
+  function researchControl() {
+    const box = el('div', { 'data-research-coverage': SCStock.reader.status().state });
+    const message = researchCoverage();
+    if (!message) return box;
+    box.appendChild(el('p', { 'class': 'sc-hint', text: message }));
+    const button = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', 'data-research-load': '', text: SCStock.reader.status().state === 'unavailable' ? 'Retry public research' : 'Load public research' });
+    button.disabled = SCStock.reader.status().state === 'loading';
+    button.addEventListener('click', () => SCStock.reader.ensure()); box.appendChild(button);
+    return box;
+  }
+  function refreshResearchViews() {
+    renderFollowing(); followJump();
+    // Only the dated research section changes: the saved original chart and
+    // a half-written private annotation keep their nodes and focus.
+    if (savedOpen) {
+      const item = SCStock.follow.find(savedOpen), before = d.querySelector('#saved [data-saved="since"]');
+      if (item && before) repaint(before, () => savedSinceSection(item));
+      const original = d.querySelector('#saved [data-saved="signal"]');
+      if (item && original && !savedPanel && savedCandidate(item)) repaint(original, () => savedSignalSection(item));
+    }
   }
 
   // ------------------------------------------------- reading one saved setup
@@ -2911,7 +2940,7 @@
     const out = { latest: latest, count: obs.length, base: base, baseDate: text(snap.close_date) || item.session,
       stand: 'unknown', current: false, change: null, basis: latest ? latest.basis : null, limitation: '', coverage: '', brief: '' };
     if (!latest) {
-      out.coverage = 'No later session has been observed for ' + item.ticker + ' in any record this page has loaded'
+      out.coverage = researchCoverage() || 'No later session has been observed for ' + item.ticker + ' in any record this page has loaded'
         + (session ? ', tonight’s included' : '') + '; the setup is shown as it was saved.';
       return out;   // the one line above already says it; a second would repeat it
     }
@@ -2923,8 +2952,8 @@
     if (latest.basis === 'unknown') out.limitation = BASIS_WORDS.unknown;
     let short = '';
     if (out.stand === 'older') {
-      out.coverage = 'Nothing newer: tonight’s record (' + dateWords(session) + ') carries no session for ' + item.ticker + ' after this one.';
-      short = 'nothing newer in tonight’s record';
+      out.coverage = researchCoverage() || 'Nothing newer: tonight’s record (' + dateWords(session) + ') carries no session for ' + item.ticker + ' after this one.';
+      short = researchCoverage() ? 'public research coverage not loaded' : 'nothing newer in tonight’s record';
     } else if (out.stand === 'ahead') {
       out.coverage = 'This close came from the ' + dateWords(from) + ' record, which is newer than the one on screen (' + dateWords(session) + '); the page is showing an older record than this browser has already read.';
       short = 'from the ' + dateShort(from) + ' record; this page shows ' + dateShort(session);
@@ -3516,6 +3545,7 @@
     const list = $('following-list'), count = $('following-count');
     if (!list) return;
     clear(list);
+    list.appendChild(researchControl());
     recoveryDownload($('following'));
     const st0 = SCStock.follow.status(), items = SCStock.follow.list();
     if (count) count.textContent = items.length ? plural(items.length, 'setup') + ' · saved in this browser' : 'saved in this browser';
@@ -3638,6 +3668,7 @@
   function savedSinceSection(item) {
     const o = observationState(item), box = el('section', { 'class': 'ss-saved__section', 'data-saved': 'since' });
     box.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'since the signal' }));
+    box.appendChild(researchControl());
     if (o.latest) {
       box.appendChild(el('p', { 'class': 'ss-saved__latest' }, [
         el('strong', { text: usd(o.latest.c) }), el('span', { 'class': 'ss-followed__when', text: dateWords(o.latest.date) }),
@@ -3650,7 +3681,7 @@
     if (o.limitation) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.limitation }));
     const horizon = (current.observations || {}).days || 21;
     const daysSince = (parseISO(text((current.run || {}).session)) - parseISO(item.session)) / 86400000;
-    const coverage = daysSince > horizon ? 'The public observation window has ended. Your saved setup and last actual observation remain here.' : !recordBarsFor(item.ticker).length ? 'Not observed in the loaded record. This does not establish a delisting.' : '';
+    const coverage = !SCStock.reader.mergeAllowed() ? '' : daysSince > horizon ? 'The public observation window has ended. Your saved setup and last actual observation remain here.' : !recordBarsFor(item.ticker).length ? 'Not observed in the loaded record. This does not establish a delisting.' : '';
     if (coverage) box.appendChild(el('p', { 'class': 'sc-hint', text: coverage }));
     if (o.coverage) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.coverage }));
     if (o.count) {
@@ -3766,6 +3797,7 @@
     const close = buildSaved(dlg, item, id);
     if (focused && $(focused)) { $(focused).focus(); if (selection) $(focused).setSelectionRange(...selection); }
     if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); close.focus(); }
+    SCStock.reader.ensure();
   }
   function closeSaved() {
     const dlg = $('saved');
@@ -4652,6 +4684,11 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    SCStock.reader.onChange(async change => {
+      if (!loaded || current !== change.data) return;
+      if (change.state === 'complete') await recordObservations();
+      if (current === change.data) refreshResearchViews();
+    });
     SCStock.observations.onChange(() => {
       if (!loaded || !model) return;
       SCStock.morning.render($('morning-desk'), current, av, model);
@@ -4892,7 +4929,7 @@
     // dropped, so a slow first response cannot land over a fast second
     const seq = ++updateSeq;
     saidUpdate('checking');
-    const src = ((w.SCStock && w.SCStock.dataUrl) || 'data.json');
+    const src = ((w.SCStock && w.SCStock.dataUrl) || 'reader.json');
     const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
     w.fetch(bust, { cache: 'no-store' })
       .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
@@ -4904,36 +4941,36 @@
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
     if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
-    let next = null;
-    try { next = JSON.parse(raw); } catch (e) { saidUpdate('failed'); return; }
+    let next = null, projection = null;
+    try { ({ data: next, projection } = SCStock.reader.parse(raw, w.SCStock.dataUrl || 'reader.json')); } catch (e) { saidUpdate(e instanceof SyntaxError ? 'failed' : 'invalid'); return; }
     if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||
         !Array.isArray(next.bursts) || !next.run.session) { saidUpdate('invalid'); return; }
     if (timingFaults(next).length) { saidUpdate('invalid'); return; }
     const here = current && current.run ? current.run.session : null;
     const there = next.run.session;
-    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.'); return; }
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection); return; }
     if (there < here) { saidUpdate('older'); return; }
     // the same trading day, re-measured on later bars: a REVISION, not a new
     // session, and the word matters -- the reader's saved observations of that
     // date are revisions of it too, not a second day
-    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.'); return; }
-    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.');
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection);
   }
   // What a reader keeps across a load, and what they are TOLD they lost. The
   // record changes; the reader's own place in it, their private saves and
   // their preferences do not. A comparison pair is the one thing that cannot
   // survive: it was pinned from one published record and two names remapped
   // onto a different one would be a comparison nobody made.
-  function loadUpdate(raw, next, outcome, message) {
+  function loadUpdate(raw, next, outcome, message, projection) {
     const keep = {
       view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
       query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
       pins: state.pins.slice(), scroll: w.pageYOffset || 0, sizeForm: openSizeForm(),
       savedOpen: savedOpen, comparing: !!(state.pins.length === 2 && $('compare') && $('compare').open)
     };
-    render(next, clockPinned ? clockAt : null, keep);
+    render(next, clockPinned ? clockAt : null, keep, projection);
     rawRecord = raw;
-    SCStock.observations.bind(next, raw);
+    SCStock.observations.bind(next, raw, projection);
     const lost = [];
     if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
       ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
@@ -4964,10 +5001,11 @@
   SCStock.checkUpdates = checkUpdates;
 
   // ---------------------------------------------------------------- render
-  function render(data, now, keep) {
+  function render(data, now, keep, projection) {
     helpUI.dismiss(false);
     if (current !== data) { readingReturn = null; $('method-return').hidden = true; }
     current = data; SCStock.data = data;
+    SCStock.reader.attach(data, projection);
     demo = !!data.fixture;
     d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
     clockAt = now ? new Date(now) : new Date();
@@ -5018,7 +5056,7 @@
     // one observation pass per loaded record, BEFORE the shelf is drawn, so
     // the card and the saved detail read the same saved history rather than
     // each re-deriving one from the record
-    recoverEvidence().then(recordObservations).then(() => { renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); });
+    recoverEvidence().then(() => current === data ? recordObservations() : null).then(() => { if (current === data) refreshResearchViews(); });
     renderFollowing();
     followJump();
     renderTray();
@@ -5041,6 +5079,7 @@
     // than null so every reader of it -- the shelf, the saved sheet, its
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
+    SCStock.reader.attach(current);
     SCStock.observations.reset(current);
     loaded = false;
     if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
@@ -5048,10 +5087,10 @@
     $('cover-dek').textContent = message;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
     $('next-h3').textContent = 'Do not place any order from this page.';
-    $('next-p').textContent = 'docs/data.json did not load; check the run log.';
+    $('next-p').textContent = 'The published reader did not load; check the run log.';
     clear($('stages')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record loaded: there are no stages to choose from.' }));
     clear($('pick-list')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record, no stocks.' }));
-    clear($('detail')).appendChild(el('div', { 'class': 'ss-chart-empty', 'data-detail': 'error' }, [el('strong', { text: 'No record. ' }), 'The page could not read docs/data.json, so there is nothing to explore. Check the run log; do not place any order from this page.']));
+    clear($('detail')).appendChild(el('div', { 'class': 'ss-chart-empty', 'data-detail': 'error' }, [el('strong', { text: 'No record. ' }), 'The page could not read its publication, so there is nothing to explore. Check the run log; do not place any order from this page.']));
     $('picks-status').textContent = 'No record loaded.';
     $('orders-summary').textContent = 'Tomorrow’s tickets · none';
     $('scan-summary').textContent = 'Everything the scan found · no record';
@@ -5074,17 +5113,17 @@
     // mounted once, here, so it stands on the no-record page too. The
     // interval override is a test's, injected the way `now` and `dataUrl` are.
     if (SCStock.walkthrough && $('walkthrough-mount')) SCStock.walkthrough.mount($('walkthrough-mount'), { interval: SCStock.walkthroughInterval });
-    const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
+    const src = (w.SCStock && w.SCStock.dataUrl) || 'reader.json';
     w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.text(); })
+      .then((r) => { if (!r.ok) throw new Error('published reader answered ' + r.status); return r.text(); })
       // an injected clock is a PIN and the page does not move it; without one
       // the page reads the real clock and re-reads it as the day goes on
       .then((raw) => {
-        const data = JSON.parse(raw);
+        const { data, projection } = SCStock.reader.parse(raw, src);
         if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
-        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null);
+        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
         rawRecord = raw;
-        SCStock.observations.bind(data, raw);
+        SCStock.observations.bind(data, raw, projection);
       })
       .catch((e) => failed(String(e && e.message || e)));
   }

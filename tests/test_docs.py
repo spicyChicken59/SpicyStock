@@ -480,11 +480,11 @@ def test_the_publication_gate_refuses_a_reference_the_checkout_does_not_carry(tm
     reader. The gate names it and stops, rather than verifying the rest and
     reporting success."""
     from tools import publish_dashboard
+    from tests.test_publish_dashboard import write_reader_records
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "index.html").write_text('<link rel="stylesheet" href="ghost.css">')
-    for name in publish_dashboard.RECORD_FILES:
-        (docs / name).write_text("{}")
+    write_reader_records(docs)
     with pytest.raises(RuntimeError, match="ghost.css"):
         publish_dashboard.public_files(tmp_path)
     (docs / "ghost.css").write_text("/* published now */")
@@ -495,6 +495,7 @@ def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
     """A CDN font, an absolute URL and a bare fragment are not files in docs/;
     reading them off the page must not turn publication red."""
     from tools import publish_dashboard
+    from tests.test_publish_dashboard import write_reader_records
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "index.html").write_text(
@@ -503,9 +504,8 @@ def test_the_publication_gate_skips_what_it_cannot_publish(tmp_path):
         '<a href="https://github.com/spicyChicken59">src</a>'
         '<a href="#method">skip</a><a href="/absolute.js">skip</a>'
         '<script src="../outside.js"></script>')
-    for name in publish_dashboard.RECORD_FILES:
-        (docs / name).write_text("{}")
-    assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES)
+    sidecar = write_reader_records(docs)
+    assert publish_dashboard.public_files(tmp_path) == ("index.html", *publish_dashboard.RECORD_FILES, sidecar)
 
 
 def test_the_readme_counts_the_fields_the_smoke_drops():

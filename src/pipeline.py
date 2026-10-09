@@ -941,14 +941,16 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 rep.problem("email_failed", f"{type(exc).__name__}: {exc}")
                 data["run"]["email"] = "failed"
                 restamp(data, rep, closed)
-                report.write(data, docs / DATA_FILE)
+                from src import reader
+                reader.write_publication(data, docs)
                 if not data.get("fixture"):
                     history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
                 rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
                 rep.fail(exc)
                 return rep
         restamp(data, rep, closed)
-        report.write(data, docs / DATA_FILE)
+        from src import reader
+        reader.write_publication(data, docs)
         if not data.get("fixture"):
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
         rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)

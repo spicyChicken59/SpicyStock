@@ -32,6 +32,7 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
+import { checkReaderTransport } from './reader_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -86,6 +87,7 @@ async function serve() {
       // Read-only isolated source controls; never mutate the working tree.
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
+        : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       const body = await readFile(override || file);
@@ -3878,6 +3880,7 @@ async function main() {
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });

@@ -60,6 +60,53 @@ def synthetic_registry():
                         "reason": quote, "sources": [source]}]}
 
 
+def build_receipts(full, red, *, legacy=False):
+    files = {}
+
+    def receipt(raw, **kwargs):
+        value = morning.collect(raw, **kwargs)
+        if legacy:
+            # Freeze the original fixture contract without a production switch.
+            # Removing only the transport extension reproduces the original
+            # receipt bytes; all canonical identity and prior-byte CAS remain.
+            del value["publication"]["reader_projection_version"]
+            del value["publication"]["reader_sha256"]
+            morning.validate_observation(value, raw, previous_raw=kwargs.get("previous_raw"),
+                                         require_continuity=True)
+        return encoded(value)
+
+    for name, raw, client, observer in (
+        ("observed", full, Client(), events()), ("outage", full, Client(errors=("iex", "delayed_sip")), events()),
+        ("no-tickets", red, Client(), events()), ("halted", full, Client(), events("halted")),
+    ):
+        files[name + ".json"] = receipt(raw, client=client, clock=lambda: NOW,
+                                          event_observer=observer, observation_run_id="synthetic-" + name)
+    later = NOW + timedelta(seconds=30)
+    files["resumed.json"] = receipt(full, client=Client(), clock=lambda: later,
+                                     event_observer=events("resumed", later), observation_run_id="synthetic-resumed",
+                                     previous_raw=files["halted.json"])
+    with mock.patch.object(event_risk, "REGISTRY", event_risk.validate_registry(synthetic_registry())):
+        files["corporate-excluded.json"] = receipt(full, client=Client(), clock=lambda: NOW,
+                                      event_observer=events(), observation_run_id="synthetic-corporate-excluded")
+    files["corporate-retained.json"] = receipt(full, client=Client(), clock=lambda: later,
+                                  event_observer=events(now=later), observation_run_id="synthetic-corporate-retained",
+                                  previous_raw=files["corporate-excluded.json"])
+    resolved = synthetic_registry()
+    resolution = {**resolved["events"][0]["sources"][0], "published_on": "2026-09-11",
+                  "title": "Synthetic explicit resolution", "quote": "The synthetic fixture deal ended; test only."}
+    resolution["sha256"] = hashlib.sha256(resolution["quote"].encode()).hexdigest()
+    resolved["events"][0].update(active_until="2026-09-11", resolution=resolution)
+    with mock.patch.object(event_risk, "REGISTRY", event_risk.validate_registry(resolved)):
+        files["corporate-resolved.json"] = receipt(full, client=Client(), clock=lambda: later,
+                                 event_observer=events(now=later), observation_run_id="synthetic-corporate-resolved",
+                                 previous_raw=files["corporate-excluded.json"])
+    carried_at = NOW + timedelta(seconds=45)
+    files["corporate-resolution-carried.json"] = receipt(full, client=Client(), clock=lambda: carried_at,
+                                  event_observer=events(now=carried_at), observation_run_id="synthetic-corporate-resolution-carried",
+                                  previous_raw=files["corporate-resolved.json"])
+    return files
+
+
 def build():
     files = {}
     with tempfile.TemporaryDirectory() as temporary:
@@ -69,35 +116,19 @@ def build():
             data.pop("fixture")
             files[variant + "-publication.json"] = encoded(data)
     full, red = files["full-publication.json"], files["red-publication.json"]
-    for name, raw, client, observer in (
-        ("observed", full, Client(), events()), ("outage", full, Client(errors=("iex", "delayed_sip")), events()),
-        ("no-tickets", red, Client(), events()), ("halted", full, Client(), events("halted")),
-    ):
-        files[name + ".json"] = encoded(morning.collect(raw, client=client, clock=lambda: NOW,
-                                          event_observer=observer, observation_run_id="synthetic-" + name))
-    later = NOW + timedelta(seconds=30)
-    files["resumed.json"] = encoded(morning.collect(full, client=Client(), clock=lambda: later,
-                                     event_observer=events("resumed", later), observation_run_id="synthetic-resumed",
-                                     previous_raw=files["halted.json"]))
-    with mock.patch.object(event_risk, "REGISTRY", event_risk.validate_registry(synthetic_registry())):
-        files["corporate-excluded.json"] = encoded(morning.collect(full, client=Client(), clock=lambda: NOW,
-                                      event_observer=events(), observation_run_id="synthetic-corporate-excluded"))
-    files["corporate-retained.json"] = encoded(morning.collect(full, client=Client(), clock=lambda: later,
-                                  event_observer=events(now=later), observation_run_id="synthetic-corporate-retained",
-                                  previous_raw=files["corporate-excluded.json"]))
-    resolved = synthetic_registry()
-    resolution = {**resolved["events"][0]["sources"][0], "published_on": "2026-09-11",
-                  "title": "Synthetic explicit resolution", "quote": "The synthetic fixture deal ended; test only."}
-    resolution["sha256"] = hashlib.sha256(resolution["quote"].encode()).hexdigest()
-    resolved["events"][0].update(active_until="2026-09-11", resolution=resolution)
-    with mock.patch.object(event_risk, "REGISTRY", event_risk.validate_registry(resolved)):
-        files["corporate-resolved.json"] = encoded(morning.collect(full, client=Client(), clock=lambda: later,
-                                 event_observer=events(now=later), observation_run_id="synthetic-corporate-resolved",
-                                 previous_raw=files["corporate-excluded.json"]))
-    carried_at = NOW + timedelta(seconds=45)
-    files["corporate-resolution-carried.json"] = encoded(morning.collect(full, client=Client(), clock=lambda: carried_at,
-                                  event_observer=events(now=carried_at), observation_run_id="synthetic-corporate-resolution-carried",
-                                  previous_raw=files["corporate-resolved.json"]))
+    files.update(build_receipts(full, red, legacy=True))
+    files.update({"reader-" + name: body for name, body in build_receipts(full, red).items()})
+    from tests.test_morning import event_outage
+    outage_at = NOW + timedelta(seconds=30)
+    files["reader-halt-outage.json"] = encoded(morning.collect(
+        full, client=Client(errors=("iex", "delayed_sip")), clock=lambda: outage_at,
+        event_observer=event_outage, observation_run_id="synthetic-reader-halt-outage",
+        previous_raw=files["halted.json"]))
+    resumed_at = NOW + timedelta(seconds=45)
+    files["reader-halt-recovered.json"] = encoded(morning.collect(
+        full, client=Client(), clock=lambda: resumed_at,
+        event_observer=events("resumed", resumed_at), observation_run_id="synthetic-reader-halt-recovered",
+        previous_raw=files["reader-halt-outage.json"]))
     capture = TARGET.parent / "morning_halts"
     metadata = json.loads((capture / "capture.json").read_bytes())
     now = datetime(2026, 10, 9, 15, 26, 22, tzinfo=timezone.utc)

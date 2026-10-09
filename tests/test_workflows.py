@@ -190,7 +190,8 @@ def test_the_artifact_keeps_records_charts_and_retained_evidence():
     art = steps(wf, "scan")["Keep the run's artifacts"]
     assert art["if"].startswith("(success() || failure())")
     assert "!= 'no_session'" in art["if"] and "!= 'session_incomplete'" in art["if"]
-    assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
+    assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/reader.json", "docs/reader-observations/",
+                                             "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
 def test_input_diagnostics_upload_separately_only_from_this_invocation():

@@ -106,7 +106,7 @@ def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
     document = json.loads(native5_public_preservation())
     assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
     assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
-    assert len(dispositions()) == 7
+    assert len(dispositions()) == 8
     entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
     assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
     assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
@@ -140,3 +140,17 @@ def test_morning_rule_disposition_requires_exact_generated_path_and_public_value
             assert all(not allowed(altered, value) for value in values)
         for value in (*PUBLIC_VALUES, "unrelated_rule", "x" + values[0], values[0] + "x", values[0].upper()):
             assert not allowed(path, value)
+
+
+def test_reader_rule_disposition_requires_exact_asset_and_public_value():
+    values = ("abnormal_10pct", "down25_quarter", "pct_above_40ma")
+    entry = next(item for item in dispositions() if "generated compact reader" in item["description"])
+    assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+    assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
+    assert entry["paths"] == [r"^docs/reader\.json$"]
+    assert entry["regexes"] == ["^(" + "|".join(values) + ")$"]
+    assert all(allowed("docs/reader.json", value) for value in values)
+    for path in ("copied/docs/reader.json", "docs/reader.json.backup", "docs/another-reader.json"):
+        assert all(not allowed(path, value) for value in values)
+    for value in (*PUBLIC_VALUES, "unrelated_rule", "x" + values[0], values[0] + "x", values[0].upper()):
+        assert not allowed("docs/reader.json", value)

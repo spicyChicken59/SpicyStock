@@ -747,6 +747,46 @@ credentials, and no provider secret reaches the browser. No new subscription
 or environment variable is required. Timely morning delivery and comprehensive
 event coverage remain acceptance work for milestone 2.
 
+### Reader payload and saved research
+
+The page initially loads `reader.json`, a compact projection of the complete
+canonical `data.json`. Candidate evidence, plans, account assumptions, timing
+and embedded charts remain available immediately. The larger retained
+observation history loads as one shared, digest-addressed file when saved
+research needs it. A morning visit does not download that history or the full
+canonical publication. Direct canonical records and old saved originals remain
+readable.
+
+The October 9 production record projects from 14,918,679 to 5,606,909 decoded
+bytes, including its envelope. The deferred observation file is 5,040,916 bytes.
+These are artifact sizes, not measured network transfer or a mobile-device
+speed guarantee. Complete hydration reproduces the original parsed publication;
+the canonical record, picks and historical evidence are unchanged.
+
+New morning receipts derive both canonical and reader hashes from the exact
+canonical source bytes. The browser verifies the actual reader bytes before
+matching observations. An older receipt can still preserve independently
+validated event restrictions, but cannot claim a reader-bound quote check.
+Missing, loading or failed deferred research stays explicitly incomplete.
+Saved bars merge only after the sidecar's digest, length, shape and metadata
+validate; a stale response cannot overwrite a newer publication. Retry is
+available after a fetch failure.
+
+Sidecar requests use only a shared public digest path and send no private saved
+symbols, notes or positions. Reads omit credentials and referrers, refuse
+redirects and enforce size/time bounds. The publication installs verified
+immutable sidecars before replacing fixed records and rolls fixed files back
+on installation failure. It refreshes companions after final publication
+restamping as well as the initial write. Owned derived transport files have a
+21-calendar-day grace period starting when the served sidecar is replaced;
+the currently served file is retained. Canonical history and evidence
+are outside this cleanup. The committed-main publisher verifies the reader and
+its referenced sidecar before declaring the site updated.
+
+`python -m src.reader --docs docs --check` verifies committed companions without
+repairing them. Omitting `--check` derives companions from the existing canonical
+bytes; it makes no provider request and does not rewrite the canonical record.
+
 ## One-time setup
 
 Six repository secrets: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`,
@@ -1064,9 +1104,10 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-observations.js · design-system/
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-observations.js · app-reader.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
+                reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 quality-ledger/ (versioned publication facts; created by future real publications)

@@ -30,6 +30,7 @@
   };
   const rowKey = c => (c.stage === 'bursts' ? 'burst' : 'anticipation') + ':' + c.ticker;
   let record = null, recordHash = null, epoch = 0, sequence = 0, controller = null, state = 'unbound', receipt = null, issue = '', now = Date.now();
+  let readerBinding = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
   const sourceMemory = { halts: {}, corporate: {} };
   const hosts = new Map();
@@ -196,7 +197,8 @@
   function validate(value) {
     if (!value || value.schema_version !== 1 || value.dry_run !== false || !value.publication || !Array.isArray(value.rows) || value.rows.length > 64) throw Error('Unsupported observation document or rehearsal receipt.');
     const p = value.publication, run = record.run || {}, timing = run.timing || {};
-    if (!HEX.test(p.data_sha256) || p.data_sha256 !== recordHash ||
+    if (!HEX.test(p.data_sha256) || p.data_sha256 !== (readerBinding ? readerBinding.canonicalSha : recordHash) ||
+        readerBinding && (p.reader_projection_version !== 1 || p.reader_sha256 !== recordHash) ||
         p.context_sha256 !== (run.evidence || {}).context_sha256 || p.rules_version !== (record.app || {}).rules_version ||
         String(p.run_id) !== String(run.run_id) || p.measured_session !== run.session ||
         p.applicable_session !== timing.applicable_session || p.published_at !== run.published_at) throw Error('These observations belong to another publication.');
@@ -348,14 +350,15 @@
   function reset(data, at, clockPinned) {
     epoch++; sequence++;
     if (controller) controller.abort();
-    record = data; recordHash = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned;
+    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
     paintAll();
   }
-  async function bind(data, raw) {
+  async function bind(data, raw, projection) {
     if (record !== data || state === 'practice') return;
     const token = epoch;
+    readerBinding = projection || null;
       try {
         const saved = w.sessionStorage.getItem(CACHE_KEY);
         if (saved) {
@@ -476,6 +479,6 @@
     validateHaltEvidence: (halt, coverage, ticker, at) => validateHalt(halt, coverage, { ticker }, dateMs(at)),
     clock: at => { now = new Date(at).getTime(); paintAll(); },
     onChange: handler => { onChange = handler; },
-    facts: () => ({ state, recordHash, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
+    facts: () => ({ state, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
   };
 })(window);
