@@ -202,6 +202,8 @@ jobs:
           name: ${{ inputs.dry_run == true && format('evening-dryrun-{0}', github.run_id) || ((steps.pipeline.outputs.code == '0' || steps.pipeline.outputs.code == '2' || steps.pipeline.outputs.code == '3') && steps.pipeline.outputs.session != '' && format('evening-{0}-{1}', steps.pipeline.outputs.session, github.run_id) || format('evening-failed-{0}', github.run_id)) }}
           path: |
             docs/data.json
+            docs/reader.json
+            docs/reader-observations/
             docs/picks.json
             docs/charts/
             docs/evidence/

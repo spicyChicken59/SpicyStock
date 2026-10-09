@@ -1083,10 +1083,17 @@
   //: the last refusal a copy control gave, so the reader is told it did not
   //: copy even though the surface it was on is rebuilt in the same breath
   let copyRefused = null;
-  function copyGuard() {
+  function candidateAvailability(c) {
+    const refusal = SCStock.observations.refusal(c);
+    return refusal && av && av.offered ? Object.assign({}, av, { offered: false, reason: refusal, lead: SCStock.observations.facts().pending ? 'morning check pending' : 'morning event restriction', observationBlocked: true }) : av;
+  }
+  function copyGuard(plan) {
     if (!current || !current.run) return 'No record is loaded, so there is no ticket to copy.';
     const nowAv = clockPinned ? av : availability(current, new Date());
-    return nowAv.offered ? null : nowAv.reason;
+    if (!nowAv.offered) return nowAv.reason;
+    const candidate = model && Object.values(model.stages).flat().find(c => c.plan === plan);
+    if (!candidate) return 'This copy control belongs to an earlier publication. Inspect the current recorded plan before copying.';
+    return SCStock.observations.refusal(candidate);
   }
   // A copy is an ACTION, and the clock may have moved since the button was
   // drawn: a reader who opened the disclosure at 9:55 and copied at 10:02
@@ -1143,7 +1150,7 @@
     if (!lines) { wrap.appendChild(el('p', { 'class': 'sc-hint', text: extraHint || 'No order.' })); return wrap; }
     const pre = el('pre', { 'class': 'ss-order__pre', 'data-order': '', 'data-ticker': plan.ticker || '' });
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
-    wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre, copyGuard)]));
+    wrap.appendChild(el('div', { 'class': 'ss-order__head' }, [el('span', { 'class': 'sc-eyebrow', style: 'margin:0', text: 'the order, in Fidelity’s field order' }), copyButton(() => pre.textContent, pre, () => copyGuard(plan))]));
     wrap.appendChild(pre);
     if (plan.order_line) wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'Read it back: ' + plan.order_line }));
     const terms = (plan.order_terms || []).filter((t) => typeof t === 'string' && t);
@@ -1622,6 +1629,7 @@
     // Keep the opener node through a saved sheet's open/close route changes.
     // Store changes and record loads already refresh this destination.
     if (state.view === 'setups' && previousView !== 'setups') renderFollowing();
+    if (state.view === 'setups') SCStock.reader.ensure();
     // the saved setup keeps its own hash, so a bookmark reopens it; every
     // other route is rewritten to the one it resolved to
     if (route.followed) canon = savedHash(route.followed);
@@ -2487,6 +2495,7 @@
     const vr = burst ? volumeRatio(b) : null;
     const trig = burst ? plan.entry_ref : plan.trigger, lim = burst ? plan.entry_high : plan.limit;
     const why = burst ? sentence(firstSentence(text(b.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''))) : pickReason(c);
+    const available = candidateAvailability(c);
     return {
       grade: c.grade ? c.grade + (isNum(c.score) ? ' · ' + c.score.toFixed(1) : '') : null,
       provenance: burst ? readerCoverage(b).label + ' · mechanical ' + (b.grade_mechanical || 'unknown') + (readerCoverage(b).state === 'accepted' ? '; reviewed final ' + b.grade : '; reader judgement unknown') : 'measured, not graded',
@@ -2501,7 +2510,7 @@
       concern: stockRisk(c),
       screening: screeningWarnings(c, true).join(' ') || null,
       ticket: c.status === 'ticket'
-        ? (av && !av.offered ? 'recorded for ' + dateWords(av.timing.session) + ', ' + av.lead + ' — ' + (text(plan.order_line) || 'a ticket in the record')
+        ? (available && !available.offered ? 'recorded for ' + dateWords(available.timing.session) + ', ' + available.lead + ' — ' + (text(plan.order_line) || 'a ticket in the record')
           : (text(plan.order_line) || 'a ticket in the record'))
         : cap(sentence(noTicketPhrase('No ticket', c)))
     };
@@ -2860,16 +2869,17 @@
   // nothing writes nothing, which is what makes a re-render, a reload and a
   // theme change cost no observation.
   async function recordObservations() {
-    const run = current.run || {}, app = current.app || {}, session = text(run.session);
+    const source = current, run = source.run || {}, app = source.app || {}, session = text(run.session);
     if (!session) return null;
     let items = [];
     try { items = SCStock.follow.list(); } catch (e) { return null; }
     const updates = [];
-    items.forEach((it) => {
+    if (SCStock.reader.mergeAllowed()) items.forEach((it) => {
       const bars = recordBarsFor(it.ticker);
       if (bars.length) updates.push({ id: it.id, bars: bars, from_session: session, from_rules: text(app.rules_version), basis: basisOf(it, bars, session) });
     });
     const res = updates.length ? await SCStock.follow.commit('observe', updates) : null;
+    if (source !== current) return res;
     const plans = [];
     items.forEach(item => (current.open_plans || []).forEach(row => {
       if (SCStock.follow.matchesPlan(item, row)) plans.push({id:item.id, row, from_session:session, published_at:run.published_at, rules_version:app.rules_version});
@@ -2877,6 +2887,33 @@
     if (plans.length) await SCStock.follow.commit('observePlans', plans);
     if (res && res.changed) invalidateFollow();
     return res;
+  }
+
+  function researchCoverage() {
+    const coverage = SCStock.reader.status();
+    if (!coverage.projected || coverage.state === 'complete') return '';
+    return ({ deferred: 'Public research coverage has not been loaded.', loading: 'Loading public research coverage…', unavailable: 'Public research coverage is unavailable. ' + coverage.reason })[coverage.state] + ' Your saved originals and earlier observations remain available.';
+  }
+  function researchControl() {
+    const box = el('div', { 'data-research-coverage': SCStock.reader.status().state });
+    const message = researchCoverage();
+    if (!message) return box;
+    box.appendChild(el('p', { 'class': 'sc-hint', text: message }));
+    const button = el('button', { type: 'button', 'class': 'sc-btn sc-btn--secondary sc-btn--sm', 'data-research-load': '', text: SCStock.reader.status().state === 'unavailable' ? 'Retry public research' : 'Load public research' });
+    button.disabled = SCStock.reader.status().state === 'loading';
+    button.addEventListener('click', () => SCStock.reader.ensure()); box.appendChild(button);
+    return box;
+  }
+  function refreshResearchViews() {
+    renderFollowing(); followJump();
+    // Only the dated research section changes: the saved original chart and
+    // a half-written private annotation keep their nodes and focus.
+    if (savedOpen) {
+      const item = SCStock.follow.find(savedOpen), before = d.querySelector('#saved [data-saved="since"]');
+      if (item && before) repaint(before, () => savedSinceSection(item));
+      const original = d.querySelector('#saved [data-saved="signal"]');
+      if (item && original && !savedPanel && savedCandidate(item)) repaint(original, () => savedSignalSection(item));
+    }
   }
 
   // ------------------------------------------------- reading one saved setup
@@ -2903,7 +2940,7 @@
     const out = { latest: latest, count: obs.length, base: base, baseDate: text(snap.close_date) || item.session,
       stand: 'unknown', current: false, change: null, basis: latest ? latest.basis : null, limitation: '', coverage: '', brief: '' };
     if (!latest) {
-      out.coverage = 'No later session has been observed for ' + item.ticker + ' in any record this page has loaded'
+      out.coverage = researchCoverage() || 'No later session has been observed for ' + item.ticker + ' in any record this page has loaded'
         + (session ? ', tonight’s included' : '') + '; the setup is shown as it was saved.';
       return out;   // the one line above already says it; a second would repeat it
     }
@@ -2915,8 +2952,8 @@
     if (latest.basis === 'unknown') out.limitation = BASIS_WORDS.unknown;
     let short = '';
     if (out.stand === 'older') {
-      out.coverage = 'Nothing newer: tonight’s record (' + dateWords(session) + ') carries no session for ' + item.ticker + ' after this one.';
-      short = 'nothing newer in tonight’s record';
+      out.coverage = researchCoverage() || 'Nothing newer: tonight’s record (' + dateWords(session) + ') carries no session for ' + item.ticker + ' after this one.';
+      short = researchCoverage() ? 'public research coverage not loaded' : 'nothing newer in tonight’s record';
     } else if (out.stand === 'ahead') {
       out.coverage = 'This close came from the ' + dateWords(from) + ' record, which is newer than the one on screen (' + dateWords(session) + '); the page is showing an older record than this browser has already read.';
       short = 'from the ' + dateShort(from) + ' record; this page shows ' + dateShort(session);
@@ -3508,6 +3545,7 @@
     const list = $('following-list'), count = $('following-count');
     if (!list) return;
     clear(list);
+    list.appendChild(researchControl());
     recoveryDownload($('following'));
     const st0 = SCStock.follow.status(), items = SCStock.follow.list();
     if (count) count.textContent = items.length ? plural(items.length, 'setup') + ' · saved in this browser' : 'saved in this browser';
@@ -3630,6 +3668,7 @@
   function savedSinceSection(item) {
     const o = observationState(item), box = el('section', { 'class': 'ss-saved__section', 'data-saved': 'since' });
     box.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'since the signal' }));
+    box.appendChild(researchControl());
     if (o.latest) {
       box.appendChild(el('p', { 'class': 'ss-saved__latest' }, [
         el('strong', { text: usd(o.latest.c) }), el('span', { 'class': 'ss-followed__when', text: dateWords(o.latest.date) }),
@@ -3642,7 +3681,7 @@
     if (o.limitation) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.limitation }));
     const horizon = (current.observations || {}).days || 21;
     const daysSince = (parseISO(text((current.run || {}).session)) - parseISO(item.session)) / 86400000;
-    const coverage = daysSince > horizon ? 'The public observation window has ended. Your saved setup and last actual observation remain here.' : !recordBarsFor(item.ticker).length ? 'Not observed in the loaded record. This does not establish a delisting.' : '';
+    const coverage = !SCStock.reader.mergeAllowed() ? '' : daysSince > horizon ? 'The public observation window has ended. Your saved setup and last actual observation remain here.' : !recordBarsFor(item.ticker).length ? 'Not observed in the loaded record. This does not establish a delisting.' : '';
     if (coverage) box.appendChild(el('p', { 'class': 'sc-hint', text: coverage }));
     if (o.coverage) box.appendChild(el('p', { 'class': 'sc-hint ss-saved__limit', text: o.coverage }));
     if (o.count) {
@@ -3758,6 +3797,7 @@
     const close = buildSaved(dlg, item, id);
     if (focused && $(focused)) { $(focused).focus(); if (selection) $(focused).setSelectionRange(...selection); }
     if (!dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); close.focus(); }
+    SCStock.reader.ensure();
   }
   function closeSaved() {
     const dlg = $('saved');
@@ -3919,13 +3959,13 @@
     const s = det.querySelector('summary'); if (s) { s.tabIndex = 0; s.focus({ preventScroll: true }); }
   }
   function burstActionArea(c) {
-    const offered = c.status === 'ticket' && av && av.offered, plan = c.plan || {}, tm = av.timing || {};
+    const available = candidateAvailability(c), offered = c.status === 'ticket' && available && available.offered, plan = c.plan || {}, tm = av.timing || {};
     const box = el('section', { 'class': 'sc-actionbar ss-action ss-action--burst', 'aria-label': 'Entry for this setup',
       'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status, 'data-window': av.phase });
     const head = el('div', { 'class': 'ss-action__head' }, [
       el('h3', { text: offered ? 'Conditional plan · ' + tm.session : 'No SpicyStock entry for this setup' }),
       help('ticket', 'Plan & ticket'),
-      offered ? chip('stop-limit', 'good') : c.status === 'ticket' ? chip(av.lead, 'warn')
+      offered ? chip('stop-limit', 'good') : c.status === 'ticket' ? chip(available.lead, 'warn')
         : statusWords(c.status)[0] !== 'no ticket' ? chip(...statusWords(c.status)) : null
     ]);
     box.appendChild(head);
@@ -3944,12 +3984,12 @@
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
     } else {
-      box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? av.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
+      box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
     const controls = el('div', { 'class': 'ss-action__controls' });
     if (offered) {
       const pre = el('pre', { 'class': 'ss-order__pre', hidden: '', 'data-ticker': c.ticker, text: (ticket(plan.order_json) || []).join('\n') });
-      controls.appendChild(copyButton(() => pre.textContent, pre, copyGuard, 'Copy order'));
+      controls.appendChild(copyButton(() => pre.textContent, pre, () => copyGuard(plan), 'Copy order'));
       box.appendChild(pre);
     }
     const target = offered || c.status === 'ticket' ? 'disc-plan' : 'disc-checklist';
@@ -3965,7 +4005,7 @@
   }
   function actionArea(c) {
     if (c.stage === 'bursts') return burstActionArea(c);
-    const sw = statusWords(c.status), offered = !!(av && av.offered), plan = c.plan || {};
+    const available = candidateAvailability(c), sw = statusWords(c.status), offered = !!(available && available.offered), plan = c.plan || {};
     const tm = (av || {}).timing || {}, ph = (av || {}).phase || 'unknown';
     const box = el('div', { 'class': 'sc-actionbar ss-action', 'data-ticket': c.status === 'ticket' ? (offered ? 'order' : 'blocked') : c.status,
       'data-window': ph });
@@ -3980,11 +4020,11 @@
       box.appendChild(chip(sw[0], sw[1]));
     } else if (c.status === 'ticket') {
       // the recorded ticket stays inspectable; only placing it is withdrawn
-      line = av.reason;
+      line = available.reason;
       btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button',
-        text: av.timingBlocked ? 'Inspect the recorded ticket' : 'Inspect conditions',
-        'data-open': av.timingBlocked ? 'disc-plan' : 'disc-checklist' });
-      box.appendChild(chip(av.lead, av.pubBlocked ? 'warn' : PHASE_TONE[ph]));
+        text: av.timingBlocked || available.observationBlocked ? 'Inspect the recorded ticket' : 'Inspect conditions',
+        'data-open': av.timingBlocked || available.observationBlocked ? 'disc-plan' : 'disc-checklist' });
+      box.appendChild(chip(available.lead, av.pubBlocked || available.observationBlocked ? 'warn' : PHASE_TONE[ph]));
     } else {
       line = (c.reason ? cap(sentence(c.reason)) : 'No ticket tonight.') + (c.plan ? ' The setup is kept here for inspection.' : '');
       btn = el('button', { 'class': 'sc-btn sc-btn--secondary', type: 'button', text: 'Inspect conditions', 'data-open': 'disc-checklist' });
@@ -4120,8 +4160,8 @@
       kids.push(el('p', { 'class': 'sc-hint', text: 'No plan: ' + sentence(c.reason) + (c.stage === 'bursts' ? ' A grade, a plan and a ticket are three different things; this burst has the first.' : '') }));
       return disclosure('disc-plan', 'Conditional plan, sizing and order', 'none', kids);
     }
-    const offered = !!(av && av.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
-    if (c.stage === 'bursts' && withheld) kids.push(el('p', { 'class': 'sc-note', text: 'Recorded plan for inspection. No SpicyStock entry for this setup. ' + (c.status === 'ticket' ? av.reason : cap(sentence(noTicketWhy(c)))) }));
+    const available = candidateAvailability(c), offered = !!(available && available.offered), withheld = c.status !== 'ticket' || !offered, t = plan.targets || {};
+    if (c.stage === 'bursts' && withheld) kids.push(el('p', { 'class': 'sc-note', text: 'Recorded plan for inspection. No SpicyStock entry for this setup. ' + (c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c)))) }));
     if (c.stage === 'bursts') {
       kids.push(factList([
         ['buy', usd(plan.entry_low) + ' – ' + usd(plan.entry_high), (plan.entry_window || '') + ' · a buy stop at ' + usd(plan.entry_ref) + ', limit ' + usd(plan.entry_high) + (text(plan.limit_note) ? ' · ' + plan.limit_note : ''), true],
@@ -4157,14 +4197,14 @@
     }
     if (text(plan.sizing_note)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.sizing_note)) }));
     if (text(plan.resize_rule)) kids.push(el('p', { 'class': 'sc-note', text: cap(sentence(plan.resize_rule)) }));
-    const hint = c.status === 'ticket' && !offered ? av.reason + (av.timingBlocked ? ' ' + cancelLine() : '')
+    const hint = c.status === 'ticket' && !offered ? available.reason + (av.timingBlocked ? ' ' + cancelLine() : '')
       : c.status === 'ticket' ? 'No order line was written for this plan.'
       : noTicketLine(c) + ' The setup is kept here for inspection.';
     // the ticket the record published stays printed as history even when it is
     // no longer offered: withdrawing the COPY is not erasing the evidence
-    if (c.status === 'ticket' && av.timingBlocked && plan.order_json) kids.push(recordedTicket(plan, av));
+    if (c.status === 'ticket' && (av.timingBlocked || available.observationBlocked) && plan.order_json) kids.push(recordedTicket(plan, available));
     kids.push(orderBlock(plan, hint, withheld));
-    return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (c.status === 'ticket' ? av.lead : statusWords(c.status)[0]) : 'sized at the limit', kids);
+    return disclosure('disc-plan', 'Conditional plan, sizing and order', withheld ? (c.status === 'ticket' ? available.lead : statusWords(c.status)[0]) : 'sized at the limit', kids);
   }
   function discExits(c) {
     const plan = c.plan, kids = [];
@@ -4235,9 +4275,11 @@
       else {
         box.appendChild(detailHead(c));
         if (c.stage === 'bursts') box.appendChild(actionArea(c));
+        if (c.stage === 'bursts') box.appendChild(SCStock.observations.detail(c));
         box.appendChild(detailChart(c));
         box.appendChild(decisionSummary(c));
         if (c.stage !== 'bursts') box.appendChild(actionArea(c));
+        if (c.stage !== 'bursts') box.appendChild(SCStock.observations.detail(c));
         box.appendChild(discChecklist(c));
         box.appendChild(discPlan(c));
         box.appendChild(discExits(c));
@@ -4269,15 +4311,17 @@
   function renderTickets(data) {
     const bursts = by(data.bursts || []), trades = (data.trades || []).map((t) => bursts[t]).filter(Boolean);
     const withOrders = trades.filter((b) => b.plan && b.plan.order_json), offered = !!(av && av.offered);
+    const restricted = withOrders.filter(b => SCStock.observations.refusal(model.byId['bursts:' + b.ticker]));
     const tm = av.timing, regime = ((data.breadth || {}).regime || {}).verdict;
     // the session, not "tomorrow": the sheet is read on the day it is for
     const forDay = tm.known ? dateWords(tm.session) + '’s tickets' : 'Tickets, session undated';
-    $('orders-summary').textContent = forDay + ' · ' + (withOrders.length ? plural(withOrders.length, 'order') + (offered ? '' : ', ' + av.lead) : 'none');
+    $('orders-summary').textContent = forDay + ' · ' + (withOrders.length ? plural(withOrders.length, 'order') + (offered ? '' : ', ' + av.lead) : 'none') + (restricted.length ? ' · ' + restricted.length + ' withheld by morning event check' : '');
     const cb = data.cash_budget || {}, acct = data.account || {};
     const budget = clear($('budget'));
     budget.appendChild(el('strong', { text: cb.sentence || ('Model allocation: next-session tickets would commit ' + usd(cb.committed_usd, 0) + ' of the configured ' + usd(acct.equity, 0) + ' · ' + plain(cb.slots_used) + ' of ' + plain(cb.slots_max) + ' slots') }));
     if (isNum(cb.at_risk_usd)) budget.appendChild(d.createTextNode(' · ' + usd(cb.at_risk_usd, 0) + ' planned price-to-stop risk'));
     budget.appendChild(d.createTextNode(' · over the configured sizing assumptions, not a balance, settled cash or buying power'));
+    restricted.forEach(b => budget.appendChild(el('p', { 'class': 'sc-note', text: b.ticker + ': ' + SCStock.observations.refusal(model.byId['bursts:' + b.ticker]) })));
     // the cut's own reason already opens with "ticket withheld" when the stop
     // rule refused it, so the lead is dropped rather than said twice
     (cb.cut || []).forEach((c) => budget.appendChild(el('span', { 'class': 'sc-note',
@@ -4287,7 +4331,7 @@
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: (tm.known ? dateWords(tm.session) + '’s orders' : 'The orders') + ' in Fidelity’s field order' }));
     table.appendChild(el('thead', null, el('tr', null, ['symbol', 'action', 'shares', 'type', 'stop (trigger)', 'limit', 'tif', 'then OTO sell stop', 'too extended over', 'planned risk'].map((h, i) => el('th', { scope: 'col', 'class': i >= 2 && i !== 3 && i !== 6 ? 'sc-num' : null, text: h })))));
     const body = el('tbody');
-    const rows = offered ? withOrders : [];
+    const rows = offered ? withOrders.filter(b => restricted.indexOf(b) < 0) : [];
     rows.forEach((b) => {
       const o = b.plan.order_json, t = o.then || {};
       const name = el('button', { 'class': 'sc-signal-matrix__name', type: 'button', text: b.ticker, 'data-go': routeHash('bursts', 'bursts:' + b.ticker) });
@@ -4640,6 +4684,17 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    SCStock.reader.onChange(async change => {
+      if (!loaded || current !== change.data) return;
+      if (change.state === 'complete') await recordObservations();
+      if (current === change.data) refreshResearchViews();
+    });
+    SCStock.observations.onChange(() => {
+      if (!loaded || !model) return;
+      SCStock.morning.render($('morning-desk'), current, av, model);
+      reclockDetail(); renderTickets(current);
+      if (comparePanels.length && state.pins.length === 2) reclockCompare();
+    });
     $('scan').addEventListener('toggle', hydrateScan);
     // The clock, re-read where a page that was left alone comes back: a tab
     // brought forward, a window given focus, and a page the browser restored
@@ -4730,6 +4785,7 @@
     av = next; st = av.pub; SCStock.state = st; SCStock.avail = av;
     // Market close can change this explanation without changing availability.
     const evaluationChanged = refreshDecisionEvaluation(current, next.at);
+    SCStock.observations.clock(next.at);
     if (same) return evaluationChanged;
     // the clock-dependent surfaces, and nothing else: no chart is disposed, no
     // lens re-read, no comparison closed, no saved sheet dismissed, and the
@@ -4873,7 +4929,7 @@
     // dropped, so a slow first response cannot land over a fast second
     const seq = ++updateSeq;
     saidUpdate('checking');
-    const src = ((w.SCStock && w.SCStock.dataUrl) || 'data.json');
+    const src = ((w.SCStock && w.SCStock.dataUrl) || 'reader.json');
     const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
     w.fetch(bust, { cache: 'no-store' })
       .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
@@ -4885,35 +4941,36 @@
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
     if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
-    let next = null;
-    try { next = JSON.parse(raw); } catch (e) { saidUpdate('failed'); return; }
+    let next = null, projection = null;
+    try { ({ data: next, projection } = SCStock.reader.parse(raw, w.SCStock.dataUrl || 'reader.json')); } catch (e) { saidUpdate(e instanceof SyntaxError ? 'failed' : 'invalid'); return; }
     if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||
         !Array.isArray(next.bursts) || !next.run.session) { saidUpdate('invalid'); return; }
     if (timingFaults(next).length) { saidUpdate('invalid'); return; }
     const here = current && current.run ? current.run.session : null;
     const there = next.run.session;
-    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.'); return; }
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection); return; }
     if (there < here) { saidUpdate('older'); return; }
     // the same trading day, re-measured on later bars: a REVISION, not a new
     // session, and the word matters -- the reader's saved observations of that
     // date are revisions of it too, not a second day
-    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.'); return; }
-    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.');
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection);
   }
   // What a reader keeps across a load, and what they are TOLD they lost. The
   // record changes; the reader's own place in it, their private saves and
   // their preferences do not. A comparison pair is the one thing that cannot
   // survive: it was pinned from one published record and two names remapped
   // onto a different one would be a comparison nobody made.
-  function loadUpdate(raw, next, outcome, message) {
+  function loadUpdate(raw, next, outcome, message, projection) {
     const keep = {
       view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
       query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
       pins: state.pins.slice(), scroll: w.pageYOffset || 0, sizeForm: openSizeForm(),
       savedOpen: savedOpen, comparing: !!(state.pins.length === 2 && $('compare') && $('compare').open)
     };
-    render(next, clockPinned ? clockAt : null, keep);
+    render(next, clockPinned ? clockAt : null, keep, projection);
     rawRecord = raw;
+    SCStock.observations.bind(next, raw, projection);
     const lost = [];
     if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
       ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
@@ -4944,10 +5001,11 @@
   SCStock.checkUpdates = checkUpdates;
 
   // ---------------------------------------------------------------- render
-  function render(data, now, keep) {
+  function render(data, now, keep, projection) {
     helpUI.dismiss(false);
     if (current !== data) { readingReturn = null; $('method-return').hidden = true; }
     current = data; SCStock.data = data;
+    SCStock.reader.attach(data, projection);
     demo = !!data.fixture;
     d.documentElement.setAttribute('data-ss-demo', demo ? 'true' : 'false');
     clockAt = now ? new Date(now) : new Date();
@@ -4959,6 +5017,7 @@
     rawRecord = null;
     av = availability(data, clockAt); st = av.pub; SCStock.state = st; SCStock.avail = av;
     model = buildModel(data); SCStock.model = model;
+    SCStock.observations.reset(data, clockAt, clockPinned);
     SCStock.follow.setDemo(demo);
     invalidateFollow();
     unmountMap();
@@ -4997,7 +5056,7 @@
     // one observation pass per loaded record, BEFORE the shelf is drawn, so
     // the card and the saved detail read the same saved history rather than
     // each re-deriving one from the record
-    recoverEvidence().then(recordObservations).then(() => { renderFollowing(); followJump(); if (savedOpen) openSaved(savedOpen, false); });
+    recoverEvidence().then(() => current === data ? recordObservations() : null).then(() => { if (current === data) refreshResearchViews(); });
     renderFollowing();
     followJump();
     renderTray();
@@ -5020,16 +5079,18 @@
     // than null so every reader of it -- the shelf, the saved sheet, its
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
+    SCStock.reader.attach(current);
+    SCStock.observations.reset(current);
     loaded = false;
     if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
     $('next-h3').textContent = 'Do not place any order from this page.';
-    $('next-p').textContent = 'docs/data.json did not load; check the run log.';
+    $('next-p').textContent = 'The published reader did not load; check the run log.';
     clear($('stages')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record loaded: there are no stages to choose from.' }));
     clear($('pick-list')).appendChild(el('div', { 'class': 'ss-picks__empty', 'data-empty': 'record', text: 'No record, no stocks.' }));
-    clear($('detail')).appendChild(el('div', { 'class': 'ss-chart-empty', 'data-detail': 'error' }, [el('strong', { text: 'No record. ' }), 'The page could not read docs/data.json, so there is nothing to explore. Check the run log; do not place any order from this page.']));
+    clear($('detail')).appendChild(el('div', { 'class': 'ss-chart-empty', 'data-detail': 'error' }, [el('strong', { text: 'No record. ' }), 'The page could not read its publication, so there is nothing to explore. Check the run log; do not place any order from this page.']));
     $('picks-status').textContent = 'No record loaded.';
     $('orders-summary').textContent = 'Tomorrow’s tickets · none';
     $('scan-summary').textContent = 'Everything the scan found · no record';
@@ -5052,16 +5113,17 @@
     // mounted once, here, so it stands on the no-record page too. The
     // interval override is a test's, injected the way `now` and `dataUrl` are.
     if (SCStock.walkthrough && $('walkthrough-mount')) SCStock.walkthrough.mount($('walkthrough-mount'), { interval: SCStock.walkthroughInterval });
-    const src = (w.SCStock && w.SCStock.dataUrl) || 'data.json';
+    const src = (w.SCStock && w.SCStock.dataUrl) || 'reader.json';
     w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('data.json answered ' + r.status); return r.text(); })
+      .then((r) => { if (!r.ok) throw new Error('published reader answered ' + r.status); return r.text(); })
       // an injected clock is a PIN and the page does not move it; without one
       // the page reads the real clock and re-reads it as the day goes on
       .then((raw) => {
-        const data = JSON.parse(raw);
+        const { data, projection } = SCStock.reader.parse(raw, src);
         if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
-        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null);
+        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
         rawRecord = raw;
+        SCStock.observations.bind(data, raw, projection);
       })
       .catch((e) => failed(String(e && e.message || e)));
   }

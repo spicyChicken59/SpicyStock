@@ -34,11 +34,19 @@ session.
 deferred rendering of the closed scan matrix. This improves the initial render;
 reducing the publication payload remains part of milestone 2.
 
-The next implementation milestone is **2: a verified morning check**, including
-provider entitlement and freshness, event/halt coverage, outage behavior and a
-smaller initial payload. Broker confirmation remains outstanding. Keep the
-milestone 3 HAE/candidate-funnel investigation separate from evidence that a
-real-money strategy has an established edge.
+Milestone **2: a verified morning check** is in progress. The next release adds
+exact-publication-bound, dated IEX quote/trade observations, explicitly delayed
+SIP volume, Nasdaq halt evidence, retained known event exclusions, visible
+expiry and guarded publication. It does not complete milestone 2: reliable
+on-time morning delivery and broader issuer-news/earnings coverage remain open.
+The compact-reader follow-up reduces the initial artifact from about 14.9 MB to
+5.6 MB while deferring retained observations; its public acceptance is recorded
+in the continuation checkpoint. Two best-effort pre-open Actions attempts cannot
+supply dependable sub-minute quotes during the entry window. Broker
+confirmation remains outstanding. Keep the milestone 3 candidate-funnel
+investigation separate from evidence that a real-money strategy has an
+established edge. Final hosted, real-provider and public-site release evidence
+belongs in the continuation checkpoint and release PR.
 
 Track the remaining work in the [GitHub milestone](https://github.com/spicyChicken59/SpicyStock/milestone/1):
 verified morning data [#108](https://github.com/spicyChicken59/SpicyStock/issues/108),

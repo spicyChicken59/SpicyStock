@@ -1,4 +1,4 @@
-/* Personal morning preparation over the published record. No quote requests,
+/* Personal morning preparation over the published record. No provider requests,
    sizing engine or order creation. Publication/timing permission comes from
    app.js availability(); candidate ticket status comes from its existing model.
    Cash and checklist entries live only in this tab, never in the publication. */
@@ -166,7 +166,7 @@
     });
     const foot = node('div', { class: 'ss-morning__foot' });
     foot.append(details, next);
-    content.append(head, factsRow, reason, account, sizing, foot);
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), foot);
     host.append(content);
     mounted = host;
   }
@@ -183,6 +183,13 @@
     field(host, 'phase', latest.phase + (latest.prepare ? ' · ' + latest.prepare : ''));
     field(host, 'plans', latest.bursts + ' burst · ' + latest.setups + ' setting up' + (latest.allowed ? '' : ' · inspect only'));
     field(host, 'next', latest.tickets.length ? 'Inspect first recorded plan' : 'See why we’re waiting');
+    const restrictions = new Set(api.observations.facts().restricted);
+    const blocked = latest.tickets.filter(candidate => restrictions.has((candidate.stage === 'bursts' ? 'burst:' : 'anticipation:') + candidate.ticker));
+    if (blocked.length) {
+      field(host, 'headline', 'Entry withheld by a morning event check');
+      field(host, 'reason', blocked.map(candidate => candidate.ticker).join(', ') + ': ' + api.observations.refusal(blocked[0]));
+      if (opener) opener.setAttribute('title', 'Morning desk · Chicago · ' + latest.window + ' · Event restriction — inspect the sources');
+    }
     host.setAttribute('data-sizing-match', String(latest.matched));
     host.setAttribute('data-morning-offered', String(latest.allowed));
     refreshCash(host);

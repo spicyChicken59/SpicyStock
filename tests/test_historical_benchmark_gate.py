@@ -139,13 +139,14 @@ def native5_repair_event(action="opened"):
 
 
 def repair_git(paths=None, *, mutate=None, missing=None):
+    from tests.historical_public_blobs import public_git_bytes
     root = Path(__file__).resolve().parents[1]
     release = (root / gate.PARENT_RELEASE).read_bytes()
     evidence = json.loads(release)
     files = {gate.PARENT_RELEASE: release}
     for path in evidence["source_sha256"]:
         if path not in gate.REPAIR_CODE:
-            files[path] = (root / path).read_bytes()
+            files[path] = public_git_bytes(path)
     for proof in evidence["proofs"].values():
         files[proof["path"]] = (root / proof["path"]).read_bytes()
     files[gate.IDENTITY_READER] = (root / gate.IDENTITY_READER).read_bytes()
@@ -164,9 +165,8 @@ def repair_git(paths=None, *, mutate=None, missing=None):
 '''
     old_reader = files[gate.IDENTITY_READER].replace(new_conditional, old_conditional)
     assert hashlib.sha256(old_reader).hexdigest() == gate.IDENTITY_READER_BEFORE_SHA256
-    files[gate.SCANNER_CONFIG] = (root / gate.SCANNER_CONFIG).read_bytes()
-    # The disposition is appended; the complete original config remains exact.
-    old_scanner = files[gate.SCANNER_CONFIG][:3320]
+    files[gate.SCANNER_CONFIG] = public_git_bytes(gate.SCANNER_CONFIG)
+    old_scanner = public_git_bytes(gate.SCANNER_CONFIG, scanner_before=True)
     assert hashlib.sha256(old_scanner).hexdigest() == gate.SCANNER_BEFORE_SHA256
     changed = paths if paths is not None else sorted(gate.REPAIR_CODE | gate.REPAIR_TESTS)
     calls = []

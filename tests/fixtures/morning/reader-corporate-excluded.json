@@ -1,0 +1,276 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-09-11T13:35:00+00:00",
+  "generated_at": "2026-09-11T13:35:00+00:00",
+  "expires_at": "2026-09-11T13:40:00+00:00",
+  "observation_run_id": "synthetic-corporate-excluded",
+  "previous_observation_sha256": null,
+  "dry_run": false,
+  "publication": {
+    "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+    "context_sha256": "594a667047ab65d68dcb7d916f49d738d60653a3c92656c7e47bdf6f43b04dbf",
+    "run_id": "synthetic-morning-full",
+    "rules_version": "633f6d0caeb4",
+    "measured_session": "2026-09-10",
+    "applicable_session": "2026-09-11",
+    "published_at": "2026-09-10T22:30:00+00:00",
+    "reader_projection_version": 1,
+    "reader_sha256": "f5c5fac5d42a4aac869388bfe2155eb100c1b0a8ce48b8fbddb94049779ffd6d"
+  },
+  "policy": {
+    "version": 1,
+    "quote_max_age_seconds": 60,
+    "trade_max_age_seconds": 60,
+    "snapshot_max_age_seconds": 300,
+    "max_future_skew_seconds": 5,
+    "delayed_sip_min_delay_seconds": 900,
+    "preopen_minutes": 30,
+    "max_collection_seconds": 180,
+    "max_numeric_value": 1000000000000000.0,
+    "market_timezone": "America/New_York",
+    "halts": {
+      "morning_halts.version": 1,
+      "morning_halts.source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+      "morning_halts.source_max_age_seconds": 180,
+      "morning_halts.receipt_max_age_seconds": 300,
+      "morning_halts.future_skew_seconds": 5,
+      "morning_halts.max_feed_bytes": 1000000,
+      "morning_halts.max_items": 2000,
+      "morning_halts.max_symbols": 100,
+      "morning_halts.max_field_length": 256,
+      "morning_halts.max_symbol_length": 32,
+      "morning_halts.timeout_seconds": 10,
+      "morning_halts.min_poll_interval_seconds": 60,
+      "morning_halts.known_codes": [
+        "C11",
+        "C3",
+        "C4",
+        "C9",
+        "D",
+        "H10",
+        "H11",
+        "H4",
+        "H9",
+        "IPO1",
+        "IPOE",
+        "IPOQ",
+        "LUDP",
+        "LUDS",
+        "M",
+        "M1",
+        "M2",
+        "MWC0",
+        "MWC1",
+        "MWC2",
+        "MWC3",
+        "MWCQ",
+        "O1",
+        "R1",
+        "R2",
+        "R4",
+        "R9",
+        "T1",
+        "T12",
+        "T2",
+        "T3",
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ]
+    }
+  },
+  "status": "observed",
+  "reason": null,
+  "entry_phase": "open",
+  "sources": {
+    "iex": {
+      "status": "ok",
+      "feed": "iex",
+      "scope": "single_venue",
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-09-11T13:35:00+00:00",
+      "error_kind": null,
+      "minimum_delay_seconds": 0
+    },
+    "delayed_sip": {
+      "status": "ok",
+      "feed": "delayed_sip",
+      "scope": "consolidated_delayed",
+      "entitlement": "request_succeeded",
+      "checked_at": "2026-09-11T13:35:00+00:00",
+      "error_kind": null,
+      "minimum_delay_seconds": 900
+    }
+  },
+  "coverage": {
+    "halts": {
+      "provider": "Nasdaq Trader current trade halts RSS",
+      "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+      "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
+      "status": "fresh",
+      "checked_at": "2026-09-11T13:35:00Z",
+      "fetched_at": "2026-09-11T13:35:00Z",
+      "source_published_at": "2026-09-11T13:35:00Z",
+      "expires_at": "2026-09-11T13:38:00Z",
+      "source_sha256": "87f1712f3e1aacbf69fde487679cda04987c5e344d2dce8b7e60a98ce80eaac9",
+      "http_date": null,
+      "item_count": 0,
+      "source_age_seconds": 0.0,
+      "receipt_age_seconds": 0.0,
+      "reason": "Snapshot retrieved; unmatched names are not cleared."
+    },
+    "issuer_news": {
+      "status": "not_checked",
+      "reason": "Comprehensive current issuer news has not been checked."
+    },
+    "earnings": {
+      "status": "not_checked",
+      "reason": "The current earnings calendar has not been checked."
+    }
+  },
+  "halt_memory": {},
+  "corporate_memory": {
+    "AAPL": [
+      {
+        "event": {
+          "id": "synthetic_cash_event",
+          "symbol": "AAPL",
+          "issuer": "Synthetic fixture issuer",
+          "kind": "cash_acquisition",
+          "announced_on": "2026-09-10",
+          "active_from": "2026-09-10",
+          "evidence_as_of": "2026-09-10",
+          "reviewed_on": "2026-09-11",
+          "review_due": "2026-09-12",
+          "reason": "Synthetic AAPL cash deal used only in this offline browser fixture.",
+          "sources": [
+            {
+              "title": "Synthetic event fixture",
+              "quote": "Synthetic AAPL cash deal used only in this offline browser fixture.",
+              "url": "https://example.invalid/synthetic-event",
+              "sha256": "2d5f8fa9560fd84eb277949a149a4fe1e43f1a840c3cc6ac391fc8d02aea9f49",
+              "published_on": "2026-09-10"
+            }
+          ],
+          "review_overdue": false
+        },
+        "registry_sha256": "3d7444276192c53c47cd10dc524accec8b00349666631d15ca267f5c4dd58c4c",
+        "registry_reviewed_on": "2026-09-11",
+        "observed_at": "2026-09-11T13:35:00+00:00"
+      }
+    ]
+  },
+  "corporate_resolutions": [],
+  "rows": [
+    {
+      "ticker": "AAPL",
+      "kind": "burst",
+      "evidence_id": "744d2f3e77f1b60f367d214e419d48dc6b2e86467d07b738bb7c2c6643021523",
+      "plan_sha256": "2dd13de7f67b811c59c955a7663de818d3af290b41017388e2a14a3d749ec3fe",
+      "levels": {
+        "trigger": 124.21,
+        "limit": 126.47,
+        "stop": 121.42,
+        "entry_low": 121.73,
+        "day2_spent_above": 129.18
+      },
+      "trade": {
+        "status": "recent",
+        "timestamp": "2026-09-11T13:35:00+00:00",
+        "age_seconds": 0.0,
+        "price": 125,
+        "exchange": "V",
+        "conditions": [
+          "@"
+        ]
+      },
+      "quote": {
+        "status": "recent",
+        "timestamp": "2026-09-11T13:35:00+00:00",
+        "age_seconds": 0.0,
+        "bid": 125,
+        "ask": 125.02,
+        "bid_size": 100,
+        "ask_size": 200,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 0.02,
+        "spread_pct": 0.01599872
+      },
+      "price_checks": {
+        "trade": "within_published_band",
+        "ask": "within_published_band"
+      },
+      "delayed_volume": {
+        "status": "delayed",
+        "daily_timestamp": "2026-09-11T04:00:00+00:00",
+        "previous_timestamp": "2026-09-10T04:00:00+00:00",
+        "latest_trade_timestamp": "2026-09-11T13:20:00+00:00",
+        "session": "2026-09-11",
+        "partial_volume": 200,
+        "previous_volume": 100,
+        "comparison": "above_prior_total",
+        "data_through": null
+      },
+      "events": {
+        "halt": {
+          "status": "not_listed",
+          "blocks_entry": null,
+          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
+          "events": [],
+          "event_count": 0,
+          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+          "retained_source": null
+        },
+        "corporate_action": {
+          "version": 1,
+          "coverage": "manual_known_events_only",
+          "registry_sha256": "3d7444276192c53c47cd10dc524accec8b00349666631d15ca267f5c4dd58c4c",
+          "registry_reviewed_on": "2026-09-11",
+          "session": "2026-09-11",
+          "symbol": "AAPL",
+          "blocked": true,
+          "status": "known_event",
+          "reason": "Known cash-acquisition event: Synthetic AAPL cash deal used only in this offline browser fixture.",
+          "matches": [
+            {
+              "id": "synthetic_cash_event",
+              "symbol": "AAPL",
+              "issuer": "Synthetic fixture issuer",
+              "kind": "cash_acquisition",
+              "announced_on": "2026-09-10",
+              "active_from": "2026-09-10",
+              "evidence_as_of": "2026-09-10",
+              "reviewed_on": "2026-09-11",
+              "review_due": "2026-09-12",
+              "reason": "Synthetic AAPL cash deal used only in this offline browser fixture.",
+              "sources": [
+                {
+                  "title": "Synthetic event fixture",
+                  "quote": "Synthetic AAPL cash deal used only in this offline browser fixture.",
+                  "url": "https://example.invalid/synthetic-event",
+                  "sha256": "2d5f8fa9560fd84eb277949a149a4fe1e43f1a840c3cc6ac391fc8d02aea9f49",
+                  "published_on": "2026-09-10"
+                }
+              ],
+              "review_overdue": false
+            }
+          ]
+        },
+        "retained_corporate_actions": []
+      }
+    }
+  ],
+  "limits": [
+    "dated_best_effort_snapshot",
+    "iex_single_venue_not_consolidated",
+    "delayed_volume_not_live_pace",
+    "daily_bar_time_is_session_label_not_data_through",
+    "no_order_or_fill_authority",
+    "broker_verification_required"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "tests-pr97.yml": {
+    "revision": "6979904ad872d8d648c93537c77ead5fda909481",
+    "path": ".github/workflows/tests.yml",
+    "sha256": "fb6bcae8838f8e07f458c2dd66f9f63665008e0a7ff09080faac0b8af23bc349"
+  },
+  "gitleaks-before-native6.toml": {
+    "revision": "6979904ad872d8d648c93537c77ead5fda909481",
+    "path": ".gitleaks.toml",
+    "sha256": "a66b479be647fcaad8fee5de44bcbfb3f44b2be13b90c69ce2aa11fbc1b9f607"
+  },
+  "gitleaks-native6.toml": {
+    "revision": "ec4dbaa549458023cb222b7467b2df967c4abc24",
+    "path": ".gitleaks.toml",
+    "sha256": "0e46fb894c9a2ea778d3f27d4e4c18871645b9746cd908136750c4484a75d088"
+  }
+}

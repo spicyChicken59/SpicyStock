@@ -3,21 +3,16 @@ name: Intraday check (3:30 PM ET, dispatch only)
 # is one clearing its trigger on volume above yesterday's? This run reads the
 # previous evening's watchlist and trades from docs/data.json, asks Alpaca's
 # snapshots for those names only (IEX for the price, delayed SIP for the
-# consolidated partial-day volume), writes docs/live.json and mails a short
-# "breakout in progress" digest when a name is confirmed. It never touches
-# docs/data.json and never commits.
+# consolidated partial-day volume), and writes docs/live.json. This is legacy
+# research, not an entry verifier; source timestamps and exact publication
+# bindings belong to morning.yml. It never emails, changes docs/data.json or
+# commits. Its older "confirmed" field must not authorize a broker order.
 #
-# SCHEDULE OFF ON PURPOSE. It is switched on after the evening run has
-# published ten nights in a row (README, "Fourteen days"); until then it is a
-# button. To switch it on, uncomment the schedule block: 3:30 PM ET is
-# "30 19" while the US is on EDT and "30 20" on EST; a cron here arrives
-# 5-17 minutes late, so schedule 3:15 PM and let the pipeline wait.
+# This legacy research path stays dispatch-only. Use morning.yml for the
+# supported, publication-bound morning observation workflow.
 run-name: Intraday ${{ github.event_name }}
 on:
   workflow_dispatch: {}
-  # schedule:
-  #   - cron: "15 19 * * 1-5"   # 3:15 PM ET while US is on EDT
-  #   - cron: "15 20 * * 1-5"   # 3:15 PM ET while US is on EST
 
 permissions:
   contents: read
@@ -39,12 +34,9 @@ jobs:
         run: pip install -r requirements.txt
       - name: Run the intraday check
         env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM: ${{ secrets.RESEND_FROM }}
-          EMAIL_TO: ${{ secrets.EMAIL_TO }}
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
-          SCAN_SEND_EMAIL: "true"
+          SCAN_SEND_EMAIL: "false"
         run: python -m src.pipeline intraday
       - uses: actions/upload-artifact@v4
         if: always()

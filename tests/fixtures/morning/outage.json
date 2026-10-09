@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-09-11T13:35:00+00:00",
+  "generated_at": "2026-09-11T13:35:00+00:00",
+  "expires_at": "2026-09-11T13:40:00+00:00",
+  "observation_run_id": "synthetic-outage",
+  "previous_observation_sha256": null,
+  "dry_run": false,
+  "publication": {
+    "data_sha256": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+    "context_sha256": "594a667047ab65d68dcb7d916f49d738d60653a3c92656c7e47bdf6f43b04dbf",
+    "run_id": "synthetic-morning-full",
+    "rules_version": "633f6d0caeb4",
+    "measured_session": "2026-09-10",
+    "applicable_session": "2026-09-11",
+    "published_at": "2026-09-10T22:30:00+00:00"
+  },
+  "policy": {
+    "version": 1,
+    "quote_max_age_seconds": 60,
+    "trade_max_age_seconds": 60,
+    "snapshot_max_age_seconds": 300,
+    "max_future_skew_seconds": 5,
+    "delayed_sip_min_delay_seconds": 900,
+    "preopen_minutes": 30,
+    "max_collection_seconds": 180,
+    "max_numeric_value": 1000000000000000.0,
+    "market_timezone": "America/New_York",
+    "halts": {
+      "morning_halts.version": 1,
+      "morning_halts.source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+      "morning_halts.source_max_age_seconds": 180,
+      "morning_halts.receipt_max_age_seconds": 300,
+      "morning_halts.future_skew_seconds": 5,
+      "morning_halts.max_feed_bytes": 1000000,
+      "morning_halts.max_items": 2000,
+      "morning_halts.max_symbols": 100,
+      "morning_halts.max_field_length": 256,
+      "morning_halts.max_symbol_length": 32,
+      "morning_halts.timeout_seconds": 10,
+      "morning_halts.min_poll_interval_seconds": 60,
+      "morning_halts.known_codes": [
+        "C11",
+        "C3",
+        "C4",
+        "C9",
+        "D",
+        "H10",
+        "H11",
+        "H4",
+        "H9",
+        "IPO1",
+        "IPOE",
+        "IPOQ",
+        "LUDP",
+        "LUDS",
+        "M",
+        "M1",
+        "M2",
+        "MWC0",
+        "MWC1",
+        "MWC2",
+        "MWC3",
+        "MWCQ",
+        "O1",
+        "R1",
+        "R2",
+        "R4",
+        "R9",
+        "T1",
+        "T12",
+        "T2",
+        "T3",
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ]
+    }
+  },
+  "status": "provider_unavailable",
+  "reason": null,
+  "entry_phase": "open",
+  "sources": {
+    "iex": {
+      "status": "unavailable",
+      "feed": "iex",
+      "scope": "single_venue",
+      "entitlement": "unavailable",
+      "checked_at": "2026-09-11T13:35:00+00:00",
+      "error_kind": "provider_error",
+      "minimum_delay_seconds": 0
+    },
+    "delayed_sip": {
+      "status": "unavailable",
+      "feed": "delayed_sip",
+      "scope": "consolidated_delayed",
+      "entitlement": "unavailable",
+      "checked_at": "2026-09-11T13:35:00+00:00",
+      "error_kind": "provider_error",
+      "minimum_delay_seconds": 900
+    }
+  },
+  "coverage": {
+    "halts": {
+      "provider": "Nasdaq Trader current trade halts RSS",
+      "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+      "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
+      "status": "fresh",
+      "checked_at": "2026-09-11T13:35:00Z",
+      "fetched_at": "2026-09-11T13:35:00Z",
+      "source_published_at": "2026-09-11T13:35:00Z",
+      "expires_at": "2026-09-11T13:38:00Z",
+      "source_sha256": "87f1712f3e1aacbf69fde487679cda04987c5e344d2dce8b7e60a98ce80eaac9",
+      "http_date": null,
+      "item_count": 0,
+      "source_age_seconds": 0.0,
+      "receipt_age_seconds": 0.0,
+      "reason": "Snapshot retrieved; unmatched names are not cleared."
+    },
+    "issuer_news": {
+      "status": "not_checked",
+      "reason": "Comprehensive current issuer news has not been checked."
+    },
+    "earnings": {
+      "status": "not_checked",
+      "reason": "The current earnings calendar has not been checked."
+    }
+  },
+  "halt_memory": {},
+  "corporate_memory": {},
+  "corporate_resolutions": [],
+  "rows": [
+    {
+      "ticker": "AAPL",
+      "kind": "burst",
+      "evidence_id": "744d2f3e77f1b60f367d214e419d48dc6b2e86467d07b738bb7c2c6643021523",
+      "plan_sha256": "2dd13de7f67b811c59c955a7663de818d3af290b41017388e2a14a3d749ec3fe",
+      "levels": {
+        "trigger": 124.21,
+        "limit": 126.47,
+        "stop": 121.42,
+        "entry_low": 121.73,
+        "day2_spent_above": 129.18
+      },
+      "trade": {
+        "status": "unavailable",
+        "timestamp": null,
+        "age_seconds": null,
+        "price": null,
+        "exchange": null,
+        "conditions": null
+      },
+      "quote": {
+        "status": "unavailable",
+        "timestamp": null,
+        "age_seconds": null,
+        "bid": null,
+        "ask": null,
+        "bid_size": null,
+        "ask_size": null,
+        "bid_exchange": null,
+        "ask_exchange": null,
+        "conditions": null,
+        "spread_usd": null,
+        "spread_pct": null
+      },
+      "price_checks": {
+        "trade": "unknown",
+        "ask": "unknown"
+      },
+      "delayed_volume": {
+        "status": "unavailable",
+        "daily_timestamp": null,
+        "previous_timestamp": null,
+        "latest_trade_timestamp": null,
+        "session": null,
+        "partial_volume": null,
+        "previous_volume": null,
+        "comparison": "unknown",
+        "data_through": null
+      },
+      "events": {
+        "halt": {
+          "status": "not_listed",
+          "blocks_entry": null,
+          "reason": "No matching halt in this snapshot; absence is not trading clearance.",
+          "events": [],
+          "event_count": 0,
+          "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+          "retained_source": null
+        },
+        "corporate_action": {
+          "version": 1,
+          "coverage": "manual_known_events_only",
+          "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+          "registry_reviewed_on": "2026-10-09",
+          "session": "2026-09-11",
+          "symbol": "AAPL",
+          "blocked": false,
+          "status": "not_in_registry",
+          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
+          "matches": []
+        },
+        "retained_corporate_actions": []
+      }
+    }
+  ],
+  "limits": [
+    "dated_best_effort_snapshot",
+    "iex_single_venue_not_consolidated",
+    "delayed_volume_not_live_pace",
+    "daily_bar_time_is_session_label_not_data_through",
+    "no_order_or_fill_authority",
+    "broker_verification_required"
+  ]
+}

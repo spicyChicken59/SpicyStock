@@ -1,0 +1,67 @@
+# Keep every default detector. No file, commit or detector is excluded; the
+# allowlists below are narrow on both the value and the path, and the
+# condition is AND, so both have to match.
+#
+# The run's rules are records with a "key" field ("abnormal_10pct",
+# "down25_quarter", "pct_above_40ma"): a lowercase identifier with digits
+# next to the word key is what generic-api-key looks for, and every fixture
+# and the record carry them. A credential does not look like that -- Alpaca
+# keys are upper case, Anthropic's carry hyphens, Resend's mixed case -- so
+# the value has to be a lowercase word with an underscore in it, and the
+# path has to be a module, the record or a page fixture.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "A rule key (lowercase, underscored, digits allowed) in a module, the record, an immutable recovery original or a page fixture"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^[a-z]+[a-z0-9]*(_[a-z0-9]+)+$''']
+paths = ['''^(src/[a-z0-9_]+\.py|docs/(data|picks)\.json|docs/history/[a-f0-9]{40}/(record|(burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json|tests/fixtures/page/[a-z]+\.json)$''']
+
+# PR #68 and #76's byte-identical historical context fixtures repeat two public
+# breadth identifiers already present in the allowed recovery original.
+# Keep the original bytes; disposition only these two values at this path.
+[[rules.allowlists]]
+description = "Two public breadth identifiers in the immutable grading context fixtures"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(down25_quarter|pct_above_40ma)$''']
+paths = ['''^tests/fixtures/grading/(record\.json|reader-commentary/record\.json)$''']
+
+# PR #97 retains public GitHub job/run-response SHA-256 evidence. Disposition
+# only these two independently verified hashes at the exact immutable receipt.
+[[rules.allowlists]]
+description = "Two public GitHub response hashes in the PR97 CI observation"
+condition = "AND"
+regexes = ['''^(f5d4b3ca6e7b8b3d1af734970650a8a06b7ba7b564abadfeda221528461f9ef2|c10038851e257ac00a9966242e290a1436d8e6d6c5151807e1e8d7cf3338ec62)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/candidate-final-ci/secret_scan-api\.json$''']
+regexTarget = "secret"
+
+# The retained public executable has one verified digest at two exact paths.
+[[rules.allowlists]]
+description = "PR97 retained public executable digest in the bounded comparison"
+condition = "AND"
+regexes = ['''^(1549c7049be32695594bedd09bbd352a94b6013a9d5c43364f3c6cd7a09ab61c)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor\.json$''', '''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/window31-supervisor\.py$''']
+regexTarget = "secret"
+
+# These are historical source digests recorded before the current test edits.
+[[rules.allowlists]]
+description = "PR97 retained public source digests in the focused test receipt"
+condition = "AND"
+regexes = ['''^(a464d9f76c8eb0567a4a1e7aaad6b1ef18cdcc90a03177426dd678fb74999a6e|cf38490f275becfe955beac6fb98bc0081201ccaaff18cc8ae6478b26da7cb5d)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/bounded-correction/focused-tests\.json$''']
+regexTarget = "secret"
+
+# Native-5 recovery retains the unchanged public Secret Scan workflow's Git
+# blob ID. Only this exact value at this exact preservation receipt is allowed.
+[[rules.allowlists]]
+description = "Native5 recovery preservation of the public Secret Scan workflow blob"
+condition = "AND"
+regexes = ['''^(f568689c3789a53835708b676ef6c2dcc418fd6f)$''']
+paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation\.json$''']
+regexTarget = "secret"

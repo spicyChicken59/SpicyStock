@@ -32,6 +32,8 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
+import { checkReaderTransport } from './reader_cases.mjs';
+import { checkObservations } from './observation_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -85,6 +87,8 @@ async function serve() {
       // Read-only isolated source controls; never mutate the working tree.
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
+        : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
+        : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       const body = await readFile(override || file);
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });
@@ -110,7 +114,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
   // system declares a fallback stack) and the optional run-log fetch to the
   // GitHub API are the three requests this page may lose offline; the console
   // reports each as one "Failed to load resource", matched off below.
-  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u);
+  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u);
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const u = r.url();
@@ -3876,6 +3880,8 @@ async function main() {
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
+      if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});

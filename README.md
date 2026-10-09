@@ -693,11 +693,99 @@ A degraded night names its problem with one of seven words —
 `chart_missing`, `email_failed`, `push_retried` — and the page has one fixed
 sentence for each; the message the run recorded never reaches it.
 
-`intraday.yml` is a button, not a schedule: it reads the previous evening's
-watchlist and trades, asks Alpaca's snapshots whether a name has cleared its
-level on volume already past yesterday's, writes `docs/live.json`, mails a
-short *breakout in progress* note when one has, and commits nothing. Switch
-its schedule on after the evening run has published ten nights in a row.
+`intraday.yml` remains a manual legacy research artifact. Its old combined
+price/volume fields do not establish entry validity. The workflow sends no
+email, forwards no delivery credentials, writes `docs/live.json` and commits
+nothing. Use the separate morning-observation path for dated quote checks.
+
+### Morning observations
+
+`morning.yml` collects a small, read-only `docs/morning.json` beside the
+canonical evening publication. Each observation binds the exact publication
+bytes, run, rules, applicable session, candidate stage and retained plan.
+Only already-admitted tickets can request quotes; a withheld candidate cannot
+become a ticket through this refresh. The evening record and its evidence are
+unchanged.
+
+The browser shows IEX as a single-venue observation, with bid/ask, spread and
+provider timestamps kept separate from collection time. A latest trade is not
+a current executable quote. Delayed SIP daily volume remains explicitly
+delayed; its daily-bar timestamp is a session label, not a claim about when the
+volume was complete. Invalid, crossed, stale, future-dated, missing and failed
+observations stay visible as limitations. Quotes and latest trades expire after
+60 seconds; the collection receipt expires after 300 seconds. A halt feed is
+fresh for at most 180 seconds by its channel publication time. These limits
+label measurement age, not permission to trade. Price comparisons use the retained
+trigger, limit and stop and do not authorize an order. Check current prices,
+spread and order terms at the broker.
+
+Nasdaq's public halt RSS supplies named halt observations. A quote-resumption
+time alone does not establish trade resumption; older unresolved halts remain
+relevant. A missing symbol or unavailable feed is not a clearance. Issuer news
+and earnings remain unchecked, and corporate-action coverage is the bounded
+source-backed manual registry. Known event restrictions survive publication
+updates and require dated, source-backed resolution evidence to clear. The page
+states these coverage limits.
+
+Two best-effort scheduled attempts target 8:20 and 8:28 a.m. Chicago, with
+separate daylight/standard UTC slots and XNYS session checks. Delayed scheduled
+jobs skip the wrong session and the expired entry window. GitHub Actions and
+Pages can deliver late; this is a dated snapshot, not a sub-minute quote
+service. The browser recomputes freshness as time passes. Its reload control
+only re-reads the public snapshot; it does not call a market-data provider.
+
+Manual dispatch defaults to a rehearsal artifact. An optional rehearsal-only
+source diagnostic requests the fixed SPY symbol through the same feed adapter
+and normalizers, even when there are no admitted tickets. Its separate artifact
+contains no plan or publication authority and cannot be written into `docs/`.
+Production persistence is
+restricted to main and rechecks the current canonical record and any newer
+observation before a one-file, ordinary fast-forward push. The existing
+publisher then verifies the committed public files. Collection receives only
+the Alpaca data credentials; it never requests trading, chart-reader or email
+credentials, and no provider secret reaches the browser. No new subscription
+or environment variable is required. Timely morning delivery and comprehensive
+event coverage remain acceptance work for milestone 2.
+
+### Reader payload and saved research
+
+The page initially loads `reader.json`, a compact projection of the complete
+canonical `data.json`. Candidate evidence, plans, account assumptions, timing
+and embedded charts remain available immediately. The larger retained
+observation history loads as one shared, digest-addressed file when saved
+research needs it. A morning visit does not download that history or the full
+canonical publication. Direct canonical records and old saved originals remain
+readable.
+
+The October 9 production record projects from 14,918,679 to 5,606,909 decoded
+bytes, including its envelope. The deferred observation file is 5,040,916 bytes.
+These are artifact sizes, not measured network transfer or a mobile-device
+speed guarantee. Complete hydration reproduces the original parsed publication;
+the canonical record, picks and historical evidence are unchanged.
+
+New morning receipts derive both canonical and reader hashes from the exact
+canonical source bytes. The browser verifies the actual reader bytes before
+matching observations. An older receipt can still preserve independently
+validated event restrictions, but cannot claim a reader-bound quote check.
+Missing, loading or failed deferred research stays explicitly incomplete.
+Saved bars merge only after the sidecar's digest, length, shape and metadata
+validate; a stale response cannot overwrite a newer publication. Retry is
+available after a fetch failure.
+
+Sidecar requests use only a shared public digest path and send no private saved
+symbols, notes or positions. Reads omit credentials and referrers, refuse
+redirects and enforce size/time bounds. The publication installs verified
+immutable sidecars before replacing fixed records and rolls fixed files back
+on installation failure. It refreshes companions after final publication
+restamping as well as the initial write. Owned derived transport files have a
+21-calendar-day grace period starting when the served sidecar is replaced;
+the currently served file is retained. Canonical history and evidence
+are outside this cleanup. The committed-main publisher verifies the reader and
+its referenced sidecar before declaring the site updated.
+
+`python -m src.reader --docs docs --check` verifies committed companions without
+repairing them. Omitting `--check` derives companions from the existing canonical
+bytes; it makes no provider request and does not rewrite the canonical record.
 
 ## One-time setup
 
@@ -1016,15 +1104,16 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · design-system/
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-observations.js · app-reader.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
+                reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
-tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py
+tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)
                 historical_backtest.py (offline: the run's own stages replayed over a recovered archive; reader not run)
@@ -1032,7 +1121,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
-.github/        evening.yml · intraday.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
+.github/        evening.yml · intraday.yml · morning.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.

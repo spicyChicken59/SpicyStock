@@ -1,0 +1,125 @@
+name: Morning observation (best effort)
+# Two bounded attempts at 8:20 and 8:28 America/Chicago. Actions can be hours
+# late: these are dated checkpoints, never a real-time quote service. The
+# nominal-slot guard skips inactive DST pairs, holidays, other dates and the
+# entry cutoff. Manual checks can retain an honest inapplicable receipt.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch'
+      && (inputs.dry_run == true && 'Morning rehearsal' || 'Morning publication')
+      || format('Morning cron {0}', github.event.schedule) }}
+on:
+  schedule:
+    - cron: "20 13 * * 1-5"   # 8:20 Chicago in CDT
+    - cron: "28 13 * * 1-5"   # 8:28 Chicago in CDT
+    - cron: "20 14 * * 1-5"   # 8:20 Chicago in CST
+    - cron: "28 14 * * 1-5"   # 8:28 Chicago in CST
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Keep an observation artifact only; never publish. No mode sends email."
+        type: boolean
+        required: false
+        default: true
+      probe_sources:
+        description: "Rehearsal only: also retain a fixed-symbol provider diagnostic. Never a plan or public observation."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: morning-observation
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    # A trusted manual rehearsal can exercise reviewed branch code. Production
+    # collection and every repository write are restricted to main.
+    if: >-
+      (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == true))
+      && (inputs.probe_sources != true || inputs.dry_run == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      observation_ready: ${{ steps.collect.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Guard the scheduled morning
+        id: guard
+        env:
+          MORNING_EVENT_SCHEDULE: ${{ github.event.schedule }}
+        run: python -m tools.publish_morning guard
+      - name: Collect a bound morning observation
+        id: collect
+        if: steps.guard.outputs.go == 'true'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          SCAN_SEND_EMAIL: "false"
+          GITHUB_RUN_ID_FOR_RECORD: ${{ github.run_id }}
+          DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
+        run: |
+          python -m src.morning --docs docs --output "$RUNNER_TEMP/morning.json" $DRY_RUN_FLAG
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Retain only this observation
+        if: steps.collect.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: morning-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/morning.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Rehearse actual source transports
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sources == true
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          SCAN_SEND_EMAIL: "false"
+        run: python -m tools.probe_morning_sources --output "$RUNNER_TEMP/morning-source-probe.json"
+      - name: Retain source diagnostic separately
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sources == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: morning-source-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/morning-source-probe.json
+          if-no-files-found: error
+          retention-days: 14
+
+  persist:
+    needs: collect
+    if: >-
+      github.ref == 'refs/heads/main'
+      && needs.collect.outputs.observation_ready == 'true'
+      && (github.event_name == 'schedule' || inputs.dry_run == false)
+      && inputs.probe_sources != true
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      # Only the artifact produced by the read-only job in this exact run and
+      # attempt is accepted. The helper revalidates against committed main.
+      - uses: actions/download-artifact@v4
+        with:
+          name: morning-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/morning-observation
+      - name: Publish only against the unchanged source record
+        run: python -m tools.publish_morning publish --snapshot "$RUNNER_TEMP/morning-observation/morning.json"
