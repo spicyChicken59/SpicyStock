@@ -1,0 +1,112 @@
+{
+  "coverage": {
+    "halts": {
+      "provider": "Nasdaq Trader current trade halts RSS",
+      "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+      "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
+      "status": "fresh",
+      "checked_at": "2026-10-09T15:26:22Z",
+      "fetched_at": "2026-10-09T15:26:21.343082Z",
+      "source_published_at": "2026-10-09T15:25:51Z",
+      "expires_at": "2026-10-09T15:28:51Z",
+      "source_sha256": "cc314b98d4c819c507c4315874eebf928363b4905b25e82facb9f01ea3fd2391",
+      "http_date": "Fri, 09 Oct 2026 15:26:20 GMT",
+      "item_count": 35,
+      "source_age_seconds": 31.0,
+      "receipt_age_seconds": 0.656918,
+      "reason": "Snapshot retrieved; unmatched names are not cleared."
+    },
+    "issuer_news": {
+      "status": "not_checked",
+      "reason": "Comprehensive current issuer news has not been checked."
+    },
+    "earnings": {
+      "status": "not_checked",
+      "reason": "The current earnings calendar has not been checked."
+    }
+  },
+  "symbols": {
+    "QETA": {
+      "halt": {
+        "status": "halt_reported",
+        "blocks_entry": true,
+        "reason": "The source reports a halt without a trading resumption. Quote resumption alone does not resume trading.",
+        "events": [
+          {
+            "symbol": "QETA",
+            "issue_name": "Quetta Acquisition Corp CS",
+            "market": "NASDAQ",
+            "reason_code": "LUDP",
+            "halted_at": "2026-10-09T15:22:07.920000Z",
+            "quote_resumption_at": "2026-10-09T15:22:07Z",
+            "trade_resumption_at": null,
+            "source_fields": {
+              "HaltDate": "10/09/2026",
+              "HaltTime": "11:22:07.920",
+              "IssueSymbol": "QETA",
+              "IssueName": "Quetta Acquisition Corp CS",
+              "Market": "NASDAQ",
+              "ReasonCode": "LUDP",
+              "ResumptionDate": "10/09/2026",
+              "ResumptionQuoteTime": "11:22:07",
+              "ResumptionTradeTime": ""
+            }
+          }
+        ],
+        "event_count": 5,
+        "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+        "retained_source": null
+      }
+    }
+  },
+  "retained": {
+    "QETA": {
+      "source": {
+        "provider": "Nasdaq Trader current trade halts RSS",
+        "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+        "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
+        "status": "fresh",
+        "checked_at": "2026-10-09T15:26:22Z",
+        "fetched_at": "2026-10-09T15:26:21.343082Z",
+        "source_published_at": "2026-10-09T15:25:51Z",
+        "expires_at": "2026-10-09T15:28:51Z",
+        "source_sha256": "cc314b98d4c819c507c4315874eebf928363b4905b25e82facb9f01ea3fd2391",
+        "http_date": "Fri, 09 Oct 2026 15:26:20 GMT",
+        "item_count": 35,
+        "source_age_seconds": 31.0,
+        "receipt_age_seconds": 0.656918,
+        "reason": "Snapshot retrieved; unmatched names are not cleared."
+      },
+      "halt": {
+        "status": "halt_reported",
+        "blocks_entry": true,
+        "reason": "The source reports a halt without a trading resumption. Quote resumption alone does not resume trading.",
+        "events": [
+          {
+            "symbol": "QETA",
+            "issue_name": "Quetta Acquisition Corp CS",
+            "market": "NASDAQ",
+            "reason_code": "LUDP",
+            "halted_at": "2026-10-09T15:22:07.920000Z",
+            "quote_resumption_at": "2026-10-09T15:22:07Z",
+            "trade_resumption_at": null,
+            "source_fields": {
+              "HaltDate": "10/09/2026",
+              "HaltTime": "11:22:07.920",
+              "IssueSymbol": "QETA",
+              "IssueName": "Quetta Acquisition Corp CS",
+              "Market": "NASDAQ",
+              "ReasonCode": "LUDP",
+              "ResumptionDate": "10/09/2026",
+              "ResumptionQuoteTime": "11:22:07",
+              "ResumptionTradeTime": ""
+            }
+          }
+        ],
+        "event_count": 5,
+        "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+        "retained_source": null
+      }
+    }
+  }
+}

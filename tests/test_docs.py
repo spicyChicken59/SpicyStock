@@ -145,7 +145,7 @@ def test_the_env_example_quotes_the_read_cap_and_the_universe_floors():
 
 
 def test_the_env_example_names_no_file_the_run_no_longer_writes():
-    for stale in ("ledger.json", "results/", "morning.yml", "scorer.py", "ScanConfig", "min_dollar_volume_pctile", "2LYNCH"):
+    for stale in ("ledger.json", "results/", "scorer.py", "ScanConfig", "min_dollar_volume_pctile", "2LYNCH"):
         assert stale not in ENV, stale
         assert stale not in README, stale
 

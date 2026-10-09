@@ -35,6 +35,7 @@ from urllib.request import Request, urlopen
 # verified, and the gate printed "Verified" over a served site that could have
 # lacked it.
 RECORD_FILES = ("data.json", "picks.json", "historical-validation.json", "historical-findings.json")
+OPTIONAL_RECORD_FILES = ("morning.json",)
 WAIT_SECONDS = 480
 
 
@@ -52,6 +53,9 @@ def public_files(root: Path) -> tuple[str, ...]:
     references = re.findall(r"""(?:src|href)\s*=\s*["']([^"']+)["']""",
                             (root / "docs" / "index.html").read_text())
     names = ["index.html", *RECORD_FILES]
+    # A new installation has no morning observation until its first successful
+    # check. Once committed, it is part of the public-byte acceptance gate.
+    names.extend(name for name in OPTIONAL_RECORD_FILES if (root / "docs" / name).exists())
     for reference in references:
         name = reference.split("?", 1)[0].split("#", 1)[0]
         # A CDN, an absolute or protocol-relative URL, a bare fragment, and any

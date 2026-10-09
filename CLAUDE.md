@@ -290,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3153 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3285 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4744,3 +4744,64 @@ the initial payload without breaking provenance or old-record readability.
 Then improve review-path compliance and measure whole-share feasibility and
 the complete candidate funnel under milestone 3. The existing workflows provide
 scheduled scans; this checkpoint creates no unattended development process.
+
+## Checkpoint, 9 Oct 2026 — publication-bound morning observations
+
+**Scope.** The next part of PRODUCT_GOAL milestone 2 is a dated, read-only
+observation layer. `src/morning.py` reads only existing admitted orders and
+binds exact canonical bytes, publication/run/rules/session, stage, ticker,
+evidence and retained plan. It never edits evening records, changes sizing,
+grades a stock, creates an order or sends email. IEX quotes/trades retain their
+source timestamps, conditions, venue and sizes; delayed SIP volume keeps its
+own timing and cannot confirm live pace. The receipt archives separate
+measurement-age policy. Invalid, stale, crossed, missing, future or failed
+measurements cannot become current quotes. The collector refuses an expired
+window before spending provider calls.
+
+**Events and persistence.** `src/morning_halts.py` parses the bounded Nasdaq
+RSS and distinguishes quote restart from explicit trading resumption, older
+unresolved halts, source-clock rollback and security deletion. Known positive
+halt and corporate exclusions persist through omission, outage and empty
+candidate lists; source-backed resolution evidence is needed to clear them.
+News and earnings remain unchecked, and the corporate registry remains bounded.
+Current registry classification stays separate from retained source facts.
+The publication helper checks both canonical-record and prior-observation
+hashes against current main, as well as run identity and clock bounds. Each
+ordinary push changes only `docs/morning.json`; a race repeats all checks or
+refuses. Provider credentials belong to the read-only collector job, while a
+separate job has the repository write permission.
+
+**Website.** `docs/app-observations.js` verifies the actual loaded publication
+bytes before attaching a morning receipt. It shows dated source observations,
+price comparisons, expiry and coverage limits in the Morning desk and selected
+stock. A source-backed halt or corporate restriction narrows order-copy
+controls. Pre-open prices below a conditional trigger remain observations,
+not a new strategy cancellation. A bounded session cache retains verified
+public event evidence across reload/fetch failures; it stores no private cash
+or saved-watchlist data. Requests use the fixed public morning file and never
+send private saved symbols. Clock repaint preserves focus and cash input.
+
+**Operations.** `morning.yml` makes two best-effort attempts at 8:20/8:28
+Chicago, with active UTC-offset, XNYS-session and entry-cutoff guards. Manual
+rehearsals do not publish. The optional fixed-SPY source diagnostic uses the
+same adapter/normalizers but has no publication or order authority, cannot
+write into docs, and is retained separately. The legacy intraday workflow is
+now artifact-only with no email credentials or activation schedule. The
+existing dashboard publisher verifies morning.json whenever it is committed.
+
+**Validation and release acceptance.** Python 3.12.14. Tests use the real
+fixture producer and morning collector; captured Nasdaq RSS is separately
+identified from invented AAPL corporate/halt scenarios. The deterministic
+morning fixture check is part of CI. Named isolated mutations exercise
+source age, exact limit versus extension, evidence retention and publication
+races; unrelated controls remain green. Local source/probe/workflow/doc checks,
+hosted full checks, provider rehearsal and public acceptance are recorded in
+the final release PR. No production financial result follows from these tests.
+
+**Remaining acceptance.** This implementation is a dated snapshot transport;
+Actions/Pages delays can exceed the quote freshness limit. Reliable morning
+delivery and current entry-window observations need a suitable backend.
+Issuer news, earnings and comprehensive corporate-action coverage, the
+smaller reader payload, broker-specific guidance and an actual first-trade
+review remain unfinished. Continue milestone 2 without marking a first
+successful trade or dependable live-quote service complete.

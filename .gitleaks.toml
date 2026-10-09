@@ -32,6 +32,15 @@ regexTarget = "secret"
 regexes = ['''^(down25_quarter|pct_above_40ma)$''']
 paths = ['''^tests/fixtures/grading/(record\.json|reader-commentary/record\.json)$''']
 
+# The morning browser fixtures are produced by the same synthetic evening
+# pipeline. These three public rule identifiers are unchanged from page/full.
+[[rules.allowlists]]
+description = "Three public rule identifiers in the generated morning publication fixtures"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(abnormal_10pct|down25_quarter|pct_above_40ma)$''']
+paths = ['''^tests/fixtures/morning/(full|red)-publication\.json$''']
+
 # PR #97 retains public GitHub job/run-response SHA-256 evidence. Disposition
 # only these two independently verified hashes at the exact immutable receipt.
 [[rules.allowlists]]

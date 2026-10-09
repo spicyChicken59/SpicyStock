@@ -129,6 +129,8 @@ jobs:
         run: >-
           "$RUNNER_TEMP/actionlint/actionlint" -no-color -shellcheck= -pyflakes=
           .github/workflows/historical-input-proof.yml .github/workflows/tests.yml
+          .github/workflows/morning.yml .github/workflows/intraday.yml
+          .github/workflows/publish-dashboard.yml
       - name: Install verified age for offline historical transport controls
         run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
@@ -142,7 +144,9 @@ jobs:
         # the pipeline that moves them without regenerating them fails here.
         env:
           MPLBACKEND: Agg
-        run: python tools/make_fixture.py --check
+        run: |
+          python tools/make_fixture.py --check
+          python tests/fixtures/morning/generate.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail

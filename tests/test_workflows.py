@@ -59,9 +59,9 @@ def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous
     return dict(line.split('=', 1) for line in output.read_text().splitlines())
 
 
-def test_the_workflow_inventory_is_exactly_the_six_the_docs_name():
+def test_the_workflow_inventory_is_exactly_the_seven_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
-        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
+        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
 
 
 # ----------------------------------------------------------- evening -----
@@ -227,13 +227,101 @@ def test_the_intraday_check_is_dispatch_only_reads_only_and_never_commits():
     assert not [s for s in wf["jobs"]["check"]["steps"] if "git " in str(s.get("run", ""))]
     art = [s for s in wf["jobs"]["check"]["steps"] if str(s.get("uses", "")).startswith("actions/upload-artifact")][0]
     assert art["with"]["path"] == "docs/live.json"
+    env = steps(wf, "check")["Run the intraday check"]["env"]
+    assert env['SCAN_SEND_EMAIL'] == 'false'
+    assert set(env) == {'ALPACA_API_KEY', 'ALPACA_SECRET_KEY', 'SCAN_SEND_EMAIL'}
+
+
+def test_legacy_workflow_delivery_setting_needs_no_resend_and_never_mails_confirmed_rows(monkeypatch, tmp_path):
+    env = steps(load('intraday.yml'), 'check')['Run the intraday check']['env']
+    monkeypatch.setenv('SCAN_SEND_EMAIL', env['SCAN_SEND_EMAIL'])
+    for name in ('ALPACA_API_KEY', 'ALPACA_SECRET_KEY'):
+        monkeypatch.setenv(name, 'offline-test-placeholder')
+    for name in ('RESEND_API_KEY', 'RESEND_FROM', 'EMAIL_TO'):
+        monkeypatch.delenv(name, raising=False)
+    assert pipeline.missing_env('intraday') == []
+    monkeypatch.setattr(pipeline, 'load_previous', lambda docs: {'trades': ['TEST']})
+    monkeypatch.setattr(pipeline, 'snapshot_rows', lambda client, symbols: {})
+    monkeypatch.setattr(pipeline, 'intraday_rows', lambda data, rows: [
+        {'ticker': 'TEST', 'above_level': True, 'volume_state': 'confirmed'}])
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError('Legacy research must never send a notice')
+
+    monkeypatch.setattr(pipeline.report, 'deliver', forbidden)
+    now = datetime_module.datetime(2026, 10, 9, 19, 30, tzinfo=datetime_module.timezone.utc)
+    result = pipeline.run_intraday(docs=tmp_path, client=object(), now=now)
+    assert result.published and result.exit_code() == 0
+    assert json.loads((tmp_path / 'live.json').read_text())['rows'][0]['volume_state'] == 'confirmed'
+
+
+# ---------------------------------------------------------- morning -----
+def test_morning_has_only_two_active_daily_slots_and_an_explicit_rehearsal():
+    from tools import publish_morning
+    wf = load('morning.yml')
+    on = triggers(wf)
+    assert [row['cron'] for row in on['schedule']] == list(publish_morning.SCHEDULES)
+    assert on['workflow_dispatch']['inputs']['dry_run']['default'] is True
+    assert on['workflow_dispatch']['inputs']['probe_sources']['default'] is False
+    assert wf['concurrency'] == {'group': 'morning-observation', 'cancel-in-progress': False}
+    assert steps(wf, 'collect')['Guard the scheduled morning']['run'] == 'python -m tools.publish_morning guard'
+
+
+def test_morning_collector_cannot_write_and_has_no_delivery_credentials():
+    wf = load('morning.yml')
+    assert wf['permissions'] == {'contents': 'read'}
+    collect = wf['jobs']['collect']
+    assert 'permissions' not in collect
+    assert "inputs.dry_run == true" in collect['if']
+    current = steps(wf, 'collect')
+    assert current['actions/checkout@v4']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
+    step = current['Collect a bound morning observation']
+    assert step['if'] == "steps.guard.outputs.go == 'true'"
+    assert step['env']['SCAN_SEND_EMAIL'] == 'false'
+    assert {k for k, value in step['env'].items() if 'secrets.' in value} == {'ALPACA_API_KEY', 'ALPACA_SECRET_KEY'}
+    assert 'python -m src.morning --docs docs --output "$RUNNER_TEMP/morning.json"' in step['run']
+    assert 'git ' not in step['run']
+
+
+def test_morning_persistence_is_main_only_never_rehearsal_and_uses_current_run_artifact():
+    wf = load('morning.yml')
+    job = wf['jobs']['persist']
+    assert job['permissions'] == {'contents': 'write'}
+    assert job['needs'] == 'collect'
+    assert "github.ref == 'refs/heads/main'" in job['if']
+    assert "inputs.dry_run == false" in job['if'] and "github.event_name == 'schedule'" in job['if']
+    assert 'inputs.probe_sources != true' in job['if']
+    current = steps(wf, 'persist')
+    assert current['actions/checkout@v4']['with']['ref'] == 'main'
+    artifact = current['actions/download-artifact@v4']['with']
+    assert artifact == {'name': 'morning-${{ github.run_id }}-${{ github.run_attempt }}',
+                        'path': '${{ runner.temp }}/morning-observation'}
+    assert current['Publish only against the unchanged source record']['run'] == \
+        'python -m tools.publish_morning publish --snapshot "$RUNNER_TEMP/morning-observation/morning.json"'
+    assert not any('secrets.' in str(step.get('env', {})) for step in job['steps'])
+
+
+def test_source_probe_is_opt_in_rehearsal_only_and_separately_retained():
+    wf = load('morning.yml')
+    current = steps(wf, 'collect')
+    probe = current['Rehearse actual source transports']
+    artifact = current['Retain source diagnostic separately']
+    assert probe['if'] == artifact['if'] == \
+        "github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sources == true"
+    assert set(probe['env']) == {'ALPACA_API_KEY', 'ALPACA_SECRET_KEY', 'SCAN_SEND_EMAIL'}
+    assert probe['env']['SCAN_SEND_EMAIL'] == 'false'
+    assert probe['run'] == 'python -m tools.probe_morning_sources --output "$RUNNER_TEMP/morning-source-probe.json"'
+    assert artifact['with']['path'] == '${{ runner.temp }}/morning-source-probe.json'
+    assert artifact['with']['name'].startswith('morning-source-probe-')
+    assert 'inputs.probe_sources != true || inputs.dry_run == true' in wf['jobs']['collect']['if']
 
 
 # ------------------------------------------------------------- tests -----
 def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke():
     wf = load("tests.yml")
     assert steps(wf, "pytest")["Run tests"]["run"].strip() == "pytest tests/ -q"
-    assert steps(wf, "pytest")["The fixtures are what the pipeline writes"]["run"].strip() == "python tools/make_fixture.py --check"
+    assert steps(wf, "pytest")["The fixtures are what the pipeline writes"]["run"].strip().splitlines() == [
+        'python tools/make_fixture.py --check', 'python tests/fixtures/morning/generate.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page
     assert "set -o pipefail" in page and "playwright@1.56.1" in page
@@ -249,7 +337,7 @@ def test_the_evening_and_the_tests_run_the_same_python():
 def test_the_publisher_only_reads_committed_main_after_the_evening_workflow():
     wf = load("publish-dashboard.yml")
     on = triggers(wf)
-    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"]]
+    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"], load('morning.yml')['name']]
     assert on["workflow_run"]["branches"] == ["main"]
     checkout = [s for s in wf["jobs"]["publish"]["steps"] if str(s.get("uses", "")).startswith("actions/checkout")][0]
     assert checkout["with"] == {"ref": "main", "persist-credentials": False}

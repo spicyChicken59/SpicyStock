@@ -1,0 +1,10 @@
+{
+  "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
+  "captured_at": "2026-10-09T15:26:21.343082+00:00",
+  "capture_clock_basis": "UTC mtime immediately after storing the successful HTTP response",
+  "http_date": "Fri, 09 Oct 2026 15:26:20 GMT",
+  "source_published_at": "2026-10-09T15:25:51Z",
+  "sha256": "cc314b98d4c819c507c4315874eebf928363b4905b25e82facb9f01ea3fd2391",
+  "item_count": 35,
+  "note": "Unmodified public RSS response. Contains QETA quote-only halt, prior QETA resumptions, old unresolved non-Nasdaq BKKT.W, and MAMK deletion with displayed resumption times."
+}

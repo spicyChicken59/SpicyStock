@@ -63,6 +63,12 @@
 .ss-morning__checks .sc-check { align-items: start; min-height: 44px; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-body); letter-spacing: normal; text-transform: none; }
 .ss-morning__checks input { flex-shrink: 0; margin-top: var(--sc-s0); }
 .ss-morning__body > p { font-size: var(--sc-text-sm); }
+.ss-observations { min-width: 0; margin-block: var(--sc-s2); border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); overflow-wrap: anywhere; }
+.ss-observations > h3 { margin: 0 0 var(--sc-s1); font-size: var(--sc-text-md); }
+.ss-observations [data-observation-body] { padding: var(--sc-s1) var(--sc-s2); }
+.ss-observations [data-observation-body] p { margin-block: var(--sc-s1); font-size: var(--sc-text-sm); }
+.ss-observations [data-observation-refusal] { color: var(--sc-text); border-left: 2px solid var(--sc-danger); padding-left: var(--sc-s1); }
+.ss-observations > button { margin-top: var(--sc-s1); }
 @media (max-width: 720px) {
   .sc-card.ss-morning { padding: var(--sc-s2); }
   .ss-morning__head { flex-direction: column; }
