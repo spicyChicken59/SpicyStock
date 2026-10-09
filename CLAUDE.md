@@ -290,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3285 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3286 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4797,6 +4797,10 @@ source age, exact limit versus extension, evidence retention and publication
 races; unrelated controls remain green. Local source/probe/workflow/doc checks,
 hosted full checks, provider rehearsal and public acceptance are recorded in
 the final release PR. No production financial result follows from these tests.
+Historical Git/API doubles use captured prior workflow and scanner blobs,
+with their original compatibility hashes still required. A historical chart
+comparison waits for its first attached layout; the exact text assertion still
+detects changed chart data. Production historical gates and evidence are unchanged.
 
 **Remaining acceptance.** This implementation is a dated snapshot transport;
 Actions/Pages delays can exceed the quote freshness limit. Reliable morning

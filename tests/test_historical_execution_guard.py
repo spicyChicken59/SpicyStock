@@ -14,6 +14,7 @@ from tools import historical_execution_guard as guard
 from tests.test_historical_workflow_validation import (
     bash, path_runtime, initialize, boundary_outputs,
 )
+from tests.historical_public_blobs import public_git_bytes
 
 
 APPROVED, CURRENT, MERGED = "a" * 40, "b" * 40, "c" * 40
@@ -31,12 +32,6 @@ def jobs_path(run_id, page=1):
 
 def artifacts_path(run_id, page=1):
     return f"/actions/runs/{run_id}/artifacts?per_page=100&page={page}"
-
-
-def public_git_bytes(path):
-    # These API fixtures represent public LF Git blobs. A Windows checkout may
-    # have CRLF bytes; the parent declaration independently pins the LF content.
-    return (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
 
 
 @pytest.fixture

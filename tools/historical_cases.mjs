@@ -38,6 +38,12 @@ export async function checkHistoricalJourneys({browser,base,open,check,shotsDir}
     await page.waitForSelector('[data-study-original="CRL"]');
     check(`${width}/${theme} historical reader image identity`,await page.locator('[data-study-original="CRL"] a[href="evidence/b32a2e0d0b7b81387cbdc39e55e68a78c7a93e5ed7284b71470659a4d373ce18.png"]').count()===1);
     check(`${width}/${theme} frozen case has no order copy`,await page.locator('[data-study-original="CRL"] button').filter({hasText:'Copy order'}).count()===0);
+    // The initial drawing uses a detached width. Compare outcome toggling only
+    // after the chart's first attached layout has selected its date-axis ticks.
+    await page.waitForFunction(()=>{
+      const chart=document.querySelector('[data-study-original="CRL"] .sc-chart--stock');
+      return chart && chart.clientWidth>0 && chart.geometry().width===chart.clientWidth;
+    });
     const before=await page.locator('[data-study-original="CRL"] [data-panel]').textContent();
     await page.locator('[data-study-original="CRL"]').evaluate(e=>e.scrollIntoView({block:'start'}));
     await capture(page, {path:path.join(output,`${width}-${theme}-frozen.png`)});
