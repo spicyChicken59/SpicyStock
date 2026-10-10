@@ -166,6 +166,7 @@ The wait explanation separates the reaction review gates from the original
 anticipation decisions. Each retained top anticipation row keeps its recorded
 ticket status and refusal reason; an absent reason stays unknown rather than
 being reconstructed from the experimental policy.
+Retained planner errors remain visible even when they produced no plan.
 On a weekend or holiday, the next-action message names the closed viewing date
 and the next session from the recorded calendar; it does not relabel the last
 measured open session as closed. In recovery notices, the latest evening
@@ -1165,6 +1166,7 @@ node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
 node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
+node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and exact recorded-chart navigation
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```

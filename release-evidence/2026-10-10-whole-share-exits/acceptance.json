@@ -1,0 +1,1040 @@
+{
+  "schema_version": 1,
+  "status": "accepted_public_release",
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/139",
+  "reviewed_head": "08b919f32718215e0899a774ae85a28293a8b172",
+  "merged_commit": "22309bb1f186e3013a6acd4fae71d83d1700ea76",
+  "merged_at": "2026-10-10T09:28:14Z",
+  "public_url": "https://spicychicken59.github.io/SpicyStock/",
+  "publisher": {
+    "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38041498479",
+    "conclusion": "success",
+    "confirmed_by": "ops_audit before run"
+  },
+  "pages": {
+    "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38041510424",
+    "conclusion": "success",
+    "confirmed_by": "ops_audit before run"
+  },
+  "hosted_exact_head": {
+    "schema_version": 1,
+    "status": "PASS",
+    "repository": "spicyChicken59/SpicyStock",
+    "pull_request": 139,
+    "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+    "tests_run_id": 38038515004,
+    "tests_conclusion": "success",
+    "recorded_at": "2026-10-10T09:27:54.257Z",
+    "checks": [
+      {
+        "id": 114173963160,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:38Z",
+        "completed_at": "2026-10-10T09:25:57Z"
+      },
+      {
+        "id": 114173963145,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:38Z",
+        "completed_at": "2026-10-10T09:26:19Z"
+      },
+      {
+        "id": 114173915131,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:21Z",
+        "completed_at": "2026-10-10T08:48:44Z"
+      },
+      {
+        "id": 114173915124,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:21Z",
+        "completed_at": "2026-10-10T08:37:35Z"
+      },
+      {
+        "id": 114173915049,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:21Z",
+        "completed_at": "2026-10-10T08:49:34Z"
+      },
+      {
+        "id": 114173914934,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:37:21Z",
+        "completed_at": "2026-10-10T08:37:37Z"
+      },
+      {
+        "id": 114173786410,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "08b919f32718215e0899a774ae85a28293a8b172",
+        "started_at": "2026-10-10T08:36:37Z",
+        "completed_at": "2026-10-10T08:36:49Z"
+      }
+    ],
+    "counts": {
+      "pytest_passed": 3734,
+      "pytest_seconds": 627.47,
+      "page_passed": 12690,
+      "page_total": 12690,
+      "chart_passed": 378,
+      "chart_total": 378,
+      "continuity_passed": 137,
+      "fixtures": {
+        "page": 13,
+        "morning": 21,
+        "issuer": 14,
+        "stop_research": 22
+      }
+    },
+    "native": [
+      {
+        "case": "central",
+        "job_id": 114173963160,
+        "started_at": "2026-10-10T08:37:38Z",
+        "completed_at": "2026-10-10T09:25:57Z",
+        "runtime_seconds": 2860.072228,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11665682866,
+        "artifact_name": "historical-runtime-central-38038515004-1",
+        "artifact_sha256": "53433add66c3cff19939e08016242e681d355786ab8c3a820e07aef01fe091e1",
+        "artifact_bytes": 26648
+      },
+      {
+        "case": "stress",
+        "job_id": 114173963145,
+        "started_at": "2026-10-10T08:37:38Z",
+        "completed_at": "2026-10-10T09:26:19Z",
+        "runtime_seconds": 2878.478516,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11666101342,
+        "artifact_name": "historical-runtime-stress-38038515004-1",
+        "artifact_sha256": "df6482e7a4cbcc21028143aef2030c37952274d0abd167721c58a9e8174856eb",
+        "artifact_bytes": 26552
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11666101342,
+        "name": "historical-runtime-stress-38038515004-1",
+        "size_in_bytes": 26552,
+        "digest": "sha256:df6482e7a4cbcc21028143aef2030c37952274d0abd167721c58a9e8174856eb"
+      },
+      {
+        "id": 11665682866,
+        "name": "historical-runtime-central-38038515004-1",
+        "size_in_bytes": 26648,
+        "digest": "sha256:53433add66c3cff19939e08016242e681d355786ab8c3a820e07aef01fe091e1"
+      },
+      {
+        "id": 11665267433,
+        "name": "page-shots",
+        "size_in_bytes": 79081716,
+        "digest": "sha256:aed6164c4787e2dd0d95b895121ab486d5156e2b76267043882927d96b192465"
+      },
+      {
+        "id": 11664701880,
+        "name": "historical-runtime-gate-38038515004-1",
+        "size_in_bytes": 336,
+        "digest": "sha256:dbfb1cb2b88051c6bec4f9224e17a31848426dd204b94039483416c279cdb380"
+      }
+    ],
+    "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only."
+  },
+  "independent_prerelease_review": {
+    "checks": 20,
+    "results": [
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 1,
+        "model_half_quantity": 1,
+        "model_remaining_quantity": 0
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 2,
+        "model_half_quantity": 1,
+        "model_remaining_quantity": 1
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 3,
+        "model_half_quantity": 2,
+        "model_remaining_quantity": 1
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 4,
+        "model_half_quantity": 2,
+        "model_remaining_quantity": 2
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 5,
+        "model_half_quantity": 3,
+        "model_remaining_quantity": 2
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 6,
+        "model_half_quantity": 3,
+        "model_remaining_quantity": 3
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 7,
+        "model_half_quantity": 4,
+        "model_remaining_quantity": 3
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 8,
+        "model_half_quantity": 4,
+        "model_remaining_quantity": 4
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 99,
+        "model_half_quantity": 50,
+        "model_remaining_quantity": 49
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 100,
+        "model_half_quantity": 50,
+        "model_remaining_quantity": 50
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 999999,
+        "model_half_quantity": 500000,
+        "model_remaining_quantity": 499999
+      },
+      {
+        "case": "reported_remaining_matches_real_plan_follow",
+        "quantity": 1000000,
+        "model_half_quantity": 500000,
+        "model_remaining_quantity": 500000
+      },
+      {
+        "case": "unknown_report_never_uses_draft",
+        "fields": {}
+      },
+      {
+        "case": "unknown_report_never_uses_draft",
+        "fields": {
+          "protected_quantity": "0"
+        }
+      },
+      {
+        "case": "unknown_report_never_uses_draft",
+        "fields": {
+          "submitted_quantity": "0"
+        }
+      },
+      {
+        "case": "unknown_report_never_uses_draft",
+        "fields": {
+          "submitted_quantity": "2",
+          "filled_quantity": "0"
+        }
+      },
+      {
+        "case": "unknown_report_never_uses_draft",
+        "fields": {
+          "submitted_quantity": "2",
+          "filled_quantity": "1"
+        }
+      },
+      {
+        "case": "explicit_zero_is_not_unknown",
+        "fields": {
+          "submitted_quantity": "0",
+          "filled_quantity": "0",
+          "exited_quantity": "0"
+        }
+      },
+      {
+        "case": "explicit_zero_is_not_unknown",
+        "fields": {
+          "submitted_quantity": "3",
+          "filled_quantity": "3",
+          "exited_quantity": "3"
+        }
+      },
+      {
+        "case": "legacy_read_no_write"
+      }
+    ],
+    "source_sha256": "fca44fba14ca061841ac5d69310cf3efebed2d04b947c107e5dec404e7be1861",
+    "oracle": "real unchanged src.plan.follow on explicitly synthetic whole-share inputs",
+    "source_tree": "/workspace/SpicyStock-whole-share-exits",
+    "status": "NO_BLOCKER",
+    "head": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+    "browser": {
+      "passed": 269,
+      "log": "/tmp/spicystock-whole-share-independent/browser.log",
+      "screenshots_inspected": [
+        "/tmp/spicystock-whole-share-independent/shots/whole-share-1-390-light.png",
+        "/tmp/spicystock-whole-share-independent/shots/whole-share-3-1280-dark.png"
+      ]
+    },
+    "ui_sha256": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2",
+    "mutations": {
+      "round_down": "failed actual0 versus actual plan.follow oracle1",
+      "unrelated_storage_bound": "20 controls pass"
+    },
+    "repository_edits_by_reviewer": false,
+    "no_provider_requests": true,
+    "scope": "Derived reference arithmetic only; unchanged persisted schema, original model, archived schedules and existing copy gates.",
+    "final_source_sha256": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb",
+    "final_ui_sha256": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2",
+    "final_delta": {
+      "exact_only_change": "A one-share position cannot be partly exited. \u2192 A one-share position cannot be partly exited in whole shares.",
+      "byte_comparison_verified": true,
+      "phone_checks_passed": 8,
+      "log": "/tmp/spicystock-whole-share-independent/final-phone.log",
+      "screenshot_inspected": "/tmp/spicystock-whole-share-independent/final-phone/whole-share-1-390-light.png"
+    },
+    "final_head": "08b919f32718215e0899a774ae85a28293a8b172",
+    "final_worktree_clean": true,
+    "final_commit_source_identity_verified": true,
+    "documentation_spotcheck": {
+      "files": [
+        "README.md",
+        ".env.example",
+        "CLAUDE.md",
+        "PRODUCT_GOAL.md",
+        "release-evidence/2026-10-10-personal-results/acceptance.json"
+      ],
+      "status": "PASS",
+      "scope": "Reference arithmetic remains distinct from broker instructions and persisted data. Actual public PR126 acceptance and separately synthetic private examples are explicitly distinguished; no real personal trade or profit claim. PR137 remains locally verified, not claimed deployed. Release receipt scope reviewed; its 32 public-file rechecks were performed by root, not repeated by this reviewer."
+    }
+  },
+  "actual_public_acceptance": {
+    "scope": "ACTUAL PUBLIC ACCEPTANCE; real clock/default data; fresh disposable browsers; no seeded storage, saved plan or order action",
+    "started_at": "2026-10-10T09:29:52.794Z",
+    "finished_at": "2026-10-10T09:30:03.462Z",
+    "checks_passed": 59,
+    "original_runner_files": 35,
+    "native_inventory_supplement_files": 2,
+    "all_required_files": [
+      {
+        "name": "index.html",
+        "bytes": 16963,
+        "sha256": "f2b7e9bb1e18126c6356d8b31f7ae6b03788a7e3e78b1eb28e64545a05ec6845"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 23842,
+        "sha256": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 29626,
+        "sha256": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 37160,
+        "sha256": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 23502,
+        "sha256": "b978010d729abfeaee93069b6310f1ec709eabb7ca0e02905f5a60b13822e808"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-stop-research.js",
+        "bytes": 34320,
+        "sha256": "ff822191d5712409bf6b175ae7d83840cb9541b60fed67c7dfe1312ecf1394bb"
+      },
+      {
+        "name": "app.css",
+        "bytes": 86973,
+        "sha256": "b194e7ecfaf65cd12349b4b23ca94a66cd89ee6d5ab6561ce0b32e97d083f007"
+      },
+      {
+        "name": "app.js",
+        "bytes": 392190,
+        "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1768,
+        "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+      },
+      {
+        "name": "stop-research.json",
+        "bytes": 1650,
+        "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+      },
+      {
+        "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "bytes": 5687,
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+      },
+      {
+        "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "bytes": 8918,
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      }
+    ],
+    "all_required_inventory_verified": true,
+    "source_receipt_sha256": "53999bef5ff13575479a2e09c30d51e53dce7c888fa0815d9f9b90f19e85a451",
+    "native_inventory_supplement": {
+      "scope": "ACTUAL PUBLIC NATIVE INVENTORY SUPPLEMENT ONLY; no clock/data/routes/private seeds/provider requests",
+      "productionSha": "22309bb1f186e3013a6acd4fae71d83d1700ea76",
+      "startedAt": "2026-10-10T09:31:16.658Z",
+      "initialFileCount": 35,
+      "requiredFiles": [
+        "index.html",
+        "data.json",
+        "reader.json",
+        "picks.json",
+        "historical-validation.json",
+        "historical-findings.json",
+        "morning.json",
+        "design-system/assets/favicon.ico",
+        "design-system/assets/sc-avatar-tile.svg",
+        "design-system/assets/apple-touch-icon.png",
+        "design-system/sc.css",
+        "design-system/sc-theme.js",
+        "design-system/sc-charts.js",
+        "design-system/sc-motion.js",
+        "app.css",
+        "app-chart.js",
+        "app-map.js",
+        "app-follow.js",
+        "app-reading.js",
+        "app-method.js",
+        "app-findings.js",
+        "app-reader.js",
+        "app-observations.js",
+        "app-cash-preview.js",
+        "app-handoff.js",
+        "app-handoff-ui.js",
+        "app-issuer-evidence.js",
+        "app-stop-research.js",
+        "app-morning.js",
+        "app.js",
+        "design-system/assets/sc-mark-color-dark.svg",
+        "design-system/assets/sc-mark-mono-cream.svg",
+        "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "issuer-evidence.json",
+        "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "stop-research.json",
+        "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json"
+      ],
+      "files": [
+        {
+          "name": "historical-findings.json",
+          "bytes": 177697,
+          "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+        },
+        {
+          "name": "historical-validation.json",
+          "bytes": 5048,
+          "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+        }
+      ],
+      "errors": [],
+      "actualClock": "2026-10-10T09:31:19.134Z",
+      "combinedRequiredFileCount": 37,
+      "allRequiredFilesMatched": true,
+      "status": "PASS_ACTUAL_PUBLIC_INVENTORY_SUPPLEMENT",
+      "finishedAt": "2026-10-10T09:31:19.158Z"
+    }
+  },
+  "separate_synthetic_private_rehearsal": {
+    "scope": "SYNTHETIC PRIVATE REHEARSAL ONLY; not Mo facts, an actual balance, live trade, or production trading acceptance. Genuine model-generated historical one/three-share draft examples are seeded only into separate fresh test browsers; public data/clock remain unchanged.",
+    "checks_passed": 80,
+    "source_receipt_sha256": "56cc1bc1f484b43d017308f5fb68abf5d2bc9e087e0c838cdf3c8658810487ab",
+    "controls": {
+      "scope": "SYNTHETIC PRIVATE REHEARSAL ONLY; not Mo facts, an actual balance, live trade, or production trading acceptance. Genuine model-generated historical one/three-share draft examples are seeded only into separate fresh test browsers; public data/clock remain unchanged.",
+      "checks_passed": 80,
+      "checks_total": 80,
+      "contexts": 4,
+      "viewports": [
+        390,
+        1280
+      ],
+      "quantities": [
+        1,
+        3
+      ],
+      "private_controls": [
+        {
+          "quantity": 1,
+          "raw_sha256": "437f8debb7e02286d0b3c530387e03106e16c1f5b065e0bd6537720122747ae9",
+          "source_publication_sha256": "8555facbab2445dcd98240696a5adf5c953769168507336ddc2418cfd8893399",
+          "creation": "Pinned real model prepare() using focused offline helper and historical producer cash fixture; not a current admission"
+        },
+        {
+          "quantity": 3,
+          "raw_sha256": "5eb8cd967815833728caadd8aeb016b89b221da783f607c812fadc21f0b252d5",
+          "source_publication_sha256": "8555facbab2445dcd98240696a5adf5c953769168507336ddc2418cfd8893399",
+          "creation": "Pinned real model prepare() using focused offline helper and historical producer cash fixture; not a current admission"
+        }
+      ],
+      "source_model_quantity_unchanged": 4,
+      "whole_share_reference": [
+        {
+          "draft_shares": 1,
+          "model_round_up_exit": 1,
+          "remaining": 0
+        },
+        {
+          "draft_shares": 3,
+          "model_round_up_exit": 2,
+          "remaining": 1
+        }
+      ],
+      "unknown_exits": "Holdings remain unknown; draft shares are not substituted.",
+      "explicit_exits": "Explicit zero establishes remaining reported quantity; later manual partial/full exits adjust the reference without changing original terms.",
+      "actual_result": "Unknown actual prices/fees suppress completed result; no user gain/loss claim.",
+      "authority": "Reference arithmetic does not determine whether another exit is due; broker fractional-share support remains unknown; old source never enables current entry copy.",
+      "private_review_creates_requests": false,
+      "public_data_and_clock_unchanged": true,
+      "browser_errors": [],
+      "horizontal_overflow": false
+    }
+  },
+  "independent_public_review": {
+    "status": "PASS_PUBLIC_RELEASE_WITH_SEPARATE_SYNTHETIC_PRIVATE_REVIEW",
+    "reviewed_at": "2026-10-10T09:32:01.580136+00:00",
+    "production_sha": "22309bb1f186e3013a6acd4fae71d83d1700ea76",
+    "site": "https://spicychicken59.github.io/SpicyStock/",
+    "publisher": {
+      "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38041498479",
+      "conclusion": "success",
+      "confirmed_by": "ops_audit before run"
+    },
+    "pages": {
+      "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38041510424",
+      "conclusion": "success",
+      "confirmed_by": "ops_audit before run"
+    },
+    "actual_public": {
+      "scope": "ACTUAL PUBLIC ACCEPTANCE; real clock/default data; fresh disposable browsers; no seeded storage, saved plan or order action",
+      "started_at": "2026-10-10T09:29:52.794Z",
+      "finished_at": "2026-10-10T09:30:03.462Z",
+      "checks_passed": 59,
+      "checks_total": 59,
+      "native_files_in_original_runner": 35,
+      "supplemental_native_files": 2,
+      "required_native_files_matched_git": 37,
+      "inventory_complete": true,
+      "files": [
+        {
+          "name": "index.html",
+          "bytes": 16963,
+          "sha256": "f2b7e9bb1e18126c6356d8b31f7ae6b03788a7e3e78b1eb28e64545a05ec6845"
+        },
+        {
+          "name": "data.json",
+          "bytes": 12963197,
+          "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+        },
+        {
+          "name": "reader.json",
+          "bytes": 4016951,
+          "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+        },
+        {
+          "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+          "bytes": 5155365,
+          "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+        },
+        {
+          "name": "app-cash-preview.js",
+          "bytes": 3836,
+          "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+        },
+        {
+          "name": "app-chart.js",
+          "bytes": 73555,
+          "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+        },
+        {
+          "name": "app-findings.js",
+          "bytes": 68115,
+          "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+        },
+        {
+          "name": "app-follow.js",
+          "bytes": 32450,
+          "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+        },
+        {
+          "name": "app-handoff-ui.js",
+          "bytes": 23842,
+          "sha256": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2"
+        },
+        {
+          "name": "app-handoff.js",
+          "bytes": 29626,
+          "sha256": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb"
+        },
+        {
+          "name": "app-issuer-evidence.js",
+          "bytes": 37160,
+          "sha256": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c"
+        },
+        {
+          "name": "app-map.js",
+          "bytes": 29522,
+          "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+        },
+        {
+          "name": "app-method.js",
+          "bytes": 44156,
+          "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+        },
+        {
+          "name": "app-morning.js",
+          "bytes": 23502,
+          "sha256": "b978010d729abfeaee93069b6310f1ec709eabb7ca0e02905f5a60b13822e808"
+        },
+        {
+          "name": "app-observations.js",
+          "bytes": 44452,
+          "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+        },
+        {
+          "name": "app-reader.js",
+          "bytes": 9507,
+          "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+        },
+        {
+          "name": "app-reading.js",
+          "bytes": 23705,
+          "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+        },
+        {
+          "name": "app-stop-research.js",
+          "bytes": 34320,
+          "sha256": "ff822191d5712409bf6b175ae7d83840cb9541b60fed67c7dfe1312ecf1394bb"
+        },
+        {
+          "name": "app.css",
+          "bytes": 86973,
+          "sha256": "b194e7ecfaf65cd12349b4b23ca94a66cd89ee6d5ab6561ce0b32e97d083f007"
+        },
+        {
+          "name": "app.js",
+          "bytes": 392190,
+          "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+        },
+        {
+          "name": "design-system/assets/favicon.ico",
+          "bytes": 5057,
+          "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+        },
+        {
+          "name": "design-system/assets/sc-avatar-tile.svg",
+          "bytes": 9274,
+          "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+        },
+        {
+          "name": "design-system/assets/apple-touch-icon.png",
+          "bytes": 11284,
+          "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+        },
+        {
+          "name": "design-system/sc.css",
+          "bytes": 130987,
+          "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+        },
+        {
+          "name": "design-system/sc-theme.js",
+          "bytes": 2077,
+          "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+        },
+        {
+          "name": "design-system/sc-charts.js",
+          "bytes": 27390,
+          "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+        },
+        {
+          "name": "design-system/sc-motion.js",
+          "bytes": 10458,
+          "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+        },
+        {
+          "name": "design-system/assets/sc-mark-color-dark.svg",
+          "bytes": 6701,
+          "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+        },
+        {
+          "name": "design-system/assets/sc-mark-mono-cream.svg",
+          "bytes": 4901,
+          "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+        },
+        {
+          "name": "picks.json",
+          "bytes": 3921,
+          "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+        },
+        {
+          "name": "morning.json",
+          "bytes": 4284,
+          "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+        },
+        {
+          "name": "issuer-evidence.json",
+          "bytes": 1768,
+          "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+        },
+        {
+          "name": "stop-research.json",
+          "bytes": 1650,
+          "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+        },
+        {
+          "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+          "bytes": 5687,
+          "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+        },
+        {
+          "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+          "bytes": 8918,
+          "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+        },
+        {
+          "name": "historical-findings.json",
+          "bytes": 177697,
+          "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+        },
+        {
+          "name": "historical-validation.json",
+          "bytes": 5048,
+          "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+        }
+      ],
+      "viewports": [
+        1280,
+        390
+      ],
+      "cash": "unknown",
+      "private_store": "absent/empty",
+      "current_entry_tickets": 0,
+      "clock_and_default_publication_unchanged": true,
+      "browser_errors": [],
+      "horizontal_overflow": false,
+      "no_private_order_prepared": true,
+      "old_source_preparation_refused": true
+    },
+    "synthetic_private": {
+      "scope": "SYNTHETIC PRIVATE REHEARSAL ONLY; not Mo facts, an actual balance, live trade, or production trading acceptance. Genuine model-generated historical one/three-share draft examples are seeded only into separate fresh test browsers; public data/clock remain unchanged.",
+      "checks_passed": 80,
+      "checks_total": 80,
+      "contexts": 4,
+      "viewports": [
+        390,
+        1280
+      ],
+      "quantities": [
+        1,
+        3
+      ],
+      "private_controls": [
+        {
+          "quantity": 1,
+          "raw_sha256": "437f8debb7e02286d0b3c530387e03106e16c1f5b065e0bd6537720122747ae9",
+          "source_publication_sha256": "8555facbab2445dcd98240696a5adf5c953769168507336ddc2418cfd8893399",
+          "creation": "Pinned real model prepare() using focused offline helper and historical producer cash fixture; not a current admission"
+        },
+        {
+          "quantity": 3,
+          "raw_sha256": "5eb8cd967815833728caadd8aeb016b89b221da783f607c812fadc21f0b252d5",
+          "source_publication_sha256": "8555facbab2445dcd98240696a5adf5c953769168507336ddc2418cfd8893399",
+          "creation": "Pinned real model prepare() using focused offline helper and historical producer cash fixture; not a current admission"
+        }
+      ],
+      "source_model_quantity_unchanged": 4,
+      "whole_share_reference": [
+        {
+          "draft_shares": 1,
+          "model_round_up_exit": 1,
+          "remaining": 0
+        },
+        {
+          "draft_shares": 3,
+          "model_round_up_exit": 2,
+          "remaining": 1
+        }
+      ],
+      "unknown_exits": "Holdings remain unknown; draft shares are not substituted.",
+      "explicit_exits": "Explicit zero establishes remaining reported quantity; later manual partial/full exits adjust the reference without changing original terms.",
+      "actual_result": "Unknown actual prices/fees suppress completed result; no user gain/loss claim.",
+      "authority": "Reference arithmetic does not determine whether another exit is due; broker fractional-share support remains unknown; old source never enables current entry copy.",
+      "private_review_creates_requests": false,
+      "public_data_and_clock_unchanged": true,
+      "browser_errors": [],
+      "horizontal_overflow": false
+    },
+    "transport": {
+      "managedProxy": true,
+      "specificCertificateSPKI": "n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=",
+      "caPath": "/usr/local/share/ca-certificates/environment-proxy-ca.crt",
+      "globalTlsBypass": false,
+      "native_body_method": "Original native bytes after bounded cloned stream reaches EOF; no CDP response-body observer",
+      "supplement": "Two previously omitted historical companion files verified with the same exact bounded native reader; original59/80 receipts unchanged.",
+      "new_provider_requests": 0,
+      "dispatches": 0,
+      "broker_actions": 0,
+      "all_public_reads_finished": true,
+      "last_public_read_completed_at": "2026-10-10T09:31:19.158Z"
+    },
+    "screenshots_inspected": {
+      "ACTUAL-PUBLIC-morning-1280.png": {
+        "sha256": "59178d0243a8a31ce33208a4e58652ae5cd6fb4139ccf1faba45646114990ca2",
+        "bytes": 98723,
+        "scope": "ACTUAL PUBLIC EMPTY/CURRENT STATE",
+        "visually_inspected": true
+      },
+      "ACTUAL-PUBLIC-morning-390.png": {
+        "sha256": "973421be903f59275cb209a0b413e245aca59a4c15a383dc57e2c0b618c0566d",
+        "bytes": 53553,
+        "scope": "ACTUAL PUBLIC EMPTY/CURRENT STATE",
+        "visually_inspected": true
+      },
+      "ACTUAL-PUBLIC-private-empty-1280.png": {
+        "sha256": "63d145117e145c4eac24356834c26182664c005f08f798c366c3a425e7b48e9a",
+        "bytes": 152680,
+        "scope": "ACTUAL PUBLIC EMPTY/CURRENT STATE",
+        "visually_inspected": true
+      },
+      "ACTUAL-PUBLIC-private-empty-390.png": {
+        "sha256": "d80cc46d96a6d4f3e49b763f6cdd5247a363fa820f754bc7745d75544362753e",
+        "bytes": 63136,
+        "scope": "ACTUAL PUBLIC EMPTY/CURRENT STATE",
+        "visually_inspected": true
+      },
+      "SYNTHETIC-PRIVATE-whole-share-1-1280.png": {
+        "sha256": "135ca7385c80a38f92b44aa45afdc433f83c0ce5ca5f636930ec3ba17f103f0f",
+        "bytes": 141885,
+        "scope": "SYNTHETIC PRIVATE TEST",
+        "visually_inspected": true
+      },
+      "SYNTHETIC-PRIVATE-whole-share-1-390.png": {
+        "sha256": "6526e9c3f606eef61d55d80212a70aa0f349ac0bf0f05b86d332904e3f02032e",
+        "bytes": 66998,
+        "scope": "SYNTHETIC PRIVATE TEST",
+        "visually_inspected": true
+      },
+      "SYNTHETIC-PRIVATE-whole-share-3-1280.png": {
+        "sha256": "eae54c21c82c5d9ca777e4a3ef7d1ecdc3ba0404eaa987dbbc3d56fbf4cfa337",
+        "bytes": 142297,
+        "scope": "SYNTHETIC PRIVATE TEST",
+        "visually_inspected": true
+      },
+      "SYNTHETIC-PRIVATE-whole-share-3-390.png": {
+        "sha256": "0356e25b8d2c770275786383dd6eb95b9fd3837ea3b8f34b7fa4886f655de69f",
+        "bytes": 65228,
+        "scope": "SYNTHETIC PRIVATE TEST",
+        "visually_inspected": true
+      }
+    },
+    "artifacts": {
+      "actual-public-acceptance.json": {
+        "sha256": "53999bef5ff13575479a2e09c30d51e53dce7c888fa0815d9f9b90f19e85a451"
+      },
+      "SYNTHETIC-private-rehearsal.json": {
+        "sha256": "56cc1bc1f484b43d017308f5fb68abf5d2bc9e087e0c838cdf3c8658810487ab"
+      },
+      "native-inventory-supplement.json": {
+        "sha256": "12f7f7b1b3b9619715347775910e4f280e17cc2f7a053d031964a435be252a76"
+      }
+    },
+    "runners": {
+      "/tmp/spicystock-public-whole-share-acceptance.mjs": {
+        "sha256": "0f85559033e0fd73b57b77b90df46b59a6a5be71d45b7f55ab2d6a0bd1e49f40"
+      },
+      "/tmp/spicystock-whole-share-inventory-supplement.mjs": {
+        "sha256": "63668cab9ba56372be1970dc12d598861b1077ce6a3bd08274551e994ef320a6"
+      }
+    },
+    "limitations": [
+      "Synthetic private cases are explicitly labelled historical fixtures in disposable browsers, not Mo balances, positions, executions or profit.",
+      "No broker orders or clipboard copy were performed; no provider or SEC requests were made.",
+      "This proves deployed release behavior at the actual clock, not market-feed availability or future trading performance.",
+      "Issuer source content remains unavailable with the prior actual typed403 receipt; native bytes matched but no fresh SEC collection was run."
+    ]
+  },
+  "review_receipt_sha256": "bdd388433ea39af94dcf2fcb8cb347770b2d171b5d78cb9fa9c9ee006efd41b8",
+  "independent_recheck": {
+    "all_native_file_hashes_match": 37,
+    "all_reviewed_runtime_hashes_match": true,
+    "screenshot_hashes_match": 8,
+    "prior_commit": "f9b91d00123281039436bcd4e8a7646992517265",
+    "unchanged_paths": [
+      "src",
+      "docs/data.json",
+      "docs/reader.json",
+      "docs/picks.json",
+      "docs/evidence",
+      "docs/history",
+      "docs/design-system",
+      "docs/morning.json",
+      "docs/issuer-evidence.json",
+      "docs/issuer-evidence",
+      "docs/stop-research.json",
+      "docs/stop-research"
+    ]
+  },
+  "remaining_gaps": [
+    "Synthetic private cases are explicitly labelled historical fixtures in disposable browsers, not Mo balances, positions, executions or profit.",
+    "No broker orders or clipboard copy were performed; no provider or SEC requests were made.",
+    "This proves deployed release behavior at the actual clock, not market-feed availability or future trading performance.",
+    "Issuer source content remains unavailable with the prior actual typed403 receipt; native bytes matched but no fresh SEC collection was run.",
+    "The current source still supplies zero baseline tickets. Registered KE/PSNL quantities remain hypothetical research, with no personal execution or first successful trade evidenced.",
+    "Research follow-through and issuer consistency await their required exact-head native gates. Anticipation explanation and recorded-chart inspection are under local review in issue142.",
+    "On-time morning delivery, broad source/earnings coverage and broker-specific guidance remain open. The daily issuer production collection budget remains exhausted."
+  ],
+  "next_step": "Ship reviewed research follow-through and issuer consistency after required gates, verify actual public results and continue the recorded-chart inspection milestone. Preserve unknown personal holdings, cash and outcomes until explicitly reported."
+}

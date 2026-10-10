@@ -5961,3 +5961,77 @@ current budget. A public-contact/client-identification change would be an
 unproven access hypothesis, requiring a designated contact and a future budgeted
 verification; never infer one from private email credentials. Broader source
 coverage and a first actual trade remain open.
+
+## Checkpoint, 10 Oct 2026 — anticipation decisions and chart inspection
+
+Issue #142 reproduces two gaps on the retained October 9 publication: the
+Morning desk's wait explanation named only reaction gates, and the registered
+research rows offered no action to inspect their existing recorded charts.
+UI commit `59199f7b` adds the original top anticipation refusals with separate
+top/quiet/ticket counts, and a keyboard-accessible recorded-chart action on each
+current research row. MG/ZIM's acquisition exclusions and KE/SN/PSNL's original
+stop refusals remain visible. It creates no new plan or trade authority.
+
+Inspection rechecks the exact publication, canonical/reader digest and original
+family/ticker/source/plan identity before synchronously closing the desk and
+opening/focusing the existing chart. A stale action, including a detached button
+after a same-ticker publication replacement, is refused with an explanation.
+Back navigation, filters, private input nodes and storage remain intact. Actual
+row choices fetch no new chart data. Missing evidence remains unknown; an
+anticipation-only ticket no longer coexists with a global zero-ticket wait.
+
+Review also reproduced a sealed planner exception that the new summary initially
+called unknown. The final expression reuses the existing planning explanation,
+preserving the actual error and distinguishing absent or incomplete evidence.
+The reproduction uses the real offline pipeline with a labelled synthetic
+planner exception, not invented market data or an observed production failure.
+
+The owner suite passes 108 controls over the existing frozen actual publication
+and producer fixtures. It uses no moving `docs/data.json` assumptions or new
+fixture path. Six isolated guard mutations fail their named controls; an
+unrelated timeout change passes all 108. Independent review passes 25 chart,
+identity, filter and modal controls plus 14 focused planner-evidence controls.
+Restoring only the old planner expression fails eight checks; an unrelated
+chart-padding change passes all 14. Twelve phone/desktop/canonical screenshots
+were inspected, including the actual button at phone width.
+
+The earlier final-draft compatibility run passed 1,490 morning, wait, research,
+status and refresh checks. After the one-expression planner correction, all
+721 wait checks pass again. README/configuration are swept; 37 documentation
+checks pass. The new suite is part of the normal page gate via
+`--only decisioninspection`, which also passes all 108 controls in the shared
+harness. Final exact-head review, hosted gates and actual public acceptance
+are still pending. Python test
+collection remains 3,850; the design-system pin and all original source data
+and strategy rules are unchanged.
+
+## Checkpoint, 10 Oct 2026 — whole-share exit guidance released
+
+[PR #139](https://github.com/spicyChicken59/SpicyStock/pull/139) merged reviewed
+head `08b919f3` at `22309bb1`. All seven gates passed: 3,734 Python, 12,690 page,
+378 chart and 137 continuity checks, both native jobs and both secret checks.
+Native API artifact digests match official upload logs; their payloads were
+not separately downloaded. Publisher `38041498479` and Pages `38041510424`
+succeeded. The actual public runner passes 59 checks and matches 35 native
+files; a separate two-file native supplement verifies the historical companions
+and completes all 37 files in the current publisher inventory.
+
+Fresh actual public contexts keep cash unknown and private reports empty.
+Separate disposable contexts pass 80 clearly labelled synthetic private checks
+using genuine model-produced historical one/three-share drafts. They show the
+whole-share half-exit reference as one/zero or two/one exited/remaining, without
+deciding that another exit is due or assuming fractional-share support. Unknown
+reported exits keep holdings unknown; later explicit reports update the reference
+without rewriting original terms. Unknown prices/fees leave completed personal
+results unavailable. These controls do not establish Mo's balance, position,
+execution or profit. All eight screenshots were inspected without errors or
+overflow; there were no provider, broker or clipboard-copy actions.
+
+Reviewed runtime hashes match the merge. Source/strategy modules, canonical and
+reader publications, picks, histories, retained sources, morning/issuer/research
+companions and the design-system pin retain their prior bytes. Full exact heads,
+hosted counts and separate actual/private verification are retained in
+[the whole-share release receipt](release-evidence/2026-10-10-whole-share-exits/acceptance.json).
+The current baseline still has zero tickets; registered research is hypothetical.
+Next are the reviewed research journal and issuer consistency releases after their
+native gates, then the anticipation explanation/chart-inspection milestone.

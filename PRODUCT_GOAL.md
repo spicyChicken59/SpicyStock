@@ -126,6 +126,14 @@ returned no filing content or captured bytes. The reason for denial is unknown.
 The three permitted UTC-day production collection starts are exhausted; the
 source access problem remains open while independent product work continues.
 
+[Whole-share personal exit guidance](https://github.com/spicyChicken59/SpicyStock/pull/139)
+is merged and publicly verified. The [dated receipt](release-evidence/2026-10-10-whole-share-exits/acceptance.json)
+separates 59 actual public checks and all 37 required file matches from 80
+synthetic private checks for one/three-share drafts. Partial-exit reference
+arithmetic now identifies feasible whole shares while actual holdings, execution
+timing, fractional-share support and unreported results retain their uncertainty.
+No actual personal trade or profit is established by these rehearsals.
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.
