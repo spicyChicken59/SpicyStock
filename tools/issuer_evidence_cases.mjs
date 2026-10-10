@@ -13,22 +13,22 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   const file = name => readFile(path.join(ROOT, DIR, name));
   const publicationRaw = await file('publication.json'), readerRaw = await file('reader.json');
   const variants = {};
-  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable']) {
+  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable', 'http-denied']) {
     variants[name] = { receipt: JSON.parse(await file(name + '-receipt.json')), raw: await file(name + '-bundle.json') };
   }
-  const original = variants.collected, originalBundle = JSON.parse(original.raw);
+  const original = variants.collected;
   const bodyText = page => page.locator('[data-issuer-body]').innerText();
   const wait = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.issuerEvidence.status().state));
   const status = page => page.evaluate(() => SCStock.issuerEvidence.status());
   const publicRequests = requests => requests.filter(x => /\/issuer-evidence(?:\.json|\/)/.test(x.url));
-  function changed(editReceipt, editBundle) {
-    const receipt = structuredClone(original.receipt), bundle = structuredClone(originalBundle);
-    let raw = original.raw;
+  function changed(editReceipt, editBundle, source = original) {
+    const receipt = structuredClone(source.receipt), bundle = JSON.parse(source.raw);
+    let raw = source.raw;
     if (editBundle) { editBundle(bundle); raw = Buffer.from(JSON.stringify(bundle)); receipt.bundle = { sha256: sha(raw), bytes: raw.length, path: 'issuer-evidence/' + sha(raw) + '.json' }; }
     if (editReceipt) editReceipt(receipt);
     // Publication controls are internally coherent transports: only comparison
     // with the actual browser publication may reject them, not a second guard.
-    if (!editBundle && JSON.stringify(receipt.publication) !== JSON.stringify(original.receipt.publication)) {
+    if (!editBundle && JSON.stringify(receipt.publication) !== JSON.stringify(source.receipt.publication)) {
       bundle.publication = structuredClone(receipt.publication); raw = Buffer.from(JSON.stringify(bundle));
       receipt.bundle = { sha256: sha(raw), bytes: raw.length, path: 'issuer-evidence/' + sha(raw) + '.json' };
     }
@@ -121,6 +121,39 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
     } finally { await context.close(); }
   }
 
+  for (const [width, theme] of [[390, 'light'], [1280, 'dark']]) {
+    const tab = await setup({ width, theme, variant: variants['http-denied'] });
+    try {
+      const { page, requests } = tab;
+      eq('HTTP diagnostic disclosure remains deferred', publicRequests(requests).length, 0);
+      const before = await page.evaluate(() => ({ data: JSON.stringify(SCStock.data), model: JSON.stringify(SCStock.model), storage: JSON.stringify(localStorage), morning: SCStock.observations.facts(), copies: [...document.querySelectorAll('[data-copy]')].map(n => n.getAttribute('data-copy')) }));
+      await page.locator('.ss-morning__prep > summary').click();
+      await page.locator('#morning-cash').fill('234.56');
+      await page.locator('#morning-cash').focus();
+      await page.evaluate(() => { window.__httpCashNode = document.getElementById('morning-cash'); document.querySelector('[data-issuer-evidence]').open = true; });
+      await wait(page);
+      eq('producer HTTP403 failure is readable missing coverage', (await status(page)).state, 'loaded');
+      const diagnostics = page.locator('[data-issuer-error]');
+      check('observed HTTP403 and human collection phase are shown', /Observed HTTP 403 · SEC ticker mapping · http error/.test(await diagnostics.innerText()));
+      eq('HTTP403 diagnostic links only its fixed requested SEC mapping', await diagnostics.locator('a').getAttribute('href'), 'https://www.sec.gov/files/company_tickers_exchange.json');
+      eq('HTTP403 never invents retrieved issuer content', await page.locator('[data-issuer-document]').count(), 0);
+      check('HTTP refusal does not clear issuer news or earnings', /does not clear issuer news, check earnings or authorize an entry/.test(await page.locator('[data-issuer-evidence]').innerText()));
+      check('raw HTTP body, headers and exception strings remain absent', !/HTTP Error 403:|Forbidden body|WWW-Authenticate|Retry-After|Traceback/.test(await bodyText(page)));
+      eq('HTTP diagnostic preserves private input node, value and focus', await page.evaluate(() => [document.getElementById('morning-cash') === window.__httpCashNode, document.getElementById('morning-cash').value, document.activeElement === window.__httpCashNode]), [true, '234.56', true]);
+      eq('HTTP diagnostic changes no publication, model, saved state, observation or copy', await page.evaluate(() => ({ data: JSON.stringify(SCStock.data), model: JSON.stringify(SCStock.model), storage: JSON.stringify(localStorage), morning: SCStock.observations.facts(), copies: [...document.querySelectorAll('[data-copy]')].map(n => n.getAttribute('data-copy')) })), before);
+      await page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
+      check('HTTP403 retains existing source-backed event exclusion', /excluded research — no entry ticket/.test(await bodyText(page)) && /35/.test(await page.locator('[data-issuer-anchors]').innerText()));
+      eq('HTTP diagnostics fetch only the two shared public artifacts', publicRequests(requests).length, 2);
+      check(`${width}/${theme}: HTTP diagnostic fits the dialog`, await page.locator('#morning-desk').evaluate(n => n.scrollWidth <= n.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+      if (shotsDir) {
+        await mkdir(shotsDir, { recursive: true });
+        await diagnostics.first().scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(shotsDir, `issuer-http403-${width}-${theme}.png`) });
+      }
+      eq('HTTP diagnostic browser errors', [...tab.errors], []);
+    } finally { await tab.context.close(); }
+  }
+
   const tab = await setup();
   try {
     const { page, transport } = tab;
@@ -131,9 +164,86 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
       eq(variant + ' has no invented issuer excerpts', await page.locator('[data-issuer-document]').count(), 0);
       check(variant + ' explains unreviewed or unverified coverage', /unreviewed|Unverified|No document excerpts/.test(await bodyText(page)));
+      if (variant === 'outage') {
+        check('legacy source failure explicitly leaves HTTP status unknown', /HTTP status not recorded/.test(await page.locator('[data-issuer-error]').innerText()));
+        check('legacy source failure never invents an HTTP status', !/Observed HTTP \d/.test(await bodyText(page)));
+      }
       await page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
       check(variant + ' retains known exclusion independently', /35/.test(await page.locator('[data-issuer-anchors]').innerText()));
     }
+    const errorBoundary = [
+      ['status without phase', e => { delete e.source_phase; }],
+      ['phase without status', e => { delete e.http_status; }],
+      ['boolean HTTP status', e => { e.http_status = true; }],
+      ['string HTTP status', e => { e.http_status = '403'; }],
+      ['fractional HTTP status', e => { e.http_status = 403.5; }],
+      ['null HTTP status', e => { e.http_status = null; }],
+      ['successful HTTP status', e => { e.http_status = 200; }],
+      ['below HTTP refusal range', e => { e.http_status = 299; }],
+      ['above HTTP refusal range', e => { e.http_status = 600; }],
+      ['unknown collection phase', e => { e.source_phase = 'provider'; }],
+      ['HTTP status with timeout code', e => { e.code = 'timeout'; }],
+      ['redirect status with HTTP error code', e => { e.http_status = 302; }],
+      ['rate-limit status with HTTP error code', e => { e.http_status = 429; }],
+      ['HTTP error status with rate-limit code', e => { e.code = 'rate_limit'; }],
+      ['HTTP error status with redirect code', e => { e.code = 'redirect_refused'; }],
+      ['mapping phase wrong exact SEC URL', e => { e.source_url = 'https://www.sec.gov/files/company_tickers.json'; }],
+      ['HTTP diagnostic lacks source URL', e => { e.source_url = null; }],
+      ['mapping URL with submissions phase', e => { e.source_phase = 'submissions'; }],
+      ['mapping URL with history phase', e => { e.source_phase = 'history'; }],
+      ['mapping URL with primary phase', e => { e.source_phase = 'primary'; }],
+      ['mapping URL with exhibit phase', e => { e.source_phase = 'exhibit'; }],
+      ['HTTP diagnostic cannot carry a raw body', e => { e.body = 'Forbidden body'; }],
+      ['HTTP diagnostic cannot carry response headers', e => { e.headers = { 'WWW-Authenticate': 'private' }; }]
+    ];
+    for (const [name, edit] of errorBoundary) {
+      transport.current = changed(null, b => edit(b.issuers[0].errors[0]), variants['http-denied']);
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq(name + ' is refused after valid transport resealing', (await status(page)).state, 'unavailable');
+      eq(name + ' leaves no unverified diagnostic text', await page.locator('[data-issuer-error]').count(), 0);
+      check(name + ' cannot erase the archived event exclusion', /35/.test(await page.locator('[data-issuer-anchors]').innerText()));
+    }
+    // These are deliberately invalid diagnostic additions to a genuine verified
+    // producer row. Each URL violates only its phase's issuer/file identity.
+    const wrongSources = [
+      ['submissions CIK', 'submissions', 'https://data.sec.gov/submissions/CIK0001654126.json'],
+      ['history CIK', 'history', 'https://data.sec.gov/submissions/CIK0001654126-submissions-001.json'],
+      ['history filename', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-01.json'],
+      ['history trailing newline', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json\n'],
+      ['history trailing carriage return', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json\r'],
+      ['primary issuer', 'primary', 'https://www.sec.gov/Archives/edgar/data/1654126/000032019326009001/synthetic-9001.htm'],
+      ['primary unselected accession', 'primary', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009004/synthetic-9004.htm'],
+      ['primary filename', 'primary', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/different.htm'],
+      ['exhibit issuer', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/1654126/000032019326009001/synthetic-ex99.htm'],
+      ['exhibit unselected accession', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009004/synthetic-ex99.htm'],
+      ['exhibit cannot be primary', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-9001.htm'],
+      ['exhibit filetype', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.txt'],
+      ['exhibit leading dot', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/.hidden.htm'],
+      ['exhibit leading hyphen', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/-hidden.htm'],
+      ['exhibit oversized basename', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/' + 'a'.repeat(201) + '.htm'],
+      ['exhibit trailing newline', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.htm\n'],
+      ['exhibit trailing carriage return', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.htm\r']
+    ];
+    for (const [name, phase, url] of wrongSources) {
+      transport.current = changed(null, b => { b.issuers[0].errors.push({ code: 'http_error', source_url: url, http_status: 403, source_phase: phase }); });
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq(name + ' diagnostic URL is refused against verified source metadata', (await status(page)).state, 'unavailable');
+      eq(name + ' leaves no invalid diagnostic source link', await page.locator('[data-issuer-error]').count(), 0);
+    }
+    for (const [name, filename] of [['leading dot', '.hidden.htm'], ['leading hyphen', '-hidden.htm'], ['oversized basename', 'a'.repeat(201) + '.htm']]) {
+      transport.current = changed(null, b => {
+        const row = b.issuers[0], filing = row.index.listed_filings[0];
+        filing.primary_document = filename;
+        const url = 'https://www.sec.gov/Archives/edgar/data/' + row.identity.cik + '/' + filing.accession.replaceAll('-', '') + '/' + filename;
+        row.documents.find(doc => doc.accession === filing.accession && doc.role === 'primary').source.url = url;
+        row.errors.push({ code: 'http_error', source_url: url, http_status: 403, source_phase: 'primary' });
+      });
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq('coherently altered primary ' + name + ' diagnostic is refused', (await status(page)).state, 'unavailable');
+      eq('coherently altered primary ' + name + ' leaves no invalid source link', await page.locator('[data-issuer-error]').count(), 0);
+    }
+    transport.current = variants['http-denied']; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+    eq('genuine HTTP403 receipt reloads after diagnostic refusals', (await status(page)).state, 'loaded');
     transport.current = variants.inapplicable; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
     eq('actual skipped collection remains readable source context', (await status(page)).state, 'loaded');
     check('wrong scan session is named without a false fetch-cap claim', /scan session was not current/.test(await bodyText(page)) && /No SEC collection ran/.test(await bodyText(page)) && !/collection cap|exceeded the fetch cap/.test(await bodyText(page)));

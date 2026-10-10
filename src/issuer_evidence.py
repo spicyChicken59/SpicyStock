@@ -72,11 +72,21 @@ COVERAGE = {"issuer_news": {"status": "not_cleared", "reason": "Bounded SEC docu
 
 
 class SourceError(ValueError):
-    def __init__(self, code):
+    def __init__(self, code, *, http_status=None):
         if code not in ERRORS:
             code = "invalid_response"
+        if http_status is not None and not _http_failure(code, http_status):
+            raise ValueError("issuer HTTP status does not match its error code")
         self.code = code
+        self.http_status = http_status
         super().__init__(code)
+
+
+def _http_failure(code, status):
+    if type(status) is not int or not 300 <= status <= 599:
+        return False
+    expected = "redirect_refused" if status < 400 else "rate_limit" if status == 429 else "http_error"
+    return code == expected
 
 
 def _require(condition, message):
@@ -369,10 +379,14 @@ def validate_bundle(receipt_raw, bundle_raw):
                  and accessions == [f["accession"] for f in index["listed_filings"][:MAX_REPORTS]], "issuer latest report selection")
         _require(isinstance(row["errors"], list) and len(row["errors"]) <= MAX_REQUESTS, "issuer errors bound")
         for error in row["errors"]:
-            _keys(error, ("code", "source_url"))
+            _keys(error, ("code", "source_url"), ("http_status", "source_phase"))
             _require(error["code"] in ERRORS, "issuer source error")
             if error["source_url"] is not None:
                 _sec_url(error["source_url"])
+            _require(("http_status" in error) == ("source_phase" in error), "issuer HTTP diagnostic pair")
+            if "http_status" in error:
+                _require(_http_failure(error["code"], error["http_status"]), "issuer HTTP status and code")
+                _http_phase(error["source_phase"], error["source_url"], identity, metadata, accessions)
         docs = row["documents"]
         _require(isinstance(docs, list) and len(docs) <= MAX_REPORTS * (1 + MAX_EXHIBITS), "issuer document bound")
         doc_urls, primary_counts, exhibit_counts = set(), {}, {}
@@ -592,7 +606,13 @@ def parse_primary(raw, url):
 
 class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise SourceError("redirect_refused")
+        try:
+            if fp is not None:
+                fp.close()
+        finally:
+            # urllib closes only after redirect_request returns; refusal must
+            # release the original response without reading or following it.
+            raise SourceError("redirect_refused", http_status=code) from None
 
 
 class _RequestDeadline:
@@ -799,9 +819,14 @@ class _Transport:
                 if not body:
                     raise SourceError("invalid_response")
         except HTTPError as error:
-            if 300 <= error.code < 400:
-                raise SourceError("redirect_refused") from None
-            raise SourceError("rate_limit" if error.code == 429 else "http_error") from None
+            status = error.code
+            try:
+                error.close()  # Never read or persist an arbitrary error body.
+            finally:
+                if type(status) is not int or not 300 <= status <= 599:
+                    raise SourceError("invalid_response") from None
+                code = "redirect_refused" if status < 400 else "rate_limit" if status == 429 else "http_error"
+                raise SourceError(code, http_status=status) from None
         except (TimeoutError, URLError, OSError) as error:
             code = "timeout" if isinstance(error, TimeoutError) or isinstance(getattr(error, "reason", None), TimeoutError) else "network_error"
             raise SourceError(code) from None
@@ -905,8 +930,42 @@ def _empty_issuer(ticker, start):
             "index": _empty_index(start), "documents": [], "errors": []}
 
 
-def _error(row, code, url=None):
-    row["errors"].append({"code": code, "source_url": url})
+def _http_phase(phase, url, identity, metadata, accessions):
+    """Bind diagnostics to an existing collection stage and requested source.
+
+    A response cannot supply this path, phase, a redirect destination or text.
+    Old two-field errors remain readable without inventing missing diagnostics.
+    """
+    _require(isinstance(phase, str) and phase in ("mapping", "submissions", "history", "primary", "exhibit"), "issuer HTTP source phase")
+    _require(isinstance(url, str), "issuer HTTP source URL")
+    if phase == "mapping":
+        _require(url == MAPPING_URL, "issuer HTTP mapping URL")
+        return
+    cik = identity["cik"]
+    _require(type(cik) is int and 0 < cik < 10**10, "issuer HTTP source identity")
+    if phase == "submissions":
+        allowed = url == f"https://data.sec.gov/submissions/CIK{cik:010d}.json"
+    elif phase == "history":
+        allowed = bool(re.fullmatch(r"https://data.sec.gov/submissions/CIK" + f"{cik:010d}" + r"-submissions-[0-9]{3}\.json", url))
+    else:
+        allowed = False
+        for accession in accessions:
+            prefix = f'https://www.sec.gov/Archives/edgar/data/{cik}/{accession.replace("-", "")}/'
+            primary_url = prefix + metadata[accession]["primary_document"]
+            if phase == "primary":
+                allowed |= url == primary_url
+            else:
+                allowed |= (url.startswith(prefix) and _basename(url[len(prefix):])
+                            and url.lower().endswith((".htm", ".html")) and url != primary_url)
+    _require(allowed, "issuer HTTP phase and requested URL")
+
+
+def _error(row, code, url=None, *, http_status=None, phase=None):
+    item = {"code": code, "source_url": url}
+    if http_status is not None:
+        _require(_http_failure(code, http_status), "issuer HTTP status and code")
+        item.update(http_status=http_status, source_phase=phase)
+    row["errors"].append(item)
 
 
 def _excerpt(text):
@@ -930,7 +989,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     except SourceError as error:
         row.update(status="identity_unverified", reason="SEC ticker mapping does not establish one issuer identity.")
         row["identity"]["mapping_source"] = mapping_source
-        _error(row, error.code, MAPPING_URL)
+        _error(row, error.code, MAPPING_URL, http_status=error.http_status, phase="mapping")
         return
     row["identity"].update(cik=mapped["cik"], name=mapped["name"], mapping_source=mapping_source)
     cik = mapped["cik"]
@@ -942,7 +1001,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     except SourceError as error:
         row.update(status="identity_unverified" if error.code == "identity_unverified" else "unavailable",
                    reason="SEC submissions could not establish current issuer metadata.")
-        _error(row, error.code, url)
+        _error(row, error.code, url, http_status=error.http_status, phase="submissions")
         return
     row["identity"].update(status="verified", submissions_source=source)
     index = row["index"]
@@ -973,7 +1032,8 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 if old["invalid_count"]:
                     _error(row, "metadata_invalid", history_url)
             except (SourceError, ValueError, KeyError, TypeError) as error:
-                _error(row, error.code if isinstance(error, SourceError) else "metadata_invalid", history_url)
+                _error(row, error.code if isinstance(error, SourceError) else "metadata_invalid", history_url,
+                       http_status=error.http_status if isinstance(error, SourceError) else None, phase="history")
     full_window = index["range_start"] is not None and index["range_start"] <= index["window_start"]
     index["coverage_status"] = "observed_window" if full_window and not row["errors"] else "partial"
     index["reason"] = None if index["coverage_status"] == "observed_window" else "The full requested index history has not been established; older content is not cleared."
@@ -993,7 +1053,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
             fetcher.budget.check_time()
             row["documents"].append(_document(filing, "primary", source, primary))
         except SourceError as error:
-            _error(row, error.code, document_url)
+            _error(row, error.code, document_url, http_status=error.http_status, phase="primary")
             continue
         index["exhibit_links_observed"] += len(primary["links"])
         fetched_exhibits = 0
@@ -1005,7 +1065,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                 row["documents"].append(_document(filing, "exhibit", source, exhibit))
                 fetched_exhibits += 1
             except SourceError as error:
-                _error(row, error.code, exhibit_url)
+                _error(row, error.code, exhibit_url, http_status=error.http_status, phase="exhibit")
         index["exhibit_links_not_fetched"] += len(primary["links"]) - fetched_exhibits
     partial = bool(row["errors"] or index["not_selected_count"] or index["exhibit_links_not_fetched"]
                    or any(d["excerpt"]["truncated"] for d in row["documents"]))
@@ -1039,7 +1099,7 @@ def collect(canonical_raw, *, fetch=None, now=None, finished_at=None, run_id, dr
                 _collect_issuer(row, mapping_body, mapping_source, fetcher, start)
         except SourceError as error:
             for row in issuers:
-                _error(row, error.code, MAPPING_URL)
+                _error(row, error.code, MAPPING_URL, http_status=error.http_status, phase="mapping")
     completion = _instant(finished_at if finished_at is not None else start if pinned else datetime.now(timezone.utc))
     bundle = {"schema_version": VERSION, "publication": binding, "collection_started_at": _iso(start),
               "generated_at": _iso(completion), "as_of": _iso(start),

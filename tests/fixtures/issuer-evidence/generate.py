@@ -23,7 +23,7 @@ from tools import make_fixture  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
-VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable")
+VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
 
@@ -112,6 +112,8 @@ def transport(variant="collected", *, edits=None):
 
     def fetch(url):
         calls.append(url)
+        if variant == "http-denied":
+            raise issuer.SourceError("http_error", http_status=403)
         if variant == "outage":
             raise issuer.SourceError("rate_limit")
         if variant == "metadata-only" and "/Archives/" in url:
