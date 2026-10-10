@@ -5594,3 +5594,73 @@ clean with gitleaks 8.30.1. The final independent research review also approved
 checks, plus exact production-companion validation/replay with sockets denied
 and independent Decimal sizing. Those are local review results, not a public
 release or a reported personal trade.
+
+## Checkpoint, 10 Oct 2026 — personal trade reports accepted on production
+
+PR #126 merged exact reviewed head `6a505ffd` as `9edab25c` at 08:28:26 UTC.
+Its 3,577 Python, 12,014 page, 378 chart and 137 continuity checks passed;
+13 page, 21 morning and 12 issuer fixture files reproduced. All seven required
+checks were green, including both native runtime cases and both secret scans.
+Two independent reviewers confirmed the final receipt-only correction against
+actual run `38033614291`: final A=41 and A+=0, rather than its mechanical A=53.
+The eight previously reviewed application hashes were unchanged by that delta.
+
+Publisher `38037996469` and replacement Pages deployment `38038008362` passed
+for `9edab25c`; initial Pages run `38037996293` was cancelled, not passed.
+Actual public acceptance passed 56 checks and matched 32 native original-byte
+files against this exact commit, using the real clock/default loader in fresh
+390px light and 1280px dark browsers. Cash remained unknown and private history
+empty, with no horizontal overflow, application/transport errors or invented
+entry. Seven scoped screenshots were inspected. A separate synthetic private
+rehearsal passed 17 controls for v1 read without save, explicit v2 correction,
+net gain $3.65, net loss -$1.85, and an unknown exit fee hiding all result amounts.
+No request carried those corrections; these were test facts, not Mo's trades.
+
+The scoped receipt is
+`release-evidence/2026-10-10-personal-results/acceptance.json`. A second local
+check matched all 32 public hashes to Git and confirmed all 18,584 retained
+history/evidence files, canonical/reader/picks and design-system bytes unchanged
+from `981e6792`. The published historical morning receipt remains unavailable
+for the newer source publication. The old closed-session sentence still names
+the measured Friday when viewed on Saturday; PR #132 contains its reviewed fix.
+On-time quotes, current issuer-news/earnings clearance, broker-specific terms
+and any actual successful trade remain open.
+
+PR #129 head `639dff8b` also passed all seven checks, including 3,607 Python,
+11,761 page, 378 chart and 137 continuity controls. After #126 merged, #129
+conflicted with main. Its reviewed source is already integrated into exact
+PR #132 head `d7e33174`, which is mergeable and has passed Python/page/secrets
+but still awaits its native gates. Ship that existing integration when all its
+checks pass, then verify one actual off-hours morning publication and automatic
+issuer collection. No conflicting head was merged or gate bypassed. Only one
+of the three daily production issuer starts has been used at this checkpoint.
+
+## Checkpoint, 10 Oct 2026 — whole-share personal exit reference prepared
+
+Issue #137 was reproduced over a genuine producer cash fixture: a personal
+one-share draft retained the four-share model's literal "sell half" schedule
+with no personal quantity explanation. The schedule now explicitly says it is
+archived model wording. A derived whole-share reference applies the existing
+`plan.follow()` at-least-half convention: one of one, two of three. It is
+reference arithmetic, never a decision that an exit is due or a claim that a
+broker supports fractional shares. Prior exits need review before acting.
+
+Before reporting, the reference names the personal draft. After any report it
+uses only remaining holdings derived from both reported entry fills and exits;
+unknown quantities stay unknown and zero remaining shares leaves the schedule
+as history. The original schedule, published plan, saved storage schema,
+entry/copy guards and personal facts remain unchanged. The explanation also
+travels with the clipboard readback. There is no broker connection or new
+provider/configuration requirement.
+
+All 34 model controls pass, including three added controls that fail against
+the original module. Three isolated semantic mutations (round down, infer draft
+holdings, discard reported exits) each fail two targeted cases. An unrelated
+storage-capacity change passes all three new controls; the existing capacity
+test correctly rejects it when the full suite is run. Integrated browser
+acceptance passes 674 cash/handoff/recovery checks and 37 documentation checks
+pass. Phone/desktop captures were inspected. Independent verification adds 20
+controls against actual Python `plan.follow()` whole-share sales and 269 browser
+checks. The final precision edit "in whole shares" passes 34 model checks and
+eight additional independent phone checks; its source delta contains only those
+words. No production release of this exit-reference change is claimed yet.

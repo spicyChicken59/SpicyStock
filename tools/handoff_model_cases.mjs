@@ -460,3 +460,53 @@ test('legacy expansion cannot write past the byte cap or evict another reported 
   assert.equal(saved.ok, false); assert.match(saved.error, /storage is full/);
   assert.equal(env.store.get(env.handoff.KEY), raw); assert.equal(env.state.writes, 0); assert.equal(env.handoff.status().count, 30);
 });
+
+test('whole-share exit reference uses personal draft and existing round-up convention without revising the model', async () => {
+  for (const [quantity, half, left] of [[1, 1, 0], [2, 1, 1], [3, 2, 1], [4, 2, 2]]) {
+    const env = environment(), before = JSON.stringify(env.api.data);
+    const result = await env.prepare({ quantity: String(quantity), fees: '0' });
+    assert.equal(result.ok, true, result.error);
+    const stored = env.store.get(env.handoff.KEY), writes = env.state.writes;
+    const review = plain(env.handoff.summary(result.item).exit_review);
+    assert.equal(review.basis, 'personal_draft'); assert.equal(review.quantity, quantity);
+    assert.equal(review.model_half_quantity, half); assert.equal(review.model_remaining_quantity, left);
+    assert.equal(review.needs_review, quantity % 2 !== 0);
+    assert.match(review.message, /reference arithmetic/i);
+    if (quantity === 1) assert.match(review.message, /one-share position cannot be partly exited/i);
+    if (quantity === 3) assert.match(review.message, /rounds up to 2 whole shares/);
+    assert.match(env.handoff.readback(result.item), /Whole-share exit reference/);
+    assert.equal(result.item.plan.order.quantity, 4);
+    assert.equal(JSON.stringify(env.api.data), before); assert.equal(env.store.get(env.handoff.KEY), stored); assert.equal(env.state.writes, writes);
+  }
+});
+
+test('whole-share exit reference uses reported remaining holdings and never assumes an unknown fill or exit', async () => {
+  const env = environment(), { item } = await env.prepare({ quantity: '3' });
+  for (const [fields, basis, quantity, half, left] of [
+    [{ submitted_quantity: '3' }, 'reported_unknown', null, null, null],
+    [{ submitted_quantity: '3', filled_quantity: '3' }, 'reported_unknown', null, null, null],
+    [{ submitted_quantity: '3', filled_quantity: '3', exited_quantity: '0' }, 'reported_remaining', 3, 2, 1],
+    [{ submitted_quantity: '3', filled_quantity: '3', exited_quantity: '1' }, 'reported_remaining', 2, 1, 1],
+    [{ submitted_quantity: '3', filled_quantity: '3', exited_quantity: '2' }, 'reported_remaining', 1, 1, 0],
+    [{ submitted_quantity: '3', filled_quantity: '3', exited_quantity: '3' }, 'reported_remaining', 0, null, null]
+  ]) {
+    const current = env.handoff.find(item.id);
+    const result = await env.handoff.report(item.id, reportFields(fields), current.revision);
+    assert.equal(result.ok, true, result.error);
+    const review = plain(env.handoff.summary(result.item).exit_review);
+    assert.equal(review.basis, basis); assert.equal(review.quantity, quantity);
+    assert.equal(review.model_half_quantity, half); assert.equal(review.model_remaining_quantity, left);
+    if (quantity === null) assert.match(review.message, /holdings are unknown/i);
+    else if (quantity === 0) assert.match(review.message, /reported no remaining shares/i);
+    else assert.match(review.message, /does not determine whether another exit is due/i);
+    assert.equal(env.handoff.find(item.id).draft.quantity, 3);
+  }
+});
+
+test('whole-share exit reference reads legacy storage without migration or extra writes', () => {
+  const store = new Map([['spicystock:handoff:v1', LEGACY_RAW]]), env = environment({ store });
+  const item = env.handoff.list()[0], review = env.handoff.summary(item).exit_review;
+  assert.equal(review.basis, 'reported_remaining'); assert.equal(review.quantity, 0);
+  assert.equal(review.model_half_quantity, null); assert.equal(review.model_remaining_quantity, null);
+  assert.equal(store.get(env.handoff.KEY), LEGACY_RAW); assert.equal(env.state.writes, 0);
+});

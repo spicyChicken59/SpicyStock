@@ -35,8 +35,8 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     await tab.page.locator('.ss-morning__prep > summary').click();
     return { ...tab, requests, halt: async () => { sidecar = halted; await tab.page.evaluate(() => SCStock.observations.reload()); await tab.page.waitForFunction(() => SCStock.observations.facts().state === 'loaded'); } };
   };
-  const prepare = async page => {
-    await page.locator('#morning-cash').fill('2000'); await page.locator('#morning-preview-fees').fill('1'); await page.locator('#morning-preview-quantity').fill('2');
+  const prepare = async (page, quantity = 2) => {
+    await page.locator('#morning-cash').fill('2000'); await page.locator('#morning-preview-fees').fill('1'); await page.locator('#morning-preview-quantity').fill(String(quantity));
     await page.locator('[data-handoff-prepare]').click();
     await page.waitForFunction(() => SCStock.handoff.list().length === 1);
   };
@@ -54,6 +54,8 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       eq('draft does not infer held, filled or submitted', [(await state(page))['Remaining reported holdings'], (await state(page))['Cumulative entry filled'], (await state(page))['Reported submitted']], ['Unknown', 'Unknown', 'Unknown']);
       eq('readback focuses its heading after explicit preparation', await page.evaluate(() => document.activeElement.id), 'handoff-title');
       await page.locator('[data-handoff-readback] > summary').click();
+      check('dated exit schedule is labelled archived and not resized', /Archived model exit schedule/.test(await page.locator('[data-handoff-readback]').textContent()) && /not resized to your personal draft or reported holdings/.test(await page.locator('[data-handoff-readback]').textContent()));
+      check('two-share draft has explicit whole-share reference', /personal draft is 2 whole shares.*rounds up to 1 whole share, leaving 1/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       check('readback labels personal two and original four separately', /BUY 2 COIL/.test(await page.locator('[data-handoff-text]').textContent()) && /Published quantity: 4/.test(await page.locator('[data-handoff-text]').textContent()));
       await page.locator('[data-handoff-copy]').click();
       check('clipboard contains chosen two and no submission claim', await page.evaluate(async () => /BUY 2 COIL/.test(await navigator.clipboard.readText()) && /places no order/.test(await navigator.clipboard.readText())));
@@ -62,8 +64,10 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       await set(page, { submitted_quantity: '2', submitted_at: '2026-09-11T08:33:00-05:00', filled_quantity: '1', average_price: '111.23', filled_at: '2026-09-11T08:34:00-05:00' });
       await save(page);
       eq('entry fill alone leaves remaining holdings unknown', [(await state(page))['Cumulative entry filled'], (await state(page))['Remaining reported holdings'], (await state(page))['Entry shares not filled']], ['1', 'Unknown', '1']);
+      check('unknown exits cannot apply draft sizing to holdings', /holdings are unknown.*draft quantity is not a report/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       await set(page, { exited_quantity: '0' }); await save(page);
       eq('explicit no exits gives one held and one unfilled', [(await state(page))['Remaining reported holdings'], (await state(page))['Entry shares not filled'], (await state(page))['Entry remainder not reported cancelled']], ['1', '1', 'Unknown']);
+      check('one remaining reported share cannot be partly exited', /reported remaining holdings are 1 whole share.*one-share position cannot be partly exited/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       eq('reported facts disable new-entry readback copy', await page.locator('[data-handoff-copy]').isDisabled(), true);
       check('unknown protection stays explicit', /Protection is unknown/.test(await page.locator('[data-handoff-protection]').textContent()));
       await set(page, { cancelled_quantity: '1', cancelled_at: '2026-09-11T08:34:30-05:00', protected_quantity: '1', protection_confirmed_at: '2026-09-11T08:35:00-05:00' }); await save(page);
@@ -87,6 +91,7 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       eq('actual facts stay recordable after expiry and halt', (await saved(page))[0].report.average_price, '111.2345');
       await set(page, { exited_quantity: '1', exited_at: '2026-09-11T09:00:00-05:00' }); await save(page);
       eq('exit preserves entry history while reducing held shares', [(await state(page))['Cumulative entry filled'], (await state(page))['Reported exited'], (await state(page))['Remaining reported holdings']], ['1', '1', '0']);
+      check('fully exited reported position leaves archived schedule as history', /reported no remaining shares.*remains history/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       check('remaining protective sell needs reconciliation after exit', /exceeds/.test(await page.locator('[data-handoff-protection]').textContent()));
       eq('missing actual exit price and costs never borrow draft buffer', [(await state(page))['Draft fee buffer (estimate)'], await resultAmounts(page)], ['$1.00', {}]);
       await set(page, { average_price: '111.23', average_exit_price: '115', entry_fees: '0.05', exit_fees: '0.07' }); await save(page);
@@ -256,6 +261,27 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       check(label + ' explains read-only/unreadable state', /unavailable|unreadable|another version|isn’t available/.test(await page.locator('[data-handoff-storage]').textContent()));
       if (label === 'future storage version') eq('unknown store left byte-exact', await page.evaluate(key => localStorage.getItem(key), KEY), '{"version":999,"items":[]}');
     } finally { await context.close(); }
+  }
+  for (const [width, theme] of [[390, 'light'], [1280, 'dark']]) {
+    for (const [quantity, half, left] of [[1, 1, 0], [3, 2, 1]]) {
+      const { page, context, errors, requests } = await launch(width, theme);
+      try {
+        const before = await page.evaluate(() => JSON.stringify(SCStock.data)), requestCount = requests.length;
+        await prepare(page, quantity);
+        const message = await page.locator('[data-handoff-exit-review]').textContent();
+        check('odd draft ' + quantity + ' shows actual whole-share model convention', message.includes('personal draft is ' + quantity + ' whole share') && message.includes('rounds up to ' + half + ' whole share') && message.includes('leaving ' + left));
+        check('odd draft review is conditional and broker support remains unknown', /reference arithmetic.*does not determine whether another exit is due/.test(message) && /fractional-share support is unknown/.test(message));
+        if (quantity === 1) check('single-share draft explicitly cannot be partially exited', /one-share position cannot be partly exited/.test(message));
+        await page.locator('[data-handoff-readback] > summary').click();
+        await page.locator('[data-handoff-copy]').click();
+        check('copied readback keeps whole-share explanation', await page.evaluate(async expected => (await navigator.clipboard.readText()).includes('Whole-share exit reference: ' + expected), message));
+        eq('odd draft leaves original model and all report fields unchanged', await page.evaluate(original => [JSON.stringify(SCStock.data) === original, SCStock.handoff.list()[0].plan.order.quantity, Object.values(SCStock.handoff.list()[0].report).every(value => value === null)], before), [true, 4, true]);
+        eq('whole-share review sends no network requests', requests.slice(requestCount), []);
+        check('whole-share text fits phone and desktop', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+        if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.locator('[data-handoff-exit-review]').scrollIntoViewIfNeeded(); await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'whole-share-' + quantity + '-' + width + '-' + theme + '.png') }); }
+        eq('whole-share reference raises no page errors', [...errors], []);
+      } finally { await context.close(); }
+    }
   }
   for (const module of ['app-handoff.js', 'app-handoff-ui.js']) {
     const { page, context, errors } = await launch(390, 'light', page => page.route('**/' + module, route => route.fulfill({ contentType: 'text/javascript', body: '/* unavailable optional module control */' })));
