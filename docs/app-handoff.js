@@ -18,7 +18,9 @@
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   const emptyReport = () => Object.fromEntries(FIELDS.map(key => [key, null]));
-  const reported = item => FIELDS.some(key => item.report[key] !== null);
+  // Clearing cumulative fields means unknown, never "no order was submitted".
+  // Once reporting begins, corrections cannot revive a fresh entry draft.
+  const reported = item => item.report_updated_at !== null || FIELDS.some(key => item.report[key] !== null);
   const keyOf = candidate => candidate.stage + ':' + candidate.ticker;
   const cents = value => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
   const dollars = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');

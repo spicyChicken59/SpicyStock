@@ -226,6 +226,9 @@ test('an explicit correction replaces cumulative totals and never adds a second 
   assert.equal(result.ok, true, result.error); assert.equal(env.handoff.summary(result.item).reported_held_quantity, 1); assert.equal(result.item.report.average_price, '110.8');
   result = await env.handoff.report(item.id, reportFields(), result.item.revision);
   assert.equal(result.ok, true, result.error); assert.equal(env.handoff.summary(result.item).reported_held_quantity, null);
+  assert.equal(env.handoff.summary(result.item).state, 'reported_unknown_fill');
+  assert.equal(env.handoff.copy(item.id).ok, false);
+  assert.equal((await env.prepare({ expectedRevision: result.item.revision })).ok, false);
   assert.ok(result.item.report_updated_at); assert.equal(result.item.plan.order.quantity, 4);
 });
 
