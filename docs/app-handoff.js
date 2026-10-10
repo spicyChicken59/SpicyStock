@@ -14,6 +14,7 @@
   const QUANTITIES = ['submitted_quantity', 'filled_quantity', 'cancelled_quantity', 'exited_quantity', 'protected_quantity'];
   const TIMES = ['submitted_at', 'filled_at', 'cancelled_at', 'exited_at', 'protection_confirmed_at'];
   const listeners = [];
+  const backupPreviews = new WeakMap();
   let lastError = '', pending = null;
   const clone = value => JSON.parse(JSON.stringify(value));
   const fail = error => ({ ok: false, error });
@@ -143,19 +144,26 @@
     const report = normalizeReport(item.report, null, version);
     return report.ok && same(report.report, item.report) && (item.report_updated_at === null ? !reported(item) : !!timestamp(item.report_updated_at) && Date.parse(item.report_updated_at) <= Date.parse(item.updated_at));
   }
+  // Parse files and storage through the same complete rules. This is pure:
+  // an invalid selected file must not poison a healthy destination's status.
+  function parseStore(raw) {
+    if (typeof raw !== 'string' || /[\uD800-\uDFFF]/u.test(raw) || new w.TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('size or encoding');
+    const store = JSON.parse(raw);
+    if (!exactKeys(store, ['version', 'items']) || ![1, 2, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
+    // The normalized view is not an export or restore serialization.
+    const items = store.version < VERSION ? store.items.map(item => ({ ...item, version: VERSION, kind: 'planned_handoff',
+      report: store.version === 1 ? { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } : item.report })) : store.items;
+    return { items, raw, version: store.version };
+  }
   function load() {
     let raw;
     try {
       raw = w.localStorage.getItem(KEY);
       if (raw === null) { lastError = ''; return { ok: true, items: [], raw }; }
-      if (new w.TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('size');
-      const store = JSON.parse(raw);
-      if (!exactKeys(store, ['version', 'items']) || ![1, 2, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
       // Reading an old record never writes or invents prices, fees or times.
       // The original raw bytes remain available for a failed explicit save.
-      const items = store.version < VERSION ? store.items.map(item => ({ ...item, version: VERSION, kind: 'planned_handoff',
-        report: store.version === 1 ? { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } : item.report })) : store.items;
-      lastError = ''; return { ok: true, items, raw };
+      const parsed = parseStore(raw);
+      lastError = ''; return { ok: true, ...parsed };
     } catch (error) {
       lastError = 'Private handoff storage is unavailable, unreadable or from another version. It was left untouched; no reported positions were removed.';
       return { ok: false, items: [], raw, error: lastError };
@@ -167,6 +175,14 @@
     if (items.length > MAX_ITEMS) return fail('Private storage has reached ' + MAX_ITEMS + ' handoffs. Explicitly remove an old record before preparing another; nothing was evicted.');
     const raw = JSON.stringify({ version: VERSION, items });
     if (new w.TextEncoder().encode(raw).length > MAX_BYTES) return fail('Private handoff storage is full. Nothing was removed or overwritten.');
+    return writeRaw(loaded, raw);
+  }
+  function writeRaw(loaded, raw) {
+    // All app writers share the lock. Also refuse an out-of-band raw change
+    // before writing; equal item counts are not an unchanged destination.
+    try {
+      if (w.localStorage.getItem(KEY) !== loaded.raw) return fail('Private storage changed in another view. Review it again before saving; nothing was overwritten.');
+    } catch (error) { return fail('Private storage could not be checked before saving. Nothing was overwritten.'); }
     try {
       w.localStorage.setItem(KEY, raw);
       if (w.localStorage.getItem(KEY) !== raw) throw new Error('readback');
@@ -271,6 +287,48 @@
       const saved = save(loaded, loaded.items.filter(row => row.id !== id)); return saved.ok ? { ok: true } : saved;
     });
   }
+  function backupSummary(parsed) {
+    return { version: parsed.version, count: parsed.items.length,
+      planned_count: parsed.items.filter(item => !independent(item)).length,
+      independent_count: parsed.items.filter(independent).length,
+      records: parsed.items.map(item => {
+        const source = independent(item) ? item.source : item, pub = source.publication;
+        return { id: item.id, ticker: independent(item) ? source.ticker : item.plan.ticker, kind: item.kind,
+          session: independent(item) ? pub.measured_session : pub.session, published_at: pub.published_at,
+          created_at: item.created_at, updated_at: item.updated_at };
+      }) };
+  }
+  function exportBackup() {
+    const loaded = load();
+    if (!loaded.ok) return fail(loaded.error);
+    if (loaded.raw === null) return fail('There are no saved private records to download. Unsaved inputs are not a backup.');
+    return { ok: true, raw: loaded.raw, summary: backupSummary(loaded) };
+  }
+  function previewBackup(raw) {
+    let parsed;
+    try { parsed = parseStore(raw); } catch (error) { return fail('This file is not a supported private backup, is inconsistent, or exceeds the 100-record / 1 MiB limit. Nothing was changed.'); }
+    const loaded = load();
+    if (!loaded.ok) return fail(loaded.error);
+    if (loaded.items.length) return fail('Restore requires empty private storage. Existing records will not be merged or overwritten.');
+    const preview = { raw, expectedRaw: loaded.raw, summary: backupSummary(parsed) };
+    backupPreviews.set(preview, { raw, expectedRaw: loaded.raw });
+    return { ok: true, preview };
+  }
+  async function restoreBackup(preview) {
+    return transaction(loaded => {
+      if (!exactKeys(preview, ['raw', 'expectedRaw', 'summary']) || !(preview.expectedRaw === null || typeof preview.expectedRaw === 'string')) return fail('Preview a supported private backup before confirming restore.');
+      const issued = backupPreviews.get(preview);
+      if (!issued || issued.raw !== preview.raw || issued.expectedRaw !== preview.expectedRaw) return fail('The backup differs from its preview. Preview the file again before restoring.');
+      if (loaded.items.length || loaded.raw !== preview.expectedRaw) return fail('Private storage is occupied or changed since preview. Nothing was overwritten; preview again in an empty destination.');
+      let parsed;
+      try { parsed = parseStore(preview.raw); } catch (error) { return fail('The backup changed or is not supported. Nothing was restored.'); }
+      const summary = backupSummary(parsed);
+      if (!same(summary, preview.summary)) return fail('The backup differs from its preview. Preview the file again before restoring.');
+      const saved = writeRaw(loaded, preview.raw);
+      if (saved.ok) backupPreviews.delete(preview);
+      return saved.ok ? { ok: true, summary } : saved;
+    });
+  }
   function priceMicros(value) {
     const [whole, part = ''] = value.split('.');
     return BigInt(whole) * 1000000n + BigInt(part.padEnd(6, '0'));
@@ -361,7 +419,7 @@
   }
   try { w.addEventListener('storage', event => { if (event.key === KEY || event.key === null) notify(); }); } catch (error) { /* reads still validate each time */ }
   api.handoff = {
-    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), prepare, inspectResearch, reportResearch, report, remove, summary, availability, readback, copy,
+    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), prepare, inspectResearch, reportResearch, report, remove, summary, availability, readback, copy, exportBackup, previewBackup, restoreBackup,
     list: () => clone(load().items), find: id => clone(load().items.find(item => item.id === id) || null),
     status: () => { const result = load(); return { available: result.ok && !!(w.navigator && w.navigator.locks), error: result.error || (!(w.navigator && w.navigator.locks) ? 'Private saving isn’t available in this browser. Open the secure site in a current browser; saved records remain readable.' : ''), count: result.items.length }; },
     recovery: () => pending ? clone(pending) : { prior: load().raw, proposed: null },

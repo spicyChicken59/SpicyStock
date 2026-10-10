@@ -23,6 +23,7 @@
   const clock = value => value ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'long' }).format(new Date(value)) : 'Not reported';
   const amount = value => value === null || value === undefined ? 'Unknown' : String(value);
   let host = null, selected = null, editing = null, research = null, dirty = false, busy = false;
+  let backupPreview = null, backupReading = false, backupGeneration = 0;
   const independent = item => item && item.kind === 'independent_research';
   const ticker = item => independent(item) ? item.source.ticker : item.plan.ticker;
   const publication = item => independent(item) ? item.source.publication : item.publication;
@@ -116,6 +117,115 @@
     link.click(); w.setTimeout(() => w.URL.revokeObjectURL(url), 1000);
     message('Private recovery copy downloaded to this device. It contains broker facts you entered; keep it private. Nothing was uploaded.');
   }
+  function backupMessage(text, state) {
+    host.querySelector('[data-handoff-backup-status]').textContent = text;
+    host.querySelector('[data-handoff-backup]').setAttribute('data-handoff-backup-state', state);
+  }
+  function refreshBackup() {
+    if (!host) return;
+    host.querySelector('[data-handoff-backup-download]').disabled = busy;
+    host.querySelector('[data-handoff-backup-file]').disabled = busy;
+    host.querySelector('[data-handoff-backup-confirm]').disabled = busy || backupReading || !backupPreview;
+    host.querySelector('[data-handoff-backup-cancel]').disabled = busy;
+    host.querySelector('[data-handoff-backup-preview]').hidden = !backupPreview;
+    host.querySelector('[data-handoff-backup-warning]').textContent = backupPreview && (dirty || research)
+      ? 'Your report has unsaved entries. Save or explicitly discard that report before restoring; selecting this file has kept those entries.' : '';
+  }
+  function clearBackupPreview() {
+    backupPreview = null;
+    host.querySelector('[data-handoff-backup-facts]').replaceChildren();
+    host.querySelector('[data-handoff-backup-records]').replaceChildren();
+  }
+  function downloadBackup() {
+    if (busy) return;
+    const result = api.handoff.exportBackup();
+    if (!result.ok) { backupMessage(result.error, 'unavailable'); return; }
+    const blob = new w.Blob([result.raw], { type: 'application/json' });
+    const url = w.URL.createObjectURL(blob), link = node('a', { href: url, download: 'spicystock-private-backup.json' });
+    link.click(); w.setTimeout(() => w.URL.revokeObjectURL(url), 1000);
+    backupMessage('Private backup downloaded: ' + result.summary.count + ' saved ' + (result.summary.count === 1 ? 'record' : 'records') + '. Unsaved editor changes are excluded. Keep this file private; nothing was uploaded.', 'downloaded');
+  }
+  function renderBackupPreview(summary) {
+    facts(host.querySelector('[data-handoff-backup-facts]'), [
+      ['Saved records', summary.count], ['Planned handoffs', summary.planned_count],
+      ['Independent execution reports', summary.independent_count], ['Original file version', summary.version]
+    ]);
+    host.querySelector('[data-handoff-backup-records]').replaceChildren(...summary.records.map(record =>
+      node('li', {}, record.ticker + ' · ' + (record.kind === 'independent_research' ? 'independent execution report' : 'planned handoff') +
+        ' · original scan ' + record.session + ' · published ' + clock(record.published_at) +
+        ' · first saved ' + clock(record.created_at) + ' · last saved ' + clock(record.updated_at))));
+  }
+  async function selectBackup() {
+    if (busy) return;
+    const generation = ++backupGeneration, file = host.querySelector('[data-handoff-backup-file]').files[0];
+    clearBackupPreview(); backupReading = false;
+    if (!file) { backupMessage('No backup selected. Nothing was changed.', 'idle'); refreshBackup(); return; }
+    backupReading = true; backupMessage('Reading the selected file on this device… Nothing has been restored.', 'reading'); refreshBackup();
+    try {
+      if (!Number.isSafeInteger(file.size) || file.size > api.handoff.MAX_BYTES) throw new Error('size');
+      const bytes = new Uint8Array(await file.slice(0, api.handoff.MAX_BYTES + 1).arrayBuffer());
+      if (generation !== backupGeneration) return;
+      if (bytes.byteLength > api.handoff.MAX_BYTES || bytes.byteLength !== file.size) throw new Error('size');
+      // Preserve a BOM for the JSON validator to refuse; never trim or repair bytes.
+      const raw = new w.TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+      const result = api.handoff.previewBackup(raw);
+      if (!result.ok) { backupMessage(result.error, 'unavailable'); return; }
+      backupPreview = result.preview; renderBackupPreview(backupPreview.summary);
+      backupMessage('Backup validated on this device. Review the original records below, then choose Restore to save them. No records have been written.', 'preview');
+    } catch (error) {
+      if (generation === backupGeneration) backupMessage('This file could not be read as a private backup within the 1 MiB limit. Use an unchanged UTF-8 backup file; nothing was written.', 'unavailable');
+    } finally {
+      if (generation === backupGeneration) { backupReading = false; refreshBackup(); }
+    }
+  }
+  function cancelBackup() {
+    if (busy) return;
+    ++backupGeneration; backupReading = false; clearBackupPreview();
+    host.querySelector('[data-handoff-backup-file]').value = '';
+    backupMessage('Backup selection cancelled. Saved records and unsaved report entries were kept.', 'idle'); refreshBackup();
+    host.querySelector('[data-handoff-backup-file]').focus();
+  }
+  async function restoreBackup() {
+    if (busy || backupReading || !backupPreview) return;
+    if (dirty || research) {
+      backupMessage('Restore refused: your report has unsaved entries. Save or explicitly discard that report first; your entries were kept.', 'blocked');
+      return;
+    }
+    const preview = backupPreview, confirm = host.querySelector('[data-handoff-backup-confirm]'), hadFocus = d.activeElement === confirm;
+    let restored = false;
+    busy = true; backupMessage('Restoring the reviewed backup on this device…', 'restoring'); update();
+    try {
+      const result = await api.handoff.restoreBackup(preview);
+      if (!result.ok) { backupMessage(result.error + ' Your report editor was kept. Check the storage notice and any separate recovery copy before retrying.', 'unavailable'); return; }
+      restored = true;
+      ++backupGeneration; clearBackupPreview(); host.querySelector('[data-handoff-backup-file]').value = '';
+      backupMessage('Restored ' + result.summary.count + ' saved ' + (result.summary.count === 1 ? 'record' : 'records') + ' exactly as backed up. Original dates and unknown facts were kept. No broker order or cash reservation was created.', 'restored');
+    } catch (error) {
+      backupMessage('Restore could not complete. Your saved records and recovery status remain visible; retry only after checking them.', 'unavailable');
+    } finally {
+      busy = false; update();
+      const status = host.querySelector('[data-handoff-backup-status]');
+      if (restored && hadFocus && (d.activeElement === d.body || d.activeElement === confirm) && status.getClientRects().length) status.focus({ preventScroll: true });
+    }
+  }
+  function mountBackup(parent) {
+    const section = node('details', { class: 'sc-disclosure', 'data-handoff-backup': '', 'data-handoff-backup-state': 'idle' });
+    section.append(node('summary', {}, 'Private backup and restore'));
+    const body = node('div', { class: 'sc-card__body' });
+    const download = button('Download private backup', { 'data-handoff-backup-download': '' }); download.addEventListener('click', downloadBackup);
+    body.append(node('p', { class: 'sc-hint' }, 'Keep a local copy of your saved broker records. The file contains private facts you entered; it has no cloud backup and is never uploaded here. Unsaved editor changes are not included.'), download);
+    const file = node('input', { id: 'handoff-backup-file', type: 'file', accept: '.json,application/json', class: 'sc-input', 'data-handoff-backup-file': '', 'aria-describedby': 'handoff-backup-help' });
+    file.addEventListener('change', selectBackup);
+    const field = node('div', { class: 'ss-handoff__field' }); field.append(node('label', { for: file.id }, 'Restore private backup'), file);
+    body.append(node('p', { id: 'handoff-backup-help', class: 'sc-hint' }, 'Choose a saved backup up to 1 MiB and 100 records. Restore is available only when this browser’s private store is readable and empty. Existing records are never merged or replaced. Emergency recovery files with prior/proposed copies are separate and cannot be restored here.'), field,
+      node('p', { role: 'status', 'aria-live': 'polite', tabindex: '-1', class: 'sc-hint', 'data-handoff-backup-status': '' }, 'Choose a file to preview it. Nothing is saved until you confirm Restore.'));
+    const preview = node('section', { hidden: '', 'data-handoff-backup-preview': '', 'aria-label': 'Private backup preview' });
+    preview.append(node('dl', { class: 'sc-facts', 'data-handoff-backup-facts': '' }), node('ul', { class: 'ss-notes', 'data-handoff-backup-records': '' }),
+      node('p', { class: 'sc-hint', 'data-handoff-backup-warning': '' }));
+    const actions = node('div', { class: 'ss-handoff__actions' }), confirm = button('Restore reviewed backup', { 'data-handoff-backup-confirm': '' }), cancel = button('Cancel backup selection', { 'data-handoff-backup-cancel': '' });
+    confirm.addEventListener('click', restoreBackup); cancel.addEventListener('click', cancelBackup);
+    preview.append(confirm); actions.append(cancel); body.append(preview, actions); section.append(body); parent.append(section);
+  }
   function mount(parent) {
     if (!api.handoff) return;
     host = node('details', { class: 'sc-disclosure ss-handoff', id: 'morning-handoffs' });
@@ -123,6 +233,7 @@
     const body = node('div', { class: 'sc-card__body' });
     body.append(node('p', { class: 'sc-hint' }, 'Saved only in this browser on this device. These are your manual records, separate from published tickets and daily-bar model outcomes. SpicyStock sends no broker orders, observes no executions and reserves no cash.'),
       node('p', { class: 'sc-hint', 'data-handoff-storage': '' }), node('p', { class: 'sc-hint', 'data-handoff-empty': '' }));
+    mountBackup(body);
     const select = node('select', { class: 'sc-select', id: 'handoff-select' });
     select.addEventListener('change', () => {
       const id = select.value;
@@ -196,6 +307,7 @@
   }
   function refreshEditorStatus() {
     if (!host) return;
+    refreshBackup();
     const current = api.handoff.find(selected || research && research.existingId), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
     host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : research
       ? 'Unsaved independent trade report. Saving requires a positive actual fill and the corresponding submitted quantity. Blank costs, prices, times and exits remain unknown; research values are never filled in for you.'
@@ -225,6 +337,7 @@
       select.dataset.choices = signature;
     }
     host.querySelector('[data-handoff-recovery]').hidden = !status.error && !api.handoff.recovery().proposed;
+    refreshBackup();
     host.querySelector('[data-handoff-selected]').hidden = !editing && !research;
     host.setAttribute('data-handoff-mode', research ? 'independent-unsaved' : editing && independent(editing) ? 'independent_research' : 'planned_handoff');
     host.querySelector('[data-handoff-readback]').hidden = !!research || independent(editing);

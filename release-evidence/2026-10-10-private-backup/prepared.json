@@ -1,0 +1,386 @@
+{
+  "schema_version": 1,
+  "status": "LOCAL_PREPARATION_ONLY",
+  "issue": 146,
+  "recorded_at": "2026-10-10T10:15:21.691921+00:00",
+  "scope": "Exact-byte local private backup, preview and empty-destination restore. Producer publications and labelled synthetic private broker facts only. Hosted gates and actual public acceptance remain pending.",
+  "local_preparation_commits": {
+    "model": "7cb02af201f73057b37539995ba877286089cf98",
+    "ui": "d3e8ad46866e7aff86cf17b37f0c6d6b595e6ddd",
+    "browser": "dbf84e3fd75f4d1f49e0d16e8024307d94972b6a",
+    "integrated_parent": "75f5bbc78201d588e143423fe2c2595d25acaaa0"
+  },
+  "publication_method": "Local preparation commits are retained locally. The connected GitHub tool publishes the identical reviewed tree on the existing remote parent; final remote-head review and hosted checks are required separately.",
+  "source_sha256": {
+    "docs/app-handoff.js": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982",
+    "docs/app-handoff-ui.js": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1",
+    "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+    "docs/app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3",
+    "tools/handoff_model_cases.mjs": "b373bdf8111ae36de02b4fdcf315177524e1164d5ac982b7376b49a5e0e46809",
+    "tools/private_backup_cases.mjs": "2789614394df9fcb3bf226db6a8e683fab461242f861ad4c3c778178ecd95de7",
+    "tools/page_smoke.mjs": "8056c761c7a166ded03ae463be5b2bb9dde56f723f2fb3aa0fa498500d531d9f",
+    "tools/publication_recovery_cases.mjs": "9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe"
+  },
+  "root_validation": {
+    "model": 67,
+    "handoff_independent_reports_refresh": 463,
+    "publication_recovery": 131,
+    "documentation": 37,
+    "scope": "Distinct targeted suites; owner and independent controls are separately scoped below, not one combined run."
+  },
+  "evidence": [
+    {
+      "name": "spicystock-private-backup-model-acceptance.json",
+      "sha256": "82abc5c26e79ae8f7fd9b6c124baa4165a41eb01411194876d707b1ea0c576f4",
+      "bytes": 5902,
+      "receipt": {
+        "issue": 146,
+        "status": "Owned model committed and independently reviewed; hosted/public release pending",
+        "scope": "Explicit exact-raw browser-private export, validated preview and empty-readable-destination restore. No provider, broker, network or publication mutation; all execution facts in controls synthetic.",
+        "source": {
+          "docs/app-handoff.js": {
+            "path": "/workspace/SpicyStock-private-backup/docs/app-handoff.js",
+            "bytes": 38839,
+            "sha256": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982"
+          },
+          "tools/handoff_model_cases.mjs": {
+            "path": "/workspace/SpicyStock-private-backup/tools/handoff_model_cases.mjs",
+            "bytes": 85111,
+            "sha256": "b373bdf8111ae36de02b4fdcf315177524e1164d5ac982b7376b49a5e0e46809"
+          }
+        },
+        "api": [
+          "exportBackup() -> {ok,raw,summary}",
+          "previewBackup(raw) -> {ok,preview:{raw,expectedRaw,summary}}",
+          "restoreBackup(preview) -> Promise<{ok,summary}>"
+        ],
+        "contract": {
+          "store_version": 3,
+          "supported_input_versions": [
+            1,
+            2,
+            3
+          ],
+          "max_items": 100,
+          "max_utf8_bytes": 1048576,
+          "exact_legacy_raw": true,
+          "read_preview_export_write": false,
+          "restore_requires_empty_readable_destination": true,
+          "preview_identity": "Private WeakMap binds original object to exact raw and expectedRaw; checked inside lock, retry preserved on failure, consumed on confirmed success.",
+          "validation": "Same pure complete store validator; no normalization serialization on export/restore.",
+          "storage": "WebLock, preview-time raw CAS, immediate-before-write raw check, readback and exact prior/proposed recovery; no merging, eviction or future-version rewrite.",
+          "authority": "Reported-only remains no-order; planned copy/prepare retains current publication/event/time checks."
+        },
+        "verification": {
+          "model_tests": 67,
+          "new_backup_tests": 18,
+          "named_negative_controls": 14,
+          "unrelated_sizing_control": {
+            "rule": "MAX_SHARES 1000000 -> 1000001",
+            "passed": 18,
+            "selected_tests": [
+              "backup exports and restores exact original legacy bytes including whitespace without migration",
+              "mixed planned and independent backups preserve unknown corrections source identity and authority",
+              "restored unreported planned draft still needs exact current publication time and event guards",
+              "empty supported envelopes retain exact raw distinction while absent export refuses",
+              "bad selected backups do not poison healthy destination records errors or recovery",
+              "backup rejects duplicate inconsistent mixed-version and unknown fields with no destination writes",
+              "occupied unreadable or inaccessible destinations cannot be previewed or overwritten",
+              "restore compares exact empty destination bytes after lock wait including null versus empty envelope",
+              "the shared raw writer rechecks storage immediately before restore and never writes after a failed check",
+              "a concurrent saved report wins over an earlier empty-destination preview",
+              "restore revalidates selected raw and displayed summary rather than trusting a mutable preview",
+              "restore quota and readback failures preserve exact prior and proposed bytes for recovery",
+              "restore binds the exact issued bytes even when changed actual fees keep the same preview summary",
+              "restore refuses copied preview objects and changed expected destination while preserving issued previews",
+              "a successful empty backup restore consumes its confirmation but another explicit preview works",
+              "normal export needs no saving permission but restore never bypasses the lock requirement",
+              "backup UTF8 and record bounds are shared with storage and never truncate records",
+              "raw lone surrogate cannot silently change exported bytes while escaped JSON remains exact"
+            ],
+            "exit_code": 0,
+            "log": "/tmp/spicystock-private-backup-model-mutations/unrelated-share-cap.log"
+          },
+          "unrelated_copy_control_passed": 67,
+          "syntax": true,
+          "diff_check": true,
+          "secret_scan": [
+            {
+              "engine": "8.24.3",
+              "findings": 0
+            },
+            {
+              "engine": "8.30.1",
+              "findings": 0
+            }
+          ],
+          "independent_model_checks": 38,
+          "independent_browser_checks": 27,
+          "exact_commit_secret_findings": 0
+        },
+        "evidence": {
+          "spicystock-private-backup-model-final.log": {
+            "path": "/tmp/spicystock-private-backup-model-final.log",
+            "bytes": 7400,
+            "sha256": "6d7ce7daff3533f298f86b492008af6da43aa1afebae9ae9ac954570cfde2987"
+          },
+          "acceptance.json": {
+            "path": "/tmp/spicystock-private-backup-model-mutations/acceptance.json",
+            "bytes": 6406,
+            "sha256": "38a8a3e13f84c5e5a80e36e4577c5b6a78a32531c7368a404f006a426343ef54"
+          },
+          "review.json": {
+            "path": "/tmp/spicystock-private-backup-independent/review.json",
+            "bytes": 2977,
+            "sha256": "53f319bc31184717d57cc8ba69d1a0dd03b65f85ac8450e98ea4c40d358b0cd1"
+          },
+          "spicystock-private-backup-model-commit-gitleaks.json": {
+            "path": "/tmp/spicystock-private-backup-model-commit-gitleaks.json",
+            "bytes": 3,
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          }
+        },
+        "fixed_review_finding": "A same-summary raw fee replacement after preview was initially accepted. Exact issued preview binding now rejects it. This is an API contract correction, not a remote attack claim.",
+        "limitations": [
+          "Model receipt only; owner UI, browser suite, hosted gates and eventual production acceptance are separately evidenced.",
+          "Private backup contains saved records only; unsaved edits excluded.",
+          "Restoration never grants entry authority or observes any actual brokerage execution."
+        ],
+        "commit": "7cb02af201f73057b37539995ba877286089cf98"
+      }
+    },
+    {
+      "name": "spicystock-private146-browser-acceptance.json",
+      "sha256": "788aca6f9e7e2fa96143152e11b2b3347ee6e6303032d7081fa1b70f65641346",
+      "bytes": 6731,
+      "receipt": {
+        "status": "NO_BLOCKER",
+        "scope": "Local browser acceptance over frozen producer publications and explicit synthetic manual broker facts only. No actual user profile, public deployment, provider call, broker request, cloud upload or real execution claim.",
+        "source_base_head": "d3e8ad46866e7aff86cf17b37f0c6d6b595e6ddd",
+        "source_sha256": {
+          "docs/app-handoff.js": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982",
+          "docs/app-handoff-ui.js": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1",
+          "tools/private_backup_cases.mjs": "2789614394df9fcb3bf226db6a8e683fab461242f861ad4c3c778178ecd95de7"
+        },
+        "fixtures": {
+          "publication": {
+            "fixture": "tests/fixtures/stop-research/current-publication.json.gz",
+            "raw_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+            "raw_bytes": 12963197
+          },
+          "reader": {
+            "fixture": "tests/fixtures/stop-research/current-reader.json.gz",
+            "raw_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+            "raw_bytes": 4016951
+          }
+        },
+        "baseline": {
+          "checks": 137,
+          "failures": 0,
+          "log": "/tmp/spicystock-private146-baseline-v2.log",
+          "results": "/tmp/spicystock-private146-baseline-v2/page-results.json"
+        },
+        "isolated_mutations": [
+          {
+            "name": "preview-bytes",
+            "source_file": "docs/app-handoff.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "preview identity: same count/kinds/dates cannot substitute actual fee bytes"
+            ],
+            "named_regression": "same count/kinds/dates cannot substitute actual fee bytes",
+            "expected_outcome": true
+          },
+          {
+            "name": "destination-cas",
+            "source_file": "docs/app-handoff.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "CAS: old null-destination preview cannot overwrite second tab"
+            ],
+            "named_regression": "old null-destination preview cannot overwrite second tab",
+            "expected_outcome": true
+          },
+          {
+            "name": "dirty-editor",
+            "source_file": "docs/app-handoff-ui.js",
+            "exit_code": 1,
+            "checks": 133,
+            "failures": [
+              "dirty: actual restore cannot replace an unsaved new report",
+              "private backup dirty and transient restore refusal: workflow completes"
+            ],
+            "named_regression": "actual restore cannot replace an unsaved new report",
+            "expected_outcome": true
+          },
+          {
+            "name": "export-normalizes",
+            "source_file": "docs/app-handoff.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "legacy v1: read/export remains byte-identical without migration",
+              "legacy v2: read/export remains byte-identical without migration"
+            ],
+            "named_regression": "read/export remains byte-identical without migration",
+            "expected_outcome": true
+          },
+          {
+            "name": "readback",
+            "source_file": "docs/app-handoff.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "readback: failed restore preserves exact original empty-envelope bytes",
+              "readback: recovery keeps exact prior/proposed without selecting one",
+              "readback: emergency recovery remains a separate visible download",
+              "private backup CAS, quota and readback recovery: workflow completes"
+            ],
+            "named_regression": "failed restore preserves exact original empty-envelope bytes",
+            "expected_outcome": true
+          },
+          {
+            "name": "forgiving-utf8",
+            "source_file": "docs/app-handoff-ui.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "invalid UTF8 inside valid JSON string: rejected file offers no restore confirmation"
+            ],
+            "named_regression": "invalid UTF8 inside valid JSON string: rejected file offers no restore confirmation",
+            "expected_outcome": true
+          },
+          {
+            "name": "restore-focus",
+            "source_file": "docs/app-handoff-ui.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "roundtrip 390/light: keyboard restore leaves focus on its persistent status",
+              "roundtrip 1280/dark: keyboard restore leaves focus on its persistent status"
+            ],
+            "named_regression": "keyboard restore leaves focus on its persistent status",
+            "expected_outcome": true
+          },
+          {
+            "name": "unrelated-blob-revoke",
+            "source_file": "docs/app-handoff-ui.js",
+            "exit_code": 0,
+            "checks": 137,
+            "failures": [],
+            "named_regression": null,
+            "expected_outcome": true
+          },
+          {
+            "name": "restore-focus-steal",
+            "source_file": "docs/app-handoff-ui.js",
+            "exit_code": 1,
+            "checks": 137,
+            "failures": [
+              "async restore: completed restore cannot steal a deliberate focus move"
+            ],
+            "named_regression": "completed restore cannot steal a deliberate focus move",
+            "expected_outcome": true
+          }
+        ],
+        "mutation_receipts": [
+          "/tmp/spicystock-private146-mutants/results.json",
+          "/tmp/spicystock-private146-mutants/results-restore-focus-steal.json"
+        ],
+        "reviewed_screens": [
+          "private-backup-preview-390-light.png",
+          "private-backup-confirm-390-light.png",
+          "private-backup-confirm-1280-dark.png",
+          "private-backup-restored-1280-dark.png",
+          "private-backup-no-publication-restore.png"
+        ],
+        "screens_directory": "/tmp/spicystock-private146-baseline-v2",
+        "coverage": [
+          "Byte-identical original v1/v2 read, restore, export and reload without migration.",
+          "Actual-model mixed planned and independent reports; original source/terms/unknowns preserved.",
+          "No private writes on access, preview, export, download or cancelled selection.",
+          "Empty-only validation and exact raw CAS inside a real native Web Lock with a different-byte second-tab winner.",
+          "Quota/readback rollback retains exact prior/proposed and explicit healthy retry.",
+          "Dirty/transient editor node/value/focus continuity and rejection before restore.",
+          "Strict UTF-8 including otherwise valid JSON with an invalid byte, BOM, 1MiB pre-read bound, 100-record cap, malformed/future/duplicate/inconsistent input refusal.",
+          "Exact issued-preview byte binding rejects same-summary fee replacement.",
+          "Keyboard success status focus and no focus theft while a user moves focus during a held lock.",
+          "Current-publication absence still permits saved export and explicit empty-only restore without source requests.",
+          "No network backup/filename/report leaks, clipboard writes or new public/model/cash authority.",
+          "Phone390/light and desktop1280/dark layout."
+        ],
+        "owned_test_commit": "dbf84e3fd75f4d1f49e0d16e8024307d94972b6a",
+        "owned_path": "tools/private_backup_cases.mjs"
+      }
+    },
+    {
+      "name": "review.json",
+      "sha256": "53f319bc31184717d57cc8ba69d1a0dd03b65f85ac8450e98ea4c40d358b0cd1",
+      "bytes": 2977,
+      "receipt": {
+        "verdict": "NO_BLOCKER at reviewed model/UI source; final commit pin pending",
+        "scope": "Independent VM and real Chromium at390/1280 using historical synthetic private reports and deliberate public503. No provider requests, current personal account data, repository edits or actual trade claims.",
+        "source_sha256": {
+          "app-handoff.js": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982",
+          "app-handoff-ui.js": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1",
+          "app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+          "app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+        },
+        "model_checks": 38,
+        "browser_checks": 27,
+        "total_named_checks": 65,
+        "fixed_finding": "Originally summary-only preview permitted changed valid same-ID facts. Private WeakMap now binds issued preview raw and destination; narrow removal reproduces and unrelated capacity passes. No remote exploit claimed.",
+        "lead_before_source": "32016ef57fd62cc1e8856e867a63a3acf77beb962c8e3b81304a616c427fe323",
+        "ui_delta_review": "Final db1 UI adds only successful-restore focus on persistent status when confirm had focus; prevents BODY loss without stealing moved focus. Independently tested final source throughout.",
+        "screenshots_inspected": [
+          "browser/source-unavailable-preview-390.png",
+          "browser/source-unavailable-preview-1280.png"
+        ],
+        "evidence": {
+          "model-review.json": {
+            "path": "/tmp/spicystock-private-backup-independent/model-review.json",
+            "sha256": "3b8287acc7f19d43716a0ce501101284dcbd6647a04546652798dcad316765f5"
+          },
+          "browser/receipt.json": {
+            "path": "/tmp/spicystock-private-backup-independent/browser/receipt.json",
+            "sha256": "0f987df624018b138e9d12e299f451bda5211229951876765b7fbbd4df0b74df"
+          },
+          "preview-identity-before.json": {
+            "path": "/tmp/spicystock-private-backup-independent/preview-identity-before.json",
+            "sha256": "7722a4df9f35643ff8ab074acb30d920401025cbb2ada8786bff38a84fef16c8"
+          },
+          "preview-identity-fixed.json": {
+            "path": "/tmp/spicystock-private-backup-independent/preview-identity-fixed.json",
+            "sha256": "a21fb59f9feb877726d45497a8e8bc8cf5e10771228136b1920154dbcc6a208e"
+          },
+          "raw-binding-negative.json": {
+            "path": "/tmp/spicystock-private-backup-independent/raw-binding-negative.json",
+            "sha256": "4b3164790e3da6e8d94579a2e12bcfcd429ac5ce93b386276535fd7e1f327c31"
+          },
+          "unrelated-binding-control.json": {
+            "path": "/tmp/spicystock-private-backup-independent/unrelated-binding-control.json",
+            "sha256": "917662e1d8d0acf968893333ac4265686d3bacf20952a9ef3d06ad3d5e650436"
+          }
+        },
+        "limitations": [
+          "Final owner commits, integration and hosted/public release remain pending.",
+          "Exact stored bytes preserve data only; imported original plans retain current-publication gates and report-only entries never acquire orders."
+        ]
+      }
+    }
+  ],
+  "fixed_review_finding": "Draft preview summary equality accepted changed same-identity fee bytes. A private WeakMap now binds the exact issued preview object to original raw and destination; narrow removal reproduces the finding, unrelated controls pass. No actual user record or remote exploit is claimed.",
+  "recovery_fixture_correction": {
+    "upstream_head": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+    "initial_result": "129/131: two legitimate legacy controls rejected a synthetic v1 seed still carrying the v3 kind field.",
+    "final_result": "131/131 after the existing PR145 removes that v3-only field from its synthetic v1 seed. Runtime validation is unchanged."
+  },
+  "limits": [
+    "No provider, broker, server, cloud upload or real personal execution was performed.",
+    "No public release or actual Mo result is established by these controls.",
+    "Restoration requires an empty readable destination and preserves existing order-copy checks.",
+    "Genuine legacy and mixed storage retain exact bytes; emergency prior/proposed wrappers remain separate."
+  ]
+}

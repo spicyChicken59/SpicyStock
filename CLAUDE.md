@@ -6118,3 +6118,61 @@ Exact checks, publication identities and screenshots are retained in
 The current canonical scan still supplies zero baseline tickets. Next are the
 reviewed issuer-consistency and decision-inspection releases after their gates,
 then the independently executed report milestone.
+
+
+## Checkpoint, 10 Oct 2026 — private backup and restore prepared
+
+Issue #146 follows an eight-check executed portability audit: a saved private
+trade report survives a same-browser reload, but a fresh isolated profile has
+no normal transfer path. This was missing capability, not a demonstrated save
+failure. The new local backup disclosure downloads the exact saved bytes and
+previews a selected supported file before a separate explicit restore action.
+Restore accepts only a readable, empty destination and never merges or replaces
+existing records. No server, provider, broker or cloud account is involved.
+
+Locally reviewed model commit `7cb02af2` reuses the full private-store validator with the shared
+100-record / 1 MiB bounds. Versions 1, 2 and 3 retain their exact bytes through
+read, export and restore; normal explicit report corrections keep their existing
+migration behavior. Unknown broker facts, decimal strings, original clocks and source
+identities retain their meaning. An invalid selected file cannot poison the
+healthy destination's storage status. File reads are bounded and strict UTF-8;
+BOM bytes are preserved for rejection, not silently trimmed.
+
+Review executed a draft API mismatch: replacing only a preview object's raw
+fee value left its summary unchanged and was accepted. The final model binds
+the issued preview object to its exact original raw bytes and destination in a
+private WeakMap, rechecking both inside the Web Lock. Rewritten or cloned
+previews fail. A changed destination refuses before any write. Successful
+restore consumes its preview; a failed write retains its original preview for
+retry and prior/proposed recovery bytes. This is a reproduced local API contract
+issue, not evidence of a remote attack or changed Mo record.
+
+Locally reviewed UI commit `d3e8ad46` keeps the existing report nodes mounted. Choosing,
+previewing, cancelling or rejecting a file preserves unsaved values; restore
+refuses a dirty or new unsaved report. Exact saved-byte download excludes those
+unsaved edits. The optional disclosure remains available when public loading
+fails. Successful restore returns focus to its visible result status when the
+confirm button still held focus; it does not steal a later user focus move.
+Emergency prior/proposed recovery downloads remain a separate format.
+
+The model passes 67 controls and 14 isolated guard mutations fail their named
+checks; unrelated capacity/copy controls pass 18 and 67 checks respectively.
+Independent source review passes 38 model and 27 browser controls, including
+legacy/mixed bytes, the exact 1 MiB boundary, raw concurrency checks, readback
+failure, strict file decoding, cancelled late reads, source outages, dirty input
+identity/focus/caret and unchanged order authority. Phone and desktop captures
+are inspected. Existing handoff, independent-report and refresh compatibility
+passes 463 controls; the corrected integrated publication-recovery suite passes
+131/131, and 37 documentation checks pass. The final dedicated browser baseline
+passes 137 controls. Eight isolated guard mutations fail their named assertions,
+and an unrelated control passes all 137. Locally reviewed browser-test commit
+`dbf84e3f` contains those controls. Final exact-head review, hosted gates and
+actual public release remain pending.
+
+The earlier recovery compatibility run exposed an inherited synthetic fixture:
+it built version 1 from a version-3 seed without removing the new kind field.
+The correction belongs to existing PR #145 and is published at `75f5bbc7`, with
+131/131 recovery checks and independent 22-integrity/5-legacy-control approval.
+Its runtime is unchanged; the earlier `e556a5c0` hosted checks are historical,
+and new exact-head gates must pass. That correction is merged into this branch.
+No storage validation or trading guard was weakened to accept the bad seed.
