@@ -63,6 +63,7 @@
 .ss-morning__checks .sc-check { align-items: start; min-height: 44px; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-body); letter-spacing: normal; text-transform: none; }
 .ss-morning__checks input { flex-shrink: 0; margin-top: var(--sc-s0); }
 .ss-morning__body > p { font-size: var(--sc-text-sm); }
+.ss-morning .sc-select { max-width: 100%; }
 .ss-handoff { margin-top: var(--sc-s2); overflow-wrap: anywhere; }
 .ss-handoff__readback { white-space: pre-wrap; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-mono); }
 .ss-handoff__fields { border: 0; padding: 0; margin: var(--sc-s2) 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--sc-s2); }

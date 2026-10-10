@@ -22,7 +22,11 @@
   const money = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
   const clock = value => value ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'long' }).format(new Date(value)) : 'Not reported';
   const amount = value => value === null || value === undefined ? 'Unknown' : String(value);
-  let host = null, selected = null, editing = null, dirty = false, busy = false;
+  let host = null, selected = null, editing = null, research = null, dirty = false, busy = false;
+  const independent = item => item && item.kind === 'independent_research';
+  const ticker = item => independent(item) ? item.source.ticker : item.plan.ticker;
+  const publication = item => independent(item) ? item.source.publication : item.publication;
+  const session = item => independent(item) ? item.source.publication.measured_session : item.publication.session;
   function node(tag, attrs, text) {
     const item = d.createElement(tag);
     Object.entries(attrs || {}).forEach(([key, value]) => item.setAttribute(key, value));
@@ -35,7 +39,7 @@
     target.replaceChildren(...rows.map(([label, value]) => { const row = node('div'); row.append(node('dt', {}, label), node('dd', {}, String(value))); return row; }));
   }
   function loadEditor(item) {
-    editing = item; dirty = false;
+    editing = item; research = null; dirty = false;
     api.handoff.FIELDS.forEach(key => { host.querySelector('[data-handoff-field="' + key + '"]').value = item && item.report[key] !== null ? String(item.report[key]) : ''; });
     host.querySelector('[data-handoff-delete-confirm]').checked = false;
   }
@@ -46,15 +50,47 @@
     selected = id; loadEditor(item); message(''); update();
   }
   async function saveReport() {
-    if (busy || !editing) return;
-    const id = editing.id, revision = editing.revision;
+    if (busy || !editing && !research) return;
+    const id = editing && editing.id, revision = editing && editing.revision, pending = research;
     const fields = Object.fromEntries(api.handoff.FIELDS.map(key => [key, host.querySelector('[data-handoff-field="' + key + '"]').value]));
     busy = true; update();
-    const result = await api.handoff.report(id, fields, revision);
+    const result = pending ? await api.handoff.reportResearch(pending.request, fields, null) : await api.handoff.report(id, fields, revision);
     busy = false;
     if (result.ok) { selected = result.item.id; loadEditor(result.item); message('Your cumulative broker report was saved on this device. No order or protection was placed.'); }
-    else message(result.error + ' Your unsaved entries remain below.');
+    else {
+      if (pending && result.existingId) pending.existingId = result.existingId;
+      message(result.error + ' Your unsaved entries remain below.' + (result.existingId ? ' Use Load saved report to discard these entries and open that existing record.' : ''));
+    }
     update();
+  }
+  function revealEditor() {
+    host.open = true;
+    host.querySelector('[data-handoff-report]').open = true;
+    const title = host.querySelector('#handoff-title');
+    title.scrollIntoView({ block: 'start' }); title.focus({ preventScroll: true });
+  }
+  function openResearch(request) {
+    const fail = error => ({ ok: false, error });
+    if (!host || !api.handoff.inspectResearch) return fail('Private research reporting is unavailable in this page.');
+    const checked = api.handoff.inspectResearch(request);
+    if (!checked.ok) return checked;
+    if (research && JSON.stringify(research.source) === JSON.stringify(checked.source)) { revealEditor(); return { ok: true }; }
+    if (dirty || busy) return fail('Your current broker report has unsaved entries. Save or explicitly discard them before opening another report; those entries have been kept.');
+    const id = checked.source.publication.data_sha256 + ':' + checked.source.evidence.id;
+    const existing = api.handoff.find(id);
+    if (existing) { choose(id); message('This source already has a private record. Correct its broker facts here; nothing was replaced.'); revealEditor(); return { ok: true }; }
+    const previousSelection = research ? research.previousSelection : selected;
+    loadEditor(null); selected = null;
+    research = { request: JSON.parse(JSON.stringify(request)), source: JSON.parse(JSON.stringify(checked.source)), previousSelection };
+    message('Not saved. Enter the positive fill and quantity actually submitted, then save explicitly. All other blank facts remain unknown.');
+    update(); revealEditor(); return { ok: true };
+  }
+  function cancelResearch() {
+    if (!research || busy) return;
+    const prior = research.previousSelection, item = prior && api.handoff.find(prior);
+    selected = item ? item.id : null; loadEditor(item || null);
+    message('Unsaved research report discarded. No private record or broker order was created.'); update();
+    host.querySelector('summary').focus();
   }
   async function copyDraft() {
     if (!editing) return;
@@ -83,7 +119,7 @@
   function mount(parent) {
     if (!api.handoff) return;
     host = node('details', { class: 'sc-disclosure ss-handoff', id: 'morning-handoffs' });
-    host.append(node('summary', {}, 'Private broker handoffs'));
+    host.append(node('summary', {}, 'Private broker handoffs and reports'));
     const body = node('div', { class: 'sc-card__body' });
     body.append(node('p', { class: 'sc-hint' }, 'Saved only in this browser on this device. These are your manual records, separate from published tickets and daily-bar model outcomes. SpicyStock sends no broker orders, observes no executions and reserves no cash.'),
       node('p', { class: 'sc-hint', 'data-handoff-storage': '' }), node('p', { class: 'sc-hint', 'data-handoff-empty': '' }));
@@ -96,10 +132,15 @@
     body.append(node('label', { for: select.id }, 'Saved personal handoff'), select,
       node('p', { role: 'status', 'aria-live': 'polite', 'data-handoff-message': '', class: 'sc-hint' }));
     const panel = node('section', { 'data-handoff-selected': '', 'aria-labelledby': 'handoff-title' });
+    const references = node('details', { class: 'sc-disclosure', 'data-handoff-research-references': '' });
+    references.append(node('summary', {}, 'Original research references'), node('p', { class: 'sc-hint', 'data-handoff-research-digests': '' }));
     panel.append(node('h3', { id: 'handoff-title', tabindex: '-1' }), node('p', { class: 'sc-hint', 'data-handoff-identity': '' }),
+      node('p', { class: 'sc-hint', 'data-handoff-research-source': '' }), references,
       node('dl', { class: 'sc-facts', 'data-handoff-summary': '' }), node('p', { class: 'sc-hint', 'data-handoff-protection': '' }),
-      node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }),
-      node('h4', {}, 'Whole-share exit check'), node('p', { class: 'sc-hint', 'data-handoff-exit-review': '' }));
+      node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }));
+    const exitReview = node('section', { 'data-handoff-exit-section': '' });
+    exitReview.append(node('h4', {}, 'Whole-share exit check'), node('p', { class: 'sc-hint', 'data-handoff-exit-review': '' }));
+    panel.append(exitReview);
     const completed = node('section', { 'data-handoff-completed': '', 'aria-labelledby': 'handoff-result-title' });
     completed.append(node('h4', { id: 'handoff-result-title' }, 'Reported completed result'),
       node('p', { class: 'sc-hint', 'data-handoff-result-status': '', role: 'status' }),
@@ -139,11 +180,12 @@
       });
       report.append(group);
     });
-    const actions = node('div', { class: 'ss-handoff__actions' }), save = button('Save broker report', { 'data-handoff-save': '' }), reload = button('Load saved report', { 'data-handoff-reload': '' });
+    const actions = node('div', { class: 'ss-handoff__actions' }), save = button('Save broker report', { 'data-handoff-save': '' }), reload = button('Load saved report', { 'data-handoff-reload': '' }), cancel = button('Cancel unsaved report', { 'data-handoff-cancel': '', hidden: '' });
     save.addEventListener('click', saveReport);
-    reload.addEventListener('click', () => { const current = api.handoff.find(selected); if (current) { loadEditor(current); message('Saved report loaded; unsaved corrections discarded.'); update(); } else message('That saved handoff is no longer available. Your unsaved entries remain visible.'); });
-    actions.append(save, reload); report.append(actions, node('p', { class: 'sc-hint', 'data-handoff-editor-status': '' }));
-    const remove = node('details', { class: 'sc-disclosure' }); remove.append(node('summary', {}, 'Remove this private handoff'));
+    reload.addEventListener('click', () => { const current = api.handoff.find(selected || research && research.existingId); if (current) { selected = current.id; loadEditor(current); message('Saved report loaded; unsaved corrections discarded.'); update(); } else message('That saved handoff is no longer available. Your unsaved entries remain visible.'); });
+    cancel.addEventListener('click', cancelResearch);
+    actions.append(save, reload, cancel); report.append(actions, node('p', { class: 'sc-hint', 'data-handoff-editor-status': '' }));
+    const remove = node('details', { class: 'sc-disclosure', 'data-handoff-remove-section': '' }); remove.append(node('summary', {}, 'Remove this private handoff'));
     const consent = node('label', { class: 'sc-check' }); consent.append(node('input', { type: 'checkbox', 'data-handoff-delete-confirm': '' }), node('span', {}, 'Delete this draft and its reported broker facts from this device. This does not cancel broker orders, remove protective orders or close positions.'));
     consent.querySelector('input').addEventListener('change', refreshEditorStatus);
     const removeButton = button('Delete private handoff', { 'data-handoff-delete': '' }); removeButton.addEventListener('click', removeSelected);
@@ -154,22 +196,53 @@
   }
   function refreshEditorStatus() {
     if (!host) return;
-    const current = api.handoff.find(selected), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
-    host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : dirty ? 'Unsaved correction — changes are not yet in your private record.' : 'Blank fields remain unknown. Reports stay editable after the entry window or an event restriction.';
-    host.querySelector('[data-handoff-save]').disabled = busy || !editing || !status.available;
+    const current = api.handoff.find(selected || research && research.existingId), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
+    host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : research
+      ? 'Unsaved independent trade report. Saving requires a positive actual fill and the corresponding submitted quantity. Blank costs, prices, times and exits remain unknown; research values are never filled in for you.'
+      : dirty ? 'Unsaved correction — changes are not yet in your private record.' : 'Blank fields remain unknown. Reports stay editable after the entry window or an event restriction.';
+    host.querySelector('[data-handoff-save]').disabled = busy || !editing && !research || !status.available;
     host.querySelector('[data-handoff-reload]').disabled = busy || !current;
     host.querySelector('[data-handoff-delete]').disabled = busy || !current || !status.available || !host.querySelector('[data-handoff-delete-confirm]').checked;
+    host.querySelector('[data-handoff-cancel]').hidden = !research;
+    host.querySelector('[data-handoff-cancel]').disabled = busy;
     host.querySelectorAll('[data-handoff-field], [data-handoff-now]').forEach(input => { input.disabled = busy; });
+  }
+  function renderResearchIdentity(source) {
+    host.querySelector('[data-handoff-research-source]').textContent = 'Independent execution report only. Original production baseline: ' +
+      (source.baseline_admitted ? 'admitted' : 'not admitted') + '. Recording broker facts grants no entry permission. ' +
+      'Research captured ' + clock(source.cohort.generated_at) + '.';
+    host.querySelector('[data-handoff-research-digests]').textContent = 'Research policy ' + source.cohort.policy_id + ' · cohort SHA-256 ' + source.cohort.sha256 +
+      ' · publication SHA-256 ' + source.publication.data_sha256 + ' · original evidence ' + source.evidence.id + '.';
   }
   function update() {
     if (!host || !api.handoff) return;
     const items = api.handoff.list(), status = api.handoff.status(), select = host.querySelector('#handoff-select');
     host.querySelector('[data-handoff-storage]').textContent = status.error || 'Saved on this device only; clearing this site’s browser data removes these private records. There is no cloud backup.';
-    host.querySelector('[data-handoff-empty]').textContent = !items.length ? status.error ? 'Saved records could not be read; this is not a claim that you hold no position.' : 'No personal handoff saved. Use a calculated cash preview to prepare one; no submitted order or holdings are inferred.' : '';
-    const signature = JSON.stringify(items.map(item => [item.id, item.plan.ticker, item.draft.quantity, item.publication.session]));
+    host.querySelector('[data-handoff-empty]').textContent = !items.length ? status.error ? 'Saved records could not be read; this is not a claim that you hold no position.' : 'No personal handoff or trade report saved. Use a calculated cash preview for a draft, or a verified research row to record an already executed trade. No submitted order or holdings are inferred.' : '';
+    const signature = JSON.stringify(items.map(item => [item.id, ticker(item), independent(item) ? 'independent' : item.draft.quantity, session(item)]));
     if (select.dataset.choices !== signature) {
-      select.replaceChildren(...items.map(item => node('option', { value: item.id }, item.plan.ticker + ' · ' + item.draft.quantity + ' planned · scan ' + item.publication.session)));
+      select.replaceChildren(...items.map(item => node('option', { value: item.id }, ticker(item) + ' · ' + (independent(item) ? 'independent execution report' : item.draft.quantity + ' planned') + ' · scan ' + session(item))));
       select.dataset.choices = signature;
+    }
+    host.querySelector('[data-handoff-recovery]').hidden = !status.error && !api.handoff.recovery().proposed;
+    host.querySelector('[data-handoff-selected]').hidden = !editing && !research;
+    host.setAttribute('data-handoff-mode', research ? 'independent-unsaved' : editing && independent(editing) ? 'independent_research' : 'planned_handoff');
+    host.querySelector('[data-handoff-readback]').hidden = !!research || independent(editing);
+    host.querySelector('[data-handoff-remove-section]').hidden = !!research;
+    host.querySelector('[data-handoff-research-source]').hidden = !research && !independent(editing);
+    host.querySelector('[data-handoff-research-references]').hidden = !research && !independent(editing);
+    for (const selector of ['[data-handoff-summary]', '[data-handoff-protection]', '[data-handoff-warnings]', '[data-handoff-exit-section]', '[data-handoff-completed]']) host.querySelector(selector).hidden = !!research;
+    if (research) {
+      select.value = ''; select.disabled = true;
+      host.querySelector('#handoff-title').textContent = research.source.ticker + ' · unsaved independent trade report';
+      host.querySelector('[data-handoff-identity]').textContent = 'Original scan ' + research.source.publication.measured_session + ' · applicable ' + research.source.publication.applicable_session + ' · published ' + clock(research.source.publication.published_at) + '. No private record has been saved.';
+      renderResearchIdentity(research.source);
+      host.querySelector('[data-handoff-completed]').setAttribute('data-result-state', 'incomplete');
+      host.querySelector('[data-handoff-completed]').setAttribute('data-result-outcome', 'unknown');
+      host.querySelector('[data-handoff-copy]').disabled = true;
+      host.querySelector('[data-handoff-text]').textContent = '';
+      host.querySelector('[data-handoff-exits]').replaceChildren();
+      refreshEditorStatus(); return;
     }
     if (!selected && items.length) { selected = items[items.length - 1].id; loadEditor(selectedItem(items)); }
     const current = selectedItem(items);
@@ -177,15 +250,20 @@
     if (!current && !dirty && !busy && editing && status.available) { selected = items.length ? items[items.length - 1].id : null; loadEditor(selectedItem(items)); }
     select.value = selected || ''; select.disabled = !items.length || busy;
     host.querySelector('[data-handoff-selected]').hidden = !editing;
-    host.querySelector('[data-handoff-recovery]').hidden = !status.error && !api.handoff.recovery().proposed;
     if (!editing) return;
     const item = current || editing, summary = api.handoff.summary(item);
-    host.querySelector('#handoff-title').textContent = item.plan.ticker + ' · personal broker record';
-    host.querySelector('[data-handoff-identity]').textContent = 'Scan ' + item.publication.session + ' · published ' + clock(item.publication.published_at) + ' · rules ' + item.publication.rules_version + ' · saved revision ' + item.revision + '. Original published terms are kept separately from your broker reports.';
-    facts(host.querySelector('[data-handoff-summary]'), [
+    const reportOnly = independent(item), pub = publication(item);
+    host.setAttribute('data-handoff-mode', reportOnly ? 'independent_research' : 'planned_handoff');
+    host.querySelector('[data-handoff-readback]').hidden = reportOnly;
+    host.querySelector('[data-handoff-research-source]').hidden = !reportOnly;
+    host.querySelector('[data-handoff-research-references]').hidden = !reportOnly;
+    host.querySelector('#handoff-title').textContent = ticker(item) + (reportOnly ? ' · independent execution report' : ' · personal broker record');
+    host.querySelector('[data-handoff-identity]').textContent = 'Scan ' + session(item) + ' · published ' + clock(pub.published_at) + ' · rules ' + pub.rules_version + ' · saved revision ' + item.revision + '. ' + (reportOnly ? 'Original research evidence is retained; this is your execution report, not a production ticket or model fill.' : 'Original published terms are kept separately from your broker reports.');
+    if (reportOnly) renderResearchIdentity(item.source);
+    facts(host.querySelector('[data-handoff-summary]'), [...(reportOnly ? [] : [
       ['Personal draft / published shares', item.draft.quantity + ' / ' + item.plan.order.quantity],
       ['Draft cash at limit including buffer', money(summary.calculation.commitmentCents)], ['Draft price-to-stop risk', money(summary.calculation.riskCents) + ' before fees, gaps and slippage'],
-      ['Draft fee buffer (estimate)', money(item.draft.fee_cents)],
+      ['Draft fee buffer (estimate)', money(item.draft.fee_cents)]]),
       ['Reported submitted', amount(item.report.submitted_quantity)], ['Cumulative entry filled', amount(item.report.filled_quantity)],
       ['Reported exited', amount(item.report.exited_quantity)], ['Remaining reported holdings', amount(summary.reported_held_quantity)],
       ['Entry shares not filled', amount(summary.unfilled_quantity)], ['Unfilled shares cancelled', amount(item.report.cancelled_quantity)],
@@ -213,7 +291,7 @@
     host.querySelector('[data-handoff-warnings]').replaceChildren(...summary.warnings.map(text => node('li', {}, text)));
     host.querySelector('[data-handoff-exit-review]').textContent = summary.exit_review.message;
     host.querySelector('[data-handoff-text]').textContent = api.handoff.readback(item);
-    host.querySelector('[data-handoff-exits]').replaceChildren(...item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction)));
+    host.querySelector('[data-handoff-exits]').replaceChildren(...(reportOnly ? [] : item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction))));
     const available = current ? api.handoff.availability(current) : { ok: false, error: 'This handoff is no longer available in saved storage.' };
     host.querySelector('[data-handoff-copy]').disabled = !available.ok;
     host.querySelector('[data-handoff-copy-status]').textContent = available.ok ? 'Copying only places text on your clipboard. Check cash, live quote, activation and protection at your broker.' : available.error;
@@ -228,7 +306,7 @@
       prepare.addEventListener('click', async () => {
         const input = prepare._intent;
         if (!input || prepare._busy) return;
-        if (dirty || busy) {
+        if (dirty || busy || research) {
           section.querySelector('[data-handoff-prepare-status]').textContent = 'Save your current broker report or use Load saved report to discard its edits before preparing a draft.';
           return;
         }
@@ -248,12 +326,14 @@
       parent.append(section);
     }
     const prepare = section.querySelector('[data-handoff-prepare]'), status = api.handoff.status();
-    const previous = intent && api.handoff.list().find(item => item.publication.sha256 === intent.expectedPublication && item.plan.reference.id === intent.referenceId);
+    const previous = intent && api.handoff.list().find(item => independent(item)
+      ? item.source.publication.data_sha256 === intent.expectedPublication && item.source.evidence.id === intent.referenceId
+      : item.publication.sha256 === intent.expectedPublication && item.plan.reference.id === intent.referenceId);
     const hasReport = previous && previous.report_updated_at !== null;
     prepare._intent = intent ? { key: intent.key, cash: intent.cash, fees: intent.fees, quantity: intent.quantity, expectedPublication: intent.expectedPublication, expectedRevision: previous ? previous.revision : null } : null;
     prepare.disabled = !!prepare._busy || !intent || !status.available || !!hasReport;
     prepare.textContent = previous ? hasReport ? 'Broker report already saved' : 'Replace private broker draft' : 'Prepare private broker draft';
     if (hasReport) section.querySelector('[data-handoff-prepare-status]').textContent = 'This exact plan already has a broker report. Open Private broker handoffs to correct it; preparing cannot overwrite it.';
   }
-  api.handoffUI = { mount, update, preview };
+  api.handoffUI = { mount, update, preview, openResearch };
 })(window);
