@@ -4910,7 +4910,9 @@
   //: file is identical and not merely stamped alike. A re-publish of the same
   //: session on later bars keeps its session, its published_at AND its rules
   //: digest, and moves only its numbers -- which is exactly the case a stamp of
-  //: those fields cannot see, and one string comparison can.
+  //: those fields cannot see, and one string comparison can. The bounded
+  //: reader preserves BOM bytes and uses fatal UTF-8 decoding; accepted JSON
+  //: therefore has a unique UTF-8 byte representation of this exact string.
   let rawRecord = null;
   // true when the served bytes are the record already on screen. Falls back to
   // re-serializing what is in memory for a page handed a record directly (a
@@ -4962,12 +4964,12 @@
     const src = ((w.SCStock && w.SCStock.dataUrl) || 'reader.json');
     const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
     w.fetch(bust, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
-      .then((raw) => { if (seq === updateSeq) applyUpdate(raw); })
+      .then((r) => SCStock.reader.read(r))
+      .then((bytes) => { if (seq === updateSeq) applyUpdate(SCStock.reader.decode(bytes), bytes); })
       .catch(() => { if (seq === updateSeq) saidUpdate('failed'); });
   }
   // the decision, with nothing replaced until every question is answered
-  function applyUpdate(raw) {
+  function applyUpdate(raw, bytes) {
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
     if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
@@ -4978,20 +4980,20 @@
     if (timingFaults(next).length) { saidUpdate('invalid'); return; }
     const here = current && current.run ? current.run.session : null;
     const there = next.run.session;
-    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection); return; }
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection, bytes); return; }
     if (there < here) { saidUpdate('older'); return; }
     // the same trading day, re-measured on later bars: a REVISION, not a new
     // session, and the word matters -- the reader's saved observations of that
     // date are revisions of it too, not a second day
-    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection); return; }
-    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection);
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection, bytes); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection, bytes);
   }
   // What a reader keeps across a load, and what they are TOLD they lost. The
   // record changes; the reader's own place in it, their private saves and
   // their preferences do not. A comparison pair is the one thing that cannot
   // survive: it was pinned from one published record and two names remapped
   // onto a different one would be a comparison nobody made.
-  function loadUpdate(raw, next, outcome, message, projection) {
+  function loadUpdate(raw, next, outcome, message, projection, bytes) {
     const keep = {
       view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
       query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
@@ -5000,7 +5002,7 @@
     };
     render(next, clockPinned ? clockAt : null, keep, projection);
     rawRecord = raw;
-    SCStock.observations.bind(next, raw, projection);
+    SCStock.observations.bind(next, bytes, projection);
     const lost = [];
     if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
       ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
@@ -5145,15 +5147,16 @@
     if (SCStock.walkthrough && $('walkthrough-mount')) SCStock.walkthrough.mount($('walkthrough-mount'), { interval: SCStock.walkthroughInterval });
     const src = (w.SCStock && w.SCStock.dataUrl) || 'reader.json';
     w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('published reader answered ' + r.status); return r.text(); })
+      .then((r) => SCStock.reader.read(r))
       // an injected clock is a PIN and the page does not move it; without one
       // the page reads the real clock and re-reads it as the day goes on
-      .then((raw) => {
+      .then((bytes) => {
+        const raw = SCStock.reader.decode(bytes);
         const { data, projection } = SCStock.reader.parse(raw, src);
         if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
         render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
         rawRecord = raw;
-        SCStock.observations.bind(data, raw, projection);
+        SCStock.observations.bind(data, bytes, projection);
       })
       .catch((e) => failed(String(e && e.message || e)));
   }

@@ -821,6 +821,10 @@ New morning receipts derive both canonical and reader hashes from the exact
 canonical source bytes. The browser verifies the actual reader bytes before
 matching observations. An older receipt can still preserve independently
 validated event restrictions, but cannot claim a reader-bound quote check.
+Initial loads, refreshes and deferred research preserve the actual response
+bytes within the 32 MiB limit. Digests use those bytes directly; malformed UTF-8
+and BOM-prefixed JSON are refused instead of being silently normalized. A failed
+refresh keeps the displayed publication and private inputs.
 Missing, loading or failed deferred research stays explicitly incomplete.
 Saved bars merge only after the sidecar's digest, length, shape and metadata
 validate; a stale response cannot overwrite a newer publication. Retry is

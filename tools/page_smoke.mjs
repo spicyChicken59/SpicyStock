@@ -3413,11 +3413,9 @@ async function checkRefresh(browser, base, full) {
   // the page has actually received it.
   {
     await page.evaluate(() => {
-      const f = window.fetch; window.__answersRead = 0;
-      window.fetch = (...a) => f(...a).then((r) => {
-        const read = r.text.bind(r);
-        r.text = () => read().then((x) => { setTimeout(() => { window.__answersRead++; }, 0); return x; });
-        return r;
+      const read = SCStock.reader.read; window.__answersRead = 0;
+      SCStock.reader.read = (...args) => read(...args).then(bytes => {
+        setTimeout(() => { window.__answersRead++; }, 0); return bytes;
       });
     });
     let release; box.body = next; box.hold = new Promise((r) => { release = r; });

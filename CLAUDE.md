@@ -11,6 +11,27 @@ production evidence before calling a release complete. The hourly ChatGPT task
 **Build SpicyStock milestones** supports continuation; coordinate with active
 builders and do not open duplicate work.
 
+**Reader byte-integrity follow-up (10 October 2026):** Browser publication and
+research reads preserve actual UTF-8 response bytes for digest checks. BOM-prefixed
+JSON and malformed UTF-8 are refused. Boot and refresh share the bounded byte
+reader; failed refreshes preserve the current record and private inputs. Native
+buffering begins only after a cloned stream reaches EOF within the 32 MiB cap;
+the native byte count must match, and refusals cancel both tee branches together.
+This avoids a reproduced Chromium 141 streaming-completion diagnostic without
+sleeps or network-error exemptions. Canonical publications, immutable fixtures,
+historical evidence and strategy rules are unchanged. Direct string callers of
+the observations API keep their explicit UTF-8 serialization compatibility.
+Local evidence: 119 reader and 991 compatibility browser checks, 238 focused
+Python checks, 137 DOM/store continuity assertions and four chart-geometry
+controls pass. Seven isolated hash/decoder/cap/native-order/refusal mutations fail their
+named controls; an unrelated timeout mutation passes all 119 reader checks.
+An independent 200-read transport reproduction has zero failed requests and
+preserves the exact source digest. Phone and desktop captures were inspected.
+The existing sidecar timeout remains 15 seconds. Initial publication loads and
+manual refreshes still have no deadline; that pre-existing limitation was not
+expanded into this byte-integrity change. Hosted gates and actual public
+acceptance remain the release owner's work.
+
 **Queued review-budget policy (10 October 2026):** `src/review_selection.py`
 archives `account_feasible_first_research_v1`. The evening run selects feasible
 private mechanical previews first, retaining the twelve-read ceiling and existing
