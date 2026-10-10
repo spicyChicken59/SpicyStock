@@ -766,8 +766,11 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   names, accepted/unaccepted/refused results, actual retained attempts and
   unused capacity. Attempts are distinct from requested names and billed cost.
   Method explains reconciled pre-review fit and opportunity/research selection.
-  The current cover and Morning desk add selected-batch completion separately
-  from broader review coverage only when the supporting counts reconcile.
+  The Morning desk adds selected-batch completion separately from broader
+  review coverage only when the supporting counts reconcile. The cover carries
+  the same facts only under the reader-wait headline (`report.H1_READER_WAIT`),
+  as one collapsed line naming the accepted selected reviews and the mechanical
+  A+/A names still unreviewed; every other night's first screen is unchanged.
   A completed research batch does not mean all discovered candidates were
   reviewed or that any plan is admitted. The original published summary remains
   available; missing, unsupported or contradictory completion evidence leaves

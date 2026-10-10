@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const NOW = '2026-09-10T22:31:00Z';
+// report.H1_READER_WAIT: the one headline whose claim the cover's selection line answers
+const READER_WAIT = 'No new burst tickets. Reader review incomplete.';
 
 async function checkMethodSelection({ browser, base, open, check, eq, shotsDir }) {
   console.log('-- review selection: opportunity fit, bounded research and legacy absence');
@@ -176,14 +178,19 @@ export async function checkReviewSelection(args) {
         if (fixture.name === 'genuine-legacy') {
           eq('legacy: unknown selection cannot acquire reconciled facts', facts, null);
           eq('legacy: original primary verdict remains unchanged', await text(page, '#cover-h1'), fixture.data.cover.h1);
-          check('legacy: selection limitation is explicit', /unknown|unavailable|not recorded|not established|not reconciled/i.test(await text(page, '[data-review-selection="cover"]')));
+          eq('legacy: a headline with no review claim keeps the cover to its own sentences', await page.locator('#cover-review-box').isVisible(), false);
+          check('legacy: selection limitation is explicit in the morning desk', /unknown|unavailable|not recorded|not established|not reconciled/i.test(await text(page, '[data-morning="review-selection"]')));
         } else {
           check(name + ': genuine producer reconciles rich selection and batch facts', !!facts?.detail);
           if (!facts?.detail) return;
           const s = fixture.data.run.review_selection, reads = fixture.data.run.reads, detail = facts.detail;
           eq(name + ': opportunity and research counts reflect recorded selection', [detail.feasible, detail.opportunity, detail.research, detail.unselected], [s.feasible, s.by_purpose.opportunity.requested, s.by_purpose.research_ranked.requested + s.by_purpose.research_rotating.requested, s.discovered - s.requested]);
           eq(name + ': accepted/unaccepted/refused and verdict reconcile actual batch', [detail.requested, detail.accepted, detail.unaccepted, detail.refused, detail.verdict], [reads.requested, reads.done, reads.requested - reads.done, reads.causes.refused, reads.verdict]);
-          eq(name + ': cover displays the shared measured selection summary', await text(page, '[data-review-selection="cover"]'), detail.summary);
+          eq(name + ': cover holds the shared measured selection summary', await text(page, '[data-review-selection="cover"]'), detail.summary);
+          const waits = fixture.data.cover.h1 === READER_WAIT;
+          eq(name + ': the cover shows the selection line only under the reader-wait headline', await page.locator('#cover-review-summary').isVisible(), waits);
+          if (waits) check(name + ': the collapsed line answers the headline with the batch and the unreviewed A-band', (await text(page, '#cover-review-summary')) ===
+            'Chart reviews: ' + (detail.requested ? detail.accepted + ' of ' + detail.requested + ' selected accepted' : 'none selected') + ' · ' + detail.unreviewedQuality + ' mechanical A+/A not reviewed', await text(page, '#cover-review-summary'));
           check(name + ': final review/cash gates are never called cleared', /Final review and combined cash allocation still decide tickets/.test(facts.note));
           if (fixture.name === 'retained-current') {
             eq('actual retained f5: original canonical and reader bytes stay bound', await page.evaluate(() => { const f = SCStock.observations.facts(); return [f.canonicalHash, f.recordHash, f.projected]; }), [sha(fixture.raw), sha(fixture.reader), true]);
@@ -192,7 +199,13 @@ export async function checkReviewSelection(args) {
             check('actual retained f5: remaining reader coverage is explicitly limited', /coverage|unreviewed|not reviewed/i.test(detail.coverage) && !/complete (universe|news|coverage)|all (stocks|candidates).*reviewed/i.test(detail.coverage));
             check('actual retained f5: readable summary distinguishes all unselected names and A-band coverage', /477 of 479 reaction candidates not selected; 51 mechanical A\+\/A lack accepted review/.test(detail.summary));
             check('actual retained f5: original published verdict remains dated and unchanged', (await text(page, '#cover-published')).includes(fixture.data.cover.h1) && /2026-10-09|Oct 9/.test(await text(page, '#cover-published-label')));
+            eq('actual retained f5: the line reads the retained batch and A-band', await text(page, '#cover-review-summary'), 'Chart reviews: 2 of 2 selected accepted · 51 mechanical A+/A not reviewed');
+            eq('actual retained f5: the summary and the dated original are collapsed until asked for', await page.locator('#cover-review').isVisible(), false);
             await capture(page, 'review-current-cover-' + width, '#market-bar');
+            await page.locator('#cover-review-summary').focus(); await page.keyboard.press('Enter');
+            eq('actual retained f5: the keyboard opens the summary and the dated original', [await page.locator('#cover-review').isVisible(), await page.locator('#cover-published').isVisible()], [true, true]);
+            await capture(page, 'review-current-cover-open-' + width, '#market-bar');
+            await page.locator('#cover-review-summary').click();
           }
           if (fixture.name === 'red') eq('RED: completed research never rewrites stand-aside primary verdict', await text(page, '#cover-h1'), fixture.data.cover.h1);
           if (fixture.name === 'full') eq('feasible: completed selected work preserves the published trade verdict', await text(page, '#cover-h1'), fixture.data.cover.h1);
@@ -271,7 +284,8 @@ export async function checkReviewSelection(args) {
         const result = await page.evaluate(data => { SCStock.render(data, new Date('2026-10-10T12:01:00Z')); return SCStock.reviewSelectionFacts(data); }, data);
         eq('renderer-only ' + name + ': unsupported reconciliation cannot claim completed batch', result?.detail || null, null);
         eq('renderer-only ' + name + ': original primary verdict stays intact', await text(page, '#cover-h1'), original.data.cover.h1);
-        check('renderer-only ' + name + ': limitation is visible in cover', /unknown|unavailable|not recorded|not established|not reconciled/i.test(await text(page, '[data-review-selection="cover"]')));
+        check('renderer-only ' + name + ': limitation is visible in cover', await page.locator('#cover-review-summary').isVisible() && /unknown|unavailable|not recorded|not established|not reconciled/i.test(await text(page, '#cover-review-summary')) &&
+          /unknown|unavailable|not recorded|not established|not reconciled/i.test(await text(page, '[data-review-selection="cover"]')));
         eq('renderer-only ' + name + ': no tickets or private writes appear', await page.evaluate(() => [SCStock.data.trades.length, Object.values(SCStock.model.stages).flat().filter(row => row.status === 'ticket').length, window.__reviewWrites]), [0, 0, 0]);
       }
       eq('renderer-only: corruptions never alter exact source fixture bytes', sha(original.raw), 'f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d');

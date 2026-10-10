@@ -180,6 +180,8 @@
   const CUT_WORDS = { withheld: 'ticket withheld', slot_cap: 'beyond the slot cap', equity: 'beyond the configured equity', no_shares: 'no whole share', no_new_longs: 'no new longs' };
   const CUT_TONE = { withheld: 'warn', slot_cap: 'neutral', equity: 'neutral', no_shares: 'neutral', no_new_longs: 'neutral' };
   const REGIME_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
+  // report.H1_READER_WAIT: the headline the run writes when an A+/A burst lacks an accepted review
+  const READER_WAIT_H1 = 'No new burst tickets. Reader review incomplete.';
   const FLAG_WORDS = { gain_over_15: 'gain over 15%', wide_stop: 'stop past the line at the limit', position_capped: 'position capped', biotech: 'healthcare category flag', foreign: 'domicile category flag', dollar_breakout: '$ breakout', refused: 'ticket withheld', risk_halved: 'risk halved', extended: 'extended' };
   // The checklist's own keys (src/quality.py): 2 L Y N C H, then RE and VOL.
   const CRITERIA_SHORT = {
@@ -560,23 +562,31 @@
       (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
     const selection = reviewSelectionFacts(data), review = selection && selection.detail;
+    const readerWait = cover.h1 === READER_WAIT_H1;
     if (review && review.verdict === 'complete' && review.requested > 0 && !asPublished &&
         ['green', 'yellow'].includes(reg.verdict) && run.session_state === 'open' &&
-        data.bursts.length > 0 && Array.isArray(data.trades) && data.trades.length === 0 &&
-        cover.h1 === 'No new burst tickets. Reader review incomplete.') {
+        data.bursts.length > 0 && Array.isArray(data.trades) && data.trades.length === 0 && readerWait) {
       $('cover-h1').textContent = 'No new burst tickets. Selected ' + (review.opportunity ? '' : 'research ') + 'reviews complete.';
     }
-    let reviewLine = $('cover-review'), published = $('cover-review-original');
-    if (!reviewLine) {
-      reviewLine = el('p', { id: 'cover-review', 'class': 'sc-hint', 'data-review-selection': 'cover' });
-      published = el('details', { id: 'cover-review-original', 'class': 'sc-disclosure' }, [
-        el('summary', { id: 'cover-published-label' }), el('p', { id: 'cover-published', 'class': 'sc-hint' })]);
-      $('cover-dek').after(reviewLine, published);
+    // The selection facts answer the reader-wait headline, so the cover carries
+    // them only under it, as one collapsed line: any other night would lose its
+    // stages and first stock below the first screen to a claim it never made,
+    // and the Morning desk and Method hold the same facts for every record. The
+    // dated original headline stays inside, beside the measured summary.
+    let box = $('cover-review-box');
+    if (!box) {
+      box = el('details', { id: 'cover-review-box', 'class': 'ss-market__review' }, [
+        el('summary', { id: 'cover-review-summary' }),
+        el('p', { id: 'cover-review', 'class': 'sc-hint', 'data-review-selection': 'cover' }),
+        el('p', { 'class': 'sc-hint' }, [el('strong', { id: 'cover-published-label' }), el('span', { text: ': ' }), el('span', { id: 'cover-published' })])]);
+      $('cover-dek').after(box);
     }
-    reviewLine.hidden = false;
-    reviewLine.setAttribute('data-review-state', review ? 'reconciled' : 'unknown');
-    reviewLine.textContent = review ? review.summary : 'Review selection and selected-batch completion are not reconciled for this record; the original verdict is shown.';
-    published.hidden = !review;
+    box.hidden = !readerWait;
+    box.setAttribute('data-review-state', review ? 'reconciled' : 'unknown');
+    $('cover-review-summary').textContent = review ? 'Chart reviews: ' +
+      (review.requested ? num(review.accepted) + ' of ' + num(review.requested) + ' selected accepted' : 'none selected') +
+      ' · ' + num(review.unreviewedQuality) + ' mechanical A+/A not reviewed' : 'Chart reviews: selection not reconciled for this record';
+    $('cover-review').textContent = review ? review.summary : 'Review selection and selected-batch completion are not reconciled for this record; the original verdict is shown.';
     $('cover-published-label').textContent = 'Original published verdict · ' + (run.session || 'session unknown');
     $('cover-published').textContent = (cover.h1 || 'No verdict recorded.') + ' ' + (cover.dek || 'No summary recorded.');
     const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
@@ -5345,8 +5355,7 @@
     if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
-    if ($('cover-review')) $('cover-review').hidden = true;
-    if ($('cover-review-original')) $('cover-review-original').hidden = true;
+    if ($('cover-review-box')) $('cover-review-box').hidden = true;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
     $('next-h3').textContent = 'Do not place any order from this page.';
     $('next-p').textContent = 'The published reader did not load; check the run log.';
