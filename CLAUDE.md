@@ -5198,3 +5198,23 @@ has no gitleaks findings. Collection remains 3,577 Python tests; local runtime
 is Python 3.12.14 and Node 24.19.0. Hosted exact-head gates and actual public
 acceptance remain outstanding. All fill examples are synthetic; no real fill,
 exit, profit or successful trade is established by this release work.
+
+## Checkpoint, 10 Oct 2026 — byte verification integrated with the morning desk
+
+The original-byte fix from issue #122 now includes the exact PR #123 ancestry,
+including private broker reports and issuer evidence. Both initial load and
+refresh still pass bounded original bytes to morning observation binding.
+The merged DOM harness uses real streamed Responses and includes all three
+new desk modules. No canonical publication, compact reader, morning receipt,
+retained research, history, evidence or producer fixture changed relative to
+that ancestry.
+
+The combined reader, refresh, handoff, issuer, cash, morning, status,
+review-selection, observations and session browser checks pass 1,488/1,488.
+Phone and desktop reader captures were inspected. Focused Python checks pass
+287/287, named handoff model controls pass 19/19 and continuity passes 137/137.
+The 33-commit integrated PR range passes gitleaks. The independent byte review
+passed 165/165 and confirmed early-refusal cancellation and the existing
+deferred-read timeout with a stalled response. Initial-load and refresh
+deadlines remain an inherited limitation. These checks establish local
+integration; hosted exact-head gates and actual public acceptance remain open.
