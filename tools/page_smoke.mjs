@@ -39,6 +39,7 @@ import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkStopResearch } from './stop_research_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
+import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -3354,7 +3355,7 @@ async function checkRefresh(browser, base, full) {
       const answer = box.body, hold = box.hold;
       if (hold) await hold;
       try {
-        if (answer === null) await route.abort('failed');
+        if (answer === null) { page.__deliberateAbort = route.request().url(); await route.abort('failed'); }
         else await route.fulfill({ status: box.status || 200, contentType: 'application/json',
           body: typeof answer === 'string' ? answer : JSON.stringify(answer) });
       } finally { page.__served = (page.__served || 0) + 1; }
@@ -3414,16 +3415,21 @@ async function checkRefresh(browser, base, full) {
   }
 
   // ---- out of order: a slow first answer cannot land over a fast second.
-  // The first answer is HELD until the second has been applied, so the order
-  // of arrival is this check's to set and never the runner's speed; the page
-  // counts the answers it has read, so the slow one is asserted only after
-  // the page has actually received it.
+  // The first answer is HELD until the second has been applied. Superseding
+  // aborts it before its body is read; only the latest answer reaches the
+  // reader. The recovery suite separately supplies abort-ignoring promises
+  // to prove that late outcomes remain harmless even without cancellation.
   {
     await page.evaluate(() => {
       const read = SCStock.reader.read; window.__answersRead = 0;
       SCStock.reader.read = (...args) => read(...args).then(bytes => {
         setTimeout(() => { window.__answersRead++; }, 0); return bytes;
       });
+      const fetch = window.fetch; window.__refreshRequests = [];
+      window.fetch = function(url, options) {
+        if (String(url).includes('full.json?')) window.__refreshRequests.push({ url: new URL(url, location.href).href, signal: options.signal });
+        return fetch.apply(this, arguments);
+      };
     });
     let release; box.body = next; box.hold = new Promise((r) => { release = r; });
     const before = page.__served || 0;
@@ -3439,7 +3445,9 @@ async function checkRefresh(browser, base, full) {
     await answered(page, before);
     release();
     await until(() => (page.__served || 0) >= before + 2, 'the held answer to be served');
-    await page.waitForFunction(() => window.__answersRead >= 2, null, { timeout: 15000 });
+    await page.waitForFunction(() => window.__answersRead >= 1 && window.__refreshRequests.length === 2 && window.__refreshRequests[0].signal.aborted, null, { timeout: 15000 });
+    page.__supersededAbort = await page.evaluate(() => window.__refreshRequests[0].url);
+    eq('the superseded response is cancelled before its body is read', await page.evaluate(() => window.__answersRead), 1);
     check('the answer that stands is the newest press, not the first to arrive',
       (await said2(page)).startsWith('No newer record'), await said2(page));
     eq('and the slow answer was dropped rather than applied', await page.evaluate(() => window.SCStock.data.run.session), full.run.session);
@@ -3480,12 +3488,18 @@ async function checkRefresh(browser, base, full) {
   eq('with its frozen evidence unchanged', await bars(page), savedEvidence);
   eq('and the chart mode the reader chose is still theirs',
     await page.evaluate(() => (JSON.parse(localStorage.getItem('spicystock:chart:v1')) || {}).mode), 'candles');
-  // one deliberate abort: the request itself, and the browser's anonymous
-  // console line for it. Named here rather than swept into the exempt list,
-  // because it is this check's own doing and nothing else's.
-  eq('the only failures are the one request this check aborted on purpose',
-    errors.filter((e) => !/full\.json\?at=/.test(e) && e !== 'console: Failed to load resource: net::ERR_FAILED'), []);
-  eq('and it is exactly one request', errors.filter((e) => /^request failed/.test(e)).length, 1);
+  // The deliberate failure and superseded request are this case's two
+  // expected failures. Match their exact URLs and cancellation types; an
+  // unrelated network failure or extra anonymous console line remains red.
+  const expectedFailures = ['request failed: ' + page.__deliberateAbort + ' net::ERR_FAILED',
+    'request failed: ' + page.__supersededAbort + ' net::ERR_ABORTED'];
+  const consoleBudget = new Map([['console: Failed to load resource: net::ERR_FAILED', 1], ['console: Failed to load resource: net::ERR_ABORTED', 1]]);
+  eq('the only failures are the deliberate failure and superseded request', errors.filter(error => {
+    if (expectedFailures.includes(error)) return false;
+    if (consoleBudget.get(error)) { consoleBudget.set(error, 0); return false; }
+    return true;
+  }), []);
+  eq('and exactly the two intended requests failed', errors.filter(error => /^request failed/.test(error)).sort(), expectedFailures.sort());
   await context.close();
 
   // ---- older, a revision, and a half-typed reference size
@@ -3907,6 +3921,7 @@ async function main() {
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
       if (runs('scorecard')) await checkScorecard({browser, base, data: full, open, check, eq, shotsDir});
       if (runs('walkthrough')) await checkWalkthrough({ browser, base, open, check, eq, shotsDir });
+      if (runs('publication-recovery')) await checkPublicationRecovery({ browser, check, eq, shotsDir });
       if (runs('calendar')) await checkExchangeCalendar(browser, base);
       if (runs('provenance')) await checkPlanEvidence(browser, base);
       if (runs('mobile')) await checkMobile(browser, base, full);

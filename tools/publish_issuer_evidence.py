@@ -41,8 +41,8 @@ MAX_RUN_ATTEMPTS = 20
 MAX_WORKFLOW_DAYS = 35
 PRODUCTION_STEP = 'Collect issuer evidence (production)'
 SHA = re.compile(r'[a-f0-9]{64}\Z')
-EVENING_NAME = 'Evening scan (6:16 PM ET)'
-MORNING_NAME = 'Morning observation (best effort)'
+EVENING_PATH = '.github/workflows/evening.yml'
+MORNING_PATH = '.github/workflows/morning.yml'
 
 
 def encode(value) -> bytes:
@@ -325,12 +325,14 @@ def collection_guard(canonical_raw: bytes, morning_raw: bytes | None, event: dic
                 or parent.get('head_branch') != 'main' or parent.get('status') != 'completed'
                 or type(parent.get('id')) is not int or parent['id'] < 1):
             return False, 'untrusted_parent'
-        if parent.get('name') == EVENING_NAME:
+        # GitHub's run name can be the dynamic run-name (for example a dated
+        # evening backfill). Only the exact workflow file identifies the parent.
+        if parent.get('path') == EVENING_PATH:
             if parent.get('conclusion') != 'success':
                 return False, 'evening_not_successful'
             if str(json.loads(canonical_raw)['run'].get('run_id')) != str(parent.get('id')):
                 return False, 'evening_did_not_publish_current_record'
-        elif parent.get('name') == MORNING_NAME:
+        elif parent.get('path') == MORNING_PATH:
             if morning_raw is None or str(json.loads(morning_raw).get('observation_run_id')) != str(parent.get('id')):
                 return False, 'morning_did_not_publish_current_observation'
             if json.loads(morning_raw).get('publication', {}).get('data_sha256') != digest(canonical_raw):

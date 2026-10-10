@@ -27,12 +27,14 @@ controls pass. Seven isolated hash/decoder/cap/native-order/refusal mutations fa
 named controls; an unrelated timeout mutation passes all 119 reader checks.
 An independent 200-read transport reproduction has zero failed requests and
 preserves the exact source digest. Phone and desktop captures were inspected.
-The existing sidecar timeout remains 15 seconds. Initial publication loads and
-manual refreshes still have no deadline; that pre-existing limitation was not
-expanded into this byte-integrity change. Hosted gates and actual public
-acceptance remain the release owner's work.
+The sidecar timeout remains 15 seconds. The subsequent publication-recovery
+change also bounds startup and manual refresh to 15 seconds across headers and
+the complete body; failed startup clears partial state, exposes Retry and keeps
+private reports accessible. Its dated checkpoint below supersedes the original
+byte-integrity checkpoint's unbounded-startup limitation. Exact-head hosted
+checks and actual public acceptance are recorded per release below.
 
-**Queued review-budget policy (10 October 2026):** `src/review_selection.py`
+**Released review-budget policy (10 October 2026):** `src/review_selection.py`
 archives `account_feasible_first_research_v1`. The evening run selects feasible
 private mechanical previews first, retaining the twelve-read ceiling and existing
 rank. At most two spare A+/A reads retain research (ranked plus deterministic
@@ -43,7 +45,11 @@ selection and rules identity, not final trade guards or historical records.
 Method explains the recorded pre-review fit, opportunity/research split and
 feasible names left unreviewed only for a reconciled, supported receipt.
 The existing conservative model-plan reservation policy still applies across
-rules identities. No production spend or improvement in outcomes is yet claimed.
+rules identities. Actual production run `38034610157` requested and accepted
+two research reviews from 479 discovered reaction candidates, with zero
+pre-review feasible candidates and no final tickets. Ten reads were unused;
+this is not a controlled cost-savings or trading-performance measurement.
+The dated PR #121 receipt below retains source replay and public evidence.
 
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
@@ -328,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3577 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3607 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5322,3 +5328,130 @@ filing-coverage acceptance. Evening `38034610157` will verify the new review
 selector and trigger the bounded production collector. Continue by verifying
 that real publication, then the combined private-result release; on-time
 quotes, broader event/earnings coverage and an actual owner trade remain open.
+
+## Issuer parent workflow identity correction — 10 October 2026
+
+The first automatic issuer run, `38034801783`, refused its successful evening
+parent `38034610157` as `unknown_parent`. GitHub supplied the dynamic run name
+`Evening backfill 2026-10-09`, while the guard expected the workflow's static
+title. The actual parent metadata and current publication reproduced the refusal
+offline. The corrected guard identifies only the exact workflow paths
+`.github/workflows/evening.yml` and `.github/workflows/morning.yml`. It still
+requires the same repository, completed main parent, current publication or
+morning binding, and bounded daily collection history. Friendly display names
+cannot authorize missing, unknown or lookalike paths. Publisher recursion is
+still refused; no schedule, permission, source request or daily limit changed.
+
+The publisher, dashboard and workflow suites pass 137 checks, including 30 new
+path and parent-trust cases. Six isolated mutants fail for the intended dynamic
+name, friendly-name bypass, suffix-path bypass, repository, current-publication
+binding and daily-limit defects; an unrelated retention-cap mutant passes all
+33 targeted guard controls. The docs/scanner suite passes 116 checks and
+actionlint passes for the issuer, dashboard publisher and test workflows.
+Collection finds 3,607 Python tests. Runtime is Python 3.12.14.
+The other workflow guards were searched for display-name identity
+comparisons; no additional instance was found. README was clarified and
+`.env.example` remains accurate with no new variables or credentials.
+
+This correction has not yet passed hosted CI or an actual automatic production
+collection. The earlier SEC rehearsal truthfully reported unavailable source
+coverage after an HTTP failure; fixing the trigger does not establish SEC
+availability, event clearance or trading permission. Canonical publications,
+immutable evidence and model history were not edited.
+
+## Checkpoint, 10 Oct 2026 — cash preview and issuer reader accepted on production
+
+PR #121 merged as `ef9f150d64e47e0241c58d749ff1bc27f17d8a86`, including
+#116, #117 and #119. Exact reviewed head
+`c0cc1720a5655561c1752837aa7dbded3c9a1611` passed all seven hosted gates:
+3,577 Python tests, 11,761 page checks, 378 chart checks, both native recovery
+jobs and both secret scans; continuity passed 137 assertions.
+[The scoped release receipt](release-evidence/2026-10-10-cash-issuer/acceptance.json)
+retains run links, exact identities, public file hashes and remaining defects.
+
+Actual evening run `38034610157` measured October 9 with email skipped and
+published `43dcb8d7c6eb0d63c1825198aa161fc4d4caec80`. The archived
+account-feasible-first policy found no feasible pre-review reaction candidates:
+all 479 failed the yellow regime's grade gate before a private sizing preview;
+185 also had a quality veto. Zero later-stage blocker counts do not establish
+whole-share feasibility or event clearance. BIIB and NTAP used the two research
+slots and both reviews completed; ten reads remained unused. Their final grades
+were B and C, with no tickets. This is an observed execution, not a controlled
+cost-saving or performance estimate. Full source provenance passes 484 setups;
+all 18,087 prior immutable evidence/history objects remain unchanged, with 496
+new objects retained. SN's $188.37 model reservation is not Mo's balance.
+
+The automatic issuer child `38034801783` skipped with `unknown_parent`: it
+compared the dynamic parent run title to a fixed label. Issue #128 / PR #129
+track the exact-workflow-path correction. The separately dispatched production
+collection `38034924561` succeeded and persisted
+`981e6792827a222c26b94da622f30d88b74d53e1`; publisher `38034993443` and Pages
+`38035005959` passed. Its receipt honestly reports unavailable: one SEC ticker
+identity request failed, with no downloaded or captured bytes. MG and ZIM keep
+their dated event anchors. Fresh issuer news is not cleared and future earnings
+remain unchecked. Manual publication does not verify the automatic trigger.
+
+The actual public site passed 187 checks over 27 exact files at 1280 and 390
+pixels, with no route/data/clock overrides or browser errors. Fourteen screenshots
+were inspected; the cash test used only an ephemeral synthetic input in a fresh
+browser context. The preview correctly refused the zero-ticket publication,
+preserved its entered value/focus, and the issuer reader matched the exact
+canonical record, compact reader and immutable bundle. All 27 public hashes were
+also independently matched to the designated production Git tree.
+
+Screenshot review found a separate sentence attributing Saturday's closure to
+the measured Friday; issue #131 tracks that correction. This scoped receipt
+does not accept that sentence, automatic collection, fresh SEC coverage, on-time
+morning delivery or a successful personal trade. Continue with those concrete
+gaps and the private-report/recovery releases; do not infer goal completion.
+
+## Checkpoint, 10 Oct 2026 — bounded publication recovery and truthful closed-day guidance
+
+Issue #127 bounds both startup and manual refresh to 15 seconds across response
+headers and the complete original-byte read. A new attempt aborts its predecessor;
+late success or failure cannot overwrite the latest attempt. Failed startup
+exposes an explicit Retry and clears partial local/exported publication state,
+including navigation and the chooser. A failed refresh retains the displayed
+record. The Morning desk mounts before loading so private saved reports remain
+readable and correctable without a current publication. Missing publication
+cannot prepare or copy a new entry. Retry preserves editor identity, unsaved
+values, focus/caret, storage bytes and an explicit pending save; it does not
+write or migrate private data automatically.
+
+Owned implementation `4a1ed0ec62c59fe350326ebfa3934bb268b21fd9` passes 131
+recovery and 1,836 compatibility browser checks, 44 focused Python tests,
+31 handoff model controls and 137 continuity assertions. Five isolated guard
+removals fail the intended timeout, latest-attempt, cancellation, initial-failure
+and partial-model cleanup controls; an unrelated tooltip change passes all 131.
+Independent review passed 191 transport/private-state checks, 59 late-response
+controls and 56 final cleanup checks. Actual blocked header and body sockets
+were cancelled at the 15-second deadline. Phone/desktop captures were inspected.
+These tests use explicit local fixtures and synthetic private reports.
+
+Issue #131 corrects the actual public next-step sentence that called measured
+Friday October 9 sessionless when viewed Saturday. The closed state now reuses
+its existing calendar sentence, naming the closed viewing date and recorded
+next applicable session. It changes no status classification or entry authority.
+Owned correction `76e004c1d10ecee893ce6a0735a4d570a09c4fa5` passes 707
+status/closed/session checks after 12 intended pre-fix failures; an unrelated
+headline mutation passes all 130 status checks. Independent review passes those
+130 checks plus 22 over the actual publication bytes with an explicitly pinned
+Saturday clock. Friday remains open and Monday October 12 remains the recorded
+next session. No historical publication or plan is rewritten.
+
+The combined branch incorporates the exact PR #126 and #129 heads plus actual
+production `981e6792827a222c26b94da622f30d88b74d53e1`. README and
+`.env.example` now describe bounded retry and private access without new
+credentials or settings. The pinned design system is unchanged. Runtime is
+Python 3.12.14 and Node 24.19.0. Integration checks, hosted exact-head gates and
+actual public acceptance are recorded below when executed; these local checks
+do not establish on-time provider delivery or a personal trade.
+
+After integration, 380 recovery/status/refresh/reader browser checks and 143
+focused documentation/reader/issuer-publisher Python tests pass. Collection
+finds 3,607 Python tests. Integrated application bytes equal the independently
+reviewed recovery source plus the single reviewed calendar sentence; the other
+owned recovery modules match exactly. Current production data, compact reader,
+morning receipt, immutable evidence/history and design-system files match
+`981e6792` byte-for-byte. Integrated timeout/private-report screenshots were
+inspected. Staged documentation and receipt scan clean with gitleaks 8.30.1.

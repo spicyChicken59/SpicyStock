@@ -152,8 +152,11 @@ remain untouched. Upgrading does not expand the storage limit.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
-In recovery notices, the latest evening workflow is reported separately: a
-successful scheduled check may skip publication and does not refresh the record.
+On a weekend or holiday, the next-action message names the closed viewing date
+and the next session from the recorded calendar; it does not relabel the last
+measured open session as closed. In recovery notices, the latest evening
+workflow is reported separately: a successful scheduled check may skip
+publication and does not refresh the record.
 
 The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
@@ -562,8 +565,14 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    newer session, a file for an EARLIER session (refused rather than applied
    backwards), the same session re-published on later bars (a revision of
    that trading day, not a second one), or a file it could not read or
-   reach. A press supersedes one in flight and only the newest answer can
-   land. A load hands back the stage, the stock and the search, keeps the
+   reach. Startup and manual refresh each have a 15-second deadline covering
+   response headers and the complete bounded body. A press aborts the previous
+   attempt and only the newest answer can land. Failed startup offers **Retry**;
+   saved private reports remain readable and editable in the Morning desk while
+   the publication is unavailable. There is no current entry preparation or
+   copying in that state. A failed refresh keeps the displayed record and
+   unsaved private inputs; a retry never saves or migrates them automatically.
+   A load hands back the stage, the stock and the search, keeps the
    theme, the lens, the chart's mode and range, every saved identity with
    its frozen evidence and a half-typed reference size — and closes a
    comparison rather than remapping its pins onto other stocks, saying so.
@@ -889,7 +898,10 @@ Future earnings and comprehensive issuer news still require verification.
 This reader does not change a ticket, copied quantity or cash preview.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
-it adds no polling schedule. Production collection is capped at three starts
+the guard identifies the parent by its exact workflow file path, then checks
+its repository, main branch and current publication binding. Dynamic run titles
+are display text. It adds no polling schedule. Production collection is capped
+at three starts
 per UTC day, including failed attempts and reruns, with a serialized guard that
 refuses incomplete Actions history. Manual dispatch defaults to a rehearsal.
 The SEC-only client uses the public project identity, no provider credential,
@@ -936,8 +948,11 @@ matching observations. An older receipt can still preserve independently
 validated event restrictions, but cannot claim a reader-bound quote check.
 Initial loads, refreshes and deferred research preserve the actual response
 bytes within the 32 MiB limit. Digests use those bytes directly; malformed UTF-8
-and BOM-prefixed JSON are refused instead of being silently normalized. A failed
-refresh keeps the displayed publication and private inputs.
+and BOM-prefixed JSON are refused instead of being silently normalized. Startup
+and refresh share a 15-second header-and-body deadline and cancel superseded
+attempts. A failed refresh keeps the displayed publication and private inputs;
+failed startup clears partial publication state and offers an explicit retry.
+Saved private reports stay available without a publication.
 Missing, loading or failed deferred research stays explicitly incomplete.
 Saved bars merge only after the sidecar's digest, length, shape and metadata
 validate; a stale response cannot overwrite a newer publication. Retry is
