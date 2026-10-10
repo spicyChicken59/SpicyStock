@@ -36,6 +36,9 @@ NATIVE5_WORKFLOW = ".github/workflows/secret-scan.yml"
 NATIVE5_PUBLIC_BLOB = "f568689c3789a53835708b676ef6c2dcc418fd6f"
 PUBLIC_SITE_CAPTURE = "release-evidence/2026-10-10-zim/ir-merger-announcement.html"
 PUBLIC_SITE_CAPTURE_SHA256 = "32b3411f00b61f712fff475a3b69d63a5de1f8589c71fee4afb6adfc8637a519"
+CASH_PUBLICATIONS = ("tests/fixtures/cash-preview/publication.json",
+                     "tests/fixtures/cash-preview/publication-multiple.json")
+CASH_RULE_IDENTIFIERS = ("abnormal_10pct", "down25_quarter", "pct_above_40ma")
 
 
 def public_site_capture():
@@ -180,6 +183,23 @@ def run_controls(binary: Path, workspace: Path):
         ("public_site_path_prefix", config, "copied/" + PUBLIC_SITE_CAPTURE, site_capture, 2, ["generic-api-key"]),
         ("public_site_default_detector", config, PUBLIC_SITE_CAPTURE, default_detector, 2, ["github-pat"]),
     ])
+    cash_documents = [(ROOT / path).read_bytes() for path in CASH_PUBLICATIONS]
+    for index, (path, raw) in enumerate(zip(CASH_PUBLICATIONS, cash_documents)):
+        label = f"cash_publication_{index}"
+        detected = ["generic-api-key"] * 7
+        altered = raw
+        for value in CASH_RULE_IDENTIFIERS:
+            altered = altered.replace(f'"{value}"'.encode(), f'"x{value}"'.encode())
+        cases.extend([
+            (label + "_defaults", baseline, path, raw, 2, detected),
+            (label + "_exact", config, path, raw, 0, []),
+            (label + "_unrelated", config, path, other_value, 2, ["generic-api-key"]),
+            (label + "_altered", config, path, altered, 2, detected),
+            (label + "_sibling", config, path.rsplit('/', 1)[0] + "/another.json", raw, 2, detected),
+            (label + "_prefix", config, "copied/" + path, raw, 2, detected),
+            (label + "_suffix", config, path + ".backup", raw, 2, detected),
+            (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
+        ])
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence
@@ -198,6 +218,7 @@ def run_controls(binary: Path, workspace: Path):
             "native5_preservation": {"path": NATIVE5_PRESERVATION, "sha256": sha(preservation),
                                      "public_workflow_path": NATIVE5_WORKFLOW, "public_git_blob": NATIVE5_PUBLIC_BLOB},
             "public_site_capture": {"path": PUBLIC_SITE_CAPTURE, "sha256": sha(site_capture)},
+            "cash_publications": [{"path": path, "sha256": sha(raw)} for path, raw in zip(CASH_PUBLICATIONS, cash_documents)],
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 
