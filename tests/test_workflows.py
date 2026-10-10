@@ -379,6 +379,7 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tools/make_fixture.py --check', 'python tests/fixtures/morning/generate.py --check',
         'python tests/fixtures/issuer-evidence/generate.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
+    assert "node tools/handoff_model_cases.mjs" in page
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page
     assert "set -o pipefail" in page and "playwright@1.56.1" in page
     assert wf["permissions"] == {"contents": "read"}

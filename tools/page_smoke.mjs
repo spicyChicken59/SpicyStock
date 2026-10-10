@@ -34,6 +34,7 @@ import { checkMorning } from './morning_cases.mjs';
 import { checkMorningStatus } from './status_cases.mjs';
 import { checkReviewSelection } from './review_selection_cases.mjs';
 import { checkCashPreview } from './cash_preview_cases.mjs';
+import { checkHandoff } from './handoff_cases.mjs';
 import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
@@ -92,6 +93,8 @@ async function serve() {
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
         : url.pathname === '/docs/app-cash-preview.js' ? process.env.SCSTOCK_CASH_PREVIEW
+        : url.pathname === '/docs/app-handoff.js' ? process.env.SCSTOCK_HANDOFF
+        : url.pathname === '/docs/app-handoff-ui.js' ? process.env.SCSTOCK_HANDOFF_UI
         : url.pathname === '/docs/app-issuer-evidence.js' ? process.env.SCSTOCK_ISSUER_EVIDENCE
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
@@ -3415,11 +3418,9 @@ async function checkRefresh(browser, base, full) {
   // the page has actually received it.
   {
     await page.evaluate(() => {
-      const f = window.fetch; window.__answersRead = 0;
-      window.fetch = (...a) => f(...a).then((r) => {
-        const read = r.text.bind(r);
-        r.text = () => read().then((x) => { setTimeout(() => { window.__answersRead++; }, 0); return x; });
-        return r;
+      const read = SCStock.reader.read; window.__answersRead = 0;
+      SCStock.reader.read = (...args) => read(...args).then(bytes => {
+        setTimeout(() => { window.__answersRead++; }, 0); return bytes;
       });
     });
     let release; box.body = next; box.hold = new Promise((r) => { release = r; });
@@ -3894,6 +3895,7 @@ async function main() {
       if (runs('status')) await checkMorningStatus({ browser, base, open, check, eq, shotsDir });
       if (runs('review-selection')) await checkReviewSelection({ browser, base, open, check, eq, shotsDir });
       if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
+      if (runs('handoff')) await checkHandoff({ browser, base, open, check, eq, shotsDir });
       if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });

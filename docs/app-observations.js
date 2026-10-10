@@ -369,9 +369,11 @@
         storageIssue = 'Earlier tab source evidence could not be verified and was ignored; this does not establish event clearance.';
         try { w.sessionStorage.removeItem(CACHE_KEY); } catch (ignored) { /* storage remains optional */ }
       }
-    if (!w.crypto || !w.crypto.subtle || !w.TextEncoder || typeof raw !== 'string') { state = 'unavailable'; issue = 'Exact publication verification is unavailable in this browser.'; paintAll(); if (onChange) onChange(); return; }
+    if (!w.crypto || !w.crypto.subtle || !w.TextEncoder || !(typeof raw === 'string' || raw instanceof Uint8Array)) { state = 'unavailable'; issue = 'Exact publication verification is unavailable in this browser.'; paintAll(); if (onChange) onChange(); return; }
     try {
-      const digest = await w.crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+      // Network loads supply the bounded original response bytes. Explicit
+      // string callers retain their UTF-8 serialization compatibility.
+      const digest = await w.crypto.subtle.digest('SHA-256', typeof raw === 'string' ? new TextEncoder().encode(raw) : raw);
       if (token !== epoch || record !== data) return;
       recordHash = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('');
       await reload();
