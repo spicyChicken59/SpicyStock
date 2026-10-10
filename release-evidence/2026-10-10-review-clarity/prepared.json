@@ -1,0 +1,637 @@
+{
+  "issue": 148,
+  "status": "LOCAL_PREPARATION_COMPLETE",
+  "recorded_at": "2026-10-10T13:52:19.171289+00:00",
+  "scope": "Local executed controls and source review; not hosted or actual public release acceptance. Local preparation commit identities must not be confused with the subsequently published GitHub head.",
+  "local_component_commits": {
+    "ui": "95957c93601f392b3c5906cb345937b21b0a86e8",
+    "tests": "e46b970350d3a8c43b67992aecab15d45724f9d7",
+    "prior_release_receipt": "cf59bf208d8fd2fd769470ae467a79cd486b16c9"
+  },
+  "base_remote_head": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+  "source_sha256": {
+    "docs/app.js": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+    "docs/app-morning.js": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe",
+    "tools/review_selection_cases.mjs": "31184b9318c3d8c6f60facc18922641ebc9d02046da75e52c7f3d6634e8ad090",
+    "README.md": "a92150f51e3548568db25147b5d47893252305de25f81dee167d46fccd01adb9",
+    ".env.example": "21df622586f268d90ac96202bacee79d6816227e5808553d0bdbe1a09bf8fe2f",
+    "CLAUDE.md": "19752a257b601e703703018743bdc43490d07602608a844ff795b152245a2487",
+    "PRODUCT_GOAL.md": "26977e563b3ba5f3a761c310c9ae9ee88f66ca31686b84edba391dff91e4c6aa",
+    "docs/data.json": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "docs/reader.json": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+  },
+  "inline_evidence": [
+    {
+      "name": "spicystock-review148-browser-acceptance.json",
+      "bytes": 10538,
+      "sha256": "d8f62dfdca1ecb460f7eaaf755a40f0c1d4e02229b1a2c38b95a34ca507c45a4",
+      "evidence": {
+        "status": "NO_BLOCKER",
+        "scope": "Local offline browser controls only, not actual-public deployment acceptance. Immutable genuine producer publications; explicitly renderer-only reader outcomes/corruptions and synthetic private report edits. No provider calls, real private profile, source/strategy mutation or new order authority.",
+        "source_sha256": {
+          "docs/app.js": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+          "docs/app-morning.js": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe"
+        },
+        "owned_test_sha256": "31184b9318c3d8c6f60facc18922641ebc9d02046da75e52c7f3d6634e8ad090",
+        "owned_test_path": "tools/review_selection_cases.mjs",
+        "baseline": {
+          "checks": 349,
+          "failures": 0,
+          "result_path": "/tmp/spicystock-review148-final-v2/page-results.json",
+          "sha256": "4bfe4d1afa7a187486242a1398c2b4c30111f0f85a8730057a5ba60e0fcf2b7f"
+        },
+        "retained_publication": {
+          "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "raw_fixture": "tests/fixtures/stop-research/current-publication.json.gz",
+          "reader_fixture": "tests/fixtures/stop-research/current-reader.json.gz",
+          "checks": "Exact original canonical/reader byte binding; zero feasible, zero opportunity, two selected/accepted research reviews,477/479 unselected,51 A-band names without accepted review; separate five anticipation refusals."
+        },
+        "chronology_and_private": "Real unpinned controlled Date moves through ended and stale phases; original H1 retained at those boundaries. Dirty average-price node/value/focus, partial settled-cash input and exact synthetic v2 raw storage survive; no save/migration/copy/provider request. Legacy absence and inconsistent row/batch/policy facts fall back visibly.",
+        "reader_outcome_oracle": {
+          "path": "/tmp/spicystock-review148-renderer-oracle.json",
+          "sha256": "3d95da8ec7cb59c8c747452c19b6b1d2ff9a56ba55d919ce94f4bee081f872d1",
+          "cases": 11,
+          "scope": "Counters/selection receipt/verdict match unchanged Python receipt/read helpers; renderer-only inputs are not provenance-valid publications."
+        },
+        "guard_controls": {
+          "path": "/tmp/spicystock-review148-mutants/results.json",
+          "sha256": "5db315a405de94edec65fd029b8595d572932465feb1984b0e8281d6ecac768e",
+          "results": [
+            {
+              "name": "batch-reconciliation",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "renderer-only accepted total mismatch: unsupported reconciliation cannot claim completed batch",
+                "renderer-only accepted total mismatch: original primary verdict stays intact",
+                "renderer-only accepted total mismatch: limitation is visible in cover"
+              ],
+              "named_regression": "accepted total mismatch: unsupported reconciliation",
+              "expected_outcome": true
+            },
+            {
+              "name": "batch-verdict",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "renderer-only unknown batch verdict: unsupported reconciliation cannot claim completed batch",
+                "renderer-only unknown batch verdict: original primary verdict stays intact",
+                "renderer-only unknown batch verdict: limitation is visible in cover"
+              ],
+              "named_regression": "unknown batch verdict: unsupported reconciliation",
+              "expected_outcome": true
+            },
+            {
+              "name": "policy-semantics",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "renderer-only unknown feasibility semantics: unsupported reconciliation cannot claim completed batch",
+                "renderer-only unknown feasibility semantics: original primary verdict stays intact",
+                "renderer-only unknown feasibility semantics: limitation is visible in cover",
+                "renderer-only unknown rotation semantics: unsupported reconciliation cannot claim completed batch",
+                "renderer-only unknown rotation semantics: original primary verdict stays intact",
+                "renderer-only unknown rotation semantics: limitation is visible in cover"
+              ],
+              "named_regression": "unknown feasibility semantics: unsupported reconciliation",
+              "expected_outcome": true
+            },
+            {
+              "name": "row-evidence",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "renderer-only embedded evidence decision mismatch: unsupported reconciliation cannot claim completed batch",
+                "renderer-only embedded evidence decision mismatch: original primary verdict stays intact",
+                "renderer-only embedded evidence decision mismatch: limitation is visible in cover"
+              ],
+              "named_regression": "embedded evidence decision mismatch: unsupported reconciliation",
+              "expected_outcome": true
+            },
+            {
+              "name": "archived-headline",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "ended: archived-original eyebrow accompanies the exact original H1",
+                "stale: archived-original eyebrow accompanies the exact original H1",
+                "ended: archived-original eyebrow accompanies the exact original H1",
+                "stale: archived-original eyebrow accompanies the exact original H1"
+              ],
+              "named_regression": "ended: archived-original eyebrow",
+              "expected_outcome": true
+            },
+            {
+              "name": "source-error-prefix",
+              "source_file": "docs/app.js",
+              "exit_code": 1,
+              "checks": 329,
+              "failures": [
+                "renderer-only partial authority: exact helper-emitted cause and verdict reconcile",
+                "renderer-only partial discovery: exact helper-emitted cause and verdict reconcile",
+                "renderer-only bare authority is transport: exact helper-emitted cause and verdict reconcile",
+                "renderer-only tolerated research refusal: exact helper-emitted cause and verdict reconcile"
+              ],
+              "named_regression": "partial authority: exact helper-emitted cause",
+              "expected_outcome": true
+            },
+            {
+              "name": "morning-parity",
+              "source_file": "docs/app-morning.js",
+              "exit_code": 1,
+              "checks": 349,
+              "failures": [
+                "retained-current/390: morning and cover use the same selection facts",
+                "ended: source selection facts remain separate dated context",
+                "stale: source selection facts remain separate dated context",
+                "retained-current/1280: morning and cover use the same selection facts",
+                "ended: source selection facts remain separate dated context",
+                "stale: source selection facts remain separate dated context",
+                "full/1280: morning and cover use the same selection facts",
+                "notrade/1280: morning and cover use the same selection facts",
+                "degraded/1280: morning and cover use the same selection facts",
+                "red/1280: morning and cover use the same selection facts",
+                "empty/1280: morning and cover use the same selection facts",
+                "partial/1280: morning and cover use the same selection facts",
+                "renderer-only partial transport: cover and morning present the same helper facts",
+                "renderer-only partial authority: cover and morning present the same helper facts",
+                "renderer-only partial discovery: cover and morning present the same helper facts",
+                "renderer-only partial format: cover and morning present the same helper facts",
+                "renderer-only partial account: cover and morning present the same helper facts",
+                "renderer-only partial credit: cover and morning present the same helper facts",
+                "renderer-only bare authority is transport: cover and morning present the same helper facts",
+                "renderer-only bare format is transport: cover and morning present the same helper facts",
+                "renderer-only wrapped authority is transport: cover and morning present the same helper facts",
+                "renderer-only all unavailable: cover and morning present the same helper facts",
+                "renderer-only tolerated research refusal: cover and morning present the same helper facts"
+              ],
+              "named_regression": "morning and cover use the same selection facts",
+              "expected_outcome": true
+            },
+            {
+              "name": "unrelated-clock-interval",
+              "source_file": "docs/app.js",
+              "exit_code": 0,
+              "checks": 349,
+              "failures": [],
+              "named_regression": null,
+              "expected_outcome": true
+            }
+          ]
+        },
+        "screenshots": [
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-cover-390.png",
+            "sha256": "5756be8080b0166fca8b539bd3dc2ff176557ef724ff7a95770621a128a316e8",
+            "bytes": 63859,
+            "dimensions": [
+              350,
+              638
+            ],
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-cover-1280.png",
+            "sha256": "b3a810dd1e9fc0c43cd43797e55873b23f49c9ca5731259b4a05afa1149b1e54",
+            "bytes": 78913,
+            "dimensions": [
+              1216,
+              409
+            ],
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-morning-390.png",
+            "sha256": "6e9ede558d9eae45268e23509fa9669d6a0ef8299aa3a56a3291c04c05937069",
+            "bytes": 78062,
+            "dimensions": [
+              354,
+              868
+            ],
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-morning-1280.png",
+            "sha256": "41087b02c961cd02d8c0c2d569aafd8d9f251a169b2d61b6aff71d25c076df2b",
+            "bytes": 122359,
+            "dimensions": [
+              1040,
+              868
+            ],
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-gates-390.png",
+            "sha256": "d1fafd0ba231c80327547796546a8aed04cd5341081e5d1be512172e0f7ee828",
+            "bytes": 129204,
+            "dimensions": [
+              350,
+              1224
+            ],
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-review148-final-v2/review-current-gates-1280.png",
+            "sha256": "a7b48e9db9aabdc90e556ed1cc194975de8b78d1884d9ce3d922c6a1c458960d",
+            "bytes": 133503,
+            "dimensions": [
+              1216,
+              600
+            ],
+            "visually_inspected": true
+          }
+        ],
+        "owned_test_commit": "e46b970350d3a8c43b67992aecab15d45724f9d7"
+      }
+    },
+    {
+      "name": "spicystock-review148-independent-final.json",
+      "bytes": 7619,
+      "sha256": "b02ffe4f1cae9e183b35fe8082c1c3c53a52460f39602286eaaa3ae511be0c02",
+      "evidence": {
+        "issue": 148,
+        "result": "no_blocker",
+        "review_type": "independent read-only local source and browser acceptance",
+        "checked_at": "2026-10-10T13:42:06.048619+00:00",
+        "tree": "/workspace/SpicyStock-review-clarity",
+        "base_head": "cf59bf208d8fd2fd769470ae467a79cd486b16c9",
+        "commit_pin": "Runtime source hashes reviewed; owner commit pin remains pending.",
+        "sources": {
+          "docs/app.js": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+          "docs/app-morning.js": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe",
+          "docs/data.json": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "docs/reader.json": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+        },
+        "checks": {
+          "helper": {
+            "total": 57,
+            "passed": 57,
+            "failed": 0
+          },
+          "actual_compact_reader_browser": {
+            "total": 20,
+            "passed": 20,
+            "failed": 0
+          },
+          "genuine_helper_inputs": {
+            "retained_actual_publications": 1,
+            "offline_fixture_records": 12
+          },
+          "renderer_only_backend_helper_outcome_controls": 11,
+          "malformed_helper_controls": 20,
+          "viewport_widths": [
+            390,
+            1280
+          ]
+        },
+        "observed_actual": {
+          "reaction_candidates": 479,
+          "individually_feasible_before_review": 0,
+          "selected_opportunity_reviews": 0,
+          "selected_intentional_research_reviews": 2,
+          "requested_reviews": 2,
+          "accepted_reviews": 2,
+          "batch_verdict": "complete",
+          "not_selected": 477,
+          "mechanical_A_or_A_plus_without_accepted_review": 51,
+          "recorded_reaction_tickets": 0,
+          "input_coverage": {
+            "usable": 4774,
+            "intended": 4775,
+            "stale_frame_within_recorded_tolerance": 1
+          }
+        },
+        "semantics_verified": [
+          "Completed selected batch is distinct from broader candidate coverage.",
+          "Zero feasible names refers to reaction candidates before review under archived regime and individual sizing; it is neither shared portfolio affordability nor anticipation coverage.",
+          "All genuine supported page inputs reconcile without modifying their JSON.",
+          "Unsupported selector semantics, contradictory row/evidence decisions, misleading research pool, reader counters and unknown policies withhold rich completion facts.",
+          "Exact backend src.ReaderAuthorityError/src.DiscoveryConflict/src.ScoreFormatError labels remain distinct from transport errors, including deliberately bare or prefixed lookalikes.",
+          "Renderer-only outcome controls retain partial, tolerated and unavailable verdicts; no claim that their edited records are provenance-valid publications.",
+          "Current actual compact-reader projection yields rich complete detail without loading canonical data.",
+          "Cutoff retains original headline under the verdict-as-published label and does not offer entry authority.",
+          "Original source JSON, synthetic saved legacy private bytes, dirty cash/report values and their DOM nodes remain unchanged across cutoff render.",
+          "No browser errors or private draft values in intercepted requests."
+        ],
+        "findings_resolved": [
+          {
+            "finding": "Rich reconciliation trusted unsupported semantics and contradictory row/evidence metadata.",
+            "resolution": "Supported semantic literals, archived grade pool and row/evidence agreement now gate rich detail."
+          },
+          {
+            "finding": "Ended-window historical cover synthesized a current headline under the verdict-as-published label.",
+            "resolution": "Headline synthesis requires !asPublished; both viewport cutoff controls pass."
+          },
+          {
+            "finding": "Reader cause matching used bare labels rather than exact backend src. prefixes.",
+            "resolution": "Exact backend prefix classification now matches source helper outcomes; bare and wrapped labels remain transport."
+          }
+        ],
+        "visual_review": {
+          "screenshots": [
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/current-390.png",
+              "sha256": "f5457addb12e6312da5184779e684253863661225dcac5e4df564b6c3dbf3d5c",
+              "bytes": 92571,
+              "width": 390,
+              "view": "current",
+              "directly_inspected": true
+            },
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/current-1280.png",
+              "sha256": "dbb2098722e374dfb958e805ef783308c50dd128ced70f8f0bfa572bd834ca25",
+              "bytes": 163276,
+              "width": 1280,
+              "view": "current",
+              "directly_inspected": true
+            },
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/morning-390.png",
+              "sha256": "7e645d248a287e98800e98ef2e5fb6133de1caf94037e9a574dc73820d0265ef",
+              "bytes": 84212,
+              "width": 390,
+              "view": "morning",
+              "directly_inspected": true
+            },
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/morning-1280.png",
+              "sha256": "5c22decc6cdf9cf0d5f7d38317d3a990d40831418086340130347ec4491d510f",
+              "bytes": 125356,
+              "width": 1280,
+              "view": "morning",
+              "directly_inspected": true
+            },
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/cutoff-390.png",
+              "sha256": "10ebcf6086382f3892589fb1a627100ac1983a370b76764a9e8ff9d1c346dadd",
+              "bytes": 95368,
+              "width": 390,
+              "view": "cutoff",
+              "directly_inspected": true
+            },
+            {
+              "path": "/tmp/spicystock-review148-independent-browser/cutoff-1280.png",
+              "sha256": "387f9ac385ddcfafd45b4dffde95d5be80b615dd3e603ae5bdaec1b9235a2e64",
+              "bytes": 170386,
+              "width": 1280,
+              "view": "cutoff",
+              "directly_inspected": true
+            }
+          ],
+          "assessment": "Phone and desktop current/desk/cutoff snapshots directly inspected. Selected batch and wider coverage remain legible, original dated verdict is separately retained, and cutoff uses original headline. No new layout blocker observed."
+        },
+        "limits": [
+          "Local acceptance, not a deployed release claim.",
+          "Browser morning observation response intentionally unavailable; no current quote or broker fact was fabricated.",
+          "Synthetic private legacy report and cash/form drafts exist only in disposable local browser contexts.",
+          "Tiny chart placeholders isolate this wording review; chart geometry was not evaluated.",
+          "No repository writes, commits, provider/model/broker calls, orders, or changes to trade gates.",
+          "No actual trade, profit, complete-universe coverage, or portfolio-performance claim."
+        ],
+        "artifacts": [
+          {
+            "path": "/tmp/spicystock-review148-helper-independent.json",
+            "sha256": "7ba2f4080809c6be7989a20dc85fb0822c8e52fcdad9393ba486508df1d9cf37",
+            "bytes": 6251
+          },
+          {
+            "path": "/tmp/spicystock-review148-independent-browser/receipt.json",
+            "sha256": "62f595b317d2a5f861bef52692670169d83ba689b43d93ac26ca9b731fadda76",
+            "bytes": 3594
+          },
+          {
+            "path": "/tmp/spicystock-review148-helper-independent.mjs",
+            "sha256": "e0a216cb7f78fdbfb3f50f21ee7552c2037b549f6e7e9b4100fe2ebbdf9ce312",
+            "bytes": 3455
+          },
+          {
+            "path": "/tmp/spicystock-review148-browser-independent.mjs",
+            "sha256": "ee1d562caaba3ce0c316a4cfec8161768326ff66bbeb55d60365f69c647be180",
+            "bytes": 6519
+          },
+          {
+            "path": "/tmp/spicystock-review148-renderer-controls.py",
+            "sha256": "4de3fd7e7fa6daf1492bf674b970a04989da3d223fb8b7656bdd04742ece2872",
+            "bytes": 2809
+          },
+          {
+            "path": "/tmp/spicystock-review148-renderer-controls.json",
+            "sha256": "784e66c253b553d793769d2e81aa4e9d5a4961f3be8dd4ad787af6788b440614",
+            "bytes": 2452152
+          }
+        ]
+      }
+    },
+    {
+      "name": "spicystock-review148-independent-commit-pin.json",
+      "bytes": 1837,
+      "sha256": "92415b1d7bd6922b1544ae1f47ede01d8ed7a73542e8028d31f07833183513e6",
+      "evidence": {
+        "issue": 148,
+        "result": "approved_exact_owned_ui_commit",
+        "checked_at": "2026-10-10T13:43:20.642052+00:00",
+        "commit": "95957c93601f392b3c5906cb345937b21b0a86e8",
+        "commit_paths": [
+          "docs/app-morning.js",
+          "docs/app.js"
+        ],
+        "checks": [
+          {
+            "path": "docs/app-morning.js",
+            "committed_sha256": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe",
+            "reviewed_sha256": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe",
+            "working_sha256": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe",
+            "matched": true
+          },
+          {
+            "path": "docs/app.js",
+            "committed_sha256": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+            "reviewed_sha256": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+            "working_sha256": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+            "matched": true
+          }
+        ],
+        "prior_independent_receipt": {
+          "path": "/tmp/spicystock-review148-independent-final.json",
+          "sha256": "b02ffe4f1cae9e183b35fe8082c1c3c53a52460f39602286eaaa3ae511be0c02",
+          "helper_passed": 57,
+          "browser_passed": 20,
+          "directly_inspected_screenshots": 6
+        },
+        "scope": "Pin unchanged reviewed runtime files to their explicit two-file owner commit; no tests repeated and no repository writes. This is not final integrated-head or public deployment approval.",
+        "root_compatibility_receipt": {
+          "path": "/tmp/spicystock-review148-root-compat.json",
+          "sha256": "e27e0300bbd7c96d9d304fca9556744427205d79e5799a35a44247813ee7828c",
+          "status": "Referenced as root-owned evidence; not recast as independently executed here."
+        },
+        "remaining": "Root final integration head after test/docs/prepared commits, then exact-head evidence and required hosted checks."
+      }
+    },
+    {
+      "name": "spicystock-review148-root-compat.json",
+      "bytes": 779,
+      "sha256": "e27e0300bbd7c96d9d304fca9556744427205d79e5799a35a44247813ee7828c",
+      "evidence": {
+        "status": "PASS",
+        "scope": "Ten relevant existing page suites over frozen local source; distinct from new349 suite and independent57/20 controls. No actual public release claim.",
+        "checks": 2124,
+        "source_sha256": {
+          "docs/app.js": "dffa6c43d0ad841d5fe1ed0af7f0ca08bdc4961e9e01bdd607320be8fb2c1c18",
+          "docs/app-morning.js": "5c7b119142b39ce7558315454b86e18dbc9f7b2bb69272bde235e6f9f50fadbe"
+        },
+        "log": {
+          "path": "/tmp/spicystock-review148-compat.log",
+          "sha256": "63ed27709849b532b351e5f3024b9c3147721455b26e2aa813d66f9b5712500c"
+        },
+        "suites": [
+          "morning",
+          "status",
+          "wait-explanations",
+          "coverage",
+          "inputs",
+          "decisioninspection",
+          "independentreports",
+          "privatebackup",
+          "refresh",
+          "publication-recovery"
+        ]
+      }
+    },
+    {
+      "name": "spicystock-review-clarity-source-recommendation.json",
+      "bytes": 6823,
+      "sha256": "05add44402f203723259893c41da0267016e3705a47b55f441ccd3f443b270e8",
+      "evidence": {
+        "issue": 148,
+        "status": "Read-only source semantics audit; awaiting final owner source/test freeze for independent implementation review.",
+        "actual": {
+          "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "measured_session": "2026-10-09",
+          "regime": "yellow",
+          "provenance": {
+            "status": "PASS",
+            "breaks": [],
+            "missing": [],
+            "checked": 484
+          },
+          "selected_accepted": 2,
+          "selected_requested": 2,
+          "selected_opportunity": 0,
+          "selected_research": 2,
+          "feasible_reaction_candidates": 0,
+          "feasible_unselected": 0,
+          "unreviewed_mechanical_A": 51,
+          "unreviewed_blockers": {
+            "grade_not_admitted": 51
+          },
+          "reaction_tickets": 0
+        },
+        "minimal_wording": [
+          "2 of 2 selected chart reviews accepted.",
+          "Before review, 0 reaction candidates fit the recorded regime and individual model sizing.",
+          "0 opportunity reviews and 2 research reviews were selected; 0 feasible reaction candidates were left unreviewed.",
+          "51 other mechanical A-grade candidates were not selected for research review and remain unreviewed; YELLOW admits only A+ reaction grades.",
+          "Accepted review does not grant a ticket. Final grade, events, sizing and shared model allocation still apply."
+        ],
+        "scope_boundaries": [
+          "Review selection covers burst/reaction candidates only, not anticipation or the wider-stop research cohort.",
+          "Complete applies only to the selected batch, never every discovered candidate or all issuer/news coverage.",
+          "Pre-review feasible means private individual plan before reader downgrades and combined model allocation; not actual settled cash, free slots or guaranteed affordability.",
+          "Mechanical A/A+ with missing review remains an unknown judgement, not a measured strategy failure.",
+          "Keep original dated cover inspectable and retain separately reported input completeness/stale tolerance; do not rewrite canonical bytes or source history.",
+          "Existing RED/closed/failed/stale/account/event/order guards remain authoritative and cannot be softened by explanatory text."
+        ],
+        "minimum_reconciliation_for_new_positive_copy": [
+          "Supported archived review-selection version/policy/rule semantics; supported archived reader policy/version. Unknown or absent policy remains original/unknown rather than upgraded completion.",
+          "Selection session matches measured session; nonnegative safe integer counts; selected unique existing tickers with known purpose; counts and purpose membership reconcile to rows.",
+          "Compare selected row.review_selection with archived evidence decision where present; feasible/research pool/blockers and selected/left-unselected totals reconcile to every burst row.",
+          "Per-purpose requested=accepted+unaccepted; accepted derives from source claude, valid final grade equal row grade, no error; refused<=unaccepted; attempts equal retained row attempts. Sum purpose totals agrees run reads.",
+          "For a complete-selected-batch claim require reads.verdict complete, requested>0, done=requested, all five causes zero, and every selected row strictly accepted. 0/0 is not_asked.",
+          "If selected reviews complete but feasible_unselected>0, state both facts explicitly; the opportunity coverage gap remains.",
+          "Archived max_reads belongs to the publication (existing UI control with9 allowed); do not silently substitute current12. Supported research policy remains capped as archived supported semantics.",
+          "Incomplete/tolerated/unavailable read wording remains separate. No need to infer a provider failure cause beyond the archived reconciled facts."
+        ],
+        "executed_counterexamples": [
+          "Source helpers:13 feasible,12 selected/accepted yields complete selected reads AND1feasible unselected.",
+          "Source helpers:1refused of2 is partial because floor(2*0.25)=0;1refused of4 may be tolerated only if other reads accepted and refused name not admitted.",
+          "Genuine full fixture:3pre-review feasible,4accepted reviews,1reaction ticket after3existing model positions consume slots; fixture account$10000, not Mo balance.",
+          "Genuine notrade fixture:3pre-review feasible,4accepted reviews,0tickets after reader downgrades.",
+          "Genuine degraded fixture:3feasible,0/4accepted,unavailable.",
+          "Genuine empty and partial fixtures:0/0not_asked; partial names input coverage, not a partial chart-reader batch.",
+          "Genuine red/thin fixtures:2/2research accepted,0feasible; RED permission still controls.",
+          "Existing selection-only JS note accepts altered accepted counters or missing selected ticker: it cannot alone certify richer selected-review completion claims."
+        ],
+        "sources": [
+          "src/review_selection.py: select, blockers, receipt, replay",
+          "src/reader_coverage.py: accepted, reads, _verdict, reads_faults",
+          "src/provenance.py: verify selection replay and reader binding",
+          "src/pipeline.py: read_charts_and_grade and _make_plans",
+          "src/report.py: reader_pending, no_trade_sentence, cover",
+          "docs/app.js: reviewSelectionNote and readerCoverage"
+        ],
+        "evidence": {
+          "spicystock-review-clarity-source-audit.py": {
+            "path": "/tmp/spicystock-review-clarity-source-audit.py",
+            "bytes": 2131,
+            "sha256": "5118033be1f534380a09c8c9e89205b2609ec7275c9775c0e9b7c33b4ecb6cb5"
+          },
+          "spicystock-review-clarity-source-audit.json": {
+            "path": "/tmp/spicystock-review-clarity-source-audit.json",
+            "bytes": 35160,
+            "sha256": "3193e4426be14aa60cd9b23c2d5d1345f2444181a50545c46696c3be39cefc6e"
+          },
+          "spicystock-review-clarity-source-audit.log": {
+            "path": "/tmp/spicystock-review-clarity-source-audit.log",
+            "bytes": 1860,
+            "sha256": "583ef31fafe5f4861197d08b44457805c8cad75033f04d1e6d252eefb870cee4"
+          },
+          "spicystock-review-clarity-counterexamples.py": {
+            "path": "/tmp/spicystock-review-clarity-counterexamples.py",
+            "bytes": 2465,
+            "sha256": "33de453848ee8d05afc8afea7329dd7f8cdd6e48ba1a108ce551f3052cdb569d"
+          },
+          "spicystock-review-clarity-counterexamples.json": {
+            "path": "/tmp/spicystock-review-clarity-counterexamples.json",
+            "bytes": 6901,
+            "sha256": "837b9ed5e56bd19b540f2ee688b788decf1bf84f11e1ceeb1861c734d10cb9ec"
+          },
+          "spicystock-review-clarity-existing-validator.mjs": {
+            "path": "/tmp/spicystock-review-clarity-existing-validator.mjs",
+            "bytes": 1202,
+            "sha256": "c361068e70cfb5287afca64fda3ab2dda7b29b5cade7d13221942de9d025bcde"
+          },
+          "spicystock-review-clarity-existing-validator.json": {
+            "path": "/tmp/spicystock-review-clarity-existing-validator.json",
+            "bytes": 1400,
+            "sha256": "f1055c857482b41fca5506d741b47bd48e2c3a9bee84a860b441db4404cc9d00"
+          }
+        },
+        "no_repository_edits": true,
+        "no_provider_model_calls": true
+      }
+    }
+  ],
+  "documentation": {
+    "checks": 37,
+    "passed": 37,
+    "command": "/workspace/.venv-spicystock/bin/python -m pytest tests/test_docs.py -q",
+    "runtime": "Python 3.12.14; Node 24.19.0",
+    "warning": "Existing websockets.legacy deprecation warning"
+  },
+  "remaining": [
+    "Final integrated exact-head independent review",
+    "All required hosted checks on final remote head",
+    "Reviewed-head merge and successful publisher/Pages delivery",
+    "Actual public file/hash/browser verification and shipped checkpoint"
+  ],
+  "limitations": [
+    "Zero baseline tickets remain. No actual Mo fill or personal profit established.",
+    "SEC mapping HTTP 403 cause remains unknown; no additional provider collection.",
+    "No strategy, model budget, original publication, saved private record or design-system revision change."
+  ]
+}

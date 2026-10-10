@@ -550,22 +550,42 @@
   // ---------------------------------------------------------------- the market, in a line
   function renderMarketBar(data, st) {
     const run = data.run || {}, cover = data.cover || {}, b = data.breadth || {}, reg = b.regime || {};
-    // The verdict is the record's own sentence, printed verbatim -- and its
-    // "Trade tomorrow." was written on the evening of its session, when
-    // tomorrow was the session it names. Once that session's window is behind
-    // the reader, the eyebrow says the sentence is the archived one rather
-    // than rewriting it: the page does not edit the record's words, and does
-    // not leave a headline in 30px type reading as today's instruction.
+    // A reconciled completed selection can clarify the current reader-wait
+    // headline; the dated original stays inspectable below. Ended or blocked
+    // records keep their headline verbatim under the archived-verdict label:
+    // their "Trade tomorrow." referred to the session the evening run named,
+    // not a new instruction for the day the reader opens this page.
     const asPublished = av.phase === 'ended' || av.pubBlocked;
     $('cover-eyebrow').textContent = 'spicystock · ' + (run.session || '—') + ' · evening run' +
       (asPublished ? ' · the verdict as published' : '');
     $('cover-h1').textContent = cover.h1 || 'No verdict.';
+    const selection = reviewSelectionFacts(data), review = selection && selection.detail;
+    if (review && review.verdict === 'complete' && review.requested > 0 && !asPublished &&
+        ['green', 'yellow'].includes(reg.verdict) && run.session_state === 'open' &&
+        data.bursts.length > 0 && Array.isArray(data.trades) && data.trades.length === 0 &&
+        cover.h1 === 'No new burst tickets. Reader review incomplete.') {
+      $('cover-h1').textContent = 'No new burst tickets. Selected ' + (review.opportunity ? '' : 'research ') + 'reviews complete.';
+    }
+    let reviewLine = $('cover-review'), published = $('cover-review-original');
+    if (!reviewLine) {
+      reviewLine = el('p', { id: 'cover-review', 'class': 'sc-hint', 'data-review-selection': 'cover' });
+      published = el('details', { id: 'cover-review-original', 'class': 'sc-disclosure' }, [
+        el('summary', { id: 'cover-published-label' }), el('p', { id: 'cover-published', 'class': 'sc-hint' })]);
+      $('cover-dek').after(reviewLine, published);
+    }
+    reviewLine.hidden = false;
+    reviewLine.setAttribute('data-review-state', review ? 'reconciled' : 'unknown');
+    reviewLine.textContent = review ? review.summary : 'Review selection and selected-batch completion are not reconciled for this record; the original verdict is shown.';
+    published.hidden = !review;
+    $('cover-published-label').textContent = 'Original published verdict · ' + (run.session || 'session unknown');
+    $('cover-published').textContent = (cover.h1 || 'No verdict recorded.') + ' ' + (cover.dek || 'No summary recorded.');
     const warning = inputWarning(run), cov = run.coverage || {}, a = cov.acceptance || {}, tol = tolerance(run);
     $('cover-dek').textContent = 'Found ' + num(run.bursts) + ' burst candidates. ' +
       (cov.version ? num(a.ready_stocks) + ' of ' + num(a.intended_stocks) + ' intended stocks had usable session bars.' +
         (a.status !== 'ok' ? ' Incomplete coverage.' : '') +
         (cov.stale ? ' ' + num(cov.stale) + (cov.stale === 1 ? ' fetched frame was stale' : ' fetched frames were stale') + (tol && tol.verdict === 'tolerated' ? ', within the recorded tolerance.' : '.') : '') : warning);
-    $('cover-original').textContent = 'Original published summary: ' + (cover.dek || 'not recorded');
+    $('cover-original').textContent = 'Original published verdict · ' + (run.session || 'session unknown') + ': ' +
+      (cover.h1 || 'not recorded') + ' ' + (cover.dek || 'No summary recorded.');
     // the coverage sentence the run stored, then the stale stocks by name, then
     // what the previous publication's stale stocks turned out to be: each the record's own words
     const follow = text((run.stale_followup || {}).sentence);
@@ -813,15 +833,16 @@
     }
     return reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade';
   }
-  function reviewSelectionNote(data) {
+  function reviewSelectionFacts(data) {
     const run = data.run || {}, s = run.review_selection, rules = data.rules || {}, policy = rules.review_selection;
     if (!s || !policy || s.version !== 1 || policy.version !== s.version ||
-        s.policy !== 'account_feasible_first_research_v1' || policy.policy !== s.policy || s.session !== run.session) return '';
+        s.policy !== 'account_feasible_first_research_v1' || policy.policy !== s.policy || s.session !== run.session) return null;
     const fields = ['discovered', 'feasible', 'research_pool', 'requested', 'max_reads', 'research_max', 'feasible_unselected', 'unused_capacity'];
     const count = (v) => Number.isSafeInteger(v) && v >= 0;
     const purposes = ['opportunity', 'research_ranked', 'research_rotating'], groups = s.by_purpose || {};
     if (!fields.every((k) => count(s[k])) || !purposes.every((k) => groups[k] && count(groups[k].requested)) ||
-        !Array.isArray(s.selected) || s.selected.some((r) => !r || typeof r.ticker !== 'string' || !purposes.includes(r.purpose))) return '';
+        !Array.isArray(data.bursts) || !Array.isArray(s.selected) ||
+        s.selected.some((r) => !r || typeof r.ticker !== 'string' || !purposes.includes(r.purpose))) return null;
     const opportunity = groups.opportunity.requested, research = groups.research_ranked.requested + groups.research_rotating.requested;
     if (s.max_reads !== (rules.pipeline || {}).max_reads || s.research_max !== policy.research_max ||
         s.discovered !== (data.bursts || []).length || s.feasible + s.research_pool > s.discovered ||
@@ -830,12 +851,110 @@
         s.feasible_unselected !== s.feasible - opportunity || s.unused_capacity !== s.max_reads - s.requested ||
         s.requested !== (run.reads || {}).requested || s.selected.length !== s.requested ||
         new Set(s.selected.map((r) => r.ticker)).size !== s.requested ||
-        !purposes.every((p) => s.selected.filter((r) => r.purpose === p).length === groups[p].requested)) return '';
-    return 'Before chart review, ' + num(s.feasible) + ' candidate' + (s.feasible === 1 ? '' : 's') +
+        !purposes.every((p) => s.selected.filter((r) => r.purpose === p).length === groups[p].requested)) return null;
+    const note = 'Before chart review, ' + num(s.feasible) + ' candidate' + (s.feasible === 1 ? '' : 's') +
       ' fit the current regime and individual model sizing. ' + num(opportunity) + ' opportunity / ' + num(research) +
       ' research reviews selected (' + num(s.requested) + ' of ' + num(s.max_reads) + ' available reads); ' +
       num(s.feasible_unselected) + ' feasible candidates left unreviewed. Final review and combined cash allocation still decide tickets.';
+    // Selection counts alone do not prove a completed batch. Reconcile the
+    // richer display against the rows and recorded reader outcomes; this is
+    // a reading of archived facts, never another planner or order authority.
+    const result = { note, detail: null }, reads = run.reads || {}, pipeline = rules.pipeline || {};
+    const failures = ['refused', 'format', 'account', 'credit', 'transport'];
+    const blockers = ['grade_not_admitted', 'quality_veto', 'preview_unavailable', 'known_event', 'plan_withheld', 'no_whole_share', 'no_order'];
+    const grades = ['A+', 'A', 'B', 'C', 'skip'], regime = ((data.breadth || {}).regime || {}).verdict;
+    const semantics = { order: 'mechanical_grade,descending_score,ticker', rotation: 'sha256(policy|measured_session|ticker),ticker',
+      research_pool: 'infeasible mechanical pipeline.trade_grades', feasibility: 'private per-candidate plan before reader and combined allocation' };
+    if (!Object.entries(semantics).every(([key, value]) => policy[key] === value) ||
+        JSON.stringify(policy.grade_order) !== JSON.stringify(grades) || !count(policy.ranked_research) || policy.ranked_research > policy.research_max ||
+        pipeline.reader_policy !== 'accepted_required_v1' || reads.version !== 1 ||
+        !['green', 'yellow', 'red'].includes(regime) || !Array.isArray(pipeline.trade_grades) || !Array.isArray(pipeline.yellow_grades) ||
+        !pipeline.trade_grades.every(g => grades.includes(g)) || !pipeline.yellow_grades.every(g => grades.includes(g)) ||
+        !isNum(pipeline.reader_refusal_fraction) || pipeline.reader_refusal_fraction < 0 || pipeline.reader_refusal_fraction > 1 ||
+        !['requested', 'done', 'refusal_limit'].every(k => count(reads[k])) || !count(s.attempts) ||
+        !reads.causes || Object.keys(reads.causes).length !== failures.length || !failures.every(k => count(reads.causes[k])) ||
+        !Array.isArray(reads.refused_names) || !Array.isArray(reads.refused_admissible) ||
+        !purposes.every(p => ['accepted', 'unaccepted', 'refused', 'attempts'].every(k => count(groups[p][k]))) ||
+        !s.blockers || !blockers.every(k => count(s.blockers[k]))) return result;
+    const selected = new Map(s.selected.map(r => [r.ticker, r.purpose])), seen = new Set();
+    const actual = Object.fromEntries(purposes.map(p => [p, { requested: 0, accepted: 0, unaccepted: 0, refused: 0, attempts: 0 }]));
+    const causes = Object.fromEntries(failures.map(k => [k, 0])), blocked = Object.fromEntries(blockers.map(k => [k, 0]));
+    const refused = [], refusedAdmissible = [], admitted = regime === 'red' ? [] : regime === 'yellow' ? pipeline.yellow_grades : pipeline.trade_grades;
+    let feasible = 0, pool = 0, unreviewedQuality = 0;
+    for (const row of data.bursts) {
+      const decision = row && row.review_selection, cl = row && row.claude;
+      const sourceDecision = ((row || {}).evidence || {}).review_selection;
+      if (!row || typeof row.ticker !== 'string' || seen.has(row.ticker) || !grades.includes(row.grade) || !grades.includes(row.grade_mechanical) ||
+          !decision || decision.policy !== s.policy || typeof decision.feasible !== 'boolean' || typeof decision.research_pool !== 'boolean' ||
+          typeof decision.selected !== 'boolean' || !Array.isArray(decision.blockers) ||
+          new Set(decision.blockers).size !== decision.blockers.length || decision.blockers.some(k => !blockers.includes(k)) ||
+          decision.feasible !== (decision.blockers.length === 0) || (decision.feasible && decision.research_pool) ||
+          decision.selected !== selected.has(row.ticker) || !sourceDecision ||
+          !['policy', 'feasible', 'blockers', 'research_pool', 'selected', 'purpose'].every(k => JSON.stringify(decision[k]) === JSON.stringify(sourceDecision[k])) ||
+          decision.research_pool !== (!decision.feasible && pipeline.trade_grades.includes(row.grade_mechanical)) ||
+          decision.blockers.includes('grade_not_admitted') !== !admitted.includes(row.grade_mechanical) ||
+          !Array.isArray(row.vetoes) || decision.blockers.includes('quality_veto') !== (row.vetoes.length > 0)) return result;
+      seen.add(row.ticker);
+      feasible += Number(decision.feasible); pool += Number(decision.research_pool);
+      decision.blockers.forEach(k => { blocked[k] += 1; });
+      const accepted = readerCoverage(row).state === 'accepted';
+      if (!accepted && row.grade !== row.grade_mechanical) return result;
+      if (!accepted && ['A+', 'A'].includes(row.grade)) unreviewedQuality += 1;
+      if (!decision.selected) {
+        const purpose = decision.feasible ? 'budget_not_selected' : decision.research_pool ? 'research_cap_not_selected' : 'outside_research_pool';
+        if (decision.purpose !== purpose || cl != null || row.reader_coverage !== 'not_selected_budget') return result;
+        continue;
+      }
+      const purpose = selected.get(row.ticker);
+      if (decision.purpose !== purpose || (purpose === 'opportunity' ? !decision.feasible : !decision.research_pool) ||
+          !cl || !Array.isArray(cl.attempts) || !['claude', 'fallback'].includes(cl.source) ||
+          accepted !== (cl.source === 'claude') || row.reader_coverage !== (accepted ? 'accepted' : 'fallback')) return result;
+      const group = actual[purpose];
+      group.requested += 1; group[accepted ? 'accepted' : 'unaccepted'] += 1; group.attempts += cl.attempts.length;
+      if (!accepted) {
+        if (typeof cl.error !== 'string') return result;
+        const error = cl.error, lower = error.toLowerCase();
+        const cause = /^src\.(DiscoveryConflict|ReaderAuthorityError):/.test(error) ? 'refused'
+          : error.startsWith('src.ScoreFormatError:') ? 'format'
+          : ['authenticationerror', 'permissiondeniederror', 'could not resolve authentication', 'invalid x-api-key', 'error code: 401', 'error code: 403'].some(v => lower.includes(v)) ? 'account'
+          : lower.includes('credit balance is too low') ? 'credit' : 'transport';
+        causes[cause] += 1;
+        if (cause === 'refused') {
+          group.refused += 1; refused.push(row.ticker);
+          if (Array.isArray(row.vetoes) && !row.vetoes.length && admitted.includes(row.grade)) refusedAdmissible.push(row.ticker);
+        }
+      }
+    }
+    const accepted = purposes.reduce((n, p) => n + actual[p].accepted, 0), unaccepted = s.requested - accepted;
+    if (feasible !== s.feasible || pool !== s.research_pool || selected.size !== purposes.reduce((n, p) => n + actual[p].requested, 0) ||
+        !blockers.every(k => s.blockers[k] === blocked[k]) ||
+        !purposes.every(p => Object.keys(actual[p]).every(k => groups[p][k] === actual[p][k])) ||
+        s.attempts !== purposes.reduce((n, p) => n + actual[p].attempts, 0) || reads.done !== accepted ||
+        !failures.every(k => reads.causes[k] === causes[k]) || reads.requested !== accepted + Object.values(causes).reduce((a, b) => a + b, 0) ||
+        JSON.stringify(reads.refused_names) !== JSON.stringify(refused.sort()) ||
+        JSON.stringify(reads.refused_admissible) !== JSON.stringify(refusedAdmissible.sort()) ||
+        reads.refusal_limit !== Math.floor(reads.requested * pipeline.reader_refusal_fraction)) return result;
+    const verdict = !reads.requested ? 'not_asked' : !accepted ? 'unavailable' : accepted === reads.requested ? 'complete'
+      : unaccepted === causes.refused && causes.refused <= reads.refusal_limit && !refusedAdmissible.length ? 'tolerated' : 'partial';
+    if (reads.verdict !== verdict) return result;
+    const selection = 'Reaction candidates: ' + num(feasible) + ' fit the archived regime and individual model sizing before chart review. ' +
+      num(opportunity) + ' opportunity / ' + num(research) + ' intentional research reviews selected.';
+    const batch = !s.requested ? 'Selected batch: no chart reviews requested.' :
+      'Selected batch: ' + num(accepted) + ' of ' + num(s.requested) + ' chart reviews accepted' +
+      (verdict === 'complete' ? ' — complete.' : '; ' + num(unaccepted) + ' without an accepted review' +
+        (causes.refused ? ' (' + num(causes.refused) + ' refused)' : '') + '. ' +
+        (verdict === 'tolerated' ? 'Refusals are within the archived tolerance; those names still lack accepted review.' :
+          verdict === 'unavailable' ? 'The selected reader batch is unavailable.' : 'The selected reader batch is incomplete.'));
+    const unselected = s.discovered - s.requested;
+    const coverage = 'Broader coverage: ' + num(unselected) + ' of ' + num(s.discovered) + ' reaction candidates not selected; ' +
+      num(unreviewedQuality) + ' mechanical A+/A lack accepted review.';
+    result.detail = { feasible, opportunity, research, requested: s.requested, accepted, unaccepted, refused: causes.refused,
+      unselected, unreviewedQuality, verdict, selection, batch, coverage,
+      summary: selection + ' ' + batch + ' ' + coverage + ' Selection is not ticket admission; anticipation is separate.' };
+    return result;
   }
+  SCStock.reviewSelectionFacts = reviewSelectionFacts;
+  function reviewSelectionNote(data) { const facts = reviewSelectionFacts(data); return facts ? facts.note : ''; }
   // the run's coverage rule, quoted from the rules the record archived: a record
   // made before the stale tolerance keeps the sentence it was published under
   function coverageRule(data, a) {
@@ -5226,6 +5345,8 @@
     if (clockTimer) { w.clearInterval(clockTimer); clockTimer = null; }
     $('cover-h1').textContent = 'The record could not be read.';
     $('cover-dek').textContent = message;
+    if ($('cover-review')) $('cover-review').hidden = true;
+    if ($('cover-review-original')) $('cover-review-original').hidden = true;
     clear($('status-slot')).appendChild(chip('no record', 'danger'));
     $('next-h3').textContent = 'Do not place any order from this page.';
     $('next-p').textContent = 'The published reader did not load; check the run log.';

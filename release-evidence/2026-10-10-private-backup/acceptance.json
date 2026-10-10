@@ -1,0 +1,1173 @@
+{
+  "schema_version": 1,
+  "status": "PASS_ACTUAL_PUBLIC_RELEASE",
+  "issue": 146,
+  "pull_request": 147,
+  "recorded_at": "2026-10-10T14:08:25.867504+00:00",
+  "scope": "Private backup release accepted on the actual deployed site, with empty-account checks separate from an explicitly synthetic private backup roundtrip. No real Mo account, execution, holdings, costs or profit was collected or established.",
+  "release": {
+    "reviewed_head": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+    "merged_main": "a9862564b3b56e23100ff290b5f1bc0a9f19e58e",
+    "merge_parents": [
+      "e081535d3e6fe438a67f467b83564d56e4a52db4",
+      "101dc9ff6f4d44aa04486f8a528246f9abecdc74"
+    ],
+    "merge_at": "2026-10-10T10:03:43-04:00",
+    "reviewed_and_merged_tree": "9fbce6d43e09b27d69447319cf6f6b971625e257",
+    "complete_tree_equality": true,
+    "url": "https://github.com/spicyChicken59/SpicyStock/pull/147",
+    "public_url": "https://spicychicken59.github.io/SpicyStock/"
+  },
+  "hosted_acceptance": {
+    "exact_head": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+    "checks_passed": 7,
+    "tests_run_id": 38055733737,
+    "checks": [
+      {
+        "id": 114223806914,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:58Z",
+        "completed_at": "2026-10-10T13:55:30Z"
+      },
+      {
+        "id": 114223806835,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:57Z",
+        "completed_at": "2026-10-10T13:44:48Z"
+      },
+      {
+        "id": 114223754843,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:45Z",
+        "completed_at": "2026-10-10T13:26:55Z"
+      },
+      {
+        "id": 114223754789,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:44Z",
+        "completed_at": "2026-10-10T13:26:57Z"
+      },
+      {
+        "id": 114223754751,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:44Z",
+        "completed_at": "2026-10-10T13:34:49Z"
+      },
+      {
+        "id": 114223754611,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:44Z",
+        "completed_at": "2026-10-10T13:40:58Z"
+      },
+      {
+        "id": 114223665264,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "101dc9ff6f4d44aa04486f8a528246f9abecdc74",
+        "started_at": "2026-10-10T13:26:19Z",
+        "completed_at": "2026-10-10T13:26:29Z"
+      }
+    ],
+    "counts": {
+      "pytest_passed": 3850,
+      "pytest_seconds": 391.08,
+      "page_passed": 13524,
+      "page_total": 13524,
+      "chart_passed": 378,
+      "chart_total": 378,
+      "continuity_passed": 137,
+      "fixtures": {
+        "page": 13,
+        "morning": 21,
+        "issuer": 30,
+        "stop_research": 22,
+        "research_outcomes": 40
+      }
+    },
+    "native_runtime": [
+      {
+        "case": "central",
+        "job_id": 114223806835,
+        "started_at": "2026-10-10T13:26:57Z",
+        "completed_at": "2026-10-10T13:44:48Z",
+        "runtime_seconds": 1031.103112,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11671652878,
+        "artifact_name": "historical-runtime-central-38055733737-1",
+        "artifact_sha256": "be5defa03d17b7e4c31bfbc5676f8e864553ff050ddf26dc0215bbb2b4945ab9",
+        "artifact_bytes": 26634
+      },
+      {
+        "case": "stress",
+        "job_id": 114223806914,
+        "started_at": "2026-10-10T13:26:58Z",
+        "completed_at": "2026-10-10T13:55:30Z",
+        "runtime_seconds": 1675.01288,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11671024436,
+        "artifact_name": "historical-runtime-stress-38055733737-1",
+        "artifact_sha256": "b1fb0acfd22c01a3b1b3497ad8a48cce4e1d84fd6d6d3f4ee0757a8e43cc0519",
+        "artifact_bytes": 26540
+      }
+    ],
+    "artifact_proof_scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only; no merge or deployment claim.",
+    "artifacts": [
+      {
+        "id": 11671652878,
+        "name": "historical-runtime-central-38055733737-1",
+        "size_in_bytes": 26634,
+        "digest": "sha256:be5defa03d17b7e4c31bfbc5676f8e864553ff050ddf26dc0215bbb2b4945ab9"
+      },
+      {
+        "id": 11671024436,
+        "name": "historical-runtime-stress-38055733737-1",
+        "size_in_bytes": 26540,
+        "digest": "sha256:b1fb0acfd22c01a3b1b3497ad8a48cce4e1d84fd6d6d3f4ee0757a8e43cc0519"
+      },
+      {
+        "id": 11670956872,
+        "name": "page-shots",
+        "size_in_bytes": 83758241,
+        "digest": "sha256:a0bfae22887ccdf83f6c408d60cbc54701a050b9acde2809340dee8f306ab351"
+      },
+      {
+        "id": 11670199938,
+        "name": "historical-runtime-gate-38055733737-1",
+        "size_in_bytes": 336,
+        "digest": "sha256:7ec6e1813032e0980a89ab2bcfe5e924e652ad474a7ef82b7d8fdde6c7768700"
+      }
+    ]
+  },
+  "delivery": {
+    "schema_version": 1,
+    "status": "PASS",
+    "recorded_at": "2026-10-10T14:05:10.415Z",
+    "repository": "spicyChicken59/SpicyStock",
+    "head_sha": "a9862564b3b56e23100ff290b5f1bc0a9f19e58e",
+    "publisher": {
+      "run_id": 38058127724,
+      "public_files_verified": 40,
+      "verification_log_line": "2026-10-10T14:04:44.7244091Z Verified: every one of the 40 public files matches committed main.",
+      "log_path": "/tmp/spicystock-pr147-publisher-38058127724.log",
+      "jobs": [
+        {
+          "id": 114230673740,
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T14:03:49Z",
+          "completed_at": "2026-10-10T14:04:46Z"
+        }
+      ]
+    },
+    "pages": {
+      "run_id": 38058141730,
+      "jobs": [
+        {
+          "id": 114230727723,
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T14:04:07Z",
+          "completed_at": "2026-10-10T14:04:20Z"
+        },
+        {
+          "id": 114230776239,
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T14:04:24Z",
+          "completed_at": "2026-10-10T14:04:45Z"
+        },
+        {
+          "id": 114230776259,
+          "name": "report-build-status",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T14:04:22Z",
+          "completed_at": "2026-10-10T14:04:26Z"
+        }
+      ]
+    },
+    "superseded_pages": {
+      "run_id": 38058127120,
+      "head_sha": "a9862564b3b56e23100ff290b5f1bc0a9f19e58e",
+      "conclusion": "cancelled"
+    },
+    "scope": "Official GitHub publisher/Pages metadata. Publisher verified 40 public files against committed main. Actual public-browser acceptance is a separate review. Initial push Pages run was superseded/cancelled; final publisher-triggered deployment succeeded. No provider collection, dispatch, or merge performed by this reviewer."
+  },
+  "actual_public": {
+    "checks_passed": 68,
+    "required_native_file_matches": 40,
+    "all_public_reads_finished": true,
+    "wall_clock_and_default_loader": true,
+    "public_clock_or_data_overrides": false,
+    "private_store": "absent in both fresh actual contexts",
+    "settled_cash": "unknown",
+    "private_storage_writes": 0,
+    "private_records_created": 0,
+    "actual_private_downloads": 0,
+    "errors": 0,
+    "source_companion_requests_for_empty_backup": 0,
+    "screenshots_inspected": 2,
+    "authority_changed": false,
+    "note": "Public count is68, versus local67, because actual mode adds final exact origin/main identity check after all phases.",
+    "started_at": "2026-10-10T14:05:39.642Z",
+    "finished_at_empty_phase": "2026-10-10T14:05:48.417Z",
+    "all_reads_finished_at": "2026-10-10T14:05:55.096Z",
+    "receipt_status": "PASS_ACTUAL_PUBLIC_EMPTY_BACKUP",
+    "publication": {
+      "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+      "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+      "run_id": "38034610157",
+      "rules_version": "c9dc7d6d1d87",
+      "measured_session": "2026-10-09",
+      "applicable_session": "2026-10-12",
+      "published_at": "2026-10-10T07:30:15.553690+00:00",
+      "reader_projection_version": 1,
+      "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+    },
+    "transport": {
+      "managedProxy": true,
+      "certificateSpecificSPKI": "n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=",
+      "globalTlsBypass": false,
+      "bodyReading": "Bounded cloned stream to EOF then native original bytes; no CDP body observer."
+    },
+    "checks": [
+      {
+        "name": "empty-1280: real clock/default public loader",
+        "pass": true
+      },
+      {
+        "name": "empty-1280: actual canonical and reader binding",
+        "pass": true
+      },
+      {
+        "name": "empty-1280: wall clock matches runtime",
+        "pass": true
+      },
+      {
+        "name": "1280: unknown cash and no private saved facts",
+        "pass": true
+      },
+      {
+        "name": "1280: backup does not fetch source companions initially",
+        "pass": true
+      },
+      {
+        "name": "1280: private storage and explicit empty-only restore stated",
+        "pass": true
+      },
+      {
+        "name": "1280: restore cannot begin without a selected preview",
+        "pass": true
+      },
+      {
+        "name": "1280: empty export refuses without a file",
+        "pass": true
+      },
+      {
+        "name": "1280: empty inspection does not write private state or make requests",
+        "pass": true
+      },
+      {
+        "name": "1280: empty backup leaves public authority untouched",
+        "pass": true
+      },
+      {
+        "name": "1280: phone/desktop fits",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file index.html",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file data.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file reader.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file picks.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file historical-validation.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file historical-findings.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file morning.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/assets/favicon.ico",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/assets/sc-avatar-tile.svg",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/assets/apple-touch-icon.png",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/sc.css",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/sc-theme.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/sc-charts.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/sc-motion.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app.css",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-chart.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-map.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-follow.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-reading.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-method.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-findings.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-reader.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-observations.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-cash-preview.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-handoff.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-handoff-ui.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-issuer-evidence.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-stop-research.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-research-outcomes.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app-morning.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file app.js",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/assets/sc-mark-color-dark.svg",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file design-system/assets/sc-mark-mono-cream.svg",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file issuer-evidence.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file stop-research.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file research-outcomes.json",
+        "pass": true
+      },
+      {
+        "name": "Native exact publisher file research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+        "pass": true
+      },
+      {
+        "name": "empty-1280: no provider or non-GET request",
+        "pass": true
+      },
+      {
+        "name": "empty-1280: no browser/transport errors",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "empty-390: real clock/default public loader",
+        "pass": true
+      },
+      {
+        "name": "empty-390: actual canonical and reader binding",
+        "pass": true
+      },
+      {
+        "name": "empty-390: wall clock matches runtime",
+        "pass": true
+      },
+      {
+        "name": "390: unknown cash and no private saved facts",
+        "pass": true
+      },
+      {
+        "name": "390: backup does not fetch source companions initially",
+        "pass": true
+      },
+      {
+        "name": "390: private storage and explicit empty-only restore stated",
+        "pass": true
+      },
+      {
+        "name": "390: restore cannot begin without a selected preview",
+        "pass": true
+      },
+      {
+        "name": "390: empty export refuses without a file",
+        "pass": true
+      },
+      {
+        "name": "390: empty inspection does not write private state or make requests",
+        "pass": true
+      },
+      {
+        "name": "390: empty backup leaves public authority untouched",
+        "pass": true
+      },
+      {
+        "name": "390: phone/desktop fits",
+        "pass": true
+      },
+      {
+        "name": "empty-390: no provider or non-GET request",
+        "pass": true
+      },
+      {
+        "name": "empty-390: no browser/transport errors",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "All publisher files verified exactly once",
+        "pass": true
+      },
+      {
+        "name": "origin/main remains exact supplied release after all reads",
+        "pass": true
+      }
+    ],
+    "native_files": [
+      {
+        "name": "index.html",
+        "bytes": 17012,
+        "sha256": "228f5fdfe586c068fe46e921408ae31d084c4cefdca716e089091e6517d46a2d"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "app.css",
+        "bytes": 87893,
+        "sha256": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 38839,
+        "sha256": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 40206,
+        "sha256": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 42047,
+        "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07"
+      },
+      {
+        "name": "app-stop-research.js",
+        "bytes": 37585,
+        "sha256": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe"
+      },
+      {
+        "name": "app-research-outcomes.js",
+        "bytes": 40344,
+        "sha256": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 24145,
+        "sha256": "781352d7a1c9086a51e65c6273a58ff18722d55796f7e9edd5fa3e38f38915f5"
+      },
+      {
+        "name": "app.js",
+        "bytes": 396766,
+        "sha256": "5b5794ec60a9dafd1e353e88f8c08526a6a8b1976daf1228536a505938ebb0ca"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1768,
+        "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+      },
+      {
+        "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "bytes": 5687,
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+      },
+      {
+        "name": "stop-research.json",
+        "bytes": 1650,
+        "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+      },
+      {
+        "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "bytes": 8918,
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      },
+      {
+        "name": "research-outcomes.json",
+        "bytes": 2132,
+        "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+      },
+      {
+        "name": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+        "bytes": 17104,
+        "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172"
+      }
+    ],
+    "source_hashes": {
+      "app-handoff.js": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982",
+      "app-handoff-ui.js": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1",
+      "app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+      "app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+    }
+  },
+  "synthetic_private": {
+    "checks_passed": 45,
+    "screenshots_inspected": 5,
+    "disposable_contexts": 3,
+    "scope": "SYNTHETIC PRIVATE BACKUP REHEARSAL ONLY. Disposable browser contexts, historical model-produced seed and deliberately invented manual report. Not Mo facts, broker execution, actual holdings, actual costs, gain/loss or public trading acceptance. Public data and clock are unchanged.",
+    "legacy_seed_sha256": "daa2afa1b60e677c3a2ad9d675ff7fe7e78f7f15b76929442f537e0e62395512",
+    "deliberately_invented_fields": {
+      "submitted_quantity": 9,
+      "filled_quantity": 7,
+      "average_price": "31.234567",
+      "exited_quantity": 3,
+      "entry_fees": "0.11",
+      "all_other_actual_fields": "unknown",
+      "sourceTicker": "KE"
+    },
+    "source": {
+      "ticker": "KE",
+      "stage": "setting-up",
+      "publication": {
+        "applicable_session": "2026-10-12",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "measured_session": "2026-10-09",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+        "rules_version": "c9dc7d6d1d87",
+        "run_id": "38034610157"
+      },
+      "cohort": {
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+        "bytes": 8918,
+        "generated_at": "2026-10-10T08:11:55.173159+00:00",
+        "policy_id": "anticipation_stop_width_4_to_5_v1"
+      },
+      "evidence": {
+        "id": "d2fd523332158801e28d50e17d6e06688882fda6d3b2e3fcd34b478de230f0a2",
+        "inputs_sha256": "3f37e164f19a115525e37dd4085371888c7ee4c1ab5c203aca64c756ff02f239",
+        "plan_sha256": "8a55c24d9d7f299d3d7518891acebdde96703ae3fc9629867fc8eea7659c7c16",
+        "source_sha256": "2d6a7ada010e7ff1921fdd285b360fe95aede612a6571347273a81d88069848e"
+      },
+      "baseline_admitted": false
+    },
+    "downloaded_files": [
+      {
+        "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-1.json",
+        "bytes": 4773,
+        "sha256": "7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff",
+        "suggestedFilename": "spicystock-private-backup.json"
+      },
+      {
+        "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-2.json",
+        "bytes": 4773,
+        "sha256": "7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff",
+        "suggestedFilename": "spicystock-private-backup.json"
+      },
+      {
+        "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-3.json",
+        "bytes": 4773,
+        "sha256": "7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff",
+        "suggestedFilename": "spicystock-private-backup.json"
+      }
+    ],
+    "local_restore_writes": {
+      "donor_explicit_synthetic_report_save": 1,
+      "390_fresh_restore": 1,
+      "1280_fresh_restore": 1
+    },
+    "preview_and_cancel_writes": 0,
+    "restore_exact_bytes": true,
+    "all_three_downloads_identical": true,
+    "download_sha256": "7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff",
+    "download_bytes": 4773,
+    "private_file_uploads": 0,
+    "real_user_facts_or_trades": false,
+    "result": "Unknown exit costs/prices/times remain unknown; completed result unavailable; no new entry/copy authority.",
+    "receipt_status": "PASS_SYNTHETIC_PRIVATE_BACKUP_REHEARSAL",
+    "finished_at": "2026-10-10T14:05:55.096Z",
+    "checks": [
+      {
+        "name": "SYNTHETIC-donor: real clock/default public loader",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-donor: actual canonical and reader binding",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-donor: wall clock matches runtime",
+        "pass": true
+      },
+      {
+        "name": "Synthetic legacy donor read preserves exact original bytes",
+        "pass": true
+      },
+      {
+        "name": "Real deployed model creates only the explicitly synthetic manual report",
+        "pass": true
+      },
+      {
+        "name": "Synthetic report retains exact public origin and archived baseline admission",
+        "pass": true
+      },
+      {
+        "name": "Actual browser download is exact saved bytes, not dirty editor text",
+        "pass": true
+      },
+      {
+        "name": "Synthetic download writes no store and makes no HTTP request",
+        "pass": true
+      },
+      {
+        "name": "Synthetic download leaves public state and cash untouched",
+        "pass": true
+      },
+      {
+        "name": "synthetic-donor: no provider or non-GET request",
+        "pass": true
+      },
+      {
+        "name": "synthetic-donor: no browser/transport errors",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "SYNTHETIC-restore-390: real clock/default public loader",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-restore-390: actual canonical and reader binding",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-restore-390: wall clock matches runtime",
+        "pass": true
+      },
+      {
+        "name": "390: fresh restore destination is empty and cash unknown",
+        "pass": true
+      },
+      {
+        "name": "390: chooser uses actual downloaded file and previews without writes",
+        "pass": true
+      },
+      {
+        "name": "390: preview identifies both original kinds and scan dates",
+        "pass": true
+      },
+      {
+        "name": "390: cancelling preview leaves no records and no restore authority",
+        "pass": true
+      },
+      {
+        "name": "390: explicit restore writes exact downloaded bytes once",
+        "pass": true
+      },
+      {
+        "name": "390: all original kinds, identities, source terms, facts and timestamps survive",
+        "pass": true
+      },
+      {
+        "name": "390: independent unknown actual costs/times/result remain unknown",
+        "pass": true
+      },
+      {
+        "name": "390: restore grants no independent or expired planned copy authority",
+        "pass": true
+      },
+      {
+        "name": "390: real re-export roundtrip preserves every byte",
+        "pass": true
+      },
+      {
+        "name": "390: local chooser/preview/restore/export makes no HTTP request",
+        "pass": true
+      },
+      {
+        "name": "390: restore changes no public/source/cash/following authority",
+        "pass": true
+      },
+      {
+        "name": "390: restored layout fits",
+        "pass": true
+      },
+      {
+        "name": "synthetic-restore-390: no provider or non-GET request",
+        "pass": true
+      },
+      {
+        "name": "synthetic-restore-390: no browser/transport errors",
+        "pass": true,
+        "detail": []
+      },
+      {
+        "name": "SYNTHETIC-restore-1280: real clock/default public loader",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-restore-1280: actual canonical and reader binding",
+        "pass": true
+      },
+      {
+        "name": "SYNTHETIC-restore-1280: wall clock matches runtime",
+        "pass": true
+      },
+      {
+        "name": "1280: fresh restore destination is empty and cash unknown",
+        "pass": true
+      },
+      {
+        "name": "1280: chooser uses actual downloaded file and previews without writes",
+        "pass": true
+      },
+      {
+        "name": "1280: preview identifies both original kinds and scan dates",
+        "pass": true
+      },
+      {
+        "name": "1280: cancelling preview leaves no records and no restore authority",
+        "pass": true
+      },
+      {
+        "name": "1280: explicit restore writes exact downloaded bytes once",
+        "pass": true
+      },
+      {
+        "name": "1280: all original kinds, identities, source terms, facts and timestamps survive",
+        "pass": true
+      },
+      {
+        "name": "1280: independent unknown actual costs/times/result remain unknown",
+        "pass": true
+      },
+      {
+        "name": "1280: restore grants no independent or expired planned copy authority",
+        "pass": true
+      },
+      {
+        "name": "1280: real re-export roundtrip preserves every byte",
+        "pass": true
+      },
+      {
+        "name": "1280: local chooser/preview/restore/export makes no HTTP request",
+        "pass": true
+      },
+      {
+        "name": "1280: restore changes no public/source/cash/following authority",
+        "pass": true
+      },
+      {
+        "name": "1280: restored layout fits",
+        "pass": true
+      },
+      {
+        "name": "synthetic-restore-1280: no provider or non-GET request",
+        "pass": true
+      },
+      {
+        "name": "synthetic-restore-1280: no browser/transport errors",
+        "pass": true,
+        "detail": []
+      }
+    ],
+    "limitations": [
+      "No real user browser profile is accessed.",
+      "Only synthetic bytes are downloaded or restored; file selection is a local browser operation, never an HTTP upload.",
+      "Recovery with failed public startup, malformed files, quota failures and concurrent storage races remain separately controlled repository tests."
+    ]
+  },
+  "screenshots_inspected": {
+    "ACTUAL-EMPTY-backup-unavailable-1280.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/ACTUAL-EMPTY-backup-unavailable-1280.png",
+      "sha256": "b12cb8ad51c79bbc6b14fa977c40dfaa52b741e3480f018983bbea256cb88945",
+      "bytes": 134861,
+      "visually_inspected": true,
+      "width": 1280,
+      "theme": "dark",
+      "scope": "actual_empty_private"
+    },
+    "ACTUAL-EMPTY-backup-unavailable-390.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/ACTUAL-EMPTY-backup-unavailable-390.png",
+      "sha256": "802f7256b310b7c5b7318878974acdcca1aaf6e18feeceeaab8b00ca3ce56b7a",
+      "bytes": 64318,
+      "visually_inspected": true,
+      "width": 390,
+      "theme": "light",
+      "scope": "actual_empty_private"
+    },
+    "SYNTHETIC-PRIVATE-downloaded-1280.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-downloaded-1280.png",
+      "sha256": "f6ecef549bd8c98c3d7fe642f4807cf2226562ad7c0963fb427f86619615bedb",
+      "bytes": 158336,
+      "visually_inspected": true,
+      "width": 1280,
+      "theme": "dark",
+      "scope": "synthetic_private"
+    },
+    "SYNTHETIC-PRIVATE-preview-no-write-390.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-preview-no-write-390.png",
+      "sha256": "05e4352d218c7420e86c11c6539abd80c6730ee74e344533be8baee3106567e0",
+      "bytes": 57018,
+      "visually_inspected": true,
+      "width": 390,
+      "theme": "light",
+      "scope": "synthetic_private"
+    },
+    "SYNTHETIC-PRIVATE-restored-exact-bytes-390.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-restored-exact-bytes-390.png",
+      "sha256": "8e4789f0ef0ad369e9fa031d89c66025c9494d9918ee84135c0c25f329d2e17d",
+      "bytes": 62311,
+      "visually_inspected": true,
+      "width": 390,
+      "theme": "light",
+      "scope": "synthetic_private"
+    },
+    "SYNTHETIC-PRIVATE-preview-no-write-1280.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-preview-no-write-1280.png",
+      "sha256": "7d4ca96ba313220e70a2fd8f8883c0cabec50a2a3b8ff87c19d287a04f7e6efa",
+      "bytes": 152622,
+      "visually_inspected": true,
+      "width": 1280,
+      "theme": "dark",
+      "scope": "synthetic_private"
+    },
+    "SYNTHETIC-PRIVATE-restored-exact-bytes-1280.png": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-restored-exact-bytes-1280.png",
+      "sha256": "397b9bc984565e4ea0fe2d36f389b58990d7a80b23f7751feac20f37f9597076",
+      "bytes": 156085,
+      "visually_inspected": true,
+      "width": 1280,
+      "theme": "dark",
+      "scope": "synthetic_private"
+    }
+  },
+  "visual_findings": [
+    "Actual390/light and1280/dark explicitly state no saved records, no cloud upload, readable-empty-only destination and no download from unsaved inputs.",
+    "Synthetic preview visibly identifies one planned handoff and one independent report with original publication/save dates, before any store write.",
+    "Synthetic restore visibly confirms two records restored exactly, unknown facts retained and no broker order or cash reservation.",
+    "Both restored views keep independent research origin and unavailable completed result; six-decimal entry value remains readable.",
+    "All seven captures inspected directly; no horizontal overflow."
+  ],
+  "failure_history": {
+    "first_attempt_passed": true,
+    "retries": 0,
+    "errors": 0
+  },
+  "source_proofs": {
+    "reviewed_remote_head": {
+      "path": "/tmp/spicystock-private-backup-independent/final-remote-review.json",
+      "sha256": "ddb2a07fad0dffc09d68205daa369af0922c26351b5471d8032d21ba3c9a70b0",
+      "bytes": 3335,
+      "raw_utf8": "{\n  \"verdict\": \"NO_BLOCKER_EXACT_REMOTE_HEAD\",\n  \"head\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n  \"tree\": \"9fbce6d43e09b27d69447319cf6f6b971625e257\",\n  \"remote_parent\": \"75f5bbc78201d588e143423fe2c2595d25acaaa0\",\n  \"reviewed_local_preparation_head\": \"f59595d5c45504c0aa2b678a8ec4acc9dfb76c21\",\n  \"local_preparation_branch\": \"codex/private-record-backup-preparation\",\n  \"passed\": 14,\n  \"total\": 14,\n  \"checks\": [\n    {\n      \"name\": \"clean exact remote head\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote git tree equals independently reviewed local tree\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"complete remote versus local diff empty\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"aggregate remote parent correct\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"original local preparation branch preserves reviewed history\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes docs/app-handoff.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes docs/app-handoff-ui.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes docs/app-stop-research.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes docs/app.css\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes tools/handoff_model_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes tools/private_backup_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes tools/page_smoke.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote source original bytes tools/publication_recovery_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"remote prepared evidence exact approved local receipt\",\n      \"pass\": true\n    }\n  ],\n  \"local_review\": {\n    \"path\": \"/tmp/spicystock-private-backup-independent/final-local-review.json\",\n    \"sha256\": \"a65c8e638adba5c6ba1c0a3b87ca810172d1ea404720ecc8ba5ccbb12ce13620\",\n    \"integrity_checks\": 37,\n    \"independent_executed_checks\": 65\n  },\n  \"complete_tree_equality\": true,\n  \"source_sha256\": {\n    \"docs/app-handoff.js\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\",\n    \"docs/app-handoff-ui.js\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\",\n    \"docs/app-stop-research.js\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\",\n    \"docs/app.css\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\",\n    \"tools/handoff_model_cases.mjs\": \"b373bdf8111ae36de02b4fdcf315177524e1164d5ac982b7376b49a5e0e46809\",\n    \"tools/private_backup_cases.mjs\": \"2789614394df9fcb3bf226db6a8e683fab461242f861ad4c3c778178ecd95de7\",\n    \"tools/page_smoke.mjs\": \"8056c761c7a166ded03ae463be5b2bb9dde56f723f2fb3aa0fa498500d531d9f\",\n    \"tools/publication_recovery_cases.mjs\": \"9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe\"\n  },\n  \"prepared_receipt_sha256\": \"5e8f484de1764096b1eca7cfb3634bee9d0d4b0bbc2afff34ed6cd29f4fe92a9\",\n  \"hosted_and_public_acceptance\": \"PENDING for exact remote head; this approval is source/tree equivalence only, not release completion.\",\n  \"private_data_scope\": \"Synthetic test records only; no real user profile, broker facts or private backup collected.\",\n  \"repository_edits\": false,\n  \"provider_requests\": 0\n}\n"
+    },
+    "reviewed_local_preparation": {
+      "path": "/tmp/spicystock-private-backup-independent/final-local-review.json",
+      "sha256": "a65c8e638adba5c6ba1c0a3b87ca810172d1ea404720ecc8ba5ccbb12ce13620",
+      "bytes": 5460,
+      "raw_utf8": "{\n  \"verdict\": \"NO_BLOCKER_LOCAL_EXACT_TREE\",\n  \"local_head\": \"f59595d5c45504c0aa2b678a8ec4acc9dfb76c21\",\n  \"tree\": \"9fbce6d43e09b27d69447319cf6f6b971625e257\",\n  \"remote_parent\": \"75f5bbc78201d588e143423fe2c2595d25acaaa0\",\n  \"passed\": 37,\n  \"total\": 37,\n  \"checks\": [\n    {\n      \"name\": \"exact local head tree and clean worktree\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"corrected145 parent included\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"exact prepared receipt local scope\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"local commits explicitly distinguished from remote publishing identity\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"local prep ancestry model\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"local prep ancestry ui\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"local prep ancestry browser\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"local prep ancestry integrated_parent\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact docs/app-handoff.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact docs/app-handoff-ui.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact docs/app-stop-research.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact docs/app.css\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact tools/handoff_model_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact tools/private_backup_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact tools/page_smoke.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"final source exact tools/publication_recovery_cases.mjs\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"eight source hashes retained\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"inline proof raw identity spicystock-private-backup-model-acceptance.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"inline proof raw identity spicystock-private146-browser-acceptance.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"inline proof raw identity review.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"three inline proofs retained\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"independent65 proof retained exactly\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"independently exercised runtime unchanged app-handoff.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"independently exercised runtime unchanged app-handoff-ui.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"independently exercised runtime unchanged app-stop-research.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"independently exercised runtime unchanged app.css\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"owner137baseline scope truthful\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"eight intended browser guards killed and unrelated137passed\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"owner67model14negative scopes retained\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"root compatibility completed evidence\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"root recovery completed evidence\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"root docs completed evidence\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"root suite counts separately named not single inflated run\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"exact intended source docs and tests delta only\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"canonical evidence history originalfixtures strategies and pinned design unchanged\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"runner hook only adds exact dedicated suite\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"documentation preserves private facts and empty restore constraints\",\n      \"pass\": true\n    }\n  ],\n  \"prepared_receipt_sha256\": \"5e8f484de1764096b1eca7cfb3634bee9d0d4b0bbc2afff34ed6cd29f4fe92a9\",\n  \"source_sha256\": {\n    \"docs/app-handoff.js\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\",\n    \"docs/app-handoff-ui.js\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\",\n    \"docs/app-stop-research.js\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\",\n    \"docs/app.css\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\",\n    \"tools/handoff_model_cases.mjs\": \"b373bdf8111ae36de02b4fdcf315177524e1164d5ac982b7376b49a5e0e46809\",\n    \"tools/private_backup_cases.mjs\": \"2789614394df9fcb3bf226db6a8e683fab461242f861ad4c3c778178ecd95de7\",\n    \"tools/page_smoke.mjs\": \"8056c761c7a166ded03ae463be5b2bb9dde56f723f2fb3aa0fa498500d531d9f\",\n    \"tools/publication_recovery_cases.mjs\": \"9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe\"\n  },\n  \"independent_executed_checks\": 65,\n  \"owner_browser_checks\": 137,\n  \"owner_browser_killed_guards\": 8,\n  \"owner_model_checks\": 67,\n  \"owner_model_killed_guards\": 14,\n  \"root_suites\": {\n    \"model\": 67,\n    \"handoff_independent_reports_refresh\": 463,\n    \"publication_recovery\": 131,\n    \"documentation\": 37,\n    \"scope\": \"Distinct targeted suites; owner and independent controls are separately scoped below, not one combined run.\"\n  },\n  \"publication_status\": \"Local preparation only. Remote aggregate must independently equal this tree and pass hosted/public acceptance. Local preparation SHAs are not asserted to be remote ancestors.\",\n  \"no_unreviewed_runtime\": true,\n  \"immutable_source_data_changed\": false,\n  \"no_repo_edits\": true,\n  \"provider_requests\": 0\n}\n"
+    },
+    "hosted": {
+      "path": "/tmp/spicystock-pr147-hosted-acceptance.json",
+      "sha256": "c542128d84e0b242ef4b80652ab3cb9e32237548226fb2a5301d013938d71237",
+      "bytes": 4670,
+      "raw_utf8": "{\n  \"schema_version\": 1,\n  \"status\": \"PASS\",\n  \"repository\": \"spicyChicken59/SpicyStock\",\n  \"pull_request\": 147,\n  \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n  \"tests_run_id\": 38055733737,\n  \"tests_conclusion\": \"success\",\n  \"recorded_at\": \"2026-10-10T13:55:56.784Z\",\n  \"checks\": [\n    {\n      \"id\": 114223806914,\n      \"name\": \"historical-runtime (stress)\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:58Z\",\n      \"completed_at\": \"2026-10-10T13:55:30Z\"\n    },\n    {\n      \"id\": 114223806835,\n      \"name\": \"historical-runtime (central)\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:57Z\",\n      \"completed_at\": \"2026-10-10T13:44:48Z\"\n    },\n    {\n      \"id\": 114223754843,\n      \"name\": \"historical-runtime-gate\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:45Z\",\n      \"completed_at\": \"2026-10-10T13:26:55Z\"\n    },\n    {\n      \"id\": 114223754789,\n      \"name\": \"gitleaks\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:26:57Z\"\n    },\n    {\n      \"id\": 114223754751,\n      \"name\": \"pytest\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:34:49Z\"\n    },\n    {\n      \"id\": 114223754611,\n      \"name\": \"page\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:40:58Z\"\n    },\n    {\n      \"id\": 114223665264,\n      \"name\": \"gitleaks\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"started_at\": \"2026-10-10T13:26:19Z\",\n      \"completed_at\": \"2026-10-10T13:26:29Z\"\n    }\n  ],\n  \"counts\": {\n    \"pytest_passed\": 3850,\n    \"pytest_seconds\": 391.08,\n    \"page_passed\": 13524,\n    \"page_total\": 13524,\n    \"chart_passed\": 378,\n    \"chart_total\": 378,\n    \"continuity_passed\": 137,\n    \"fixtures\": {\n      \"page\": 13,\n      \"morning\": 21,\n      \"issuer\": 30,\n      \"stop_research\": 22,\n      \"research_outcomes\": 40\n    }\n  },\n  \"native\": [\n    {\n      \"case\": \"central\",\n      \"job_id\": 114223806835,\n      \"started_at\": \"2026-10-10T13:26:57Z\",\n      \"completed_at\": \"2026-10-10T13:44:48Z\",\n      \"runtime_seconds\": 1031.103112,\n      \"memory_supervisor_status\": \"PASS\",\n      \"artifact_id\": 11671652878,\n      \"artifact_name\": \"historical-runtime-central-38055733737-1\",\n      \"artifact_sha256\": \"be5defa03d17b7e4c31bfbc5676f8e864553ff050ddf26dc0215bbb2b4945ab9\",\n      \"artifact_bytes\": 26634\n    },\n    {\n      \"case\": \"stress\",\n      \"job_id\": 114223806914,\n      \"started_at\": \"2026-10-10T13:26:58Z\",\n      \"completed_at\": \"2026-10-10T13:55:30Z\",\n      \"runtime_seconds\": 1675.01288,\n      \"memory_supervisor_status\": \"PASS\",\n      \"artifact_id\": 11671024436,\n      \"artifact_name\": \"historical-runtime-stress-38055733737-1\",\n      \"artifact_sha256\": \"b1fb0acfd22c01a3b1b3497ad8a48cce4e1d84fd6d6d3f4ee0757a8e43cc0519\",\n      \"artifact_bytes\": 26540\n    }\n  ],\n  \"artifacts\": [\n    {\n      \"id\": 11671652878,\n      \"name\": \"historical-runtime-central-38055733737-1\",\n      \"size_in_bytes\": 26634,\n      \"digest\": \"sha256:be5defa03d17b7e4c31bfbc5676f8e864553ff050ddf26dc0215bbb2b4945ab9\"\n    },\n    {\n      \"id\": 11671024436,\n      \"name\": \"historical-runtime-stress-38055733737-1\",\n      \"size_in_bytes\": 26540,\n      \"digest\": \"sha256:b1fb0acfd22c01a3b1b3497ad8a48cce4e1d84fd6d6d3f4ee0757a8e43cc0519\"\n    },\n    {\n      \"id\": 11670956872,\n      \"name\": \"page-shots\",\n      \"size_in_bytes\": 83758241,\n      \"digest\": \"sha256:a0bfae22887ccdf83f6c408d60cbc54701a050b9acde2809340dee8f306ab351\"\n    },\n    {\n      \"id\": 11670199938,\n      \"name\": \"historical-runtime-gate-38055733737-1\",\n      \"size_in_bytes\": 336,\n      \"digest\": \"sha256:7ec6e1813032e0980a89ab2bcfe5e924e652ad474a7ef82b7d8fdde6c7768700\"\n    }\n  ],\n  \"scope\": \"Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only; no merge or deployment claim.\"\n}\n"
+    },
+    "premerge_and_merge": {
+      "path": "/tmp/spicystock-pr147-premerge-and-merge.json",
+      "sha256": "8037f8896473ce07552db27c3184567ea892a7a0bf0360f532ee53b076ff99ca",
+      "bytes": 40013,
+      "raw_utf8": "{\n  \"checked_head\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n  \"checks\": [\n    {\n      \"id\": 114223806914,\n      \"name\": \"historical-runtime (stress)\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamET5wg\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"22a71a04-0c16-529b-8e38-bce2b3a4bddc\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223806914\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223806914\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223806914\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:58Z\",\n      \"completed_at\": \"2026-10-10T13:55:30Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 0,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223806914/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391278\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223806835,\n      \"name\": \"historical-runtime (central)\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamET5cw\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"fe5c7702-6e99-5559-851c-866ba95230a6\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223806835\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223806835\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223806835\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:57Z\",\n      \"completed_at\": \"2026-10-10T13:44:48Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 0,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223806835/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391278\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223754843,\n      \"name\": \"historical-runtime-gate\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamEQuWw\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"716b5425-4c47-5064-8716-2995bba87d71\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754843\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754843\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754843\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:45Z\",\n      \"completed_at\": \"2026-10-10T13:26:55Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 0,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754843/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391278\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223754789,\n      \"name\": \"gitleaks\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamEQuJQ\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"61aa7669-ff71-5cf3-a8fe-497ceaf22e8f\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754789\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733760/job/114223754789\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733760/job/114223754789\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:26:57Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 2,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754789/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391350\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223754751,\n      \"name\": \"pytest\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamEQt_w\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"8f65e18b-4090-5e4c-98cc-eea1504751df\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754751\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754751\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754751\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:34:49Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 2,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754751/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391278\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223754611,\n      \"name\": \"page\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamEQtcw\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"6da9d74d-dd59-526c-947a-8dc7e4fba93c\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754611\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754611\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737/job/114223754611\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:44Z\",\n      \"completed_at\": \"2026-10-10T13:40:58Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 2,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223754611/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112391278\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    },\n    {\n      \"id\": 114223665264,\n      \"name\": \"gitleaks\",\n      \"node_id\": \"CR_kwDOUKUbqs8AAAAamELQcA\",\n      \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n      \"external_id\": \"d5cc978f-a06a-55ae-b99b-e9683cddb481\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223665264\",\n      \"html_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055707823/job/114223665264\",\n      \"details_url\": \"https://github.com/spicyChicken59/SpicyStock/actions/runs/38055707823/job/114223665264\",\n      \"status\": \"completed\",\n      \"conclusion\": \"success\",\n      \"started_at\": \"2026-10-10T13:26:19Z\",\n      \"completed_at\": \"2026-10-10T13:26:29Z\",\n      \"output\": {\n        \"title\": null,\n        \"summary\": null,\n        \"text\": null,\n        \"annotations_count\": 2,\n        \"annotations_url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/check-runs/114223665264/annotations\"\n      },\n      \"check_suite\": {\n        \"id\": 103112322075\n      },\n      \"app\": {\n        \"id\": 15368,\n        \"client_id\": \"Iv1.05c79e9ad1f6bdfa\",\n        \"slug\": \"github-actions\",\n        \"node_id\": \"MDM6QXBwMTUzNjg=\",\n        \"owner\": {\n          \"login\": \"github\",\n          \"id\": 9919,\n          \"node_id\": \"MDEyOk9yZ2FuaXphdGlvbjk5MTk=\",\n          \"avatar_url\": \"https://avatars.githubusercontent.com/u/9919?v=4\",\n          \"gravatar_id\": \"\",\n          \"url\": \"https://api.github.com/users/github\",\n          \"html_url\": \"https://github.com/github\",\n          \"followers_url\": \"https://api.github.com/users/github/followers\",\n          \"following_url\": \"https://api.github.com/users/github/following{/other_user}\",\n          \"gists_url\": \"https://api.github.com/users/github/gists{/gist_id}\",\n          \"starred_url\": \"https://api.github.com/users/github/starred{/owner}{/repo}\",\n          \"subscriptions_url\": \"https://api.github.com/users/github/subscriptions\",\n          \"organizations_url\": \"https://api.github.com/users/github/orgs\",\n          \"repos_url\": \"https://api.github.com/users/github/repos\",\n          \"events_url\": \"https://api.github.com/users/github/events{/privacy}\",\n          \"received_events_url\": \"https://api.github.com/users/github/received_events\",\n          \"type\": \"Organization\",\n          \"user_view_type\": \"public\",\n          \"site_admin\": false\n        },\n        \"name\": \"GitHub Actions\",\n        \"description\": \"Automate your workflow from idea to production\",\n        \"external_url\": \"https://help.github.com/en/actions\",\n        \"html_url\": \"https://github.com/apps/github-actions\",\n        \"created_at\": \"2018-07-30T09:30:17Z\",\n        \"updated_at\": \"2026-06-18T16:17:48Z\",\n        \"permissions\": {\n          \"actions\": \"write\",\n          \"administration\": \"read\",\n          \"artifact_metadata\": \"write\",\n          \"attestations\": \"write\",\n          \"checks\": \"write\",\n          \"code_quality\": \"write\",\n          \"contents\": \"write\",\n          \"copilot_requests\": \"write\",\n          \"deployments\": \"write\",\n          \"discussions\": \"write\",\n          \"drives\": \"write\",\n          \"issues\": \"write\",\n          \"merge_queues\": \"write\",\n          \"metadata\": \"read\",\n          \"models\": \"read\",\n          \"packages\": \"write\",\n          \"pages\": \"write\",\n          \"pull_requests\": \"write\",\n          \"repository_hooks\": \"write\",\n          \"repository_projects\": \"write\",\n          \"security_events\": \"write\",\n          \"statuses\": \"write\",\n          \"vulnerability_alerts\": \"read\"\n        },\n        \"events\": [\n          \"branch_protection_rule\",\n          \"check_run\",\n          \"check_suite\",\n          \"create\",\n          \"delete\",\n          \"deployment\",\n          \"deployment_status\",\n          \"discussion\",\n          \"discussion_comment\",\n          \"fork\",\n          \"gollum\",\n          \"issues\",\n          \"issue_comment\",\n          \"label\",\n          \"merge_group\",\n          \"milestone\",\n          \"page_build\",\n          \"public\",\n          \"pull_request\",\n          \"pull_request_review\",\n          \"pull_request_review_comment\",\n          \"push\",\n          \"registry_package\",\n          \"release\",\n          \"repository\",\n          \"repository_dispatch\",\n          \"status\",\n          \"watch\",\n          \"workflow_dispatch\",\n          \"workflow_run\"\n        ]\n      },\n      \"pull_requests\": [\n        {\n          \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/pulls/147\",\n          \"id\": 4811537642,\n          \"number\": 147,\n          \"head\": {\n            \"ref\": \"codex/private-record-backup\",\n            \"sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          },\n          \"base\": {\n            \"ref\": \"main\",\n            \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n            \"repo\": {\n              \"id\": 1352997802,\n              \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock\",\n              \"name\": \"SpicyStock\"\n            }\n          }\n        }\n      ]\n    }\n  ],\n  \"main_before\": {\n    \"ref\": \"refs/heads/main\",\n    \"node_id\": \"REF_kwDOUKUbqq9yZWZzL2hlYWRzL21haW4\",\n    \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/git/refs/heads/main\",\n    \"object\": {\n      \"sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n      \"type\": \"commit\",\n      \"url\": \"https://api.github.com/repos/spicyChicken59/SpicyStock/git/commits/e081535d3e6fe438a67f467b83564d56e4a52db4\"\n    }\n  },\n  \"pr_before\": {\n    \"url\": \"https://github.com/spicyChicken59/SpicyStock/pull/147\",\n    \"number\": 147,\n    \"state\": \"open\",\n    \"merged\": false,\n    \"mergeable\": true,\n    \"draft\": false,\n    \"body\": \"Saved private trade reports can now be downloaded and restored in another empty browser profile. Download preserves the exact stored bytes; choosing a file shows a validated preview, and only a separate confirmation restores it. Existing records, unreadable storage, concurrent changes and unsaved report edits prevent replacement.\\n\\nLegacy records and unknown broker facts keep their original values. Restore reuses the existing size, validation, locking, readback and recovery controls. It grants no new entry authority, uploads nothing and works when public data is unavailable. The emergency prior/proposed recovery format remains separate.\\n\\nCloses #146.\\n\\nValidation: 67 model controls, 137 dedicated browser controls and 65 independent model/browser controls pass. Fourteen model and eight browser guard mutations fail their named assertions; unrelated controls pass. Existing handoff/report/refresh compatibility passes 463 checks, publication recovery passes 131, and documentation passes 37. Phone and desktop screenshots were inspected. Review caught and fixed preview-byte substitution and successful-restore focus loss before release. No actual personal execution or public release is claimed by these synthetic controls.\\n\\nThe final remote head is `101dc9ff6f4d44aa04486f8a528246f9abecdc74`, tree `9fbce6d43e09b27d69447319cf6f6b971625e257`. Its tree is byte-identical to reviewed local preparation `f59595d5`; local component commits are explicitly distinguished in the durable preparation receipt. The connected GitHub tool published this tree after the coding environment's CLI authentication stopped working. Redacted secret scanning found no leaks. Required hosted checks and actual public acceptance remain pending.\\n\\nNo strategy, provider, production data, fixture bytes or design-system revision changes. README and configuration documentation describe the new local workflow. The preparation receipt retains source hashes, review evidence, synthetic-data scope and remaining release gates.\\n\\nIndependent final remote review is now complete: 14 readback checks confirm exact complete-tree equality with the locally reviewed build, binding 37 integrity checks and 65 independent execution controls. Hosted checks run at https://github.com/spicyChicken59/SpicyStock/actions/runs/38055733737; all required gates must pass on the unchanged remote head before merge.\\n\",\n    \"title\": \"Back up private trade reports and restore into an empty browser\",\n    \"base\": \"main\",\n    \"base_sha\": \"e081535d3e6fe438a67f467b83564d56e4a52db4\",\n    \"head\": \"codex/private-record-backup\",\n    \"head_sha\": \"101dc9ff6f4d44aa04486f8a528246f9abecdc74\",\n    \"head_repo_id\": 1352997802,\n    \"head_repo_full_name\": \"spicyChicken59/SpicyStock\",\n    \"merge_commit_sha\": \"7db2c313bb552d9cda57cd4acd1582a2c242a2c2\",\n    \"user\": {\n      \"login\": \"spicyChicken59\",\n      \"name\": \"spicyChicken59\",\n      \"email\": null,\n      \"avatar_url\": \"https://avatars.githubusercontent.com/u/318666285?v=4\",\n      \"id\": 318666285\n    },\n    \"requested_reviewers\": null,\n    \"requested_team_reviewers\": null,\n    \"diff\": null,\n    \"comments\": null,\n    \"created_at\": \"2026-10-10T13:26:39Z\",\n    \"updated_at\": \"2026-10-10T13:29:11Z\",\n    \"closed_at\": null,\n    \"merged_at\": null,\n    \"commits\": 1,\n    \"changed_files\": 9,\n    \"additions\": 1175,\n    \"deletions\": 9,\n    \"display_url\": \"https://github.com/spicyChicken59/SpicyStock/pull/147\",\n    \"display_title\": \"Back up private trade reports and restore into an empty browser\"\n  },\n  \"merge\": {\n    \"sha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n    \"merged\": true,\n    \"message\": \"Pull Request successfully merged\"\n  }\n}\n"
+    },
+    "delivery": {
+      "path": "/tmp/spicystock-pr147-delivery-acceptance.json",
+      "sha256": "0c9fb51e4644dee8b90aeffbf320d36ff606b23f207f1db143b0f72e529476ff",
+      "bytes": 1963,
+      "raw_utf8": "{\n  \"schema_version\": 1,\n  \"status\": \"PASS\",\n  \"recorded_at\": \"2026-10-10T14:05:10.415Z\",\n  \"repository\": \"spicyChicken59/SpicyStock\",\n  \"head_sha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n  \"publisher\": {\n    \"run_id\": 38058127724,\n    \"public_files_verified\": 40,\n    \"verification_log_line\": \"2026-10-10T14:04:44.7244091Z Verified: every one of the 40 public files matches committed main.\",\n    \"log_path\": \"/tmp/spicystock-pr147-publisher-38058127724.log\",\n    \"jobs\": [\n      {\n        \"id\": 114230673740,\n        \"name\": \"publish\",\n        \"status\": \"completed\",\n        \"conclusion\": \"success\",\n        \"started_at\": \"2026-10-10T14:03:49Z\",\n        \"completed_at\": \"2026-10-10T14:04:46Z\"\n      }\n    ]\n  },\n  \"pages\": {\n    \"run_id\": 38058141730,\n    \"jobs\": [\n      {\n        \"id\": 114230727723,\n        \"name\": \"build\",\n        \"status\": \"completed\",\n        \"conclusion\": \"success\",\n        \"started_at\": \"2026-10-10T14:04:07Z\",\n        \"completed_at\": \"2026-10-10T14:04:20Z\"\n      },\n      {\n        \"id\": 114230776239,\n        \"name\": \"deploy\",\n        \"status\": \"completed\",\n        \"conclusion\": \"success\",\n        \"started_at\": \"2026-10-10T14:04:24Z\",\n        \"completed_at\": \"2026-10-10T14:04:45Z\"\n      },\n      {\n        \"id\": 114230776259,\n        \"name\": \"report-build-status\",\n        \"status\": \"completed\",\n        \"conclusion\": \"success\",\n        \"started_at\": \"2026-10-10T14:04:22Z\",\n        \"completed_at\": \"2026-10-10T14:04:26Z\"\n      }\n    ]\n  },\n  \"superseded_pages\": {\n    \"run_id\": 38058127120,\n    \"head_sha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n    \"conclusion\": \"cancelled\"\n  },\n  \"scope\": \"Official GitHub publisher/Pages metadata. Publisher verified 40 public files against committed main. Actual public-browser acceptance is a separate review. Initial push Pages run was superseded/cancelled; final publisher-triggered deployment succeeded. No provider collection, dispatch, or merge performed by this reviewer.\"\n}\n"
+    },
+    "actual_empty": {
+      "path": "/tmp/spicystock-private147-public-38058141730/actual-empty-acceptance.json",
+      "sha256": "a677f38ccabe83a6100e7887bf7c9dffe93cc3ca07f5d23f6b2f4e2899e09995",
+      "bytes": 40268,
+      "raw_utf8": "{\n  \"scope\": \"ACTUAL PUBLIC EMPTY-PRIVATE UI. Real clock and public bytes; no private data entered, selected, saved, uploaded or downloaded.\",\n  \"productionSha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n  \"workingTreeSources\": false,\n  \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n  \"startedAt\": \"2026-10-10T14:05:39.642Z\",\n  \"checks\": [\n    {\n      \"name\": \"empty-1280: real clock/default public loader\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-1280: actual canonical and reader binding\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-1280: wall clock matches runtime\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: unknown cash and no private saved facts\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: backup does not fetch source companions initially\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: private storage and explicit empty-only restore stated\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: restore cannot begin without a selected preview\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: empty export refuses without a file\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: empty inspection does not write private state or make requests\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: empty backup leaves public authority untouched\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: phone/desktop fits\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file index.html\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file data.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file reader.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file picks.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file historical-validation.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file historical-findings.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file morning.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/assets/favicon.ico\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/assets/sc-avatar-tile.svg\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/assets/apple-touch-icon.png\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/sc.css\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/sc-theme.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/sc-charts.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/sc-motion.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app.css\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-chart.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-map.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-follow.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-reading.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-method.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-findings.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-reader.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-observations.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-cash-preview.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-handoff.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-handoff-ui.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-issuer-evidence.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-stop-research.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-research-outcomes.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app-morning.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file app.js\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/assets/sc-mark-color-dark.svg\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file design-system/assets/sc-mark-mono-cream.svg\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file issuer-evidence.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file stop-research.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file research-outcomes.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Native exact publisher file research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-1280: no provider or non-GET request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-1280: no browser/transport errors\",\n      \"pass\": true,\n      \"detail\": []\n    },\n    {\n      \"name\": \"empty-390: real clock/default public loader\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-390: actual canonical and reader binding\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-390: wall clock matches runtime\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: unknown cash and no private saved facts\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: backup does not fetch source companions initially\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: private storage and explicit empty-only restore stated\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: restore cannot begin without a selected preview\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: empty export refuses without a file\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: empty inspection does not write private state or make requests\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: empty backup leaves public authority untouched\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: phone/desktop fits\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-390: no provider or non-GET request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"empty-390: no browser/transport errors\",\n      \"pass\": true,\n      \"detail\": []\n    },\n    {\n      \"name\": \"All publisher files verified exactly once\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"origin/main remains exact supplied release after all reads\",\n      \"pass\": true\n    }\n  ],\n  \"files\": [\n    {\n      \"name\": \"index.html\",\n      \"bytes\": 17012,\n      \"sha256\": \"228f5fdfe586c068fe46e921408ae31d084c4cefdca716e089091e6517d46a2d\"\n    },\n    {\n      \"name\": \"data.json\",\n      \"bytes\": 12963197,\n      \"sha256\": \"f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d\"\n    },\n    {\n      \"name\": \"reader.json\",\n      \"bytes\": 4016951,\n      \"sha256\": \"f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3\"\n    },\n    {\n      \"name\": \"picks.json\",\n      \"bytes\": 3921,\n      \"sha256\": \"7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774\"\n    },\n    {\n      \"name\": \"historical-validation.json\",\n      \"bytes\": 5048,\n      \"sha256\": \"57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e\"\n    },\n    {\n      \"name\": \"historical-findings.json\",\n      \"bytes\": 177697,\n      \"sha256\": \"0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967\"\n    },\n    {\n      \"name\": \"morning.json\",\n      \"bytes\": 4284,\n      \"sha256\": \"97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0\"\n    },\n    {\n      \"name\": \"design-system/assets/favicon.ico\",\n      \"bytes\": 5057,\n      \"sha256\": \"1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4\"\n    },\n    {\n      \"name\": \"design-system/assets/sc-avatar-tile.svg\",\n      \"bytes\": 9274,\n      \"sha256\": \"9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499\"\n    },\n    {\n      \"name\": \"design-system/assets/apple-touch-icon.png\",\n      \"bytes\": 11284,\n      \"sha256\": \"5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177\"\n    },\n    {\n      \"name\": \"design-system/sc.css\",\n      \"bytes\": 130987,\n      \"sha256\": \"c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55\"\n    },\n    {\n      \"name\": \"design-system/sc-theme.js\",\n      \"bytes\": 2077,\n      \"sha256\": \"cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe\"\n    },\n    {\n      \"name\": \"design-system/sc-charts.js\",\n      \"bytes\": 27390,\n      \"sha256\": \"a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85\"\n    },\n    {\n      \"name\": \"design-system/sc-motion.js\",\n      \"bytes\": 10458,\n      \"sha256\": \"6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a\"\n    },\n    {\n      \"name\": \"app.css\",\n      \"bytes\": 87893,\n      \"sha256\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\"\n    },\n    {\n      \"name\": \"app-chart.js\",\n      \"bytes\": 73555,\n      \"sha256\": \"c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509\"\n    },\n    {\n      \"name\": \"app-map.js\",\n      \"bytes\": 29522,\n      \"sha256\": \"7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f\"\n    },\n    {\n      \"name\": \"app-follow.js\",\n      \"bytes\": 32450,\n      \"sha256\": \"f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f\"\n    },\n    {\n      \"name\": \"app-reading.js\",\n      \"bytes\": 23705,\n      \"sha256\": \"179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21\"\n    },\n    {\n      \"name\": \"app-method.js\",\n      \"bytes\": 44156,\n      \"sha256\": \"1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02\"\n    },\n    {\n      \"name\": \"app-findings.js\",\n      \"bytes\": 68115,\n      \"sha256\": \"60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a\"\n    },\n    {\n      \"name\": \"app-reader.js\",\n      \"bytes\": 9507,\n      \"sha256\": \"512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274\"\n    },\n    {\n      \"name\": \"app-observations.js\",\n      \"bytes\": 44452,\n      \"sha256\": \"3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4\"\n    },\n    {\n      \"name\": \"app-cash-preview.js\",\n      \"bytes\": 3836,\n      \"sha256\": \"34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7\"\n    },\n    {\n      \"name\": \"app-handoff.js\",\n      \"bytes\": 38839,\n      \"sha256\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\"\n    },\n    {\n      \"name\": \"app-handoff-ui.js\",\n      \"bytes\": 40206,\n      \"sha256\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\"\n    },\n    {\n      \"name\": \"app-issuer-evidence.js\",\n      \"bytes\": 42047,\n      \"sha256\": \"66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07\"\n    },\n    {\n      \"name\": \"app-stop-research.js\",\n      \"bytes\": 37585,\n      \"sha256\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\"\n    },\n    {\n      \"name\": \"app-research-outcomes.js\",\n      \"bytes\": 40344,\n      \"sha256\": \"fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4\"\n    },\n    {\n      \"name\": \"app-morning.js\",\n      \"bytes\": 24145,\n      \"sha256\": \"781352d7a1c9086a51e65c6273a58ff18722d55796f7e9edd5fa3e38f38915f5\"\n    },\n    {\n      \"name\": \"app.js\",\n      \"bytes\": 396766,\n      \"sha256\": \"5b5794ec60a9dafd1e353e88f8c08526a6a8b1976daf1228536a505938ebb0ca\"\n    },\n    {\n      \"name\": \"design-system/assets/sc-mark-color-dark.svg\",\n      \"bytes\": 6701,\n      \"sha256\": \"4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e\"\n    },\n    {\n      \"name\": \"design-system/assets/sc-mark-mono-cream.svg\",\n      \"bytes\": 4901,\n      \"sha256\": \"92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2\"\n    },\n    {\n      \"name\": \"reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json\",\n      \"bytes\": 5155365,\n      \"sha256\": \"8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4\"\n    },\n    {\n      \"name\": \"issuer-evidence.json\",\n      \"bytes\": 1768,\n      \"sha256\": \"f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab\"\n    },\n    {\n      \"name\": \"issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json\",\n      \"bytes\": 5687,\n      \"sha256\": \"f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac\"\n    },\n    {\n      \"name\": \"stop-research.json\",\n      \"bytes\": 1650,\n      \"sha256\": \"98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22\"\n    },\n    {\n      \"name\": \"stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json\",\n      \"bytes\": 8918,\n      \"sha256\": \"249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0\"\n    },\n    {\n      \"name\": \"research-outcomes.json\",\n      \"bytes\": 2132,\n      \"sha256\": \"15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2\"\n    },\n    {\n      \"name\": \"research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json\",\n      \"bytes\": 17104,\n      \"sha256\": \"31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172\"\n    }\n  ],\n  \"pages\": [\n    {\n      \"name\": \"empty-1280\",\n      \"width\": 1280,\n      \"requests\": [\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.googleapis.com/css2\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/index.html\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/data.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/picks.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/historical-validation.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/historical-findings.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/favicon.ico\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-avatar-tile.svg\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/apple-touch-icon.png\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/issuer-evidence.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/stop-research.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/research-outcomes.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"native-verification\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        }\n      ],\n      \"errors\": [],\n      \"storageEvents\": [],\n      \"screenshots\": [\n        {\n          \"path\": \"ACTUAL-EMPTY-backup-unavailable-1280.png\",\n          \"sha256\": \"b12cb8ad51c79bbc6b14fa977c40dfaa52b741e3480f018983bbea256cb88945\",\n          \"visuallyInspected\": false\n        }\n      ],\n      \"wallClock\": \"2026-10-10T14:05:41.802Z\"\n    },\n    {\n      \"name\": \"empty-390\",\n      \"width\": 390,\n      \"requests\": [\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.googleapis.com/css2\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        }\n      ],\n      \"errors\": [],\n      \"storageEvents\": [],\n      \"screenshots\": [\n        {\n          \"path\": \"ACTUAL-EMPTY-backup-unavailable-390.png\",\n          \"sha256\": \"802f7256b310b7c5b7318878974acdcca1aaf6e18feeceeaab8b00ca3ce56b7a\",\n          \"visuallyInspected\": false\n        }\n      ],\n      \"wallClock\": \"2026-10-10T14:05:47.877Z\"\n    }\n  ],\n  \"requiredInventory\": [\n    \"index.html\",\n    \"data.json\",\n    \"reader.json\",\n    \"picks.json\",\n    \"historical-validation.json\",\n    \"historical-findings.json\",\n    \"morning.json\",\n    \"design-system/assets/favicon.ico\",\n    \"design-system/assets/sc-avatar-tile.svg\",\n    \"design-system/assets/apple-touch-icon.png\",\n    \"design-system/sc.css\",\n    \"design-system/sc-theme.js\",\n    \"design-system/sc-charts.js\",\n    \"design-system/sc-motion.js\",\n    \"app.css\",\n    \"app-chart.js\",\n    \"app-map.js\",\n    \"app-follow.js\",\n    \"app-reading.js\",\n    \"app-method.js\",\n    \"app-findings.js\",\n    \"app-reader.js\",\n    \"app-observations.js\",\n    \"app-cash-preview.js\",\n    \"app-handoff.js\",\n    \"app-handoff-ui.js\",\n    \"app-issuer-evidence.js\",\n    \"app-stop-research.js\",\n    \"app-research-outcomes.js\",\n    \"app-morning.js\",\n    \"app.js\",\n    \"design-system/assets/sc-mark-color-dark.svg\",\n    \"design-system/assets/sc-mark-mono-cream.svg\",\n    \"reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json\",\n    \"issuer-evidence.json\",\n    \"issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json\",\n    \"stop-research.json\",\n    \"stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json\",\n    \"research-outcomes.json\",\n    \"research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json\"\n  ],\n  \"sourceHashes\": {\n    \"app-handoff.js\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\",\n    \"app-handoff-ui.js\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\",\n    \"app-stop-research.js\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\",\n    \"app.css\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\"\n  },\n  \"publication\": {\n    \"data_sha256\": \"f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d\",\n    \"context_sha256\": \"8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb\",\n    \"run_id\": \"38034610157\",\n    \"rules_version\": \"c9dc7d6d1d87\",\n    \"measured_session\": \"2026-10-09\",\n    \"applicable_session\": \"2026-10-12\",\n    \"published_at\": \"2026-10-10T07:30:15.553690+00:00\",\n    \"reader_projection_version\": 1,\n    \"reader_sha256\": \"f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3\"\n  },\n  \"transport\": {\n    \"managedProxy\": true,\n    \"certificateSpecificSPKI\": \"n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=\",\n    \"globalTlsBypass\": false,\n    \"bodyReading\": \"Bounded cloned stream to EOF then native original bytes; no CDP body observer.\"\n  },\n  \"status\": \"PASS_ACTUAL_PUBLIC_EMPTY_BACKUP\",\n  \"finishedAt\": \"2026-10-10T14:05:48.417Z\"\n}\n"
+    },
+    "synthetic_backup": {
+      "path": "/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-rehearsal.json",
+      "sha256": "82b8eca59042dc418cf0905daa49e8a35c5e270d8863e6632a1bd1ed02a42c67",
+      "bytes": 32006,
+      "raw_utf8": "{\n  \"scope\": \"SYNTHETIC PRIVATE BACKUP REHEARSAL ONLY. Disposable browser contexts, historical model-produced seed and deliberately invented manual report. Not Mo facts, broker execution, actual holdings, actual costs, gain/loss or public trading acceptance. Public data and clock are unchanged.\",\n  \"productionSha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n  \"workingTreeSources\": false,\n  \"checks\": [\n    {\n      \"name\": \"SYNTHETIC-donor: real clock/default public loader\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-donor: actual canonical and reader binding\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-donor: wall clock matches runtime\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Synthetic legacy donor read preserves exact original bytes\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Real deployed model creates only the explicitly synthetic manual report\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Synthetic report retains exact public origin and archived baseline admission\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Actual browser download is exact saved bytes, not dirty editor text\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Synthetic download writes no store and makes no HTTP request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"Synthetic download leaves public state and cash untouched\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-donor: no provider or non-GET request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-donor: no browser/transport errors\",\n      \"pass\": true,\n      \"detail\": []\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-390: real clock/default public loader\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-390: actual canonical and reader binding\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-390: wall clock matches runtime\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: fresh restore destination is empty and cash unknown\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: chooser uses actual downloaded file and previews without writes\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: preview identifies both original kinds and scan dates\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: cancelling preview leaves no records and no restore authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: explicit restore writes exact downloaded bytes once\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: all original kinds, identities, source terms, facts and timestamps survive\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: independent unknown actual costs/times/result remain unknown\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: restore grants no independent or expired planned copy authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: real re-export roundtrip preserves every byte\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: local chooser/preview/restore/export makes no HTTP request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: restore changes no public/source/cash/following authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"390: restored layout fits\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-restore-390: no provider or non-GET request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-restore-390: no browser/transport errors\",\n      \"pass\": true,\n      \"detail\": []\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-1280: real clock/default public loader\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-1280: actual canonical and reader binding\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-1280: wall clock matches runtime\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: fresh restore destination is empty and cash unknown\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: chooser uses actual downloaded file and previews without writes\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: preview identifies both original kinds and scan dates\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: cancelling preview leaves no records and no restore authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: explicit restore writes exact downloaded bytes once\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: all original kinds, identities, source terms, facts and timestamps survive\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: independent unknown actual costs/times/result remain unknown\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: restore grants no independent or expired planned copy authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: real re-export roundtrip preserves every byte\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: local chooser/preview/restore/export makes no HTTP request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: restore changes no public/source/cash/following authority\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"1280: restored layout fits\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-restore-1280: no provider or non-GET request\",\n      \"pass\": true\n    },\n    {\n      \"name\": \"synthetic-restore-1280: no browser/transport errors\",\n      \"pass\": true,\n      \"detail\": []\n    }\n  ],\n  \"pages\": [\n    {\n      \"name\": \"SYNTHETIC-donor\",\n      \"width\": 1280,\n      \"requests\": [\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.googleapis.com/css2\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/l/font\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"synthetic-source\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/stop-research.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"synthetic-source\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        }\n      ],\n      \"errors\": [],\n      \"storageEvents\": [\n        {\n          \"phase\": \"synthetic-source\",\n          \"action\": \"domStorageItemUpdated\",\n          \"key\": \"spicystock:handoff:v1\",\n          \"local\": true\n        }\n      ],\n      \"screenshots\": [\n        {\n          \"path\": \"SYNTHETIC-PRIVATE-downloaded-1280.png\",\n          \"sha256\": \"f6ecef549bd8c98c3d7fe642f4807cf2226562ad7c0963fb427f86619615bedb\",\n          \"visuallyInspected\": false\n        }\n      ],\n      \"wallClock\": \"2026-10-10T14:05:49.661Z\"\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-390\",\n      \"width\": 390,\n      \"requests\": [\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.googleapis.com/css2\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        }\n      ],\n      \"errors\": [],\n      \"storageEvents\": [\n        {\n          \"phase\": \"synthetic-explicit-restore\",\n          \"action\": \"domStorageItemAdded\",\n          \"key\": \"spicystock:handoff:v1\",\n          \"local\": true\n        }\n      ],\n      \"screenshots\": [\n        {\n          \"path\": \"SYNTHETIC-PRIVATE-preview-no-write-390.png\",\n          \"sha256\": \"05e4352d218c7420e86c11c6539abd80c6730ee74e344533be8baee3106567e0\",\n          \"visuallyInspected\": false\n        },\n        {\n          \"path\": \"SYNTHETIC-PRIVATE-restored-exact-bytes-390.png\",\n          \"sha256\": \"8e4789f0ef0ad369e9fa031d89c66025c9494d9918ee84135c0c25f329d2e17d\",\n          \"visuallyInspected\": false\n        }\n      ],\n      \"wallClock\": \"2026-10-10T14:05:52.013Z\"\n    },\n    {\n      \"name\": \"SYNTHETIC-restore-1280\",\n      \"width\": 1280,\n      \"requests\": [\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.googleapis.com/css2\",\n          \"query\": true,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.css\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-chart.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-map.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-follow.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reading.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-method.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-findings.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-reader.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-observations.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-cash-preview.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-stop-research.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app-morning.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/app.js\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/reader.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        },\n        {\n          \"phase\": \"initial\",\n          \"url\": \"https://spicychicken59.github.io/SpicyStock/morning.json\",\n          \"query\": false,\n          \"method\": \"GET\",\n          \"body\": false\n        }\n      ],\n      \"errors\": [],\n      \"storageEvents\": [\n        {\n          \"phase\": \"synthetic-explicit-restore\",\n          \"action\": \"domStorageItemAdded\",\n          \"key\": \"spicystock:handoff:v1\",\n          \"local\": true\n        }\n      ],\n      \"screenshots\": [\n        {\n          \"path\": \"SYNTHETIC-PRIVATE-preview-no-write-1280.png\",\n          \"sha256\": \"7d4ca96ba313220e70a2fd8f8883c0cabec50a2a3b8ff87c19d287a04f7e6efa\",\n          \"visuallyInspected\": false\n        },\n        {\n          \"path\": \"SYNTHETIC-PRIVATE-restored-exact-bytes-1280.png\",\n          \"sha256\": \"397b9bc984565e4ea0fe2d36f389b58990d7a80b23f7751feac20f37f9597076\",\n          \"visuallyInspected\": false\n        }\n      ],\n      \"wallClock\": \"2026-10-10T14:05:54.215Z\"\n    }\n  ],\n  \"downloads\": [\n    {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-1.json\",\n      \"bytes\": 4773,\n      \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n      \"suggestedFilename\": \"spicystock-private-backup.json\"\n    },\n    {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-2.json\",\n      \"bytes\": 4773,\n      \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n      \"suggestedFilename\": \"spicystock-private-backup.json\"\n    },\n    {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-3.json\",\n      \"bytes\": 4773,\n      \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n      \"suggestedFilename\": \"spicystock-private-backup.json\"\n    }\n  ],\n  \"sourceHashes\": {\n    \"app-handoff.js\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\",\n    \"app-handoff-ui.js\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\",\n    \"app-stop-research.js\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\",\n    \"app.css\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\"\n  },\n  \"legacySeedSha256\": \"daa2afa1b60e677c3a2ad9d675ff7fe7e78f7f15b76929442f537e0e62395512\",\n  \"limitations\": [\n    \"No real user browser profile is accessed.\",\n    \"Only synthetic bytes are downloaded or restored; file selection is a local browser operation, never an HTTP upload.\",\n    \"Recovery with failed public startup, malformed files, quota failures and concurrent storage races remain separately controlled repository tests.\"\n  ],\n  \"syntheticFields\": {\n    \"submitted_quantity\": 9,\n    \"filled_quantity\": 7,\n    \"average_price\": \"31.234567\",\n    \"exited_quantity\": 3,\n    \"entry_fees\": \"0.11\",\n    \"all_other_actual_fields\": \"unknown\",\n    \"sourceTicker\": \"KE\"\n  },\n  \"source\": {\n    \"ticker\": \"KE\",\n    \"stage\": \"setting-up\",\n    \"publication\": {\n      \"applicable_session\": \"2026-10-12\",\n      \"context_sha256\": \"8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb\",\n      \"data_sha256\": \"f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d\",\n      \"measured_session\": \"2026-10-09\",\n      \"published_at\": \"2026-10-10T07:30:15.553690+00:00\",\n      \"reader_projection_version\": 1,\n      \"reader_sha256\": \"f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3\",\n      \"rules_version\": \"c9dc7d6d1d87\",\n      \"run_id\": \"38034610157\"\n    },\n    \"cohort\": {\n      \"sha256\": \"249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0\",\n      \"bytes\": 8918,\n      \"generated_at\": \"2026-10-10T08:11:55.173159+00:00\",\n      \"policy_id\": \"anticipation_stop_width_4_to_5_v1\"\n    },\n    \"evidence\": {\n      \"id\": \"d2fd523332158801e28d50e17d6e06688882fda6d3b2e3fcd34b478de230f0a2\",\n      \"inputs_sha256\": \"3f37e164f19a115525e37dd4085371888c7ee4c1ab5c203aca64c756ff02f239\",\n      \"plan_sha256\": \"8a55c24d9d7f299d3d7518891acebdde96703ae3fc9629867fc8eea7659c7c16\",\n      \"source_sha256\": \"2d6a7ada010e7ff1921fdd285b360fe95aede612a6571347273a81d88069848e\"\n    },\n    \"baseline_admitted\": false\n  },\n  \"savedRawSha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n  \"status\": \"PASS_SYNTHETIC_PRIVATE_BACKUP_REHEARSAL\",\n  \"finishedAt\": \"2026-10-10T14:05:55.096Z\"\n}\n"
+    },
+    "visual_review": {
+      "path": "/tmp/spicystock-private147-public-38058141730/review.json",
+      "sha256": "442e215cae71fb14617a3b898c868fd42f29bf18bd73f4e87ad0d55f85b55508",
+      "bytes": 10434,
+      "raw_utf8": "{\n  \"status\": \"PASS_ACTUAL_PUBLIC_WITH_SEPARATE_SYNTHETIC_PRIVATE_REHEARSAL\",\n  \"production_sha\": \"a9862564b3b56e23100ff290b5f1bc0a9f19e58e\",\n  \"reviewed_at\": \"2026-10-10T14:06:58.356901+00:00\",\n  \"runner\": {\n    \"path\": \"/tmp/spicystock-public-private-backup-acceptance.mjs\",\n    \"sha256\": \"4f264767f57bb1a99ac697337aee096bf12ee744492474041aceb4575070592a\",\n    \"bytes\": 41087\n  },\n  \"artifacts\": {\n    \"actual-empty-acceptance.json\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/actual-empty-acceptance.json\",\n      \"sha256\": \"a677f38ccabe83a6100e7887bf7c9dffe93cc3ca07f5d23f6b2f4e2899e09995\",\n      \"bytes\": 40268\n    },\n    \"SYNTHETIC-private-backup-rehearsal.json\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-rehearsal.json\",\n      \"sha256\": \"82b8eca59042dc418cf0905daa49e8a35c5e270d8863e6632a1bd1ed02a42c67\",\n      \"bytes\": 32006\n    },\n    \"delivery.json\": {\n      \"path\": \"/tmp/spicystock-pr147-delivery-acceptance.json\",\n      \"sha256\": \"0c9fb51e4644dee8b90aeffbf320d36ff606b23f207f1db143b0f72e529476ff\",\n      \"bytes\": 1963\n    }\n  },\n  \"actual_public\": {\n    \"checks_passed\": 68,\n    \"required_native_file_matches\": 40,\n    \"all_public_reads_finished\": true,\n    \"wall_clock_and_default_loader\": true,\n    \"public_clock_or_data_overrides\": false,\n    \"private_store\": \"absent in both fresh actual contexts\",\n    \"settled_cash\": \"unknown\",\n    \"private_storage_writes\": 0,\n    \"private_records_created\": 0,\n    \"actual_private_downloads\": 0,\n    \"errors\": 0,\n    \"source_companion_requests_for_empty_backup\": 0,\n    \"screenshots_inspected\": 2,\n    \"authority_changed\": false,\n    \"note\": \"Public count is68, versus local67, because actual mode adds final exact origin/main identity check after all phases.\"\n  },\n  \"synthetic_private\": {\n    \"checks_passed\": 45,\n    \"screenshots_inspected\": 5,\n    \"disposable_contexts\": 3,\n    \"scope\": \"SYNTHETIC PRIVATE BACKUP REHEARSAL ONLY. Disposable browser contexts, historical model-produced seed and deliberately invented manual report. Not Mo facts, broker execution, actual holdings, actual costs, gain/loss or public trading acceptance. Public data and clock are unchanged.\",\n    \"legacy_seed_sha256\": \"daa2afa1b60e677c3a2ad9d675ff7fe7e78f7f15b76929442f537e0e62395512\",\n    \"deliberately_invented_fields\": {\n      \"submitted_quantity\": 9,\n      \"filled_quantity\": 7,\n      \"average_price\": \"31.234567\",\n      \"exited_quantity\": 3,\n      \"entry_fees\": \"0.11\",\n      \"all_other_actual_fields\": \"unknown\",\n      \"sourceTicker\": \"KE\"\n    },\n    \"source\": {\n      \"ticker\": \"KE\",\n      \"stage\": \"setting-up\",\n      \"publication\": {\n        \"applicable_session\": \"2026-10-12\",\n        \"context_sha256\": \"8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb\",\n        \"data_sha256\": \"f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d\",\n        \"measured_session\": \"2026-10-09\",\n        \"published_at\": \"2026-10-10T07:30:15.553690+00:00\",\n        \"reader_projection_version\": 1,\n        \"reader_sha256\": \"f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3\",\n        \"rules_version\": \"c9dc7d6d1d87\",\n        \"run_id\": \"38034610157\"\n      },\n      \"cohort\": {\n        \"sha256\": \"249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0\",\n        \"bytes\": 8918,\n        \"generated_at\": \"2026-10-10T08:11:55.173159+00:00\",\n        \"policy_id\": \"anticipation_stop_width_4_to_5_v1\"\n      },\n      \"evidence\": {\n        \"id\": \"d2fd523332158801e28d50e17d6e06688882fda6d3b2e3fcd34b478de230f0a2\",\n        \"inputs_sha256\": \"3f37e164f19a115525e37dd4085371888c7ee4c1ab5c203aca64c756ff02f239\",\n        \"plan_sha256\": \"8a55c24d9d7f299d3d7518891acebdde96703ae3fc9629867fc8eea7659c7c16\",\n        \"source_sha256\": \"2d6a7ada010e7ff1921fdd285b360fe95aede612a6571347273a81d88069848e\"\n      },\n      \"baseline_admitted\": false\n    },\n    \"downloaded_files\": [\n      {\n        \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-1.json\",\n        \"bytes\": 4773,\n        \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n        \"suggestedFilename\": \"spicystock-private-backup.json\"\n      },\n      {\n        \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-2.json\",\n        \"bytes\": 4773,\n        \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n        \"suggestedFilename\": \"spicystock-private-backup.json\"\n      },\n      {\n        \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-private-backup-3.json\",\n        \"bytes\": 4773,\n        \"sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n        \"suggestedFilename\": \"spicystock-private-backup.json\"\n      }\n    ],\n    \"local_restore_writes\": {\n      \"donor_explicit_synthetic_report_save\": 1,\n      \"390_fresh_restore\": 1,\n      \"1280_fresh_restore\": 1\n    },\n    \"preview_and_cancel_writes\": 0,\n    \"restore_exact_bytes\": true,\n    \"all_three_downloads_identical\": true,\n    \"download_sha256\": \"7fb9c7aad6dabb525f3245a6fac8cfd10030036b23409bbe5dff300678f922ff\",\n    \"download_bytes\": 4773,\n    \"private_file_uploads\": 0,\n    \"real_user_facts_or_trades\": false,\n    \"result\": \"Unknown exit costs/prices/times remain unknown; completed result unavailable; no new entry/copy authority.\"\n  },\n  \"source_hashes\": {\n    \"app-handoff.js\": \"7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982\",\n    \"app-handoff-ui.js\": \"db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1\",\n    \"app-stop-research.js\": \"bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe\",\n    \"app.css\": \"00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3\"\n  },\n  \"publication\": {\n    \"data_sha256\": \"f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d\",\n    \"context_sha256\": \"8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb\",\n    \"run_id\": \"38034610157\",\n    \"rules_version\": \"c9dc7d6d1d87\",\n    \"measured_session\": \"2026-10-09\",\n    \"applicable_session\": \"2026-10-12\",\n    \"published_at\": \"2026-10-10T07:30:15.553690+00:00\",\n    \"reader_projection_version\": 1,\n    \"reader_sha256\": \"f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3\"\n  },\n  \"screenshots_inspected\": {\n    \"ACTUAL-EMPTY-backup-unavailable-1280.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/ACTUAL-EMPTY-backup-unavailable-1280.png\",\n      \"sha256\": \"b12cb8ad51c79bbc6b14fa977c40dfaa52b741e3480f018983bbea256cb88945\",\n      \"bytes\": 134861,\n      \"visually_inspected\": true,\n      \"width\": 1280,\n      \"theme\": \"dark\",\n      \"scope\": \"actual_empty_private\"\n    },\n    \"ACTUAL-EMPTY-backup-unavailable-390.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/ACTUAL-EMPTY-backup-unavailable-390.png\",\n      \"sha256\": \"802f7256b310b7c5b7318878974acdcca1aaf6e18feeceeaab8b00ca3ce56b7a\",\n      \"bytes\": 64318,\n      \"visually_inspected\": true,\n      \"width\": 390,\n      \"theme\": \"light\",\n      \"scope\": \"actual_empty_private\"\n    },\n    \"SYNTHETIC-PRIVATE-downloaded-1280.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-downloaded-1280.png\",\n      \"sha256\": \"f6ecef549bd8c98c3d7fe642f4807cf2226562ad7c0963fb427f86619615bedb\",\n      \"bytes\": 158336,\n      \"visually_inspected\": true,\n      \"width\": 1280,\n      \"theme\": \"dark\",\n      \"scope\": \"synthetic_private\"\n    },\n    \"SYNTHETIC-PRIVATE-preview-no-write-390.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-preview-no-write-390.png\",\n      \"sha256\": \"05e4352d218c7420e86c11c6539abd80c6730ee74e344533be8baee3106567e0\",\n      \"bytes\": 57018,\n      \"visually_inspected\": true,\n      \"width\": 390,\n      \"theme\": \"light\",\n      \"scope\": \"synthetic_private\"\n    },\n    \"SYNTHETIC-PRIVATE-restored-exact-bytes-390.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-restored-exact-bytes-390.png\",\n      \"sha256\": \"8e4789f0ef0ad369e9fa031d89c66025c9494d9918ee84135c0c25f329d2e17d\",\n      \"bytes\": 62311,\n      \"visually_inspected\": true,\n      \"width\": 390,\n      \"theme\": \"light\",\n      \"scope\": \"synthetic_private\"\n    },\n    \"SYNTHETIC-PRIVATE-preview-no-write-1280.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-preview-no-write-1280.png\",\n      \"sha256\": \"7d4ca96ba313220e70a2fd8f8883c0cabec50a2a3b8ff87c19d287a04f7e6efa\",\n      \"bytes\": 152622,\n      \"visually_inspected\": true,\n      \"width\": 1280,\n      \"theme\": \"dark\",\n      \"scope\": \"synthetic_private\"\n    },\n    \"SYNTHETIC-PRIVATE-restored-exact-bytes-1280.png\": {\n      \"path\": \"/tmp/spicystock-private147-public-38058141730/SYNTHETIC-PRIVATE-restored-exact-bytes-1280.png\",\n      \"sha256\": \"397b9bc984565e4ea0fe2d36f389b58990d7a80b23f7751feac20f37f9597076\",\n      \"bytes\": 156085,\n      \"visually_inspected\": true,\n      \"width\": 1280,\n      \"theme\": \"dark\",\n      \"scope\": \"synthetic_private\"\n    }\n  },\n  \"visual_findings\": [\n    \"Actual390/light and1280/dark explicitly state no saved records, no cloud upload, readable-empty-only destination and no download from unsaved inputs.\",\n    \"Synthetic preview visibly identifies one planned handoff and one independent report with original publication/save dates, before any store write.\",\n    \"Synthetic restore visibly confirms two records restored exactly, unknown facts retained and no broker order or cash reservation.\",\n    \"Both restored views keep independent research origin and unavailable completed result; six-decimal entry value remains readable.\",\n    \"All seven captures inspected directly; no horizontal overflow.\"\n  ],\n  \"failure_history\": {\n    \"first_attempt_passed\": true,\n    \"retries\": 0,\n    \"errors\": 0\n  },\n  \"remaining_limits\": [\n    \"No actual Mo account, execution, holdings, costs or successful trade is asserted.\",\n    \"Only synthetic private bytes were downloaded or restored; the actual-empty phase selected, saved and downloaded no private facts.\",\n    \"Recovery under unavailable public startup, malformed backups, quota faults and concurrent storage races remain separately labelled repository controls.\",\n    \"The runner read the existing deployed static publication; it did not collect SEC/market data, dispatch workflows, submit broker orders, copy an order or write production files.\",\n    \"No public review-selection PR150 release has been accepted by these checks.\"\n  ]\n}\n"
+    }
+  },
+  "runner": {
+    "path": "/tmp/spicystock-public-private-backup-acceptance.mjs",
+    "sha256": "4f264767f57bb1a99ac697337aee096bf12ee744492474041aceb4575070592a",
+    "bytes": 41087
+  },
+  "official_publisher_log": {
+    "path": "/tmp/spicystock-pr147-publisher-38058127724.log",
+    "sha256": "bfec0a6040a8744b34ae927333fe704289654ac6d2709a159582c856b5bfc33a",
+    "bytes": 15262
+  },
+  "independent_source_review": {
+    "exact_remote_head_readback": 14,
+    "local_integrity_checks": 37,
+    "separate_independent_execution_checks": 65,
+    "verdict": "NO_BLOCKER_EXACT_REMOTE_HEAD",
+    "source_sha256": {
+      "docs/app-handoff.js": "7be2fece1af414df2e4eb7cf118f37134b3b9ae02b3094576e6b391f11485982",
+      "docs/app-handoff-ui.js": "db1cd11a9dba6a559d30af64e8a9b5cf43e4c92153caa2cb03b0fc4b422674c1",
+      "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+      "docs/app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3",
+      "tools/handoff_model_cases.mjs": "b373bdf8111ae36de02b4fdcf315177524e1164d5ac982b7376b49a5e0e46809",
+      "tools/private_backup_cases.mjs": "2789614394df9fcb3bf226db6a8e683fab461242f861ad4c3c778178ecd95de7",
+      "tools/page_smoke.mjs": "8056c761c7a166ded03ae463be5b2bb9dde56f723f2fb3aa0fa498500d531d9f",
+      "tools/publication_recovery_cases.mjs": "9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe"
+    },
+    "scope": "Reviewed preparation and remote tree equivalence precede this release. Earlier PENDING wording inside immutable source receipts records their original time, not the final combined status."
+  },
+  "remaining_limits": [
+    "No actual Mo account, execution, holdings, costs or successful trade is asserted.",
+    "Only synthetic private bytes were downloaded or restored; the actual-empty phase selected, saved and downloaded no private facts.",
+    "Recovery under unavailable public startup, malformed backups, quota faults and concurrent storage races remain separately labelled repository controls.",
+    "The runner read the existing deployed static publication; it did not collect SEC/market data, dispatch workflows, submit broker orders, copy an order or write production files.",
+    "No public review-selection PR150 release has been accepted by these checks.",
+    "Hosted native artifact payloads were not independently downloaded; recorded digests and successful memory supervisor outcomes come from official job logs and API metadata.",
+    "Actual browser accepted this release on the first attempt. Local synthetic preparation and repository fault controls are separate, and are not counted as actual user activity.",
+    "Source receipts are embedded as exact UTF-8 strings alongside byte lengths and SHA256; screenshots and synthetic backup files retain exact digests but their binary/file payloads are not embedded here."
+  ]
+}
