@@ -685,6 +685,14 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   known cash-takeover candidates from both kinds of momentum ticket. Its
   evidence is part of the rules identity; a due review does not silently clear
   an exclusion. Unknown names have not passed a comprehensive live news check.
+  ZIM was added on 10 October 2026 after reviewing its 16 February $35 cash
+  merger announcement, 30 September Israeli approval-process update, and
+  6 October guidance release identifying the transaction as pending. The
+  guidance increase remains useful research context; it does not remove the
+  existing takeover exclusion. This addition does not establish live news or
+  earnings-calendar coverage for other candidates. The [captured issuer and
+  SEC sources](release-evidence/2026-10-10-zim/README.md) retain the reviewed
+  bytes, source dates, retrieval times and digests.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.

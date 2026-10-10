@@ -260,6 +260,17 @@ def test_original_legacy_controls_keep_exact_bytes_and_canonical_validation(name
     morning.validate_observation(out, (MORNING_FIXTURES / "full-publication.json").read_bytes())
 
 
+def test_archived_morning_generator_refuses_changed_input_before_collecting(tmp_path, monkeypatch):
+    from tests.fixtures.morning import generate
+    for name in generate.ARCHIVED_PUBLICATIONS:
+        raw = (MORNING_FIXTURES / (name + "-publication.json")).read_bytes()
+        (tmp_path / (name + "-publication.json")).write_bytes(raw + (b"\n" if name == "full" else b""))
+    monkeypatch.setattr(generate, "TARGET", tmp_path)
+    monkeypatch.setattr(generate.morning, "collect", lambda *a, **kw: pytest.fail("altered archive reached collector"))
+    with pytest.raises(ValueError, match="Archived morning publication bytes changed: full"):
+        generate.build()
+
+
 def test_legacy_halt_migration_keeps_exclusion_through_outage_until_sourced_resumption():
     from tests.fixtures.morning.generate import events
     raw = (MORNING_FIXTURES / "full-publication.json").read_bytes()

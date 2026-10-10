@@ -1,16 +1,29 @@
 # Morning observation browser controls
 
-Everything here except `qeta-captured.json` is **synthetic test data**, not a
-publication, trading recommendation or actual corporate event. Never copy these
-files into `docs/` or a production artifact.
+The publication and receipt files here except `qeta-captured.json` are
+**synthetic test data**, not publications or trading recommendations. Never
+copy these files into `docs/` or a production artifact.
 
-`generate.py` drives the real evening pipeline with the established offline
-provider/chart/reader doubles from `tools.make_fixture`, then passes its exact
-publication bytes to the real morning collector with snapshot and RSS doubles.
-The synthetic run IDs and this external note identify the controls. Publication
+`full-publication.json` and `red-publication.json` are immutable source inputs
+produced by the real evening pipeline and its offline provider/chart/reader
+doubles before the reader rollout, retained at commit `62bce72d`. Their raw
+SHA-256 values are pinned in `generate.py`; it refuses altered input bytes and
+never rewrites these files. The generator passes those exact publication bytes
+to the real morning collector with snapshot and RSS doubles. The synthetic run
+IDs and this external note identify the controls. Publication
 and receipt files deliberately use production shapes so the browser's rejection
 of rehearsal receipts can be tested separately. There are no live provider calls
 or emails.
+
+The generator supplies the matching event registry archived in both source
+publications to the collector. That manual registry was reviewed on 9 October
+2026, before ZIM was added; it is not a current event screen. The source inputs
+and registry preserve the original migration identities when today's pipeline
+or registry changes. Normal page fixtures, used by `test_morning.publication()`,
+still exercise the current real pipeline and current registry. The morning
+generator writes only derived receipt files, never reads its receipt outputs
+to construct expected values, and does not claim today's pipeline recreates
+the original historical implementation.
 
 Pin the browser to `2026-09-11T13:35:00Z`. `observed`, `outage`, `halted`,
 `resumed`, `corporate-excluded`, and `corporate-retained` bind `full-publication.json`. `no-tickets`

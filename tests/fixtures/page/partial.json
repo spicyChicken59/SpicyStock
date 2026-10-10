@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "633f6d0caeb4"
+  "rules_version": "75c237d78018"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -800,7 +800,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "5b4c5a14c5e67175444583b319c3758be7e0bb553caa2fcab8cb553ddb130a42"
+   "context_sha256": "1e2d2392a2108681a74859c81eda6e8406fd7222ac5d2f0359c9459801e18e2c"
   },
   "sanitised": {
    "replaced": 0,
@@ -1114,12 +1114,12 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "1586f05e28182b77b4faad7d26d7c0bdebebc1ababb36062c8902bd19f5efc71",
+   "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
-    "reviewed_on": "2026-10-09",
-    "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Issuer SEC filings and recent submissions were reviewed on the stated date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
+    "reviewed_on": "2026-10-10",
+    "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Each event records its own source dates and manual review date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
     "events": [
      {
       "id": "mg-hig-cash-acquisition",
@@ -1242,6 +1242,42 @@
         "url": "https://www.sec.gov/Archives/edgar/data/1637873/000119312526417485/d151127dsc14d9a.htm",
         "sha256": "a4c967bf63c74b3b15d5278adc37fcbc4c0ba738917e105fe0648c97a2a10eb5",
         "quote": "has been further extended until 5:00 p.m., Eastern Time, on October 15, 2026"
+       }
+      ]
+     },
+     {
+      "id": "zim-hapag-lloyd-cash-acquisition",
+      "symbol": "ZIM",
+      "issuer": "ZIM Integrated Shipping Services Ltd.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-02-16",
+      "active_from": "2026-02-16",
+      "active_until": null,
+      "evidence_as_of": "2026-10-06",
+      "reviewed_on": "2026-10-10",
+      "review_due": "2026-10-16",
+      "reason": "ZIM announced an agreement for Hapag-Lloyd to acquire its shares for $35.00 in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "ZIM to be acquired by Hapag-Lloyd for $35.00 per share in cash",
+        "published_on": "2026-02-16",
+        "url": "https://investors.zim.com/news/news-details/2026/ZIM-to-be-Acquired-by-Hapag-Lloyd-for-35-00-per-Share-in-Cash-at-Aggregate-Cash-Consideration-of-Approximately-4-2-Billion-New-Israeli-Company-New-ZIM-to-Acquire-Portion-of-ZIMs-Business/default.aspx",
+        "sha256": "32b3411f00b61f712fff475a3b69d63a5de1f8589c71fee4afb6adfc8637a519",
+        "quote": "Hapag-Lloyd will acquire ZIM for $35.00 per share in cash."
+       },
+       {
+        "title": "ZIM Form 6-K: Israeli approval application and revised proposal",
+        "published_on": "2026-09-30",
+        "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004656/zk2636172.htm",
+        "sha256": "a7e23f853c80a6525bb283e3ca57077e388376dee8b41264d21cc54abb72f9ed",
+        "quote": "the GCA has determined to cease handling the pending application for approval of the requested changes in the special state share"
+       },
+       {
+        "title": "ZIM raises full-year 2026 guidance; identifies pending Hapag-Lloyd transaction",
+        "published_on": "2026-10-06",
+        "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
+        "sha256": "9c4ac3ec5770dfacf5cadc7a392c65c06c20837fd078e9d26950e02f3a9edff6",
+        "quote": "statements relating to the timing and closing of the pending transaction with Hapag-Lloyd"
        }
       ]
      }
@@ -1830,7 +1866,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "633f6d0caeb4"
+  "replay_rules_version": "75c237d78018"
  },
  "observations": {
   "as_of": "2026-09-10",
