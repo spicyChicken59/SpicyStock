@@ -83,6 +83,29 @@ def reader_files(root: Path) -> tuple[str, ...]:
     return (ref['path'],)
 
 
+def issuer_files(root: Path) -> tuple[str, ...]:
+    """Check an optional dated receipt and its own immutable companion.
+
+    An evening publication naturally supersedes yesterday's issuer binding.
+    Validate self-integrity here; the browser separately refuses stale binding.
+    That normal state must not block publication of the new evening record.
+    """
+    docs = root / 'docs'
+    path = docs / 'issuer-evidence.json'
+    if not path.exists() and not path.is_symlink():
+        return ()
+    from src.issuer_evidence import parse_receipt, validate_bundle
+    try:
+        receipt_raw = reader_asset(docs, 'issuer-evidence.json', 64 * 1024)
+        receipt = parse_receipt(receipt_raw)
+        ref = receipt['bundle']
+        bundle_raw = reader_asset(docs, ref['path'], ref['bytes'])
+        validate_bundle(receipt_raw, bundle_raw)
+    except (OSError, ValueError, TypeError, KeyError):
+        raise RuntimeError('Issuer evidence companion does not match its committed receipt.') from None
+    return ('issuer-evidence.json', ref['path'])
+
+
 def public_files(root: Path) -> tuple[str, ...]:
     """Every file a reader's browser is asked for: index.html, each local asset
     it references -- its own modules AND the vendored design system -- and the
@@ -116,6 +139,7 @@ def public_files(root: Path) -> tuple[str, ...]:
         raise RuntimeError("docs/ does not carry files the page asks readers to load: "
                            + ", ".join(absent))
     names.extend(name for name in reader_files(root) if name not in names)
+    names.extend(name for name in issuer_files(root) if name not in names)
     return tuple(names)
 
 

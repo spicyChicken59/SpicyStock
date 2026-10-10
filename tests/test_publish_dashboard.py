@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import sys
@@ -117,6 +118,60 @@ def test_reader_file_reads_have_explicit_bounds(publication):
     root, _ = publication
     with pytest.raises(ValueError, match='bytes exceed bound'):
         publisher.reader_asset(root / 'docs', 'reader.json', 1)
+
+
+@pytest.fixture
+def issuer_publication(publication):
+    from src import issuer_evidence
+    root, _ = publication
+    # Valid but intentionally older publication: evening Pages must continue
+    # after canonical bytes change, while browser binding remains fail-closed.
+    raw = (Path(__file__).parent / 'fixtures/morning/full-publication.json').read_bytes()
+    output = issuer_evidence.collect(raw, fetch=lambda url: pytest.fail('provider not expected'),
+        now=datetime(2026, 10, 10, 8, tzinfo=timezone.utc), run_id='42', dry_run=False)
+    ref = output['receipt']['bundle']['path']
+    (root / 'docs/issuer-evidence').mkdir()
+    (root / 'docs/issuer-evidence.json').write_bytes(output['receipt_bytes'])
+    (root / 'docs' / ref).write_bytes(output['bundle_bytes'])
+    return root, ref
+
+
+def test_optional_issuer_self_integrity_allows_previous_publication(issuer_publication):
+    root, ref = issuer_publication
+    (root / 'docs/issuer-evidence/retention.json').write_text('private publisher ownership metadata')
+    (root / 'docs/issuer-evidence' / ('0' * 64 + '.json')).write_text('unreferenced retained object')
+    files = publisher.public_files(root)
+    assert 'issuer-evidence.json' in files and ref in files
+    assert [p for p in files if p.startswith('issuer-evidence/')] == [ref]
+
+
+@pytest.mark.parametrize('fault', ['missing', 'bytes', 'symlink'])
+def test_committed_issuer_companion_must_be_present_and_exact(issuer_publication, fault):
+    root, ref = issuer_publication
+    path = root / 'docs' / ref
+    if fault == 'missing':
+        path.unlink()
+    elif fault == 'bytes':
+        path.write_bytes(path.read_bytes() + b' ')
+    else:
+        retained = root / 'elsewhere'; path.rename(retained); path.symlink_to(retained)
+    with pytest.raises(RuntimeError, match='Issuer evidence companion'):
+        publisher.public_files(root)
+
+
+def test_issuer_path_validation_precedes_arbitrary_file_read(issuer_publication, monkeypatch):
+    root, _ = issuer_publication
+    path = root / 'docs/issuer-evidence.json'
+    receipt = json.loads(path.read_bytes()); receipt['bundle']['path'] = '../private.json'
+    path.write_text(json.dumps(receipt))
+    actual = publisher.reader_asset; names = []
+    def recorded(docs, name, maximum):
+        names.append(name)
+        return actual(docs, name, maximum)
+    monkeypatch.setattr(publisher, 'reader_asset', recorded)
+    with pytest.raises(RuntimeError, match='Issuer evidence companion'):
+        publisher.issuer_files(root)
+    assert names == ['issuer-evidence.json']
 
 
 def test_invalid_bundle_makes_no_github_or_public_request(publication, monkeypatch):

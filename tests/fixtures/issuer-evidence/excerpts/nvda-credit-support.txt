@@ -1,0 +1,3 @@
+NVIDIA’s aggregate payment obligation is cumulatively capped at $105 billion for its initial commitment under the Agreements.
+Pursuant to the Agreements, OpenAI is the tenant; however, in the event of (i) OpenAI’s insolvency resulting in a default under a lease, or (ii) OpenAI’s failure to make payments under a lease (each a “Trigger Event”), NVIDIA will pay an amount generally equal to any shortfall between the guaranteed minimum value of a lease (as set forth in the Agreements) and amounts recovered through a replacement lease or sale.
+OpenAI has agreed to reimburse and indemnify NVIDIA for any and all amounts actually paid by NVIDIA to the Lessor under the Agreements.

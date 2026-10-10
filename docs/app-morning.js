@@ -247,7 +247,9 @@
     });
     const foot = node('div', { class: 'ss-morning__foot' });
     foot.append(details, next);
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), foot);
+    const issuer = api.issuerEvidence && typeof api.issuerEvidence.mount === 'function' && typeof api.issuerEvidence.update === 'function'
+      ? api.issuerEvidence.mount() : node('p', { class: 'sc-hint', 'data-issuer-unavailable': '' }, 'Issuer source reader unavailable. Check company filings, news and earnings independently; this does not clear any known event.');
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, foot);
     if (api.handoffUI && api.handoff) api.handoffUI.mount(content);
     else content.append(node('p', { class: 'sc-hint' }, 'Private broker handoffs are unavailable in this page. Cash preview and published research remain available.'));
     host.append(content);
@@ -277,6 +279,7 @@
     host.setAttribute('data-morning-offered', String(latest.allowed));
     refreshCash(host);
     if (api.handoffUI) api.handoffUI.update();
+    if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
   }
   api.morning = { render, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
 })(window);

@@ -59,9 +59,9 @@ def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous
     return dict(line.split('=', 1) for line in output.read_text().splitlines())
 
 
-def test_the_workflow_inventory_is_exactly_the_seven_the_docs_name():
+def test_the_workflow_inventory_is_exactly_the_eight_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
-        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
+        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "issuer-evidence.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
 
 
 # ----------------------------------------------------------- evening -----
@@ -318,11 +318,66 @@ def test_source_probe_is_opt_in_rehearsal_only_and_separately_retained():
 
 
 # ------------------------------------------------------------- tests -----
+def test_issuer_trigger_is_publication_bound_and_has_no_recursion_or_new_cron():
+    wf = load('issuer-evidence.yml')
+    on = triggers(wf)
+    assert set(on) == {'workflow_run', 'workflow_dispatch'}
+    assert on['workflow_run'] == {'workflows': [load('evening.yml')['name'], load('morning.yml')['name']],
+                                  'types': ['completed'], 'branches': ['main']}
+    assert on['workflow_dispatch']['inputs']['dry_run']['default'] is True
+    assert set(on['workflow_dispatch']['inputs']) == {'dry_run'}
+    assert wf['concurrency'] == {'group': 'issuer-evidence', 'cancel-in-progress': False}
+    assert wf['permissions'] == {'contents': 'read', 'actions': 'read'}
+
+
+def test_issuer_readonly_collection_and_main_only_writer_are_separate():
+    wf = load('issuer-evidence.yml')
+    collect = wf['jobs']['collect']; persist = wf['jobs']['persist']
+    current = steps(wf, 'collect')
+    assert current['actions/checkout@v4']['with']['persist-credentials'] is False
+    assert 'inputs.dry_run == true' in collect['if']
+    assert 'head_repository.full_name == github.repository' in collect['if']
+    guard = current['Guard the trigger and daily collection budget']
+    assert guard['run'] == 'python -m tools.publish_issuer_evidence guard'
+    assert guard['env'] == {'GH_TOKEN': '${{ github.token }}'}
+    for name, dry in [('Collect issuer evidence (production)', False), ('Collect issuer evidence (rehearsal)', True)]:
+        step = current[name]
+        assert step['env'] == {'SCAN_SEND_EMAIL': 'false'}
+        assert ('--dry-run' in step['run']) is dry
+        assert 'steps.guard.outputs.go' in step['if']
+    assert persist['needs'] == 'collect' and persist['permissions'] == {'contents': 'write'}
+    assert "github.ref == 'refs/heads/main'" in persist['if']
+    assert "github.event_name == 'workflow_run' || inputs.dry_run == false" in persist['if']
+    writer = steps(wf, 'persist')
+    assert writer['actions/checkout@v4']['with'] == {'ref': 'main'}
+    assert writer['actions/download-artifact@v4']['with']['name'] == 'issuer-evidence-${{ github.run_id }}-${{ github.run_attempt }}'
+    assert writer['Publish only against unchanged main source and receipt']['run'] == \
+        'python -m tools.publish_issuer_evidence publish --input "$RUNNER_TEMP/issuer-candidate"'
+    assert 'secrets.' not in str(wf) and 'git add' not in str(wf)
+
+
+def test_issuer_cache_and_capture_retention_do_not_promote_untrusted_artifacts():
+    current = steps(load('issuer-evidence.yml'), 'collect')
+    for name in ('Restore verified main source cache', 'Save main-only verified source cache'):
+        assert "github.ref == 'refs/heads/main'" in current[name]['if']
+        assert current[name]['with']['path'] == '${{ runner.temp }}/issuer-source-cache'
+    assert "steps.cache.outputs.valid == 'true'" in current['Save main-only verified source cache']['if']
+    assert current['Verify source cache before save']['run'] == \
+        'python -m tools.publish_issuer_evidence cache-check --path "$RUNNER_TEMP/issuer-source-cache"'
+    candidate = current["Retain this run's validated public candidate"]['with']
+    captures = current['Retain bounded source captures separately']['with']
+    assert candidate['retention-days'] == captures['retention-days'] == 30
+    assert set(captures['path'].splitlines()) == {'${{ runner.temp }}/issuer-output/captures/',
+                                                '${{ runner.temp }}/issuer-output/manifest.json'}
+    assert 'captures' not in candidate['path'] and 'cache' not in candidate['path']
+
+
 def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke():
     wf = load("tests.yml")
     assert steps(wf, "pytest")["Run tests"]["run"].strip() == "pytest tests/ -q"
     assert steps(wf, "pytest")["The fixtures are what the pipeline writes"]["run"].strip().splitlines() == [
-        'python tools/make_fixture.py --check', 'python tests/fixtures/morning/generate.py --check']
+        'python tools/make_fixture.py --check', 'python tests/fixtures/morning/generate.py --check',
+        'python tests/fixtures/issuer-evidence/generate.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/handoff_model_cases.mjs" in page
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page
@@ -339,7 +394,7 @@ def test_the_evening_and_the_tests_run_the_same_python():
 def test_the_publisher_only_reads_committed_main_after_the_evening_workflow():
     wf = load("publish-dashboard.yml")
     on = triggers(wf)
-    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"], load('morning.yml')['name']]
+    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"], load('morning.yml')['name'], load('issuer-evidence.yml')['name']]
     assert on["workflow_run"]["branches"] == ["main"]
     checkout = [s for s in wf["jobs"]["publish"]["steps"] if str(s.get("uses", "")).startswith("actions/checkout")][0]
     assert checkout["with"] == {"ref": "main", "persist-credentials": False}

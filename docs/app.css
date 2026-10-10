@@ -71,6 +71,7 @@
 .ss-handoff__field { min-width: 0; display: flex; flex-direction: column; align-items: start; gap: var(--sc-s1); }
 .ss-handoff__field input { width: 100%; min-width: 0; }
 .ss-handoff__actions { display: flex; flex-wrap: wrap; gap: var(--sc-s1); }
+.ss-issuer { overflow-wrap: anywhere; }
 .ss-observations { min-width: 0; margin-block: var(--sc-s2); border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); overflow-wrap: anywhere; }
 .ss-observations > h3 { margin: 0 0 var(--sc-s1); font-size: var(--sc-text-md); }
 .ss-observations [data-observation-body] { padding: var(--sc-s1) var(--sc-s2); }
