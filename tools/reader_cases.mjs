@@ -246,9 +246,20 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
   eq('digest negative control preserves byte length', alteredRaw.length, full.sidecarRaw.length);
   const malformed = JSON.parse(full.sidecarRaw); malformed.symbols.AAPL.c = 'invalid';
   const wrongMetadata = JSON.parse(full.sidecarRaw); wrongMetadata.days += 1;
+  // A UTF-8 BOM changes three actual bytes. Only the declared length changes:
+  // the old decoded-text hash incorrectly accepted the original sidecar SHA.
+  const bom = Buffer.from([0xef, 0xbb, 0xbf]);
+  const bomEnvelope = structuredClone(full.envelope);
+  bomEnvelope.retained_observations.bytes += bom.length;
+  const bomSidecar = bundle(JSON.stringify(bomEnvelope), Buffer.concat([bom, full.sidecarRaw]), full.canonicalRaw);
+  const shortEnvelope = structuredClone(full.envelope);
+  shortEnvelope.retained_observations.bytes += 1;
+  const shortSidecar = bundle(JSON.stringify(shortEnvelope), full.sidecarRaw, full.canonicalRaw);
   const cases = [
     ['digest', full, alteredRaw, /digest/i],
+    ['BOM byte identity', bomSidecar, null, /digest/i],
     ['length', full, Buffer.concat([full.sidecarRaw, Buffer.from('\n')]), /byte|length/i],
+    ['short body', shortSidecar, null, /length/i],
     ['shape', changedSidecar(full, malformed), null, /invalid.*bar|invalid.*observation/i],
     ['metadata', changedSidecar(full, wrongMetadata), null, /metadata/i]
   ];
@@ -263,6 +274,100 @@ export async function checkReaderTransport({ browser, base, open, check, eq, sho
       eq(`${name}: failed hydration preserves local originals`, await tab.page.evaluate(() => JSON.stringify(localStorage)), before);
       eq(`${name}: invalid history is never installed`, await tab.page.evaluate(() => Object.keys(SCStock.data.observations.symbols).length), 0);
       check(`${name}: unavailable coverage stays explicit`, /unavailable|could not|retry/i.test(await tab.page.locator('#view-setups').textContent()));
+    } finally { await tab.context.close(); }
+  }
+
+  // Boot and refresh share the same byte boundary. Fetch.text() used to strip
+  // these bytes, then bind an unchanged morning SHA or report an unchanged file.
+  for (const direct of [false, true]) {
+    const record = { ...morning,
+      readerRaw: Buffer.concat([bom, Buffer.from(morning.readerRaw)]),
+      canonicalRaw: Buffer.concat([bom, canonical]) };
+    const tab = await setup(record, { canonical: direct, receipt: direct ? await receipt('observed') : observed });
+    try {
+      eq(`${direct ? 'canonical' : 'projected'} BOM: unsupported JSON is refused before rendering`, await tab.page.getAttribute('html', 'data-ss-rendered'), 'error');
+      eq(`${direct ? 'canonical' : 'projected'} BOM: normalized bytes cannot acquire a morning check`, tab.requests.filter(r => /\/morning\.json$/.test(r.url)).length, 0);
+    } finally { await tab.context.close(); }
+  }
+  {
+    const raw = Buffer.from(morning.readerRaw);
+    // Invalid UTF-8 within a string remains parseable after Fetch.text()'s
+    // replacement decoding, but cannot be an exact UTF-8 publication.
+    const offset = raw.indexOf(Buffer.from(morning.envelope.data.cover.dek));
+    check('invalid UTF-8 control targets the publication text', offset >= 0);
+    raw[offset] = 0xff;
+    const tab = await setup({ ...morning, readerRaw: raw });
+    try {
+      eq('invalid UTF-8 publication is refused before rendering', await tab.page.getAttribute('html', 'data-ss-rendered'), 'error');
+    } finally { await tab.context.close(); }
+  }
+  {
+    const tab = await setup(morning, { seed: privateSeed, receipt: observed });
+    try {
+      await waitMorning(tab.page);
+      const before = await tab.page.evaluate(() => ({ data: JSON.stringify(SCStock.data), local: JSON.stringify(localStorage), hash: SCStock.observations.facts().recordHash }));
+      eq('ordinary UTF-8 publication binds its actual served bytes', before.hash, sha(morning.readerRaw));
+      tab.transport.current = { ...morning, readerRaw: Buffer.concat([bom, Buffer.from(morning.readerRaw)]) };
+      await tab.page.evaluate(() => SCStock.checkUpdates());
+      await tab.page.waitForFunction(() => document.getElementById('refresh-said').dataset.outcome !== 'checking');
+      eq('BOM refresh cannot be called an unchanged publication', await tab.page.locator('#refresh-said').getAttribute('data-outcome'), 'failed');
+      checkSame('refused BOM refresh preserves source identity and private inputs', await tab.page.evaluate(() => ({ data: JSON.stringify(SCStock.data), local: JSON.stringify(localStorage), hash: SCStock.observations.facts().recordHash })), before);
+      const byteControl = await tab.page.evaluate(async ({ raw }) => {
+        const { data, projection } = SCStock.reader.parse(raw, 'reader.json');
+        const original = new TextEncoder().encode('\ufeff' + raw);
+        const chunks = new ReadableStream({ start(controller) {
+          controller.enqueue(original.slice(0, 1)); controller.enqueue(original.slice(1, 2));
+          controller.enqueue(original.slice(2)); controller.close();
+        } });
+        const bytes = await SCStock.reader.read(new Response(chunks), original.length);
+        SCStock.observations.reset(data, new Date('2026-09-11T13:35:00Z'));
+        await SCStock.observations.bind(data, bytes, projection);
+        return { bytesMatch: bytes.every((value, i) => value === original[i]) && bytes.length === original.length,
+          leadingCode: SCStock.reader.decode(bytes).charCodeAt(0), ...SCStock.observations.facts() };
+      }, { raw: morning.readerRaw });
+      check('fragmented stream retains every original byte', byteControl.bytesMatch);
+      eq('UTF-8 decoding preserves a BOM for JSON to reject', byteControl.leadingCode, 0xfeff);
+      eq('byte-backed binding hashes the actual response, including BOM', byteControl.recordHash, sha(Buffer.concat([bom, Buffer.from(morning.readerRaw)])));
+      eq('byte-backed binding cannot certify a normalized matching receipt', byteControl.state, 'unavailable');
+      const bounds = await tab.page.evaluate(async () => {
+        let cancelled = false, count = 0, oversized = false, header = false, headerCancelled = false, statusCancelled = false, oversizedNativeReads = 0;
+        const chunks = new ReadableStream({ pull(controller) {
+          if (count++ < 40) controller.enqueue(new Uint8Array(1024 * 1024)); else controller.close();
+        }, cancel() { cancelled = true; } });
+        const large = new Response(chunks), largeNative = large.arrayBuffer.bind(large);
+        large.arrayBuffer = () => { oversizedNativeReads++; return largeNative(); };
+        try { await SCStock.reader.read(large); } catch (error) { oversized = /byte limit/.test(error.message); }
+        const advertised = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { headerCancelled = true; } });
+        try { await SCStock.reader.read(new Response(advertised, { headers: { 'content-length': String(33 * 1024 * 1024) } })); }
+        catch (error) { header = /size limit/.test(error.message); }
+        const refused = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123, 125])); }, cancel() { statusCancelled = true; } });
+        try { await SCStock.reader.read(new Response(refused, { status: 503 })); } catch (error) { /* expected HTTP refusal */ }
+        let counterEOF = false, nativeReads = 0, prematureNativeRead = false;
+        const small = new Response(new ReadableStream({
+          start(controller) { controller.enqueue(new Uint8Array([123])); },
+          pull(controller) { controller.enqueue(new Uint8Array([125])); controller.close(); }
+        })), native = small.arrayBuffer.bind(small);
+        const clone = small.clone.bind(small);
+        small.clone = () => {
+          const copy = clone(), acquire = copy.body.getReader.bind(copy.body);
+          copy.body.getReader = () => {
+            const reader = acquire(), read = reader.read.bind(reader);
+            reader.read = async () => { const part = await read(); if (part.done) counterEOF = true; return part; };
+            return reader;
+          };
+          return copy;
+        };
+        small.arrayBuffer = () => { nativeReads++; prematureNativeRead = !counterEOF; return native(); };
+        const exact = await SCStock.reader.read(small, 2);
+        return { oversized, cancelled, header, headerCancelled, statusCancelled, oversizedNativeReads, nativeReads, prematureNativeRead, exact: [...exact] };
+      });
+      eq('actual streamed size is bounded without trusting a header', bounds.oversized, true);
+      eq('an oversized publication cancels its source stream', bounds.cancelled, true);
+      eq('an oversized advertised publication is refused', bounds.header, true);
+      eq('early header refusal cancels the unconsumed source', bounds.headerCancelled, true);
+      eq('early HTTP refusal cancels the unconsumed source', bounds.statusCancelled, true);
+      eq('oversize never enters native buffering', bounds.oversizedNativeReads, 0);
+      eq('native buffering starts only after bounded EOF', [bounds.nativeReads, bounds.prematureNativeRead, bounds.exact], [1, false, [123, 125]]);
     } finally { await tab.context.close(); }
   }
 

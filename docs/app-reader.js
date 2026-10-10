@@ -35,24 +35,43 @@
   }
   const status = () => ({ projected: !!projection, state, reason, canonicalSha: projection && projection.canonicalSha, sidecarSha: projection && projection.sidecar.sha256 });
   function changed() { if (onChange) onChange({ data: current, ...status() }); }
-  async function read(response, expected) {
-    require(response.ok && !response.redirected, 'The public research file could not be read.');
-    const length = Number(response.headers.get('content-length'));
-    require(!Number.isFinite(length) || length <= MAX_BYTES, 'Research exceeds its size limit.');
-    require(response.body && response.body.getReader, 'Bounded research reading is unavailable.');
-    const reader = response.body.getReader(), decoder = new TextDecoder('utf-8', { fatal: true });
-    let bytes = 0, raw = '';
+  async function refuse(response, reason) {
+    if (response.body && !response.body.locked && typeof response.body.cancel === 'function')
+      await response.body.cancel().catch(() => {});
+    throw Error(reason);
+  }
+  // Preserve the response bytes through digest verification. Decoding first
+  // can strip a UTF-8 BOM and turn a different file into the expected string.
+  async function read(response, expected = null) {
+    if (!response.ok || response.redirected) return refuse(response, 'The public JSON file could not be read.');
+    const contentLength = Number(response.headers.get('content-length'));
+    if (Number.isFinite(contentLength) && contentLength > MAX_BYTES) return refuse(response, 'Public JSON exceeds its size limit.');
+    if (!response.body || !response.body.getReader) return refuse(response, 'Bounded public JSON reading is unavailable.');
+    // Count a clone before native consumption. Directly draining the network
+    // response can emit Chromium ERR_ABORTED after a complete successful read.
+    // The original tee queue is bounded by this counter; retain no extra chunks.
+    const reader = response.clone().body.getReader();
+    let length = 0;
     try {
       while (true) {
         const next = await reader.read(); if (next.done) break;
-        bytes += next.value.byteLength;
-        if (bytes > MAX_BYTES || bytes > expected) { await reader.cancel(); throw Error('Research exceeds its declared byte limit.'); }
-        raw += decoder.decode(next.value, { stream: true });
+        length += next.value.byteLength;
+        if (length > MAX_BYTES || expected !== null && length > expected) throw Error('Public JSON exceeds its byte limit.');
       }
-      require(bytes === expected, 'Research length differs from its publication.');
-      return raw + decoder.decode();
+      require(expected === null || length === expected, 'Research length differs from its publication.');
+      // Native buffering starts only after actual EOF and the byte checks.
+      const bytes = new Uint8Array(await response.arrayBuffer());
+      require(bytes.byteLength === length, 'Public JSON length changed during reading.');
+      return bytes;
+    } catch (error) {
+      // A tee cancellation waits for both branches: start both before awaiting.
+      await Promise.allSettled([reader.cancel(), response.body.cancel()]);
+      throw error;
     } finally { reader.releaseLock(); }
   }
+  // JSON does not permit a leading BOM. Preserve it so JSON.parse rejects it,
+  // and refuse malformed UTF-8 instead of silently replacing source bytes.
+  const decode = bytes => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
   function validate(value, descriptor) {
     require(object(value) && object(value.symbols) && equal(metadata(value), JSON.parse(descriptor.metadata)) && ('signals' in value) === descriptor.hasSignals && (!descriptor.hasSignals || object(value.signals)), 'Research metadata differs from its publication.');
     const bar = row => object(row) && date(row.date) && finite(row.c) && row.c > 0 && ['o', 'h', 'l', 'v'].every(key => row[key] === undefined || row[key] === null || finite(row[key]) && row[key] >= 0);
@@ -82,10 +101,10 @@
         else {
           require(w.crypto && w.crypto.subtle && w.TextEncoder, 'Research digest verification is unavailable in this browser.');
           const response = await w.fetch(descriptor.sidecar.url, { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', mode: 'same-origin', redirect: 'error', signal: active.signal });
-          const raw = await read(response, descriptor.sidecar.bytes);
-          const digest = await w.crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+          const bytes = await read(response, descriptor.sidecar.bytes);
+          const digest = await w.crypto.subtle.digest('SHA-256', bytes);
           require(Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('') === descriptor.sidecar.sha256, 'Research digest differs from its publication.');
-          value = validate(JSON.parse(raw), descriptor);
+          value = validate(JSON.parse(decode(bytes)), descriptor);
         }
         if (token !== epoch || target !== current) return false;
         cached = { sha: descriptor.sidecar.sha256, bytes: descriptor.sidecar.bytes, value };
@@ -99,5 +118,5 @@
     });
     return pending;
   }
-  api.reader = { parse, attach, ensure, status, mergeAllowed: () => !projection || state === 'complete', onChange: fn => { onChange = fn; }, MAX_BYTES };
+  api.reader = { parse, read, decode, attach, ensure, status, mergeAllowed: () => !projection || state === 'complete', onChange: fn => { onChange = fn; }, MAX_BYTES };
 })(window);

@@ -89,16 +89,37 @@ export async function checkWalkthrough({ browser, base, open, check, eq, shotsDi
   eq('End goes to the record', await stepOf(p), W.steps.length);
   await p.keyboard.press('Home'); await settle(p, 100);
   eq('Home goes to the thesis', await stepOf(p), 1);
-  await p.keyboard.press(' '); await settle(p, 650);
-  check('Space plays from the stage', (await txt(p, '#walkthrough [data-walk="play"]')) === 'Pause' && (await stepOf(p)) >= 2, await stepOf(p));
-  await p.locator('#walkthrough [data-walk="play"]').click();
-  const paused = await stepOf(p); await settle(p, 600);
+  // Capture transient controls in the event's task: a delayed runner can
+  // otherwise read a later, valid autoplay step (or its completed Play label).
+  await p.locator('#walkthrough .ss-walk__stage').evaluate((stage) => {
+    stage.addEventListener('keydown', () => {
+      stage.dataset.playStarted = document.querySelector('#walkthrough [data-walk="play"]').textContent;
+    }, { once: true });
+  });
+  await p.keyboard.press(' ');
+  eq('Space plays from the stage', await p.locator('#walkthrough .ss-walk__stage').getAttribute('data-play-started'), 'Pause');
+  await p.waitForFunction(() => Number(document.querySelector('#walkthrough [data-walk-root]').getAttribute('data-step')) >= 2);
+  check('Space playback advances', (await stepOf(p)) >= 2);
+  // Start and pause together, so completing the previous playback while the
+  // runner is busy cannot turn an intended Pause click into a new Play click.
+  const paused = await p.evaluate(() => {
+    document.querySelector('#walkthrough [data-walk-step="thesis"]').click();
+    const play = document.querySelector('#walkthrough [data-walk="play"]');
+    play.click(); play.click();
+    return Number(document.querySelector('#walkthrough [data-walk-root]').getAttribute('data-step'));
+  });
+  await settle(p, 600);
   eq('Pause holds the step', await stepOf(p), paused);
   eq('Pause reads Play again', await txt(p, '#walkthrough [data-walk="play"]'), 'Play');
   await p.locator('#walkthrough [data-walk-step="record"]').click(); await settle(p, 100);
-  await p.locator('#walkthrough [data-walk="play"]').click(); await settle(p, 120);
-  eq('Play from the last step starts over', await stepOf(p), 1);
-  await p.locator('#walkthrough [data-walk="play"]').click();
+  const restarted = await p.locator('#walkthrough [data-walk="play"]').evaluate((play) => {
+    play.click();
+    return Number(document.querySelector('#walkthrough [data-walk-root]').getAttribute('data-step'));
+  });
+  eq('Play from the last step starts over', restarted, 1);
+  await p.waitForFunction(() => Number(document.querySelector('#walkthrough [data-walk-root]').getAttribute('data-step')) >= 2);
+  check('restarted playback advances', (await stepOf(p)) >= 2);
+  await p.locator('#walkthrough [data-walk="play"]').evaluate((play) => { if (play.textContent === 'Pause') play.click(); });
   // the table twin: every bar, the burst marked, readable without the picture
   eq('the chart owes a table twin with every bar', await p.locator('#walkthrough [data-walk="table"] tbody tr').count(), W.bars);
   eq('the twin marks the burst', await p.locator('#walkthrough [data-walk="table"] tbody tr[data-burst]').count(), 1);
@@ -115,13 +136,29 @@ export async function checkWalkthrough({ browser, base, open, check, eq, shotsDi
   await m.context.close();
 
   // no record at all: the walkthrough still stands and steps
-  const none = await load('/tests/fixtures/page/does-not-exist.json', 1280);
+  const missingPath = '/tests/fixtures/page/does-not-exist.json', missingURL = base + missingPath;
+  const missingStatuses = [];
+  const none = await load(missingPath, 1280, { beforeLoad: async (page) => {
+    await fast(page);
+    page.on('response', (response) => { if (response.url() === missingURL) missingStatuses.push(response.status()); });
+  } });
+  eq('the deliberate missing publication responds with HTTP 404', missingStatuses, [404]);
   eq('with no record the page says so', await none.page.getAttribute('html', 'data-ss-rendered'), 'error');
+  check('a missing publication provides no record or order controls', await none.page.evaluate(() =>
+    !SCStock.data && !document.querySelector('[data-copy], [data-handoff-prepare]:not(:disabled)') &&
+    document.querySelector('#next-h3').textContent === 'Do not place any order from this page.'));
   eq('and the walkthrough still draws every bar', await none.page.locator('#walkthrough .ss-walk__bar').count(), W.bars);
   await none.page.locator('#walkthrough [data-walk="next"]').click(); await settle(none.page, 100);
   eq('and still steps', await live(none.page), W.steps[1].reveal);
-  // the one failed request on this page is the record that does not exist, which is the point
-  eq('no-record walkthrough errors', none.errors.filter((e) => !/404/.test(e)), []);
+  // A refused 404 body is cancelled by the byte reader. Permit that exact
+  // request's cancellation only after observing its HTTP status; keep every
+  // other error, including unrelated cancellations and extra 404 diagnostics.
+  let missingConsole = missingStatuses.filter((status) => status === 404).length, missingCancel = missingConsole;
+  eq('no-record walkthrough errors', none.errors.filter((e) => {
+    if (missingCancel && e === 'request failed: ' + missingURL + ' net::ERR_ABORTED') { missingCancel--; return false; }
+    if (missingConsole && e === 'console: Failed to load resource: the server responded with a status of 404 (Not Found)') { missingConsole--; return false; }
+    return true;
+  }), []);
   await none.context.close();
 
   // a phone and a narrow phone: stacked, every step readable, nothing sideways

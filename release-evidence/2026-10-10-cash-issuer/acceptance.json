@@ -1,0 +1,502 @@
+{
+  "schema": "spicystock-release-acceptance-v1",
+  "recorded_at": "2026-10-10T07:54:15.515911+00:00",
+  "scope": "PR121 actual production review selection, manually collected issuer receipt and public cash/issuer UI. Automatic issuer refresh and session copy remain separately tracked defects.",
+  "status": "PASS_SCOPED_PRODUCTION_AND_PUBLIC_UI",
+  "pr": "https://github.com/spicyChicken59/SpicyStock/pull/121",
+  "reviewed_head": "c0cc1720a5655561c1752837aa7dbded3c9a1611",
+  "merge_commit": "ef9f150d64e47e0241c58d749ff1bc27f17d8a86",
+  "hosted_checks": {
+    "schema": "spicystock-hosted-acceptance-v1",
+    "pr": 121,
+    "head": "c0cc1720a5655561c1752837aa7dbded3c9a1611",
+    "tests_run": 38032281629,
+    "status": "success",
+    "completed_at": "2026-10-10T07:17:07Z",
+    "secret_runs": [
+      38032281625,
+      38032278711
+    ],
+    "python_tests": 3577,
+    "page_checks": 11761,
+    "chart_checks": 378,
+    "continuity_checks": 137,
+    "fixture_files": {
+      "page": 13,
+      "morning": 21,
+      "issuer": 12
+    },
+    "native": {
+      "central": {
+        "job": 114155595583,
+        "workload_seconds": 1580.507849,
+        "artifact_id": 11662938481,
+        "sha256": "1f32a60e192027e7f0d3748812dca8cde176e8403bd2b23a74d741943358a683"
+      },
+      "stress": {
+        "job": 114155595548,
+        "workload_seconds": 1099.0818,
+        "artifact_id": 11663242451,
+        "sha256": "213a37b51d20fe1d2e0ab712af6b2e2f0946152e8254bcffa8d133192bcd1659"
+      }
+    },
+    "evidence_scope": "Exact-head GitHub run conclusions and decoded official job logs; native compact artifacts referenced by reported digest, not independently downloaded here."
+  },
+  "production": {
+    "publication_commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+    "source_head": "ef9f150d64e47e0241c58d749ff1bc27f17d8a86",
+    "run_id": "38034610157",
+    "session": "2026-10-09",
+    "published_at": "2026-10-10T07:30:15.553690+00:00",
+    "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+    "rules_version": "c9dc7d6d1d87",
+    "archived_review_selection_policy": {
+      "version": 1,
+      "policy": "account_feasible_first_research_v1",
+      "research_max": 2,
+      "ranked_research": 1,
+      "grade_order": [
+        "A+",
+        "A",
+        "B",
+        "C",
+        "skip"
+      ],
+      "order": "mechanical_grade,descending_score,ticker",
+      "rotation": "sha256(policy|measured_session|ticker),ticker",
+      "research_pool": "infeasible mechanical pipeline.trade_grades",
+      "feasibility": "private per-candidate plan before reader and combined allocation"
+    },
+    "run_reads": {
+      "requested": 2,
+      "done": 2,
+      "unavailable_reason": null,
+      "version": 1,
+      "causes": {
+        "refused": 0,
+        "format": 0,
+        "account": 0,
+        "credit": 0,
+        "transport": 0
+      },
+      "refusal_limit": 0,
+      "refused_names": [],
+      "refused_admissible": [],
+      "verdict": "complete",
+      "sentence": null
+    },
+    "run_selection": {
+      "version": 1,
+      "policy": "account_feasible_first_research_v1",
+      "session": "2026-10-09",
+      "max_reads": 12,
+      "research_max": 2,
+      "discovered": 479,
+      "feasible": 0,
+      "blockers": {
+        "grade_not_admitted": 479,
+        "quality_veto": 185,
+        "preview_unavailable": 0,
+        "known_event": 0,
+        "plan_withheld": 0,
+        "no_whole_share": 0,
+        "no_order": 0
+      },
+      "research_pool": 53,
+      "selected": [
+        {
+          "ticker": "BIIB",
+          "purpose": "research_ranked"
+        },
+        {
+          "ticker": "NTAP",
+          "purpose": "research_rotating"
+        }
+      ],
+      "requested": 2,
+      "by_purpose": {
+        "opportunity": {
+          "requested": 0,
+          "accepted": 0,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 0
+        },
+        "research_ranked": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        },
+        "research_rotating": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        }
+      },
+      "feasible_unselected": 0,
+      "unused_capacity": 10,
+      "attempts": 2
+    },
+    "replayed_purpose_counts": {
+      "research_ranked": 1,
+      "research_cap_not_selected": 51,
+      "research_rotating": 1,
+      "outside_research_pool": 426
+    },
+    "replayed_blocker_counts": {
+      "grade_not_admitted": 479,
+      "quality_veto": 185
+    },
+    "selected_rows": [
+      {
+        "ticker": "BIIB",
+        "purpose": "research_ranked",
+        "blockers": [
+          "grade_not_admitted"
+        ],
+        "reader_coverage": "accepted",
+        "mechanical_grade": "A",
+        "final_grade": "B",
+        "ticket": false,
+        "ticket_reason": "regime_gate"
+      },
+      {
+        "ticker": "NTAP",
+        "purpose": "research_rotating",
+        "blockers": [
+          "grade_not_admitted"
+        ],
+        "reader_coverage": "accepted",
+        "mechanical_grade": "A",
+        "final_grade": "C",
+        "ticket": false,
+        "ticket_reason": "regime_gate"
+      }
+    ],
+    "tickets": [],
+    "source_provenance": {
+      "status": "PASS",
+      "checked_setups": 484,
+      "breaks": [],
+      "missing": [],
+      "source_objects_loaded": 487
+    },
+    "immutable": {
+      "baseline_commit": "dcb12a0b20f2d41900c4235c30efa76a40285c0b",
+      "baseline_objects_preserved": 18087,
+      "added_objects": 496,
+      "changed_or_missing": [],
+      "paths": "docs/evidence/** and docs/history/** excluding mutable history/index.json"
+    },
+    "regime": {
+      "verdict": "yellow",
+      "admitted_reaction_grades": [
+        "A+"
+      ],
+      "mechanical_grade_counts": {
+        "A": 53,
+        "B": 112,
+        "C": 89,
+        "skip": 225
+      },
+      "final_grade_counts": {
+        "A": 51,
+        "B": 113,
+        "C": 90,
+        "skip": 225
+      }
+    },
+    "current_reader_coverage": {
+      "not_selected_budget": 477,
+      "accepted": 2
+    },
+    "zim": [
+      {
+        "ticker": "ZIM",
+        "kind": "anticipation",
+        "eligible": false,
+        "action": "refused",
+        "reason": "Known cash-acquisition event: ZIM announced an agreement for Hapag-Lloyd to acquire its shares for $35.00 in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket."
+      }
+    ],
+    "verifier": {
+      "workspace_head": "7c8be72c9f599c3deabfca1f689b3f61a1d45d14",
+      "source_sha256": {
+        "src/review_selection.py": "7c17feb62e608773b203339bceb30af5a1120d239b000d356606d3c15f924a65",
+        "src/provenance.py": "9bf1a126402d97091b6a19cb9590244d9a15ef4a165fab9b46ab812862f7e2ad"
+      },
+      "script_sha256": "f10d3e3e92acee20172d700f147491733138b3b3d59413dfa29de65b491cf059"
+    }
+  },
+  "model_account": {
+    "equity_usd": 2000,
+    "committed_usd": 0,
+    "reserved_usd": 188.37,
+    "open_model_symbols": [
+      "SN"
+    ],
+    "is_owner_balance": false
+  },
+  "issuer_manual_production": {
+    "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034924561",
+    "publication_commit": "981e6792827a222c26b94da622f30d88b74d53e1",
+    "publisher": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034993443",
+    "pages": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38035005959",
+    "receipt": {
+      "status": "unavailable",
+      "collectionRunId": "38034924561",
+      "generatedAt": "2026-10-10T07:35:36.385307+00:00",
+      "expiresAt": "2026-10-11T07:35:36.385307+00:00",
+      "selfIntegrity": true,
+      "exactCurrentPublication": true,
+      "declaredPublication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "selection": {
+        "candidate_count": 2,
+        "issuer_count": 2,
+        "selected_issuer_count": 2,
+        "omitted_issuer_count": 0,
+        "selected_tickers": [
+          "MG",
+          "ZIM"
+        ]
+      },
+      "coverage": {
+        "issuer_news": {
+          "status": "not_cleared",
+          "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+        },
+        "earnings": {
+          "status": "not_checked",
+          "reason": "The future earnings calendar has not been checked."
+        }
+      },
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "bundle": {
+        "sha256": "0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3",
+        "bytes": 5601,
+        "path": "issuer-evidence/0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3.json"
+      },
+      "sourceCoverageClaim": "NOT CLEARED"
+    },
+    "collection_mode": "manual production; not an automatic trigger acceptance"
+  },
+  "public_ui": {
+    "url": "https://spicychicken59.github.io/SpicyStock/",
+    "production_commit": "981e6792827a222c26b94da622f30d88b74d53e1",
+    "started_at": "2026-10-10T07:45:37.495Z",
+    "finished_at": "2026-10-10T07:45:49.366Z",
+    "scope": "ACTUAL PUBLIC UI; real wall clock; no route/data/clock overrides",
+    "passed_checks": 187,
+    "browser_errors": [],
+    "viewports": [
+      1280,
+      390
+    ],
+    "screenshots_inspected": [
+      "cash-preview-1280.png",
+      "cash-preview-390.png",
+      "issuer-anchors-MG-1280.png",
+      "issuer-anchors-MG-390.png",
+      "issuer-anchors-ZIM-1280.png",
+      "issuer-anchors-ZIM-390.png",
+      "issuer-coverage-MG-1280.png",
+      "issuer-coverage-MG-390.png",
+      "issuer-coverage-ZIM-1280.png",
+      "issuer-coverage-ZIM-390.png",
+      "issuer-desk-1280.png",
+      "issuer-desk-390.png",
+      "next-step-1280.png",
+      "next-step-390.png"
+    ],
+    "exact_public_files": [
+      {
+        "name": "index.html",
+        "bytes": 16837,
+        "sha256": "bd8e8bf54fa7618eee7d3a24a3e1e0c839021eaa148dd239b84854e7132cf4ed"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 34250,
+        "sha256": "df6c5aad5a20ff3835a544325352923f3350b610e863c9365e5c6d725a6f2957"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 20887,
+        "sha256": "d9ed7d7685eb24da789407dd7b0e2e6c3871cd5f6cba826b3ead0fb974d4afdc"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44240,
+        "sha256": "d57fc01c4a9f928c3109436049623d768cbd36e685684728bafaac40cade8cc6"
+      },
+      {
+        "name": "app.css",
+        "bytes": 85430,
+        "sha256": "e1cf4d470e98e236f45fca7cdcc3c5af0282cd1fdcf8633a94fa3f57fcfc73a7"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 8235,
+        "sha256": "5c474f126fcf35fd174e08aa00138d3dc3256cad63124a42165eab141d4e1796"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app.js",
+        "bytes": 389543,
+        "sha256": "24b2dc18352213c7ad2782d23fdfd9d1ea2a70a42d92663525f1aef38ef89e89"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1706,
+        "sha256": "397403d50a7917b1ab288171e9fcf242f5301382f3a5a74160e4f37da1cecbf8"
+      },
+      {
+        "name": "issuer-evidence/0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3.json",
+        "bytes": 5601,
+        "sha256": "0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3"
+      }
+    ],
+    "synthetic_private_cash_input_only": "1743.29",
+    "cash_zero_ticket_refusal_verified": true,
+    "acceptance_sha256": "398a118fd9b8985507c49c0ca5ec09356c729cfbdbc2f74c4bdc68855545e22c",
+    "runner_sha256": "73faf4033da5623bf695e0f0a35a1ee9671f3e1626a26a2b66613eea8087163b"
+  },
+  "remaining_at_acceptance": [
+    {
+      "issue": 128,
+      "pr": 129,
+      "evidence": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034801783",
+      "finding": "Automatic issuer collection skipped with unknown_parent because a dynamic run title was compared with a fixed workflow label. Manual collection does not verify the automatic path."
+    },
+    {
+      "issue": 131,
+      "finding": "On Saturday the next-step panel attributed the closed viewing date to measured Friday. Other session evidence remained open; this scoped acceptance does not accept that sentence."
+    },
+    {
+      "issue": 108,
+      "finding": "The actual SEC ticker identity endpoint returned an HTTP error: one request, zero captured bytes. Known event anchors remain; fresh issuer news and earnings are not cleared."
+    }
+  ],
+  "limits": [
+    "The two runs are separate real executions; observed differences are not controlled savings, profit or strategy-performance estimates.",
+    "A feasible pre-review preview or accepted review does not grant a ticket. Final archived gates and shared allocation still apply.",
+    "Blocker counts can overlap and do not sum to unique candidates.",
+    "Model cash reserves are not Mo's actual cash or positions.",
+    "This does not establish on-time quote delivery, comprehensive issuer-news coverage or an actual trade.",
+    "All reaction candidates were blocked by the regime/grade gate before a private plan preview. Zero preview-derived blocker counts do not establish whole-share feasibility or news clearance.",
+    "This verifies deployed public bytes and the UI over the receipt actually served. It does not perform a new SEC collection or verify raw SEC downloads against their original servers.",
+    "Partial, unavailable, no-candidate, inapplicable, expired or differently bound receipts cannot establish issuer-news or earnings clearance.",
+    "Fresh browser contexts exercise only an ephemeral synthetic cash input. No real balance, saved symbol, order, position or credential is supplied.",
+    "Two viewport observations do not establish provider availability on another run or future trading performance.",
+    "No real owner execution or first successful trade was supplied or measured. On-time morning delivery remains unverified."
+  ]
+}

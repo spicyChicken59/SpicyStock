@@ -4593,7 +4593,7 @@
     const day = tm.known ? dateWords(tm.session) : null;
     const by_ = tm.prepareBy ? timeET(tm.prepareBy.toISOString()) : ORDERS_BY;
     // the record's own safeguards first, with the window's state beside them
-    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', 'The market was closed on ' + dateWords(tm.closedSession || s.expected) + ', so the plans dated for it had no session. ' + line, 'closed'];
+    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', s.sentence + ' ' + line, 'closed'];
     if (red) return ['No new longs.' + (open ? ' Review the open public-model plans.' : ' Wait for the next published scan.'), 'The recorded market filter refuses new entries. ' + (open ? 'Open model plans keep their recorded exit rules; they do not establish what you hold. ' : 'There are no open public-model plans in this record. ') + line, 'red'];
     if (ph === 'unknown') return ['Entry timing unavailable — research only.', line + ' Read the setups and the evidence; do not place an order from a page that cannot date it.', 'stale'];
     if (ph === 'ended') {
@@ -4713,6 +4713,10 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    if (SCStock.handoff) SCStock.handoff.onChange(() => {
+      if (loaded && model && $('morning-desk')) SCStock.morning.render($('morning-desk'), current, av, model);
+      else if (SCStock.handoffUI) SCStock.handoffUI.update();
+    });
     SCStock.reader.onChange(async change => {
       if (!loaded || current !== change.data) return;
       if (change.state === 'complete') await recordObservations();
@@ -4903,14 +4907,18 @@
     unchanged: 'No newer record: this is still the published one.',
     older: 'The published file is for an earlier session than the one on screen, so it was not loaded. Nothing here changed.',
     failed: 'The published record could not be re-read. Nothing here changed.',
+    timeout: 'The publication did not finish loading within 15 seconds. The existing record and your unsaved entries are still shown. Try again when ready.',
     invalid: 'The published file is not a record this page can read, so it was not loaded. Nothing here changed.'
   };
-  let updateSeq = 0, updateBusy = false, updateSaid = '', updateOutcome = '';
+  const PUBLICATION_TIMEOUT_MS = 15000;
+  let updateSeq = 0, updateBusy = false, updateSaid = '', updateOutcome = '', publicationAttempt = null;
   //: the bytes the page was last loaded from, so "unchanged" means the served
   //: file is identical and not merely stamped alike. A re-publish of the same
   //: session on later bars keeps its session, its published_at AND its rules
   //: digest, and moves only its numbers -- which is exactly the case a stamp of
-  //: those fields cannot see, and one string comparison can.
+  //: those fields cannot see, and one string comparison can. The bounded
+  //: reader preserves BOM bytes and uses fatal UTF-8 decoding; accepted JSON
+  //: therefore has a unique UTF-8 byte representation of this exact string.
   let rawRecord = null;
   // true when the served bytes are the record already on screen. Falls back to
   // re-serializing what is in memory for a page handed a record directly (a
@@ -4936,7 +4944,7 @@
     // first press is hanging must be able to try again, and the sequence number
     // below is what makes the newest answer the only one that can land
     const btn = el('button', { 'class': 'sc-btn sc-btn--ghost sc-btn--sm', type: 'button', id: 'check-updates',
-      text: updateBusy ? 'Checking…' : 'Check for updates', 'data-check': updateBusy ? 'busy' : '' });
+      text: !loaded ? 'Retry publication' : updateBusy ? 'Checking…' : 'Check for updates', 'data-check': updateBusy ? 'busy' : '' });
     btn.addEventListener('click', checkUpdates);
     host.appendChild(btn);
     // at rest the control says what it does and nothing more; the outcome line
@@ -4953,21 +4961,70 @@
     updateBusy = outcome === 'checking';
     renderRefresh();
   }
-  function checkUpdates() {
-    // a second press SUPERSEDES the one in flight rather than being refused;
-    // every answer carries the sequence it was asked under and a stale one is
-    // dropped, so a slow first response cannot land over a fast second
+  function requestPublication(bustCache) {
+    // One deadline spans headers and the entire bounded byte reader. Abort
+    // superseded work, and still refuse late outcomes from a transport that
+    // does not honour cancellation. Neither failure changes a loaded record.
     const seq = ++updateSeq;
-    saidUpdate('checking');
+    if (publicationAttempt) {
+      publicationAttempt.controller.abort();
+      w.clearTimeout(publicationAttempt.timer);
+    }
+    const attempt = { controller: new AbortController(), timer: null, timedOut: false, hadPublication: loaded };
+    publicationAttempt = attempt;
+    saidUpdate('checking', loaded ? null : 'Loading the published record… Saved private broker reports remain accessible.');
     const src = ((w.SCStock && w.SCStock.dataUrl) || 'reader.json');
-    const bust = src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now();
-    w.fetch(bust, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('answered ' + r.status); return r.text(); })
-      .then((raw) => { if (seq === updateSeq) applyUpdate(raw); })
-      .catch(() => { if (seq === updateSeq) saidUpdate('failed'); });
+    const url = bustCache ? src + (src.indexOf('?') >= 0 ? '&' : '?') + 'at=' + Date.now() : src;
+    const deadline = new Promise((resolve, reject) => {
+      attempt.timer = w.setTimeout(() => {
+        attempt.timedOut = true;
+        attempt.controller.abort();
+        reject(new Error('Publication deadline exceeded.'));
+      }, PUBLICATION_TIMEOUT_MS);
+    });
+    const reading = w.fetch(url, { cache: 'no-store', signal: attempt.controller.signal })
+      .then(async response => {
+        if (seq !== updateSeq || attempt.controller.signal.aborted) {
+          if (response.body && !response.body.locked) await response.body.cancel().catch(() => {});
+          throw new Error('Publication request was superseded.');
+        }
+        return SCStock.reader.read(response);
+      });
+    Promise.race([reading, deadline])
+      .then(bytes => {
+        if (seq !== updateSeq || attempt.controller.signal.aborted) return;
+        const raw = SCStock.reader.decode(bytes);
+        if (loaded) { applyUpdate(raw, bytes); return; }
+        const { data, projection } = parsePublication(raw);
+        // An injected clock is a pin; otherwise the page uses the real clock.
+        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
+        rawRecord = raw;
+        SCStock.observations.bind(data, bytes, projection);
+        saidUpdate('loaded', bustCache ? 'Publication loaded. Review its session and entry conditions.' : '');
+      })
+      .catch(() => {
+        if (seq !== updateSeq) return;
+        if (attempt.hadPublication) { saidUpdate(attempt.timedOut ? 'timeout' : 'failed'); return; }
+        const message = attempt.timedOut
+          ? 'The publication did not finish loading within 15 seconds. Retry when ready; your saved private reports are still available.'
+          : 'The publication could not be read. Retry when ready; your saved private reports are still available.';
+        failed(message);
+        saidUpdate(attempt.timedOut ? 'timeout' : 'failed', message);
+      })
+      .finally(() => {
+        w.clearTimeout(attempt.timer);
+        if (publicationAttempt === attempt) publicationAttempt = null;
+      });
+  }
+  function checkUpdates() { requestPublication(true); }
+  function parsePublication(raw) {
+    const parsed = SCStock.reader.parse(raw, w.SCStock.dataUrl || 'reader.json'), next = parsed.data;
+    if (!next || next.schema_version !== 2 || !next.run)
+      throw new Error('Unsupported publication.');
+    return parsed;
   }
   // the decision, with nothing replaced until every question is answered
-  function applyUpdate(raw) {
+  function applyUpdate(raw, bytes) {
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
     if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
@@ -4978,20 +5035,20 @@
     if (timingFaults(next).length) { saidUpdate('invalid'); return; }
     const here = current && current.run ? current.run.session : null;
     const there = next.run.session;
-    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection); return; }
+    if (!here) { loadUpdate(raw, next, 'newer', 'A record loaded: ' + dateWords(there) + '.', projection, bytes); return; }
     if (there < here) { saidUpdate('older'); return; }
     // the same trading day, re-measured on later bars: a REVISION, not a new
     // session, and the word matters -- the reader's saved observations of that
     // date are revisions of it too, not a second day
-    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection); return; }
-    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection);
+    if (there === here) { loadUpdate(raw, next, 'revised', dateWords(there) + ' was re-published, so it was re-read: the same session on later bars, not a new one.', projection, bytes); return; }
+    loadUpdate(raw, next, 'newer', 'A newer record loaded: ' + dateWords(there) + ' replaces ' + dateWords(here) + '.', projection, bytes);
   }
   // What a reader keeps across a load, and what they are TOLD they lost. The
   // record changes; the reader's own place in it, their private saves and
   // their preferences do not. A comparison pair is the one thing that cannot
   // survive: it was pinned from one published record and two names remapped
   // onto a different one would be a comparison nobody made.
-  function loadUpdate(raw, next, outcome, message, projection) {
+  function loadUpdate(raw, next, outcome, message, projection, bytes) {
     const keep = {
       view: state.view, stage: state.stage, selected: Object.assign({}, state.selected),
       query: $('search') ? $('search').value : '', hash: String(w.location.hash || ''),
@@ -5000,7 +5057,7 @@
     };
     render(next, clockPinned ? clockAt : null, keep, projection);
     rawRecord = raw;
-    SCStock.observations.bind(next, raw, projection);
+    SCStock.observations.bind(next, bytes, projection);
     const lost = [];
     if (keep.pins.length) lost.push(keep.pins.length === 2 && keep.comparing
       ? 'The comparison was closed: a pinned pair belongs to the record it was pinned from.'
@@ -5029,6 +5086,7 @@
     if (want.focused) input.focus();
   }
   SCStock.checkUpdates = checkUpdates;
+  SCStock.PUBLICATION_TIMEOUT_MS = PUBLICATION_TIMEOUT_MS;
 
   // ---------------------------------------------------------------- render
   function render(data, now, keep, projection) {
@@ -5109,6 +5167,8 @@
     // than null so every reader of it -- the shelf, the saved sheet, its
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
+    model = null; av = null; st = null;
+    SCStock.data = null; SCStock.avail = null; SCStock.model = null; SCStock.state = null;
     SCStock.reader.attach(current);
     SCStock.observations.reset(current);
     loaded = false;
@@ -5131,6 +5191,7 @@
     const fl = $('following-list');
     if (fl && !fl.childElementCount) clear(fl).appendChild(el('div', { 'class': 'ss-following__empty', text: 'No record loaded, so nothing to observe.' }));
     clear($('record-card')).appendChild(empty('No record loaded.'));
+    SCStock.morning.unavailable($('morning-desk'));
     applyRoute(parseHash(w.location.hash), true);
     d.documentElement.setAttribute('data-ss-rendered', 'error');
   }
@@ -5143,19 +5204,8 @@
     // mounted once, here, so it stands on the no-record page too. The
     // interval override is a test's, injected the way `now` and `dataUrl` are.
     if (SCStock.walkthrough && $('walkthrough-mount')) SCStock.walkthrough.mount($('walkthrough-mount'), { interval: SCStock.walkthroughInterval });
-    const src = (w.SCStock && w.SCStock.dataUrl) || 'reader.json';
-    w.fetch(src, { cache: 'no-store' })
-      .then((r) => { if (!r.ok) throw new Error('published reader answered ' + r.status); return r.text(); })
-      // an injected clock is a PIN and the page does not move it; without one
-      // the page reads the real clock and re-reads it as the day goes on
-      .then((raw) => {
-        const { data, projection } = SCStock.reader.parse(raw, src);
-        if (!data || data.schema_version !== 2 || !data.run) throw new Error('not a schema_version 2 record');
-        render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
-        rawRecord = raw;
-        SCStock.observations.bind(data, raw, projection);
-      })
-      .catch((e) => failed(String(e && e.message || e)));
+    SCStock.morning.unavailable($('morning-desk'));
+    requestPublication(false);
   }
   if (d.readyState === 'loading') d.addEventListener('DOMContentLoaded', boot); else boot();
 })(window);

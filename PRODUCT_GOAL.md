@@ -60,6 +60,55 @@ opportunity coverage [#109](https://github.com/spicyChicken59/SpicyStock/issues/
 first-trade walkthrough [#110](https://github.com/spicyChicken59/SpicyStock/issues/110),
 and daily operations [#111](https://github.com/spicyChicken59/SpicyStock/issues/111).
 
+## Release update — 10 October 2026
+
+[PR #115](https://github.com/spicyChicken59/SpicyStock/pull/115) is released.
+The [production rerun](https://github.com/spicyChicken59/SpicyStock/actions/runs/38033614291)
+supersedes the October 9 ZIM ticket with a dated, source-backed cash-acquisition
+refusal. It publishes zero tickets for October 12 and preserves the original
+model pick as historical research. The $188.37 reserved for an unfinished SN
+model plan is not Mo's balance, holding or settled cash.
+
+[Durable acceptance evidence](release-evidence/2026-10-10-zim/acceptance.json)
+records the checked head, merge and publication commits, source digests, 3,376
+hosted Python tests, 11,204 page checks, 378 chart checks and passing native
+jobs. Actual public acceptance passed 135 checks at phone and desktop sizes,
+with 31 exact public-file hashes. All 17,415 prior immutable evidence/history
+objects retain their bytes; provenance passes for 484 setups.
+
+The rerun completed all 12 requested reviews. That is a complete requested
+batch, not complete opportunity coverage: 467 of 479 discovered reaction
+candidates were not selected for review. One intended stock still lacks a
+usable current-session input. The retained morning receipt belongs to an older
+publication and is visibly unavailable for the new scan. On-time delivery,
+broader issuer-news/earnings coverage and the first actual trade remain open.
+The separate status correction is also pending release; this acceptance does
+not validate the older banner's statement that October 9 was closed.
+
+Issue [#124](https://github.com/spicyChicken59/SpicyStock/issues/124) has a locally
+verified completed-result extension to the private broker handoff. Actual
+reported entry and exit averages, quantities, costs and times determine its
+result only after the position and remaining entry order are reconciled.
+Partial or incomplete reports remain unknown; original model outcomes stay
+separate. Legacy records are read without rewriting them, and an explicit save
+upgrades their schema. Synthetic rehearsals establish the implementation, not
+an actual owner result. Hosted and public acceptance for this extension remain
+outstanding; it is not claimed shipped here.
+
+The subsequent [cash-preview and issuer-reader release](https://github.com/spicyChicken59/SpicyStock/pull/121)
+is merged and deployed. Its [scoped production receipt](release-evidence/2026-10-10-cash-issuer/acceptance.json)
+records two completed research reviews out of twelve available reads, zero
+reaction candidates passing the pre-review regime/grade gate, zero tickets,
+484 verified source-bound setups, and 187 actual public UI checks on desktop
+and phone. Personal cash input remains local and does not become broker cash.
+
+The actual issuer receipt was manually collected and reports unavailable after
+a failed SEC identity request; MG/ZIM's known-event evidence remains readable.
+Automatic triggering required the separately tracked workflow-path fix (#128 /
+#129). Actual public review also found the weekend guidance defect (#131).
+These release results do not establish fresh filing coverage, on-time morning
+quotes or an actual personal trade. The dated checkpoint records each limitation.
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.
@@ -192,6 +241,17 @@ published counterfactual and historical findings remain the performance source
 until new, separately identified results are produced. Closing this goal means
 shipping the milestones and reviewing actual experience, not marking an
 unobserved financial outcome complete.
+
+## Registered opportunity experiment
+
+Issue #130 prepares `anticipation_stop_width_4_to_5_v1`, a separately labelled
+comparison for October 12 through November 6. It keeps the production strategy
+and $2,000 / 0.5% account, changing only an anticipation research cap from 4% to
+5%. Original levels, risk reductions, known-event exclusions and baseline-first
+shared allocation remain. Dated empty/refused cohorts and actual generation
+times are retained alongside possible fits. This is research preparation;
+hosted release and actual public acceptance are recorded in the checkpoint when
+completed. It establishes no strategy return, personal fill or successful trade.
 
 ## Continuation
 

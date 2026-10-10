@@ -12,6 +12,7 @@ import pytest
 
 from src import reader
 from tools import publish_dashboard as publisher
+from tests.test_pipeline import claude, evening, market  # real offline producer controls
 
 
 def write_reader_records(docs: Path) -> str:
@@ -215,3 +216,111 @@ def test_direct_script_import_keeps_standard_library_only(tmp_path):
     result = subprocess.run([sys.executable, '-I', '-S', '-c', code], cwd=tmp_path,
                             capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.fixture
+def stop_research_publication(publication, market, claude, fake_resend, tmp_path, monkeypatch):
+    """A real prior evening receipt beside an independently revised reader."""
+    from src import stop_research
+    for name, value in {'ACCOUNT_EQUITY': '2000', 'RISK_PCT': '.5',
+                        'MAX_POSITION_PCT': '25', 'MAX_OPEN_POSITIONS': '4',
+                        'GITHUB_RUN_ID_FOR_RECORD': 'offline-producer-control'}.items():
+        monkeypatch.setenv(name, value)
+    root, _ = publication
+    rep, _, source = evening(tmp_path / 'prior-source', market)
+    assert rep.exit_code() == 0
+    raw = (source / 'stop-research.json').read_bytes()
+    ref = stop_research.parse_receipt(raw)['bundle']['path']
+    (root / 'docs/stop-research').mkdir()
+    (root / 'docs/stop-research.json').write_bytes(raw)
+    (root / 'docs' / ref).write_bytes((source / ref).read_bytes())
+    return root, ref
+
+
+def test_optional_stop_research_verifies_only_current_reference_and_preserves_cohorts(stop_research_publication):
+    root, ref = stop_research_publication
+    docs = root / 'docs'
+    old = docs / 'stop-research' / ('0' * 64 + '.json')
+    old.write_bytes(b'older-unreferenced-cohort-transport-control')
+    index = docs / 'stop-research/index.json'
+    index.write_bytes(b'append-only-cohort-index-transport-control')
+    before = {path: path.read_bytes() for path in docs.rglob('*') if path.is_file()}
+    files = publisher.public_files(root)
+    assert 'stop-research.json' in files and ref in files
+    assert [name for name in files if name.startswith('stop-research/')] == [ref]
+    assert {path: path.read_bytes() for path in docs.rglob('*') if path.is_file()} == before
+
+
+@pytest.mark.parametrize('fault', ['missing', 'changed', 'bundle_symlink', 'receipt_symlink', 'directory_symlink', 'oversize'])
+def test_optional_stop_research_assets_fail_closed(stop_research_publication, fault):
+    root, ref = stop_research_publication
+    receipt = root / 'docs/stop-research.json'
+    bundle = root / 'docs' / ref
+    if fault == 'missing':
+        bundle.unlink()
+    elif fault == 'changed':
+        raw = bundle.read_bytes()
+        # Same-length valid JSON mutation isolates digest checking from the
+        # independent byte-count cap (appending whitespace only tests size).
+        altered = raw.replace(b'"schema_version":1', b'"schema_version":2', 1)
+        assert len(altered) == len(raw) and altered != raw
+        bundle.write_bytes(altered)
+    elif fault == 'oversize':
+        receipt.write_bytes(b' ' * (16 * 1024 + 1))
+    else:
+        path = {'bundle_symlink': bundle, 'receipt_symlink': receipt,
+                'directory_symlink': bundle.parent}[fault]
+        elsewhere = root / 'elsewhere'
+        path.rename(elsewhere); path.symlink_to(elsewhere, target_is_directory=elsewhere.is_dir())
+    with pytest.raises(RuntimeError, match='Stop research companion'):
+        publisher.public_files(root)
+
+
+def test_stop_research_path_is_validated_before_reading_any_companion(stop_research_publication, monkeypatch):
+    root, _ = stop_research_publication
+    path = root / 'docs/stop-research.json'
+    receipt = json.loads(path.read_bytes()); receipt['bundle']['path'] = '../private.json'
+    path.write_text(json.dumps(receipt))
+    read = []; actual = publisher.reader_asset
+
+    def recorded(docs, name, maximum):
+        read.append(name)
+        return actual(docs, name, maximum)
+
+    monkeypatch.setattr(publisher, 'reader_asset', recorded)
+    with pytest.raises(RuntimeError, match='Stop research companion'):
+        publisher.stop_research_files(root)
+    assert read == ['stop-research.json']
+
+
+def test_stop_research_public_inventory_needs_only_standard_library(stop_research_publication):
+    root, ref = stop_research_publication
+    source = Path(__file__).resolve().parent.parent
+    code = ('import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); '
+            'from tools.publish_dashboard import public_files; print(public_files(Path(sys.argv[2])))')
+    result = subprocess.run([sys.executable, '-I', '-S', '-c', code, str(source), str(root)],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert 'stop-research.json' in result.stdout and ref in result.stdout
+
+
+def test_public_byte_verification_fetches_optional_stop_receipt_and_exact_cohort(stop_research_publication, monkeypatch):
+    root, ref = stop_research_publication
+    requested = []
+
+    def api(repository, endpoint, method='GET'):
+        if endpoint == 'pages':
+            return {'build_type': 'legacy', 'source': {'branch': 'main', 'path': '/docs'},
+                    'html_url': 'https://example.invalid/SpicyStock/'}
+        assert (endpoint, method) == ('pages/builds', 'POST')
+        return {'status': 'queued'}
+
+    def fetch(url, timeout):
+        name = urlsplit(url).path.removeprefix('/SpicyStock/')
+        requested.append(name)
+        return (root / 'docs' / name).read_bytes()
+
+    monkeypatch.setattr(publisher, 'github_api', api)
+    monkeypatch.setattr(publisher, 'public_bytes', fetch)
+    publisher.publish('owner/repository', root)
+    assert requested.count('stop-research.json') == requested.count(ref) == 1

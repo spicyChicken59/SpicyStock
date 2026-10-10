@@ -84,16 +84,79 @@ mismatched account assumptions cannot produce a current personal preview.
 Each preview considers one plan independently and reserves no cash. Account for
 other orders and broker holds before entering available settled cash. Changing
 plans clears the fees and quantity inputs; a new session clears cash too, and a
-reload clears all entries. Published copy controls still copy the original model
+reload clears these preview inputs. Published copy controls still copy the original model
 quantity, clearly identified beside the preview. The calculation does not submit
 an order or verify a balance. Preparation checks do not establish live quotes,
 news coverage, broker buying power or execution, and cannot turn an unavailable
 setup into an order. Planned price-to-stop risk excludes fees, gaps and slippage.
 
+**Private broker handoff.** A calculated preview can be explicitly saved as a
+separate personal draft for broker review. Its chosen whole-share quantity stays
+within the admitted published quantity and entered cash; trigger, limit, stop and
+dated exit instructions retain the published terms. The draft keeps the exact
+publication and plan identities, selected terms, cash and fees on this device.
+Its personal readback uses the chosen quantity for entry and planned protection.
+The original published ticket remains separate. Copying is only a clipboard
+operation, not a broker order format or a confirmation of execution.
+
+New preparation and copying recheck the current publication, account, entry
+window and event restrictions. A superseded or expired draft remains readable.
+Manual broker reports remain editable afterward: submitted quantity, cumulative
+entry fills and average price/time, cancelled remainder, cumulative exits and
+average exit price/time, actual entry/exit fees, and the broker-reported
+protective quantity. Actual submissions, prices and
+times can differ from the draft and are labeled as deviations. They do not
+rewrite the strategy or the original terms. Copying, saving and market prices
+never create a reported fill.
+
+Blank values mean unknown. Remaining holdings require both entry fills and
+exits, including an explicit zero when no exit has occurred. Filled plus
+cancelled shares cannot exceed the quantity reported submitted; exits cannot
+exceed reported fills. The protective quantity is compared with reported shares
+remaining, not cumulative purchases. A quantity match does not verify an active
+broker stop. Once reporting has begun, clearing fields to unknown cannot revive
+the draft as a new entry to copy. Corrections are explicit; stale revisions
+cannot overwrite a newer report. Dates require an explicit time-zone offset
+and are displayed in Chicago time.
+
+The private store holds at most 100 handoffs and 1 MiB, never silently evicts
+records, and serializes writes with browser Web Locks. Unavailable, unreadable
+or future-version storage is preserved and reported; it does not imply no
+holdings. Saved drafts and reports persist across reloads, but clearing this
+site's browser data removes them. They are not uploaded, backed up in the cloud,
+added to model performance, or used to infer buying power. The handoff creates
+no broker connection, reserves no cash, and neither places nor cancels a
+protective order.
+
+**Personal completed-trade result.** A separate, user-reported result requires
+positive entry fills, all filled shares exited, and submitted shares fully
+reconciled as filled or cancelled (including an explicit zero cancellation).
+Both average prices, actual entry/exit fees and latest entry/exit times must be
+reported. Blank costs remain unknown; explicit zero fees means no reported fee.
+The draft's estimated fee buffer is never substituted for actual costs.
+Partial exits retain their facts without estimating a realized cost basis.
+
+Gross result is filled shares multiplied by the difference between average
+exit and entry prices; net subtracts the reported entry and exit fees. Prices use at most six
+decimal places and actual fees use cents. Integer arithmetic retains exact
+microdollars, rounding only the displayed amount to cents; a nonzero sub-cent
+gain or loss is named explicitly. Corrections recompute this personal result.
+It is not broker-verified, tax accounting, settlement confirmation, model
+performance or evidence of a strategy's future returns.
+
+Existing version-1 private records remain readable with new result fields
+unknown. Reading does not rewrite storage. An explicit successful save writes
+the current version, retaining the original identities and previously reported
+facts. Failed writes retain prior and proposed recovery bytes; unknown versions
+remain untouched. Upgrading does not expand the storage limit.
+
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
-In recovery notices, the latest evening workflow is reported separately: a
-successful scheduled check may skip publication and does not refresh the record.
+On a weekend or holiday, the next-action message names the closed viewing date
+and the next session from the recorded calendar; it does not relabel the last
+measured open session as closed. In recovery notices, the latest evening
+workflow is reported separately: a successful scheduled check may skip
+publication and does not refresh the record.
 
 The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
@@ -502,8 +565,14 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    newer session, a file for an EARLIER session (refused rather than applied
    backwards), the same session re-published on later bars (a revision of
    that trading day, not a second one), or a file it could not read or
-   reach. A press supersedes one in flight and only the newest answer can
-   land. A load hands back the stage, the stock and the search, keeps the
+   reach. Startup and manual refresh each have a 15-second deadline covering
+   response headers and the complete bounded body. A press aborts the previous
+   attempt and only the newest answer can land. Failed startup offers **Retry**;
+   saved private reports remain readable and editable in the Morning desk while
+   the publication is unavailable. There is no current entry preparation or
+   copying in that state. A failed refresh keeps the displayed record and
+   unsaved private inputs; a retry never saves or migrates them automatically.
+   A load hands back the stage, the stock and the search, keeps the
    theme, the lens, the chart's mode and range, every saved identity with
    its frozen evidence and a half-typed reference size — and closes a
    comparison rather than remapping its pins onto other stocks, saying so.
@@ -857,6 +926,63 @@ attach to a different scan. An issuer-source failure does not prevent the
 evening record from publishing. See the
 [versioned source contract](docs/ISSUER_EVIDENCE_SCHEMA.md) for exact fields.
 
+### Registered anticipation stop-width research
+
+The Morning desk has a closed **Wider-stop anticipation research** disclosure.
+It compares the unchanged 4% production stop-width cap with a separate 5%
+anticipation calculation for applicable sessions **October 12 through November
+6, 2026**. The versioned experiment is `anticipation_stop_width_4_to_5_v1`.
+It changes no production ticket, reaction/burst stop selection or model record.
+There is no research order-copy or broker-draft action.
+
+The producer uses the actual retained planning inputs and the same pure planner,
+changing only the anticipation cap. Original trigger, limit and structural stop
+must match; the 4% calculation must reproduce original geometry, sizing and
+multipliers before a comparison is accepted. The reference remains $2,000,
+0.5% base risk, a 25% per-name cap and four slots. Existing market, watchlist,
+known-event, whole-share and shared-allocation rules still apply. A stop beyond
+the ideal distance still halves the risk budget; widening the cap does not
+increase the configured dollar-risk budget.
+
+All original top anticipation rows are retained, including excluded names,
+zero-share results and out-of-band rows. Current baseline tickets and unfinished
+model positions reserve their cash and slots first; research cannot displace a
+baseline trade. The panel shows the original refusal, fixed levels, hypothetical
+quantity, principal, price-to-stop risk, risk multipliers and each remaining
+blocker. These amounts exclude actual fees, gaps and slippage. Model reserves
+are not broker holdings or available settled cash. A manual event-registry
+match is an exclusion; no match is not news or earnings clearance. There is no
+new chart review, quote, provider request or inferred trading outcome.
+
+The comparison is bound to the exact canonical publication, compact reader,
+archived rules, plans and retained sources. Its actual generation timestamp is
+separate from the source publication's run-start timestamp. Collection before,
+during or after entry is labelled accordingly; a late backfill cannot claim to
+be pre-entry research. The reader labels an elapsed entry window as archived.
+Empty/refused cohorts and outside-period status remain visible evidence.
+
+The evening hook runs after final canonical/reader bytes, including delivery
+failure restamps. Unsupported account/rules, invalid retained sources or a
+research-write refusal leave the authoritative publication unchanged. An older
+receipt can remain, but cannot attach to a different current publication.
+There is no research environment variable, provider credential or subscription.
+
+Opening the disclosure fetches only the optional `stop-research.json` receipt
+(at most 16 KiB) and its exact digest-named bundle (at most 128 KiB), with a
+15-second deadline and the existing omitted-credential/no-redirect transport.
+Its immutable cohorts and append-only index retain at most 128 cohorts / 16 MiB;
+the index is capped at 64 KiB. Capacity exhaustion refuses a new write without
+pruning past cohorts. Repeating an exact publication preserves its first
+cohort and generation time. These repository/Pages paths are public; they contain
+no private reports. The publisher verifies the current referenced bundle;
+retained cohorts are not initial page requests. See
+[the registered schema](docs/STOP_RESEARCH_SCHEMA.md) for the exact contract.
+
+This is a dated strategy experiment, not evidence of an established edge.
+User-reported trades/results remain separate. Promotion or performance claims
+require a later explicit strategy review using the retained comparison and
+subsequent observations.
+
 ### Reader payload and saved research
 
 The page initially loads `reader.json`, a compact projection of the complete
@@ -877,6 +1003,13 @@ New morning receipts derive both canonical and reader hashes from the exact
 canonical source bytes. The browser verifies the actual reader bytes before
 matching observations. An older receipt can still preserve independently
 validated event restrictions, but cannot claim a reader-bound quote check.
+Initial loads, refreshes and deferred research preserve the actual response
+bytes within the 32 MiB limit. Digests use those bytes directly; malformed UTF-8
+and BOM-prefixed JSON are refused instead of being silently normalized. Startup
+and refresh share a 15-second header-and-body deadline and cancel superseded
+attempts. A failed refresh keeps the displayed publication and private inputs;
+failed startup clears partial publication state and offers an explicit retry.
+Saved private reports stay available without a publication.
 Missing, loading or failed deferred research stays explicitly incomplete.
 Saved bars merge only after the sidecar's digest, length, shape and metadata
 validate; a stale response cannot overwrite a newer publication. Retry is
@@ -1223,11 +1356,12 @@ src/            history.py (public recovery and coverage)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 review_selection.py (feasible-first chart review and bounded spare research)
+                stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-observations.js · app-reader.js · app-issuer-evidence.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)

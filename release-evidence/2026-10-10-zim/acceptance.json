@@ -1,0 +1,396 @@
+{
+  "schema": "spicystock-release-acceptance-v1",
+  "milestone": "Source-backed ZIM cash-acquisition exclusion",
+  "status": "PASS_RELEASED",
+  "accepted_at": "2026-10-10T07:24:39.399Z",
+  "source": "Recorded exact-head hosted checks, committed production artifacts and actual public-site browser acceptance; no route, clock or data overrides.",
+  "release": {
+    "pr": 115,
+    "url": "https://github.com/spicyChicken59/SpicyStock/pull/115",
+    "checked_head": "41d250c43225dd6f517e10199cf98b3f46038e0e",
+    "merge_commit": "21cd3497cd7ee06c66e4c2b46dcbed4782a7213e",
+    "merged_at": "2026-10-10T07:12:02Z",
+    "baseline_publication_commit": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+    "publication_commit": "dcb12a0b20f2d41900c4235c30efa76a40285c0b"
+  },
+  "hosted": {
+    "tests_run_id": 38030547868,
+    "tests_run_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38030547868",
+    "status": "success",
+    "completed_at": "2026-10-10T07:10:44Z",
+    "python_tests": 3376,
+    "page_checks": 11204,
+    "chart_checks": 378,
+    "secret_run_ids": [
+      38030547873,
+      38030545442
+    ],
+    "native": {
+      "central": {
+        "status": "PASS",
+        "job": 114150437939,
+        "workload_seconds": 2030.963589,
+        "artifact_id": 11662956216,
+        "sha256": "a6fc31b1fe20f8f69d80d1f27fbe462e32e3b319558056d58e34bf59e44ef9f5"
+      },
+      "stress": {
+        "status": "PASS",
+        "job": 114150437938,
+        "workload_seconds": 2991.267804,
+        "artifact_id": 11663247716,
+        "sha256": "deb635c8f4de861dcc8e5c5bd82d3749cc119bfebd5d655b416e3141f3b9e995"
+      }
+    },
+    "evidence_scope": "Exact-head GitHub run conclusions and decoded official job logs; native compact artifacts referenced by reported digest, not independently downloaded here."
+  },
+  "production": {
+    "run_id": "38033614291",
+    "run_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38033614291",
+    "dry_run": false,
+    "session": "2026-10-09",
+    "published_at": "2026-10-10T07:12:55.687883+00:00",
+    "applicable_session": "2026-10-12",
+    "rules_version": "4f69dc967d7a",
+    "canonical_sha256": "d042156845aba2824fbec423855c3866b5eb00e451f9bcb50f37135cc83d092c",
+    "canonical_bytes": 12676277,
+    "reader_sha256": "874f529211b9e0c45259b6e5b186485741bf0ac196ad8825fce16f988a579698",
+    "sidecar": {
+      "sha256": "8be0c98d1419effce588b277d9a2a3f22bfa3b1096b88120df177bea5dd04c61",
+      "bytes": 5083545,
+      "path": "reader-observations/8be0c98d1419effce588b277d9a2a3f22bfa3b1096b88120df177bea5dd04c61.json"
+    },
+    "status": "ok",
+    "email": "skipped",
+    "problems": [],
+    "reviews": {
+      "requested": 12,
+      "completed": 12,
+      "refused": 0,
+      "coverage_verdict": "complete_requested_reads",
+      "discovered_reaction_candidates": 479,
+      "accepted": 12,
+      "not_selected_budget": 467,
+      "final_A_plus": 0,
+      "final_A": 41,
+      "limit": "12/12 describes the requested review batch, not complete candidate, issuer-news or earnings coverage."
+    },
+    "input_coverage": {
+      "intended_stocks": 4775,
+      "usable_session_stocks": 4774,
+      "stale_symbols": [
+        "WBD"
+      ],
+      "status": "one stale stock tolerated by archived rules; missing data is not a measured non-match"
+    },
+    "allocation": {
+      "admitted_tickets": 0,
+      "new_commitment_usd": 0.0,
+      "reserved_model_usd": 188.37,
+      "open_model_symbols": [
+        "SN"
+      ],
+      "limit": "The $188.37 reserve belongs to unfinished model plans. It does not establish Mo's holdings, settled cash or buying power."
+    },
+    "zim": {
+      "current_state": "present_and_event_refused",
+      "eligible": false,
+      "reason": "Known cash-acquisition event: ZIM announced an agreement for Hapag-Lloyd to acquire its shares for $35.00 in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
+      "coverage": "manual_known_events_only",
+      "event_id": "zim-hapag-lloyd-cash-acquisition",
+      "source_manifest": "manifest.json",
+      "original_pick_retained": true
+    },
+    "immutable": {
+      "baseline_objects_preserved": 17415,
+      "paths": "docs/evidence/** and docs/history/** excluding the mutable history/index.json",
+      "comparison": "Every baseline path retains its exact Git blob at the production publication commit; independently rechecked while recording this receipt."
+    },
+    "provenance": {
+      "status": "PASS",
+      "checked": 484,
+      "breaks": [],
+      "missing": []
+    },
+    "morning_receipt": {
+      "sha256": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8",
+      "generated_at": "2026-10-09T17:10:18.034037+00:00",
+      "status": "inapplicable",
+      "bound_publication_sha256": "36e3ac12a53d78d7f9adccfb302793aa8fad2e2fb00548ed1d2124538350b1bd",
+      "bound_measured_session": "2026-10-08",
+      "bound_applicable_session": "2026-10-09",
+      "rows": 0,
+      "matches_current_publication": false,
+      "public_state": "unavailable",
+      "limit": "The retained receipt belongs to an older publication. It provides no fresh quote or entry authority for the new scan."
+    }
+  },
+  "public": {
+    "url": "https://spicychicken59.github.io/SpicyStock/",
+    "started_at": "2026-10-10T07:24:30.571Z",
+    "finished_at": "2026-10-10T07:24:39.399Z",
+    "status": "PASS",
+    "passed_checks": 135,
+    "exact_files_verified": 31,
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 16746,
+        "sha256": "6605ea481dae2b95797655d295b86a5a202df2861ea73c5b38c5e7b85b8a98ff",
+        "publicationInventory": true
+      },
+      {
+        "name": "data.json",
+        "bytes": 12676277,
+        "sha256": "d042156845aba2824fbec423855c3866b5eb00e451f9bcb50f37135cc83d092c",
+        "publicationInventory": true
+      },
+      {
+        "name": "reader.json",
+        "bytes": 3876866,
+        "sha256": "874f529211b9e0c45259b6e5b186485741bf0ac196ad8825fce16f988a579698",
+        "publicationInventory": true
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "publicationInventory": true
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "publicationInventory": true
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "publicationInventory": true
+      },
+      {
+        "name": "reader-observations/8be0c98d1419effce588b277d9a2a3f22bfa3b1096b88120df177bea5dd04c61.json",
+        "bytes": 5083545,
+        "sha256": "8be0c98d1419effce588b277d9a2a3f22bfa3b1096b88120df177bea5dd04c61",
+        "publicationInventory": true
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4224,
+        "sha256": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "publicationInventory": true
+      },
+      {
+        "name": "app.css",
+        "bytes": 85390,
+        "sha256": "2845c38eaa9d6af3bac4cebe0e594b648fea168c25877125b4d4a727309f82ff",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 8235,
+        "sha256": "5c474f126fcf35fd174e08aa00138d3dc3256cad63124a42165eab141d4e1796",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44240,
+        "sha256": "d57fc01c4a9f928c3109436049623d768cbd36e685684728bafaac40cade8cc6",
+        "publicationInventory": true
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 14234,
+        "sha256": "2f44050efe43ccf615a05d48d6efed39dd861d7525fabe7d40fbbeea1dd9df27",
+        "publicationInventory": true
+      },
+      {
+        "name": "app.js",
+        "bytes": 386704,
+        "sha256": "5dda2e892f2abcdfc96a1a7cb6d804bcc12570e1c325b8861c3cd7fff76aa41a",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "publicationInventory": true
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "publicationInventory": true
+      },
+      {
+        "name": "history/index.json",
+        "bytes": 3202561,
+        "sha256": "93de742b391bd3a11b29bc899787f3a09471d8c20b02d99d90fb5aad8611d253",
+        "publicationInventory": false
+      },
+      {
+        "name": "history/353088402c6588916d0c9a87ae0f08c7d401f605/anticipation-ZIM.json",
+        "bytes": 18155,
+        "sha256": "7cf6c1d62b4510677700d1012bcf8743e37af5068593a8619a15b8180c22e332",
+        "publicationInventory": false
+      },
+      {
+        "name": "history/353088402c6588916d0c9a87ae0f08c7d401f605/record.json",
+        "bytes": 50546,
+        "sha256": "1865b882d982727d4bdfdeb36f190760fcb6b1ac75803ddb7874e083a5157e9a",
+        "publicationInventory": false
+      }
+    ],
+    "viewports": [
+      1280,
+      390
+    ],
+    "screenshots_inspected": [
+      "current-zim-1280.png",
+      "current-zim-390.png",
+      "morning-1280.png",
+      "morning-390.png",
+      "retained-zim-1280.png",
+      "retained-zim-390.png"
+    ],
+    "browser_errors": 0,
+    "clock_override": false,
+    "data_override": false,
+    "runner_sha256": "f32fb324b61bd7573f0e4cb8fe7a431573a00629e8a93c20976c44026f9472c9",
+    "runner_local_self_tests": 19,
+    "no_error_exemptions": true,
+    "retained_historical_zim": {
+      "source": "353088402c6588916d0c9a87ae0f08c7d401f605",
+      "path": "353088402c6588916d0c9a87ae0f08c7d401f605/anticipation-ZIM.json",
+      "sha256": "7cf6c1d62b4510677700d1012bcf8743e37af5068593a8619a15b8180c22e332",
+      "recordedQuantity": 2,
+      "historicalOnly": true
+    },
+    "selected_findings": [
+      "Current ZIM candidate is visibly withheld with dated primary-source links.",
+      "Current and historical ZIM views offer no executable copy control.",
+      "The original two-share model pick and publication remain available as historical research.",
+      "Chicago profile and $2,000 reference are visible; settled cash remains unknown.",
+      "The retained morning receipt does not bind to the new publication."
+    ],
+    "transport": {
+      "proxyApplied": true,
+      "certificateSpecificSpki": "n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=",
+      "caPath": "/usr/local/share/ca-certificates/environment-proxy-ca.crt",
+      "globalTlsBypass": false
+    }
+  },
+  "source_receipts": [
+    {
+      "name": "spicystock-pr115-hosted-acceptance.json",
+      "scope": "hosted",
+      "bytes": 948,
+      "sha256": "b01a78cff404d53d79d7f281b5b005a83b2ed284791907a73c59825ca2b3d11a"
+    },
+    {
+      "name": "spicystock-zim-production-38033614291.json",
+      "scope": "production",
+      "bytes": 8879,
+      "sha256": "8785a2f1ba16edc4e68056269164577eefa2aa36715ff313bf56c15684df8794"
+    },
+    {
+      "name": "public-acceptance.json",
+      "scope": "public",
+      "bytes": 49892,
+      "sha256": "718721947855829d55b529df826097c3507b56b27d248475afe9984ce78fcd78"
+    },
+    {
+      "name": "public-review.json",
+      "scope": "review",
+      "bytes": 1336,
+      "sha256": "38e0a73cf4944c924509afa8c1a6fdc740c1f64dd1719128a9bdeaefc87d9fd5"
+    }
+  ],
+  "limitations": [
+    "This acceptance establishes the ZIM source correction, not comprehensive issuer-news or earnings coverage.",
+    "The public commit predates the cash-preview, corrected status, SEC-evidence, personal handoff, original-byte-reader and reported-result releases being integrated separately.",
+    "The existing status banner still says Friday October 9 was closed; the recorded run session is open. The separate status correction is not claimed shipped here.",
+    "No fresh provider quotes were fetched during public acceptance; no on-time pre-open or entry-window delivery was established.",
+    "No private inputs, saved personal plans, order copies, broker actions or actual fills were performed.",
+    "No actual profitable trade or demonstrated strategy edge is established."
+  ]
+}
