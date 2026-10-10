@@ -1085,7 +1085,9 @@ wider-stop cohort using observations already retained by normal publications.
 It makes no new provider or model requests. The first before-entry cohort for
 an applicable session is identified as primary; later revisions and late
 captures remain visible. Original exclusions, quantities and levels stay frozen.
-There is no order, personal draft or reported-execution action in this view.
+Each verified original row can open a blank private actual-fill report. Its
+explicitly entered broker facts stay separate from these conditional model
+outcomes; the journal adds no order or personal entry-draft action.
 
 The companion reports pending, missing, uncertain, not-filled, open or resolved
 conditional daily-bar models, plus explicit unsupported-source states. Before

@@ -18,7 +18,7 @@
     "tools/handoff_model_cases.mjs": "9bb326a923635e6953a608f3d3787867160ccb61e33ffc48e94c95d3c71d324e",
     "tools/journal_report_cases.mjs": "fff0b453b80ef2c6777d697b6902a0cf991048aa27b14e524a6ceced1bfd8d7a",
     "tools/page_smoke.mjs": "ff3263834773c5c0c306f413605cf543fd2222e328c7984e792e03a90ceab47e",
-    "README.md": "b3009500c2c0d4d6604bbe5d8717d9ad514abb2846b709f0a7c39956e57e6be3",
+    "README.md": "256d9b05c72967f842f030715d8897f69e8827a76ef02d308bee2d70a988edd7",
     ".env.example": "34eee79aaa06ce19822434d9e272a76c4b078eb1bf2a5a2a4e1b3dc65170c96a",
     "CLAUDE.md": "3673d5947913fd66b78b44a271cbf653c12ebd2e548fa2838212371c4b33e12d",
     "PRODUCT_GOAL.md": "5a809e1663f87307a8c6f706efa050cfcf7186ed61ed4b9d68f7d7a7312e7935",
@@ -760,7 +760,8 @@
     "passed": 37,
     "command": "/workspace/.venv-spicystock/bin/python -m pytest tests/test_docs.py -q",
     "runtime": "Python3.12.14;Node24.19.0",
-    "warning": "Existing websockets.legacy deprecation warning"
+    "warning": "Existing websockets.legacy deprecation warning",
+    "follow_up": "Final prose sweep corrected the older research-journal paragraph to name the newly added blank actual-fill report action; no runtime or test change."
   },
   "remaining": [
     "Final integrated exact-head independent review",
