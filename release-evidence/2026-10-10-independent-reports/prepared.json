@@ -17,14 +17,16 @@
     "tools/handoff_model_cases.mjs": "07390d44cf9cbe38b82a695eb7a3c99529692c203a22dbaa93259816b8660b35",
     "tools/independent_report_cases.mjs": "423df74ccb6b38d86b6be452f4c2fa611600a452039e06087b0c51c53fe155b1",
     "tools/handoff_cases.mjs": "db04adc3a40547bd1e592f1562fd608b87dc76c8e7bcd4aa36c00fd1bebbe146",
-    "tools/page_smoke.mjs": "da7cc9ff13129b58d95edb74bfd54381aa9b2f71028606b4f3a89720aca9b754"
+    "tools/page_smoke.mjs": "da7cc9ff13129b58d95edb74bfd54381aa9b2f71028606b4f3a89720aca9b754",
+    "tools/publication_recovery_cases.mjs": "9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe"
   },
   "root_validation": {
     "model": 49,
     "legacy_browser": 269,
     "compatibility_browser": 1475,
     "documentation": 37,
-    "scope": "Distinct targeted suites; owner dedicated147 and independent139 are separate evidence below, not added into a purported single test run."
+    "scope": "Distinct targeted suites; owner dedicated147 and independent139 are separate evidence below, not added into a purported single test run.",
+    "publication_recovery": 131
   },
   "evidence": [
     {
@@ -148,5 +150,14 @@
     "Private factual reports do not grant entry authority or cash reservation.",
     "Old v1/v2 byte-preserving reads migrate only on an explicit save.",
     "Current actual public canonical still has zero baseline tickets."
-  ]
+  ],
+  "recovery_fixture_correction": {
+    "recorded_at": "2026-10-10T10:07:05.180555+00:00",
+    "scope": "A synthetic v1 envelope built from the current v3 prepared record must omit kind, which was absent in genuine v1. Existing application validation remains unchanged.",
+    "prior_failure": "The successor backup compatibility run found two failed legacy readability/disabled-copy checks (129/131).",
+    "final_validation": "Corrected fixture on this report-only branch passes all 131 actual local HTTP publication-recovery controls.",
+    "runtime_changed": false,
+    "previous_head": "e556a5c0645eb6a1219aecada8b8582bb448073a",
+    "hosted_status": "The prior head checks are historical; the corrected exact head requires new hosted checks and review."
+  }
 }
