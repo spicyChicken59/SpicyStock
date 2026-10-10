@@ -242,6 +242,17 @@ until new, separately identified results are produced. Closing this goal means
 shipping the milestones and reviewing actual experience, not marking an
 unobserved financial outcome complete.
 
+## Registered opportunity experiment
+
+Issue #130 prepares `anticipation_stop_width_4_to_5_v1`, a separately labelled
+comparison for October 12 through November 6. It keeps the production strategy
+and $2,000 / 0.5% account, changing only an anticipation research cap from 4% to
+5%. Original levels, risk reductions, known-event exclusions and baseline-first
+shared allocation remain. Dated empty/refused cohorts and actual generation
+times are retained alongside possible fits. This is research preparation;
+hosted release and actual public acceptance are recorded in the checkpoint when
+completed. It establishes no strategy return, personal fill or successful trade.
+
 ## Continuation
 
 Mo explicitly authorizes an ongoing loop: choose the next useful deliverable,

@@ -926,6 +926,63 @@ attach to a different scan. An issuer-source failure does not prevent the
 evening record from publishing. See the
 [versioned source contract](docs/ISSUER_EVIDENCE_SCHEMA.md) for exact fields.
 
+### Registered anticipation stop-width research
+
+The Morning desk has a closed **Wider-stop anticipation research** disclosure.
+It compares the unchanged 4% production stop-width cap with a separate 5%
+anticipation calculation for applicable sessions **October 12 through November
+6, 2026**. The versioned experiment is `anticipation_stop_width_4_to_5_v1`.
+It changes no production ticket, reaction/burst stop selection or model record.
+There is no research order-copy or broker-draft action.
+
+The producer uses the actual retained planning inputs and the same pure planner,
+changing only the anticipation cap. Original trigger, limit and structural stop
+must match; the 4% calculation must reproduce original geometry, sizing and
+multipliers before a comparison is accepted. The reference remains $2,000,
+0.5% base risk, a 25% per-name cap and four slots. Existing market, watchlist,
+known-event, whole-share and shared-allocation rules still apply. A stop beyond
+the ideal distance still halves the risk budget; widening the cap does not
+increase the configured dollar-risk budget.
+
+All original top anticipation rows are retained, including excluded names,
+zero-share results and out-of-band rows. Current baseline tickets and unfinished
+model positions reserve their cash and slots first; research cannot displace a
+baseline trade. The panel shows the original refusal, fixed levels, hypothetical
+quantity, principal, price-to-stop risk, risk multipliers and each remaining
+blocker. These amounts exclude actual fees, gaps and slippage. Model reserves
+are not broker holdings or available settled cash. A manual event-registry
+match is an exclusion; no match is not news or earnings clearance. There is no
+new chart review, quote, provider request or inferred trading outcome.
+
+The comparison is bound to the exact canonical publication, compact reader,
+archived rules, plans and retained sources. Its actual generation timestamp is
+separate from the source publication's run-start timestamp. Collection before,
+during or after entry is labelled accordingly; a late backfill cannot claim to
+be pre-entry research. The reader labels an elapsed entry window as archived.
+Empty/refused cohorts and outside-period status remain visible evidence.
+
+The evening hook runs after final canonical/reader bytes, including delivery
+failure restamps. Unsupported account/rules, invalid retained sources or a
+research-write refusal leave the authoritative publication unchanged. An older
+receipt can remain, but cannot attach to a different current publication.
+There is no research environment variable, provider credential or subscription.
+
+Opening the disclosure fetches only the optional `stop-research.json` receipt
+(at most 16 KiB) and its exact digest-named bundle (at most 128 KiB), with a
+15-second deadline and the existing omitted-credential/no-redirect transport.
+Its immutable cohorts and append-only index retain at most 128 cohorts / 16 MiB;
+the index is capped at 64 KiB. Capacity exhaustion refuses a new write without
+pruning past cohorts. Repeating an exact publication preserves its first
+cohort and generation time. These repository/Pages paths are public; they contain
+no private reports. The publisher verifies the current referenced bundle;
+retained cohorts are not initial page requests. See
+[the registered schema](docs/STOP_RESEARCH_SCHEMA.md) for the exact contract.
+
+This is a dated strategy experiment, not evidence of an established edge.
+User-reported trades/results remain separate. Promotion or performance claims
+require a later explicit strategy review using the retained comparison and
+subsequent observations.
+
 ### Reader payload and saved research
 
 The page initially loads `reader.json`, a compact projection of the complete
@@ -1299,11 +1356,12 @@ src/            history.py (public recovery and coverage)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 review_selection.py (feasible-first chart review and bounded spare research)
+                stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)

@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3607 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3664 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5455,3 +5455,89 @@ owned recovery modules match exactly. Current production data, compact reader,
 morning receipt, immutable evidence/history and design-system files match
 `981e6792` byte-for-byte. Integrated timeout/private-report screenshots were
 inspected. Staged documentation and receipt scan clean with gitleaks 8.30.1.
+
+## Checkpoint, 10 Oct 2026 — registered stop-width research ready for hosted review
+
+Issue #130 adds the optional Morning desk comparison
+`anticipation_stop_width_4_to_5_v1` for applicable sessions October 12 through
+November 6. It changes one explicit pure-helper input for anticipation research:
+a 5% cap versus the unchanged 4% production wrapper. The $2,000 / 0.5% account,
+25% position cap, four slots, trigger, limit, structural stop, risk reductions,
+market/watchlist/event checks and whole-share sizing remain the baseline.
+Production reaction-stop geometry and archived numeric rules are unchanged.
+
+The producer retains every original top anticipation row, including exclusions,
+zero shares, empty cohorts and outside-period status. Existing baseline tickets
+and unfinished model reservations consume resources before research; research
+cannot displace a lower-ranked baseline trade. Exact canonical/reader/rules,
+plan/input/source identities bind the comparison to verified retained evidence.
+Generation uses actual UTC time, classifies before/during/after entry, and never
+uses an old run-start stamp to claim prospective capture. An exact-publication
+repeat or revisit preserves its first cohort and generation clock. The bounded
+append-only index refuses overflow or invalid evidence without pruning records.
+
+The optional producer runs after final evening canonical/reader writes on both
+delivery paths. Its failure does not restamp or degrade the authoritative record.
+The existing publisher validates any present receipt and its referenced bundle;
+an older valid receipt may remain but cannot attach to a new record. Source and
+reader loads are deferred until the disclosure opens. The panel shows baseline
+refusals, unchanged levels, hypothetical sizing, risk reductions, allocation and
+coverage limits; it adds no research order-copy, private draft or execution path.
+Elapsed entry windows are labelled archived. Private cash/report inputs remain
+independent. No provider/model calls, credentials or settings are added.
+
+Implementation commits: publication hooks `3122067f`, producer `6fd884a1`, UI
+`081e58a9`, browser controls `50e070ca`. Producer verification passes 41 focused
+and 123 planner tests; 22 generated artifacts reproduce. Independent review
+passes 57 additional checks, 288 comparisons against the prior production
+planner, 42 backend/publication tests and five final clock-input controls.
+Seven isolated backend mutations fail cap/risk/baseline/event/clock/retention/
+binding controls; an unrelated change passes. UI checks pass 332 assertions,
+with five validation mutants rejected and an unrelated timeout control passing;
+all 12 phone/desktop dark/light screenshots were inspected. Existing browser
+compatibility passes 1,019 checks, continuity 137 and geometry four.
+
+After merging exact recovery/calendar head `d7e33174`, the combined Morning,
+cash, handoff, issuer, research, recovery, refresh and status checks pass 1,613.
+The fixture command inventory is extended to require the new generator in CI;
+removing that command fails its intended assertion, while an unrelated workflow
+timeout change passes. Source, immutable fixtures and strategy policy were not
+relaxed to satisfy that guard. Collection finds 3,664 Python tests. README and
+`.env.example` document the optional producer, public retained cohorts, bounds,
+registered dates and absence of new credentials. Runtime is Python 3.12.14 and
+Node 24.19.0. Actual public acceptance remains pending.
+
+Both pinned and current engines scan the producer commit without findings.
+The separately decompressed fixture scan has 60 pinned-engine detections, all
+exact previously classified public numeric-rule identifiers, with zero unknown
+values; it is not a zero-findings scan. The current engine finds zero on those
+raw bytes. Independent decompression/digest comparison confirms all ten raw
+canonical/reader files match the scanned originals. No source bytes or scanner
+rules were changed to hide a finding.
+
+The first actual comparison was derived locally at
+`2026-10-10T08:11:55.173159+00:00` from the exact retained production
+publication `43dcb8d7` (canonical `f5cbe38e…`, reader `f9282e90…`). Full source
+and picks validation passed; no new scan, model call or provider request was made.
+The receipt is 1,650 bytes (SHA-256 `98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22`);
+its 8,918-byte immutable bundle is
+`249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0`. This is pre-entry capture for October 12,
+not a claim of an on-time live quote or a trade. All original data, reader,
+picks, morning/issuer receipts, history and evidence remain unchanged.
+
+All five top rows are retained. Three fall within the 4–5% band; two fit the
+unchanged effective $2.50 risk budget: KE one share at the fixed $29.52 limit,
+$1.27 price-to-stop risk; PSNL three at $16.42, $49.26 principal and $2.22 risk.
+Total hypothetical principal is $78.78 and price-to-stop risk $3.49. SN remains
+zero-share and occupies a model slot; its $188.37 model reserve is not Mo's
+holding or settled cash. MG/ZIM retain their event exclusions. Fees, gaps,
+slippage, current quotes and broad news/earnings clearance are not supplied by
+this derivation. The companion is prepared in this branch, not yet deployed;
+there is no reported personal execution or result.
+
+Final documentation/publisher verification passes 74 tests over the prepared
+actual companion; all 49 workflow checks pass with the extended fixture-command
+inventory. The 22 producer fixtures remain current. The new generator-command
+removal is detected, while its unrelated timeout control passes. Integrated
+phone/desktop research captures were inspected. The prepared files enter the
+existing required exact-head hosted gates before any merge or public claim.

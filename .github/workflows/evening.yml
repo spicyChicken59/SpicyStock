@@ -204,6 +204,8 @@ jobs:
             docs/data.json
             docs/reader.json
             docs/reader-observations/
+            docs/stop-research.json
+            docs/stop-research/
             docs/picks.json
             docs/charts/
             docs/evidence/
