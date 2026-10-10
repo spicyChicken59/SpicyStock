@@ -84,11 +84,48 @@ mismatched account assumptions cannot produce a current personal preview.
 Each preview considers one plan independently and reserves no cash. Account for
 other orders and broker holds before entering available settled cash. Changing
 plans clears the fees and quantity inputs; a new session clears cash too, and a
-reload clears all entries. Published copy controls still copy the original model
+reload clears these preview inputs. Published copy controls still copy the original model
 quantity, clearly identified beside the preview. The calculation does not submit
 an order or verify a balance. Preparation checks do not establish live quotes,
 news coverage, broker buying power or execution, and cannot turn an unavailable
 setup into an order. Planned price-to-stop risk excludes fees, gaps and slippage.
+
+**Private broker handoff.** A calculated preview can be explicitly saved as a
+separate personal draft for broker review. Its chosen whole-share quantity stays
+within the admitted published quantity and entered cash; trigger, limit, stop and
+dated exit instructions retain the published terms. The draft keeps the exact
+publication and plan identities, selected terms, cash and fees on this device.
+Its personal readback uses the chosen quantity for entry and planned protection.
+The original published ticket remains separate. Copying is only a clipboard
+operation, not a broker order format or a confirmation of execution.
+
+New preparation and copying recheck the current publication, account, entry
+window and event restrictions. A superseded or expired draft remains readable.
+Manual broker reports remain editable afterward: submitted quantity, cumulative
+entry fills and average price/time, cancelled remainder, cumulative exits/time,
+and the broker-reported protective quantity. Actual submissions, prices and
+times can differ from the draft and are labeled as deviations. They do not
+rewrite the strategy or the original terms. Copying, saving and market prices
+never create a reported fill.
+
+Blank values mean unknown. Remaining holdings require both entry fills and
+exits, including an explicit zero when no exit has occurred. Filled plus
+cancelled shares cannot exceed the quantity reported submitted; exits cannot
+exceed reported fills. The protective quantity is compared with reported shares
+remaining, not cumulative purchases. A quantity match does not verify an active
+broker stop. Once reporting has begun, clearing fields to unknown cannot revive
+the draft as a new entry to copy. Corrections are explicit; stale revisions
+cannot overwrite a newer report. Dates require an explicit time-zone offset
+and are displayed in Chicago time.
+
+The private store holds at most 100 handoffs and 1 MiB, never silently evicts
+records, and serializes writes with browser Web Locks. Unavailable, unreadable
+or future-version storage is preserved and reported; it does not imply no
+holdings. Saved drafts and reports persist across reloads, but clearing this
+site's browser data removes them. They are not uploaded, backed up in the cloud,
+added to model performance, or used to infer buying power. The handoff creates
+no broker connection, reserves no cash, and neither places nor cancels a
+protective order. Exit prices and actual P&L are outside this first slice.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
@@ -1171,7 +1208,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-observations.js · app-reader.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
