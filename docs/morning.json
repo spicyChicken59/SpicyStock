@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-10-09T17:10:16.756501+00:00",
-  "generated_at": "2026-10-09T17:10:18.034037+00:00",
-  "expires_at": "2026-10-09T17:15:18.034037+00:00",
-  "observation_run_id": "37964299335",
-  "previous_observation_sha256": null,
+  "collection_started_at": "2026-10-10T08:56:32.661180+00:00",
+  "generated_at": "2026-10-10T08:56:34.636611+00:00",
+  "expires_at": "2026-10-10T09:01:34.636611+00:00",
+  "observation_run_id": "38039598040",
+  "previous_observation_sha256": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8",
   "dry_run": false,
   "publication": {
-    "data_sha256": "36e3ac12a53d78d7f9adccfb302793aa8fad2e2fb00548ed1d2124538350b1bd",
-    "context_sha256": "fb70a8f1db8daef49255231e25695a2e30eaedab13805f79c7ecbb5df517198c",
-    "run_id": "37928234562",
-    "rules_version": "8e9ea8528b31",
-    "measured_session": "2026-10-08",
-    "applicable_session": "2026-10-09",
-    "published_at": "2026-10-09T12:10:20.678352+00:00",
+    "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+    "run_id": "38034610157",
+    "rules_version": "c9dc7d6d1d87",
+    "measured_session": "2026-10-09",
+    "applicable_session": "2026-10-12",
+    "published_at": "2026-10-10T07:30:15.553690+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "fd24d85a0a32ba26d550b5840ff80b9be6db4453c55c1ca7c1ca4a9e7faf70ca"
+    "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
   },
   "policy": {
     "version": 1,
@@ -81,8 +81,8 @@
     }
   },
   "status": "inapplicable",
-  "reason": "entry_window_ended",
-  "entry_phase": "ended",
+  "reason": "wrong_session",
+  "entry_phase": "upcoming",
   "sources": {
     "iex": {
       "status": "not_requested",
@@ -109,7 +109,7 @@
       "source_url": "https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts",
       "scope": "Nasdaq and other exchange-listed securities reported in this RSS snapshot; absence is not clearance.",
       "status": "not_requested",
-      "checked_at": "2026-10-09T17:10:18.034004Z",
+      "checked_at": "2026-10-10T08:56:34.636560Z",
       "fetched_at": null,
       "source_published_at": null,
       "expires_at": null,
