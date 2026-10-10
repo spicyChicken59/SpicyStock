@@ -26,7 +26,8 @@ dry_run=True, previous_raw=None, allow_fixture=False, cache_dir=None)` returns
 `receipt`, `receipt_bytes`, `bundle`, `bundle_bytes`, and `captures` (raw SHA
 to original response bytes). A fake `fetch(url)` returns `body` bytes and an
 offset-aware `observed_at` datetime or ISO timestamp, or raises
-`SourceError(code)`. Optional `fetched_at` and `cache_status` distinguish a
+`SourceError(code, http_status=...)` for an observed HTTP refusal or
+`SourceError(code)` when no HTTP status is known. Optional `fetched_at` and `cache_status` distinguish a
 verified cache body from the current check. Supplying `now` pins start/as-of;
 completion defaults to that instant unless `finished_at` is supplied. Real
 collection records actual completion. Parser APIs are
@@ -98,8 +99,23 @@ index: {window_start, window_end, coverage_status: observed_window | partial | u
         history_files_advertised, history_files_fetched, history_sources: [source],
         selected_accessions: [accession], listed_filings: [filing]}
 documents: [document]
-errors: [{code, source_url: HTTPS SEC URL or null}]
+errors: [{code, source_url: HTTPS SEC URL or null,
+          http_status?: integer 300..599, source_phase?: mapping | submissions | history | primary | exhibit}]
 ```
+
+The HTTP fields are an optional pair. Both are absent on legacy errors or when
+no HTTP response status was observed; absence is unknown, never inferred from
+a timeout, cache result or error message. Present status must be a real integer
+(not a boolean), with `redirect_refused` for 3xx, `rate_limit` for 429 and
+`http_error` for other 4xx/5xx. The collector supplies the phase and original
+requested URL; neither comes from a response body, header or redirect target.
+Mapping uses the one fixed mapping URL. Submissions and history use the current
+issuer CIK. Primary documents exactly match a selected filing; exhibits remain
+under that selected accession, use a safe HTML filename and cannot be its primary
+document. Error bodies, exception text and headers are never read or retained.
+This diagnostic does not change source coverage, clearance, budgets, caching,
+retry behavior or redirect refusal. Existing two-field errors remain valid and
+are not rewritten.
 
 A `source` is `{url, raw_sha256, bytes, fetched_at, checked_at, cache_status}`;
 cache status is `network` or `verified_cache`. A `filing` is
