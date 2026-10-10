@@ -307,7 +307,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3423 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3424 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5067,3 +5067,25 @@ Hosted checks and actual public acceptance remain outstanding. The original
 October 9 ZIM ticket must be superseded through normal production after PR #115;
 its retained model history must not be erased. No actual fill or successful
 trade has been reported by Mo.
+
+## Checkpoint, 10 Oct 2026 — enforce cash-fixture integrity (PR #119)
+
+Independent review found that the cash-preview generator and publication test
+called `provenance.verify()` without checking its returned status. Both now
+require PASS with `require_sources=False`. The generator's temporary source
+objects are not retained, so this checks publication integrity and compatible
+rule replay; it does not claim a retained-source audit.
+
+The new regression runs the real offline producer, changes only a candidate's
+recorded review-selection decision, and requires the generator to reject the
+evidence mismatch. In an isolated copy, deleting only the new assertion makes
+that regression fail with a missing rejection; changing unrelated archive
+capacity keeps it passing. All six cash-preview fixture files reproduce their
+existing bytes. Collection now finds 3,424 Python tests.
+
+The preceding independent selector review passed 156 targeted Python and 427
+browser checks, with phone and desktop explanations inspected. This follow-up
+changes test enforcement only; it does not change an application asset,
+published plan, fixture JSON, strategy rule or source record. README and
+`.env.example` need no factual change for this test-only correction. Hosted
+checks and public acceptance remain the release owner's responsibility.
