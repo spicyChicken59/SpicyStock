@@ -110,6 +110,7 @@
     const hash = await w.crypto.subtle.digest('SHA-256', typeof raw === 'string' ? new TextEncoder().encode(raw) : raw);
     return Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, '0')).join('');
   }
+  const diagnosticBasename = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.-]{0,199}(?![\s\S])/.test(value) && !value.includes('..');
   function sourceError(error, row) {
     require((keys(error, 'code source_url') || keys(error, 'code source_url http_status source_phase')) &&
       ERRORS.includes(error.code) && (error.source_url === null || safeUrl(error.source_url)), 'Issuer error metadata is invalid.');
@@ -123,13 +124,14 @@
     if (Number.isSafeInteger(cik) && cik > 0) {
       const submissions = 'https://data.sec.gov/submissions/CIK' + String(cik).padStart(10, '0');
       if (phase === 'submissions') matches = url === submissions + '.json';
-      if (phase === 'history') matches = new RegExp('^' + submissions.replaceAll('.', '\\.') + '-submissions-[0-9]{3}\\.json$').test(url);
+      if (phase === 'history') matches = new RegExp('^' + submissions.replaceAll('.', '\\.') + '-submissions-[0-9]{3}\\.json(?![\\s\\S])').test(url);
       if (phase === 'primary' || phase === 'exhibit') matches = row.index.listed_filings.some(filing => {
         if (!row.index.selected_accessions.includes(filing.accession)) return false;
         const prefix = 'https://www.sec.gov/Archives/edgar/data/' + cik + '/' + filing.accession.replaceAll('-', '') + '/';
-        if (phase === 'primary') return url === prefix + filing.primary_document;
+        if (phase === 'primary') return diagnosticBasename(filing.primary_document) && url === prefix + filing.primary_document;
         const filename = typeof url === 'string' && url.startsWith(prefix) ? url.slice(prefix.length) : '';
-        return /^[A-Za-z0-9_.-]+\.(?:htm|html)$/i.test(filename) && !filename.includes('..') && filename !== filing.primary_document;
+        return diagnosticBasename(filename) &&
+          ['.htm', '.html'].some(suffix => filename.toLowerCase().endsWith(suffix)) && filename !== filing.primary_document;
       });
     }
     require(matches, 'Issuer HTTP diagnostic source differs from its collection phase.');

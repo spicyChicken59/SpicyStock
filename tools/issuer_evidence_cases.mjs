@@ -209,19 +209,38 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       ['submissions CIK', 'submissions', 'https://data.sec.gov/submissions/CIK0001654126.json'],
       ['history CIK', 'history', 'https://data.sec.gov/submissions/CIK0001654126-submissions-001.json'],
       ['history filename', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-01.json'],
+      ['history trailing newline', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json\n'],
+      ['history trailing carriage return', 'history', 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json\r'],
       ['primary issuer', 'primary', 'https://www.sec.gov/Archives/edgar/data/1654126/000032019326009001/synthetic-9001.htm'],
       ['primary unselected accession', 'primary', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009004/synthetic-9004.htm'],
       ['primary filename', 'primary', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/different.htm'],
       ['exhibit issuer', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/1654126/000032019326009001/synthetic-ex99.htm'],
       ['exhibit unselected accession', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009004/synthetic-ex99.htm'],
       ['exhibit cannot be primary', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-9001.htm'],
-      ['exhibit filetype', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.txt']
+      ['exhibit filetype', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.txt'],
+      ['exhibit leading dot', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/.hidden.htm'],
+      ['exhibit leading hyphen', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/-hidden.htm'],
+      ['exhibit oversized basename', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/' + 'a'.repeat(201) + '.htm'],
+      ['exhibit trailing newline', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.htm\n'],
+      ['exhibit trailing carriage return', 'exhibit', 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009001/synthetic-ex99.htm\r']
     ];
     for (const [name, phase, url] of wrongSources) {
       transport.current = changed(null, b => { b.issuers[0].errors.push({ code: 'http_error', source_url: url, http_status: 403, source_phase: phase }); });
       await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
       eq(name + ' diagnostic URL is refused against verified source metadata', (await status(page)).state, 'unavailable');
       eq(name + ' leaves no invalid diagnostic source link', await page.locator('[data-issuer-error]').count(), 0);
+    }
+    for (const [name, filename] of [['leading dot', '.hidden.htm'], ['leading hyphen', '-hidden.htm'], ['oversized basename', 'a'.repeat(201) + '.htm']]) {
+      transport.current = changed(null, b => {
+        const row = b.issuers[0], filing = row.index.listed_filings[0];
+        filing.primary_document = filename;
+        const url = 'https://www.sec.gov/Archives/edgar/data/' + row.identity.cik + '/' + filing.accession.replaceAll('-', '') + '/' + filename;
+        row.documents.find(doc => doc.accession === filing.accession && doc.role === 'primary').source.url = url;
+        row.errors.push({ code: 'http_error', source_url: url, http_status: 403, source_phase: 'primary' });
+      });
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq('coherently altered primary ' + name + ' diagnostic is refused', (await status(page)).state, 'unavailable');
+      eq('coherently altered primary ' + name + ' leaves no invalid source link', await page.locator('[data-issuer-error]').count(), 0);
     }
     transport.current = variants['http-denied']; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
     eq('genuine HTTP403 receipt reloads after diagnostic refusals', (await status(page)).state, 'loaded');
