@@ -959,6 +959,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 from src import reader
                 reader.write_publication(data, docs)
                 publish_stop_research(docs, rec)
+                publish_research_outcomes(docs, rec)
                 if not data.get("fixture"):
                     history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
                 rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
@@ -968,6 +969,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         from src import reader
         reader.write_publication(data, docs)
         publish_stop_research(docs, rec)
+        publish_research_outcomes(docs, rec)
         if not data.get("fixture"):
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
         rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
@@ -1009,6 +1011,23 @@ def publish_stop_research(docs: Path, rec: dict) -> None:
                                         objects=docs / "evidence", picks=rec)
     except Exception as exc:  # noqa: BLE001 — optional derived research only
         log.warning("Stop research publication unavailable (%s); evening record retained.",
+                    type(exc).__name__)
+
+
+def publish_research_outcomes(docs: Path, rec: dict) -> None:
+    """Follow retained cohorts using final local evidence, without changing plans.
+
+    This runs even when the preceding optional cohort capture was refused:
+    previously frozen cohorts can still have newly completed observations.
+    The writer owns its bounded append-only journal and installs its receipt
+    last; a refusal leaves the authoritative evening record intact.
+    """
+    try:
+        from src import research_outcomes
+        research_outcomes.write_publication((docs / DATA_FILE).read_bytes(), docs,
+                                            objects=docs / "evidence", picks=rec)
+    except Exception as exc:  # noqa: BLE001 — optional derived research only
+        log.warning("Research outcomes publication unavailable (%s); evening record retained.",
                     type(exc).__name__)
 
 

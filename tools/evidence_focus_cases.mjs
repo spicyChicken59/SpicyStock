@@ -212,7 +212,7 @@ if (process.argv.includes('--dom')) {
     w.scrollTo = () => {}; w.HTMLElement.prototype.scrollIntoView = () => {};
     w.SCStock = { now: '2026-09-18T23:00:00Z' };
     w.fetch = async url => new Response(JSON.stringify(focusRecord(shell)), { status: String(url).includes('github') ? 404 : 200 });
-    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app-reading.js', 'docs/app-method.js', 'docs/app-findings.js', 'docs/app-reader.js','docs/app-observations.js', 'docs/app-cash-preview.js','docs/app-handoff.js','docs/app-handoff-ui.js','docs/app-issuer-evidence.js','docs/app-stop-research.js','docs/app-morning.js', 'docs/app.js']) {
+    for (const file of ['docs/design-system/sc-charts.js', 'docs/app-chart.js', 'docs/app-map.js', 'docs/app-follow.js', 'docs/app-reading.js', 'docs/app-method.js', 'docs/app-findings.js', 'docs/app-reader.js','docs/app-observations.js', 'docs/app-cash-preview.js','docs/app-handoff.js','docs/app-handoff-ui.js','docs/app-issuer-evidence.js','docs/app-stop-research.js','docs/app-research-outcomes.js','docs/app-morning.js', 'docs/app.js']) {
       const override = file === 'docs/app.js' && process.argv.includes('--app') ? process.argv[process.argv.indexOf('--app') + 1] : null;
       w.eval(await readFile(override || path.join(ROOT, file), 'utf8'));
     }

@@ -252,7 +252,9 @@
       ? api.issuerEvidence.mount() : node('p', { class: 'sc-hint', 'data-issuer-unavailable': '' }, 'Issuer source reader unavailable. Check company filings, news and earnings independently; this does not clear any known event.');
     const research = api.stopResearch && typeof api.stopResearch.mount === 'function'
       ? api.stopResearch.mount() : node('p', { class: 'sc-hint' }, 'Optional stop-width research is unavailable in this page. Production plans keep their recorded policy.');
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, research, foot);
+    const outcomes = api.researchOutcomes && typeof api.researchOutcomes.mount === 'function'
+      ? api.researchOutcomes.mount() : node('p', { class: 'sc-hint' }, 'Optional research follow-through is unavailable in this page.');
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, research, outcomes, foot);
     if (api.handoffUI && api.handoff) api.handoffUI.mount(content);
     else content.append(node('p', { class: 'sc-hint' }, 'Private broker handoffs are unavailable in this page. Cash preview and published research remain available.'));
     host.append(content);
@@ -285,6 +287,7 @@
     if (api.handoffUI) api.handoffUI.update();
     if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
     if (api.stopResearch && typeof api.stopResearch.update === 'function') api.stopResearch.update(data);
+    if (api.researchOutcomes && typeof api.researchOutcomes.update === 'function') api.researchOutcomes.update(data);
   }
   function unavailable(host) {
     if (!host) return;
@@ -300,6 +303,7 @@
     host.setAttribute('data-morning-offered', 'false');
     const opener = d.getElementById('morning-open');
     if (opener) opener.title = 'Morning desk · No current publication · Saved private broker reports remain accessible';
+    if (api.researchOutcomes && typeof api.researchOutcomes.update === 'function') api.researchOutcomes.update(null);
     refreshCash(host);
     if (api.handoffUI) api.handoffUI.update();
   }

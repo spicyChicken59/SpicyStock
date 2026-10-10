@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3734 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3813 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5664,3 +5664,95 @@ controls against actual Python `plan.follow()` whole-share sales and 269 browser
 checks. The final precision edit "in whole shares" passes 34 model checks and
 eight additional independent phone checks; its source delta contains only those
 words. No production release of this exit-reference change is claimed yet.
+
+## Checkpoint, 10 Oct 2026 — frozen research follow-through prepared
+
+Issue #136 adds `anticipation_stop_width_follow_through_v1`, a dated journal of
+all original registered wider-stop cohorts. It reuses retained observations;
+no new market-data/model calls, private reports or account credentials enter
+its producer. Every original exclusion, quantity, level, source identity and
+actual capture time remains frozen. The first before-entry cohort per applicable
+session is primary; later revisions and late captures remain visible. Only
+original allocated research rows are replayed with their original whole shares.
+
+The existing daily-bar fill/follow/R model remains conditional. Pending,
+missing, uncertain, not-filled, open, resolved and unsupported-source states
+remain distinct. Missing observations are not zero returns. Only a reconciled
+resolved model receives an R result; there is no aggregate performance, win
+rate or cross-night portfolio simulation. Actual execution, fees and slippage
+remain unspecified. Known event exclusions and production tickets are unchanged.
+
+Observation identity includes its containing publication, provider/feed,
+adjustment, daily timeframe, source anchor and full OHLCV clip. Public anchor
+comparison uses the pipeline's explicit four-decimal price conversion while
+preserving the raw anchor and hash. Expected sessions follow the containing
+publication's measured completed session, not a later wall clock. A prior
+conclusive clip can remain readable under partial later coverage with its old
+date and identity; conflicting fresh evidence remains explicit. Full bar
+revisions append new snapshots without rewriting old evidence.
+
+The optional hook follows final canonical/reader writes and the stop-comparison
+attempt on both delivery paths. Failure preserves the main record and previous
+companion. The fixed receipt is bounded to 16 KiB, each immutable bundle to
+2 MiB, and the lazy browser read to 15 seconds. The producer bounds 128 cohorts /
+640 rows, 16 MiB of cohort inputs, 128 MiB of sequential original-publication
+reads and 60 seconds of processing. Its append-only archive allows 128 snapshots /
+64 MiB with a 64 KiB index; exhausted or invalid archives refuse without pruning.
+An exact publication/cohort revisit preserves its first snapshot and clock.
+
+Independent review found and fixed genuine defects in rounded anchor matching,
+missing-session accounting, retention of conclusive old clips under partial
+new coverage, and the cached-write deadline. Owner validation passes 54 backend
+tests and 40 reproducible fixture files. All twelve isolated mutations fail
+their named assertions, with an unrelated seven-test control passing; setup
+errors from the first harness attempt were corrected and are not counted.
+Independent backend verification passes 44 contract/source/archive controls
+and eleven boundary controls in addition to the 54 tests. Publication hooks
+pass 117 focused and 112 pipeline/provenance checks; seven isolated mutations
+are detected and an unrelated 25-test control passes.
+
+The browser suite passes 324 checks, six targeted mutations and an unrelated
+324-check control. The final wording changes only “Model whole-share partial
+exit” to “Model whole-share exit”; receipts explicitly reconcile the unchanged
+guards from the mutation source with the final source. Compatibility passes
+592 checks and 137 DOM/store continuity assertions. Independent review passes
+108 private/recovery/carried-source controls plus 41 integrated checks after
+merging the exact whole-share-exit head from PR #139. Synthetic 2.26R/-1R and
+private dollar results are test fixtures, not actual cohort performance or
+Mo's executions. Phone and desktop screenshots were inspected.
+
+Both pinned and current scanners report zero on the committed packed source
+and fixtures. On twenty independently decompressed exact Git fixture files,
+the pinned engine reports 110 findings, all previously classified public numeric
+rule identifiers with zero unknown values; the current engine reports zero.
+Raw hashes and all 110 finding coordinates match the original scan. The pinned
+raw scan is not described as zero-findings, and no scanner rule or source byte
+was changed to conceal a finding.
+
+The first actual snapshot was derived with sockets denied at
+`2026-10-10T08:50:21.159749+00:00` from canonical `f5cbe38e…`, reader `f9282e90…`
+and original cohort `249b60c0…`. Full source/picks and exact journal replay
+validation pass. Receipt `15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2`
+is 2,132 bytes; bundle
+`31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172`
+is 17,104 bytes. It preserves all five rows: KE one share and PSNL three shares
+are pending for October 12; MG, ZIM and SN remain excluded. There are no later
+bars, entries, exits or R results. Canonical, reader, picks, morning/issuer
+receipts, original cohort, immutable history/evidence and pinned design system
+retain their bytes. This is a prepared companion, not yet a public release.
+
+README and `.env.example` explain the optional journal, exact data boundaries,
+retention limits and absence of new configuration. Python 3.12.14 collects
+3,813 tests; Node is 24.19.0. The actual first personal successful trade remains
+unobserved. Required hosted gates and public acceptance remain outstanding.
+
+Final combined verification passes 314 focused Python checks, 1,767 browser
+checks across journal/research/private handoff/cash/recovery/morning/status/
+refresh, all 34 handoff model checks, 37 final documentation checks and
+workflow lint. All 40 journal and 22 original research fixture files reproduce.
+Independent actual-companion replay passes with zero connection attempts;
+30 further real-clock phone/desktop checks confirm the prepared pending rows,
+unknown personal cash, empty private history and exactly two lazy public reads.
+All 19,058 original tracked docs files (191,243,348 bytes) retain their Git
+object bytes. These results establish local preparation; hosted and actual
+public acceptance will be recorded after the reviewed exact head passes.

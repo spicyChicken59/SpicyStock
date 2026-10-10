@@ -80,6 +80,16 @@
 .ss-stop-research__comparison section { min-width: 0; }
 .ss-stop-research__comparison h5 { margin: var(--sc-s1) 0; font-size: var(--sc-text-sm); color: var(--sc-heading); }
 .ss-stop-research__limits { padding-left: 1.25em; font-size: var(--sc-text-sm); }
+.ss-research-outcomes { margin-block: var(--sc-s2); overflow-wrap: anywhere; }
+.ss-research-outcomes__session { margin-block: var(--sc-s3); min-width: 0; }
+.ss-research-outcomes__session h3 { font-size: var(--sc-text-lg); }
+.ss-research-outcomes__cohort { margin-block: var(--sc-s2); min-width: 0; }
+.ss-research-outcomes__cohort h4 { margin-block: var(--sc-s2) var(--sc-s1); font-size: var(--sc-text-md); }
+.ss-research-outcomes__row { margin-block: var(--sc-s2); padding: var(--sc-s2); border: 1px solid var(--sc-border); border-radius: var(--sc-r-md); min-width: 0; }
+.ss-research-outcomes__row h5 { margin: 0 0 var(--sc-s1); font-size: var(--sc-text-md); }
+.ss-research-outcomes__row p { margin-block: var(--sc-s1); }
+.ss-research-outcomes__events { padding-left: 1.25em; font-size: var(--sc-text-sm); }
+.ss-research-outcomes__events li + li { margin-top: var(--sc-s1); }
 .ss-observations { min-width: 0; margin-block: var(--sc-s2); border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); overflow-wrap: anywhere; }
 .ss-observations > h3 { margin: 0 0 var(--sc-s1); font-size: var(--sc-text-md); }
 .ss-observations [data-observation-body] { padding: var(--sc-s1) var(--sc-s2); }
