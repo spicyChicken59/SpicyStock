@@ -1,0 +1,2 @@
+# Preserve captured HTTP bytes, including the issuer page's mixed line endings.
+*.html -text
