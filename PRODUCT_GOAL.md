@@ -272,6 +272,13 @@ from already retained observations is tracked in #136. Automatic issuer
 collection and closed-session/retry corrections are awaiting the integrated
 release #132 and its actual production verification.
 
+Issue #136 follows the frozen cohorts using already retained observations. Its
+dated snapshots keep original exclusions, share quantities, capture times and
+revisions. Conditional daily-bar results remain separate from personal trades;
+missing observations remain missing, and the initial October 12 cohort remains
+pending. There is no portfolio result or win-rate claim. Hosted and public
+acceptance are recorded in the checkpoint when completed.
+
 ## Continuation
 
 Mo explicitly authorizes an ongoing loop: choose the next useful deliverable,

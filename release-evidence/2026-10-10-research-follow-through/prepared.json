@@ -1,0 +1,1499 @@
+{
+  "schema": "spicystock-research-follow-through-preparation-v1",
+  "status": "LOCAL_PREPARATION_ONLY",
+  "issue": 136,
+  "scope": "No public release acceptance, provider/model calls, personal execution or actual model return claimed.",
+  "checks": {
+    "collected_python": 3813,
+    "integrated_python": 314,
+    "integrated_browser": 1767,
+    "handoff_model": 34,
+    "final_docs": 37,
+    "journal_fixture_files": 40,
+    "original_research_fixture_files": 22
+  },
+  "evidence": {
+    "actual_derivation": {
+      "sha256": "b39be844ffdd48fb01e47d4122f0d3ccfc683e05cb456ae1cf9ed81eb498fcd5",
+      "receipt": {
+        "schema": "spicystock-production-research-outcomes-derivation-v1",
+        "status": "VERIFIED_LOCAL_DERIVATION_NOT_YET_DEPLOYED",
+        "scope": "Actual retained production bytes and actual UTC generation time; sockets denied; no provider/model calls, scan, reported trade or performance.",
+        "started_at": "2026-10-10T08:50:20.064659+00:00",
+        "finished_at": "2026-10-10T08:50:55.651955+00:00",
+        "workspace_head": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "source_public_tree": "01632f4453601856619eed7d32dbb07a9147465b",
+        "source_sha256": {
+          "src/research_outcomes.py": "b7456ae8270ad4ee88135b24090a3d36bf0ba442f9d509762a4db6f2e2825397",
+          "src/record.py": "708d3d0639ae6228cbb3523180393872e4636c211bd41c5f67734b2ffcfa316a",
+          "docs/app-research-outcomes.js": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4"
+        },
+        "unchanged_source_files": {
+          "data.json": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "reader.json": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+          "picks.json": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+          "morning.json": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8",
+          "issuer-evidence.json": "397403d50a7917b1ab288171e9fcf242f5301382f3a5a74160e4f37da1cecbf8",
+          "stop-research.json": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22",
+          "stop-research/index.json": "8f446d8d318581d86016df134708dd217be1023c6a72ff9a6cf1c6647bdf3979"
+        },
+        "original_cohort_sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+        "receipt": {
+          "schema_version": 1,
+          "policy": {
+            "version": 1,
+            "id": "anticipation_stop_width_follow_through_v1",
+            "cohort_policy_id": "anticipation_stop_width_4_to_5_v1",
+            "horizon_sessions": 5,
+            "population": "frozen_allocation_fit_only",
+            "primary": "first_actual_before_entry_per_applicable_session",
+            "observation_price_decimals": 4,
+            "basis": "same_provider_feed_adjustment_daily_and_fresh_matching_anchor",
+            "replay_rules": {
+              "version": 1,
+              "fill": "open_inside_zone",
+              "same_bar": "stop_first",
+              "whole_shares": "ceil_half",
+              "r": "original_stop_weighted_complete_sales_v1",
+              "plan": {
+                "sell_half_pct": 8.0,
+                "abnormal_day_pct": 10.0,
+                "gap_exit_pct": 20.0,
+                "trail_cents": 0.25,
+                "sell_half_day": 3,
+                "no_progress_day": 3,
+                "trail_from_day": 3,
+                "final_exit_day": 5,
+                "entry_day": 1,
+                "precision.cents": 2,
+                "precision.pct_decimals": 2
+              },
+              "record": {
+                "open_plan_sessions": 5,
+                "known_fill": "open_inside_zone"
+              },
+              "calendar": {
+                "version": 1,
+                "exchange": "XNYS",
+                "library": "exchange_calendars",
+                "library_version": "4.13.2",
+                "timezone": "America/New_York",
+                "completion_buffer_minutes": 15
+              }
+            },
+            "costs": "unspecified_actual_fees_and_slippage_excluded",
+            "aggregation": "counts_only_no_portfolio_performance"
+          },
+          "publication": {
+            "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+            "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+            "run_id": "38034610157",
+            "rules_version": "c9dc7d6d1d87",
+            "measured_session": "2026-10-09",
+            "applicable_session": "2026-10-12",
+            "published_at": "2026-10-10T07:30:15.553690+00:00",
+            "reader_projection_version": 1,
+            "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+          },
+          "generated_at": "2026-10-10T08:50:21.159749+00:00",
+          "cohort_set_sha256": "79d392c8191dd2e18dad088f51c74845b6c5effbe339d79f8794113d63f8d0e7",
+          "counts": {
+            "cohorts": 1,
+            "primary_cohorts": 1,
+            "rows": 5,
+            "eligible": 2,
+            "by_status": {
+              "pending": 2,
+              "missing": 0,
+              "uncertain": 0,
+              "not_filled": 0,
+              "open": 0,
+              "resolved": 0,
+              "excluded": 3,
+              "origin_unavailable": 0,
+              "basis_conflict": 0,
+              "unsupported": 0,
+              "unreadable": 0
+            }
+          },
+          "bundle": {
+            "path": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+            "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172",
+            "bytes": 17104
+          }
+        },
+        "receipt_sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2",
+        "receipt_bytes": 2132,
+        "index_sha256": "c982d642da83154529807303d8081a840e80906aa51ecaf78d910e00fb8d4fca",
+        "index_bytes": 405,
+        "rows": [
+          {
+            "ticker": "MG",
+            "primary": true,
+            "model": {
+              "current_stop": null,
+              "day": 0,
+              "entry": null,
+              "events": [],
+              "expected_sessions": [],
+              "missing_sessions": [],
+              "original_shares": 3,
+              "r": null,
+              "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+              "remaining_shares": null,
+              "sessions": 0,
+              "sold_shares": null,
+              "status": "excluded",
+              "uncertainty": null
+            }
+          },
+          {
+            "ticker": "KE",
+            "primary": true,
+            "model": {
+              "current_stop": null,
+              "day": 0,
+              "entry": null,
+              "events": [],
+              "expected_sessions": [],
+              "missing_sessions": [],
+              "original_shares": 1,
+              "r": null,
+              "reason": "Awaiting 2026-10-12 entry-session observations.",
+              "remaining_shares": null,
+              "sessions": 0,
+              "sold_shares": null,
+              "status": "pending",
+              "uncertainty": null
+            }
+          },
+          {
+            "ticker": "ZIM",
+            "primary": true,
+            "model": {
+              "current_stop": null,
+              "day": 0,
+              "entry": null,
+              "events": [],
+              "expected_sessions": [],
+              "missing_sessions": [],
+              "original_shares": 2,
+              "r": null,
+              "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+              "remaining_shares": null,
+              "sessions": 0,
+              "sold_shares": null,
+              "status": "excluded",
+              "uncertainty": null
+            }
+          },
+          {
+            "ticker": "SN",
+            "primary": true,
+            "model": {
+              "current_stop": null,
+              "day": 0,
+              "entry": null,
+              "events": [],
+              "expected_sessions": [],
+              "missing_sessions": [],
+              "original_shares": 0,
+              "r": null,
+              "reason": "Not an allocated research idea in the frozen cohort: no_whole_share, occupied_model_symbol",
+              "remaining_shares": null,
+              "sessions": 0,
+              "sold_shares": null,
+              "status": "excluded",
+              "uncertainty": null
+            }
+          },
+          {
+            "ticker": "PSNL",
+            "primary": true,
+            "model": {
+              "current_stop": null,
+              "day": 0,
+              "entry": null,
+              "events": [],
+              "expected_sessions": [],
+              "missing_sessions": [],
+              "original_shares": 3,
+              "r": null,
+              "reason": "Awaiting 2026-10-12 entry-session observations.",
+              "remaining_shares": null,
+              "sessions": 0,
+              "sold_shares": null,
+              "status": "pending",
+              "uncertainty": null
+            }
+          }
+        ],
+        "public_acceptance": false,
+        "actual_trade": false
+      }
+    },
+    "actual_independent": {
+      "sha256": "f766a0c08684e694d00d4dbb6c3750eb229befa95077b6436797e12e86b5ed4c",
+      "receipt": {
+        "schema": "actual-research-outcomes-independent-v1",
+        "head_during_read": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "producer_source_sha256": "b7456ae8270ad4ee88135b24090a3d36bf0ba442f9d509762a4db6f2e2825397",
+        "artifacts": {
+          "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+          "receipt_sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2",
+          "receipt_bytes": 2132,
+          "bundle_sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172",
+          "bundle_bytes": 17104,
+          "cohort_sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+        },
+        "generated_at": "2026-10-10T08:50:21.159749+00:00",
+        "cohort_generated_at": "2026-10-10T08:11:55.173159+00:00",
+        "applicable_session": "2026-10-12",
+        "source_measured_session": "2026-10-09",
+        "counts": {
+          "by_status": {
+            "basis_conflict": 0,
+            "excluded": 3,
+            "missing": 0,
+            "not_filled": 0,
+            "open": 0,
+            "origin_unavailable": 0,
+            "pending": 2,
+            "resolved": 0,
+            "uncertain": 0,
+            "unreadable": 0,
+            "unsupported": 0
+          },
+          "cohorts": 1,
+          "eligible": 2,
+          "primary_cohorts": 1,
+          "rows": 5
+        },
+        "actual_models": {
+          "KE": {
+            "current_stop": null,
+            "day": 0,
+            "entry": null,
+            "events": [],
+            "expected_sessions": [],
+            "missing_sessions": [],
+            "original_shares": 1,
+            "r": null,
+            "reason": "Awaiting 2026-10-12 entry-session observations.",
+            "remaining_shares": null,
+            "sessions": 0,
+            "sold_shares": null,
+            "status": "pending",
+            "uncertainty": null
+          },
+          "PSNL": {
+            "current_stop": null,
+            "day": 0,
+            "entry": null,
+            "events": [],
+            "expected_sessions": [],
+            "missing_sessions": [],
+            "original_shares": 3,
+            "r": null,
+            "reason": "Awaiting 2026-10-12 entry-session observations.",
+            "remaining_shares": null,
+            "sessions": 0,
+            "sold_shares": null,
+            "status": "pending",
+            "uncertainty": null
+          }
+        },
+        "immutable_archive_files_unchanged": 9178,
+        "network_attempts": 0,
+        "strict_actual_source_replay": "PASS",
+        "claim": "Two research ideas await Oct12 observations; no actual trade, return, model fill, or broker balance is established."
+      }
+    },
+    "original_docs_independent": {
+      "sha256": "df4c0f997655d7d088154fa86388832668f4b0f8e20c5618a10f35e94e5540e9",
+      "receipt": {
+        "head": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "scope": "Every tracked original docs file compared byte-for-byte by Git blob SHA; new journal artifacts excluded because absent from baseline tree.",
+        "original_files_checked": 19058,
+        "bytes_checked": 191243348,
+        "mismatches": [],
+        "by_directory": {
+          "top-level": 32,
+          "docs/actionability": 2,
+          "docs/continuity": 3,
+          "docs/design-system": 23,
+          "docs/evidence": 9176,
+          "docs/history": 9408,
+          "docs/input-truthfulness": 385,
+          "docs/issuer-evidence": 2,
+          "docs/provenance": 3,
+          "docs/quality-ledger": 17,
+          "docs/reader-observations": 5,
+          "docs/stop-research": 2
+        }
+      }
+    },
+    "raw_scan_independent": {
+      "sha256": "55385dd0b4fb2bf987057feb76a9be436f34a5a76259bfb6977d878f81e66b04",
+      "receipt": {
+        "schema": "journal-raw-scan-independent-v1",
+        "head": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "scope": "Fresh engine runs over exact git-pinned decompressed source fixtures, independently checked against prior captures and finding coordinates. No repository writes/provider calls.",
+        "config_sha256": "1e5741cae35c6c6b7cf6c758e44565749160245646cccf07587d13d9728357a3",
+        "files": {
+          "tests/fixtures/research-outcomes/basis-conflict-publication.json.gz": {
+            "packed_sha256": "2adf3ae40dd4a49a00d93b5a49e4919bc11be4f6e53ed99c18deb1e4241793c8",
+            "raw_sha256": "7595e7e5ec7830e2593a411bec73112f6658ab2266d49296c27bf50a0b747c76",
+            "raw_bytes": 186000
+          },
+          "tests/fixtures/research-outcomes/basis-conflict-reader.json.gz": {
+            "packed_sha256": "a94a15e33b622fd7513e091ca441e05cbb4eeb6151ca7ea907642d67e21374ea",
+            "raw_sha256": "e33e265411ab22a783ecb6726b8b61679a0536a14283529a668da5cf7ffc8758",
+            "raw_bytes": 178682
+          },
+          "tests/fixtures/research-outcomes/cohort-revisions-publication.json.gz": {
+            "packed_sha256": "498c4f79cc88ae7f8af0bad36eff5e7cb449bcc5f763813145739832624580bb",
+            "raw_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+            "raw_bytes": 252385
+          },
+          "tests/fixtures/research-outcomes/cohort-revisions-reader.json.gz": {
+            "packed_sha256": "afa5304c98822439b31418e67bb3be2d4b4e68279f608f18e2bbf53ce780d55e",
+            "raw_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+            "raw_bytes": 248239
+          },
+          "tests/fixtures/research-outcomes/empty-publication.json.gz": {
+            "packed_sha256": "0ad0b64371f1bbe983f70264d53efd1f46f516d6cf1e88ff306b8f63bc3629af",
+            "raw_sha256": "c687aa23c715614c8781c1019050d41eec62dbac995d4dc87138da3b9811d10d",
+            "raw_bytes": 45191
+          },
+          "tests/fixtures/research-outcomes/empty-reader.json.gz": {
+            "packed_sha256": "29178bde5cc055647a056c49e87402fd2566c7ad7cc997d7aacc804cf9f7ff64",
+            "raw_sha256": "e7fa83191115a1f1466d461d8ae2f2f2e84543d248405d629a07a018dd2e6cb7",
+            "raw_bytes": 45558
+          },
+          "tests/fixtures/research-outcomes/missing-publication.json.gz": {
+            "packed_sha256": "36bf071446e6f9cff3728d6c5dd9f16b6e0efc6ab027848a420c70e5f71d9d02",
+            "raw_sha256": "a2f20d875312d762f5246ea1f7f1cc8a888b6738f029a545759ebc51bfe20c4b",
+            "raw_bytes": 170305
+          },
+          "tests/fixtures/research-outcomes/missing-reader.json.gz": {
+            "packed_sha256": "d37fec296b092360f38e879c5881fea0b486627cd9ef273d5fc1ad6d57a80db7",
+            "raw_sha256": "a57549bfe66a486181163dfa8007a00196c3391248879bb2fa8dcf441c7682bf",
+            "raw_bytes": 162419
+          },
+          "tests/fixtures/research-outcomes/not-filled-publication.json.gz": {
+            "packed_sha256": "2ea68d752758b8548379d595f7009ab6b60bf6fba0127d72398cb93dacf2ef4a",
+            "raw_sha256": "5447182a2cb6c3873023e579e51b84d5d9ee05c9858463f4cfd0c36181a2a444",
+            "raw_bytes": 187023
+          },
+          "tests/fixtures/research-outcomes/not-filled-reader.json.gz": {
+            "packed_sha256": "323af5103213f40c628d41c220e674e26003277895854e619761c1d7b12da085",
+            "raw_sha256": "a208bb0dbb4717cf0e1ce3501a25a7f566c5520560d067507031198a7bdd9d64",
+            "raw_bytes": 179693
+          },
+          "tests/fixtures/research-outcomes/observed-publication.json.gz": {
+            "packed_sha256": "745b9a525727f1694ebcac77cefb3cff3982342bc7fa2834e35890d907429c41",
+            "raw_sha256": "ae9059f929bb09403846cf0331422d5bc45132eaa932c938b9b257d2ba5a0bf0",
+            "raw_bytes": 185994
+          },
+          "tests/fixtures/research-outcomes/observed-reader.json.gz": {
+            "packed_sha256": "c76757811a1b13dc88b27438bc75eb068c883b71ae80f66fbe52e743cd2dcaf3",
+            "raw_sha256": "c17e47e4ead259dd23a1f180832aceb1feab93c7a76fe3294d32a4ee3fc812e0",
+            "raw_bytes": 178676
+          },
+          "tests/fixtures/research-outcomes/pending-publication.json.gz": {
+            "packed_sha256": "b7e3d25a6703c7fab2710ac0bdc3de85c1d8eaa512ff8b51a0ccef7a23f4c274",
+            "raw_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+            "raw_bytes": 12963197
+          },
+          "tests/fixtures/research-outcomes/pending-reader.json.gz": {
+            "packed_sha256": "1f0c0857fadd7ac27e9d5e7d57706a09fb580b1618616c8fde2dc67e4380bb4b",
+            "raw_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+            "raw_bytes": 4016951
+          },
+          "tests/fixtures/research-outcomes/red-publication.json.gz": {
+            "packed_sha256": "456a6467bfea4eb0970bf3d0e22580200c9632116583bcdfdb9bfea998d25b30",
+            "raw_sha256": "36a19fc5e1ce0cf0bf55230c375fc128b670cda52784ad14900c0ecd9a3ac98a",
+            "raw_bytes": 235680
+          },
+          "tests/fixtures/research-outcomes/red-reader.json.gz": {
+            "packed_sha256": "96aba5f62112b401a0224beffeb58a09ec70b13575569d3df73082bd711fb171",
+            "raw_sha256": "e80de153f610cff4c06df0d07ad053219a41be672557fdeaff12fea7adc4fc77",
+            "raw_bytes": 231534
+          },
+          "tests/fixtures/research-outcomes/revised-publication.json.gz": {
+            "packed_sha256": "02d31e6b797354ef4cfd49ff74c8c508002b1d5df18c24a347e7b8732084f283",
+            "raw_sha256": "862d52a69f5ffd5e1f77dbb08250ea00443c9ccd14743c2ef03fa4d00651da37",
+            "raw_bytes": 185995
+          },
+          "tests/fixtures/research-outcomes/revised-reader.json.gz": {
+            "packed_sha256": "5a9e8359c01b9466634fe0b1a46112db4c620c475e692432c48a89dea175b5e6",
+            "raw_sha256": "77896c286eec39adebe70011a793e967eb3eab7d25fb1079f86ce28244ca117d",
+            "raw_bytes": 178677
+          },
+          "tests/fixtures/research-outcomes/synthetic-pending-publication.json.gz": {
+            "packed_sha256": "498c4f79cc88ae7f8af0bad36eff5e7cb449bcc5f763813145739832624580bb",
+            "raw_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+            "raw_bytes": 252385
+          },
+          "tests/fixtures/research-outcomes/synthetic-pending-reader.json.gz": {
+            "packed_sha256": "afa5304c98822439b31418e67bb3be2d4b4e68279f608f18e2bbf53ce780d55e",
+            "raw_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+            "raw_bytes": 248239
+          }
+        },
+        "results": {
+          "8.24.3": {
+            "engine_sha256": "e18325d568268b6efb6cd0cc721f8bea5667f4cd1c8d03618ab61987f41269ad",
+            "exit": 1,
+            "findings": 110,
+            "classified_identifiers": {
+              "down25_quarter": 20,
+              "pct_above_40ma": 20,
+              "abnormal_10pct": 70
+            },
+            "unknown": 0,
+            "by_path": {
+              "tests/fixtures/research-outcomes/empty-publication.json.gz": 2,
+              "tests/fixtures/research-outcomes/empty-reader.json.gz": 2,
+              "tests/fixtures/research-outcomes/basis-conflict-reader.json.gz": 4,
+              "tests/fixtures/research-outcomes/revised-publication.json.gz": 4,
+              "tests/fixtures/research-outcomes/pending-publication.json.gz": 7,
+              "tests/fixtures/research-outcomes/basis-conflict-publication.json.gz": 4,
+              "tests/fixtures/research-outcomes/revised-reader.json.gz": 4,
+              "tests/fixtures/research-outcomes/missing-reader.json.gz": 4,
+              "tests/fixtures/research-outcomes/synthetic-pending-reader.json.gz": 9,
+              "tests/fixtures/research-outcomes/not-filled-reader.json.gz": 5,
+              "tests/fixtures/research-outcomes/cohort-revisions-reader.json.gz": 9,
+              "tests/fixtures/research-outcomes/cohort-revisions-publication.json.gz": 9,
+              "tests/fixtures/research-outcomes/missing-publication.json.gz": 4,
+              "tests/fixtures/research-outcomes/synthetic-pending-publication.json.gz": 9,
+              "tests/fixtures/research-outcomes/pending-reader.json.gz": 7,
+              "tests/fixtures/research-outcomes/observed-publication.json.gz": 4,
+              "tests/fixtures/research-outcomes/observed-reader.json.gz": 4,
+              "tests/fixtures/research-outcomes/red-reader.json.gz": 7,
+              "tests/fixtures/research-outcomes/not-filled-publication.json.gz": 5,
+              "tests/fixtures/research-outcomes/red-publication.json.gz": 7
+            }
+          },
+          "8.30.1": {
+            "engine_sha256": "88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509",
+            "exit": 0,
+            "findings": 0,
+            "classified_identifiers": {},
+            "unknown": 0,
+            "by_path": {}
+          }
+        },
+        "conclusion": "Pinned raw scan has110 classified public rule identifier findings, not zero findings; unknown0. Current engine raw0."
+      }
+    },
+    "browser_owner": {
+      "sha256": "467d80283b620e2f1c63ca9896a5ac52a8a6977f9f670ae8bf2b0b260f6c2469",
+      "receipt": {
+        "status": "PASS_LOCAL_CONTROLLED_BROWSER_ACCEPTANCE",
+        "generated_at": "2026-10-10T08:46:48.557922+00:00",
+        "scope": "Offline genuine producer fixtures and isolated malformed served copies only; no actual public journal acceptance, provider call, user trade, account outcome, or order action claimed.",
+        "checks": 324,
+        "runtime": {
+          "path": "docs/app-research-outcomes.js",
+          "sha256": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4"
+        },
+        "test": {
+          "path": "tools/research_outcomes_cases.mjs",
+          "sha256": "6376e824986dfb58d2fc67c48bf5c6eaaf7d7b0b80a59af899f6e258cc59767a"
+        },
+        "browser_log": {
+          "path": "/tmp/spicystock-research-outcomes-final-release-browser.log",
+          "sha256": "a5fd7a3ab1c1ee04b2cb75d0b4c02354a5cd1ed3673bc22dd71adb39ff83306d"
+        },
+        "mutations": {
+          "path": "/tmp/spicystock-research-outcomes-mutations-final/results.json",
+          "sha256": "e06d5bd15f82499a6818ebf53cdf08b38d5c0423f1369a7e49a0c5068c95ca2d",
+          "targeted_kills": 6,
+          "unrelated_passed": 324,
+          "final_runtime_delta_from_guard_copies": {
+            "before": "Model whole-share partial exit",
+            "after": "Model whole-share exit",
+            "occurrences": 1,
+            "kind": "display label only; all guards identical"
+          },
+          "orchestrator_exit": 1,
+          "exit_explanation": "The orchestrator stability assertion correctly noticed the owner applied the announced one-string copy change while immutable /tmp mutants were running. This receipt independently proves the only runtime delta and retains the individual executed logs. Final exact-runtime baseline passed324/324 afterward."
+        },
+        "coverage": [
+          "Exact actual canonical/reader binding and fixed two-request lazy transport",
+          "All original cohort rows, eligibility, primary/revision order and byte identities",
+          "One-share resolved2.26R versus same-close low-revised-1.00R; uncertain, open, not-filled, missing, basis-conflict, empty and refused states",
+          "Real15-second stalled-bundle deadline and successful retry; actual byte caps and raw BOM",
+          "No order/copy/draft promotion; preserved non-null chart, cash input node/value/focus, private store and public model",
+          "Phone/desktop light/dark, bounded inert HTML-like source text, stale response and missing crypto"
+        ],
+        "fixtures": [
+          {
+            "name": "basis-conflict-bundle.json",
+            "bytes": 15469,
+            "sha256": "a8d001e0607fe90f849ff283a86778747aac2c6336626745dabea376c9b48dd6"
+          },
+          {
+            "name": "basis-conflict-publication.json.gz",
+            "bytes": 33420,
+            "sha256": "2adf3ae40dd4a49a00d93b5a49e4919bc11be4f6e53ed99c18deb1e4241793c8"
+          },
+          {
+            "name": "basis-conflict-reader.json.gz",
+            "bytes": 32851,
+            "sha256": "a94a15e33b622fd7513e091ca441e05cbb4eeb6151ca7ea907642d67e21374ea"
+          },
+          {
+            "name": "basis-conflict-receipt.json",
+            "bytes": 2139,
+            "sha256": "65d4afd11d5deee1ebc5b4c1f98f465ae79a61dc10c9e9e0e82605a2512d4acd"
+          },
+          {
+            "name": "cohort-revisions-bundle.json",
+            "bytes": 33044,
+            "sha256": "eb9ca8a5df35b0e8b9fa221441ad035c775a039aa151481dd23778fb77f8ae2a"
+          },
+          {
+            "name": "cohort-revisions-publication.json.gz",
+            "bytes": 34577,
+            "sha256": "498c4f79cc88ae7f8af0bad36eff5e7cb449bcc5f763813145739832624580bb"
+          },
+          {
+            "name": "cohort-revisions-reader.json.gz",
+            "bytes": 34253,
+            "sha256": "afa5304c98822439b31418e67bb3be2d4b4e68279f608f18e2bbf53ce780d55e"
+          },
+          {
+            "name": "cohort-revisions-receipt.json",
+            "bytes": 2140,
+            "sha256": "d522383940ec1d9d299f4b6438161ad88ea21b3d2ad3c57f432cd79a9d8b7ffb"
+          },
+          {
+            "name": "empty-bundle.json",
+            "bytes": 5608,
+            "sha256": "abfcd59b7662442640d12cddef00cdb2834c31283adc6ad6e13ac74d74455192"
+          },
+          {
+            "name": "empty-publication.json.gz",
+            "bytes": 12338,
+            "sha256": "0ad0b64371f1bbe983f70264d53efd1f46f516d6cf1e88ff306b8f63bc3629af"
+          },
+          {
+            "name": "empty-reader.json.gz",
+            "bytes": 12504,
+            "sha256": "29178bde5cc055647a056c49e87402fd2566c7ad7cc997d7aacc804cf9f7ff64"
+          },
+          {
+            "name": "empty-receipt.json",
+            "bytes": 2135,
+            "sha256": "57f0434d3728bbebbf2981abb7ad161c5a74ea0c4ca819de90f19c518dc9663c"
+          },
+          {
+            "name": "missing-bundle.json",
+            "bytes": 18281,
+            "sha256": "922ede6debfe9a9ba47ed794b5186f24135874ab52055dd2232f620b5b98dadd"
+          },
+          {
+            "name": "missing-publication.json.gz",
+            "bytes": 28850,
+            "sha256": "36bf071446e6f9cff3728d6c5dd9f16b6e0efc6ab027848a420c70e5f71d9d02"
+          },
+          {
+            "name": "missing-reader.json.gz",
+            "bytes": 28281,
+            "sha256": "d37fec296b092360f38e879c5881fea0b486627cd9ef273d5fc1ad6d57a80db7"
+          },
+          {
+            "name": "missing-receipt.json",
+            "bytes": 2132,
+            "sha256": "0e77d2270749cf1f2104bff14ddc69486c98413b4cd88b30cf00eb8bcc2d6e77"
+          },
+          {
+            "name": "not-filled-bundle.json",
+            "bytes": 18469,
+            "sha256": "f21ede138a21a6da6a561f01433e4c3eaae9430c76512d9a07d86ccc80778791"
+          },
+          {
+            "name": "not-filled-publication.json.gz",
+            "bytes": 34830,
+            "sha256": "2ea68d752758b8548379d595f7009ab6b60bf6fba0127d72398cb93dacf2ef4a"
+          },
+          {
+            "name": "not-filled-reader.json.gz",
+            "bytes": 34242,
+            "sha256": "323af5103213f40c628d41c220e674e26003277895854e619761c1d7b12da085"
+          },
+          {
+            "name": "not-filled-receipt.json",
+            "bytes": 2135,
+            "sha256": "b41b602301503c39758650d68dac0d547229ceeecbb3f04424f84ff19a5c4a73"
+          },
+          {
+            "name": "observed-bundle.json",
+            "bytes": 18456,
+            "sha256": "a0de9cb04255cbac9ddd5c2af062c6c65334ca94bf995402ed0cb4683c96a966"
+          },
+          {
+            "name": "observed-publication.json.gz",
+            "bytes": 33414,
+            "sha256": "745b9a525727f1694ebcac77cefb3cff3982342bc7fa2834e35890d907429c41"
+          },
+          {
+            "name": "observed-reader.json.gz",
+            "bytes": 32845,
+            "sha256": "c76757811a1b13dc88b27438bc75eb068c883b71ae80f66fbe52e743cd2dcaf3"
+          },
+          {
+            "name": "observed-receipt.json",
+            "bytes": 2133,
+            "sha256": "0073a900e96c8768f09e92f9537cf55b8674d76406c70bd880863a7898d17961"
+          },
+          {
+            "name": "pending-bundle.json",
+            "bytes": 17097,
+            "sha256": "7a68310334d570f2b8304bcd524ef919653f7e94fbbfa12fe82245e729346a07"
+          },
+          {
+            "name": "pending-publication.json.gz",
+            "bytes": 1174711,
+            "sha256": "b7e3d25a6703c7fab2710ac0bdc3de85c1d8eaa512ff8b51a0ccef7a23f4c274"
+          },
+          {
+            "name": "pending-reader.json.gz",
+            "bytes": 468451,
+            "sha256": "1f0c0857fadd7ac27e9d5e7d57706a09fb580b1618616c8fde2dc67e4380bb4b"
+          },
+          {
+            "name": "pending-receipt.json",
+            "bytes": 2125,
+            "sha256": "ceb7142c2c73f615cb731e3fbe34115904c55cea4906f796f0b3f6cd416821d2"
+          },
+          {
+            "name": "red-bundle.json",
+            "bytes": 14881,
+            "sha256": "36242fdb6cbf12d78b49aee3954f5ffc36fb7682f50e678d99675cbc64662d4f"
+          },
+          {
+            "name": "red-publication.json.gz",
+            "bytes": 30892,
+            "sha256": "456a6467bfea4eb0970bf3d0e22580200c9632116583bcdfdb9bfea998d25b30"
+          },
+          {
+            "name": "red-reader.json.gz",
+            "bytes": 30567,
+            "sha256": "96aba5f62112b401a0224beffeb58a09ec70b13575569d3df73082bd711fb171"
+          },
+          {
+            "name": "red-receipt.json",
+            "bytes": 2134,
+            "sha256": "0141a23b1ee1c2a62f85d4241564c484ded634b5c26b205a04a9da3cbcc934ff"
+          },
+          {
+            "name": "revised-bundle.json",
+            "bytes": 18524,
+            "sha256": "940bec903430d470737b6b5d401eed6513dd38d989a3df80aa28e56c2504fbdd"
+          },
+          {
+            "name": "revised-publication.json.gz",
+            "bytes": 33427,
+            "sha256": "02d31e6b797354ef4cfd49ff74c8c508002b1d5df18c24a347e7b8732084f283"
+          },
+          {
+            "name": "revised-reader.json.gz",
+            "bytes": 32858,
+            "sha256": "5a9e8359c01b9466634fe0b1a46112db4c620c475e692432c48a89dea175b5e6"
+          },
+          {
+            "name": "revised-receipt.json",
+            "bytes": 2132,
+            "sha256": "81984d941f1be81d7247558aea0ecd48796c02728053debd64fb28edb9a4e471"
+          },
+          {
+            "name": "synthetic-pending-bundle.json",
+            "bytes": 17710,
+            "sha256": "6bcaa364d9041261b70a035c0f2af435272265c66468f8ccb34f2c439fdd69de"
+          },
+          {
+            "name": "synthetic-pending-publication.json.gz",
+            "bytes": 34577,
+            "sha256": "498c4f79cc88ae7f8af0bad36eff5e7cb449bcc5f763813145739832624580bb"
+          },
+          {
+            "name": "synthetic-pending-reader.json.gz",
+            "bytes": 34253,
+            "sha256": "afa5304c98822439b31418e67bb3be2d4b4e68279f608f18e2bbf53ce780d55e"
+          },
+          {
+            "name": "synthetic-pending-receipt.json",
+            "bytes": 2139,
+            "sha256": "f4d7e966a4c427be93e43b62e396a6049a48ffd4ec1e137f029d9adf82b8a5a2"
+          }
+        ],
+        "screenshots": [
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-basis-conflict-390-light-COIL.png",
+            "sha256": "fb4616a15d07164e1e8bb0075b4bfaecdae4ec41482bdaff49f50e54635e14ca",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-basis-conflict-390-light.png",
+            "sha256": "9f79095ba426717ac6bad03fac6434c9db97e7b9917ed56b076605b75788a6bc",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-cohort-revisions-390-light-COIL.png",
+            "sha256": "b0639cf4514cab66e4c586a2de65ebf3223ac0a075bcea182b8653a5f2aba6fe",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-cohort-revisions-390-light.png",
+            "sha256": "0d55cf76c6bcaf9bab0fa2d5a9fec0b7a8d9ba59c8fb2ff4197cca33ef4584e2",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-empty-390-light.png",
+            "sha256": "079675eb7720a5aef8dc2993c3218e9c3580f224752584c50a8c2a1e46bb9132",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-missing-390-light-COIL.png",
+            "sha256": "f895598de54a904c5fb1096e14df25bd58a897a953ffc1496f5e5ec9b051a6cf",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-missing-390-light.png",
+            "sha256": "bbfdc7b96c142db17288a2458fd13c6d987117d588e18fed3161f3960a7f4134",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-not-filled-390-light-COIL.png",
+            "sha256": "397eb32b978021f854d4c9a95a85d36171088ae7d34d53d0f2d7783d885b339b",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-not-filled-390-light.png",
+            "sha256": "9f79095ba426717ac6bad03fac6434c9db97e7b9917ed56b076605b75788a6bc",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-observed-390-light-COIL.png",
+            "sha256": "f8b24cdaadbc0a6e2cf45f1858a053f9c26d2fe2016ccbeadbb0a277712257e8",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-observed-390-light-RONE.png",
+            "sha256": "a2caeccb17d3c7299361411c928a1f3c559e3405dfea1265771a9b39835c690b",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-observed-390-light-RTHR.png",
+            "sha256": "481c20261b482bb07d0f324169d782f3bdcd97e8ea35e22fbee2fd96156abec3",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-observed-390-light-result.png",
+            "sha256": "a9c6096f7623eb14d79b735a9617c93138396c8cdbfac13215327a07201610e8",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-observed-390-light.png",
+            "sha256": "9f79095ba426717ac6bad03fac6434c9db97e7b9917ed56b076605b75788a6bc",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-1280-dark-KE.png",
+            "sha256": "ffd0dea666e220778b086035ad06f6be95fcb13571f34f47aac315fd76a6a1ef",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-1280-dark.png",
+            "sha256": "78b743cce1ba9217ed4981953fa9fe2b9dd16323ce82b465d9f2a94b90ed0561",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-1280-light-KE.png",
+            "sha256": "9aa87dc16db3e9ed995d2e40a2474375a5bdf5c0d5b9c0284832c1e9b830d206",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-1280-light.png",
+            "sha256": "c5d4b8fd3121486a48eb646359bf501f4fa1175143aa7a83f60d101a24daaef1",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-390-dark-KE.png",
+            "sha256": "36be9d5a0cdfc0c5a74504e27c1dcc05f2bff5f4c807d13941780e803ca87e80",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-390-dark.png",
+            "sha256": "efd36ea53da741f43abb9b6ec6a4a0c1a848dfb477d48c969c14970d070e44e4",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-390-light-KE.png",
+            "sha256": "4fd17f569c90f29feae4f9d9fb47567e61a9ec08f27cf76f2baa4a4d1537fd73",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-pending-390-light.png",
+            "sha256": "aca8b4b5d1059bce53f6a9b89b7e8ef116299fd4c86da370d37d5225637fd08c",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-red-390-light.png",
+            "sha256": "d7fffa6cc7e9564517aff9c767d56ca9934ddc9581eba3f1aa4671cbb34fcb00",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-revised-390-light-COIL.png",
+            "sha256": "f8b24cdaadbc0a6e2cf45f1858a053f9c26d2fe2016ccbeadbb0a277712257e8",
+            "visually_inspected": false
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-revised-390-light-result.png",
+            "sha256": "8d8af9f2fe415bf5978c1db5117c520d1089d726856faa4c2d15cf6db60ee0c7",
+            "visually_inspected": true
+          },
+          {
+            "path": "/tmp/spicystock-research-outcomes-final-release-shots/research-outcomes-revised-390-light.png",
+            "sha256": "9f79095ba426717ac6bad03fac6434c9db97e7b9917ed56b076605b75788a6bc",
+            "visually_inspected": false
+          }
+        ],
+        "visual_review": "Fourteen critical state/summary/result views inspected directly or verified byte-identical to inspected captures. Dated conditional evidence and unknown values are clear, with no horizontal overflow. Remaining companion frames are retained for review."
+      }
+    },
+    "browser_independent": {
+      "sha256": "c07f2ff9223a632aff6698449fc13df666d213a36517c2b368ae562fe8d3ed16",
+      "receipt": {
+        "verdict": "NO_BLOCKER",
+        "head": "200476d4715b187bfec931f0cbe7d89a2d70a04b",
+        "source_sha256": {
+          "src/research_outcomes.py": "b7456ae8270ad4ee88135b24090a3d36bf0ba442f9d509762a4db6f2e2825397",
+          "docs/app-research-outcomes.js": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4",
+          "docs/app-morning.js": "6f799ae5563ca961fc5e4e2b7a60258be498daf0419c4e151f4afcca24b3cfb5",
+          "docs/app.js": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+        },
+        "scope": "Independent read-only journal source/chronology/coverage/private/recovery review; no shared repository edits, provider calls, or deployment.",
+        "browser_checks": {
+          "private_recovery": {
+            "passed": 80,
+            "total": 80,
+            "receipt": "/tmp/spicystock-research-outcomes-private-independent/receipt.json"
+          },
+          "carry_no_origin": {
+            "passed": 28,
+            "total": 28,
+            "receipt": "/tmp/spicystock-research-outcomes-carry-independent/receipt.json"
+          }
+        },
+        "exact_current_derivation": {
+          "explicit_test_generation_clock": "2026-10-10T12:00:00Z",
+          "real_publication_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "real_reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+          "frozen_source_cohort": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+          "no_network": true,
+          "not_publicly_deployed": true
+        },
+        "explicit_synthetic_producer_carry": {
+          "kind": "EXPLICIT_SYNTHETIC_REAL_PIPELINE_AND_PRODUCER_CONTROLS",
+          "not_actual_market_or_personal_results": true,
+          "no_network": true,
+          "carried": {
+            "current_observation_measured_session": "2026-10-13",
+            "original_evidence_session": "2026-10-12",
+            "original_bar_dates": [
+              "2026-10-12"
+            ],
+            "model_status": "resolved",
+            "model_R": 2.26,
+            "missing_sessions": [
+              "2026-10-13"
+            ]
+          },
+          "no_origin_count": 3
+        },
+        "fixed_findings": [
+          {
+            "finding": "Missing completed sessions and processed sessions could understate attached coverage after coherent resealing.",
+            "closure": "Baseline remains valid; empty missing_sessions and sessions greater than attached bars now refuse under stdlib validation.",
+            "evidence": "/tmp/spicystock-research-outcomes-missing-accounting-repro.json"
+          },
+          {
+            "finding": "A fresh clip omitting an already-conclusive earlier prefix could erase its resolved outcome.",
+            "closure": "Genuine offline producer follow-up retains original dated conclusive clip and reports the missing later session. New overlapping price revisions remain new evidence.",
+            "evidence": "/tmp/spicystock-research-outcomes-independent-carry/provenance.json"
+          }
+        ],
+        "private_boundaries": [
+          "fresh test browser contexts only",
+          "schema-v1 bytes unchanged on read/load/reload",
+          "exact dirty input node/focus/selection/cash continuity through startup failure, render failure and retry",
+          "reported synthetic $4 net remains separate from pending model",
+          "same COIL model result cannot fill unknown personal actual costs",
+          "fixed same-origin GETs omit cookies/auth/referrer and private query values",
+          "no order, copy, preparation or provider authority introduced"
+        ],
+        "screens_inspected": [
+          "/tmp/spicystock-research-outcomes-carry-independent/carried-390.png",
+          "/tmp/spicystock-research-outcomes-carry-independent/carried-1280.png"
+        ],
+        "not_publicly_deployed": true,
+        "test_clock_and_synthetic_scope_explicit": true
+      }
+    },
+    "integrated_private": {
+      "sha256": "c4ab1f2fb3b913693ac2dd43306f794d2cc08d1a4fa3cd275a49132feaa29596",
+      "receipt": {
+        "head": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "fixture_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+        "synthetic_offline_fixture": true,
+        "real_http_faults": true,
+        "production_deadline_ms": 15000,
+        "pinned_clock": "2026-10-10T12:01:00Z",
+        "checks": [
+          {
+            "name": "journal startup with no publication no current authority",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication disabled plan navigation and draft copy/preparation",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication explicit unavailable headline",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication private desk accessible",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication one private editor",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication original stored bytes unchanged",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication no automatic private writes",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication saved handoff readable",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication exact draft input node preserved",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication draft and dirty status preserved",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication focus and selection preserved",
+            "pass": true
+          },
+          {
+            "name": "journal startup with no publication no document overflow",
+            "pass": true
+          },
+          {
+            "name": "unbound journal makes zero requests and shows no model rows",
+            "pass": true
+          },
+          {
+            "name": "Retry with already-open journal exact report input node",
+            "pass": true
+          },
+          {
+            "name": "Retry with already-open journal unsaved report value/focus/selection",
+            "pass": true
+          },
+          {
+            "name": "Retry with already-open journal exact stored report bytes and write count",
+            "pass": true
+          },
+          {
+            "name": "Retry with already-open journal one readable private editor",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault no current authority",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault disabled plan navigation and draft copy/preparation",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault explicit unavailable headline",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault private desk accessible",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault one private editor",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault original stored bytes unchanged",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault no automatic private writes",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault saved handoff readable",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault exact draft input node preserved",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault draft and dirty status preserved",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault focus and selection preserved",
+            "pass": true
+          },
+          {
+            "name": "journal after partial renderer fault no document overflow",
+            "pass": true
+          },
+          {
+            "name": "partial renderer fault exposes no journal rows or unbound requests",
+            "pass": true
+          },
+          {
+            "name": "fault cleanup refuses local stale candidate route",
+            "pass": true
+          },
+          {
+            "name": "Retry after journal partial renderer fault exact report input node",
+            "pass": true
+          },
+          {
+            "name": "Retry after journal partial renderer fault unsaved report value/focus/selection",
+            "pass": true
+          },
+          {
+            "name": "Retry after journal partial renderer fault exact stored report bytes and write count",
+            "pass": true
+          },
+          {
+            "name": "Retry after journal partial renderer fault one readable private editor",
+            "pass": true
+          },
+          {
+            "name": "legacy reported zero held does not use personal draft quantity for exit reference",
+            "pass": true
+          },
+          {
+            "name": "one reported held share uses whole-share reference without partial exit claim",
+            "pass": true
+          },
+          {
+            "name": "unknown exits do not silently use draft quantity",
+            "pass": true
+          },
+          {
+            "name": "exit reference pure projection preserves stored v1 report and separates archived schedule",
+            "pass": true
+          },
+          {
+            "name": "journal requests remain fixed GET without private payloads or credentials",
+            "pass": true
+          },
+          {
+            "name": "two scoped recovery contexts introduce no provider/broker transport",
+            "pass": true
+          }
+        ],
+        "cases": [],
+        "docs/app.js": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381",
+        "docs/app-morning.js": "6f799ae5563ca961fc5e4e2b7a60258be498daf0419c4e151f4afcca24b3cfb5",
+        "docs/app-handoff.js": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb",
+        "docs/app-handoff-ui.js": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2",
+        "docs/app-research-outcomes.js": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4",
+        "passed": 41,
+        "total": 41,
+        "research_requests": [
+          {
+            "path": "/docs/research-outcomes.json",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:35387",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "path": "/docs/research-outcomes/f0b67b47d0c975136e556032435c30919c6ee2cc02f05e147c4df3092041ae91.json",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:35387",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "path": "/docs/research-outcomes.json",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:35387",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "path": "/docs/research-outcomes/f0b67b47d0c975136e556032435c30919c6ee2cc02f05e147c4df3092041ae91.json",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:35387",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          }
+        ],
+        "private_seed": "Genuine archived schema-v1 test control; isolated fresh browser contexts only",
+        "narrow_integration_only": true
+      }
+    },
+    "actual_prepared_browser": {
+      "sha256": "260ea26fc1051839d2564e47c3ca639346c84abb6f303805051f9d6a4039c6e7",
+      "receipt": {
+        "scope": "ACTUAL PREPARED LOCAL COMPANION, NOT A PUBLIC DEPLOYMENT; real browser/wall clock; no private seed or provider calls",
+        "head": "e0970b25b6780b5bd9c9f576dc53a245c902fe8f",
+        "started_at": "2026-10-10T08:52:28.056Z",
+        "checks": [
+          {
+            "name": "prepared receipt and exact bundle raw length/digest agree",
+            "pass": true
+          },
+          {
+            "name": "prepared companion binds exact unchanged canonical and reader",
+            "pass": true
+          },
+          {
+            "name": "one primary cohort, all five original rows, two eligible and three excluded",
+            "pass": true
+          },
+          {
+            "name": "390 real browser clock without injected pin",
+            "pass": true
+          },
+          {
+            "name": "390 original response reader SHA and canonical binding match prepared companion",
+            "pass": true
+          },
+          {
+            "name": "390 closed disclosure makes zero journal requests",
+            "pass": true
+          },
+          {
+            "name": "390 fresh test browser has no private reports and unknown settled cash",
+            "pass": true
+          },
+          {
+            "name": "390 exactly fixed receipt then referenced digest request",
+            "pass": true
+          },
+          {
+            "name": "390 all five original rows and frozen population counts visible",
+            "pass": true
+          },
+          {
+            "name": "390 KE actual pending, original frozen shares and no entry/result",
+            "pass": true
+          },
+          {
+            "name": "390 PSNL actual pending, original frozen shares and no entry/result",
+            "pass": true
+          },
+          {
+            "name": "390 MG ZIM SN original exclusions remain visible",
+            "pass": true
+          },
+          {
+            "name": "390 conditional model and actual fees/slippage distinction visible",
+            "pass": true
+          },
+          {
+            "name": "390 opening actual companion leaves all current/private facts unchanged",
+            "pass": true
+          },
+          {
+            "name": "390 journal has no order copy preparation or save control",
+            "pass": true
+          },
+          {
+            "name": "390 no overflow, browser errors or external provider requests",
+            "pass": true
+          },
+          {
+            "name": "1280 real browser clock without injected pin",
+            "pass": true
+          },
+          {
+            "name": "1280 original response reader SHA and canonical binding match prepared companion",
+            "pass": true
+          },
+          {
+            "name": "1280 closed disclosure makes zero journal requests",
+            "pass": true
+          },
+          {
+            "name": "1280 fresh test browser has no private reports and unknown settled cash",
+            "pass": true
+          },
+          {
+            "name": "1280 exactly fixed receipt then referenced digest request",
+            "pass": true
+          },
+          {
+            "name": "1280 all five original rows and frozen population counts visible",
+            "pass": true
+          },
+          {
+            "name": "1280 KE actual pending, original frozen shares and no entry/result",
+            "pass": true
+          },
+          {
+            "name": "1280 PSNL actual pending, original frozen shares and no entry/result",
+            "pass": true
+          },
+          {
+            "name": "1280 MG ZIM SN original exclusions remain visible",
+            "pass": true
+          },
+          {
+            "name": "1280 conditional model and actual fees/slippage distinction visible",
+            "pass": true
+          },
+          {
+            "name": "1280 opening actual companion leaves all current/private facts unchanged",
+            "pass": true
+          },
+          {
+            "name": "1280 journal has no order copy preparation or save control",
+            "pass": true
+          },
+          {
+            "name": "1280 no overflow, browser errors or external provider requests",
+            "pass": true
+          },
+          {
+            "name": "all journal requests same-origin fixed GET without query body credentials or referrer",
+            "pass": true
+          }
+        ],
+        "receipt_sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2",
+        "bundle_sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172",
+        "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+        "source_sha256": {
+          "docs/app.js": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381",
+          "docs/app-morning.js": "6f799ae5563ca961fc5e4e2b7a60258be498daf0419c4e151f4afcca24b3cfb5",
+          "docs/app-handoff.js": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb",
+          "docs/app-handoff-ui.js": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2",
+          "docs/app-research-outcomes.js": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4",
+          "src/research_outcomes.py": "b7456ae8270ad4ee88135b24090a3d36bf0ba442f9d509762a4db6f2e2825397"
+        },
+        "requests": [
+          {
+            "url": "/docs/research-outcomes.json",
+            "query": "",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:43833",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "url": "/docs/research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+            "query": "",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:43833",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "url": "/docs/research-outcomes.json",
+            "query": "",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:43833",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          },
+          {
+            "url": "/docs/research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+            "query": "",
+            "method": "GET",
+            "headers": {
+              "host": "127.0.0.1:43833",
+              "connection": "keep-alive",
+              "pragma": "no-cache",
+              "cache-control": "no-cache",
+              "sec-ch-ua-platform": "\"Linux\"",
+              "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+              "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"HeadlessChrome\";v=\"151\", \"Chromium\";v=\"151\"",
+              "sec-ch-ua-mobile": "?0",
+              "accept": "*/*",
+              "sec-fetch-site": "same-origin",
+              "sec-fetch-mode": "same-origin",
+              "sec-fetch-dest": "empty",
+              "accept-encoding": "gzip, deflate, br, zstd"
+            }
+          }
+        ],
+        "passed": 30,
+        "total": 30,
+        "completed_at": "2026-10-10T08:52:35.212Z",
+        "no_public_deployment_claim": true
+      }
+    },
+    "backend_independent": {
+      "sha256": "8d6ae38af452b9d940be173f572390e5784a15f4aa6f8eab4fca18ac758ae113",
+      "receipt": {
+        "status": "NO_BLOCKER",
+        "scope": "Independent read-only backend review; not public release or personal-trade acceptance",
+        "tree": "/workspace/SpicyStock-research-outcomes",
+        "final_source_sha256": "b7456ae8270ad4ee88135b24090a3d36bf0ba442f9d509762a4db6f2e2825397",
+        "test_sha256": "e6b9633b36fe398f35935e5b55022dcbb5367e3671d9ae1ca9a75395d8fe090e",
+        "final_focused_tests": {
+          "passed": 54,
+          "log": "/tmp/spicystock-journal-independent/pytest-final.log"
+        },
+        "broad_independent_contract_checks": {
+          "passed": 44,
+          "receipt": "/tmp/spicystock-journal-independent/receipt.json",
+          "source_note": "Broad controls completed while owner applied narrow review deltas; exact final source independently verified by final54 focused tests and11 isolated boundary controls."
+        },
+        "final_boundary_checks": {
+          "passed": 11,
+          "result": "/tmp/spicystock-journal-independent/delta-mutation.json"
+        },
+        "review_findings": [
+          {
+            "issue": "Raw anchor versus four-decimal public history falsely reports conflict",
+            "status": "fixed",
+            "before_source_sha256": "e5419e4f9b27f5b45b6b6b27dacef1d45dac662ae88204c70bd60a5f4c556809",
+            "after": "Exact public-series round(float(close),4), preserving raw anchor/source identity",
+            "mutation": "Removal fails named same-frame precision assertion; unrelated event cap11/11 passes"
+          },
+          {
+            "issue": "Cached snapshot revisit writes after sorting crosses processing deadline",
+            "status": "fixed",
+            "before_source_sha256": "ebf58bf0b1e2e697071778be6a50993262f6be556431e8d51719980a71ab8283",
+            "after": "61-second controlled clock rejected before atomic write",
+            "receipt": "/tmp/spicystock-journal-independent/deadline.json"
+          }
+        ],
+        "actual_source": {
+          "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "cohort_sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+          "pending": 2,
+          "excluded": 3,
+          "eligible_frozen_shares": {
+            "KE": 1,
+            "PSNL": 3
+          },
+          "later_retained_bars": 0,
+          "r": null,
+          "statement": "No actual outcome or personal execution exists. All observed/resolved boundary examples are explicitly synthetic."
+        },
+        "repo_edits": false,
+        "provider_or_model_requests": false,
+        "approval_commit": "141f96a1e445e35ca668cf3c48ad06007b6ac64b",
+        "committed_source_sha_verified": true
+      }
+    }
+  }
+}

@@ -1001,6 +1001,54 @@ User-reported trades/results remain separate. Promotion or performance claims
 require a later explicit strategy review using the retained comparison and
 subsequent observations.
 
+### Research follow-through
+
+The Morning desk's optional **Research follow-through** view follows every frozen
+wider-stop cohort using observations already retained by normal publications.
+It makes no new provider or model requests. The first before-entry cohort for
+an applicable session is identified as primary; later revisions and late
+captures remain visible. Original exclusions, quantities and levels stay frozen.
+There is no order, personal draft or reported-execution action in this view.
+
+The companion reports pending, missing, uncertain, not-filled, open or resolved
+conditional daily-bar models, plus explicit unsupported-source states. Before
+an entry session has a completed observation publication, it remains pending.
+The initial October 10 snapshot has October 9 bars and remains pending for
+the October 12 entry session; no outcome or R is invented. Missing sessions do not become zero
+returns. A daily high/low crossing cannot establish the first thirty minutes
+or intraday event order. Only a reconciled resolved model has an R result;
+actual fees and slippage remain unspecified. This is not personal execution,
+a portfolio return or a win rate. Research positions are not reserved across
+separate cohorts as a hypothetical portfolio.
+
+Each evaluated clip identifies its containing observation publication, dates,
+bar digest and provider/feed/adjustment/daily-timeframe basis. The original
+source anchor and supported fill/follow/R rules must agree. Anchor comparisons
+use the pipeline's explicit four-decimal public price format while retaining
+the raw source anchor and hash. Unknown or conflicting carried bases remain
+unavailable. A prior conclusive clip may remain readable with its original date
+when newer coverage is partial; genuinely conflicting new evidence is flagged.
+Full OHLCV revisions produce new snapshots, retaining the prior snapshot.
+
+The evening hook runs after final canonical/reader writes and the optional
+stop comparison. Its failure preserves the authoritative record and previous
+companion. Opening the disclosure fetches the fixed `research-outcomes.json`
+receipt (16 KiB maximum) and its exact digest-named bundle (2 MiB maximum),
+with a 15-second deadline and no private browser inputs. The original frozen
+cohort bytes are embedded, so the browser requests no extra ticker histories.
+A differently bound receipt cannot attach to the current observation publication.
+
+The producer accepts at most 128 cohorts / 640 original rows, 16 MiB of cohort
+inputs and 128 MiB of sequential original-publication reads within a 60-second
+processing deadline. Its append-only store retains up to 128 snapshots / 64 MiB
+and a 64 KiB index. Repeating the same publication/cohort set preserves the first
+snapshot and generation time. Invalid archives or exhausted bounds refuse a
+write without pruning earlier results. These repository/Pages archives are
+public and contain no private reports. The publisher verifies the current
+receipt and referenced bundle. See the [versioned contract](docs/RESEARCH_OUTCOMES_SCHEMA.md)
+for source limits, replay semantics and exact fields.
+
+
 ### Reader payload and saved research
 
 The page initially loads `reader.json`, a compact projection of the complete
@@ -1375,13 +1423,16 @@ src/            history.py (public recovery and coverage)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 review_selection.py (feasible-first chart review and bounded spare research)
                 stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
+                research_outcomes.py (frozen cohort follow-through from dated retained observations)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
+                stop-research.json · stop-research/ (registered comparison and immutable cohorts)
+                research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 quality-ledger/ (versioned publication facts; created by future real publications)
