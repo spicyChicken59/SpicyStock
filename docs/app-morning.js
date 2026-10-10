@@ -249,7 +249,9 @@
     foot.append(details, next);
     const issuer = api.issuerEvidence && typeof api.issuerEvidence.mount === 'function' && typeof api.issuerEvidence.update === 'function'
       ? api.issuerEvidence.mount() : node('p', { class: 'sc-hint', 'data-issuer-unavailable': '' }, 'Issuer source reader unavailable. Check company filings, news and earnings independently; this does not clear any known event.');
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, foot);
+    const research = api.stopResearch && typeof api.stopResearch.mount === 'function'
+      ? api.stopResearch.mount() : node('p', { class: 'sc-hint' }, 'Optional stop-width research is unavailable in this page. Production plans keep their recorded policy.');
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, research, foot);
     if (api.handoffUI && api.handoff) api.handoffUI.mount(content);
     else content.append(node('p', { class: 'sc-hint' }, 'Private broker handoffs are unavailable in this page. Cash preview and published research remain available.'));
     host.append(content);
@@ -280,6 +282,7 @@
     refreshCash(host);
     if (api.handoffUI) api.handoffUI.update();
     if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
+    if (api.stopResearch && typeof api.stopResearch.update === 'function') api.stopResearch.update(data);
   }
   api.morning = { render, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
 })(window);
