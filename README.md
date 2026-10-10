@@ -99,6 +99,16 @@ Its personal readback uses the chosen quantity for entry and planned protection.
 The original published ticket remains separate. Copying is only a clipboard
 operation, not a broker order format or a confirmation of execution.
 
+The dated exit schedule is labelled as archived model wording. A separate
+whole-share reference applies the existing model's at-least-half convention to
+the personal draft, or to explicitly reported remaining holdings after reporting
+begins. It rounds up: one of one share or two of three. A one-share position
+cannot be partly exited in whole shares. Unknown fills or exits leave holdings
+unknown; zero reported remaining shares leaves the schedule as history. This
+reference arithmetic does not decide whether another exit is due, infer broker
+fractional-share support or resize the saved schedule. Review prior exits and
+choose feasible quantities at the broker before acting.
+
 New preparation and copying recheck the current publication, account, entry
 window and event restrictions. A superseded or expired draft remains readable.
 Manual broker reports remain editable afterward: submitted quantity, cumulative

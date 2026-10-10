@@ -1,0 +1,411 @@
+{
+  "schema_version": 1,
+  "status": "accepted_public_release",
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/126",
+  "reviewed_head": "6a505ffde3b41de6de61af0851bb1f4b1d679145",
+  "merged_commit": "9edab25c226b4f0398ad88ecf24b4787f25d7e96",
+  "merged_at": "2026-10-10T08:28:26Z",
+  "public_url": "https://spicychicken59.github.io/SpicyStock/",
+  "publisher_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38037996469",
+  "pages_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38038008362",
+  "superseded_pages_run": {
+    "id": 38037996293,
+    "conclusion": "cancelled",
+    "replacement": 38038008362
+  },
+  "hosted_exact_head": {
+    "schema": "spicystock-hosted-acceptance-v1",
+    "pr": 126,
+    "head": "6a505ffde3b41de6de61af0851bb1f4b1d679145",
+    "tests_run": 38034931993,
+    "status": "success",
+    "completed_at": "2026-10-10T08:25:34Z",
+    "secret_runs": [
+      38034932035,
+      38034929096
+    ],
+    "python_tests": 3577,
+    "python_test_seconds": 524.58,
+    "page_checks": 12014,
+    "chart_checks": 378,
+    "continuity_checks": 137,
+    "fixture_files": {
+      "page": 13,
+      "morning": 21,
+      "issuer": 12
+    },
+    "native": {
+      "central": {
+        "job": 114163319933,
+        "workload_seconds": 2922.765506,
+        "memory_supervisor_status": "PASS",
+        "started_at": "2026-10-10T07:35:30Z",
+        "completed_at": "2026-10-10T08:24:52Z",
+        "artifact_id": 11664875265,
+        "sha256": "755005c3d4e94644ce9e874c97126ce9194e3fa14b9bf80215f047b43ac00e11",
+        "artifact_bytes": 26660
+      },
+      "stress": {
+        "job": 114163319871,
+        "workload_seconds": 2960.087372,
+        "memory_supervisor_status": "PASS",
+        "started_at": "2026-10-10T07:35:29Z",
+        "completed_at": "2026-10-10T08:25:33Z",
+        "artifact_id": 11664318385,
+        "sha256": "c685eb42e7be96e114a81d44c5347b52180beabb5b7cddbe6c624f99170a6910",
+        "artifact_bytes": 26544
+      }
+    },
+    "checks": [
+      {
+        "id": 114163319933,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034931993/job/114163319933"
+      },
+      {
+        "id": 114163319871,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034931993/job/114163319871"
+      },
+      {
+        "id": 114163285517,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034931993/job/114163285517"
+      },
+      {
+        "id": 114163285499,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034931993/job/114163285499"
+      },
+      {
+        "id": 114163285486,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034932035/job/114163285486"
+      },
+      {
+        "id": 114163285360,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034931993/job/114163285360"
+      },
+      {
+        "id": 114163276926,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38034929096/job/114163276926"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11664875265,
+        "name": "historical-runtime-central-38034931993-1",
+        "bytes": 26660,
+        "digest": "sha256:755005c3d4e94644ce9e874c97126ce9194e3fa14b9bf80215f047b43ac00e11"
+      },
+      {
+        "id": 11664318385,
+        "name": "historical-runtime-stress-38034931993-1",
+        "bytes": 26544,
+        "digest": "sha256:c685eb42e7be96e114a81d44c5347b52180beabb5b7cddbe6c624f99170a6910"
+      },
+      {
+        "id": 11663900262,
+        "name": "historical-runtime-gate-38034931993-1",
+        "bytes": 483,
+        "digest": "sha256:eee6e71c9daa7331ee48fdde2d3aa8937515c11d8f9719376429c651880e4bda"
+      },
+      {
+        "id": 11663855707,
+        "name": "page-shots",
+        "bytes": 76910116,
+        "digest": "sha256:4f8377383b7ea6ee576bcc8e7e74a69ec07891bc98d620001f8f41c0ec6fac54"
+      }
+    ],
+    "evidence_scope": "Exact-head GitHub run/check conclusions and decoded official job logs; native compact artifact digests match GitHub metadata and upload logs, payloads not independently downloaded here."
+  },
+  "public_acceptance": {
+    "started_at": "2026-10-10T08:31:36.161Z",
+    "finished_at": "2026-10-10T08:31:47.248Z",
+    "checks": 56,
+    "native_exact_git_files": 32,
+    "viewports": [
+      1280,
+      390
+    ],
+    "real_clock": true,
+    "public_data_override": false,
+    "fresh_private_history_empty": true,
+    "settled_cash_unknown": true,
+    "actual_orders_or_user_records": false,
+    "application_or_transport_errors": [],
+    "geometry": [
+      {
+        "documentWidth": 1280,
+        "viewportWidth": 1280,
+        "dialogScrollWidth": 1038,
+        "dialogClientWidth": 1038
+      },
+      {
+        "documentWidth": 390,
+        "viewportWidth": 390,
+        "dialogScrollWidth": 352,
+        "dialogClientWidth": 352
+      }
+    ],
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 16918,
+        "sha256": "04364c519cdbb860cbc38fc4cd324a8a020a8423e60f380e702c1cc61fe8bbfd"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 23349,
+        "sha256": "5a7cdbcbe72aaf5b84c222ebe64369c33eba216274cd00db65c84b6e8d40ea12"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 27456,
+        "sha256": "87ba7cd963ca1441b19cbd057e29362df66745dc5fe6d442dc9fc68504d77f49"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 34250,
+        "sha256": "df6c5aad5a20ff3835a544325352923f3350b610e863c9365e5c6d725a6f2957"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 21806,
+        "sha256": "680be15975297ad0eac191dec7dd603c5c95b786e7d880c667fd3fdbaa9aa8d7"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app.css",
+        "bytes": 86201,
+        "sha256": "8ae3c948af2c77fe0eb3105ecc66e6ad376c1daa6aef59439314c9f8ca0b768e"
+      },
+      {
+        "name": "app.js",
+        "bytes": 389895,
+        "sha256": "f5410c553373c9c8d623f92f833e338af20899857f23dd90609bf37b8488e3a4"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4224,
+        "sha256": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1706,
+        "sha256": "397403d50a7917b1ab288171e9fcf242f5301382f3a5a74160e4f37da1cecbf8"
+      },
+      {
+        "name": "issuer-evidence/0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3.json",
+        "bytes": 5601,
+        "sha256": "0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3"
+      }
+    ],
+    "source_receipt_sha256": "e32df6b8b8a4bafa0153196a28b9b19f83565649b39c4634aadf969ddf663cfc"
+  },
+  "separate_synthetic_private_rehearsal": {
+    "checks": 17,
+    "scope": "SYNTHETIC PRIVATE REHEARSAL ONLY; not Mo facts, an actual balance, live trade, or production trading acceptance. Genuine old-schema test record is seeded only into a separate fresh test browser; public data/clock remain unchanged.",
+    "gain": "$3.65",
+    "loss": "-$1.85",
+    "missing_actual_exit_fee": "all result amounts unavailable",
+    "zero_requests_during_private_corrections": true,
+    "no_real_user_trade_or_goal_completion_claim": true,
+    "source_receipt_sha256": "edbe2f4ba7983fc0922227dcf63e8fd44d82000925830ae354356197661fe577"
+  },
+  "screenshots": [
+    {
+      "name": "ACTUAL-PUBLIC-morning-1280.png",
+      "sha256": "938f4375ccc712a84e369b60408134c7527d88e197a8afffc548f03e9a48f906",
+      "scope": "actual public fresh browser",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-morning-390.png",
+      "sha256": "9105af6f1adb3a9c19f0e605cdeb07d37cc056cf11e59440aef02995fda62e36",
+      "scope": "actual public fresh browser",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-private-empty-1280.png",
+      "sha256": "f0df24ef726d34f4b6a27b114f96de8f87917f37ef1e91361cca7292395246c2",
+      "scope": "actual public fresh browser",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-private-empty-390.png",
+      "sha256": "ae1131c93abe3405827525ec5f233c5c97b4450efc6ca9498dfff99fe0bd72be",
+      "scope": "actual public fresh browser",
+      "visually_inspected": true
+    },
+    {
+      "name": "SYNTHETIC-PRIVATE-gain-1280.png",
+      "sha256": "0c6d634cdb33ed4f58c15a7fc4c95faaa2c44ab14c7be0a3e3edff452dcaa905",
+      "scope": "synthetic private rehearsal only",
+      "visually_inspected": true
+    },
+    {
+      "name": "SYNTHETIC-PRIVATE-loss-1280.png",
+      "sha256": "512f24e679b7dbda3236ea1c4cc68827f633d65309b1dc03bbccf59749fe4297",
+      "scope": "synthetic private rehearsal only",
+      "visually_inspected": true
+    },
+    {
+      "name": "SYNTHETIC-PRIVATE-unknown-cost-1280.png",
+      "sha256": "06016b447d3739bff8c6c9847329227fdac4b40d249f28534358f10fb3f9f5c6",
+      "scope": "synthetic private rehearsal only",
+      "visually_inspected": true
+    }
+  ],
+  "independent_file_recheck": {
+    "matched": 32,
+    "against_commit": "9edab25c226b4f0398ad88ecf24b4787f25d7e96",
+    "prior_commit": "981e6792827a222c26b94da622f30d88b74d53e1",
+    "unchanged_paths": [
+      "docs/evidence",
+      "docs/history",
+      "docs/data.json",
+      "docs/reader.json",
+      "docs/picks.json",
+      "docs/design-system"
+    ],
+    "immutable_history_and_evidence_files": 18584
+  },
+  "runner_sha256": "acfaa269a7d74f8ef2151a822d7ef3c7819cae6cb9cf35bd0fa7e9bc63e2c777",
+  "review_receipt_sha256": "c2409d1eb752eb6e9ef41a8be57cb25f40cd3695e4f5e13acaf29181db5c06b0",
+  "remaining_gaps": [
+    "No broker execution or user profitability was observed.",
+    "Synthetic result entry was exercised on desktop; fresh actual empty-history views were checked at phone and desktop widths.",
+    "Existing public morning receipt belongs to a prior publication and correctly remains unavailable; no refresh or provider request was initiated.",
+    "This check does not claim SEC coverage, automatic issuer-trigger acceptance, or a successful user trade.",
+    "The existing closed-session sentence still names the measured Friday on Saturday; the reviewed correction is queued in PR132.",
+    "PR129 exact head passed all seven hosted gates but conflicts with main after PR126; PR132 already contains the reviewed integration and is waiting for its own native gates.",
+    "First successful real trade remains unobserved; broker is unspecified."
+  ],
+  "next_step": "Release exact reviewed PR132 after all required checks, verify publication recovery and the automatic issuer child of one bounded morning workflow; continue separately labelled research and personal whole-share clarity."
+}

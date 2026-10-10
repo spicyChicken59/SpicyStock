@@ -251,6 +251,25 @@
     return { ...empty, state: 'complete', quantity: report.filled_quantity, gross_microusd: String(gross), fees_microusd: String(fees), net_microusd: String(net),
       gross_display: displayMicros(gross), fees_display: displayMicros(fees), net_display: displayMicros(net), outcome: net > 0n ? 'gain' : net < 0n ? 'loss' : 'breakeven' };
   }
+  function exitReview(item) {
+    const report = item.report, hasReport = reported(item);
+    const held = report.filled_quantity === null || report.exited_quantity === null ? null : report.filled_quantity - report.exited_quantity;
+    const quantity = hasReport ? held : item.draft.quantity;
+    const basis = hasReport ? (quantity === null ? 'reported_unknown' : 'reported_remaining') : 'personal_draft';
+    if (quantity === null) return { basis, quantity, model_half_quantity: null, model_remaining_quantity: null, needs_review: true,
+      message: 'Remaining holdings are unknown. Check entry fills and exits at your broker before applying the archived partial-exit schedule. Your draft quantity is not a report of remaining holdings.' };
+    if (quantity === 0) return { basis, quantity, model_half_quantity: null, model_remaining_quantity: null, needs_review: false,
+      message: 'You reported no remaining shares. The archived exit schedule remains history; SpicyStock has not verified your broker holdings.' };
+    // The existing model takes at least half in whole shares (plan.follow).
+    // This reference never decides whether an exit is due or repeats a prior exit.
+    const half = quantity - Math.floor(quantity / 2), remaining = quantity - half;
+    const source = hasReport ? 'Your reported remaining holdings are ' : 'Your personal draft is ';
+    const units = quantity === 1 ? ' whole share. ' : ' whole shares. ';
+    return { basis, quantity, model_half_quantity: half, model_remaining_quantity: remaining, needs_review: quantity % 2 !== 0,
+      message: source + quantity + units + "The model's at-least-half convention rounds up to " + half + (half === 1 ? ' whole share' : ' whole shares') + ', leaving ' + remaining + '. ' +
+        (quantity === 1 ? 'A one-share position cannot be partly exited in whole shares. ' : '') +
+        'This is reference arithmetic and does not determine whether another exit is due. Review prior exits and choose feasible quantities at your broker before acting; fractional-share support is unknown.' };
+  }
   function summary(item) {
     if (!validItem(item)) return null;
     const report = item.report, filled = report.filled_quantity, submitted = report.submitted_quantity, cancelled = report.cancelled_quantity, exited = report.exited_quantity, protectedQty = report.protected_quantity;
@@ -266,7 +285,7 @@
       planned_quantity: item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
       unfilled_quantity: submitted === null || filled === null ? null : submitted - filled,
       uncancelled_quantity: submitted === null || filled === null || cancelled === null ? null : submitted - filled - cancelled,
-      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, calculation: calculation(item), completed_result: completedResult(report) };
+      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completedResult(report) };
   }
   function readback(item) {
     if (!validItem(item)) return '';
@@ -275,7 +294,8 @@
       'BUY ' + qty + ' ' + item.plan.ticker + ' · STOP LIMIT · trigger ' + dollars(api.cashPreview.cents(String(order.stop_price))) + ' · limit ' + dollars(api.cashPreview.cents(String(order.limit_price))) + ' · DAY\n' +
       'Planned protective SELL ' + qty + ' ' + item.plan.ticker + ' · STOP ' + dollars(api.cashPreview.cents(String(order.then.stop_price))) + ' · GTC; confirm support, activation and actual filled quantity at your broker.\n' +
       'Published quantity: ' + order.quantity + '. This personal readback places no order or protective stop.\n' +
-      'Entry window: ' + item.plan.timing.opens_at + ' to ' + item.plan.timing.cutoff_at + '. Cancel any unfilled entry at the cutoff yourself.';
+      'Entry window: ' + item.plan.timing.opens_at + ' to ' + item.plan.timing.cutoff_at + '. Cancel any unfilled entry at the cutoff yourself.\n' +
+      'Whole-share exit reference: ' + exitReview(item).message;
   }
   function copy(id) {
     if (api.reclock) api.reclock();
