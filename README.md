@@ -757,9 +757,13 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   `run.review_selection` reconciles feasibility, research-pool size, selected
   names, accepted/unaccepted/refused results, actual retained attempts and
   unused capacity. Attempts are distinct from requested names and billed cost.
-  Method explains the recorded pre-review fit, opportunity/research selection
-  and feasible names left unreviewed; older or unsupported receipts make no
-  selection claim.
+  Method explains reconciled pre-review fit and opportunity/research selection.
+  The current cover and Morning desk add selected-batch completion separately
+  from broader review coverage only when the supporting counts reconcile.
+  A completed research batch does not mean all discovered candidates were
+  reviewed or that any plan is admitted. The original published summary remains
+  available; missing, unsupported or contradictory completion evidence leaves
+  that wording in place without the new completion claim.
   The private preview precedes combined allocation; selection grants no ticket.
   Final accepted-review, grade/regime, sizing, event and allocation guards
   remain unchanged. Archived records without this policy keep their original

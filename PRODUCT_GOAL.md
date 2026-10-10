@@ -350,3 +350,37 @@ MG, ZIM and SN are excluded, and no result or personal trade is inferred.
 [Release evidence](release-evidence/2026-10-10-research-follow-through/acceptance.json)
 records the exact checked head and public release. The first actual successful
 trade, timely live-data delivery and broader issuer coverage remain open.
+
+## Issuer clarity, chart inspection and independent reports released
+
+[PR #145](https://github.com/spicyChicken59/SpicyStock/pull/145) is deployed and
+publicly verified, incorporating reviewed [#141](https://github.com/spicyChicken59/SpicyStock/pull/141)
+and [#143](https://github.com/spicyChicken59/SpicyStock/pull/143). Issuer labels now
+reconcile with retained identity, index and document evidence. The Morning desk
+shows the original anticipation refusals, and research rows open their exact
+recorded charts. A trade executed independently from a verified research idea
+can start a blank private report without first creating an admitted entry draft.
+Explicit actual fill facts are required for its first save; no order, cash
+reservation or inferred model execution is created.
+
+All seven checks passed on the exact merged head. Three separate actual public
+runs passed 189 issuer, 147 inspection and 163 blank-report checks, each matching
+all 40 public files; all 30 phone/desktop screenshots were inspected. The
+[combined release receipt](release-evidence/2026-10-10-independent-reports/acceptance.json)
+keeps actual public checks, synthetic local controls and source limitations
+separate. SEC mapping still reports HTTP 403 with an unknown cause and no new
+filings. The published scan still has zero baseline tickets; the research cohort
+remains pending/excluded. No personal execution or successful trade is claimed.
+
+Private backup/restore is prepared in #147. The next bounded opportunity-funnel
+step, #148, explains intentional research selection separately from selected
+review completion and broader coverage. Morning delivery, issuer access and
+broker-specific preparation remain open.
+
+The review-clarity implementation for #148 is locally verified: selected-batch
+completion and wider candidate coverage are shown independently, with the
+original dated verdict retained. Its preparation evidence records 349 browser,
+77 independent and 2,124 compatibility controls; hosted and public release checks
+are still pending. The next first-trade workflow improvement, #149, preserves
+access to a blank actual-fill report from a verified older journal entry after
+a new scan arrives. Neither change creates a ticket or infers a personal trade.

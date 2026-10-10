@@ -29,6 +29,8 @@
     const tickets = bursts.concat(setups), tm = av.timing || {};
     const marketKnown = regime.verdict === 'green' || regime.verdict === 'yellow';
     const allowed = !!av.offered && marketKnown && !data.fixture;
+    const selection = typeof api.reviewSelectionFacts === 'function' ? api.reviewSelectionFacts(data) : null;
+    const review = selection && selection.detail;
     const matched = account.equity === PROFILE.equity && account.risk_pct === PROFILE.riskPct && account.max_position_pct === PROFILE.positionPct && account.max_open_positions === PROFILE.maxOpenPositions;
     let headline, reason;
     if (data.fixture) {
@@ -42,7 +44,8 @@
       reason = regime.verdict === 'red' ? 'The published market gate is RED. A stock on the scan is not a new-entry instruction.' : 'Wait for a record with an established market verdict.';
     } else if (!tickets.length) {
       headline = 'No qualifying entry plans';
-      reason = (data.cover || {}).h1 || 'The run published no conditional entry tickets. Inspect the scan gates to see what held them back.';
+      reason = review ? 'No conditional entry plans were admitted. Reaction review selection and anticipation decisions are separate; inspect their recorded reasons.'
+        : (data.cover || {}).h1 || 'The run published no conditional entry tickets. Inspect the scan gates to see what held them back.';
     } else if (!matched) {
       headline = 'Account sizing needs an update';
       reason = count(tickets.length, 'conditional plan') + ' recorded. Published quantities do not match your $2,000 cash-account reference.';
@@ -54,7 +57,7 @@
       reason = 'Confirm live prices, settled cash and the plan’s conditions at your broker before submitting anything.';
     }
     return {
-      headline, reason, matched, allowed, tickets, fixture: !!data.fixture, bursts: bursts.length, setups: setups.length,
+      headline, reason, review, matched, allowed, tickets, fixture: !!data.fixture, bursts: bursts.length, setups: setups.length,
       window: tm.known ? date(tm.opens) + ' · ' + clock(tm.opens) + '–' + clock(tm.cutoff) + ' CT' : 'Entry session/window unavailable',
       prepare: tm.known && tm.prepareBy ? 'Prepare by ' + clock(tm.prepareBy) + ' CT' : '',
       phase: av.phase === 'open' ? 'window open' : av.phase === 'upcoming' ? 'window upcoming' : av.phase === 'ended' ? 'window ended' : 'timing unknown',
@@ -205,6 +208,9 @@
       const block = node('div'); block.append(node('dt', {}, label), node('dd', { 'data-morning': key })); factsRow.append(block);
     });
     const reason = node('p', { class: 'ss-morning__reason', 'data-morning': 'reason' });
+    const review = node('p', { class: 'sc-hint', 'data-morning': 'review-selection' });
+    const published = node('details', { class: 'sc-disclosure', 'data-morning': 'published-context' });
+    published.append(node('summary', { 'data-morning': 'published-label' }), node('p', { class: 'sc-hint', 'data-morning': 'published-verdict' }));
     const account = node('p', { class: 'ss-morning__reference' }, '$2,000 cash-account reference · $10 planned risk (0.5%) · $500 position cap (25%).');
     const sizing = node('p', { class: 'ss-morning__sizing', 'data-morning': 'sizing' });
     const details = node('details', { class: 'ss-morning__prep' });
@@ -257,7 +263,7 @@
       ? api.stopResearch.mount() : node('p', { class: 'sc-hint' }, 'Optional stop-width research is unavailable in this page. Production plans keep their recorded policy.');
     const outcomes = api.researchOutcomes && typeof api.researchOutcomes.mount === 'function'
       ? api.researchOutcomes.mount() : node('p', { class: 'sc-hint' }, 'Optional research follow-through is unavailable in this page.');
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, research, outcomes, foot);
+    content.append(head, factsRow, reason, review, published, account, sizing, api.observations.summary(), issuer, research, outcomes, foot);
     if (api.handoffUI && api.handoff) api.handoffUI.mount(content);
     else content.append(node('p', { class: 'sc-hint' }, 'Private broker handoffs are unavailable in this page. Cash preview and published research remain available.'));
     host.append(content);
@@ -271,6 +277,12 @@
     if (publicationKey !== latest.identity || sessionKey !== latest.session) host.querySelectorAll('[data-morning-check]').forEach(input => { input.checked = false; });
     sessionKey = latest.session; publicationKey = latest.identity;
     ['headline', 'window', 'publication', 'market', 'reason', 'sizing'].forEach(key => field(host, key, latest[key]));
+    const review = latest.review;
+    field(host, 'review-selection', review ? review.summary : 'Review selection and selected-batch completion are not reconciled for this record; the original verdict remains the source context.');
+    host.querySelector('[data-morning="review-selection"]').setAttribute('data-review-state', review ? 'reconciled' : 'unknown');
+    field(host, 'published-label', 'Original published verdict · ' + ((data.run || {}).session || 'session unknown'));
+    field(host, 'published-verdict', ((data.cover || {}).h1 || 'No verdict recorded.') + ' ' + ((data.cover || {}).dek || 'No summary recorded.'));
+    host.querySelector('[data-morning="published-context"]').hidden = false;
     const opener = d.getElementById('morning-open');
     if (opener) opener.setAttribute('title', 'Morning desk · Chicago · ' + latest.window + ' · ' + latest.summary + ' · $2,000 cash reference');
     field(host, 'phase', latest.phase + (latest.prepare ? ' · ' + latest.prepare : ''));
@@ -301,6 +313,9 @@
       publication: 'Not loaded', market: 'Unknown', plans: 'No current entry authority', reason: latest.reason,
       sizing: 'No published order is available for a cash preview.', next: 'Current research unavailable' };
     Object.entries(labels).forEach(([key, value]) => field(host, key, value));
+    field(host, 'review-selection', 'Review selection and completion are unknown without a current publication.');
+    host.querySelector('[data-morning="review-selection"]').setAttribute('data-review-state', 'unknown');
+    host.querySelector('[data-morning="published-context"]').hidden = true;
     host.querySelector('[data-morning="next"]').disabled = true;
     host.setAttribute('data-sizing-match', 'false');
     host.setAttribute('data-morning-offered', 'false');

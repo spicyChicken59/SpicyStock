@@ -1,0 +1,1549 @@
+{
+  "schema": "spicystock-combined-issuer-inspection-independent-report-release-v1",
+  "status": "ACCEPTED_ACTUAL_PUBLIC_RELEASE",
+  "recorded_at": "2026-10-10T13:33:02.493617+00:00",
+  "pull_requests": [
+    141,
+    143,
+    145
+  ],
+  "issues": [
+    138,
+    142,
+    144
+  ],
+  "reviewed_heads": {
+    "141": "041a5c447e03bf6cab806d97552379e5171d24e0",
+    "143": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+    "145": "75f5bbc78201d588e143423fe2c2595d25acaaa0"
+  },
+  "merge_commit": "e081535d3e6fe438a67f467b83564d56e4a52db4",
+  "merge_parents": [
+    "62f7905d4b2db24460346bf2b471210ca0737b18",
+    "75f5bbc78201d588e143423fe2c2595d25acaaa0"
+  ],
+  "scope": "Actual public issuer coverage reconciliation, dated chart inspection and empty independent-report entry on exact merged source. No personal execution, return, live source clearance or successful trade is established.",
+  "hosted_exact_heads": {
+    "141": {
+      "schema_version": 1,
+      "status": "PASS",
+      "repository": "spicyChicken59/SpicyStock",
+      "pull_request": 141,
+      "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+      "tests_run_id": 38040632378,
+      "tests_conclusion": "success",
+      "recorded_at": "2026-10-10T10:03:42.606Z",
+      "checks": [
+        {
+          "id": 114180032707,
+          "name": "historical-runtime (stress)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:50Z",
+          "completed_at": "2026-10-10T09:41:35Z"
+        },
+        {
+          "id": 114180032636,
+          "name": "historical-runtime (central)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:50Z",
+          "completed_at": "2026-10-10T10:02:45Z"
+        },
+        {
+          "id": 114179997072,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:38Z",
+          "completed_at": "2026-10-10T09:13:48Z"
+        },
+        {
+          "id": 114179997029,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:38Z",
+          "completed_at": "2026-10-10T09:13:48Z"
+        },
+        {
+          "id": 114179996984,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:38Z",
+          "completed_at": "2026-10-10T09:25:27Z"
+        },
+        {
+          "id": 114179996891,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:37Z",
+          "completed_at": "2026-10-10T09:28:04Z"
+        },
+        {
+          "id": 114179986724,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+          "started_at": "2026-10-10T09:13:34Z",
+          "completed_at": "2026-10-10T09:13:48Z"
+        }
+      ],
+      "counts": {
+        "pytest_passed": 3850,
+        "pytest_seconds": 709.16,
+        "page_passed": 13132,
+        "page_total": 13132,
+        "chart_passed": 378,
+        "chart_total": 378,
+        "continuity_passed": 137,
+        "fixtures": {
+          "page": 13,
+          "morning": 21,
+          "issuer": 30,
+          "stop_research": 22,
+          "research_outcomes": 40
+        }
+      },
+      "native": [
+        {
+          "case": "central",
+          "job_id": 114180032636,
+          "started_at": "2026-10-10T09:13:50Z",
+          "completed_at": "2026-10-10T10:02:45Z",
+          "runtime_seconds": 2896.537286,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11666109965,
+          "artifact_name": "historical-runtime-central-38040632378-1",
+          "artifact_sha256": "5bc13124eeeed5bac014bf24aa37e6478ed9bec5e8b7a0ded28c097d5ed241cc",
+          "artifact_bytes": 26659
+        },
+        {
+          "case": "stress",
+          "job_id": 114180032707,
+          "started_at": "2026-10-10T09:13:50Z",
+          "completed_at": "2026-10-10T09:41:35Z",
+          "runtime_seconds": 1629.772722,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11665838394,
+          "artifact_name": "historical-runtime-stress-38040632378-1",
+          "artifact_sha256": "736678b26590ca048c8ebf24072e08237c064366068c5a8240031c874672dfb4",
+          "artifact_bytes": 26529
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11666109965,
+          "name": "historical-runtime-central-38040632378-1",
+          "size_in_bytes": 26659,
+          "digest": "sha256:5bc13124eeeed5bac014bf24aa37e6478ed9bec5e8b7a0ded28c097d5ed241cc"
+        },
+        {
+          "id": 11665941569,
+          "name": "page-shots",
+          "size_in_bytes": 81287686,
+          "digest": "sha256:1aeea6e6bea719f8aa47941e147cce7460c8944df2a2165e712082c219f19e4a"
+        },
+        {
+          "id": 11665838394,
+          "name": "historical-runtime-stress-38040632378-1",
+          "size_in_bytes": 26529,
+          "digest": "sha256:736678b26590ca048c8ebf24072e08237c064366068c5a8240031c874672dfb4"
+        },
+        {
+          "id": 11665279782,
+          "name": "historical-runtime-gate-38040632378-1",
+          "size_in_bytes": 336,
+          "digest": "sha256:25cd648a5cb0d3ce76927e30811a6684e28ff1a87d2c702e2583f921dd935f54"
+        }
+      ],
+      "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only."
+    },
+    "143": {
+      "schema_version": 1,
+      "status": "PASS",
+      "repository": "spicyChicken59/SpicyStock",
+      "pull_request": 143,
+      "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+      "tests_run_id": 38041933275,
+      "tests_conclusion": "success",
+      "recorded_at": "2026-10-10T10:24:46.034Z",
+      "checks": [
+        {
+          "id": 114183778559,
+          "name": "historical-runtime (central)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:53Z",
+          "completed_at": "2026-10-10T10:23:52Z"
+        },
+        {
+          "id": 114183778425,
+          "name": "historical-runtime (stress)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:52Z",
+          "completed_at": "2026-10-10T09:54:46Z"
+        },
+        {
+          "id": 114183736999,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:38Z",
+          "completed_at": "2026-10-10T09:35:49Z"
+        },
+        {
+          "id": 114183736791,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:38Z",
+          "completed_at": "2026-10-10T09:47:43Z"
+        },
+        {
+          "id": 114183736746,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:39Z",
+          "completed_at": "2026-10-10T09:50:11Z"
+        },
+        {
+          "id": 114183736635,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:38Z",
+          "completed_at": "2026-10-10T09:35:50Z"
+        },
+        {
+          "id": 114183728013,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+          "started_at": "2026-10-10T09:35:35Z",
+          "completed_at": "2026-10-10T09:35:47Z"
+        }
+      ],
+      "counts": {
+        "pytest_passed": 3850,
+        "pytest_seconds": 710.32,
+        "page_passed": 13240,
+        "page_total": 13240,
+        "chart_passed": 378,
+        "chart_total": 378,
+        "continuity_passed": 137,
+        "fixtures": {
+          "page": 13,
+          "morning": 21,
+          "issuer": 30,
+          "stop_research": 22,
+          "research_outcomes": 40
+        }
+      },
+      "native": [
+        {
+          "case": "central",
+          "job_id": 114183778559,
+          "started_at": "2026-10-10T09:35:53Z",
+          "completed_at": "2026-10-10T10:23:52Z",
+          "runtime_seconds": 2835.708462,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11667641698,
+          "artifact_name": "historical-runtime-central-38041933275-1",
+          "artifact_sha256": "3139d46832404c5bd621f6018700e369d4db830c12438bf7f640833526da908f",
+          "artifact_bytes": 26647
+        },
+        {
+          "case": "stress",
+          "job_id": 114183778425,
+          "started_at": "2026-10-10T09:35:52Z",
+          "completed_at": "2026-10-10T09:54:46Z",
+          "runtime_seconds": 1096.928767,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11665989195,
+          "artifact_name": "historical-runtime-stress-38041933275-1",
+          "artifact_sha256": "83eb4d8d7be55541c2a8eb32cc02d7091201bf19d06597fc07a02b7e1d8ba5a7",
+          "artifact_bytes": 26545
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11667641698,
+          "name": "historical-runtime-central-38041933275-1",
+          "size_in_bytes": 26647,
+          "digest": "sha256:3139d46832404c5bd621f6018700e369d4db830c12438bf7f640833526da908f"
+        },
+        {
+          "id": 11666292010,
+          "name": "historical-runtime-gate-38041933275-1",
+          "size_in_bytes": 336,
+          "digest": "sha256:42f40007d159f4a0638828375c472c94c81f23ac3b52b20389cacb27bfdc119c"
+        },
+        {
+          "id": 11665989195,
+          "name": "historical-runtime-stress-38041933275-1",
+          "size_in_bytes": 26545,
+          "digest": "sha256:83eb4d8d7be55541c2a8eb32cc02d7091201bf19d06597fc07a02b7e1d8ba5a7"
+        },
+        {
+          "id": 11665784120,
+          "name": "page-shots",
+          "size_in_bytes": 82738715,
+          "digest": "sha256:f53c9ff6332d1d567f57e8f460be10b5153f87302b6399abd55f216dfb5b3b97"
+        }
+      ],
+      "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only; no merge or deployment claim."
+    },
+    "145": {
+      "schema_version": 1,
+      "status": "PASS",
+      "repository": "spicyChicken59/SpicyStock",
+      "pull_request": 145,
+      "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+      "tests_run_id": 38043825289,
+      "tests_conclusion": "success",
+      "recorded_at": "2026-10-10T10:58:30.054Z",
+      "checks": [
+        {
+          "id": 114189261589,
+          "name": "historical-runtime (central)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:08:03Z",
+          "completed_at": "2026-10-10T10:26:43Z"
+        },
+        {
+          "id": 114189261574,
+          "name": "historical-runtime (stress)",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:08:03Z",
+          "completed_at": "2026-10-10T10:58:04Z"
+        },
+        {
+          "id": 114189221942,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:07:49Z",
+          "completed_at": "2026-10-10T10:08:00Z"
+        },
+        {
+          "id": 114189221903,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:07:49Z",
+          "completed_at": "2026-10-10T10:21:37Z"
+        },
+        {
+          "id": 114189221879,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:07:49Z",
+          "completed_at": "2026-10-10T10:18:46Z"
+        },
+        {
+          "id": 114189221858,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:07:48Z",
+          "completed_at": "2026-10-10T10:07:59Z"
+        },
+        {
+          "id": 114189215962,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+          "started_at": "2026-10-10T10:07:46Z",
+          "completed_at": "2026-10-10T10:07:57Z"
+        }
+      ],
+      "counts": {
+        "pytest_passed": 3850,
+        "pytest_seconds": 524,
+        "page_passed": 13387,
+        "page_total": 13387,
+        "chart_passed": 378,
+        "chart_total": 378,
+        "continuity_passed": 137,
+        "fixtures": {
+          "page": 13,
+          "morning": 21,
+          "issuer": 30,
+          "stop_research": 22,
+          "research_outcomes": 40
+        }
+      },
+      "native": [
+        {
+          "case": "central",
+          "job_id": 114189261589,
+          "started_at": "2026-10-10T10:08:03Z",
+          "completed_at": "2026-10-10T10:26:43Z",
+          "runtime_seconds": 1080.723532,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11667071735,
+          "artifact_name": "historical-runtime-central-38043825289-1",
+          "artifact_sha256": "f6d44847124227bbefed04314e57848a533f88c847af227c05533be8c785f1cf",
+          "artifact_bytes": 26650
+        },
+        {
+          "case": "stress",
+          "job_id": 114189261574,
+          "started_at": "2026-10-10T10:08:03Z",
+          "completed_at": "2026-10-10T10:58:04Z",
+          "runtime_seconds": 2960.245251,
+          "memory_supervisor_status": "PASS",
+          "artifact_id": 11668370225,
+          "artifact_name": "historical-runtime-stress-38043825289-1",
+          "artifact_sha256": "08739b75f9d1e6c0566dc618de8e040e2a08507265d89b32a004ccfed6598363",
+          "artifact_bytes": 26530
+        }
+      ],
+      "artifacts": [
+        {
+          "id": 11668370225,
+          "name": "historical-runtime-stress-38043825289-1",
+          "size_in_bytes": 26530,
+          "digest": "sha256:08739b75f9d1e6c0566dc618de8e040e2a08507265d89b32a004ccfed6598363"
+        },
+        {
+          "id": 11667655214,
+          "name": "historical-runtime-gate-38043825289-1",
+          "size_in_bytes": 514,
+          "digest": "sha256:68239a6d8277251dd733d2c15d9d2eac0b9df90bed972d91ca86e0e81dbb9c9a"
+        },
+        {
+          "id": 11667071735,
+          "name": "historical-runtime-central-38043825289-1",
+          "size_in_bytes": 26650,
+          "digest": "sha256:f6d44847124227bbefed04314e57848a533f88c847af227c05533be8c785f1cf"
+        },
+        {
+          "id": 11667032396,
+          "name": "page-shots",
+          "size_in_bytes": 83092166,
+          "digest": "sha256:b37ac5b2d5275ddccdbf98750b831b6dc60f6a171ccf9a31ef4ef633c128757e"
+        }
+      ],
+      "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Corrected exact-head hosted acceptance only; no merge or deployment claim."
+    }
+  },
+  "independent_exact_head_approvals": {
+    "141": {
+      "head": "041a5c447e03bf6cab806d97552379e5171d24e0",
+      "status": "NO_BLOCKER_READ_ONLY_FINAL_INTEGRATION_REVIEW",
+      "integrity_checks": 81
+    },
+    "143": {
+      "head": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+      "status": "NO_BLOCKER",
+      "navigation_checks": 25,
+      "planner_error_delta_checks": 14
+    },
+    "145": {
+      "head": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+      "status": "NO_BLOCKER",
+      "corrected_tree": "04841a89d07ec4ecda8bf03b6f29c512e99ebe04",
+      "integrity_checks": 22,
+      "legacy_fixture_delta_checks": 5,
+      "original_runtime_independent_checks": 139,
+      "earlier_e556_hosted_checks_not_used": true
+    }
+  },
+  "delivery": {
+    "schema_version": 1,
+    "status": "PASS",
+    "recorded_at": "2026-10-10T13:28:03.303Z",
+    "repository": "spicyChicken59/SpicyStock",
+    "head_sha": "e081535d3e6fe438a67f467b83564d56e4a52db4",
+    "publisher": {
+      "run_id": 38055671203,
+      "public_files_verified": 40,
+      "verification_log_line": "2026-10-10T13:26:58.7155763Z Verified: every one of the 40 public files matches committed main.",
+      "log_path": "/tmp/spicystock-pr145-publisher-38055671203.log",
+      "jobs": [
+        {
+          "id": 114223532951,
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T13:25:44Z",
+          "completed_at": "2026-10-10T13:27:01Z"
+        }
+      ]
+    },
+    "pages": {
+      "run_id": 38055685479,
+      "jobs": [
+        {
+          "id": 114223598930,
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T13:26:03Z",
+          "completed_at": "2026-10-10T13:26:19Z"
+        },
+        {
+          "id": 114223676153,
+          "name": "report-build-status",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T13:26:22Z",
+          "completed_at": "2026-10-10T13:26:25Z"
+        },
+        {
+          "id": 114223676172,
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T13:26:23Z",
+          "completed_at": "2026-10-10T13:26:44Z"
+        }
+      ]
+    },
+    "superseded_pages": {
+      "run_id": 38055671329,
+      "head_sha": "e081535d3e6fe438a67f467b83564d56e4a52db4",
+      "conclusion": "cancelled"
+    },
+    "pull_requests": [
+      {
+        "number": 141,
+        "state": "closed",
+        "merged": true,
+        "merged_at": "2026-10-10T13:25:40Z",
+        "head_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+        "merge_commit_sha": "041a5c447e03bf6cab806d97552379e5171d24e0",
+        "incorporation": "automatically marked merged by ancestry"
+      },
+      {
+        "number": 143,
+        "state": "closed",
+        "merged": true,
+        "merged_at": "2026-10-10T13:25:40Z",
+        "head_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+        "merge_commit_sha": "703032b97a604a07968b34e22e80a6852b1e2bf6",
+        "incorporation": "automatically marked merged by ancestry"
+      },
+      {
+        "number": 145,
+        "state": "closed",
+        "merged": true,
+        "merged_at": "2026-10-10T13:25:38Z",
+        "head_sha": "75f5bbc78201d588e143423fe2c2595d25acaaa0",
+        "merge_commit_sha": "e081535d3e6fe438a67f467b83564d56e4a52db4",
+        "incorporation": "explicit reviewed exact-head merge"
+      }
+    ],
+    "issues": [
+      {
+        "number": 138,
+        "state": "closed",
+        "state_reason": "completed",
+        "closed_at": "2026-10-10T13:25:42Z"
+      },
+      {
+        "number": 142,
+        "state": "closed",
+        "state_reason": "completed",
+        "closed_at": "2026-10-10T13:25:42Z"
+      },
+      {
+        "number": 144,
+        "state": "closed",
+        "state_reason": "completed",
+        "closed_at": "2026-10-10T13:25:40Z"
+      }
+    ],
+    "scope": "Official GitHub publisher/Pages and incorporated PR/issue metadata. The publisher verified 40 public files against committed main. Actual public-browser acceptance is a separate review. No provider collection, dispatch, or merge was performed by this reviewer."
+  },
+  "reviewed_source_sha256": {
+    "src/issuer_evidence.py": "8621458eaead06d9e117c727bcca0d6b60fbac85174b6534c8ab05ead259cd50",
+    "docs/app-issuer-evidence.js": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07",
+    "docs/app.js": "5b5794ec60a9dafd1e353e88f8c08526a6a8b1976daf1228536a505938ebb0ca",
+    "docs/app-morning.js": "781352d7a1c9086a51e65c6273a58ff18722d55796f7e9edd5fa3e38f38915f5",
+    "docs/app-handoff.js": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5",
+    "docs/app-handoff-ui.js": "f643280d144d98cf707dd52fe0641038b0593c94d4866ddcf212c652c477978d",
+    "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+    "docs/app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3",
+    "tools/handoff_model_cases.mjs": "07390d44cf9cbe38b82a695eb7a3c99529692c203a22dbaa93259816b8660b35",
+    "tools/independent_report_cases.mjs": "423df74ccb6b38d86b6be452f4c2fa611600a452039e06087b0c51c53fe155b1",
+    "tools/handoff_cases.mjs": "db04adc3a40547bd1e592f1562fd608b87dc76c8e7bcd4aa36c00fd1bebbe146",
+    "tools/page_smoke.mjs": "da7cc9ff13129b58d95edb74bfd54381aa9b2f71028606b4f3a89720aca9b754",
+    "tools/publication_recovery_cases.mjs": "9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe"
+  },
+  "local_preparation": {
+    "status": "LOCAL_PREPARATION_ONLY",
+    "path": "release-evidence/2026-10-10-independent-reports/prepared.json",
+    "file": "release-evidence/2026-10-10-independent-reports/prepared.json",
+    "sha256": "e2d371577c904726dff9a922a6c619e8f0bbe65a80d439af3d612b071619b0b7",
+    "bytes": 9253,
+    "inline_receipts": {
+      "spicystock-independent-reports-model-acceptance.json": "07d9b6284d6c9a5ab6c039a521d277b6a316560a0e9bf181e9383af8675fcfb1",
+      "spicystock-independent144-browser-acceptance.json": "34a7f13aec84fd4c33b480130d7b498d1315de7a7ca3c585dc6a504bc9c885ad",
+      "final-review.json": "83b04f100f24d537f920fca25c4ccb6159ae446b44568cda087411f78e0c30c7"
+    },
+    "root_validation": {
+      "model": 49,
+      "legacy_browser": 269,
+      "compatibility_browser": 1475,
+      "documentation": 37,
+      "scope": "Distinct targeted suites; owner dedicated147 and independent139 are separate evidence below, not added into a purported single test run.",
+      "publication_recovery": 131
+    },
+    "legacy_fixture_correction": {
+      "recorded_at": "2026-10-10T10:07:05.180555+00:00",
+      "scope": "A synthetic v1 envelope built from the current v3 prepared record must omit kind, which was absent in genuine v1. Existing application validation remains unchanged.",
+      "prior_failure": "The successor backup compatibility run found two failed legacy readability/disabled-copy checks (129/131).",
+      "final_validation": "Corrected fixture on this report-only branch passes all 131 actual local HTTP publication-recovery controls.",
+      "runtime_changed": false,
+      "previous_head": "e556a5c0645eb6a1219aecada8b8582bb448073a",
+      "hosted_status": "The prior head checks are historical; the corrected exact head requires new hosted checks and review."
+    },
+    "scope": "Synthetic execution/arithmetic/CAS/recovery controls remain distinct from the actual public empty forms. No saved synthetic or real execution was created in the public acceptance."
+  },
+  "production_source": {
+    "publication": {
+      "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+      "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+      "run_id": "38034610157",
+      "rules_version": "c9dc7d6d1d87",
+      "measured_session": "2026-10-09",
+      "applicable_session": "2026-10-12",
+      "published_at": "2026-10-10T07:30:15.553690+00:00",
+      "reader_projection_version": 1,
+      "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+    },
+    "canonical_bytes": 12963197,
+    "reader_bytes": 4016951,
+    "baseline_tickets": 0,
+    "issuer": {
+      "receipt_sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab",
+      "receipt_bytes": 1768,
+      "bundle": {
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac",
+        "bytes": 5687,
+        "path": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json"
+      },
+      "status": "unavailable",
+      "generated_at": "2026-10-10T09:18:39.533632+00:00",
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "diagnostics": [
+        {
+          "ticker": "MG",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+              "http_status": 403,
+              "source_phase": "mapping"
+            }
+          ]
+        },
+        {
+          "ticker": "ZIM",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+              "http_status": 403,
+              "source_phase": "mapping"
+            }
+          ]
+        }
+      ],
+      "coverage": {
+        "issuer_news": {
+          "status": "not_cleared",
+          "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+        },
+        "earnings": {
+          "status": "not_checked",
+          "reason": "The future earnings calendar has not been checked."
+        }
+      },
+      "denial_cause": "unknown"
+    },
+    "stop_research": {
+      "receipt_sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22",
+      "receipt_bytes": 1650,
+      "bundle": {
+        "bytes": 8918,
+        "path": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      }
+    },
+    "journal": {
+      "receipt_sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2",
+      "receipt_bytes": 2132,
+      "bundle": {
+        "bytes": 17104,
+        "path": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+        "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172"
+      },
+      "generated_at": "2026-10-10T08:50:21.159749+00:00",
+      "counts": {
+        "by_status": {
+          "basis_conflict": 0,
+          "excluded": 3,
+          "missing": 0,
+          "not_filled": 0,
+          "open": 0,
+          "origin_unavailable": 0,
+          "pending": 2,
+          "resolved": 0,
+          "uncertain": 0,
+          "unreadable": 0,
+          "unsupported": 0
+        },
+        "cohorts": 1,
+        "eligible": 2,
+        "primary_cohorts": 1,
+        "rows": 5
+      },
+      "original_cohort_sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+      "models": {
+        "MG": {
+          "current_stop": null,
+          "day": 0,
+          "entry": null,
+          "events": [],
+          "expected_sessions": [],
+          "missing_sessions": [],
+          "original_shares": 3,
+          "r": null,
+          "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+          "remaining_shares": null,
+          "sessions": 0,
+          "sold_shares": null,
+          "status": "excluded",
+          "uncertainty": null
+        },
+        "KE": {
+          "current_stop": null,
+          "day": 0,
+          "entry": null,
+          "events": [],
+          "expected_sessions": [],
+          "missing_sessions": [],
+          "original_shares": 1,
+          "r": null,
+          "reason": "Awaiting 2026-10-12 entry-session observations.",
+          "remaining_shares": null,
+          "sessions": 0,
+          "sold_shares": null,
+          "status": "pending",
+          "uncertainty": null
+        },
+        "ZIM": {
+          "current_stop": null,
+          "day": 0,
+          "entry": null,
+          "events": [],
+          "expected_sessions": [],
+          "missing_sessions": [],
+          "original_shares": 2,
+          "r": null,
+          "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+          "remaining_shares": null,
+          "sessions": 0,
+          "sold_shares": null,
+          "status": "excluded",
+          "uncertainty": null
+        },
+        "SN": {
+          "current_stop": null,
+          "day": 0,
+          "entry": null,
+          "events": [],
+          "expected_sessions": [],
+          "missing_sessions": [],
+          "original_shares": 0,
+          "r": null,
+          "reason": "Not an allocated research idea in the frozen cohort: no_whole_share, occupied_model_symbol",
+          "remaining_shares": null,
+          "sessions": 0,
+          "sold_shares": null,
+          "status": "excluded",
+          "uncertainty": null
+        },
+        "PSNL": {
+          "current_stop": null,
+          "day": 0,
+          "entry": null,
+          "events": [],
+          "expected_sessions": [],
+          "missing_sessions": [],
+          "original_shares": 3,
+          "r": null,
+          "reason": "Awaiting 2026-10-12 entry-session observations.",
+          "remaining_shares": null,
+          "sessions": 0,
+          "sold_shares": null,
+          "status": "pending",
+          "uncertainty": null
+        }
+      }
+    },
+    "retained_source_unchanged_from_prior_main": {
+      "parent": "62f7905d4b2db24460346bf2b471210ca0737b18",
+      "protected_files_preserved": 18867,
+      "paths": "All prior docs JSON and docs/evidence/**, docs/history/** plus prior release-evidence/**; exact Git blobs",
+      "changed_or_missing": []
+    }
+  },
+  "actual_public": {
+    "url": "https://spicychicken59.github.io/SpicyStock/",
+    "runs": {
+      "issuer": {
+        "status": "PASS_PUBLIC_UI",
+        "scope": "ACTUAL PUBLIC UI; real wall clock; no route/data/clock overrides",
+        "started_at": "2026-10-10T13:28:25.672Z",
+        "finished_at": "2026-10-10T13:28:40.126Z",
+        "checks_passed": 189,
+        "exact_native_files_matched_git": 40,
+        "viewports": [
+          390,
+          1280
+        ],
+        "screenshots": [
+          {
+            "path": "next-step-1280.png",
+            "sha256": "673b24b4675cd685a7ea97b4df6718f355feff2f1f2095bf7f0d4f746877e733",
+            "bytes": 40240,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "cash-preview-1280.png",
+            "sha256": "6f9b6934bbbb6cf2ae921a7a27ee08ab50bade7bfef71e6c00e2b40ba1a54fab",
+            "bytes": 42820,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-anchors-MG-1280.png",
+            "sha256": "3ded241fd00ae07a44c983e02c8c26ab48b67a0ecc3b8ba4b5d9389f0c5698c0",
+            "bytes": 122983,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-coverage-MG-1280.png",
+            "sha256": "698cf87fade0ba17e4ac0d016e4e7113eed0762ef7d504f747e8c2eeb49ab495",
+            "bytes": 100154,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-diagnostic-MG-1280.png",
+            "sha256": "133fe8e0074781647e6482ff04d371eae18ab20c49ee91f3aed05c1fc5a674fa",
+            "bytes": 181216,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-anchors-ZIM-1280.png",
+            "sha256": "e407bc0d39ae38f6ed1e5268b79fef7b720e68aece0da4d5f032ccb99b60d5f5",
+            "bytes": 125966,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-coverage-ZIM-1280.png",
+            "sha256": "df130dda89e51403e0c53edc17cd12200475a818716003af824b925233ed689b",
+            "bytes": 100125,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-diagnostic-ZIM-1280.png",
+            "sha256": "e8aa361f0c231720007c6ce721976e72c89ac19df3a70cd34941dd5bc3fcb5d1",
+            "bytes": 170741,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-desk-1280.png",
+            "sha256": "4fad6542a7934c8d660f73c8ddd08bdd4e077019082d52fc93329e848e8fc5cd",
+            "bytes": 122153,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "next-step-390.png",
+            "sha256": "6a2b521a48089394d8d839a8c73fa1eaffaa82d0f2a6cf1336ab9e08fdbe07cf",
+            "bytes": 43275,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "cash-preview-390.png",
+            "sha256": "94c9a07f8ef89790ea736a934cfcddbbfc793cab97e59e0d3aa8fcf62bec53b4",
+            "bytes": 39217,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-anchors-MG-390.png",
+            "sha256": "ce739d5fd1de27eb950d4373b3e020c25d25fa9161bb2be11acad6ab74d70482",
+            "bytes": 67926,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-coverage-MG-390.png",
+            "sha256": "98a19470237b6a85a871a42a84c0e864cd6bdcde40db4780bebe34ef2858cf13",
+            "bytes": 62225,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-diagnostic-MG-390.png",
+            "sha256": "bc1424671c2258f3b75468c74ad646688a2eb3ee8670b582d601a1dc66099c00",
+            "bytes": 74537,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-anchors-ZIM-390.png",
+            "sha256": "18dd6f64a192cac052932f0c58c3ebff7e447ceb6228bf289f7b8ec3c824fa3b",
+            "bytes": 60932,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-coverage-ZIM-390.png",
+            "sha256": "e306290cb3cc2ba8956139f5cde7c74b3ea1841b37ccd23518a58e53eee91483",
+            "bytes": 62135,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-diagnostic-ZIM-390.png",
+            "sha256": "253bdf15569ea77aaaa407ee8ac9f1e3346d674ad513a76ff00d01fd2b230d94",
+            "bytes": 74247,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "issuer-desk-390.png",
+            "sha256": "f85fbaa1273f2db9f184c1c766ff8cfa3cb9d8b0c6ed24d6d7fdbfc265ef6154",
+            "bytes": 60184,
+            "width": 390,
+            "visually_inspected": true
+          }
+        ],
+        "limitations": [
+          "This verifies deployed public bytes and the UI over the receipt actually served. It does not perform a new SEC collection or verify raw SEC downloads against their original servers.",
+          "Partial, unavailable, no-candidate, inapplicable, expired or differently bound receipts cannot establish issuer-news or earnings clearance.",
+          "Fresh browser contexts exercise only an ephemeral synthetic cash input. No real balance, saved symbol, order, position or credential is supplied.",
+          "Two viewport observations do not establish provider availability on another run or future trading performance."
+        ],
+        "visual_review": {
+          "status": "PASS_ACTUAL_PUBLIC_REVIEW",
+          "reviewed_at": "2026-10-10T13:31:41.526879+00:00",
+          "actual_public": {
+            "checks_passed": 189,
+            "required_native_file_matches": 40,
+            "all_public_reads_finished": true,
+            "first_attempt": true,
+            "failed_attempts": 0,
+            "browser_errors": 0,
+            "unexpected_transport_errors": 0,
+            "viewports": [
+              390,
+              1280
+            ],
+            "started_at": "2026-10-10T13:28:25.672Z",
+            "finished_at": "2026-10-10T13:28:40.126Z",
+            "default_data_loader": true,
+            "real_wall_clock": true,
+            "data_clock_route_overrides": false,
+            "provider_requests": 0,
+            "workflow_dispatches": 0,
+            "repo_edits": 0,
+            "saved_private_reports": 0,
+            "copied_orders": 0,
+            "broker_actions": 0
+          },
+          "visual_review": "All listed actual screenshots directly inspected. Text and controls are readable at phone/light and desktop/dark sizes; recorded no-horizontal-overflow checks pass. Captures are viewport/element slices, not an assertion that all long content is visible in one image.",
+          "scope": "Actual deployed issuer reconciliation over the retained typed403 receipt. The source request itself was not rerun.",
+          "findings": [
+            "MG and ZIM remain excluded research with no entry ticket; archived reviewed event evidence and original SEC/issuer source links remain visible.",
+            "Actual stored mapping response is observed HTTP403; identity unverified, index unknown and zero documents. The shared stored failure has one request and zero downloaded/captured bytes. No new SEC collection was requested.",
+            "Receipt is exactly bound to the current public canonical and reader; source reader initially makes zero requests and opens only its fixed receipt plus digest bundle.",
+            "The source coverage gap and no-clearance wording remain explicit. Actual source date is retained, not restamped as a new check.",
+            "Cash input initially unknown; the unchanged runner then uses explicitly synthetic ephemeral1743.29 only to prove the same DOM/value survives issuer inspection. It creates no ticket, amount, draft, saved record or transmitted input."
+          ],
+          "synthetic_scope": {
+            "cash_dollars": "1743.29",
+            "purpose": "ephemeral DOM continuity only",
+            "actual_user_balance": false,
+            "saved_private_facts": false,
+            "public_source_override": false,
+            "warning": "Some issuer coverage screenshots show this synthetic input. It is not Mo\u2019s balance."
+          },
+          "limits": [
+            "Production tested the existing unavailable branch, not successful fresh SEC filings or a new redirect response.",
+            "Local semantic contradiction/mutation tests and synthetic403/redirect producer controls remain separate and are not counted in these189 public checks."
+          ]
+        }
+      },
+      "decision": {
+        "status": "PASS_ACTUAL_PUBLIC_DECISION_INSPECTION",
+        "scope": "ACTUAL PUBLIC RECORDED DECISION INSPECTION; exact native files, default data/clock, no route or data overrides",
+        "started_at": "2026-10-10T13:28:53.765Z",
+        "finished_at": "2026-10-10T13:29:01.382Z",
+        "checks_passed": 147,
+        "exact_native_files_matched_git": 40,
+        "viewports": [
+          390,
+          1280
+        ],
+        "screenshots": [
+          {
+            "path": "ACTUAL-anticipation-wait-1280.png",
+            "sha256": "411847e4ff0642f7dfdff9a47d4ba91d2ee098c63fcc126f4fff5a08909c933a",
+            "bytes": 154883,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-research-inspect-control-1280.png",
+            "sha256": "1ed9ec80fe280536cf65daa7dbc759358211179bbee6767073eedbb87dfc0588",
+            "bytes": 154388,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-recorded-chart-1280.png",
+            "sha256": "8883b3d50396ba478a6e070301ac88543601c179d8e1b297d7b2aca55660a87f",
+            "bytes": 105351,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-anticipation-wait-390.png",
+            "sha256": "8f7e83381e0f693fe0a182e5c9063dff4bcb7d92cfb3d00567e3676ffcedccbe",
+            "bytes": 69289,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-research-inspect-control-390.png",
+            "sha256": "41015bd94597f2d28413708729a8727b5bb48b0a9388cf6a188099b6ee52670a",
+            "bytes": 63188,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-recorded-chart-390.png",
+            "sha256": "2c128db819a7cc08d6a8d99382e666ab67bd4b6bcb05b6ee37cd44e532c27ddb",
+            "bytes": 50282,
+            "width": 390,
+            "visually_inspected": true
+          }
+        ],
+        "limitations": [
+          "No provider, broker, dispatch, copy, prepare, saved private record or reported execution action.",
+          "Actual private cash remains unknown and private history empty; local108-control private-continuity evidence is separate.",
+          "Refusal inputs below are malformed function arguments only: actual publication, receipt, model and source evidence are never changed.",
+          "Recorded chart inspection grants no entry authority; research figures remain hypothetical.",
+          "Screenshots need a separate visual review before final acceptance."
+        ],
+        "visual_review": {
+          "status": "PASS_ACTUAL_PUBLIC_REVIEW",
+          "reviewed_at": "2026-10-10T13:31:41.548105+00:00",
+          "actual_public": {
+            "checks_passed": 147,
+            "required_native_file_matches": 40,
+            "all_public_reads_finished": true,
+            "first_attempt": true,
+            "failed_attempts": 0,
+            "browser_errors": 0,
+            "unexpected_transport_errors": 0,
+            "viewports": [
+              390,
+              1280
+            ],
+            "started_at": "2026-10-10T13:28:53.765Z",
+            "finished_at": "2026-10-10T13:29:01.382Z",
+            "default_data_loader": true,
+            "real_wall_clock": true,
+            "data_clock_route_overrides": false,
+            "provider_requests": 0,
+            "workflow_dispatches": 0,
+            "repo_edits": 0,
+            "saved_private_reports": 0,
+            "copied_orders": 0,
+            "broker_actions": 0
+          },
+          "visual_review": "All listed actual screenshots directly inspected. Text and controls are readable at phone/light and desktop/dark sizes; recorded no-horizontal-overflow checks pass. Captures are viewport/element slices, not an assertion that all long content is visible in one image.",
+          "scope": "Actual recorded decision explanations and original-chart inspection, with unknown private cash and empty private records throughout.",
+          "findings": [
+            "All five original anticipation decisions remain in original order, with zero tickets. Ten additional quiet names stay separate from the top-five baseline explanation.",
+            "MG/ZIM known-event exclusions and KE/SN/PSNL original stop-width refusals remain explicit; wider-stop research does not revise admission.",
+            "KE inspection opens a real original recorded chart with original levels29.23 trigger/29.52limit/28.25stop and withheld ticket; no new order or private draft is created.",
+            "Eight malformed or detached inspection references are refused against exact publication/evidence binding without modifying the public source.",
+            "Keyboard navigation, chart focus and return preserve the original cash node/value, private storage, public data and model. Research transport stays lazy until opened."
+          ],
+          "synthetic_scope": {
+            "private_inputs": false,
+            "saved_reports": false,
+            "source_override": false,
+            "argument_controls": "Eight explicitly malformed API arguments are refusal checks only; actual served data is unchanged."
+          },
+          "limits": [
+            "Original retained charts are dated research, not live quotes, new strategy validation or entry permission."
+          ]
+        }
+      },
+      "independent": {
+        "status": "PASS_ACTUAL_PUBLIC_EMPTY_INDEPENDENT_REPORT",
+        "scope": "ACTUAL PUBLIC EMPTY REPORT ENTRY ONLY; default clock/data; no private reports or cash seeded, entered or saved",
+        "started_at": "2026-10-10T13:29:17.929Z",
+        "finished_at": "2026-10-10T13:29:30.742Z",
+        "checks_passed": 163,
+        "exact_native_files_matched_git": 40,
+        "viewports": [
+          390,
+          1280
+        ],
+        "screenshots": [
+          {
+            "path": "ACTUAL-blank-report-origin-1280.png",
+            "sha256": "a7b34533c19b6affbf8c79b38e69f9228c2426421e02fbe30b83165a9e0bb4c4",
+            "bytes": 149250,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-blank-report-fields-1280.png",
+            "sha256": "b257aa19888581188dbc3dcb24b6f8a46dce9c3684a7ef52b7d7894920b0450a",
+            "bytes": 126870,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-private-empty-after-cancel-1280.png",
+            "sha256": "d8aaed88a560b6a771e0b09ede25ec10ffdf1e8b382fa2cd760270c0f43a4b49",
+            "bytes": 139359,
+            "width": 1280,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-blank-report-origin-390.png",
+            "sha256": "2ef32f258608f71f3ed4ac4bd2a0da05818233e4c6d1bc42a2499b01130fad79",
+            "bytes": 69786,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-blank-report-fields-390.png",
+            "sha256": "49cd2ae8dd65bb18e0dc44e626ebf386521f522f0780699f0e527eef9514be0c",
+            "bytes": 57793,
+            "width": 390,
+            "visually_inspected": true
+          },
+          {
+            "path": "ACTUAL-private-empty-after-cancel-390.png",
+            "sha256": "7f91e56770ba0694b3509557157e637334fc05d9eaa5c325b0579ebd1fbca34c",
+            "bytes": 61282,
+            "width": 390,
+            "visually_inspected": true
+          }
+        ],
+        "limitations": [
+          "This acceptance opens and cancels empty forms only; no saved execution, position, fees, profit or first successful trade is claimed.",
+          "Creation/correction and exact six-decimal arithmetic are separately exercised by labelled repository controls; they are not real user facts.",
+          "No provider, broker, dispatch, clipboard-copy, prepare or report-save action.",
+          "Recorded research remains hypothetical and does not authorize new entries."
+        ],
+        "visual_review": {
+          "status": "PASS_ACTUAL_PUBLIC_REVIEW",
+          "reviewed_at": "2026-10-10T13:31:41.568976+00:00",
+          "actual_public": {
+            "checks_passed": 163,
+            "required_native_file_matches": 40,
+            "all_public_reads_finished": true,
+            "first_attempt": true,
+            "failed_attempts": 0,
+            "browser_errors": 0,
+            "unexpected_transport_errors": 0,
+            "viewports": [
+              390,
+              1280
+            ],
+            "started_at": "2026-10-10T13:29:17.929Z",
+            "finished_at": "2026-10-10T13:29:30.742Z",
+            "default_data_loader": true,
+            "real_wall_clock": true,
+            "data_clock_route_overrides": false,
+            "provider_requests": 0,
+            "workflow_dispatches": 0,
+            "repo_edits": 0,
+            "saved_private_reports": 0,
+            "copied_orders": 0,
+            "broker_actions": 0
+          },
+          "visual_review": "All listed actual screenshots directly inspected. Text and controls are readable at phone/light and desktop/dark sizes; recorded no-horizontal-overflow checks pass. Captures are viewport/element slices, not an assertion that all long content is visible in one image.",
+          "scope": "Actual blank independent-report open/close/reopen/cancel workflow only; no private quantities, prices, times or fees entered.",
+          "findings": [
+            "All five actual research rows open a blank independent execution report with exact immutable publication/cohort/evidence source and archived baseline admission.",
+            "All fourteen manual fields remain blank/unknown. Opening or cancelling never supplies a fill, report, cash assumption, order, reservation or admission.",
+            "Current KE source display explicitly says original production baseline not admitted and recording broker facts grants no entry permission.",
+            "Close/reopen preserves the blank field node. Explicit Cancel returns to no saved private records.",
+            "Across both viewports, the open/cancel phase produces zero storage write events and zero HTTP requests; original unknown cash node, data/model/source and private storage stay unchanged."
+          ],
+          "synthetic_scope": {
+            "private_inputs": false,
+            "saved_reports": false,
+            "source_override": false,
+            "note": "No positive synthetic save/result/backup flow ran in this actual public acceptance."
+          },
+          "limits": [
+            "Saving/correcting executed reports, six-decimal arithmetic and migration are established by separate controlled tests, not by a real user trade here.",
+            "All14 fields are checked in the browser; captures show the visible form sections only."
+          ]
+        }
+      }
+    },
+    "checks_total": 499,
+    "unique_native_files": 40,
+    "native_file_matches_across_three_runs": 120,
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 17012,
+        "sha256": "228f5fdfe586c068fe46e921408ae31d084c4cefdca716e089091e6517d46a2d"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "app.css",
+        "bytes": 87893,
+        "sha256": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 34946,
+        "sha256": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 31185,
+        "sha256": "f643280d144d98cf707dd52fe0641038b0593c94d4866ddcf212c652c477978d"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 42047,
+        "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07"
+      },
+      {
+        "name": "app-stop-research.js",
+        "bytes": 37585,
+        "sha256": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe"
+      },
+      {
+        "name": "app-research-outcomes.js",
+        "bytes": 40344,
+        "sha256": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 24145,
+        "sha256": "781352d7a1c9086a51e65c6273a58ff18722d55796f7e9edd5fa3e38f38915f5"
+      },
+      {
+        "name": "app.js",
+        "bytes": 396766,
+        "sha256": "5b5794ec60a9dafd1e353e88f8c08526a6a8b1976daf1228536a505938ebb0ca"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1768,
+        "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+      },
+      {
+        "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "bytes": 5687,
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+      },
+      {
+        "name": "stop-research.json",
+        "bytes": 1650,
+        "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+      },
+      {
+        "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "bytes": 8918,
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      },
+      {
+        "name": "research-outcomes.json",
+        "bytes": 2132,
+        "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+      },
+      {
+        "name": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+        "bytes": 17104,
+        "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172"
+      }
+    ],
+    "screenshots_visually_inspected": 30,
+    "wall_clock_default_loader": true,
+    "route_data_clock_overrides": false,
+    "saved_private_reports": 0,
+    "decision_and_independent_settled_cash": "unknown",
+    "issuer_cash_control": "Only an ephemeral synthetic DOM value checks continuity; not an account balance, saved record or broker fact."
+  },
+  "limits": [
+    "Current baseline publication has zero admitted entry tickets. Research and report viewing never create entry or order authority.",
+    "MG and ZIM SEC mapping retrieval returned HTTP403; the reason for that response is unknown. One shared request downloaded/captured zero bytes, so neither issuer-news nor earnings clearance is established.",
+    "KE and PSNL remain pending day0 of5 in the frozen research cohort; MG, ZIM and SN remain excluded. There is no established model fill, R, portfolio result or strategy edge.",
+    "Actual public report checks opened and cancelled blank forms only. Positive fills, fees and result arithmetic were tested separately with explicitly synthetic offline private facts.",
+    "No broker/account facts, holdings, credentials, actual trade or profit were inspected or saved. First successful personal trade and timely morning source coverage remain unverified.",
+    "Hosted artifact digests are those from official metadata/logs; their payloads were not independently downloaded for this receipt."
+  ],
+  "evidence_inputs": {
+    "hosted_141": {
+      "file": "spicystock-pr141-hosted-acceptance.json",
+      "sha256": "e754c0bca92c36deea1ad989349b3f6ff1e59ea949a8d028d0c125509a0e60a4",
+      "bytes": 4641
+    },
+    "hosted_143": {
+      "file": "spicystock-pr143-hosted-acceptance.json",
+      "sha256": "3fcca1c0fe33782dfc343ef2d87590d2193cbee266364b2468920d8a72c14997",
+      "bytes": 4671
+    },
+    "hosted_145": {
+      "file": "spicystock-pr145-hosted-acceptance.json",
+      "sha256": "b487237acc2ac6adfebfbdfa72ff62c24b1da914cd0b4576e59ec00bcc1db71c",
+      "bytes": 4678
+    },
+    "fresh_premerge_and_merge": {
+      "file": "spicystock-pr145-premerge-and-merge.json",
+      "sha256": "4b2aa262a9a9474e2dca64f90d5ffc6e96309729ceffd1dbeca5d2e0a207689f",
+      "bytes": 38164
+    },
+    "independent_141": {
+      "file": "spicystock-issuer138-final-exact-head-review.json",
+      "sha256": "711042288f1391ffae73ec75a1abc1f9ea25b2f413eaffa66a84f6598513a683",
+      "bytes": 8733
+    },
+    "independent_143": {
+      "file": "final-review.json",
+      "sha256": "399fb61b8281d5ef368391e0a60162e9a2beb4378e854e10c9b556cc9c78194b",
+      "bytes": 4135
+    },
+    "independent_145_corrected": {
+      "file": "final-145-correction-review.json",
+      "sha256": "c0c4060a0ed26d298c453c9e92584cd5848a38a001e41010edf48c9c04480ff0",
+      "bytes": 3316
+    },
+    "prepared": {
+      "file": "release-evidence/2026-10-10-independent-reports/prepared.json",
+      "sha256": "e2d371577c904726dff9a922a6c619e8f0bbe65a80d439af3d612b071619b0b7",
+      "bytes": 9253,
+      "inline_receipts": {
+        "spicystock-independent-reports-model-acceptance.json": "07d9b6284d6c9a5ab6c039a521d277b6a316560a0e9bf181e9383af8675fcfb1",
+        "spicystock-independent144-browser-acceptance.json": "34a7f13aec84fd4c33b480130d7b498d1315de7a7ca3c585dc6a504bc9c885ad",
+        "final-review.json": "83b04f100f24d537f920fca25c4ccb6159ae446b44568cda087411f78e0c30c7"
+      }
+    },
+    "delivery": {
+      "file": "spicystock-pr145-delivery-acceptance.json",
+      "sha256": "0b92fb17aeda0ffb36c6804117a4eb69f571d048081689f080af6c149b5a6e4a",
+      "bytes": 3309
+    },
+    "issuer_actual_acceptance": {
+      "file": "acceptance.json",
+      "sha256": "62a4fcb0159a3c4b692580b4e983efd3d7b706438abb4df007e5ede288cf1db1",
+      "bytes": 92767
+    },
+    "issuer_actual_visual_review": {
+      "file": "review.json",
+      "sha256": "9470d74288a33c6701cbca1ff4d1d2bac9e90e9e192e671c56bfb3b825bb2e7f",
+      "bytes": 14156
+    },
+    "decision_actual_acceptance": {
+      "file": "acceptance.json",
+      "sha256": "908b96aab7f5dbb7ff0e0d079db07e73168ba3188766d638664e24cc26a1ea1c",
+      "bytes": 74392
+    },
+    "decision_actual_visual_review": {
+      "file": "review.json",
+      "sha256": "2d9386ecec6eead491449809a8a645afeaa7abb5218154c462e2944b46a9ed50",
+      "bytes": 7367
+    },
+    "independent_actual_acceptance": {
+      "file": "acceptance.json",
+      "sha256": "ded6622aaa8e4bee17b31ff20a93593b2b1068f602aecbd4ec9a17b50085462e",
+      "bytes": 93207
+    },
+    "independent_actual_visual_review": {
+      "file": "review.json",
+      "sha256": "7282e5df38da7d59dcfe3004a00d32b0dcb5fb9651b26bae85a0f97017eb925f",
+      "bytes": 6331
+    }
+  },
+  "generator_sha256": "a6c33e417dec8bbfb1839dd3d187a73c265d3b79aabe922e1a8ce92f3c39b5ee"
+}
