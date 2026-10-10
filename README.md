@@ -8,9 +8,11 @@ allocation, known corporate-action exclusions and dependable session handling.
 Verified morning observations and the compact reader are deployed; reliable
 on-time delivery and broader event coverage remain open. The
 [implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
-track this work and the practical first-trade workflow. The October 9 evening
-publication records one conditional anticipation ticket for October 12; a
-successful real-money trade has not yet been recorded. Mo authorizes continued
+track this work and the practical first-trade workflow. The original October 9
+evening publication exposed a missing ZIM takeover exclusion; the source-backed
+correction and its production verification are tracked in
+[PR #115](https://github.com/spicyChicken59/SpicyStock/pull/115). A successful
+real-money trade has not yet been recorded. Mo authorizes continued
 milestone releases with tests, independent review and public verification. The
 hourly **Build SpicyStock milestones** ChatGPT task supports resuming that work;
 see the goal's continuation contract.

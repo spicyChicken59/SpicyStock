@@ -4985,3 +4985,41 @@ banking calendars differ that day, so cash still comes from the broker.
 Broker identity, pre-open operational acceptance, actual fills and the first
 successful trade remain outstanding. Continue from these gaps; do not mark the
 whole goal or milestone 2 complete.
+
+## Checkpoint, 10 Oct 2026 — personal cash preview ready for release
+
+Mo expanded the operating contract to continued milestone releases until
+manually stopped. `PRODUCT_GOAL.md` records that contract; the hourly ChatGPT
+continuation task resumes work but is not an uninterrupted process. Both
+repositories remain connected, and the pinned design-system assets are reused.
+
+The morning desk now offers a separate, tab-local preview of one admitted
+published plan using entered settled cash, an explicit fees buffer and optional
+smaller whole-share quantity. Integer-cent arithmetic caps at both published
+quantity and cash affordable at the limit. It shows principal, fees, total
+cash, limit-to-stop risk and cash remaining. Published order copying retains
+the original quantity and says so beside the preview. Nothing reserves cash,
+submits an order or reads a broker balance. Invalid or unknown inputs, zero
+affordability, incompatible account assumptions, fixture publications, expiry
+and event refusal cannot produce a current preview. Inputs are reconsidered
+against the current clock and publication; session changes clear settled cash.
+
+The asynchronous observations callback now checks that the application is
+still mounted. The prior teardown exception was reproduced on unchanged main;
+a held-crypto teardown control passes and deleting the guard restores failure.
+
+Executed local evidence: 534 morning/cash browser assertions, 137 continuity
+assertions, seven producer-fixture tests and six reproduced fixture files.
+Independent review passed 421 browser assertions and 10,014 arithmetic cases,
+and inspected phone/desktop captures. Quantity, fees, event, account and cutoff
+mutations fail their intended controls; an unrelated maximum-share mutation
+passes. The publisher inventory includes all 29 files, including the new
+`app-cash-preview.js`. After incorporating the ZIM registry and narrow scanner
+correction, 44 documentation/fixture tests pass and collection finds 3,383
+Python tests. Runtime: Python 3.12.14 and Node 24.19.0. `.env.example` documents
+that this calculation needs no broker credential or new environment variable.
+
+Hosted checks and actual public acceptance remain outstanding. The original
+October 9 ZIM ticket must be superseded through normal production after PR #115;
+its retained model history must not be erased. No actual fill or successful
+trade has been reported by Mo.
