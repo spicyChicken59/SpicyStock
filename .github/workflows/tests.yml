@@ -150,6 +150,7 @@ jobs:
           python tests/fixtures/morning/generate.py --check
           python tests/fixtures/issuer-evidence/generate.py --check
           python tests/fixtures/stop-research/generate.py --check
+          python tests/fixtures/research-outcomes/generate.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail
