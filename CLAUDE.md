@@ -6267,3 +6267,74 @@ Next: release #147 after its remaining required gate, finish exact-head review
 and hosted acceptance for #148, then #149 enables a first actual-fill report from
 a verified retained journal row after a newer scan replaces the current cohort.
 Timely morning delivery, SEC source access and the first actual trade remain open.
+
+## Checkpoint, 10 Oct 2026 — first reports from retained journal cohorts
+
+Issue #149 closes a reproduced gap after publication replacement: the current
+research comparison can be empty while the verified journal retains original
+ideas. Each verified original row now offers a blank actual-fill report. Its
+request binds the currently loaded journal to the current publication and the
+selected original cohort, row and evidence. Stored version-3 source identity
+remains the original publication; current journal identity is only a transient
+lookup prerequisite. Unknown origins and arbitrary ticker requests refuse.
+
+The existing current-comparison path retains its original publication guard.
+First saves still require actual positive fills and submitted quantities, and
+recheck the source inside the existing storage lock. A replaced journal requires
+an explicit verified reopen; reopening the same original preserves mounted dirty
+inputs, focus and caret. Busy saves refuse reference replacement. Different
+cohort revisions of the same original publication/evidence open the same private
+record, rather than creating duplicate trades. Saved corrections remain available
+after source disappearance. Model outcomes never fill in actual broker facts.
+
+Local model commit `bca160e5` passes 76 controls, including nine new journal
+boundaries. Nine isolated model guard mutations fail their named controls;
+an unrelated share-cap change passes the nine journal controls. Local UI commit
+`7b2c71f9` and browser-suite commit `020298fb` pass 128 dedicated controls.
+Three isolated browser guard removals fail exact-reference, loaded-state and
+explicit-reopen assertions; an unrelated control passes all 128. Independent
+browser review passes 41 complementary controls, including a real Web Lock wait,
+journal replacement, original-source deduplication and unavailable-source
+correction. Eight bounded owner and two independent phone/desktop screenshots
+were inspected. The normal page gate includes `journalreports`.
+
+These local receipts use genuine producer fixtures with clearly labelled
+synthetic private fills. They establish neither a real execution nor public
+release acceptance. README and configuration documentation describe the loaded
+journal path without new provider calls or settings. Exact-head integration
+review, hosted checks and actual public acceptance remain pending. The
+[preparation receipt](release-evidence/2026-10-10-journal-reports/prepared.json)
+preserves component hashes and evidence boundaries.
+
+Next independent data milestone #151 adds a separate dated IEX observation for
+the current registered research cohort's allocation-fit rows. An offline source
+replay demonstrates that the admitted-only morning collector supplies no quotes
+for current KE/PSNL research, even at an eligible synthetic Monday clock. The
+new work must preserve ticket admission and label unchecked halt, volume and
+event coverage. It does not resolve best-effort delivery or SEC HTTP 403 access.
+
+## Checkpoint, 10 Oct 2026 — private backup released
+
+[PR #147](https://github.com/spicyChicken59/SpicyStock/pull/147) merged reviewed
+head `101dc9ff` at `a9862564`. All seven exact-head gates passed: 3,850 Python,
+13,524 page, 378 chart and 137 continuity checks, both native jobs and both
+secret checks. Native memory supervision passed and official upload/API artifact
+digests matched; artifact payloads were not separately downloaded. Publisher
+`38058127724` verified all 40 public files and final Pages `38058141730` deployed.
+
+First-attempt public acceptance passed 68 actual-empty controls and matched all
+40 files. Cash stayed unknown, no private records existed and empty download made
+no write or download. A separate synthetic rehearsal passed 45 controls: a real
+file download, new browser chooser, zero-write preview/cancel, explicit restore
+and re-export preserved exactly 4,773 bytes. Both legacy and independent report
+origins and unknown costs/times survived. All seven phone/desktop screenshots
+were directly inspected without errors or overflow. Synthetic fields are not
+Mo's account facts, execution or successful trade.
+
+The [durable release receipt](release-evidence/2026-10-10-private-backup/acceptance.json)
+embeds eight original proof files with exact byte digests, the reviewed/merged
+identities, delivery, source hashes and separate public/private scopes. Root
+readback checked 26 proof, source, image and release identities. Actual public
+reads are complete and the main-release hold is lifted. PR #150 review clarity
+is undergoing hosted checks; #149 retained-journal reporting is locally verified
+and being prepared for review; #151 research observations is in implementation.

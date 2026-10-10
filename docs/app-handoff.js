@@ -116,13 +116,16 @@
     if (typeof value !== 'string') return false;
     return !!timestamp(value.replace(/(\.\d{3})\d{1,3}(?=Z|[+-])/, '$1'));
   }
-  function researchValid(source) {
-    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'cohort', 'evidence', 'baseline_admitted']) || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(source.ticker) || source.stage !== 'setting-up' || typeof source.baseline_admitted !== 'boolean') return false;
-    const pub = source.publication, cohort = source.cohort, evidence = source.evidence;
+  function researchPublicationValid(pub) {
     return exactKeys(pub, ['data_sha256', 'context_sha256', 'run_id', 'rules_version', 'measured_session', 'applicable_session', 'published_at', 'reader_projection_version', 'reader_sha256']) &&
       ['data_sha256', 'context_sha256', 'reader_sha256'].every(key => typeof pub[key] === 'string' && HEX.test(pub[key])) &&
       typeof pub.run_id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(pub.run_id) && /^[a-f0-9]{12}$/.test(pub.rules_version) &&
-      validDate(pub.measured_session) && validDate(pub.applicable_session) && sourceTime(pub.published_at) && pub.reader_projection_version === 1 &&
+      validDate(pub.measured_session) && validDate(pub.applicable_session) && sourceTime(pub.published_at) && pub.reader_projection_version === 1;
+  }
+  function researchValid(source) {
+    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'cohort', 'evidence', 'baseline_admitted']) || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(source.ticker) || source.stage !== 'setting-up' || typeof source.baseline_admitted !== 'boolean') return false;
+    const cohort = source.cohort, evidence = source.evidence;
+    return researchPublicationValid(source.publication) &&
       exactKeys(cohort, ['sha256', 'bytes', 'generated_at', 'policy_id']) && HEX.test(cohort.sha256) && Number.isSafeInteger(cohort.bytes) && cohort.bytes > 0 && cohort.bytes <= 128 * 1024 &&
       sourceTime(cohort.generated_at) && cohort.policy_id === 'anticipation_stop_width_4_to_5_v1' &&
       exactKeys(evidence, ['id', 'plan_sha256', 'source_sha256', 'inputs_sha256']) && Object.values(evidence).every(value => typeof value === 'string' && HEX.test(value));
@@ -248,11 +251,17 @@
     });
   }
   function inspectResearch(request) {
-    if (!api.stopResearch || typeof api.stopResearch.reportReference !== 'function') return fail('Open the verified research comparison before recording a trade.');
-    const verified = api.stopResearch.reportReference(request);
+    const journal = object(request) && Object.hasOwn(request, 'origin');
+    if (journal && request.origin !== 'retained_journal') return fail('This research reference has an unsupported origin. Open its verified source before recording a trade.');
+    const verifier = journal ? api.researchOutcomes : api.stopResearch;
+    if (!verifier || typeof verifier.reportReference !== 'function') return fail(journal ? 'Open the verified research journal before recording a trade.' : 'Open the verified research comparison before recording a trade.');
+    const verified = verifier.reportReference(request);
     if (!verified || !verified.ok) return fail(verified && verified.error || 'The research source changed. Open its current reference before recording a trade.');
     const source = verified.source, hashes = api.observations && api.observations.facts();
-    if (!researchValid(source) || !hashes || hashes.canonicalHash !== source.publication.data_sha256) return fail('The research source does not match the verified publication.');
+    // A retained original remains historical. Only the journal verifier's
+    // separately bound active publication authorizes this source lookup.
+    const publication = journal ? verified.publication : source && source.publication;
+    if (!researchValid(source) || !researchPublicationValid(publication) || !hashes || hashes.canonicalHash !== publication.data_sha256) return fail('The research source does not match the verified publication.');
     return { ok: true, source: clone(source) };
   }
   async function reportResearch(request, fields, expectedRevision = null) {

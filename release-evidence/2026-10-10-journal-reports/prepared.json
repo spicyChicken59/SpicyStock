@@ -1,0 +1,777 @@
+{
+  "issue": 149,
+  "status": "LOCAL_PREPARATION_COMPLETE",
+  "recorded_at": "2026-10-10T14:09:56.999874+00:00",
+  "scope": "Local controls, synthetic actual fill facts and genuine producer-source fixtures. Component commit IDs below are local preparation identities, not the later GitHub head. No actual Mo execution or deployed release is claimed.",
+  "base_remote_head": "31c32fbb08107099bbd9043f91f59c3ec6fd1af5",
+  "local_component_commits": {
+    "model": "bca160e59d31f683d3a42fc3db8b67c6584934bb",
+    "ui": "7b2c71f96861e7909a64a5523a49c69fc1d04907",
+    "browser": "020298fbb291018dad6c14daff72755baffdc99a",
+    "page_hook": "fdfecefb6ce685ec8ecdb43136e81b342edaba28"
+  },
+  "source_sha256": {
+    "docs/app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+    "docs/app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+    "docs/app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+    "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+    "tools/handoff_model_cases.mjs": "9bb326a923635e6953a608f3d3787867160ccb61e33ffc48e94c95d3c71d324e",
+    "tools/journal_report_cases.mjs": "fff0b453b80ef2c6777d697b6902a0cf991048aa27b14e524a6ceced1bfd8d7a",
+    "tools/page_smoke.mjs": "ff3263834773c5c0c306f413605cf543fd2222e328c7984e792e03a90ceab47e",
+    "README.md": "b3009500c2c0d4d6604bbe5d8717d9ad514abb2846b709f0a7c39956e57e6be3",
+    ".env.example": "34eee79aaa06ce19822434d9e272a76c4b078eb1bf2a5a2a4e1b3dc65170c96a",
+    "CLAUDE.md": "3673d5947913fd66b78b44a271cbf653c12ebd2e548fa2838212371c4b33e12d",
+    "PRODUCT_GOAL.md": "5a809e1663f87307a8c6f706efa050cfcf7186ed61ed4b9d68f7d7a7312e7935",
+    "docs/data.json": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "docs/reader.json": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+  },
+  "inline_evidence": [
+    {
+      "path": "/tmp/spicystock-journal149-model-acceptance.json",
+      "bytes": 3734,
+      "sha256": "5e406e2805214a8a1bafb4d9353b473d5f5dd6cfda24aba55f1bfcbe37349814",
+      "evidence": {
+        "issue": 149,
+        "scope": "Model owner acceptance; integration, independent review and release gates tracked separately.",
+        "status": "owned_model_commit_complete",
+        "checked_at": "2026-10-10T13:50:54.481814+00:00",
+        "base": "95957c93601f392b3c5906cb345937b21b0a86e8",
+        "owned_files": {
+          "docs/app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "tools/handoff_model_cases.mjs": "9bb326a923635e6953a608f3d3787867160ccb61e33ffc48e94c95d3c71d324e"
+        },
+        "api": {
+          "new_origin": "retained_journal",
+          "verifier": "SCStock.researchOutcomes.reportReference(request)",
+          "verifier_result": "{ok:true, source: original unchanged v3 source, publication: independently verified active journal publication}",
+          "stored_schema_version": 3,
+          "identity": "original publication.data_sha256 + colon + original evidence.id",
+          "existing_comparison": "No-origin requests still use stopResearch and original publication hash equality; unknown present origins fail with no fallback."
+        },
+        "checks": {
+          "direct_model_tests": {
+            "passed": 76,
+            "failed": 0,
+            "new_journal_tests": 9,
+            "preexisting_tests": 67
+          },
+          "named_isolated_mutations": {
+            "killed": 9,
+            "total": 9
+          },
+          "unrelated_share_cap_control": {
+            "passed": 9,
+            "failed": 0
+          },
+          "syntax_and_diff": "PASS"
+        },
+        "preserved": [
+          "positive actual fill plus submitted-quantity reconciliation",
+          "inside-lock source re-verification and raw store CAS",
+          "original source/admission and pub:evidence dedup across cohort revisions/current/planned",
+          "v1/v2/v3 existing read and backup bytes; no version migration added",
+          "saved corrections after source disappearance",
+          "report-only no draft/order/cash/copy authority",
+          "missing prices, quantities, fees, times stay unknown; conditional model status does not supply facts"
+        ],
+        "fixtures": {
+          "paths": "tests/fixtures/research-outcomes/{observed,cohort-revisions,pending,basis-conflict,not-filled}; existing stop research current/priority; cash publication; original legacy v1/v2 model bytes",
+          "authority_boundary": "VM source verifier is explicitly injected; genuine current/original publication, raw cohort SHA/length and evidence verified from producer fixtures. Real verifier/browser integration is independently tested by other owners.",
+          "case_scope": "Eight report creation rows span resolved, uncertain, open, excluded, basis conflict, not filled and pending conditional model states; all actual input facts are labeled synthetic."
+        },
+        "evidence": [
+          {
+            "path": "/tmp/spicystock-journal149-model-final.log",
+            "sha256": "b6961fa0cdde45dcd27a2c59ecbb58665f0d6a5802c2246aca0b081a77a05ffd"
+          },
+          {
+            "path": "/tmp/spicystock-journal149-model-mutations.json",
+            "sha256": "e9b9a4970b4e9a6eb421f1067008b3dc9dbc4e2cf16bf84e0cf94c5fa527339c"
+          },
+          {
+            "path": "/tmp/spicystock-journal149-model-mutations.py",
+            "sha256": "6bfeab7a9ef858947470cd0acdb60839eb767c8fe681a5faa6fb0f4ec0e8668e"
+          }
+        ],
+        "limits": [
+          "No repository changes outside the two owned paths.",
+          "No provider/public requests, dispatch, real broker facts, orders, new published schema or private store version.",
+          "Mutations changed only /tmp copies; intended named assertions failed rather than setup/parser failures.",
+          "Duplicate-guidance mutation targets existingId response; shared writer separately refuses duplicates.",
+          "Local owned model commit only; no hosted or public release acceptance implied."
+        ],
+        "local_commit": "bca160e59d31f683d3a42fc3db8b67c6584934bb",
+        "commit_paths": [
+          "docs/app-handoff.js",
+          "tools/handoff_model_cases.mjs"
+        ]
+      }
+    },
+    {
+      "path": "/tmp/spicystock-journal149-browser-acceptance.json",
+      "bytes": 15798,
+      "sha256": "f882259c1d56a53ae22e60357c6809c20495a74bd37afc5ad85d5df09580ff23",
+      "evidence": {
+        "schema_version": 1,
+        "issue": 149,
+        "recorded_at": "2026-10-10T14:02:21.315622Z",
+        "status": "PASS",
+        "scope": "LOCAL ONLY. Frozen genuine offline producer fixtures and local HTTP browser assets. No actual public deployment claim, provider request, dispatch, real user profile, broker execution, upload, or private cloud storage. All manually entered execution facts are explicitly SYNTHETIC PRIVATE in fresh test contexts.",
+        "worktree": "/workspace/SpicyStock-journal-reports",
+        "base_head": "95957c93601f392b3c5906cb345937b21b0a86e8",
+        "source_sha256": {
+          "docs/app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "docs/app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+          "docs/app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635"
+        },
+        "owned_test": {
+          "path": "tools/journal_report_cases.mjs",
+          "sha256": "fff0b453b80ef2c6777d697b6902a0cf991048aa27b14e524a6ceced1bfd8d7a",
+          "owned_commit": "020298fbb291018dad6c14daff72755baffdc99a"
+        },
+        "baseline": {
+          "path": "/tmp/spicystock-journal149-final-v3/page-results.json",
+          "bytes": 18001,
+          "sha256": "5b6792775ceb18128cf4fc2072924b6377f03bc873b941c7b8864ed01b50bb73",
+          "checks": 128,
+          "failures": 0,
+          "log": {
+            "path": "/tmp/spicystock-journal149-final-v3.log",
+            "bytes": 186,
+            "sha256": "d4e52cd109ad3d4cdd2b68f84a5cdc516bd95924ed528fb8064c5d9362e9693f"
+          }
+        },
+        "isolated_mutation_controls": {
+          "path": "/tmp/spicystock-journal149-mutants/results.json",
+          "bytes": 2396,
+          "sha256": "10a15c7d2e3324760f7fe00da8c547cce55cef48576e34a3095913847b34108f",
+          "results": [
+            {
+              "name": "journal-exact-request",
+              "checks": 128,
+              "exit_code": 1,
+              "failures": [
+                "reference active publication: mismatched lookup refuses without source substitution",
+                "reference journal snapshot: mismatched lookup refuses without source substitution",
+                "reference journal clock: mismatched lookup refuses without source substitution",
+                "reference original clock: mismatched lookup refuses without source substitution",
+                "reference original evidence: mismatched lookup refuses without source substitution",
+                "reopen: old snapshot request cannot silently authorize new first save"
+              ],
+              "named_regression": "reference journal snapshot: mismatched lookup",
+              "expected_outcome": true
+            },
+            {
+              "name": "journal-loaded-state",
+              "checks": 128,
+              "exit_code": 1,
+              "failures": [
+                "loading: old valid source cannot authorize a report during journal revalidation",
+                "loading: visible blocked row gives explicit source-change guidance",
+                "loading: detached old callback cannot open transient broker editor"
+              ],
+              "named_regression": "loading: old valid source cannot authorize",
+              "expected_outcome": true
+            },
+            {
+              "name": "explicit-reopen",
+              "checks": 127,
+              "exit_code": 1,
+              "failures": [
+                "reopen: renewed verified journal reference can now save actual facts"
+              ],
+              "named_regression": "reopen: renewed verified journal reference can now save",
+              "expected_outcome": true
+            },
+            {
+              "name": "unrelated-reader-deadline",
+              "checks": 128,
+              "exit_code": 0,
+              "failures": [],
+              "named_regression": null,
+              "expected_outcome": true
+            }
+          ],
+          "unrelated_checks": 128,
+          "unrelated_failures": 0
+        },
+        "fixtures": [
+          {
+            "name": "observed",
+            "canonical_original_bytes": 185994,
+            "canonical_original_sha256": "ae9059f929bb09403846cf0331422d5bc45132eaa932c938b9b257d2ba5a0bf0",
+            "reader_original_bytes": 178676,
+            "reader_original_sha256": "c17e47e4ead259dd23a1f180832aceb1feab93c7a76fe3294d32a4ee3fc812e0",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/observed-receipt.json",
+              "bytes": 2133,
+              "sha256": "0073a900e96c8768f09e92f9537cf55b8674d76406c70bd880863a7898d17961"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/observed-bundle.json",
+              "bytes": 18456,
+              "sha256": "a0de9cb04255cbac9ddd5c2af062c6c65334ca94bf995402ed0cb4683c96a966"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-12T23:00:00+00:00"
+          },
+          {
+            "name": "missing",
+            "canonical_original_bytes": 170305,
+            "canonical_original_sha256": "a2f20d875312d762f5246ea1f7f1cc8a888b6738f029a545759ebc51bfe20c4b",
+            "reader_original_bytes": 162419,
+            "reader_original_sha256": "a57549bfe66a486181163dfa8007a00196c3391248879bb2fa8dcf441c7682bf",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/missing-receipt.json",
+              "bytes": 2132,
+              "sha256": "0e77d2270749cf1f2104bff14ddc69486c98413b4cd88b30cf00eb8bcc2d6e77"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/missing-bundle.json",
+              "bytes": 18281,
+              "sha256": "922ede6debfe9a9ba47ed794b5186f24135874ab52055dd2232f620b5b98dadd"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-13T23:00:00+00:00"
+          },
+          {
+            "name": "not-filled",
+            "canonical_original_bytes": 187023,
+            "canonical_original_sha256": "5447182a2cb6c3873023e579e51b84d5d9ee05c9858463f4cfd0c36181a2a444",
+            "reader_original_bytes": 179693,
+            "reader_original_sha256": "a208bb0dbb4717cf0e1ce3501a25a7f566c5520560d067507031198a7bdd9d64",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/not-filled-receipt.json",
+              "bytes": 2135,
+              "sha256": "b41b602301503c39758650d68dac0d547229ceeecbb3f04424f84ff19a5c4a73"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/not-filled-bundle.json",
+              "bytes": 18469,
+              "sha256": "f21ede138a21a6da6a561f01433e4c3eaae9430c76512d9a07d86ccc80778791"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-12T23:00:00+00:00"
+          },
+          {
+            "name": "basis-conflict",
+            "canonical_original_bytes": 186000,
+            "canonical_original_sha256": "7595e7e5ec7830e2593a411bec73112f6658ab2266d49296c27bf50a0b747c76",
+            "reader_original_bytes": 178682,
+            "reader_original_sha256": "e33e265411ab22a783ecb6726b8b61679a0536a14283529a668da5cf7ffc8758",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/basis-conflict-receipt.json",
+              "bytes": 2139,
+              "sha256": "65d4afd11d5deee1ebc5b4c1f98f465ae79a61dc10c9e9e0e82605a2512d4acd"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/basis-conflict-bundle.json",
+              "bytes": 15469,
+              "sha256": "a8d001e0607fe90f849ff283a86778747aac2c6336626745dabea376c9b48dd6"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-12T23:00:00+00:00"
+          },
+          {
+            "name": "cohort-revisions",
+            "canonical_original_bytes": 252385,
+            "canonical_original_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+            "reader_original_bytes": 248239,
+            "reader_original_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/cohort-revisions-receipt.json",
+              "bytes": 2140,
+              "sha256": "d522383940ec1d9d299f4b6438161ad88ea21b3d2ad3c57f432cd79a9d8b7ffb"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/cohort-revisions-bundle.json",
+              "bytes": 33044,
+              "sha256": "eb9ca8a5df35b0e8b9fa221441ad035c775a039aa151481dd23778fb77f8ae2a"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-12T15:00:01+00:00"
+          },
+          {
+            "name": "synthetic-pending",
+            "canonical_original_bytes": 252385,
+            "canonical_original_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+            "reader_original_bytes": 248239,
+            "reader_original_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+            "receipt": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/synthetic-pending-receipt.json",
+              "bytes": 2139,
+              "sha256": "f4d7e966a4c427be93e43b62e396a6049a48ffd4ec1e137f029d9adf82b8a5a2"
+            },
+            "bundle": {
+              "path": "/workspace/SpicyStock-journal-reports/tests/fixtures/research-outcomes/synthetic-pending-bundle.json",
+              "bytes": 17710,
+              "sha256": "6bcaa364d9041261b70a035c0f2af435272265c66468f8ccb34f2c439fdd69de"
+            },
+            "clock": "Receipt generated_at +60 seconds; synthetic-pending is explicitly viewed at cohort-revisions +60 seconds for a same-canonical later-journal test.",
+            "receipt_generated_at": "2026-10-10T13:00:00+00:00"
+          }
+        ],
+        "acceptance": [
+          "Active canonical and native reader bytes bind journal lookup while saved identity/source stays the original older publication and evidence ID.",
+          "Opening remains blank and unwritten; positive actual fill is required. Actual partial/completed facts never inherit hypothetical model quantities, R, prices, fees, exits or admission.",
+          "Unknown, missing, not-filled, basis-conflict, excluded and admitted-original row contexts permit reporting real facts without granting an order, copy, cash reservation or new entry permission.",
+          "Same-original repeated cohorts deduplicate without overwriting original source; dirty nodes/values persist through close/reopen and source change.",
+          "A stale same-canonical journal snapshot refuses first save; explicit verified reopen renews only lookup reference and preserves dirty actual values.",
+          "During loading, even an old valid retained closure refuses first-report authorization; stale detached row actions cannot open an editor.",
+          "Startup unavailable preserves old private reports and exact backup; later corrections remain possible without current publication authority.",
+          "Private edits perform no network requests and leave publication/model/following unchanged."
+        ],
+        "synthetic_arithmetic_oracle": {
+          "main_suite": {
+            "actual_filled_quantity": 3,
+            "actual_average_entry": "31.234567",
+            "actual_average_exit": "32.345678",
+            "entry_fees": "0.11",
+            "exit_fees": "0.22",
+            "net_microusd": "3003333",
+            "net_display": "$3.00"
+          },
+          "supplemental_visual_only": {
+            "actual_submitted_quantity": 2,
+            "actual_filled_quantity": 1,
+            "actual_average_entry": "44.56",
+            "other_fields": "Unknown; no completed result claim."
+          }
+        },
+        "expected_startup_error_scope": "Only the exact served /docs/reader.json HTTP503 is paired. At most one exact matching console503 and same-URL net::ERR_ABORTED are removed; all unrelated or duplicate errors still fail.",
+        "screenshots": [
+          {
+            "path": "/tmp/spicystock-journal149-visual/journal-overview-390.png",
+            "bytes": 59245,
+            "sha256": "ef37fa034ab7b8c051762097e9b2eb5e2f119b8154d00f79269bfe11bf678480",
+            "width": 390,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/journal-action-390.png",
+            "bytes": 70991,
+            "sha256": "779d6f12b2227e26fa89075649d9f7f5383ca3cac547341526dd32e54459f290",
+            "width": 390,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/private-blank-390.png",
+            "bytes": 80461,
+            "sha256": "4e44afb5715631cca407553e84542d089d912b459c4cf152467eaae2167a85d4",
+            "width": 390,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/private-synthetic-saved-390.png",
+            "bytes": 85477,
+            "sha256": "8b0953ce8e645805d49d2c5490ab7d2978b2c23f360dd064f8e3f9261b778862",
+            "width": 390,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/journal-overview-1280.png",
+            "bytes": 157717,
+            "sha256": "a67abd984f6a10ff9a31552cac3960fdebbcfbdae0928083efb79b2b100135bd",
+            "width": 1280,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/journal-action-1280.png",
+            "bytes": 157717,
+            "sha256": "a67abd984f6a10ff9a31552cac3960fdebbcfbdae0928083efb79b2b100135bd",
+            "width": 1280,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/private-blank-1280.png",
+            "bytes": 148586,
+            "sha256": "b110d8d285badb1f749e416c4db399eeb941fd434e3b220be1aa44c8683ac9f9",
+            "width": 1280,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          },
+          {
+            "path": "/tmp/spicystock-journal149-visual/private-synthetic-saved-1280.png",
+            "bytes": 174014,
+            "sha256": "3d1400180e1302729e3774e7f153ed0cd9fceb437b28b9dcacae58f6443fdc54",
+            "width": 1280,
+            "height": 900,
+            "visually_inspected": true,
+            "scope": "Local genuine dated producer context; blank or explicitly synthetic PRIVATE report in fresh browser storage."
+          }
+        ],
+        "visual_note": "The original tall phone row capture was clipped by a scrolling dialog; the inspected bounded viewport supplement shows the actual dated entry action. Desktop overview/action happen to be identical because the complete action was already visible.",
+        "safe_integration_marker": "All owner acceptance/mutation/visual processes are finished; no source/tree mutation harness remains active. Parent may integrate reviewed ancestry.",
+        "index": "Empty after owned-only commit; owned test clean. Returned reservation ROOT ONLY; parent hook left unstaged.",
+        "verified_after_owned_commit": "020298fbb291018dad6c14daff72755baffdc99a"
+      }
+    },
+    {
+      "path": "/tmp/spicystock-journal149-owner/receipt.json",
+      "bytes": 9130,
+      "sha256": "c963b055e6324f5fe4dc16a842a2f9996b46f7a073954ef5baf977aba4255026",
+      "evidence": {
+        "scope": "Offline genuine later-publication journal; explicitly synthetic broker quantities in fresh disposable browser contexts only.",
+        "source": {
+          "app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+          "app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635"
+        },
+        "cases": [
+          {
+            "width": 390,
+            "before": {
+              "source": "Research policy anticipation_stop_width_4_to_5_v1 \u00b7 cohort SHA-256 c75241a33e7016cb075554d4c138fb65d45208cb06f07d72d0f9a5d3a0855d09 \u00b7 publication SHA-256 ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b \u00b7 original evidence 7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af.",
+              "fields": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "mode": "independent-unsaved",
+              "raw": null,
+              "hash": "ae9059f929bb09403846cf0331422d5bc45132eaa932c938b9b257d2ba5a0bf0"
+            },
+            "after": {
+              "item": {
+                "version": 3,
+                "kind": "independent_research",
+                "id": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b:7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af",
+                "revision": 1,
+                "created_at": "2026-10-10T13:49:16.917Z",
+                "updated_at": "2026-10-10T13:49:16.917Z",
+                "source": {
+                  "ticker": "COIL",
+                  "stage": "setting-up",
+                  "publication": {
+                    "applicable_session": "2026-10-12",
+                    "context_sha256": "ada6b1100ab61a8917cbeecd3b3b965b968fd0319d54ed2c162f2e66f2c512be",
+                    "data_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+                    "measured_session": "2026-10-09",
+                    "published_at": "2026-10-09T22:30:00+00:00",
+                    "reader_projection_version": 1,
+                    "reader_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+                    "rules_version": "f75417fcc509",
+                    "run_id": "synthetic-stop-research-priority"
+                  },
+                  "cohort": {
+                    "sha256": "c75241a33e7016cb075554d4c138fb65d45208cb06f07d72d0f9a5d3a0855d09",
+                    "bytes": 8528,
+                    "generated_at": "2026-10-10T13:00:00+00:00",
+                    "policy_id": "anticipation_stop_width_4_to_5_v1"
+                  },
+                  "evidence": {
+                    "id": "7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af",
+                    "inputs_sha256": "90f068ead2565f68b30fc19e971c623c26b4ce1fab40e63b926a27804d7b1aaf",
+                    "plan_sha256": "a56bf67f8c8eb65022fce04ce3c492038b35a5afcc435f4a271a45b2d098d820",
+                    "source_sha256": "7157acecb4021452b20c3f3463ebcaefb8022e1dbbb9f58caf04c12818a32a4a"
+                  },
+                  "baseline_admitted": false
+                },
+                "report": {
+                  "submitted_quantity": 7,
+                  "submitted_at": null,
+                  "filled_quantity": 7,
+                  "average_price": null,
+                  "filled_at": null,
+                  "cancelled_quantity": null,
+                  "cancelled_at": null,
+                  "exited_quantity": null,
+                  "exited_at": null,
+                  "protected_quantity": null,
+                  "protection_confirmed_at": null,
+                  "average_exit_price": null,
+                  "entry_fees": null,
+                  "exit_fees": null
+                },
+                "report_updated_at": "2026-10-10T13:49:16.917Z"
+              },
+              "copy": {
+                "ok": false,
+                "error": "This is an independently reported trade. It has no entry draft or order to copy."
+              },
+              "width": 390,
+              "viewport": 390,
+              "modal": 352,
+              "client": 352
+            },
+            "errors": []
+          },
+          {
+            "width": 1280,
+            "before": {
+              "source": "Research policy anticipation_stop_width_4_to_5_v1 \u00b7 cohort SHA-256 c75241a33e7016cb075554d4c138fb65d45208cb06f07d72d0f9a5d3a0855d09 \u00b7 publication SHA-256 ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b \u00b7 original evidence 7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af.",
+              "fields": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+              ],
+              "mode": "independent-unsaved",
+              "raw": null,
+              "hash": "ae9059f929bb09403846cf0331422d5bc45132eaa932c938b9b257d2ba5a0bf0"
+            },
+            "after": {
+              "item": {
+                "version": 3,
+                "kind": "independent_research",
+                "id": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b:7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af",
+                "revision": 1,
+                "created_at": "2026-10-10T13:49:17.549Z",
+                "updated_at": "2026-10-10T13:49:17.549Z",
+                "source": {
+                  "ticker": "COIL",
+                  "stage": "setting-up",
+                  "publication": {
+                    "applicable_session": "2026-10-12",
+                    "context_sha256": "ada6b1100ab61a8917cbeecd3b3b965b968fd0319d54ed2c162f2e66f2c512be",
+                    "data_sha256": "ad63b3b66d942fa17953ce8aa570cf6a97fa3ac8478f7955acc5db4f0a49005b",
+                    "measured_session": "2026-10-09",
+                    "published_at": "2026-10-09T22:30:00+00:00",
+                    "reader_projection_version": 1,
+                    "reader_sha256": "590f5568dc6e0cae71e361e36b6a47a16a745d3708ee836b5dabad36f0fd110b",
+                    "rules_version": "f75417fcc509",
+                    "run_id": "synthetic-stop-research-priority"
+                  },
+                  "cohort": {
+                    "sha256": "c75241a33e7016cb075554d4c138fb65d45208cb06f07d72d0f9a5d3a0855d09",
+                    "bytes": 8528,
+                    "generated_at": "2026-10-10T13:00:00+00:00",
+                    "policy_id": "anticipation_stop_width_4_to_5_v1"
+                  },
+                  "evidence": {
+                    "id": "7f173249d5cf143480d79803bbaf86c9156ad3b0885e0be131f13617eab858af",
+                    "inputs_sha256": "90f068ead2565f68b30fc19e971c623c26b4ce1fab40e63b926a27804d7b1aaf",
+                    "plan_sha256": "a56bf67f8c8eb65022fce04ce3c492038b35a5afcc435f4a271a45b2d098d820",
+                    "source_sha256": "7157acecb4021452b20c3f3463ebcaefb8022e1dbbb9f58caf04c12818a32a4a"
+                  },
+                  "baseline_admitted": false
+                },
+                "report": {
+                  "submitted_quantity": 7,
+                  "submitted_at": null,
+                  "filled_quantity": 7,
+                  "average_price": null,
+                  "filled_at": null,
+                  "cancelled_quantity": null,
+                  "cancelled_at": null,
+                  "exited_quantity": null,
+                  "exited_at": null,
+                  "protected_quantity": null,
+                  "protection_confirmed_at": null,
+                  "average_exit_price": null,
+                  "entry_fees": null,
+                  "exit_fees": null
+                },
+                "report_updated_at": "2026-10-10T13:49:17.549Z"
+              },
+              "copy": {
+                "ok": false,
+                "error": "This is an independently reported trade. It has no entry draft or order to copy."
+              },
+              "width": 1280,
+              "viewport": 1280,
+              "modal": 1038,
+              "client": 1038
+            },
+            "errors": []
+          }
+        ],
+        "local_commit_pin": {
+          "commit": "7b2c71f96861e7909a64a5523a49c69fc1d04907",
+          "owned_paths": [
+            "docs/app-research-outcomes.js",
+            "docs/app-handoff-ui.js"
+          ],
+          "source_sha256": {
+            "docs/app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+            "docs/app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c"
+          },
+          "index_empty": true,
+          "owned_paths_clean": true,
+          "syntax": "PASS",
+          "diff_check": "PASS",
+          "exact_commit_secret_scan": "/tmp/spicystock-journal149-ui-commit-scan.json"
+        },
+        "final_review_evidence": {
+          "browser": {
+            "path": "/tmp/spicystock-journal149-browser-acceptance.json",
+            "sha256": "8172590ee399763d371db8c8b5149b4dafe1b9881f1df2b3baad8cc849261cb9",
+            "bytes": 15668
+          },
+          "independent": {
+            "path": "/tmp/spicystock-journal149-independent/review.json",
+            "sha256": "a9870df3bda7c41893e42591aeea4910d36a20d713ee189432914fb8e2855074",
+            "bytes": 2983
+          }
+        },
+        "additional_owner_screenshots_inspected": [
+          "/tmp/spicystock-journal149-independent/synthetic-retained-report-390.png",
+          "/tmp/spicystock-journal149-independent/synthetic-retained-report-1280.png",
+          "/tmp/spicystock-journal149-final-v3/journal-original-row-1280.png",
+          "/tmp/spicystock-journal149-visual/journal-action-390.png",
+          "/tmp/spicystock-journal149-visual/private-synthetic-saved-390.png"
+        ],
+        "release_limit": "Local reviewed source only; combined-head tests, hosted checks and actual-public verification belong to the release owner and are not claimed here."
+      }
+    },
+    {
+      "path": "/tmp/spicystock-journal149-independent/review.json",
+      "bytes": 2983,
+      "sha256": "a9870df3bda7c41893e42591aeea4910d36a20d713ee189432914fb8e2855074",
+      "evidence": {
+        "status": "NO_BLOCKER_READ_ONLY_SOURCE_REVIEW",
+        "reviewed_at": "2026-10-10T13:51:15.846005+00:00",
+        "source_sha256": {
+          "app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+          "app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+          "app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe"
+        },
+        "base_head": "95957c93601f392b3c5906cb345937b21b0a86e8",
+        "final_head_pending": true,
+        "independent_checks": 41,
+        "receipt": {
+          "sha256": "f83b19e46e0209bbbb6106ab53f98d226b6853245b1360addcefdd04ecae7680",
+          "bytes": 9307,
+          "path": "/tmp/spicystock-journal149-independent/receipt.json"
+        },
+        "genuine_same_canonical_snapshot_control": {
+          "sha256": "5c8d6048deb44652e194bcdff66a9ebc44e5f4af3597b609040b865ffd3f0a1b",
+          "path": "/tmp/spicystock-journal149-snapshot-control/receipt.json"
+        },
+        "screenshots_inspected": {
+          "synthetic-retained-report-1280.png": {
+            "sha256": "02bfc1d15d4505bf143283b6bf091ccf33daa7f5fefb2057b2d4bd3557eadcc8",
+            "bytes": 193044,
+            "visually_inspected": true,
+            "scope": "Explicitly synthetic local retained-journal report, 3submitted/2filled/unknown fees; no live user fact or execution claim."
+          },
+          "synthetic-retained-report-390.png": {
+            "sha256": "183ce8ed3ddf5b094fcac12f98e04f4f9eb9468bda1888d7f2462cd8addab3fb",
+            "bytes": 69560,
+            "visually_inspected": true,
+            "scope": "Explicitly synthetic local retained-journal report, 3submitted/2filled/unknown fees; no live user fact or execution claim."
+          }
+        },
+        "findings": [
+          "Known retained_journal variant dispatches to current bound journal verifier; absent discriminator keeps original current-source equality, present unknown variants refuse.",
+          "Newer same-canonical journal snapshot during actual origin WebLock wait refuses stale source before writing.",
+          "Journal reload preserves dirty input node, values, focus and caret; explicit verified same-original-source reopen renews only transient handle and next UI save succeeds.",
+          "Original v3 publication/evidence/cohort/admission retained; exact same trade ID remains unique across genuine cohort revisions.",
+          "All14 fields initially blank; positive save uses explicit synthetic facts, leaves fees and outcomes unknown, and never provides draft/order/copy authority.",
+          "Saved correction and byte-exact backup still work when journal later becomes unavailable."
+        ],
+        "limitations": [
+          "Local actual-Chromium acceptance over existing real-producer synthetic fixtures; public data/clock replacements are explicitly test-only.",
+          "No provider/public requests, repository edits, real user account facts or trading outcome claims.",
+          "Owner source/tests commits and final combined-head documentation/evidence verification remain pending."
+        ]
+      }
+    },
+    {
+      "path": "/tmp/spicystock-journal149-independent/owned-commit-review.json",
+      "bytes": 978,
+      "sha256": "99bef1e901e4f0b252034d27c185d49e7db2ffd8a58cf1258987bda06ffb8fe4",
+      "evidence": {
+        "status": "NO_BLOCKER_OWNED_COMMIT_DELTA",
+        "reviewed_commits": {
+          "model": "bca160e59d31f683d3a42fc3db8b67c6584934bb",
+          "ui": "7b2c71f96861e7909a64a5523a49c69fc1d04907"
+        },
+        "source_sha256": {
+          "app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+          "app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+          "app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe"
+        },
+        "prior_review": {
+          "path": "/tmp/spicystock-journal149-independent/review.json",
+          "sha256": "a9870df3bda7c41893e42591aeea4910d36a20d713ee189432914fb8e2855074"
+        },
+        "independent_checks_carried_forward": 41,
+        "checks_repeated": 0,
+        "scope": "Exact committed runtime matches independently executed41 source hashes; no broad rerun claimed. Final combined head remains pending."
+      }
+    },
+    {
+      "path": "/tmp/spicystock-journal149-root-compat.json",
+      "bytes": 850,
+      "sha256": "9b8f576a33da78ea914b5fb6df5ac1bfb4e1960214e36249fb05a43e8d396938",
+      "evidence": {
+        "status": "PASS",
+        "checks": 1055,
+        "scope": "Six existing suites on final149 runtime; no public acceptance claim",
+        "suites": [
+          "handoff",
+          "research-outcomes",
+          "independentreports",
+          "privatebackup",
+          "publication-recovery",
+          "refresh"
+        ],
+        "source_sha256": {
+          "docs/app-handoff.js": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+          "docs/app-handoff-ui.js": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+          "docs/app-research-outcomes.js": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+          "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe"
+        },
+        "log": {
+          "path": "/tmp/spicystock-journal149-root-compat.log",
+          "sha256": "7e8d2c3ca9661ad12b4ecdb153c87df7ab7a999ff5f4499f8dc006da308e5562"
+        }
+      }
+    }
+  ],
+  "documentation": {
+    "passed": 37,
+    "command": "/workspace/.venv-spicystock/bin/python -m pytest tests/test_docs.py -q",
+    "runtime": "Python3.12.14;Node24.19.0",
+    "warning": "Existing websockets.legacy deprecation warning"
+  },
+  "remaining": [
+    "Final integrated exact-head independent review",
+    "All required hosted gates on final remote head",
+    "Reviewed-head merge and existing publisher/Pages deployment",
+    "Actual public verification and shipped checkpoint"
+  ],
+  "limitations": [
+    "No source publication, strategy, private schema version, provider or design-system revision change",
+    "Original-source reports contain only explicitly entered actual broker facts",
+    "The same original publication/evidence ID cannot become duplicate records through different cohorts",
+    "First actual personal successful trade remains unevidenced"
+  ]
+}

@@ -35,6 +35,21 @@ const researchFixtures = Object.fromEntries(await Promise.all(['current', 'prior
   assert.equal(bundleRaw.length, receipt.bundle.bytes);
   return [name, { data: JSON.parse(publication), receipt, bundle: JSON.parse(bundleRaw) }];
 })));
+const journalFixtures = Object.fromEntries(await Promise.all(['observed', 'cohort-revisions', 'pending', 'basis-conflict', 'not-filled'].map(async name => {
+  const folder = path.join(ROOT, 'tests/fixtures/research-outcomes');
+  const publication = gunzipSync(await readFile(path.join(folder, name + '-publication.json.gz')));
+  const receipt = JSON.parse(await readFile(path.join(folder, name + '-receipt.json'), 'utf8'));
+  const bundleRaw = await readFile(path.join(folder, name + '-bundle.json'));
+  assert.equal(createHash('sha256').update(publication).digest('hex'), receipt.publication.data_sha256);
+  assert.equal(createHash('sha256').update(bundleRaw).digest('hex'), receipt.bundle.sha256);
+  assert.equal(bundleRaw.length, receipt.bundle.bytes);
+  const bundle = JSON.parse(bundleRaw);
+  for (const entry of bundle.cohorts) {
+    assert.equal(createHash('sha256').update(entry.source.raw).digest('hex'), entry.source.sha256);
+    assert.equal(Buffer.byteLength(entry.source.raw), entry.source.bytes);
+  }
+  return [name, { data: JSON.parse(publication), receipt, bundle }];
+})));
 
 const plain = value => JSON.parse(JSON.stringify(value));
 const reportFields = patch => ({ submitted_quantity: '', submitted_at: '', filled_quantity: '', average_price: '', filled_at: '', cancelled_quantity: '', cancelled_at: '', exited_quantity: '', exited_at: '', protected_quantity: '', protection_confirmed_at: '', average_exit_price: '', entry_fees: '', exit_fees: '', ...patch });
@@ -83,6 +98,132 @@ function researchEnvironment(name = 'current', ticker = 'KE', options = {}) {
   } };
   return { ...env, request, source, create: fields => env.handoff.reportResearch(request, reportFields(fields), null) };
 }
+
+// Only the verifier boundary is injected. Active and original publications,
+// raw cohort identities and row evidence come from genuine producer fixtures.
+function journalEnvironment(name = 'observed', ticker = 'COIL', options = {}) {
+  const fixture = journalFixtures[name], { receipt, bundle } = fixture, entry = bundle.cohorts[options.cohortIndex || 0];
+  const original = JSON.parse(entry.source.raw), row = original.rows.find(row => row.ticker === ticker); assert.ok(row);
+  const source = { ticker, stage: 'setting-up', publication: plain(original.publication),
+    cohort: { sha256: entry.source.sha256, bytes: entry.source.bytes, generated_at: original.timing.generated_at, policy_id: original.policy.id },
+    evidence: plain(row.evidence), baseline_admitted: row.baseline.admitted };
+  const request = { origin: 'retained_journal', recordHash: receipt.publication.reader_sha256, projected: true, publication: plain(receipt.publication),
+    journal: { sha256: receipt.bundle.sha256, bytes: receipt.bundle.bytes, generated_at: receipt.generated_at, cohort_set_sha256: receipt.cohort_set_sha256 },
+    cohort: plain(source.cohort), ticker, evidence: plain(source.evidence) };
+  const env = environment({ data: fixture.data, hash: receipt.publication.data_sha256, now: '2026-11-07T20:00:00Z', ...options });
+  Object.assign(env.state, { source, request: plain(request), activePublication: plain(receipt.publication), verifierCalls: 0, comparisonCalls: 0 });
+  env.api.researchOutcomes = { reportReference: input => {
+    env.state.verifierCalls++;
+    return !env.state.sourceUnavailable && JSON.stringify(input) === JSON.stringify(env.state.request)
+      ? { ok: true, source: plain(env.state.source), publication: plain(env.state.activePublication) } : { ok: false, error: 'Journal reference changed.' };
+  } };
+  env.api.stopResearch = { reportReference: () => { env.state.comparisonCalls++; return { ok: true, source: plain(env.state.source) }; } };
+  return { ...env, request, source, create: fields => env.handoff.reportResearch(request, reportFields(fields), null) };
+}
+
+test('retained journal inspection binds the active publication while preserving the older original source without writes', () => {
+  const env = journalEnvironment(), before = JSON.stringify(env.api.data);
+  assert.notEqual(env.source.publication.data_sha256, env.state.hash);
+  const inspected = env.handoff.inspectResearch(env.request); assert.equal(inspected.ok, true, inspected.error);
+  assert.deepEqual(plain(inspected.source), env.source); assert.equal(Object.keys(inspected).sort().join(','), 'ok,source');
+  inspected.source.cohort.sha256 = 'f'.repeat(64); assert.notEqual(env.source.cohort.sha256, inspected.source.cohort.sha256);
+  assert.equal(env.state.comparisonCalls, 0); assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0); assert.equal(JSON.stringify(env.api.data), before);
+});
+
+test('retained journal dispatch refuses every present unsupported origin without comparison fallback', () => {
+  for (const origin of [null, undefined, '', 'current', false, 'retained_journal_v2']) {
+    const env = researchEnvironment(), request = { ...env.request, origin }; env.state.request = request;
+    const result = env.handoff.inspectResearch(request); assert.equal(result.ok, false); assert.match(result.error, /unsupported origin/);
+    assert.equal(env.state.verifierCalls, 0); assert.equal(env.state.writes, 0);
+  }
+  for (const absent of [true, false]) {
+    const env = journalEnvironment(); if (absent) delete env.api.researchOutcomes; else env.state.sourceUnavailable = true;
+    assert.equal(env.handoff.inspectResearch(env.request).ok, false); assert.equal(env.state.comparisonCalls, 0);
+  }
+});
+
+test('retained journal support never relaxes the current comparison original publication hash guard', () => {
+  const env = journalEnvironment(), current = plain(env.request); delete current.origin;
+  assert.equal(env.handoff.inspectResearch(current).ok, false); assert.equal(env.state.comparisonCalls, 1); assert.equal(env.state.verifierCalls, 0);
+  env.state.hash = env.source.publication.data_sha256;
+  assert.equal(env.handoff.inspectResearch(current).ok, true);
+  assert.equal(env.handoff.inspectResearch(env.request).ok, false); assert.equal(env.state.writes, 0);
+});
+
+test('retained journal active publication and original source are separately strict rather than caller authority', async () => {
+  for (const change of [pub => { pub.data_sha256 = 'f'.repeat(64); }, pub => { pub.run_id = null; }, pub => { delete pub.context_sha256; }, pub => { pub.reader_projection_version = 2; }, pub => { pub.published_at = '2026-10-12T20:00:00.1234567Z'; }, pub => { pub.extra = true; }]) {
+    const env = journalEnvironment(); change(env.state.activePublication);
+    const result = await env.create({ submitted_quantity: '1', filled_quantity: '1' }); assert.equal(result.ok, false); assert.match(result.error, /verified publication/); assert.equal(env.state.writes, 0);
+  }
+  for (const change of [source => { source.publication.run_id = null; }, source => { source.cohort.bytes = 131073; }, source => { source.evidence.id = null; }, source => { source.baseline_admitted = 'false'; }, source => { source.order = {}; }]) {
+    const env = journalEnvironment(); change(env.state.source); assert.equal(env.handoff.inspectResearch(env.request).ok, false);
+    assert.equal((await env.create({ submitted_quantity: '1', filled_quantity: '1' })).ok, false); assert.equal(env.state.writes, 0);
+  }
+});
+
+test('retained journal reference and canonical authority are reverified after waiting for the save lock', async () => {
+  for (const change of [env => { env.state.sourceUnavailable = true; }, env => { env.state.request.journal.sha256 = 'a'.repeat(64); }, env => { env.state.hash = 'b'.repeat(64); }]) {
+    const env = journalEnvironment(); assert.equal(env.handoff.inspectResearch(env.request).ok, true);
+    let unlock; env.state.blockLock = new Promise(resolve => { unlock = resolve; });
+    const waiting = env.create({ submitted_quantity: '2', filled_quantity: '1' }); change(env); unlock();
+    assert.equal((await waiting).ok, false); assert.equal(env.state.verifierCalls, 2); assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0);
+  }
+});
+
+test('retained journal first save still requires explicit positive reconciled fills and carries no hypothetical outcome facts', async () => {
+  const env = journalEnvironment();
+  for (const fields of [{}, { submitted_quantity: '1', filled_quantity: '0' }, { filled_quantity: '1' }, { submitted_quantity: '1', filled_quantity: '2' }, { submitted_quantity: '2', filled_quantity: '1', cancelled_quantity: '2' }]) {
+    assert.equal((await env.create(fields)).ok, false); assert.equal(env.state.writes, 0);
+  }
+  for (const [name, ticker] of [['observed', 'COIL'], ['observed', 'RONE'], ['observed', 'RTHR'], ['observed', 'RTWO'], ['observed', 'ZBASE'], ['basis-conflict', 'COIL'], ['not-filled', 'COIL'], ['pending', 'KE']]) {
+    const row = journalEnvironment(name, ticker), saved = await row.create({ submitted_quantity: '9', filled_quantity: '7' }); assert.equal(saved.ok, true, saved.error);
+    assert.deepEqual(plain(saved.item.source), row.source); assert.equal(saved.item.id, row.source.publication.data_sha256 + ':' + row.source.evidence.id);
+    for (const [key, value] of Object.entries(saved.item.report)) assert.equal(value, key === 'submitted_quantity' ? 9 : key === 'filled_quantity' ? 7 : null, key);
+    assert.equal(saved.item.version, 3); assert.equal(saved.item.kind, 'independent_research'); assert.equal('draft' in saved.item, false); assert.equal('plan' in saved.item, false);
+    assert.equal(row.handoff.summary(saved.item).completed_result.state, 'incomplete'); assert.equal(row.handoff.summary(saved.item).reported_held_quantity, null);
+    assert.equal(row.handoff.readback(saved.item), ''); assert.equal(row.handoff.copy(saved.item.id).ok, false);
+  }
+});
+
+test('retained journal cohort revisions share original identity and never replace a saved source', async () => {
+  const first = journalEnvironment('cohort-revisions'), saved = await first.create({ submitted_quantity: '2', filled_quantity: '1' }); assert.equal(saved.ok, true, saved.error);
+  const next = journalEnvironment('cohort-revisions', 'COIL', { cohortIndex: 1, store: first.store }); assert.notEqual(next.source.cohort.sha256, first.source.cohort.sha256);
+  assert.equal(next.source.publication.data_sha256, first.source.publication.data_sha256); assert.equal(next.source.evidence.id, first.source.evidence.id);
+  const before = first.store.get(first.handoff.KEY), duplicate = await next.create({ submitted_quantity: '4', filled_quantity: '4' });
+  assert.equal(duplicate.ok, false); assert.equal(duplicate.existingId, saved.item.id); assert.equal(first.store.get(first.handoff.KEY), before);
+  assert.deepEqual(plain(next.handoff.find(saved.item.id).source), first.source);
+});
+
+test('retained journal and current comparison or planned handoffs use one duplicate namespace in both directions', async () => {
+  for (const planned of [false, true]) {
+    const first = researchEnvironment('priority', 'ZBASE', { now: '2026-10-12T13:35:00Z' });
+    const saved = planned ? await first.prepare({ key: 'setting-up:ZBASE', expectedPublication: first.state.hash, quantity: '1', fees: '0' }) : await first.create({ submitted_quantity: '1', filled_quantity: '1' });
+    assert.equal(saved.ok, true, saved.error);
+    const journal = journalEnvironment('observed', 'ZBASE', { store: first.store }), before = first.store.get(first.handoff.KEY), duplicate = await journal.create({ submitted_quantity: '3', filled_quantity: '2' });
+    assert.equal(duplicate.ok, false); assert.equal(duplicate.existingId, saved.item.id); assert.equal(first.store.get(first.handoff.KEY), before);
+  }
+  const journal = journalEnvironment('observed', 'ZBASE'), saved = await journal.create({ submitted_quantity: '3', filled_quantity: '2' }); assert.equal(saved.ok, true, saved.error);
+  const current = researchEnvironment('priority', 'ZBASE', { now: '2026-10-12T13:35:00Z', store: journal.store }), before = journal.store.get(journal.handoff.KEY);
+  const duplicate = await current.create({ submitted_quantity: '1', filled_quantity: '1' }); assert.equal(duplicate.ok, false); assert.equal(duplicate.existingId, saved.item.id);
+  assert.equal((await current.prepare({ key: 'setting-up:ZBASE', expectedPublication: current.state.hash, quantity: '1', fees: '0', expectedRevision: 1 })).ok, false);
+  assert.equal(journal.store.get(journal.handoff.KEY), before);
+});
+
+test('retained journal saved corrections and exact backup survive disappearance while failed writes preserve recovery', async () => {
+  const env = journalEnvironment('observed', 'COIL', { store: new Map([['spicystock:handoff:v1', LEGACY_V2_RAW]]) }); env.state.writeFails = true;
+  assert.equal((await env.create({ submitted_quantity: '2', filled_quantity: '1' })).ok, false);
+  assert.equal(env.handoff.recovery().prior, LEGACY_V2_RAW); assert.equal(env.store.get(env.handoff.KEY), LEGACY_V2_RAW);
+  const proposed = JSON.parse(env.handoff.recovery().proposed); assert.deepEqual(proposed.items[1].source, env.source);
+  env.state.writeFails = false; const saved = await env.create({ submitted_quantity: '2', filled_quantity: '1' }); assert.equal(saved.ok, true, saved.error);
+  env.state.sourceUnavailable = true; env.state.hash = 'e'.repeat(64);
+  const corrected = await env.handoff.report(saved.item.id, reportFields({ submitted_quantity: '2', filled_quantity: '1', exited_quantity: '0' }), 1); assert.equal(corrected.ok, true, corrected.error);
+  assert.deepEqual(plain(corrected.item.source), env.source); assert.equal(env.handoff.summary(corrected.item).reported_held_quantity, 1);
+  assert.equal((await env.handoff.report(saved.item.id, reportFields({ submitted_quantity: '2', filled_quantity: '2' }), 1)).ok, false);
+  const backup = env.handoff.exportBackup(); assert.equal(backup.ok, true); assert.equal(backup.raw, env.store.get(env.handoff.KEY));
+  const fresh = environment(), preview = fresh.handoff.previewBackup(backup.raw); assert.equal(preview.ok, true, preview.error);
+  assert.equal((await fresh.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(fresh.store.get(fresh.handoff.KEY), backup.raw);
+  assert.deepEqual(plain(fresh.handoff.find(saved.item.id).source), env.source); assert.equal(fresh.handoff.copy(saved.item.id).ok, false);
+});
 
 test('verified research inspection is read-only with no defaults and preserves exact microsecond source clocks', () => {
   const env = researchEnvironment(), before = JSON.stringify(env.api.data);

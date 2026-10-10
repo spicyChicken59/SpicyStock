@@ -161,6 +161,14 @@ corrections retain the frozen original evidence even after publication replaceme
 or expiry. Modal close/reopen preserves unsaved input; cancelling the new unsaved
 report is an explicit action. Reports remain private on this device.
 
+The verified research journal also offers this blank report for an original
+cohort retained after a newer scan arrives. The loaded journal must match the
+current publication, and the selected row must match its exact original cohort
+and evidence. A refreshed journal requires an explicit reopen before the first
+save; reopening the same verified original preserves unsaved broker inputs.
+Different cohort revisions sharing an original publication/evidence identity
+open the same private record. Conditional model outcomes never supply fill facts.
+
 **Personal completed-trade result.** A separate, user-reported result requires
 positive entry fills, all filled shares exited, and submitted shares fully
 reconciled as filled or cancelled (including an explicit zero cancellation).

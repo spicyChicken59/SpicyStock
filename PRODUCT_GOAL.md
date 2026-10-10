@@ -384,3 +384,19 @@ original dated verdict retained. Its preparation evidence records 349 browser,
 are still pending. The next first-trade workflow improvement, #149, preserves
 access to a blank actual-fill report from a verified older journal entry after
 a new scan arrives. Neither change creates a ticket or infers a personal trade.
+
+Issue #149 is now locally verified with 76 model, 128 dedicated browser and 41
+independent browser controls. Actual-fill reports can begin from a verified
+retained original after publication replacement, preserving original identity
+and unknown broker facts. Required hosted and public acceptance remain pending.
+The next data milestone, #151, gives current registered research ideas separate
+dated IEX observations. It preserves admitted-ticket rules and does not present
+quotes as event clearance, timely execution evidence or a demonstrated edge.
+
+[Private backup and restore](https://github.com/spicyChicken59/SpicyStock/pull/147)
+is released. All seven checks passed and actual public acceptance matched all
+40 files. Sixty-eight checks kept real private storage empty and cash unknown;
+45 separately labelled synthetic checks verified exact-byte download, preview,
+restore and re-export. Seven phone/desktop views were inspected. The
+[release receipt](release-evidence/2026-10-10-private-backup/acceptance.json)
+retains both scopes without claiming an actual personal trade.
