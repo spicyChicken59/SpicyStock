@@ -100,6 +100,56 @@
    },
    "date": "2026-10-08",
    "regime": "yellow"
+  },
+  {
+   "evidence_ref": {
+    "version": 1,
+    "id": "dd74ad44fd6bed66236c2424b944eb16d5d1cd4373e4152e591f4f0ddba22bf1",
+    "context_sha256": "a04403d17c33a22ef3bdf2dc14f5b3100c004899fc6350c6dfcfcaefe3ea3047",
+    "plan_sha256": "683ce38237a8efdf3af0622bbad6df92fc8b565c5df24a2cb591b86fbf57f55e",
+    "pick_sha256": "02a3de6e1f0e3ded13bb7d5cbb56d028dfef9bb94b37c967cca4ee9486ba2477"
+   },
+   "ticker": "ZIM",
+   "kind": "anticipation",
+   "grade": "watch",
+   "score": 1.0799,
+   "entry_ref": 30.38,
+   "entry_low": null,
+   "entry_high": null,
+   "day2_spent_above": null,
+   "limit_basis": null,
+   "trigger": 30.38,
+   "limit": 30.68,
+   "stop": 29.66,
+   "shares": 2,
+   "targets": {
+    "low_pct": 8.0,
+    "high_pct": 20.0,
+    "low": 32.81,
+    "high": 36.46,
+    "note": null,
+    "dollar_low": null,
+    "dollar_high": null
+   },
+   "order_json": {
+    "symbol": "ZIM",
+    "action": "buy",
+    "quantity": 2,
+    "order_type": "stop_limit",
+    "stop_price": 30.38,
+    "limit_price": 30.68,
+    "time_in_force": "day",
+    "conditional": "one_triggers_the_other",
+    "then": {
+     "action": "sell",
+     "quantity": 2,
+     "order_type": "stop",
+     "stop_price": 29.66,
+     "time_in_force": "gtc"
+    }
+   },
+   "date": "2026-10-09",
+   "regime": "yellow"
   }
  ]
 }
