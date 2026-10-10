@@ -510,9 +510,14 @@ def stop_risk(stop_pct: float) -> tuple[float, str | None]:
     """The stop-risk multiplier: 1 at or under the ideal stop, halved between
     the ideal and the maximum, and 1 past the maximum (that plan is refused
     on eligibility, not sized down)."""
-    if IDEAL_STOP_PCT < stop_pct <= MAX_STOP_PCT:
+    return _stop_risk(stop_pct, MAX_STOP_PCT)
+
+
+def _stop_risk(stop_pct: float, max_stop_pct: float) -> tuple[float, str | None]:
+    """Pure shared calculation; the production wrapper keeps its archived cap."""
+    if IDEAL_STOP_PCT < stop_pct <= max_stop_pct:
         return STOP_RISK_MULTIPLIER, (f"the stop is {stop_pct:g}% under the ticket's limit, the highest fill "
-                                      f"it permits: inside his {MAX_STOP_PCT:g}% line, wider than his ideal "
+                                      f"it permits: inside his {max_stop_pct:g}% line, wider than his ideal "
                                       f"{IDEAL_STOP_PCT:g}%, so the risk is multiplied by {STOP_RISK_MULTIPLIER:g}")
     return 1.0, None
 
@@ -1048,10 +1053,20 @@ ANTICIPATION_INSTRUCTION = (f"Buy only if it clears its trigger in the {ENTRY_WI
 def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: float,
                       lows_last3: Sequence[float], account: Account,
                       size_multiplier: float = 1.0) -> dict[str, Any]:
+    """The unchanged production anticipation policy."""
+    return _anticipation_plan(ticker=ticker, close=close, box_high=box_high,
+        box_low=box_low, lows_last3=lows_last3, account=account,
+        size_multiplier=size_multiplier, max_stop_pct=MAX_STOP_PCT)
+
+
+def _anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: float,
+                      lows_last3: Sequence[float], account: Account,
+                      size_multiplier: float = 1.0, max_stop_pct: float) -> dict[str, Any]:
     """A buy stop-limit a few cents over the consolidation high, the stop under
     the last sessions' low. The stop distance, the stop-risk multiplier and
     the shares are judged at the limit, the highest fill the ticket permits;
     a stop past MAX_STOP_PCT there withholds the ticket (``action`` refused)."""
+    max_stop_pct = _price(max_stop_pct, "max_stop_pct")
     if not isinstance(ticker, str) or not ticker.strip():
         raise ValueError(f"ticker must be a non-empty string, got {ticker!r}")
     close, box_high, box_low = _price(close, "close"), _price(box_high, "box_high"), _price(box_low, "box_low")
@@ -1069,12 +1084,12 @@ def anticipation_plan(*, ticker: str, close: float, box_high: float, box_low: fl
     limit = _at_pct(trigger, TRIGGER_LIMIT_PCT)
     stop_primary, stop_alt = min(lows), lows[-1]
     risk_pct = _pct(100 * (limit - stop_primary) / limit)
-    eligible = risk_pct <= MAX_STOP_PCT
+    eligible = risk_pct <= max_stop_pct
     reason = None if eligible else (f"ticket withheld: at the {_usd(limit)} limit, the highest fill the ticket "
                                     f"permits, the stop {_usd(stop_primary)} is {risk_pct:g}% away, past his "
-                                    f"{MAX_STOP_PCT:g}% line; the setup stands, the ticket does not")
+                                    f"{max_stop_pct:g}% line; the setup stands, the ticket does not")
     regime_multiplier = _number(size_multiplier, "size_multiplier")
-    stop_multiplier, stop_reason = stop_risk(risk_pct)
+    stop_multiplier, stop_reason = _stop_risk(risk_pct, max_stop_pct)
     total = regime_multiplier * stop_multiplier
     sizing = size(limit, stop_primary, account, total)
     action = _action(eligible, sizing, "place_buy_stop")
