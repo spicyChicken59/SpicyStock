@@ -5,7 +5,7 @@
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {};
-  const VERSION = 2, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
+  const VERSION = 3, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
   const HEX = /^[a-f0-9]{64}$/, DATE = /^\d{4}-\d{2}-\d{2}$/;
   const REF = ['id', 'context_sha256', 'plan_sha256', 'pick_sha256'];
   const LEGACY_FIELDS = ['submitted_quantity', 'submitted_at', 'filled_quantity', 'average_price', 'filled_at', 'cancelled_quantity', 'cancelled_at', 'exited_quantity', 'exited_at', 'protected_quantity', 'protection_confirmed_at'];
@@ -23,6 +23,7 @@
   // Clearing cumulative fields means unknown, never "no order was submitted".
   // Once reporting begins, corrections cannot revive a fresh entry draft.
   const reported = item => item.report_updated_at !== null || Object.values(item.report).some(value => value !== null);
+  const independent = item => item.kind === 'independent_research';
   const keyOf = candidate => candidate.stage + ':' + candidate.ticker;
   const cents = value => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
   const dollars = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
@@ -61,7 +62,7 @@
     }
     out.average_price = average(fields.average_price);
     if (out.average_price === undefined) return fail('Average fill price must be positive, with at most six decimal places, or blank for unknown.');
-    if (version === VERSION) {
+    if (version >= 2) {
       out.average_exit_price = average(fields.average_exit_price);
       if (out.average_exit_price === undefined) return fail('Average exit price must be positive, with at most six decimal places, or blank for unknown.');
       for (const key of ['entry_fees', 'exit_fees']) {
@@ -80,7 +81,7 @@
     if (submitted === null && (filled !== null || cancelled !== null)) return fail('Enter the quantity actually submitted before reporting fills or cancellations.');
     if (submitted !== null && ((filled !== null && filled > submitted) || (cancelled !== null && cancelled > submitted) || (filled !== null && cancelled !== null && filled + cancelled > submitted))) return fail('Filled plus cancelled shares cannot exceed the quantity reported submitted. Correct the cumulative quantities together.');
     if (exited !== null && (filled === null || exited > filled)) return fail('Exited shares cannot exceed reported entry fills. Enter or correct both cumulative quantities together.');
-    if (version === VERSION && out.average_exit_price !== null && !exited) return fail('An average exit price needs a positive reported exit quantity.');
+    if (version >= 2 && out.average_exit_price !== null && !exited) return fail('An average exit price needs a positive reported exit quantity.');
     if ((out.submitted_at && !submitted) || ((out.average_price !== null || out.filled_at) && !filled) || (out.cancelled_at && !cancelled) || (out.exited_at && !exited) || (out.protection_confirmed_at && out.protected_quantity === null)) return fail('Prices and event times need their corresponding reported quantity; zero fills have no fill price or fill time.');
     for (const key of ['filled_at', 'cancelled_at', 'exited_at']) if (out[key] && out.submitted_at && out[key] < out.submitted_at) return fail('A fill, cancellation or exit cannot precede the reported submission. Correct the times together.');
     if (out.cancelled_at && out.filled_at && out.cancelled_at < out.filled_at) return fail('The remainder cancellation cannot precede the latest reported fill.');
@@ -105,14 +106,40 @@
       typeof row.key === 'string' && /^[a-z0-9_]{1,80}$/.test(row.key) && typeof row.instruction === 'string' && row.instruction.length > 0 && row.instruction.length <= 2000);
   }
   function calculation(item) {
+    if (independent(item)) return null;
     return api.cashPreview.calculate({ cash: cashText(item.draft.cash_cents), fees: cashText(item.draft.fee_cents), quantity: String(item.draft.quantity), order: item.plan.order });
   }
+  // Source clocks retain upstream microseconds and spelling. Manual broker
+  // times use the separate timestamp() normalizer above.
+  function sourceTime(value) {
+    if (typeof value !== 'string') return false;
+    return !!timestamp(value.replace(/(\.\d{3})\d{1,3}(?=Z|[+-])/, '$1'));
+  }
+  function researchValid(source) {
+    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'cohort', 'evidence', 'baseline_admitted']) || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(source.ticker) || source.stage !== 'setting-up' || typeof source.baseline_admitted !== 'boolean') return false;
+    const pub = source.publication, cohort = source.cohort, evidence = source.evidence;
+    return exactKeys(pub, ['data_sha256', 'context_sha256', 'run_id', 'rules_version', 'measured_session', 'applicable_session', 'published_at', 'reader_projection_version', 'reader_sha256']) &&
+      ['data_sha256', 'context_sha256', 'reader_sha256'].every(key => typeof pub[key] === 'string' && HEX.test(pub[key])) &&
+      typeof pub.run_id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(pub.run_id) && /^[a-f0-9]{12}$/.test(pub.rules_version) &&
+      validDate(pub.measured_session) && validDate(pub.applicable_session) && sourceTime(pub.published_at) && pub.reader_projection_version === 1 &&
+      exactKeys(cohort, ['sha256', 'bytes', 'generated_at', 'policy_id']) && HEX.test(cohort.sha256) && Number.isSafeInteger(cohort.bytes) && cohort.bytes > 0 && cohort.bytes <= 128 * 1024 &&
+      sourceTime(cohort.generated_at) && cohort.policy_id === 'anticipation_stop_width_4_to_5_v1' &&
+      exactKeys(evidence, ['id', 'plan_sha256', 'source_sha256', 'inputs_sha256']) && Object.values(evidence).every(value => typeof value === 'string' && HEX.test(value));
+  }
   function validItem(item, version = VERSION) {
-    if (!exactKeys(item, ['version', 'id', 'revision', 'created_at', 'updated_at', 'publication', 'plan', 'draft', 'report', 'report_updated_at']) || item.version !== version || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
-        !timestamp(item.created_at) || !timestamp(item.updated_at) || Date.parse(item.created_at) > Date.parse(item.updated_at) || !planValid(item.plan)) return false;
-    const pub = item.publication, draft = item.draft;
-    if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !HEX.test(pub.sha256) || !validDate(pub.session) || !timestamp(pub.published_at) || !/^[a-f0-9]{12}$/.test(pub.rules_version) ||
-        item.id !== pub.sha256 + ':' + item.plan.reference.id || !exactKeys(draft, ['quantity', 'cash_cents', 'fee_cents']) || !Number.isInteger(draft.quantity) || draft.quantity < 1 || draft.quantity > MAX_SHARES || !cents(draft.cash_cents) || !cents(draft.fee_cents) || calculation(item).state !== 'calculated') return false;
+    if (!object(item)) return false;
+    const isIndependent = version === VERSION && independent(item);
+    const fields = ['version', 'id', 'revision', 'created_at', 'updated_at', 'report', 'report_updated_at', ...(isIndependent ? ['source'] : ['publication', 'plan', 'draft']), ...(version === VERSION ? ['kind'] : [])];
+    if (!exactKeys(item, fields) || item.version !== version || (version === VERSION && !['planned_handoff', 'independent_research'].includes(item.kind)) || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
+        !timestamp(item.created_at) || !timestamp(item.updated_at) || Date.parse(item.created_at) > Date.parse(item.updated_at)) return false;
+    if (isIndependent) {
+      if (!researchValid(item.source) || item.id !== item.source.publication.data_sha256 + ':' + item.source.evidence.id || item.report_updated_at === null) return false;
+    } else {
+      if (!planValid(item.plan)) return false;
+      const pub = item.publication, draft = item.draft;
+      if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !HEX.test(pub.sha256) || !validDate(pub.session) || !sourceTime(pub.published_at) || !/^[a-f0-9]{12}$/.test(pub.rules_version) ||
+          item.id !== pub.sha256 + ':' + item.plan.reference.id || !exactKeys(draft, ['quantity', 'cash_cents', 'fee_cents']) || !Number.isInteger(draft.quantity) || draft.quantity < 1 || draft.quantity > MAX_SHARES || !cents(draft.cash_cents) || !cents(draft.fee_cents) || calculation(item).state !== 'calculated') return false;
+    }
     const report = normalizeReport(item.report, null, version);
     return report.ok && same(report.report, item.report) && (item.report_updated_at === null ? !reported(item) : !!timestamp(item.report_updated_at) && Date.parse(item.report_updated_at) <= Date.parse(item.updated_at));
   }
@@ -123,11 +150,11 @@
       if (raw === null) { lastError = ''; return { ok: true, items: [], raw }; }
       if (new w.TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('size');
       const store = JSON.parse(raw);
-      if (!exactKeys(store, ['version', 'items']) || ![1, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
+      if (!exactKeys(store, ['version', 'items']) || ![1, 2, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
       // Reading an old record never writes or invents prices, fees or times.
       // The original raw bytes remain available for a failed explicit save.
-      const items = store.version === 1 ? store.items.map(item => ({ ...item, version: VERSION,
-        report: { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } })) : store.items;
+      const items = store.version < VERSION ? store.items.map(item => ({ ...item, version: VERSION, kind: 'planned_handoff',
+        report: store.version === 1 ? { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } : item.report })) : store.items;
       lastError = ''; return { ok: true, items, raw };
     } catch (error) {
       lastError = 'Private handoff storage is unavailable, unreadable or from another version. It was left untouched; no reported positions were removed.';
@@ -178,6 +205,7 @@
   }
   function availability(item) {
     if (!validItem(item)) return fail('This private draft is unreadable.');
+    if (independent(item)) return fail('This is an independently reported trade. It has no entry draft or order to copy.');
     const current = currentPlan(keyOf(item.plan), item.publication.sha256);
     if (!current.ok) return current;
     if (!same(current.snapshot, item.plan) || !same(current.publication, item.publication)) return fail('The published plan changed. This saved readback remains history; prepare from the current publication.');
@@ -196,11 +224,34 @@
       if (previous && (!same(previous.plan, source.snapshot) || !same(previous.publication, source.publication))) return fail('The published source changed under this draft. Its original evidence cannot be overwritten.');
       if (previous && reported(previous)) return fail('This draft has reported broker facts. Correct those facts explicitly; preparing a draft cannot overwrite them.');
       const at = new Date().toISOString();
-      const item = { version: VERSION, id, revision: previous ? previous.revision + 1 : 1, created_at: previous ? previous.created_at : at, updated_at: at,
+      const item = { version: VERSION, kind: 'planned_handoff', id, revision: previous ? previous.revision + 1 : 1, created_at: previous ? previous.created_at : at, updated_at: at,
         publication: source.publication, plan: source.snapshot, draft: { quantity: calc.quantity, cash_cents: api.cashPreview.cents(input.cash), fee_cents: calc.feeCents }, report: emptyReport(), report_updated_at: null };
       if (!validItem(item)) return fail('The exact published source cannot be stored as a private draft.');
       const items = loaded.items.filter(row => row.id !== id); items.push(item);
       const saved = save(loaded, items); return saved.ok ? { ok: true, item: clone(item) } : saved;
+    });
+  }
+  function inspectResearch(request) {
+    if (!api.stopResearch || typeof api.stopResearch.reportReference !== 'function') return fail('Open the verified research comparison before recording a trade.');
+    const verified = api.stopResearch.reportReference(request);
+    if (!verified || !verified.ok) return fail(verified && verified.error || 'The research source changed. Open its current reference before recording a trade.');
+    const source = verified.source, hashes = api.observations && api.observations.facts();
+    if (!researchValid(source) || !hashes || hashes.canonicalHash !== source.publication.data_sha256) return fail('The research source does not match the verified publication.');
+    return { ok: true, source: clone(source) };
+  }
+  async function reportResearch(request, fields, expectedRevision = null) {
+    return transaction(loaded => {
+      const inspected = inspectResearch(request);
+      if (!inspected.ok) return inspected;
+      const source = inspected.source, id = source.publication.data_sha256 + ':' + source.evidence.id;
+      if (loaded.items.some(item => item.id === id)) return { ...fail('A private record already exists for this original idea. Open and correct that record instead of creating another.'), existingId: id };
+      if (expectedRevision !== null) return fail('A new independent report has no prior revision. Open the saved record to correct it.');
+      const at = new Date().toISOString(), normalized = normalizeReport(fields, at);
+      if (!normalized.ok) return normalized;
+      if (!(normalized.report.filled_quantity > 0)) return fail('Record a positive quantity actually filled at your broker before saving an independent trade. Blank or zero is not an executed trade.');
+      const item = { version: VERSION, kind: 'independent_research', id, revision: 1, created_at: at, updated_at: at, source, report: normalized.report, report_updated_at: at };
+      const saved = save(loaded, [...loaded.items, item]);
+      return saved.ok ? { ok: true, item: clone(item) } : saved;
     });
   }
   async function report(id, fields, expectedRevision) {
@@ -254,6 +305,8 @@
   function exitReview(item) {
     const report = item.report, hasReport = reported(item);
     const held = report.filled_quantity === null || report.exited_quantity === null ? null : report.filled_quantity - report.exited_quantity;
+    if (independent(item)) return { basis: held === null ? 'reported_unknown' : 'reported_remaining', quantity: held, model_half_quantity: null, model_remaining_quantity: null, needs_review: held === null,
+      message: 'This independent trade has no personal entry draft or archived exit instructions. Remaining holdings are ' + (held === null ? 'unknown; report actual entry fills and exits.' : held + ' reported whole ' + (held === 1 ? 'share.' : 'shares.')) + ' Check holdings and protection at your broker; no exit has been inferred or placed.' };
     const quantity = hasReport ? held : item.draft.quantity;
     const basis = hasReport ? (quantity === null ? 'reported_unknown' : 'reported_remaining') : 'personal_draft';
     if (quantity === null) return { basis, quantity, model_half_quantity: null, model_remaining_quantity: null, needs_review: true,
@@ -275,20 +328,22 @@
     const report = item.report, filled = report.filled_quantity, submitted = report.submitted_quantity, cancelled = report.cancelled_quantity, exited = report.exited_quantity, protectedQty = report.protected_quantity;
     const held = filled === null || exited === null ? null : filled - exited;
     const warnings = [];
-    if (submitted !== null && submitted !== item.draft.quantity) warnings.push('Reported submitted quantity differs from your personal draft; this is a broker fact, not a revised plan.');
-    if (filled && report.average_price !== null && (Number(report.average_price) < item.plan.order.stop_price || Number(report.average_price) > item.plan.order.limit_price)) warnings.push('Reported average fill price is outside the published trigger-to-limit range.');
-    if (report.filled_at && (Date.parse(report.filled_at) < Date.parse(item.plan.timing.opens_at) || Date.parse(report.filled_at) >= Date.parse(item.plan.timing.cutoff_at))) warnings.push('Reported fill time is outside the published entry window.');
+    if (!independent(item)) {
+      if (submitted !== null && submitted !== item.draft.quantity) warnings.push('Reported submitted quantity differs from your personal draft; this is a broker fact, not a revised plan.');
+      if (filled && report.average_price !== null && (Number(report.average_price) < item.plan.order.stop_price || Number(report.average_price) > item.plan.order.limit_price)) warnings.push('Reported average fill price is outside the published trigger-to-limit range.');
+      if (report.filled_at && (Date.parse(report.filled_at) < Date.parse(item.plan.timing.opens_at) || Date.parse(report.filled_at) >= Date.parse(item.plan.timing.cutoff_at))) warnings.push('Reported fill time is outside the published entry window.');
+    }
     const protection = held === null || protectedQty === null ? 'unknown' : protectedQty === held ? 'matched' : protectedQty < held ? 'under' : 'over';
     if (protection === 'under') warnings.push('Broker-confirmed protective quantity is below reported remaining holdings. Reconcile protection at your broker.');
     if (protection === 'over') warnings.push('Broker-confirmed protective quantity exceeds reported remaining holdings. Reconcile the sell quantity at your broker.');
     return { state: !reported(item) ? 'draft' : filled === null ? 'reported_unknown_fill' : filled === 0 ? 'reported_no_fill' : held === 0 ? 'reported_closed' : submitted !== null && filled < submitted ? 'reported_partial_fill' : 'reported_filled',
-      planned_quantity: item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
+      planned_quantity: independent(item) ? null : item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
       unfilled_quantity: submitted === null || filled === null ? null : submitted - filled,
       uncancelled_quantity: submitted === null || filled === null || cancelled === null ? null : submitted - filled - cancelled,
       cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completedResult(report) };
   }
   function readback(item) {
-    if (!validItem(item)) return '';
+    if (!validItem(item) || independent(item)) return '';
     const order = item.plan.order, qty = item.draft.quantity;
     return 'PERSONAL BROKER READBACK — ' + item.plan.ticker + '\n' +
       'BUY ' + qty + ' ' + item.plan.ticker + ' · STOP LIMIT · trigger ' + dollars(api.cashPreview.cents(String(order.stop_price))) + ' · limit ' + dollars(api.cashPreview.cents(String(order.limit_price))) + ' · DAY\n' +
@@ -306,7 +361,7 @@
   }
   try { w.addEventListener('storage', event => { if (event.key === KEY || event.key === null) notify(); }); } catch (error) { /* reads still validate each time */ }
   api.handoff = {
-    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), prepare, report, remove, summary, availability, readback, copy,
+    VERSION, KEY, MAX_ITEMS, MAX_BYTES, FIELDS: FIELDS.slice(), prepare, inspectResearch, reportResearch, report, remove, summary, availability, readback, copy,
     list: () => clone(load().items), find: id => clone(load().items.find(item => item.id === id) || null),
     status: () => { const result = load(); return { available: result.ok && !!(w.navigator && w.navigator.locks), error: result.error || (!(w.navigator && w.navigator.locks) ? 'Private saving isn’t available in this browser. Open the secure site in a current browser; saved records remain readable.' : ''), count: result.items.length }; },
     recovery: () => pending ? clone(pending) : { prior: load().raw, proposed: null },
