@@ -19,6 +19,7 @@
     ['events', 'Check company news, earnings and takeover/corporate-action risk before entry.']
   ];
   let mounted = null, sessionKey = null, publicationKey = null, latest = null, previewKey = null;
+  let closeForInspection = () => {};
 
   function facts(data, av, model) {
     const account = data.account || {}, run = data.run || {}, regime = (data.breadth || {}).regime || {};
@@ -182,6 +183,9 @@
     const close = node('button', { type: 'button', class: 'sc-btn sc-btn--ghost sc-btn--sm', id: 'morning-close' }, 'Close');
     close.addEventListener('click', () => host.close());
     let returnToOpener = true;
+    closeForInspection = () => {
+      if (host.open) { returnToOpener = false; host.close(); }
+    };
     const opener = d.getElementById('morning-open');
     if (opener) {
       opener.disabled = false;
@@ -227,8 +231,7 @@
       if (!api.data || !api.avail || !api.model) return;
       // Open the current record's research; this control places/copies nothing.
       const current = api.morning.facts(api.data, api.avail, api.model);
-      returnToOpener = false;
-      host.close();
+      closeForInspection();
       const reveal = (route, action) => {
         if (w.location.hash === route) { api.navigate(route); action(); }
         else { w.addEventListener('hashchange', action, { once: true }); api.navigate(route); }
@@ -307,5 +310,5 @@
     refreshCash(host);
     if (api.handoffUI) api.handoffUI.update();
   }
-  api.morning = { render, unavailable, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
+  api.morning = { render, unavailable, facts, cashValue, profile: PROFILE, closeForInspection: () => closeForInspection(), refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
 })(window);

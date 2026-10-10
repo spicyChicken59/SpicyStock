@@ -256,6 +256,17 @@
         row.research.blockers.forEach(key => list.append(node('li', {}, BLOCKER_WORDS[key]))); article.append(list);
       }
       paragraph(article, row.event.blocked ? 'Known event exclusion.' : 'Limited event coverage.', row.event.blocked ? row.event.event_ids.join(', ') + (row.event.status === 'review_required' ? ' · source review is overdue; exclusion remains.' : ' · retained in both policies.') : 'No match in the archived manual registry is not issuer-news or earnings clearance.');
+      const hashes = fingerprint(), request = { kind: 'anticipation', ticker: row.ticker,
+        publication: { ...receipt.publication }, recordHash: hashes.recordHash, projected: hashes.projected,
+        evidence: { id: row.evidence.id, plan_sha256: row.evidence.plan_sha256, source_sha256: row.evidence.source_sha256 } };
+      const inspect = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-stop-inspect': row.ticker,
+        'aria-label': 'Inspect ' + row.ticker + ' recorded chart' }, 'Inspect recorded chart');
+      const message = node('p', { class: 'sc-hint', role: 'status', 'data-stop-inspect-status': '' }, 'Opens this publication’s original chart and baseline decision. Research creates no entry permission.');
+      inspect.addEventListener('click', () => {
+        const result = api.inspectRecordedChart ? api.inspectRecordedChart(request) : { ok: false, reason: 'Recorded chart inspection is unavailable in this page.' };
+        if (!result.ok) message.textContent = result.reason;
+      });
+      article.append(inspect, message);
       host.append(article);
     }
     paragraph(host, 'Still unverified:', 'Current broker quotes, spread, trading status, issuer news and earnings. This comparison supplies no new live check, executable order, confirmed fill, return or established strategy edge.');

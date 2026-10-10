@@ -738,8 +738,10 @@
     const band = listRule(data, 'trade_grades', ['A+', 'A']);
     const qualified = accepted.filter(b => band.includes(b.grade) && !(b.vetoes || []).length);
     const tickets = (data.trades || []).length;
-    slot.hidden = tickets > 0;
-    if (tickets) { clear(slot); return; }
+    const settingUp = model ? model.stages['setting-up'] : [];
+    const anticipationTickets = settingUp.filter(c => c.status === 'ticket').length;
+    slot.hidden = tickets + anticipationTickets > 0;
+    if (tickets + anticipationTickets) { clear(slot); return; }
     const host = el('details');
     host.appendChild(el('summary', { 'data-wait-summary': '', text: 'Why wait? Market ' + (reg.verdict || 'unknown').toUpperCase() +
       ' · ' + num(qualified.length) + ' accepted A/A+ · ' + num(accepted.length) + '/' + num((run.reads || {}).requested) + ' reviews accepted' }));
@@ -751,8 +753,23 @@
     host.appendChild(el('p', { 'data-independent-gates': '', text: 'Independent gates: market ' + (reg.verdict || 'unknown').toUpperCase() +
       '; ' + num(accepted.length) + ' accepted reviews out of ' + num((run.reads || {}).requested) + ' selected; ' + num(qualified.length) +
       ' accepted, non-vetoed candidates in the A/A+ band. ' + num(tickets) + ' reaction tickets published. A completed scan does not grant market permission.' }));
-    const top = (data.watchlist || {}).top || [];
-    host.appendChild(el('p', { text: top.length ? num(top.length) + ' existing anticipation setups are available under Setting up. They are research candidates; inspect their own market, entry and volume conditions.' : 'No anticipation shortlist was recorded.' }));
+    const top = (data.watchlist || {}).top, known = Array.isArray(top), quiet = settingUp.filter(c => c.quiet).length;
+    const anticipation = el('section', { 'data-anticipation-wait': '', 'data-top-count': known ? top.length : 'unknown',
+      'data-ticket-count': known ? anticipationTickets : 'unknown', 'data-quiet-count': quiet });
+    anticipation.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'Anticipation baseline' }));
+    anticipation.appendChild(el('p', { 'data-anticipation-counts': '', text: known
+      ? num(anticipationTickets) + ' recorded tickets among ' + plural(top.length, 'top anticipation setup') + '. ' +
+        (quiet ? plural(quiet, 'additional quiet name') + ' appear separately in Setting up. ' : '') + 'These are the original baseline decisions; wider-stop research does not change them.'
+      : 'The anticipation shortlist was not recorded; its ticket count and refusal reasons are unknown.' }));
+    if (known && top.length) anticipation.appendChild(el('ul', { 'class': 'ss-notes' }, top.map(row => {
+      const candidate = settingUp.find(c => c.row === row && !c.quiet), plan = row && row.plan;
+      const reason = !plan ? (candidate ? planningWaitReasons(candidate, data)[0] : 'No baseline plan was recorded; its refusal reason is unavailable.')
+        : text(plan.reason) || (candidate && text(candidate.reason)) || 'No ticket was recorded; its refusal reason is unavailable.';
+      return el('li', { 'data-anticipation-refusal': row && row.ticker || 'unknown' }, [
+        el('strong', { text: (row && text(row.ticker) || 'Unknown symbol') + ' — ' }), d.createTextNode(cap(sentence(reason)))
+      ]);
+    })));
+    host.appendChild(anticipation);
     host.appendChild(el('p', { 'class': 'sc-hint', 'data-evaluation-next': '', text: evaluationExplanation(data, nowAt()) }));
     host.appendChild(el('a', { href: '#/record', text: 'What the retained historical sample establishes' }));
     const previous = slot.querySelector('details');
@@ -1575,6 +1592,40 @@
     else w.location.hash = hash;
   }
   SCStock.navigate = navigate;
+  function inspectRecordedChart(request) {
+    const refuse = reason => ({ ok: false, reason });
+    const changed = 'This chart action belongs to another publication or unverified evidence. Reload the research and try again.';
+    const hashes = SCStock.observations.facts(), run = current && current.run || {}, pub = request && request.publication;
+    const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+    if (!current || !model || !request || !pub || request.kind !== 'anticipation' ||
+        !digest(request.recordHash) || request.recordHash !== hashes.recordHash || request.projected !== hashes.projected ||
+        !digest(pub.data_sha256) || pub.data_sha256 !== hashes.canonicalHash ||
+        !digest(pub.reader_sha256) || pub.reader_projection_version !== 1 || (hashes.projected && pub.reader_sha256 !== hashes.recordHash) ||
+        !digest(pub.context_sha256) || pub.context_sha256 !== (run.evidence || {}).context_sha256 ||
+        pub.rules_version !== (current.app || {}).rules_version || String(pub.run_id) !== String(run.run_id) ||
+        pub.measured_session !== run.session || pub.applicable_session !== (run.timing || {}).applicable_session || pub.published_at !== run.published_at)
+      return refuse(changed);
+    const rows = ((current.watchlist || {}).top || []).filter(row => row && row.ticker === request.ticker);
+    if (rows.length !== 1) return refuse('The matching anticipation setup is unavailable in this publication.');
+    const row = rows[0], evidence = row.evidence || {}, wanted = request.evidence || {}, source = evidence.source || {}, planning = evidence.planning || {};
+    if (![wanted.id, wanted.source_sha256, wanted.plan_sha256].every(digest) || wanted.id !== evidence.id ||
+        wanted.source_sha256 !== source.sha256 || wanted.plan_sha256 !== planning.output_sha256 ||
+        evidence.kind !== request.kind || evidence.ticker !== request.ticker || evidence.session !== run.session ||
+        evidence.context_sha256 !== pub.context_sha256 || evidence.rules_version !== pub.rules_version)
+      return refuse(changed);
+    const candidates = model.stages['setting-up'].filter(c => c.row === row && c.ticker === request.ticker && !c.quiet);
+    if (candidates.length !== 1 || !candidates[0].series.length) return refuse('The matching recorded chart is unavailable in this publication.');
+    const candidate = candidates[0], route = routeHash(candidate.stage, candidate.id);
+    // Validate and route in one turn so an asynchronous hash event cannot
+    // substitute a same-ticker chart from a newly loaded publication.
+    try { if (w.location.hash !== route) w.history.pushState(null, '', route); }
+    catch (_) { return refuse('The recorded chart could not be opened in this browser.'); }
+    SCStock.morning.closeForInspection();
+    pendingFocus = 'detail'; state.gesture = true;
+    applyRoute(parseHash(route));
+    return { ok: true, reason: '' };
+  }
+  SCStock.inspectRecordedChart = inspectRecordedChart;
   const reducedMotion = () => !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const scrollTo = (node) => { if (node && node.scrollIntoView) node.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }); };
   const desktopCards = () => !narrow() && $('workspace').getAttribute('data-discover') === 'cards';
