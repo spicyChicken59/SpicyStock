@@ -299,6 +299,63 @@ def parse_receipt(raw):
     return value
 
 
+def _reconcile_row(row):
+    """Reconcile trust labels with already shape-validated visible evidence."""
+    identity, index = row["identity"], row["index"]
+    if identity["status"] == "unverified":
+        empty_fields = ("metadata_count", "eligible_current_report_count", "not_selected_count",
+                        "history_files_advertised", "history_files_fetched", "history_sources",
+                        "selected_accessions", "listed_filings", "exhibit_links_observed",
+                        "exhibit_links_not_fetched")
+        _require(index["coverage_status"] == "unknown" and index["range_start"] is None
+                 and not any(index[key] for key in empty_fields), "issuer unverified index must remain unknown")
+        _require(row["status"] in ("unavailable", "identity_unverified") and not row["documents"]
+                 and identity["submissions_source"] is None, "issuer unverified row cannot claim collection")
+        return
+    prefix = f'https://data.sec.gov/submissions/CIK{identity["cik"]:010d}'
+    index_errors = any(error["code"] in ("history_incomplete", "metadata_invalid")
+                       or error["source_url"] in (MAPPING_URL, prefix + ".json")
+                       or isinstance(error["source_url"], str)
+                       and re.fullmatch(re.escape(prefix) + r"-submissions-[0-9]{3}\.json", error["source_url"])
+                       for error in row["errors"])
+    full_window = index["range_start"] is not None and index["range_start"] <= index["window_start"]
+    coverage = "observed_window" if full_window and not index_errors else "partial"
+    _require(index["coverage_status"] == coverage, "issuer index label contradicts observed coverage")
+    _require(len(index["listed_filings"]) == min(index["eligible_current_report_count"], MAX_LISTED_FILINGS),
+             "issuer listed metadata count must reconcile")
+    primaries = {doc["accession"] for doc in row["documents"] if doc["role"] == "primary"}
+    incomplete = (coverage != "observed_window" or row["errors"] or index["not_selected_count"]
+                  or index["exhibit_links_not_fetched"] or any(doc["excerpt"]["truncated"] for doc in row["documents"])
+                  or not set(index["selected_accessions"]) <= primaries)
+    _require(row["status"] == ("partial" if incomplete else "collected"),
+             "issuer row label contradicts visible completeness")
+
+
+def _reconcile_budget(issuers, stats):
+    """Visible sources prove lower bounds, never all attempts or raw captures."""
+    network, captures, failures = {}, {}, set()
+    for row in issuers:
+        identity = row["identity"]
+        sources = [identity["mapping_source"], identity["submissions_source"], *row["index"]["history_sources"],
+                   *(doc["source"] for doc in row["documents"])]
+        for source in sources:
+            if source is None:
+                continue
+            digest, size = source["raw_sha256"], source["bytes"]
+            _require(digest not in captures or captures[digest] == size, "issuer source digest has conflicting byte sizes")
+            captures[digest] = size
+            if source["cache_status"] == "network":
+                event = (source["url"], digest, size, _instant(source["fetched_at"]), _instant(source["checked_at"]))
+                network[event] = size
+        for error in row["errors"]:
+            if "http_status" in error:
+                failures.add((error["source_url"], error["code"], error["http_status"], error["source_phase"]))
+    _require(stats["request_count"] >= len(network) + len(failures), "issuer request count below visible evidence")
+    _require(stats["downloaded_bytes"] >= sum(network.values()), "issuer downloaded bytes below visible evidence")
+    _require(stats["capture_bytes"] >= sum(captures.values()), "issuer capture bytes below visible evidence")
+    _require(not stats["downloaded_bytes"] or stats["request_count"] > 0, "issuer download requires a request")
+
+
 def validate_bundle(receipt_raw, bundle_raw):
     receipt = parse_receipt(receipt_raw)
     _require(isinstance(bundle_raw, bytes) and len(bundle_raw) == receipt["bundle"]["bytes"]
@@ -420,12 +477,14 @@ def validate_bundle(receipt_raw, bundle_raw):
                      and excerpt["sha256"] == _sha(excerpt["text"].encode("utf-8")), "issuer excerpt integrity")
         _require(all(accession in primary_counts for accession in exhibit_counts), "issuer exhibit needs primary document")
         _require(index["exhibit_links_observed"] - index["exhibit_links_not_fetched"] == sum(exhibit_counts.values()), "issuer exact exhibit remainder")
+        _reconcile_row(row)
     stats = bundle["stats"]
     _keys(stats, ("request_count", "downloaded_bytes", "capture_bytes", "budget_stop"))
     _require(_count(stats["request_count"], MAX_REQUESTS) and _count(stats["downloaded_bytes"], MAX_DOWNLOAD_BYTES + MAX_RESPONSE_BYTES)
              and _count(stats["capture_bytes"], MAX_CAPTURE_BYTES)
              and (stats["budget_stop"] is None or stats["budget_stop"] in ERRORS), "issuer collection budget")
     _require(stats["downloaded_bytes"] <= MAX_DOWNLOAD_BYTES or stats["budget_stop"] == "size_limit", "issuer exceeded download budget must stop")
+    _reconcile_budget(issuers, stats)
     if receipt["status"] in ("no_candidates", "inapplicable"):
         _require(not issuers and stats["request_count"] == 0 and not stats["downloaded_bytes"] and not stats["capture_bytes"], "issuer no-fetch receipt")
     _require(receipt["status"] != "no_candidates" or not candidates, "issuer no-candidate receipt")

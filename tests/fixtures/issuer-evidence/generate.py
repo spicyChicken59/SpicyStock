@@ -8,7 +8,7 @@ filing. Run with --check to compare without rewriting committed fixtures.
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import sys
@@ -24,6 +24,8 @@ from tools import make_fixture  # noqa: E402
 HERE = Path(__file__).resolve().parent
 NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
 VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
+SEMANTIC_VARIANTS = ("complete", "empty-window", "cached", "cache-unverified", "document-denied",
+                     "metadata-invalid", "short-index", "prefetch-budget")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
 
@@ -136,6 +138,61 @@ def collect(raw, variant="collected", **kwargs):
     return issuer.collect(raw, **options)
 
 
+def collect_semantic(raw, variant, *, dry_run=False):
+    """Entirely synthetic SEC responses exercise genuine collector states.
+
+    The shared mapping event and identical document bodies deliberately test
+    different request/download versus distinct-capture accounting. These
+    additional controls leave all original captured-source outputs unchanged.
+    """
+    assert variant in SEMANTIC_VARIANTS
+    mapping = {"fields": ["cik", "name", "ticker", "exchange"], "data": [
+        [320193, "Synthetic AAPL issuer fixture", "AAPL", "Nasdaq"],
+        [1654126, "Synthetic ZIM issuer fixture", "ZIM", "NYSE"],
+    ]}
+    bodies = {MAPPING_URL: json_bytes(mapping)}
+    for cik, ticker in ((320193, "AAPL"), (1654126, "ZIM")):
+        filings = [{"accessionNumber": f"{cik:010d}-25-000001", "filingDate": "2025-10-01",
+                    "reportDate": "2025-10-01", "acceptanceDateTime": "2025-10-01T16:00:00Z",
+                    "form": "10-K", "items": "", "primaryDocument": "old.htm"}]
+        if variant != "empty-window":
+            filings.append({"accessionNumber": f"{cik:010d}-26-000001", "filingDate": "2026-10-09",
+                            "reportDate": "2026-10-09", "acceptanceDateTime": "2026-10-09T16:00:00Z",
+                            "form": "8-K", "items": "8.01", "primaryDocument": "current.htm"})
+        if variant == "metadata-invalid":
+            filings.append({"accessionNumber": f"{cik:010d}-27-000001", "filingDate": "2026-10-09",
+                            "reportDate": "2026-10-09", "acceptanceDateTime": "2027-10-09T16:00:00Z",
+                            "form": "8-K", "items": "8.01", "primaryDocument": "future.htm"})
+        if variant == "short-index":
+            filings = filings[1:]
+        recent = {key: [filing[key] for filing in filings] for key in filings[0]}
+        bodies[f"https://data.sec.gov/submissions/CIK{cik:010d}.json"] = json_bytes({
+            "cik": cik, "tickers": [ticker], "filings": {"recent": recent, "files": []}})
+        bodies[f"https://www.sec.gov/Archives/edgar/data/{cik}/{cik:010d}26000001/current.htm"] = (
+            b"<html><body>Complete synthetic document. No event or trade clearance.</body></html>")
+    if variant == "cache-unverified":
+        bodies[MAPPING_URL] = json_bytes({"fields": ["cik", "name", "ticker"],
+                                         "data": [[1, "Unrelated synthetic issuer", "OTHER"]]})
+
+    def fetch(url):
+        if variant == "prefetch-budget":
+            raise AssertionError("deadline must prevent transport")
+        if variant == "document-denied" and "/Archives/" in url:
+            raise issuer.SourceError("http_error", http_status=403)
+        assert url in bodies, "unexpected synthetic source URL"
+        cached = variant == "cache-unverified" or variant == "cached" and "/submissions/" not in url
+        observed = NOW - timedelta(hours=1) if cached else NOW
+        return {"body": bodies[url], "observed_at": observed, "fetched_at": observed,
+                "cache_status": "verified_cache" if cached else "network"}
+
+    options = {"fetch": fetch, "now": NOW, "run_id": "fixture-issuer-semantic-" + variant,
+               "dry_run": dry_run, "allow_fixture": True}
+    if variant == "prefetch-budget":
+        with mock.patch.object(issuer._Budget, "remaining", return_value=0):
+            return issuer.collect(raw, **options)
+    return issuer.collect(raw, **options)
+
+
 def build():
     raw = publication()
     projected, _ = reader.derive(raw)
@@ -147,6 +204,11 @@ def build():
         issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
         outputs[variant + "-receipt.json"] = result["receipt_bytes"]
         outputs[variant + "-bundle.json"] = result["bundle_bytes"]
+    for variant in SEMANTIC_VARIANTS:
+        result = collect_semantic(raw, variant)
+        issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
+        outputs["semantic-" + variant + "-receipt.json"] = result["receipt_bytes"]
+        outputs["semantic-" + variant + "-bundle.json"] = result["bundle_bytes"]
     return outputs
 
 
