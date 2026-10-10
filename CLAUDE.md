@@ -4945,3 +4945,34 @@ banking calendars differ that day, so cash still comes from the broker.
 Broker identity, pre-open operational acceptance, actual fills and the first
 successful trade remain outstanding. Continue from these gaps; do not mark the
 whole goal or milestone 2 complete.
+
+## Checkpoint, 10 Oct 2026 — consistent ticket and workflow status (local)
+
+**Executed defect.** The October 9 publication at `62bce72d` admits one ZIM
+anticipation ticket for October 12. At phone and desktop sizes, the morning
+desk counted it while `nextActionCore()` counted bursts alone: it offered no
+next step for the coil and said nothing had been offered once the window ended.
+The same contradiction occurs with the pipeline-generated `notrade` fixture.
+The optional stale-page run log also called an already-published, skipped
+scheduled attempt “tonight’s run: completed.” Its success was workflow evidence,
+not a new publication.
+
+**Correction.** The next-action message reads both existing model ticket counts,
+preserving publication, market and clock refusal precedence. Zero-ticket wording
+covers both setup families, and cutoff retains the published ticket count as
+history. The optional run log names the latest evening workflow, includes its
+exchange-local date, distinguishes cancellation/skipping from failure, and says
+successful workflows can skip publication. It makes no new data or delivery
+claim. No strategy number, ticket, source record, provider request or workflow
+changed; `.env.example` was reviewed and needs no new setting.
+
+**Local evidence.** The new `status` browser suite plus `full`, `degraded` and
+`notrade` pass 1,424 checks. Independent review passed all 106 status checks.
+Docs/secret tests pass 92. Isolated burst-only and false-publication-claim
+mutations fail their intended assertions (92/106 and 94/106); an unrelated
+coil-sorting mutation still passes 106/106. Exact current publication bytes
+were also replayed at 1280 and 390 pixels with explicitly pinned pre-open, open,
+cutoff and stale clocks; before/after screenshots were inspected. This local
+browser work does not establish future pre-open delivery or a live trade.
+Runtime: Node 24.19.0, Playwright Chromium 151, Python 3.12.14.
+Hosted and public acceptance remain the release owner's next steps.

@@ -69,6 +69,10 @@ sized for another account says so; the browser does not resize its tickets.
 Optional settled cash begins unknown and stays in this browser. Preparation
 checks do not establish live quotes, news coverage, broker buying power or
 execution, and cannot turn an unavailable setup into an order.
+The next-action message counts the same published reaction and anticipation
+tickets as the desk, including tickets retained for inspection after cutoff.
+In recovery notices, the latest evening workflow is reported separately: a
+successful scheduled check may skip publication and does not refresh the record.
 
 The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
@@ -838,6 +842,7 @@ pytest tests/ -q                            # every boundary is a double
 node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
+node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```

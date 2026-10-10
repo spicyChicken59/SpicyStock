@@ -4558,8 +4558,9 @@
     return result;
   }
   function nextActionCore(data, s) {
-    const bursts = by(data.bursts || []);
-    const orders = (data.trades || []).map((t) => bursts[t]).filter((b) => b && b.plan && b.plan.order_json).length;
+    // The same recorded ticket families used by the morning desk and stage
+    // counts. An anticipation ticket remains a plan when no burst qualified.
+    const orders = STAGES.reduce((count, stage) => count + model.tickets[stage], 0);
     const open = (data.open_plans || []).length, red = ((data.breadth || {}).regime || {}).verdict === 'red';
     if (blocked(s)) return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is the next session’s plan.', 'stale'];
     const tm = av.timing, ph = av.phase, window = tm.window;
@@ -4581,11 +4582,11 @@
     if (ph === 'open') {
       return orders
         ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
-        : ['Nothing new to place in ' + day + '’s window.', 'No burst qualified with a ticket. ' + line, 'quiet'];
+        : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
     if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Attach its protective stop after a fill; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
-    if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
-    return ['No new entry offered for ' + day + '.', 'No burst qualified and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
+    if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
+    return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }
   function renderNext(data, s) {
     const n = nextAction(data, s);
@@ -4613,9 +4614,12 @@
         const run = j && j.workflow_runs && j.workflow_runs[0];
         if (!run || !run.status) return;
         const when = run.status === 'completed' ? run.updated_at : run.run_started_at || run.created_at;
-        const word = run.status === 'completed' ? (run.conclusion === 'success' ? 'completed' : 'failed') : run.status.replace(/_/g, ' ');
+        const word = run.status === 'completed'
+          ? (run.conclusion === 'success' ? 'completed successfully' : words(run.conclusion) || 'completed (outcome unknown)')
+          : words(run.status);
+        const at = instant(when), dated = at ? ' on ' + dateWords(etParts(at).date) + ' at ' + timeET(when) : '';
         clear(slot);
-        slot.appendChild(d.createTextNode('tonight’s run: ' + word + (when ? ' at ' + timeET(when) : '') + ' — '));
+        slot.appendChild(d.createTextNode('Latest evening workflow: ' + word + dated + '. A successful workflow may skip publication; check the record’s session above. '));
         slot.appendChild(el('a', { href: run.html_url || RUNS_URL, target: '_blank', rel: 'noopener', text: 'open log' }));
         slot.hidden = false;
       })
