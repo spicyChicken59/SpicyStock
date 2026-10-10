@@ -5859,3 +5859,52 @@ and actual public acceptance; no new source coverage or trade is claimed.
 Final combined documentation/workflow/issuer/publisher verification passes
 221 checks. The prepared-source validators also accept the latest actual
 unavailable issuer publication without guessing its missing HTTP status.
+
+
+## Checkpoint, 10 Oct 2026 — registered wider-stop comparison released
+
+[PR #134](https://github.com/spicyChicken59/SpicyStock/pull/134) merged exact
+reviewed head `49d96480` at `6abbc950`. All seven gates passed: 3,664 Python,
+12,502 page, 378 chart and 137 continuity checks; both native jobs and both
+secret checks succeeded. Native API artifact digests match official upload
+logs; their payloads were not separately downloaded. Publisher `38040190670`
+and replacement Pages `38040201537` succeeded.
+
+Actual public acceptance passes 261 checks with native original-byte matches
+for all 37 required public files. Fourteen phone/desktop screenshots were
+inspected, with no errors or horizontal overflow. The unchanged canonical
+`f5cbe38e…` and reader `f9282e90…` bind the exact dated comparison
+`249b60c0…`, captured before entry opened for October 12. Production strategy,
+picks, histories, source objects, latest morning/issuer receipts and the
+pinned design system retain their bytes. The reviewed producer/runtime and
+cohort hashes are identical after merge, preserving the prior retained-source
+and independent Decimal replay evidence.
+
+All five original rows remain. KE one share requires $29.52 principal and
+$1.27 price-to-stop risk; PSNL three shares require $49.26 and $2.22. The
+unchanged stop/market reductions leave a $2.50 effective research risk budget
+per idea. The comparison totals $78.78 principal and $3.49 price-to-stop risk;
+fees, gaps and slippage are excluded. Baseline tickets/reservations precede
+research. MG/ZIM remain event-refused; SN remains zero-share/occupied with
+its model reservation. None establishes Mo's holdings or settled cash.
+
+Initial personal cash is unknown. A separately disclosed ephemeral test input
+of $1,743.29 stayed local and preserved focus/storage; it is not an observed
+account balance. Opening the research panel makes exactly two bounded public
+reads and creates no order, copied ticket, private draft or reported fill.
+No provider, broker or workflow action occurred in this public verification.
+Full identities, checks, hashes and retained limitations are in
+[the dated release receipt](release-evidence/2026-10-10-stop-research/acceptance.json).
+
+The experiment is available as dated research, not an observed October 12
+trade or measured strategy return. The journal in PR #140 remains pending
+its required native gates. Next releases cover HTTP diagnostics, whole-share
+personal guidance and issuer evidence consistency; timely quotes, broader
+coverage and an actual first personal trade remain open.
+
+The integrated issuer-consistency branch passes 476 issuer checks and 1,459
+additional morning/cash/private-handoff/research/journal checks in two scoped
+browser invocations (1,935 total), after incorporating the actual current
+morning/issuer receipts from main. All reviewed runtime hashes are unchanged.
+Final documentation checks pass 37/37; the current 40-file publisher inventory
+and exact production issuer companion validate with zero network attempts.

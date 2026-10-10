@@ -244,14 +244,19 @@ unobserved financial outcome complete.
 
 ## Registered opportunity experiment
 
-Issue #130 prepares `anticipation_stop_width_4_to_5_v1`, a separately labelled
+[PR #134](https://github.com/spicyChicken59/SpicyStock/pull/134) released
+`anticipation_stop_width_4_to_5_v1`, a separately labelled
 comparison for October 12 through November 6. It keeps the production strategy
 and $2,000 / 0.5% account, changing only an anticipation research cap from 4% to
 5%. Original levels, risk reductions, known-event exclusions and baseline-first
 shared allocation remain. Dated empty/refused cohorts and actual generation
-times are retained alongside possible fits. This is research preparation;
-hosted release and actual public acceptance are recorded in the checkpoint when
-completed. It establishes no strategy return, personal fill or successful trade.
+times are retained alongside possible fits. Actual public acceptance passed
+261 checks and matched all 37 required files. The first dated cohort retains
+five rows, with KE one share and PSNL three shares as hypothetical sizing fits;
+MG/ZIM keep their event exclusions and SN its occupied-model/whole-share refusal.
+The [release evidence](release-evidence/2026-10-10-stop-research/acceptance.json)
+records the exact publication and scoped verification. It establishes no
+strategy return, personal fill or successful trade.
 
 ## Personal trade reporting — released 10 October 2026
 

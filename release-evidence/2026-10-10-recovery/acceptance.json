@@ -442,7 +442,7 @@
   "remaining_gaps": [
     "Controlled loopback faults are not evidence that the public site experienced an outage.",
     "Synthetic private legacy data is separate from actual public contexts and is not a user trade or result.",
-    "No market-provider requests, workflow dispatch, broker requests, order copies or actual trading occurred.",
+    "The original public/recovery verification itself made no market-provider requests, workflow dispatch, broker requests, order copies or trades. The separate authorized production morning dispatch and automatic SEC attempt are recorded under automatic_issuer_delivery.",
     "No generalized performance guarantee or investment outcome is inferred from this single run.",
     "On-time morning quote delivery, comprehensive SEC/earnings coverage and first actual personal trade remain open.",
     "Broker unspecified.",
