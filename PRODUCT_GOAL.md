@@ -95,6 +95,20 @@ upgrades their schema. Synthetic rehearsals establish the implementation, not
 an actual owner result. Hosted and public acceptance for this extension remain
 outstanding; it is not claimed shipped here.
 
+The subsequent [cash-preview and issuer-reader release](https://github.com/spicyChicken59/SpicyStock/pull/121)
+is merged and deployed. Its [scoped production receipt](release-evidence/2026-10-10-cash-issuer/acceptance.json)
+records two completed research reviews out of twelve available reads, zero
+reaction candidates passing the pre-review regime/grade gate, zero tickets,
+484 verified source-bound setups, and 187 actual public UI checks on desktop
+and phone. Personal cash input remains local and does not become broker cash.
+
+The actual issuer receipt was manually collected and reports unavailable after
+a failed SEC identity request; MG/ZIM's known-event evidence remains readable.
+Automatic triggering required the separately tracked workflow-path fix (#128 /
+#129). Actual public review also found the weekend guidance defect (#131).
+These release results do not establish fresh filing coverage, on-time morning
+quotes or an actual personal trade. The dated checkpoint records each limitation.
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.
