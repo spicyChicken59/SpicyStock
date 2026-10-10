@@ -136,6 +136,66 @@
     }
     require(matches, 'Issuer HTTP diagnostic source differs from its collection phase.');
   }
+  function coverage(row) {
+    const ident = row.identity, index = row.index;
+    if (ident.status !== 'verified') {
+      const empty = ['metadata_count', 'eligible_current_report_count', 'not_selected_count', 'history_files_advertised',
+        'history_files_fetched', 'exhibit_links_observed', 'exhibit_links_not_fetched'].every(key => index[key] === 0) &&
+        ['history_sources', 'selected_accessions', 'listed_filings'].every(key => index[key].length === 0);
+      require(index.coverage_status === 'unknown' && index.range_start === null && index.range_end === null && empty,
+        'Unverified issuer identity cannot establish index coverage.');
+      require(['unavailable', 'identity_unverified'].includes(row.status) && ident.submissions_source === null && row.documents.length === 0,
+        'Unverified issuer identity cannot establish collected content.');
+      return;
+    }
+    const submissions = 'https://data.sec.gov/submissions/CIK' + String(ident.cik).padStart(10, '0');
+    const history = new RegExp('^' + submissions.replaceAll('.', '\\.') + '-submissions-[0-9]{3}\\.json(?![\\s\\S])');
+    // Index coverage is decided before document retrieval; a later document
+    // refusal does not erase the independently observed index window.
+    const indexFailed = row.errors.some(error => ['metadata_invalid', 'history_incomplete'].includes(error.code) ||
+      error.source_url === 'https://www.sec.gov/files/company_tickers_exchange.json' ||
+      error.source_url === submissions + '.json' || history.test(error.source_url));
+    const fullWindow = index.range_start !== null && index.range_start <= index.window_start;
+    require(index.coverage_status === (fullWindow && !indexFailed ? 'observed_window' : 'partial'),
+      'Issuer index coverage contradicts its range or source failures.');
+    require(index.listed_filings.length === Math.min(index.eligible_current_report_count, POLICY.max_listed_filings),
+      'Issuer listed metadata count differs from its eligible reports.');
+    const complete = index.coverage_status === 'observed_window' && row.errors.length === 0 && index.not_selected_count === 0 &&
+      index.exhibit_links_not_fetched === 0 && !row.documents.some(doc => doc.excerpt.truncated) &&
+      index.selected_accessions.every(accession => row.documents.some(doc => doc.accession === accession && doc.role === 'primary'));
+    require(row.status === (complete ? 'collected' : 'partial'), 'Issuer row status contradicts its retained coverage.');
+  }
+  function collection(value, r) {
+    const network = new Map(), captures = new Map(), failures = new Set();
+    // Keep submillisecond precision while normalizing equivalent UTC offsets.
+    const sourceTime = raw => instant(raw) + ':' + ((raw.match(/\.(\d+)/) || [null, ''])[1].padEnd(6, '0').slice(3));
+    function retain(item) {
+      if (item === null) return;
+      require(!captures.has(item.raw_sha256) || captures.get(item.raw_sha256) === item.bytes,
+        'Issuer source digest has conflicting byte lengths.');
+      captures.set(item.raw_sha256, item.bytes);
+      if (item.cache_status === 'network') network.set(JSON.stringify([item.url, item.raw_sha256, item.bytes,
+        sourceTime(item.fetched_at), sourceTime(item.checked_at)]), item.bytes);
+    }
+    value.issuers.forEach(row => {
+      [row.identity.mapping_source, row.identity.submissions_source, ...row.index.history_sources, ...row.documents.map(doc => doc.source)].forEach(retain);
+      row.errors.forEach(error => {
+        if (Object.hasOwn(error, 'http_status')) failures.add(JSON.stringify([error.source_url, error.code, error.http_status, error.source_phase]));
+      });
+    });
+    const sum = items => [...items.values()].reduce((total, size) => total + size, 0), stats = value.stats;
+    // Visible evidence supplies lower bounds. Cached bodies and unsuccessful or
+    // discarded responses prevent inferring exact totals from this subset.
+    require(stats.request_count >= network.size + failures.size, 'Issuer request count is below its visible source evidence.');
+    require(stats.downloaded_bytes >= sum(network), 'Issuer downloaded bytes are below its visible network sources.');
+    require(stats.capture_bytes >= sum(captures), 'Issuer captured bytes are below its visible distinct sources.');
+    require(stats.downloaded_bytes === 0 || stats.request_count > 0, 'Issuer downloads require a collection request.');
+    if (!['no_candidates', 'inapplicable'].includes(r.status)) {
+      const expected = value.issuers.every(row => ['unavailable', 'identity_unverified'].includes(row.status)) ? 'unavailable' :
+        r.selection.omitted_issuer_count || value.issuers.some(row => row.status !== 'collected') ? 'partial' : 'collected';
+      require(r.status === expected, 'Issuer receipt status contradicts its retained rows.');
+    }
+  }
   async function validateBundle(value, r) {
     require(keys(value, 'schema_version publication collection_started_at generated_at as_of window_start candidates issuers stats') && value.schema_version === 1 &&
       equal(value.publication, r.publication) && value.collection_started_at === r.collection_started_at && value.generated_at === r.generated_at && value.as_of === r.collection_started_at && day(value.window_start), 'Issuer bundle metadata differs from its receipt.');
@@ -203,12 +263,14 @@
       require(index.exhibit_links_observed - index.exhibit_links_not_fetched === row.documents.filter(x => x.role === 'exhibit').length, 'Issuer exhibit remainder differs from retrieved content.');
       require(Array.isArray(row.errors) && row.errors.length <= 96, 'Issuer error metadata is invalid.');
       row.errors.forEach(error => sourceError(error, row));
+      coverage(row);
     }
     require(keys(value.stats, 'request_count downloaded_bytes capture_bytes budget_stop') && integer(value.stats.request_count, 96) && integer(value.stats.downloaded_bytes, 34 * 1024 * 1024) &&
       integer(value.stats.capture_bytes, 32 * 1024 * 1024) && (value.stats.budget_stop === null || ERRORS.includes(value.stats.budget_stop)) &&
       (value.stats.downloaded_bytes <= 32 * 1024 * 1024 || value.stats.budget_stop === 'size_limit'), 'Issuer collection bounds are invalid.');
     require(!['no_candidates', 'inapplicable'].includes(r.status) || !value.issuers.length && value.stats.request_count === 0 && value.stats.downloaded_bytes === 0 && value.stats.capture_bytes === 0, 'Issuer no-fetch receipt contradicts collection.');
     require(r.status !== 'no_candidates' || !choices.length, 'Issuer no-candidate status contradicts this publication.');
+    collection(value, r);
     return value;
   }
   async function read(response, max, expected) {

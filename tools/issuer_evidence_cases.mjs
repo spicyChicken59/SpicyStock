@@ -154,6 +154,137 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
     } finally { await tab.context.close(); }
   }
 
+  // These companions are real collector outputs over injected SEC responses.
+  // Their public publication/reader are the unchanged original producer fixture.
+  const semantic = {};
+  for (const name of ['complete', 'empty-window', 'cached', 'cache-unverified', 'document-denied', 'metadata-invalid', 'short-index', 'prefetch-budget']) {
+    semantic[name] = { receipt: JSON.parse(await file('semantic-' + name + '-receipt.json')), raw: await file('semantic-' + name + '-bundle.json') };
+  }
+  const semantics = await setup({ variant: semantic.complete });
+  try {
+    const { page, transport, requests } = semantics;
+    eq('semantic reader remains lazy while closed', publicRequests(requests).length, 0);
+    await page.locator('.ss-morning__prep > summary').click();
+    await page.locator('#morning-cash').fill('234.56');
+    const unchanged = await page.evaluate(() => ({ data: JSON.stringify(SCStock.data), model: JSON.stringify(SCStock.model), storage: JSON.stringify(localStorage), morning: SCStock.observations.facts() }));
+    await reveal(page);
+    const load = async variant => { transport.current = variant; await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page); };
+    for (const [name, coverage, documents] of [
+      ['complete', 'observed window', 1], ['empty-window', 'observed window', 0],
+      ['cached', 'observed window', 1], ['cache-unverified', 'unknown', 0],
+      ['document-denied', 'observed window', 0], ['metadata-invalid', 'partial', 1],
+      ['short-index', 'partial', 1], ['prefetch-budget', 'unknown', 0]
+    ]) {
+      await load(semantic[name]);
+      eq(name + ' genuine semantic producer result is readable', (await status(page)).state, 'loaded');
+      await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
+      check(name + ' keeps its observed index scope', (await bodyText(page)).includes('· ' + coverage));
+      eq(name + ' presents only actually retained documents', await page.locator('[data-issuer-document]').count(), documents);
+      if (name === 'document-denied') {
+        check('later primary HTTP403 does not erase the observed index', /Observed HTTP 403 · primary filing document/.test(await page.locator('[data-issuer-error]').innerText()) && /1 selected primary documents missing/.test(await bodyText(page)));
+        if (shotsDir) {
+          await mkdir(shotsDir, { recursive: true });
+          await page.locator('[data-issuer-error]').scrollIntoViewIfNeeded();
+          await page.screenshot({ path: path.join(shotsDir, 'issuer-semantic-observed-index-document403-1280.png') });
+        }
+      }
+      await page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
+      check(name + ' never clears the independent archived exclusion', /35/.test(await page.locator('[data-issuer-anchors]').innerText()));
+    }
+    const complete = JSON.parse(semantic.complete.raw), cached = JSON.parse(semantic.cached.raw);
+    check('producer captures deduplicate identical bodies from distinct network URLs', complete.stats.capture_bytes < complete.stats.downloaded_bytes && complete.issuers[0].documents[0].source.raw_sha256 === complete.issuers[1].documents[0].source.raw_sha256);
+    eq('producer network accounting deduplicates the shared mapping descriptor', complete.stats.request_count, 5);
+    eq('producer verified cache does not invent mapping or document requests', cached.stats.request_count, 2);
+    check('producer cache preserves captured bytes independently of network download count', cached.stats.capture_bytes > cached.stats.downloaded_bytes);
+
+    // Equivalent offsets describe the SAME shared source event. Only the served
+    // clock spelling and enclosing digest change; no producer record is rewritten.
+    await load(changed(null, b => {
+      const source = b.issuers[1].identity.mapping_source;
+      source.fetched_at = source.checked_at = '2026-10-10T02:20:00-04:00';
+    }, semantic.complete));
+    eq('equivalent UTC offsets do not double-count a shared network source', (await status(page)).state, 'loaded');
+    const distinctMicrosecond = changed(null, b => {
+      const source = b.issuers[1].identity.mapping_source;
+      source.fetched_at = source.checked_at = '2026-10-10T06:20:00.000001Z';
+      b.stats.downloaded_bytes += source.bytes;
+    }, semantic.complete);
+    await load(changed(null, b => { b.stats.request_count = 6; }, distinctMicrosecond));
+    eq('distinct microsecond source event remains readable with its extra request accounted', (await status(page)).state, 'loaded');
+    await load(changed(null, b => { b.stats.request_count = 0; }, variants.outage));
+    eq('legacy errors without observed HTTP status impose no invented request count', (await status(page)).state, 'loaded');
+    check('legacy accounting control keeps HTTP status unknown', /HTTP status not recorded/.test(await page.locator('[data-issuer-error]').innerText()));
+
+    await load(changed(r => { r.status = 'partial'; }, b => {
+      b.issuers[0].documents = []; b.issuers[0].status = 'partial';
+    }, semantic.complete));
+    eq('explicit partial collection may retain missing primary without an invented error', (await status(page)).state, 'loaded');
+    await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
+    check('partial missing primary is disclosed rather than silently called collected', /1 selected primary documents missing/.test(await bodyText(page)) && await page.locator('[data-issuer-error]').count() === 0);
+    await page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
+
+    // Each contradictory transport is rehashed and otherwise kept coherent, so
+    // a named semantic boundary, rather than the outer SHA, must reject it.
+    const contradictions = [
+      ['unverified identity cannot claim observed index', variants.outage, null, b => { b.issuers[0].index.coverage_status = 'observed_window'; }],
+      ['unverified identity cannot retain a submissions source', variants.outage, null, b => { b.issuers[0].identity.submissions_source = structuredClone(complete.issuers[0].identity.submissions_source); b.stats.request_count += 1; b.stats.downloaded_bytes += complete.issuers[0].identity.submissions_source.bytes; b.stats.capture_bytes += complete.issuers[0].identity.submissions_source.bytes; }],
+      ['unverified rows cannot become collected', variants.outage, r => { r.status = 'collected'; }, b => { for (const row of b.issuers) row.status = 'collected'; }],
+      ['short index cannot claim the complete window', semantic['short-index'], null, b => { b.issuers[0].index.coverage_status = 'observed_window'; }],
+      ['index metadata failure cannot claim the complete window', semantic['metadata-invalid'], null, b => { b.issuers[0].index.coverage_status = 'observed_window'; }],
+      ['complete rows cannot silently claim partial collection', semantic.complete, r => { r.status = 'partial'; }, b => { b.issuers[0].status = 'partial'; }],
+      ['missing HTTP-refused documents cannot become collected', semantic['document-denied'], r => { r.status = 'collected'; }, b => { for (const row of b.issuers) row.status = 'collected'; }],
+      ['selected primary cannot silently disappear', semantic.complete, null, b => { b.issuers[0].documents = []; }],
+      ['eligible report count cannot omit listed metadata', semantic.complete, r => { r.status = 'partial'; }, b => {
+        const row = b.issuers[0]; row.documents = []; row.index.listed_filings = []; row.index.selected_accessions = [];
+        row.index.not_selected_count = 1; row.status = 'partial';
+      }],
+      ['receipt status must reconcile its collected rows', semantic.complete, r => { r.status = 'partial'; }],
+      ['visible network sources require enough request events', semantic.complete, null, b => { b.stats.request_count = 4; }],
+      ['observed shared HTTP refusal requires one request', variants['http-denied'], null, b => { b.stats.request_count = 0; }],
+      ['distinct microsecond events cannot be merged into one request', distinctMicrosecond],
+      ['visible network bodies require downloaded bytes', semantic.complete, null, b => { b.stats.downloaded_bytes = 1; }],
+      ['visible distinct bodies require retained capture bytes', semantic.complete, null, b => { b.stats.capture_bytes = 0; }],
+      ['one raw digest cannot claim conflicting byte lengths', semantic.complete, null, b => { b.issuers[1].documents[0].source.bytes += 1; b.stats.downloaded_bytes += 1; b.stats.capture_bytes += 1; }],
+      ['positive downloads cannot claim zero network requests', semantic['cache-unverified'], null, b => { b.stats.downloaded_bytes = 1; }]
+    ];
+    const semanticIssues = {
+      'unverified identity cannot claim observed index': 'Unverified issuer identity cannot establish index coverage.',
+      'unverified identity cannot retain a submissions source': 'Unverified issuer identity cannot establish collected content.',
+      'unverified rows cannot become collected': 'Unverified issuer identity cannot establish collected content.',
+      'short index cannot claim the complete window': 'Issuer index coverage contradicts its range or source failures.',
+      'index metadata failure cannot claim the complete window': 'Issuer index coverage contradicts its range or source failures.',
+      'complete rows cannot silently claim partial collection': 'Issuer row status contradicts its retained coverage.',
+      'missing HTTP-refused documents cannot become collected': 'Issuer row status contradicts its retained coverage.',
+      'selected primary cannot silently disappear': 'Issuer row status contradicts its retained coverage.',
+      'eligible report count cannot omit listed metadata': 'Issuer listed metadata count differs from its eligible reports.',
+      'receipt status must reconcile its collected rows': 'Issuer receipt status contradicts its retained rows.',
+      'visible network sources require enough request events': 'Issuer request count is below its visible source evidence.',
+      'observed shared HTTP refusal requires one request': 'Issuer request count is below its visible source evidence.',
+      'distinct microsecond events cannot be merged into one request': 'Issuer request count is below its visible source evidence.',
+      'visible network bodies require downloaded bytes': 'Issuer downloaded bytes are below its visible network sources.',
+      'visible distinct bodies require retained capture bytes': 'Issuer captured bytes are below its visible distinct sources.',
+      'one raw digest cannot claim conflicting byte lengths': 'Issuer source digest has conflicting byte lengths.',
+      'positive downloads cannot claim zero network requests': 'Issuer downloads require a collection request.'
+    };
+    for (const [name, source, editReceipt, editBundle] of contradictions) {
+      await load(changed(editReceipt, editBundle, source));
+      eq(name + ' after coherent digest resealing', (await status(page)).state, 'unavailable');
+      eq(name + ' fails its named semantic boundary', (await status(page)).issue, semanticIssues[name]);
+      eq(name + ' exposes no contradictory retrieved text', await page.locator('[data-issuer-document]').count(), 0);
+      check(name + ' preserves the archived event source', /35/.test(await page.locator('[data-issuer-anchors]').innerText()));
+    }
+    await load(semantic['document-denied']);
+    eq('honest primary denial recovers after all semantic refusals', (await status(page)).state, 'loaded');
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.locator('[data-issuer-choice]').selectOption('burst:AAPL');
+    check('observed index and missing primary fit the phone without overflow', await page.locator('#morning-desk').evaluate(n => n.scrollWidth <= n.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+    if (shotsDir) { await page.locator('[data-issuer-error]').scrollIntoViewIfNeeded(); await page.screenshot({ path: path.join(shotsDir, 'issuer-semantic-observed-index-document403-390.png') }); }
+    eq('semantic refusal/recovery preserves private input and public authority', await page.evaluate(() => ({ data: JSON.stringify(SCStock.data), model: JSON.stringify(SCStock.model), storage: JSON.stringify(localStorage), morning: SCStock.observations.facts() })), unchanged);
+    eq('semantic refusal/recovery keeps the private cash value', await page.locator('#morning-cash').inputValue(), '234.56');
+    check('semantic source review transmits no private data or request body', publicRequests(requests).every(x => x.method === 'GET' && !x.body && !x.url.includes(PRIVATE) && !('cookie' in x.headers)));
+    eq('semantic source accounting produces no browser errors', [...semantics.errors], []);
+  } finally { await semantics.context.close(); }
+
   const tab = await setup();
   try {
     const { page, transport } = tab;

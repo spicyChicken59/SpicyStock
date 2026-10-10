@@ -201,7 +201,7 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     // A legacy private-store envelope, formed from an actual prepared/reporting
     // item, uses the prior eleven report fields. This is no publication change.
     const legacyRaw = await page.evaluate(() => {
-      const item = SCStock.handoff.list()[0]; item.version = 1;
+      const item = SCStock.handoff.list()[0]; item.version = 1; delete item.kind;
       for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key];
       const raw = JSON.stringify({ version: 1, items: [item] }); localStorage.setItem(SCStock.handoff.KEY, raw); return raw;
     });
@@ -214,7 +214,7 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     eq('invalid new fees do not migrate or overwrite legacy bytes', await page.evaluate(key => localStorage.getItem(key), KEY), legacyRaw);
     eq('invalid actual fee correction remains editable', await field(page, 'exit_fees').inputValue(), '0.001');
     await set(page, { exit_fees: '0.07' }); await save(page);
-    eq('explicit valid report save advances store version', await page.evaluate(key => JSON.parse(localStorage.getItem(key)).version, KEY), 2);
+    eq('explicit valid report save advances store version', await page.evaluate(key => JSON.parse(localStorage.getItem(key)).version, KEY), 3);
     eq('explicit legacy completion computes the known reported net', (await resultAmounts(page))['Reported net result'], '$7.42');
     check('completed result and form still fit phone', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
     if (shotsDir) { await field(page, 'entry_fees').scrollIntoViewIfNeeded(); await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'reported-result-form-390-light.png') }); }

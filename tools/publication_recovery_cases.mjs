@@ -228,7 +228,7 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
     }
 
     const legacy = JSON.parse(seed); legacy.version = 1;
-    legacy.items.forEach(item => { item.version = 1; for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key]; });
+    legacy.items.forEach(item => { item.version = 1; delete item.kind; for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key]; });
     for (const [name, privateRaw, storageMode] of [['legacy', JSON.stringify(legacy), null], ['future', '{"version":99,"items":[]}', null], ['malformed', '{', null], ['blocked', seed, 'blocked'], ['no-locks', seed, 'no-locks']]) {
       const tab = await launch([{ kind: 'http' }], { seed: privateRaw, storageMode }), { page } = tab;
       await waitOutcome(page, 'failed'); await desk(page); await page.locator('#morning-handoffs').evaluate(node => { node.open = true; });

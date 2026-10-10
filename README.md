@@ -129,7 +129,7 @@ the draft as a new entry to copy. Corrections are explicit; stale revisions
 cannot overwrite a newer report. Dates require an explicit time-zone offset
 and are displayed in Chicago time.
 
-The private store holds at most 100 handoffs and 1 MiB, never silently evicts
+The private store holds at most 100 records and 1 MiB, never silently evicts
 records, and serializes writes with browser Web Locks. Unavailable, unreadable
 or future-version storage is preserved and reported; it does not imply no
 holdings. Saved drafts and reports persist across reloads, but clearing this
@@ -137,6 +137,29 @@ site's browser data removes them. They are not uploaded, backed up in the cloud,
 added to model performance, or used to infer buying power. The handoff creates
 no broker connection, reserves no cash, and neither places nor cancels a
 protective order.
+
+**Independently executed research trade.** A verified retained research row also
+offers **Record an already executed trade**. This opens a blank private report
+without saving anything. The first explicit save requires a positive quantity
+reported filled and the corresponding submitted quantity; prices, fees, times,
+exits and protection remain unknown until entered. Research quantities and
+prices are never filled in as actual broker facts.
+
+The record preserves its original publication, cohort, evidence and baseline
+admission status. Both admitted and withheld comparison rows can be recorded
+after the entry window, including a trade for which no personal draft was saved.
+Reported quantities may differ from the hypothetical allocation. An existing
+record for the same publication and evidence cannot be duplicated or overwritten
+by this creation path; its existing correction form remains available.
+
+This report-only kind contains no draft, cash assumption or order payload, and
+never gains entry-copy or preparation authority. It shows actual reported
+holdings/protection and, when reconciled, the same personal result described
+below. No original model exit schedule is inferred for an independent execution.
+Initial creation rechecks the verified source inside the save operation. Later
+corrections retain the frozen original evidence even after publication replacement
+or expiry. Modal close/reopen preserves unsaved input; cancelling the new unsaved
+report is an explicit action. Reports remain private on this device.
 
 **Personal completed-trade result.** A separate, user-reported result requires
 positive entry fills, all filled shares exited, and submitted shares fully
@@ -154,14 +177,22 @@ gain or loss is named explicitly. Corrections recompute this personal result.
 It is not broker-verified, tax accounting, settlement confirmation, model
 performance or evidence of a strategy's future returns.
 
-Existing version-1 private records remain readable with new result fields
-unknown. Reading does not rewrite storage. An explicit successful save writes
-the current version, retaining the original identities and previously reported
-facts. Failed writes retain prior and proposed recovery bytes; unknown versions
-remain untouched. Upgrading does not expand the storage limit.
+Existing version-1 and version-2 private records remain readable. Missing
+version-1 result fields stay unknown; recorded version-2 prices and costs retain
+their validation and values. Reading adapts them in memory without rewriting
+storage. An explicit successful save writes version 3, retaining the original
+identities and previously reported facts and distinguishing planned handoffs
+from independent research reports. Failed writes retain prior and proposed
+recovery bytes; unknown versions remain untouched. Upgrading does not expand
+the shared 100-record / 1 MiB limit.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
+The wait explanation separates the reaction review gates from the original
+anticipation decisions. Each retained top anticipation row keeps its recorded
+ticket status and refusal reason; an absent reason stays unknown rather than
+being reconstructed from the experimental policy.
+Retained planner errors remain visible even when they produced no plan.
 On a weekend or holiday, the next-action message names the closed viewing date
 and the next session from the recorded calendar; it does not relabel the last
 measured open session as closed. In recovery notices, the latest evening
@@ -930,6 +961,14 @@ response body, headers or exception text. Redirects remain refused; refused
 responses are closed without reading their bodies. A status explains a failed
 source request and does not establish news or earnings coverage.
 
+Coverage labels must reconcile with the retained evidence. Unverified identity
+cannot claim an observed index or collected issuer. A complete index can coexist
+with a later filing-document failure; that issuer remains partial. Collected
+rows require every selected primary and no recorded omissions or truncation.
+Request and byte totals must cover the distinct visible source events and
+explicit HTTP failures, while preserving valid cached and legacy observations.
+These checks establish internal consistency, not comprehensive source truth.
+
 The receipt expires 24 hours after collection; individual source ages remain
 visible, and this period is not news clearance. Up to 16 KiB of normalized
 text is retained per excerpt, with a separate excerpt digest and original-body
@@ -952,6 +991,11 @@ anticipation calculation for applicable sessions **October 12 through November
 6, 2026**. The versioned experiment is `anticipation_stop_width_4_to_5_v1`.
 It changes no production ticket, reaction/burst stop selection or model record.
 There is no research order-copy or broker-draft action.
+An **Inspect recorded chart** action opens the same publication's existing
+anticipation chart and baseline decision. It checks the publication and retained
+evidence identity again when pressed, including after a same-ticker refresh.
+Missing or changed identity leaves an explanation in the research panel.
+Inspection preserves private preparation and adds no current quote or order.
 
 The producer uses the actual retained planning inputs and the same pure planner,
 changing only the anticipation cap. Original trigger, limit and structural stop
@@ -1148,6 +1192,7 @@ node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
 node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
+node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and exact recorded-chart navigation
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```

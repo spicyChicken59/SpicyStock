@@ -256,6 +256,27 @@
         row.research.blockers.forEach(key => list.append(node('li', {}, BLOCKER_WORDS[key]))); article.append(list);
       }
       paragraph(article, row.event.blocked ? 'Known event exclusion.' : 'Limited event coverage.', row.event.blocked ? row.event.event_ids.join(', ') + (row.event.status === 'review_required' ? ' · source review is overdue; exclusion remains.' : ' · retained in both policies.') : 'No match in the archived manual registry is not issuer-news or earnings clearance.');
+      const hashes = fingerprint(), request = { kind: 'anticipation', ticker: row.ticker,
+        publication: { ...receipt.publication }, recordHash: hashes.recordHash, projected: hashes.projected,
+        evidence: { id: row.evidence.id, plan_sha256: row.evidence.plan_sha256, source_sha256: row.evidence.source_sha256 } };
+      const inspect = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-stop-inspect': row.ticker,
+        'aria-label': 'Inspect ' + row.ticker + ' recorded chart' }, 'Inspect recorded chart');
+      const message = node('p', { class: 'sc-hint', role: 'status', 'data-stop-inspect-status': '' }, 'Opens this publication’s original chart and baseline decision. Research creates no entry permission.');
+      inspect.addEventListener('click', () => {
+        const result = api.inspectRecordedChart ? api.inspectRecordedChart(request) : { ok: false, reason: 'Recorded chart inspection is unavailable in this page.' };
+        if (!result.ok) message.textContent = result.reason;
+      });
+      article.append(inspect, message);
+      const report = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-stop-report': row.ticker,
+        'aria-label': 'Record an already executed ' + row.ticker + ' trade' }, 'Record an already executed trade');
+      const reportIdentity = reportRequest(row);
+      const reportStatus = node('p', { class: 'sc-hint', role: 'status', 'data-stop-report-status': '' }, 'Enter only actual broker facts. Opening this form saves nothing and creates no order or cash reservation.');
+      report.addEventListener('click', () => {
+        const result = api.handoffUI && api.handoffUI.openResearch ? api.handoffUI.openResearch(reportIdentity)
+          : { ok: false, error: 'Private trade reporting is unavailable in this page.' };
+        if (!result.ok) reportStatus.textContent = result.error;
+      });
+      article.append(report, reportStatus);
       host.append(article);
     }
     paragraph(host, 'Still unverified:', 'Current broker quotes, spread, trading status, issuer news and earnings. This comparison supplies no new live check, executable order, confirmed fill, return or established strategy edge.');
@@ -264,6 +285,23 @@
     paragraph(detail, 'Policy:', policy.id); paragraph(detail, 'Rules:', receipt.publication.rules_version);
     paragraph(detail, 'Canonical source SHA-256:', receipt.publication.data_sha256); paragraph(detail, 'Reader SHA-256:', receipt.publication.reader_sha256);
     paragraph(detail, 'Comparison SHA-256:', receipt.bundle.sha256); source.append(detail); host.append(source);
+  }
+  function reportRequest(row) {
+    const hashes = fingerprint();
+    return JSON.parse(JSON.stringify({ recordHash: hashes.recordHash, projected: hashes.projected, publication: receipt.publication,
+      cohort: { sha256: receipt.bundle.sha256, bytes: receipt.bundle.bytes, generated_at: receipt.timing.generated_at, policy_id: receipt.policy.id },
+      ticker: row.ticker, evidence: row.evidence }));
+  }
+  function reportReference(request) {
+    const failure = { ok: false, error: 'This research report belongs to another or unverified publication. Your unsaved facts remain available; reload the matching research before creating its report.' };
+    if (!record || record !== api.data || state !== 'loaded' || !receipt || !bundle || !object(request)) return failure;
+    try {
+      binding(receipt.publication);
+      const rows = bundle.rows.filter(row => row.ticker === request.ticker);
+      if (rows.length !== 1 || !equal(request, reportRequest(rows[0]))) return failure;
+      return { ok: true, source: JSON.parse(JSON.stringify({ ticker: rows[0].ticker, stage: 'setting-up', publication: receipt.publication,
+        cohort: request.cohort, evidence: rows[0].evidence, baseline_admitted: rows[0].baseline.admitted })) };
+    } catch (_) { return failure; }
   }
 
   async function load() {
@@ -334,5 +372,5 @@
       paint(); if (mounted && mounted.open && record && hashes.recordHash) load();
     } else paintStatus();
   }
-  api.stopResearch = { mount, update, reload: load, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.rows.length : 0 }) };
+  api.stopResearch = { mount, update, reload: load, reportReference, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.rows.length : 0 }) };
 })(window);

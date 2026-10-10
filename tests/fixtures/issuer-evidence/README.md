@@ -26,7 +26,7 @@ Browser receipts, when present, are generated through the production collector
 from verified fixture publications; they are not hand-authored publication
 records. Fetch success does not mean issuer news or earnings are cleared.
 
-Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the twelve
+Run `python tests/fixtures/issuer-evidence/generate.py --check` to verify the thirty
 producer outputs, or omit `--check` to regenerate them. The generator changes a
 synthetic provider's COIL symbol to ZIM before the real evening pipeline runs.
 That produces an AAPL ticket and a reviewed ZIM exclusion. Following the
@@ -36,8 +36,8 @@ The run ID explicitly names this synthetic issuer-evidence control. Its reader
 projection comes from those exact canonical bytes. These are production-shaped
 offline test records, not actual provider observations or real production runs.
 
-The `collected`, `metadata-only`, `identity-unverified`, `outage` and
-`inapplicable` receipt and bundle pairs use a pinned 10 October collection time.
+The `collected`, `metadata-only`, `identity-unverified`, `outage`,
+`http-denied` and `inapplicable` receipt and bundle pairs use a pinned 10 October collection time.
 The inapplicable variant uses the real session gate without a fixture override;
 it makes no source requests for this older publication and keeps its reviewed
 anchors. Browser receipts exercise
@@ -47,3 +47,17 @@ are synthetic and labelled in their text. ZIM's supplied responses are the
 captured files above. Its uncaptured August document returns an explicit
 retrieval failure, so the `collected` variant honestly remains partial. No
 fixture generation makes a live provider request or changes trade authority.
+
+The eight additive `semantic-*` pairs reuse those exact canonical and reader
+bytes. Their SEC-shaped mapping, submissions and document responses are entirely
+synthetic, including the ZIM responses; the original captured-source variants
+remain byte-identical. They exercise complete content, an empty full metadata
+window, cached mapping/documents with fresh submissions, an unverified cached
+mapping, late document HTTP 403, invalid metadata, a short metadata window and a
+deadline before transport. The real collector produces every receipt and bundle
+with `dry_run: false` and an explicitly synthetic run ID. Shared mapping response
+identity and identical bodies at different document URLs distinguish network
+attempts/downloads from unique captures. Cached source clocks stay dated; they
+do not create new network requests. Equivalent timestamp spellings and semantic
+contradictions are separately labelled, resealed test mutations, not claimed
+producer outputs or captured source facts.

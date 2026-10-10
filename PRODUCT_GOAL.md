@@ -109,6 +109,31 @@ Automatic triggering required the separately tracked workflow-path fix (#128 /
 These release results do not establish fresh filing coverage, on-time morning
 quotes or an actual personal trade. The dated checkpoint records each limitation.
 
+The [HTTP diagnostic release](https://github.com/spicyChicken59/SpicyStock/pull/135)
+is also merged and deployed. Its [dated acceptance](release-evidence/2026-10-10-issuer-diagnostics/acceptance.json)
+records the reviewed head, all seven hosted gates, 183 actual public checks and
+37 exact public-file matches. The existing legacy receipt correctly shows an
+unknown HTTP status, unknown issuer identity/index coverage and no new filings.
+One initial external Google Fonts CORS failure remains in the evidence; a fresh
+run with the unchanged strict checks passed. The diagnostic release by itself
+does not establish a cause for the older SEC failure or new source availability.
+
+The separately authorized final daily [issuer collection](https://github.com/spicyChicken59/SpicyStock/actions/runs/38040893686)
+then recorded **HTTP 403 during SEC ticker mapping**. Its publisher and Pages
+deployment succeeded; a second 183-check public verification matched all 37
+files and inspected the actual typed error at both screen sizes. One request
+returned no filing content or captured bytes. The reason for denial is unknown.
+The three permitted UTC-day production collection starts are exhausted; the
+source access problem remains open while independent product work continues.
+
+[Whole-share personal exit guidance](https://github.com/spicyChicken59/SpicyStock/pull/139)
+is merged and publicly verified. The [dated receipt](release-evidence/2026-10-10-whole-share-exits/acceptance.json)
+separates 59 actual public checks and all 37 required file matches from 80
+synthetic private checks for one/three-share drafts. Partial-exit reference
+arithmetic now identifies feasible whole shares while actual holdings, execution
+timing, fractional-share support and unreported results retain their uncertainty.
+No actual personal trade or profit is established by these rehearsals.
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.
@@ -244,14 +269,19 @@ unobserved financial outcome complete.
 
 ## Registered opportunity experiment
 
-Issue #130 prepares `anticipation_stop_width_4_to_5_v1`, a separately labelled
+[PR #134](https://github.com/spicyChicken59/SpicyStock/pull/134) released
+`anticipation_stop_width_4_to_5_v1`, a separately labelled
 comparison for October 12 through November 6. It keeps the production strategy
 and $2,000 / 0.5% account, changing only an anticipation research cap from 4% to
 5%. Original levels, risk reductions, known-event exclusions and baseline-first
 shared allocation remain. Dated empty/refused cohorts and actual generation
-times are retained alongside possible fits. This is research preparation;
-hosted release and actual public acceptance are recorded in the checkpoint when
-completed. It establishes no strategy return, personal fill or successful trade.
+times are retained alongside possible fits. Actual public acceptance passed
+261 checks and matched all 37 required files. The first dated cohort retains
+five rows, with KE one share and PSNL three shares as hypothetical sizing fits;
+MG/ZIM keep their event exclusions and SN its occupied-model/whole-share refusal.
+The [release evidence](release-evidence/2026-10-10-stop-research/acceptance.json)
+records the exact publication and scoped verification. It establishes no
+strategy return, personal fill or successful trade.
 
 ## Personal trade reporting — released 10 October 2026
 
@@ -269,8 +299,10 @@ Milestone 4's reporting foundation is available. Broker-specific preparation,
 an actual eligible live opportunity and the first reported real trade remain
 open. Whole-share exit clarity is tracked in #137; dated research follow-through
 from already retained observations is tracked in #136. Automatic issuer
-collection and closed-session/retry corrections are awaiting the integrated
-release #132 and its actual production verification.
+collection and closed-session/retry corrections are released in #132. Its
+actual morning-to-issuer-to-Pages cycle passed; the SEC request itself remains
+unavailable. The [recovery release receipt](release-evidence/2026-10-10-recovery/acceptance.json)
+separates automatic delivery from missing source coverage.
 
 Issue #136 follows the frozen cohorts using already retained observations. Its
 dated snapshots keep original exclusions, share quantities, capture times and
@@ -305,3 +337,16 @@ continuation, not a continuously running process or a guarantee that a future
 runtime has the same workspace. The repository's market-data workflows retain
 their own schedules. No broker execution, paid infrastructure, or new outbound
 messages are authorized by this development loop.
+
+
+## Research follow-through released — 10 October 2026
+
+[PR #140](https://github.com/spicyChicken59/SpicyStock/pull/140) is deployed.
+The frozen research journal retains the original cohort and later dated
+observations separately from private trade reports. Actual public acceptance
+passed 127 checks with all 40 public files matched and phone/desktop views
+inspected. KE and PSNL are currently pending with zero observed sessions;
+MG, ZIM and SN are excluded, and no result or personal trade is inferred.
+[Release evidence](release-evidence/2026-10-10-research-follow-through/acceptance.json)
+records the exact checked head and public release. The first actual successful
+trade, timely live-data delivery and broader issuer coverage remain open.

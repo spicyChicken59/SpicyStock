@@ -1,0 +1,2013 @@
+{
+  "schema_version": 1,
+  "status": "accepted_public_release",
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/135",
+  "reviewed_head": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+  "merged_commit": "d72bcf35483f2a4db49cccdc07a40df734a5546e",
+  "merged_at": "2026-10-10T09:12:56Z",
+  "public_url": "https://spicychicken59.github.io/SpicyStock/",
+  "publisher": {
+    "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040596719",
+    "conclusion": "success",
+    "confirmation": "Root confirmed before actual run."
+  },
+  "pages": {
+    "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040608992",
+    "conclusion": "success",
+    "confirmation": "Root confirmed before actual run."
+  },
+  "hosted_exact_head": {
+    "schema_version": 1,
+    "status": "PASS",
+    "repository": "spicyChicken59/SpicyStock",
+    "pull_request": 135,
+    "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+    "tests_run_id": 38037693778,
+    "tests_conclusion": "success",
+    "recorded_at": "2026-10-10T09:13:16.813Z",
+    "checks": [
+      {
+        "id": 114171514184,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:32Z",
+        "completed_at": "2026-10-10T09:12:21Z"
+      },
+      {
+        "id": 114171514147,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:32Z",
+        "completed_at": "2026-10-10T09:12:23Z"
+      },
+      {
+        "id": 114171471630,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:17Z",
+        "completed_at": "2026-10-10T08:23:30Z"
+      },
+      {
+        "id": 114171471608,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:17Z",
+        "completed_at": "2026-10-10T08:35:21Z"
+      },
+      {
+        "id": 114171471448,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:17Z",
+        "completed_at": "2026-10-10T08:35:41Z"
+      },
+      {
+        "id": 114171471227,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:23:16Z",
+        "completed_at": "2026-10-10T08:23:27Z"
+      },
+      {
+        "id": 114171387592,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+        "started_at": "2026-10-10T08:22:46Z",
+        "completed_at": "2026-10-10T08:22:57Z"
+      }
+    ],
+    "counts": {
+      "pytest_passed": 3734,
+      "pytest_seconds": 633.33,
+      "page_passed": 12640,
+      "page_total": 12640,
+      "chart_passed": 378,
+      "chart_total": 378,
+      "continuity_passed": 137,
+      "fixtures": {
+        "page": 13,
+        "morning": 21,
+        "issuer": 14,
+        "stop_research": 22
+      }
+    },
+    "native": [
+      {
+        "case": "central",
+        "job_id": 114171514147,
+        "started_at": "2026-10-10T08:23:32Z",
+        "completed_at": "2026-10-10T09:12:23Z",
+        "runtime_seconds": 2890.451749,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11665681848,
+        "artifact_name": "historical-runtime-central-38037693778-1",
+        "artifact_sha256": "44ce326c29329659c5951607f25c907a08bb3768cc7b977d8c6ba5f9e95e75af",
+        "artifact_bytes": 26647
+      },
+      {
+        "case": "stress",
+        "job_id": 114171514184,
+        "started_at": "2026-10-10T08:23:32Z",
+        "completed_at": "2026-10-10T09:12:21Z",
+        "runtime_seconds": 2885.468152,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11665139798,
+        "artifact_name": "historical-runtime-stress-38037693778-1",
+        "artifact_sha256": "4bc9f3da447503d12f740c1b1c4d8748b29247187eab3a58802e0b1c79d60516",
+        "artifact_bytes": 26554
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11665681848,
+        "name": "historical-runtime-central-38037693778-1",
+        "size_in_bytes": 26647,
+        "digest": "sha256:44ce326c29329659c5951607f25c907a08bb3768cc7b977d8c6ba5f9e95e75af"
+      },
+      {
+        "id": 11665231067,
+        "name": "page-shots",
+        "size_in_bytes": 78831329,
+        "digest": "sha256:9fe9788170b43d622060155f7bfeeea4263e9a6b70f51f7f9605f4c08b212e6e"
+      },
+      {
+        "id": 11665139798,
+        "name": "historical-runtime-stress-38037693778-1",
+        "size_in_bytes": 26554,
+        "digest": "sha256:4bc9f3da447503d12f740c1b1c4d8748b29247187eab3a58802e0b1c79d60516"
+      },
+      {
+        "id": 11663598646,
+        "name": "historical-runtime-gate-38037693778-1",
+        "size_in_bytes": 336,
+        "digest": "sha256:2a7fe0c85a35a8014d149ab8fbe3f53dcf1a265005408e156f56e0adb982f8bc"
+      }
+    ],
+    "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only."
+  },
+  "independent_prerelease_review": {
+    "reviewed_at": "2026-10-10T08:16:36.914757+00:00",
+    "worktree": "/workspace/SpicyStock-issuer-diagnostics",
+    "reviewer": "signal_audit",
+    "status": "NO_BLOCKER",
+    "head_at_review": "9989ea6cda66896232af659681492c111a0577ee",
+    "backend_followup_commit_pending": false,
+    "source_sha256": {
+      "src/issuer_evidence.py": "20c313ae7844e31fc50c5e891a8e981b70e127fe31f8a7fc2fb7a2b1ade751c3",
+      "tests/test_issuer_http_diagnostics.py": "3f8e1fab4219d0fb78be0eed419715e24fa4f5b7d9c796336d477424df444788",
+      "docs/app-issuer-evidence.js": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c",
+      "tools/issuer_evidence_cases.mjs": "51182f044fc2cb6aa293c0dcbb04e01d9ffeb69db5d1e4dd299c50fb202dd482"
+    },
+    "independent_checks": {
+      "focused_python": {
+        "passed": 166,
+        "log": "/tmp/spicystock-issuer-diagnostics-independent-final-python.log"
+      },
+      "browser": {
+        "passed": 358,
+        "log": "/tmp/spicystock-issuer-diagnostics-independent-primary-final-browser.log",
+        "runner": "/tmp/spicystock-issuer-diagnostics-independent-primary-browser.mjs",
+        "cases": "/tmp/spicystock-issuer-diagnostics-independent-primary-cases.mjs"
+      },
+      "redirect_dispatch_through_transport": {
+        "passed": 10,
+        "script": "/tmp/spicystock-issuer-diagnostics-redirect-integration.py",
+        "receipt": "/tmp/spicystock-issuer-diagnostics-redirect-integration-final.json"
+      },
+      "producer_fixture_check": {
+        "current": 14,
+        "log": "/tmp/spicystock-issuer-diagnostics-independent-final-fixtures.log"
+      },
+      "immutable_prior_json": {
+        "unchanged": 13,
+        "against": "639dff8b",
+        "digests": "/tmp/spicystock-issuer-diagnostics-legacy-fixtures.json"
+      },
+      "canonical_history_unchanged": true,
+      "screenshots_inspected": [
+        "/tmp/spicystock-issuer-diagnostics-independent-final-shots/issuer-http403-390-light.png",
+        "/tmp/spicystock-issuer-diagnostics-independent-final-shots/issuer-http403-1280-dark.png"
+      ]
+    },
+    "findings_resolved": [
+      {
+        "finding": "New exhibit diagnostic accepted invalid leading-punctuation or oversized filename",
+        "before": "338/344; six intended assertion failures",
+        "before_log": "/tmp/spicystock-issuer-diagnostics-independent-browser.log",
+        "final": "Strict collector basename bound; controls pass"
+      },
+      {
+        "finding": "New primary diagnostic accepted coherent invalid filename via legacy filing metadata",
+        "before": "352/358; six intended assertion failures",
+        "before_log": "/tmp/spicystock-issuer-diagnostics-independent-primary-browser.log",
+        "final": "Strict basename check only for new diagnostic; controls pass"
+      },
+      {
+        "finding": "Pre-existing redirect refusal omitted explicit fp.close",
+        "preexisting_in": "639dff8b",
+        "before_receipt": "/tmp/spicystock-issuer-diagnostics-redirect-check.json",
+        "final": "All five urllib redirect statuses close the original response; normal and failing close retain bounded status with zero reads, one request, zero bytes, no follow"
+      }
+    ],
+    "limits": [
+      "Offline deterministic provider doubles and local loopback browser only; no live SEC/provider validation",
+      "Focused independent checks, not a claim that hosted full CI or deployment completed"
+    ],
+    "reviewer_repository_edits": false,
+    "live_or_paid_calls": false,
+    "reviewed_commits": [
+      "933f896d1599da7916d74d6262657ab060376ccb",
+      "346254b750ec335e7d8737638b3cea48bc6162d3",
+      "9989ea6cda66896232af659681492c111a0577ee"
+    ],
+    "source_marker_verified_after_commit": true,
+    "integration": {
+      "status": "NO_BLOCKER",
+      "head": "ce1184c5250db2b1f72fa0d6f6deb5f3c44b75b7",
+      "clean": true,
+      "reviewed_issuer_sources_tests_fixtures_unchanged_from": "9989ea6cda66896232af659681492c111a0577ee",
+      "focused_merged_browser_checks": 55,
+      "log": "/tmp/spicystock-issuer-final-integration-browser.log",
+      "runner": "/tmp/spicystock-issuer-final-integration-browser.mjs",
+      "cases": "/tmp/spicystock-issuer-final-integration-cases.mjs",
+      "actual_publication_binding": {
+        "run_id": "38034610157",
+        "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "collection_run_id": "38034924561",
+        "receipt_sha256": "397403d50a7917b1ab288171e9fcf242f5301382f3a5a74160e4f37da1cecbf8",
+        "validation": "PASS"
+      },
+      "screenshots_inspected": [
+        "/tmp/spicystock-issuer-final-integration-shots/actual-issuer-390.png",
+        "/tmp/spicystock-issuer-final-integration-shots/actual-issuer-1280.png"
+      ],
+      "scope": "Merged recovery + research module coexistence, typed403 producer rendering/private continuity, legacy unknown status, canonical/reader/candidate plan/evidence refusals, direct canonical+reader actual retained unavailable receipt."
+    }
+  },
+  "actual_public_acceptance": {
+    "started_at": "2026-10-10T09:15:19.822Z",
+    "finished_at": "2026-10-10T09:15:33.109Z",
+    "checks_passed": 183,
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 16963,
+        "sha256": "f2b7e9bb1e18126c6356d8b31f7ae6b03788a7e3e78b1eb28e64545a05ec6845"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "app.css",
+        "bytes": 86973,
+        "sha256": "b194e7ecfaf65cd12349b4b23ca94a66cd89ee6d5ab6561ce0b32e97d083f007"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 27456,
+        "sha256": "87ba7cd963ca1441b19cbd057e29362df66745dc5fe6d442dc9fc68504d77f49"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 23349,
+        "sha256": "5a7cdbcbe72aaf5b84c222ebe64369c33eba216274cd00db65c84b6e8d40ea12"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 37160,
+        "sha256": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c"
+      },
+      {
+        "name": "app-stop-research.js",
+        "bytes": 34320,
+        "sha256": "ff822191d5712409bf6b175ae7d83840cb9541b60fed67c7dfe1312ecf1394bb"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 23502,
+        "sha256": "b978010d729abfeaee93069b6310f1ec709eabb7ca0e02905f5a60b13822e808"
+      },
+      {
+        "name": "app.js",
+        "bytes": 392190,
+        "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1768,
+        "sha256": "c0d1c97f22767c514385604155bb433a3571e1351dfd28884be846b8fa141731"
+      },
+      {
+        "name": "issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+        "bytes": 5601,
+        "sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510"
+      },
+      {
+        "name": "stop-research.json",
+        "bytes": 1650,
+        "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+      },
+      {
+        "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "bytes": 8918,
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      }
+    ],
+    "all_required_inventory_verified": true,
+    "source_receipt_sha256": "743bd882c4b3c13a00eced42d3668630512b09c2ce504c84d016bc840b0fd591",
+    "publication": {
+      "binding": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "account": {
+        "equity": 2000,
+        "risk_pct": 0.5,
+        "max_position_pct": 25,
+        "max_open_positions": 4,
+        "notes": [
+          "Risk per trade: $10.00 (0.5% of $2,000.00; his band is 0.25-1%).",
+          "Position cap: $500.00 (25% of equity) in any one name.",
+          "Max 4 open positions (100% of equity if all are at the cap).",
+          "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+          "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+          "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
+        ]
+      },
+      "candidates": [
+        {
+          "ticker": "MG",
+          "kind": "anticipation",
+          "admission": "known_event_excluded",
+          "anchorCount": 1
+        },
+        {
+          "ticker": "ZIM",
+          "kind": "anticipation",
+          "admission": "known_event_excluded",
+          "anchorCount": 1
+        }
+      ]
+    },
+    "receipt": {
+      "status": "unavailable",
+      "collectionRunId": "38039664597",
+      "generatedAt": "2026-10-10T08:57:46.469022+00:00",
+      "expiresAt": "2026-10-11T08:57:46.469022+00:00",
+      "selfIntegrity": true,
+      "exactCurrentPublication": true,
+      "declaredPublication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "selection": {
+        "candidate_count": 2,
+        "issuer_count": 2,
+        "selected_issuer_count": 2,
+        "omitted_issuer_count": 0,
+        "selected_tickers": [
+          "MG",
+          "ZIM"
+        ]
+      },
+      "coverage": {
+        "issuer_news": {
+          "status": "not_cleared",
+          "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+        },
+        "earnings": {
+          "status": "not_checked",
+          "reason": "The future earnings calendar has not been checked."
+        }
+      },
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "bundle": {
+        "sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510",
+        "bytes": 5601,
+        "path": "issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json"
+      },
+      "sourceCoverageClaim": "NOT CLEARED",
+      "diagnostics": [
+        {
+          "ticker": "MG",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json"
+            }
+          ]
+        },
+        {
+          "ticker": "ZIM",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "independent_public_review": {
+    "status": "PASS_REVIEWED_ACTUAL_PUBLIC_LEGACY_DIAGNOSTICS_AFTER_STRICT_RETRY",
+    "sealed_at": "2026-10-10T09:16:41.834079+00:00",
+    "production_sha": "d72bcf35483f2a4db49cccdc07a40df734a5546e",
+    "site": "https://spicychicken59.github.io/SpicyStock/",
+    "publisher": {
+      "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040596719",
+      "conclusion": "success",
+      "confirmation": "Root confirmed before actual run."
+    },
+    "pages": {
+      "run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040608992",
+      "conclusion": "success",
+      "confirmation": "Root confirmed before actual run."
+    },
+    "successful_actual_run": {
+      "started_at": "2026-10-10T09:15:19.822Z",
+      "finished_at": "2026-10-10T09:15:33.109Z",
+      "checks_passed": 183,
+      "required_native_byte_files_matched_git": 37,
+      "required_inventory_complete": true,
+      "viewports": [
+        {
+          "width": 1280,
+          "theme": "dark"
+        },
+        {
+          "width": 390,
+          "theme": "light"
+        }
+      ],
+      "wall_clock_default_publication_unmodified": true,
+      "public_route_or_data_overrides": false,
+      "browser_errors": [],
+      "horizontal_overflow_found": false
+    },
+    "publication": {
+      "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+      "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+      "run_id": "38034610157",
+      "rules_version": "c9dc7d6d1d87",
+      "measured_session": "2026-10-09",
+      "applicable_session": "2026-10-12",
+      "published_at": "2026-10-10T07:30:15.553690+00:00",
+      "reader_projection_version": 1,
+      "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+    },
+    "issuer_receipt": {
+      "status": "unavailable",
+      "collectionRunId": "38039664597",
+      "generatedAt": "2026-10-10T08:57:46.469022+00:00",
+      "expiresAt": "2026-10-11T08:57:46.469022+00:00",
+      "selfIntegrity": true,
+      "exactCurrentPublication": true,
+      "declaredPublication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "selection": {
+        "candidate_count": 2,
+        "issuer_count": 2,
+        "selected_issuer_count": 2,
+        "omitted_issuer_count": 0,
+        "selected_tickers": [
+          "MG",
+          "ZIM"
+        ]
+      },
+      "coverage": {
+        "issuer_news": {
+          "status": "not_cleared",
+          "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+        },
+        "earnings": {
+          "status": "not_checked",
+          "reason": "The future earnings calendar has not been checked."
+        }
+      },
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "bundle": {
+        "sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510",
+        "bytes": 5601,
+        "path": "issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json"
+      },
+      "sourceCoverageClaim": "NOT CLEARED",
+      "diagnostics": [
+        {
+          "ticker": "MG",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json"
+            }
+          ]
+        },
+        {
+          "ticker": "ZIM",
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json"
+            }
+          ]
+        }
+      ]
+    },
+    "visible_diagnostics": [
+      {
+        "width": 1280,
+        "diagnostics": [
+          {
+            "ticker": "MG",
+            "rows": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "displayed": "Source retrieval: http error \u00b7 HTTP status not recorded \u00b7 SEC request URL",
+                "links": [
+                  {
+                    "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                    "target": "_blank",
+                    "rel": "noopener noreferrer"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "ticker": "ZIM",
+            "rows": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "displayed": "Source retrieval: http error \u00b7 HTTP status not recorded \u00b7 SEC request URL",
+                "links": [
+                  {
+                    "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                    "target": "_blank",
+                    "rel": "noopener noreferrer"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "width": 390,
+        "diagnostics": [
+          {
+            "ticker": "MG",
+            "rows": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "displayed": "Source retrieval: http error \u00b7 HTTP status not recorded \u00b7 SEC request URL",
+                "links": [
+                  {
+                    "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                    "target": "_blank",
+                    "rel": "noopener noreferrer"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "ticker": "ZIM",
+            "rows": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "displayed": "Source retrieval: http error \u00b7 HTTP status not recorded \u00b7 SEC request URL",
+                "links": [
+                  {
+                    "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                    "target": "_blank",
+                    "rel": "noopener noreferrer"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "truthful_scope": {
+      "legacy_http_status": "unknown; not inferred as403 or any other code",
+      "source_url": "Original requested https://www.sec.gov/files/company_tickers_exchange.json",
+      "raw_error_body_exposed": false,
+      "fresh_filing_content_claimed": false,
+      "identity_index_coverage": "unverified/unknown",
+      "known_exclusions_retained": [
+        "MG",
+        "ZIM"
+      ],
+      "issuer_news": "not cleared",
+      "earnings": "not checked",
+      "zero_ticket_cash_preview": "No published ticket; personal preparation remains unavailable.",
+      "morning_observations": "Correctly dated stale wrong-session receipt; no live quote or entry clearance."
+    },
+    "private_input_control": {
+      "initial_cash": "unknown",
+      "entered_value": "1743.29",
+      "scope": "Explicit ephemeral synthetic input in fresh disposable contexts; not Mo cash or broker facts. It may appear in screenshots.",
+      "private_storage_preserved": true,
+      "source_requests_include_private_input": false,
+      "saved_order_or_position": false
+    },
+    "transport": {
+      "closed_issuer_requests": 0,
+      "opened_issuer_requests_per_context": 2,
+      "paths": "Fixed issuer-evidence.json then exact bound SHA bundle",
+      "credentials_referrer_queries_request_bodies": "omitted",
+      "byte_reader": "Original bounded native bytes after cloned stream reaches EOF; no CDP body reads",
+      "provider_requests_by_this_runner": 0,
+      "new_collection_or_dispatch": false
+    },
+    "prior_attempt": {
+      "status": "FAIL_RETAINED",
+      "receipt_path": "/tmp/spicystock-issuer-diagnostics-public-38040608992/acceptance.json",
+      "receipt_sha256": "a765e02b87fc814864088af2f6e6e24e9c68618ade3de21a6fefd2393de3df65",
+      "checks_passed": 130,
+      "checks_total": 131,
+      "native_file_matches": 37,
+      "failure": {
+        "message": "1280: no application or unexpected transport errors: [{\"kind\":\"requestfailed\",\"url\":\"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\"message\":\"net::ERR_FAILED\"},{\"kind\":\"console\",\"message\":\"Access to font at 'https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2' from origin 'https://spicychicken59.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.\"},{\"kind\":\"console\",\"message\":\"Failed to load resource: net::ERR_FAILED\"}]"
+      },
+      "resolution": "Fresh contexts with the unchanged strict runner passed both sizes. No error exemption, asset substitution, TLS relaxation or test weakening was introduced. The external-font failure remains an observed intermittent dependency failure, not erased evidence."
+    },
+    "screenshots_inspected": {
+      "cash-preview-1280.png": {
+        "sha256": "6f9b6934bbbb6cf2ae921a7a27ee08ab50bade7bfef71e6c00e2b40ba1a54fab",
+        "bytes": 42820,
+        "visually_inspected": true
+      },
+      "cash-preview-390.png": {
+        "sha256": "94c9a07f8ef89790ea736a934cfcddbbfc793cab97e59e0d3aa8fcf62bec53b4",
+        "bytes": 39217,
+        "visually_inspected": true
+      },
+      "issuer-anchors-MG-1280.png": {
+        "sha256": "f18c14f669a803ffd52fbb2cbcdca3b90fe4ada95e911ecd9b8edc73de3d1fcd",
+        "bytes": 122599,
+        "visually_inspected": true
+      },
+      "issuer-anchors-MG-390.png": {
+        "sha256": "ce739d5fd1de27eb950d4373b3e020c25d25fa9161bb2be11acad6ab74d70482",
+        "bytes": 67926,
+        "visually_inspected": true
+      },
+      "issuer-anchors-ZIM-1280.png": {
+        "sha256": "c22cb5c9346a66aa0ffb87e360b5b7bc702bedbb1ec897bf0f9e52d025727c36",
+        "bytes": 124187,
+        "visually_inspected": true
+      },
+      "issuer-anchors-ZIM-390.png": {
+        "sha256": "18dd6f64a192cac052932f0c58c3ebff7e447ceb6228bf289f7b8ec3c824fa3b",
+        "bytes": 60932,
+        "visually_inspected": true
+      },
+      "issuer-coverage-MG-1280.png": {
+        "sha256": "2b7f63c205337f6209a1cd4363cb251186a062a01b2bb1d45248a9808a551947",
+        "bytes": 98182,
+        "visually_inspected": true
+      },
+      "issuer-coverage-MG-390.png": {
+        "sha256": "2cf77f8b8b020d8d9691643c32921dc44d7971c3cc3913fbbf6dccea59e78123",
+        "bytes": 60524,
+        "visually_inspected": true
+      },
+      "issuer-coverage-ZIM-1280.png": {
+        "sha256": "3f46ad567b45f3c80f92d63e33317503be723cf3ad17ba73e443641ad50012bf",
+        "bytes": 97912,
+        "visually_inspected": true
+      },
+      "issuer-coverage-ZIM-390.png": {
+        "sha256": "d8c82406a4082c90e16ecacf75491af63dba81a903a48304a57732259a6d779c",
+        "bytes": 60455,
+        "visually_inspected": true
+      },
+      "issuer-desk-1280.png": {
+        "sha256": "4ab5c7cef86acb766cbb4487331ba99df6831fd15701f0d73b74d5fddcaa6808",
+        "bytes": 121983,
+        "visually_inspected": true
+      },
+      "issuer-desk-390.png": {
+        "sha256": "f5efa9d0325bfa5036ecc5ae5a8f6d7f06889a39953cb56e11f56ee4306fe401",
+        "bytes": 60122,
+        "visually_inspected": true
+      },
+      "issuer-diagnostic-MG-1280.png": {
+        "sha256": "4aedda4e77b08874e15659fe8b9643deb84a84f9cb6e2996bb8be87ea0d62d45",
+        "bytes": 183862,
+        "visually_inspected": true
+      },
+      "issuer-diagnostic-MG-390.png": {
+        "sha256": "b4f9c159c7ed96e032e9dacdcdcb7820b6b9ce45d84241eac57055993042031f",
+        "bytes": 73054,
+        "visually_inspected": true
+      },
+      "issuer-diagnostic-ZIM-1280.png": {
+        "sha256": "d3cfff5a7d7bf02965fc1ab336e63c6d82b9c64752a7a2ca9ab59e50dc1da74f",
+        "bytes": 173108,
+        "visually_inspected": true
+      },
+      "issuer-diagnostic-ZIM-390.png": {
+        "sha256": "1fa69176a88cb91d135e4722fa5a97abb361fd1d64a2b9137f9b300064247537",
+        "bytes": 73064,
+        "visually_inspected": true
+      },
+      "next-step-1280.png": {
+        "sha256": "673b24b4675cd685a7ea97b4df6718f355feff2f1f2095bf7f0d4f746877e733",
+        "bytes": 40240,
+        "visually_inspected": true
+      },
+      "next-step-390.png": {
+        "sha256": "6a2b521a48089394d8d839a8c73fa1eaffaa82d0f2a6cf1336ab9e08fdbe07cf",
+        "bytes": 43275,
+        "visually_inspected": true
+      }
+    },
+    "artifacts": {
+      "acceptance.json": {
+        "sha256": "743bd882c4b3c13a00eced42d3668630512b09c2ce504c84d016bc840b0fd591",
+        "scope": "Unmodified successful automatic actual-public receipt"
+      },
+      "/tmp/spicystock-public-issuer-diagnostics-acceptance.mjs": {
+        "sha256": "d131103b5ab4c47c8ec9a31a33dabf58d95c78427e8cc1cbae9e36141d17d9f0"
+      }
+    },
+    "limitations": [
+      "This validates the deployed UI against existing legacy source metadata, not a new SEC response or source availability guarantee.",
+      "No typed HTTP403/redirect production collection is claimed here; separately prepared controlled cases remain local evidence only.",
+      "A fresh browser retry passed after one recorded external Google Fonts CORS failure; uninterrupted third-party font availability is not established.",
+      "No broker action, real private trade, profit or first successful trade is evidenced."
+    ]
+  },
+  "review_receipt_sha256": "1f4e2a08edaf316332bd04acfe4ec331649bcafab5f10d6bc4386693e722aa0e",
+  "retained_failed_attempt": {
+    "started_at": "2026-10-10T09:14:34.707Z",
+    "finished_at": "2026-10-10T09:14:51.724Z",
+    "status": "FAIL",
+    "failure": {
+      "message": "1280: no application or unexpected transport errors: [{\"kind\":\"requestfailed\",\"url\":\"https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2\",\"message\":\"net::ERR_FAILED\"},{\"kind\":\"console\",\"message\":\"Access to font at 'https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2' from origin 'https://spicychicken59.github.io' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.\"},{\"kind\":\"console\",\"message\":\"Failed to load resource: net::ERR_FAILED\"}]"
+    },
+    "checks_passed": 130,
+    "checks_total": 131,
+    "source_receipt_sha256": "a765e02b87fc814864088af2f6e6e24e9c68618ade3de21a6fefd2393de3df65",
+    "resolution": "Fresh contexts with the unchanged strict runner passed both sizes. No error exemption, asset substitution, TLS relaxation or test weakening was introduced. The external-font failure remains an observed intermittent dependency failure, not erased evidence."
+  },
+  "independent_recheck": {
+    "matched_public_files": 37,
+    "all_reviewed_runtime_test_hashes_unchanged": true,
+    "screenshots_hash_checked": 18,
+    "prior_commit": "6abbc95073ea7eb6a3cb9c522c933a2cd18a73ef",
+    "unchanged_paths": [
+      "docs/data.json",
+      "docs/reader.json",
+      "docs/picks.json",
+      "docs/evidence",
+      "docs/history",
+      "docs/design-system",
+      "docs/morning.json",
+      "docs/issuer-evidence.json",
+      "docs/issuer-evidence",
+      "docs/stop-research.json",
+      "docs/stop-research"
+    ]
+  },
+  "remaining_gaps": [
+    "The initial legacy acceptance validates the deployed UI against existing source metadata. The subsequent production collection below separately establishes an observed mapping HTTP 403, without an availability guarantee.",
+    "Actual production redirect behavior remains untested; separately prepared controlled redirects remain local evidence only.",
+    "The initial legacy check passed on a fresh browser retry after one recorded external Google Fonts CORS failure; uninterrupted third-party font availability is not established. The subsequent typed collection public check passed on its first attempt.",
+    "No broker action, real private trade, profit or first successful trade is evidenced.",
+    "SEC collection remains unavailable. The reason for the observed mapping HTTP 403 is unknown; older errors without a status remain unknown.",
+    "On-time morning delivery, comprehensive issuer-news and earnings coverage, broker-specific guidance and a first personal trade remain open.",
+    "All three UTC-day production collection starts are used. No fourth production collection was dispatched; any client identification or approved access remedy needs a future budgeted verification."
+  ],
+  "next_step": "Continue exact-head reviewed whole-share guidance, research follow-through, issuer consistency and recorded-chart inspection. Preserve the SEC access failure; review a compliant client identification/access remedy without inventing contact details or bypassing the collection cap.",
+  "subsequent_production_collection": {
+    "scope": "Separate single authorized production collection after the legacy public acceptance. The root dispatched it; all later source and public checks were read-only. This establishes an observed request failure, not new filing coverage.",
+    "workflow": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040893686",
+    "published_commit": "f9b91d00123281039436bcd4e8a7646992517265",
+    "delivery_and_daily_quota": {
+      "schema_version": 1,
+      "status": "PASS",
+      "recorded_at": "2026-10-10T09:21:11.958Z",
+      "scope": "Official Actions delivery and exact committed path inventory only. SEC coverage remains unavailable. No personal trade, clearance, or provider coverage inferred. Artifact API digests matched official upload logs; payloads not independently downloaded by this review.",
+      "repository": "spicyChicken59/SpicyStock",
+      "run_id": 38040893686,
+      "code_head": "d72bcf35483f2a4db49cccdc07a40df734a5546e",
+      "published_commit": "f9b91d00123281039436bcd4e8a7646992517265",
+      "collection": {
+        "guard": "production_collection",
+        "guard_at": "2026-10-10T09:18:35.3403477Z",
+        "result": "unavailable",
+        "selected_issuers": 2,
+        "entry_authority": false
+      },
+      "jobs": [
+        {
+          "id": 114180752730,
+          "name": "collect",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:18:01Z",
+          "completed_at": "2026-10-10T09:18:46Z"
+        },
+        {
+          "id": 114180885277,
+          "name": "persist",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:18:49Z",
+          "completed_at": "2026-10-10T09:19:19Z"
+        }
+      ],
+      "publication": {
+        "result": "published",
+        "logged_at": "2026-10-10T09:19:17.5525607Z",
+        "changed_paths": [
+          "docs/issuer-evidence.json",
+          "docs/issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+          "docs/issuer-evidence/retention.json"
+        ],
+        "parent": "d72bcf35483f2a4db49cccdc07a40df734a5546e"
+      },
+      "artifacts": [
+        {
+          "id": 11666210514,
+          "name": "issuer-evidence-38040893686-1",
+          "size_in_bytes": 3467,
+          "digest": "sha256:b859fd96f0f4d351c382725015d0a6c2a330c8aff94c75ada3d6ce063a5546f5",
+          "upload_log_digest_matches": true
+        },
+        {
+          "id": 11665940920,
+          "name": "issuer-captures-38040893686-1",
+          "size_in_bytes": 213,
+          "digest": "sha256:aa91bc525a007e834c1cee738d962d2f654ec056dbbf16bc2d1b067f27a93624",
+          "upload_log_digest_matches": true
+        }
+      ],
+      "publisher": {
+        "run_id": 38040976621,
+        "public_files_verified": 37,
+        "verified_at": "2026-10-10T09:20:07.7451447Z",
+        "jobs": [
+          {
+            "id": 114180988364,
+            "name": "publish",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-10-10T09:19:25Z",
+            "completed_at": "2026-10-10T09:20:09Z"
+          }
+        ]
+      },
+      "pages": {
+        "run_id": 38040987252,
+        "jobs": [
+          {
+            "id": 114181031657,
+            "name": "build",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-10-10T09:19:41Z",
+            "completed_at": "2026-10-10T09:19:54Z"
+          },
+          {
+            "id": 114181073103,
+            "name": "report-build-status",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-10-10T09:19:57Z",
+            "completed_at": "2026-10-10T09:20:00Z"
+          },
+          {
+            "id": 114181073128,
+            "name": "deploy",
+            "status": "completed",
+            "conclusion": "success",
+            "started_at": "2026-10-10T09:19:58Z",
+            "completed_at": "2026-10-10T09:20:07Z"
+          }
+        ]
+      },
+      "quota_receipt": "/tmp/spicystock-issuer-final-daily-quota.json",
+      "log_paths": [
+        "/tmp/spicystock-issuer-final-114180752730.log",
+        "/tmp/spicystock-issuer-final-114180885277.log",
+        "/tmp/spicystock-issuer-final-publisher-38040976621.log"
+      ],
+      "daily_quota": {
+        "status": "PASS",
+        "checked_at": "2026-10-10T09:20:50.757124+00:00",
+        "utc_day": "2026-10-10",
+        "production_collection_starts": 3,
+        "limit": 3,
+        "remaining": 0,
+        "history_complete": true,
+        "helper_source_sha256": "5d3a6b997d79013d1164251467d285ab40eb007da53ec676576ff643c6a5b240",
+        "metadata_requests": [
+          {
+            "endpoint": "actions/workflows/issuer-evidence.yml/runs?branch=main&created=%3E%3D2026-09-05T00%3A00%3A00%2B00%3A00&per_page=100&page=1",
+            "total_count": 5,
+            "sha256": "f6d4ba18b50b9451a8e576dafc6e1fdadcb4bcc251c87619a03df0da58ff1831"
+          },
+          {
+            "endpoint": "actions/runs/38040893686/attempts/1/jobs?per_page=100",
+            "total_count": 2,
+            "sha256": "89d81587633496c51408760e7cc87b8d793cd0556da0bdd1cdf6a90db800c455"
+          },
+          {
+            "endpoint": "actions/runs/38039664597/attempts/1/jobs?per_page=100",
+            "total_count": 2,
+            "sha256": "02e5710722fab0b4f27b87c43aec67d732ec21ff0f873c4c11eb456d87bde69c"
+          },
+          {
+            "endpoint": "actions/runs/38034924561/attempts/1/jobs?per_page=100",
+            "total_count": 2,
+            "sha256": "a33a7583b8c501994a8f6280b43e488172842cbb5bc20ab81ad63576ef05729b"
+          },
+          {
+            "endpoint": "actions/runs/38034801783/attempts/1/jobs?per_page=100",
+            "total_count": 2,
+            "sha256": "16178ebdf489340aca10dd720a73282a532bed8cd9dccd80bd5c45d3bad65d82"
+          },
+          {
+            "endpoint": "actions/runs/38034513636/attempts/1/jobs?per_page=100",
+            "total_count": 2,
+            "sha256": "81327f07c2da8f26ad389a29e6bc723664454b6746ffcd0a4c4b096983f2a485"
+          }
+        ],
+        "scope": "Read-only Actions metadata, production guard's full-history and attempt completeness checks; no provider or workflow calls."
+      },
+      "quota_receipt_sha256": "0fcc502b83972efdb0b706954348a96baafc91208cb87118ba29a05b63da582b"
+    },
+    "source_receipt": {
+      "schema_version": 1,
+      "status": "unavailable",
+      "dry_run": false,
+      "collection_run_id": "38040893686",
+      "collection_started_at": "2026-10-10T09:18:37.281961+00:00",
+      "generated_at": "2026-10-10T09:18:39.533632+00:00",
+      "expires_at": "2026-10-11T09:18:39.533632+00:00",
+      "publication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "previous_receipt_sha256": "c0d1c97f22767c514385604155bb433a3571e1351dfd28884be846b8fa141731",
+      "policy": {
+        "version": 1,
+        "max_issuers": 8,
+        "lookback_days": 365,
+        "max_reports": 3,
+        "max_exhibits_per_report": 2,
+        "max_history_files": 1,
+        "max_metadata_rows": 2000,
+        "max_listed_filings": 12,
+        "max_excerpt_bytes": 16384,
+        "receipt_ttl_seconds": 86400,
+        "max_future_skew_seconds": 5,
+        "max_requests": 96,
+        "max_response_bytes": 2097152,
+        "max_download_bytes": 33554432,
+        "max_collection_seconds": 240,
+        "min_request_interval_seconds": 1
+      },
+      "selection": {
+        "candidate_count": 2,
+        "issuer_count": 2,
+        "selected_issuer_count": 2,
+        "omitted_issuer_count": 0,
+        "selected_tickers": [
+          "MG",
+          "ZIM"
+        ]
+      },
+      "bundle": {
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac",
+        "bytes": 5687,
+        "path": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json"
+      },
+      "coverage": {
+        "issuer_news": {
+          "status": "not_cleared",
+          "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+        },
+        "earnings": {
+          "status": "not_checked",
+          "reason": "The future earnings calendar has not been checked."
+        }
+      }
+    },
+    "receipt_sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab",
+    "source_stats": {
+      "request_count": 1,
+      "downloaded_bytes": 0,
+      "capture_bytes": 0,
+      "budget_stop": null
+    },
+    "source_errors": [
+      {
+        "ticker": "MG",
+        "errors": [
+          {
+            "code": "http_error",
+            "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+            "http_status": 403,
+            "source_phase": "mapping"
+          }
+        ]
+      },
+      {
+        "ticker": "ZIM",
+        "errors": [
+          {
+            "code": "http_error",
+            "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+            "http_status": 403,
+            "source_phase": "mapping"
+          }
+        ]
+      }
+    ],
+    "independent_source_verification": {
+      "status": "PASS_INDEPENDENT_LOCAL_PRODUCTION_VERIFICATION",
+      "source_commit": "f9b91d00123281039436bcd4e8a7646992517265",
+      "collection_run_id": "38040893686",
+      "files": {
+        "canonical": {
+          "bytes": 12963197,
+          "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+        },
+        "issuer_receipt": {
+          "bytes": 1768,
+          "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+        },
+        "issuer_bundle": {
+          "bytes": 5687,
+          "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+        }
+      },
+      "validation": [
+        {
+          "validator": "deployed",
+          "revision": "d72bcf35",
+          "source_sha256": "20c313ae7844e31fc50c5e891a8e981b70e127fe31f8a7fc2fb7a2b1ade751c3",
+          "status": "PASS"
+        },
+        {
+          "validator": "queued_strict",
+          "revision": "09b12b6bbb2f2b1c522ad54d0b404929e94d2330",
+          "source_sha256": "8621458eaead06d9e117c727bcca0d6b60fbac85174b6534c8ab05ead259cd50",
+          "status": "PASS"
+        }
+      ],
+      "cas": {
+        "prior_commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+        "previous_receipt_sha256": "c0d1c97f22767c514385604155bb433a3571e1351dfd28884be846b8fa141731",
+        "prior_bundle_sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510",
+        "prior_bundle_preserved": true,
+        "collection_and_completion_strictly_later": true
+      },
+      "publication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "receipt_status": "unavailable",
+      "started_at": "2026-10-10T09:18:37.281961+00:00",
+      "completed_at": "2026-10-10T09:18:39.533632+00:00",
+      "expires_at": "2026-10-11T09:18:39.533632+00:00",
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "issuers": [
+        {
+          "ticker": "MG",
+          "status": "unavailable",
+          "identity_status": "unverified",
+          "index_coverage": "unknown",
+          "visible_sources": 0,
+          "documents": 0,
+          "errors": [
+            {
+              "code": "http_error",
+              "http_status": 403,
+              "source_phase": "mapping",
+              "fixed_mapping_url": true
+            }
+          ]
+        },
+        {
+          "ticker": "ZIM",
+          "status": "unavailable",
+          "identity_status": "unverified",
+          "index_coverage": "unknown",
+          "visible_sources": 0,
+          "documents": 0,
+          "errors": [
+            {
+              "code": "http_error",
+              "http_status": 403,
+              "source_phase": "mapping",
+              "fixed_mapping_url": true
+            }
+          ]
+        }
+      ],
+      "network_or_provider_requests": 0,
+      "repository_edits": false,
+      "limits": "Local exact Git bytes after root fetched main; does not claim additional SEC access, complete source coverage, on-time morning quotes, personal execution or profit.",
+      "additional_exact_byte_checks": {
+        "immediate_parent_commit": "d72bcf35483f2a4db49cccdc07a40df734a5546e",
+        "immediate_parent_receipt_matches_cas": true,
+        "served_reader_matches_bound_hash": true,
+        "prior_protected_docs_blobs_unchanged": 18594,
+        "changed_protected_paths": [],
+        "publication_commit_changed_paths": [
+          "docs/issuer-evidence.json",
+          "docs/issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+          "docs/issuer-evidence/retention.json"
+        ]
+      }
+    },
+    "read_only_diagnostic_review": {
+      "workflow_run": "38040893686",
+      "source_head": "d72bcf35483f2a4db49cccdc07a40df734a5546e",
+      "publication_commit": "f9b91d00123281039436bcd4e8a7646992517265",
+      "receipt": {
+        "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab",
+        "bytes": 1768,
+        "status": "unavailable",
+        "dry_run": false,
+        "collection_started_at": "2026-10-10T09:18:37.281961+00:00",
+        "generated_at": "2026-10-10T09:18:39.533632+00:00",
+        "bundle": {
+          "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac",
+          "bytes": 5687,
+          "path": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json"
+        }
+      },
+      "stats": {
+        "request_count": 1,
+        "downloaded_bytes": 0,
+        "capture_bytes": 0,
+        "budget_stop": null
+      },
+      "issuers": [
+        {
+          "ticker": "MG",
+          "status": "unavailable",
+          "identity": "unverified",
+          "index": "unknown",
+          "documents": 0,
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+              "http_status": 403,
+              "source_phase": "mapping"
+            }
+          ]
+        },
+        {
+          "ticker": "ZIM",
+          "status": "unavailable",
+          "identity": "unverified",
+          "index": "unknown",
+          "documents": 0,
+          "errors": [
+            {
+              "code": "http_error",
+              "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+              "http_status": 403,
+              "source_phase": "mapping"
+            }
+          ]
+        }
+      ],
+      "exact_current_publication_validation": "PASS",
+      "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+      "source_sha256": "20c313ae7844e31fc50c5e891a8e981b70e127fe31f8a7fc2fb7a2b1ade751c3",
+      "prior_environment_probe": {
+        "scope": "ONE environment-only diagnostic; not GitHub Actions or issuer production collection",
+        "url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "user_agent": "SpicyStock issuer evidence (https://github.com/spicyChicken59/SpicyStock)",
+        "started_at": "2026-10-10T08:02:15.265791+00:00",
+        "request_count": 1,
+        "deadline_seconds": 10,
+        "max_response_bytes": 2097152,
+        "redirects": "refused",
+        "status": 200,
+        "content_type": "application/json",
+        "body_sha256": "33b3998934205f0ce54c874470a41689ea5aaaba7d04c909f20976eb3e551ba4",
+        "body_bytes": 524131,
+        "body_complete": true,
+        "finished_at": "2026-10-10T08:02:15.511452+00:00",
+        "elapsed_seconds": 0.246
+      },
+      "limits": [
+        "HTTP error response body and headers intentionally not read or retained; cause of403 is unknown.",
+        "Shared mapping failure appears on two issuer rows but represents one HTTP request.",
+        "Older legacy errors without status remain unknown.",
+        "No new SEC/provider requests or workflow dispatch made for this investigation."
+      ],
+      "source_review": {
+        "constants": {
+          "MAX_REQUESTS": 96,
+          "MAX_COLLECTION_SECONDS": 240,
+          "MIN_REQUEST_INTERVAL_SECONDS": 1,
+          "USER_AGENT": "SpicyStock issuer evidence (https://github.com/spicyChicken59/SpicyStock)"
+        },
+        "request_headers": [
+          "User-Agent",
+          "Accept-Encoding",
+          "Accept"
+        ],
+        "user_agent_configuration": "Fixed public project identity and GitHub URL; no environment or credential construction. No contact email included.",
+        "failure_behavior": "HTTPError status classified; body closed without reading/persisting. No automatic transport retry. Mapping failure prevents all submissions and document requests.",
+        "inference_limit": "HTTP403 records denial of this hosted request; no retained response body/header establishes its cause. The prior successful request used another environment and earlier time, so it is not a controlled test of runner/IP versus timing."
+      },
+      "next_step": {
+        "supported": "Do not spend a fourth production start today. Retain the exact denied mapping URL, status, source phase, run and timestamp; keep issuer coverage unknown and reviewed anchors visible.",
+        "recommendation": "Before the next allowed normal trigger, review compliant SEC client identification/access requirements. If a maintained public project contact is needed, configure only an explicitly designated contact and validate header length/CRLF offline; test at most one such change within the existing daily/request budget. Do not reuse private email credentials or infer a contact from secrets.",
+        "unproven": "A contact-bearing User-Agent may be worth testing, but same-identity HTTP200 in the earlier environment means the current identifier is not proven to be the cause. Shared hosted egress reputation or time-dependent denial remain hypotheses only.",
+        "out_of_scope": "No immediate retries, access-control workarounds, proxy rotation, paid provider, new hosting, code edits or workflow dispatch performed."
+      },
+      "delivery_and_quota_evidence": [
+        "/tmp/spicystock-pr135-final-issuer-chain.json",
+        "/tmp/spicystock-issuer-final-daily-quota.json"
+      ]
+    },
+    "actual_public_acceptance": {
+      "started_at": "2026-10-10T09:20:31.527Z",
+      "finished_at": "2026-10-10T09:20:45.500Z",
+      "checks_passed": 183,
+      "files": [
+        {
+          "name": "index.html",
+          "bytes": 16963,
+          "sha256": "f2b7e9bb1e18126c6356d8b31f7ae6b03788a7e3e78b1eb28e64545a05ec6845"
+        },
+        {
+          "name": "data.json",
+          "bytes": 12963197,
+          "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+        },
+        {
+          "name": "reader.json",
+          "bytes": 4016951,
+          "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+        },
+        {
+          "name": "picks.json",
+          "bytes": 3921,
+          "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+        },
+        {
+          "name": "historical-validation.json",
+          "bytes": 5048,
+          "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+        },
+        {
+          "name": "historical-findings.json",
+          "bytes": 177697,
+          "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+        },
+        {
+          "name": "morning.json",
+          "bytes": 4284,
+          "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+        },
+        {
+          "name": "design-system/assets/favicon.ico",
+          "bytes": 5057,
+          "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+        },
+        {
+          "name": "design-system/assets/sc-avatar-tile.svg",
+          "bytes": 9274,
+          "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+        },
+        {
+          "name": "design-system/assets/apple-touch-icon.png",
+          "bytes": 11284,
+          "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+        },
+        {
+          "name": "design-system/sc.css",
+          "bytes": 130987,
+          "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+        },
+        {
+          "name": "design-system/sc-theme.js",
+          "bytes": 2077,
+          "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+        },
+        {
+          "name": "design-system/sc-charts.js",
+          "bytes": 27390,
+          "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+        },
+        {
+          "name": "design-system/sc-motion.js",
+          "bytes": 10458,
+          "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+        },
+        {
+          "name": "app.css",
+          "bytes": 86973,
+          "sha256": "b194e7ecfaf65cd12349b4b23ca94a66cd89ee6d5ab6561ce0b32e97d083f007"
+        },
+        {
+          "name": "app-chart.js",
+          "bytes": 73555,
+          "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+        },
+        {
+          "name": "app-map.js",
+          "bytes": 29522,
+          "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+        },
+        {
+          "name": "app-follow.js",
+          "bytes": 32450,
+          "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+        },
+        {
+          "name": "app-reading.js",
+          "bytes": 23705,
+          "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+        },
+        {
+          "name": "app-method.js",
+          "bytes": 44156,
+          "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+        },
+        {
+          "name": "app-findings.js",
+          "bytes": 68115,
+          "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+        },
+        {
+          "name": "app-reader.js",
+          "bytes": 9507,
+          "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+        },
+        {
+          "name": "app-observations.js",
+          "bytes": 44452,
+          "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+        },
+        {
+          "name": "app-cash-preview.js",
+          "bytes": 3836,
+          "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+        },
+        {
+          "name": "app-handoff.js",
+          "bytes": 27456,
+          "sha256": "87ba7cd963ca1441b19cbd057e29362df66745dc5fe6d442dc9fc68504d77f49"
+        },
+        {
+          "name": "app-handoff-ui.js",
+          "bytes": 23349,
+          "sha256": "5a7cdbcbe72aaf5b84c222ebe64369c33eba216274cd00db65c84b6e8d40ea12"
+        },
+        {
+          "name": "app-issuer-evidence.js",
+          "bytes": 37160,
+          "sha256": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c"
+        },
+        {
+          "name": "app-stop-research.js",
+          "bytes": 34320,
+          "sha256": "ff822191d5712409bf6b175ae7d83840cb9541b60fed67c7dfe1312ecf1394bb"
+        },
+        {
+          "name": "app-morning.js",
+          "bytes": 23502,
+          "sha256": "b978010d729abfeaee93069b6310f1ec709eabb7ca0e02905f5a60b13822e808"
+        },
+        {
+          "name": "app.js",
+          "bytes": 392190,
+          "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+        },
+        {
+          "name": "design-system/assets/sc-mark-color-dark.svg",
+          "bytes": 6701,
+          "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+        },
+        {
+          "name": "design-system/assets/sc-mark-mono-cream.svg",
+          "bytes": 4901,
+          "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+        },
+        {
+          "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+          "bytes": 5155365,
+          "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+        },
+        {
+          "name": "issuer-evidence.json",
+          "bytes": 1768,
+          "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+        },
+        {
+          "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+          "bytes": 5687,
+          "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+        },
+        {
+          "name": "stop-research.json",
+          "bytes": 1650,
+          "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+        },
+        {
+          "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+          "bytes": 8918,
+          "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+        }
+      ],
+      "all_required_inventory_verified": true,
+      "source_receipt_sha256": "b9c91b23003e410f2842ecea27e8ad96c853e7dc572f11c671da51fb6286bd5f"
+    },
+    "independent_public_review": {
+      "status": "PASS_PUBLIC_TYPED_DIAGNOSTICS_REVIEWED",
+      "reviewed_at": "2026-10-10T09:23:28.642578+00:00",
+      "production_sha": "f9b91d00123281039436bcd4e8a7646992517265",
+      "url": "https://spicychicken59.github.io/SpicyStock/",
+      "scope": "ACTUAL PUBLIC UI; real wall clock; no route/data/clock overrides",
+      "execution": {
+        "started_at": "2026-10-10T09:20:31.527Z",
+        "finished_at": "2026-10-10T09:20:45.500Z",
+        "attempt": 1,
+        "checks_passed": 183,
+        "checks_total": 183,
+        "required_native_files_matched_git": 37,
+        "viewports": [
+          {
+            "width": 1280,
+            "theme": "dark"
+          },
+          {
+            "width": 390,
+            "theme": "light"
+          }
+        ],
+        "browser_errors": 0,
+        "overflow": false,
+        "all_public_reads_finished": true
+      },
+      "deployment": {
+        "issuer_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040893686",
+        "publisher_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040976621",
+        "pages_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38040987252",
+        "deployment_success": "Root verified before acceptance; exact deployed bytes independently matched Git."
+      },
+      "publication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "issuer_receipt_sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab",
+      "issuer_receipt": {
+        "status": "unavailable",
+        "collectionRunId": "38040893686",
+        "generatedAt": "2026-10-10T09:18:39.533632+00:00",
+        "expiresAt": "2026-10-11T09:18:39.533632+00:00",
+        "selfIntegrity": true,
+        "exactCurrentPublication": true,
+        "declaredPublication": {
+          "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+          "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+          "run_id": "38034610157",
+          "rules_version": "c9dc7d6d1d87",
+          "measured_session": "2026-10-09",
+          "applicable_session": "2026-10-12",
+          "published_at": "2026-10-10T07:30:15.553690+00:00",
+          "reader_projection_version": 1,
+          "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+        },
+        "selection": {
+          "candidate_count": 2,
+          "issuer_count": 2,
+          "selected_issuer_count": 2,
+          "omitted_issuer_count": 0,
+          "selected_tickers": [
+            "MG",
+            "ZIM"
+          ]
+        },
+        "coverage": {
+          "issuer_news": {
+            "status": "not_cleared",
+            "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+          },
+          "earnings": {
+            "status": "not_checked",
+            "reason": "The future earnings calendar has not been checked."
+          }
+        },
+        "stats": {
+          "request_count": 1,
+          "downloaded_bytes": 0,
+          "capture_bytes": 0,
+          "budget_stop": null
+        },
+        "bundle": {
+          "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac",
+          "bytes": 5687,
+          "path": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json"
+        },
+        "sourceCoverageClaim": "NOT CLEARED",
+        "diagnostics": [
+          {
+            "ticker": "MG",
+            "errors": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "http_status": 403,
+                "source_phase": "mapping"
+              }
+            ]
+          },
+          {
+            "ticker": "ZIM",
+            "errors": [
+              {
+                "code": "http_error",
+                "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                "http_status": 403,
+                "source_phase": "mapping"
+              }
+            ]
+          }
+        ]
+      },
+      "visible_diagnostics": [
+        {
+          "width": 1280,
+          "diagnostics": [
+            {
+              "ticker": "MG",
+              "rows": [
+                {
+                  "code": "http_error",
+                  "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                  "http_status": 403,
+                  "source_phase": "mapping",
+                  "displayed": "Source retrieval: Observed HTTP 403 \u00b7 SEC ticker mapping \u00b7 http error \u00b7 SEC request URL",
+                  "links": [
+                    {
+                      "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                      "target": "_blank",
+                      "rel": "noopener noreferrer"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "ticker": "ZIM",
+              "rows": [
+                {
+                  "code": "http_error",
+                  "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                  "http_status": 403,
+                  "source_phase": "mapping",
+                  "displayed": "Source retrieval: Observed HTTP 403 \u00b7 SEC ticker mapping \u00b7 http error \u00b7 SEC request URL",
+                  "links": [
+                    {
+                      "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                      "target": "_blank",
+                      "rel": "noopener noreferrer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "width": 390,
+          "diagnostics": [
+            {
+              "ticker": "MG",
+              "rows": [
+                {
+                  "code": "http_error",
+                  "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                  "http_status": 403,
+                  "source_phase": "mapping",
+                  "displayed": "Source retrieval: Observed HTTP 403 \u00b7 SEC ticker mapping \u00b7 http error \u00b7 SEC request URL",
+                  "links": [
+                    {
+                      "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                      "target": "_blank",
+                      "rel": "noopener noreferrer"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "ticker": "ZIM",
+              "rows": [
+                {
+                  "code": "http_error",
+                  "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+                  "http_status": 403,
+                  "source_phase": "mapping",
+                  "displayed": "Source retrieval: Observed HTTP 403 \u00b7 SEC ticker mapping \u00b7 http error \u00b7 SEC request URL",
+                  "links": [
+                    {
+                      "href": "https://www.sec.gov/files/company_tickers_exchange.json",
+                      "target": "_blank",
+                      "rel": "noopener noreferrer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "truthful_scope": {
+        "observed_http_status": 403,
+        "observed_source_phase": "mapping",
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "raw_error_body_exposed": false,
+        "fresh_filing_content_claimed": false,
+        "identity_index_coverage": "unverified/unknown",
+        "known_exclusions_retained": [
+          "MG",
+          "ZIM"
+        ],
+        "issuer_news": "not cleared",
+        "earnings": "not checked",
+        "zero_ticket_cash_preview": "No admitted published ticket; no personal order preparation available.",
+        "morning_observations": "Dated stale wrong-session receipt; no live quote or entry clearance.",
+        "calendar": "Actual Saturday Oct 10 market closure; next applicable session Monday Oct 12."
+      },
+      "private_input_control": {
+        "initial_cash": "unknown",
+        "entered_value": "1743.29",
+        "scope": "Explicit ephemeral synthetic input in fresh disposable contexts to test DOM continuity; not Mo cash or broker facts. It appears in some screenshots.",
+        "private_storage_preserved": true,
+        "source_requests_include_private_input": false,
+        "saved_order_or_position": false,
+        "copy_or_broker_action": false
+      },
+      "transport": {
+        "closed_issuer_requests": 0,
+        "opened_issuer_requests_per_context": 2,
+        "paths": "Fixed issuer-evidence.json then exact bound SHA bundle",
+        "issuer_request_credentials_referrer_queries_request_bodies": "omitted",
+        "byte_reader": "Original bounded native bytes after cloned stream reaches EOF; no CDP body reads",
+        "provider_requests_by_this_runner": 0,
+        "new_collection_or_dispatch": false,
+        "duplicateCdpBodyObserver": false,
+        "managedProxy": true,
+        "certificateSpecificSpki": "n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=",
+        "caPath": "/usr/local/share/ca-certificates/environment-proxy-ca.crt",
+        "globalTlsBypass": false
+      },
+      "screenshots_inspected": {
+        "cash-preview-1280.png": {
+          "sha256": "6f9b6934bbbb6cf2ae921a7a27ee08ab50bade7bfef71e6c00e2b40ba1a54fab",
+          "bytes": 42820,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "cash-preview-390.png": {
+          "sha256": "94c9a07f8ef89790ea736a934cfcddbbfc793cab97e59e0d3aa8fcf62bec53b4",
+          "bytes": 39217,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-anchors-MG-1280.png": {
+          "sha256": "c4cbd0a27e3b212cca62cc0f0e9939e0e976112bd8e02c0963fa2befec7de2a3",
+          "bytes": 124345,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-anchors-MG-390.png": {
+          "sha256": "ce739d5fd1de27eb950d4373b3e020c25d25fa9161bb2be11acad6ab74d70482",
+          "bytes": 67926,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-anchors-ZIM-1280.png": {
+          "sha256": "e407bc0d39ae38f6ed1e5268b79fef7b720e68aece0da4d5f032ccb99b60d5f5",
+          "bytes": 125966,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-anchors-ZIM-390.png": {
+          "sha256": "18dd6f64a192cac052932f0c58c3ebff7e447ceb6228bf289f7b8ec3c824fa3b",
+          "bytes": 60932,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-coverage-MG-1280.png": {
+          "sha256": "bf6ac82263aff7c62744dc1ad79e8691a1b5d00ebaafc6f6f4caef2677083050",
+          "bytes": 99908,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-coverage-MG-390.png": {
+          "sha256": "98a19470237b6a85a871a42a84c0e864cd6bdcde40db4780bebe34ef2858cf13",
+          "bytes": 62225,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-coverage-ZIM-1280.png": {
+          "sha256": "a868712f0ad485f4e910d0356d11b6181a18bec90505f6d68960daa43c94e002",
+          "bytes": 99638,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-coverage-ZIM-390.png": {
+          "sha256": "a3666e1bb4d4dd4179df95a69180e1212598223622e2786ad248170764997143",
+          "bytes": 62152,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-desk-1280.png": {
+          "sha256": "995e8174439ae824afbc58f6a723aa33cdce6ad931d6e690c44fe70bf49035b5",
+          "bytes": 122057,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-desk-390.png": {
+          "sha256": "66c297bbcafcbdc2e759574825a458f4afdc42cd35828d249c6662f1d92de797",
+          "bytes": 60215,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-diagnostic-MG-1280.png": {
+          "sha256": "775fb8143bdc7a58ae6702b84e706e6dd06b3e09192966031d820e876def4759",
+          "bytes": 185744,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-diagnostic-MG-390.png": {
+          "sha256": "84caa6eef399a0bac0c8e3679551b9c3510613501a12ac61727170820a0e947d",
+          "bytes": 74814,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-diagnostic-ZIM-1280.png": {
+          "sha256": "b682bc2148bdadb2b43f8de47e59d6f36699ff22ce1072d47b648a8c88536d44",
+          "bytes": 174988,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "issuer-diagnostic-ZIM-390.png": {
+          "sha256": "cd6bf0c299e89b0fa1b88d927664a75d2b9215eb26b54d39b19d98aec00ce634",
+          "bytes": 74821,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "next-step-1280.png": {
+          "sha256": "673b24b4675cd685a7ea97b4df6718f355feff2f1f2095bf7f0d4f746877e733",
+          "bytes": 40240,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        },
+        "next-step-390.png": {
+          "sha256": "6a2b521a48089394d8d839a8c73fa1eaffaa82d0f2a6cf1336ab9e08fdbe07cf",
+          "bytes": 43275,
+          "visually_inspected": true,
+          "method": "Direct image inspection"
+        }
+      },
+      "artifacts": {
+        "acceptance.json": {
+          "sha256": "b9c91b23003e410f2842ecea27e8ad96c853e7dc572f11c671da51fb6286bd5f",
+          "scope": "Unmodified successful automatic actual-public receipt"
+        },
+        "/tmp/spicystock-public-issuer-diagnostics-acceptance.mjs": {
+          "sha256": "d131103b5ab4c47c8ec9a31a33dabf58d95c78427e8cc1cbae9e36141d17d9f0"
+        },
+        "previous_legacy_review": {
+          "path": "/tmp/spicystock-issuer-diagnostics-public-38040608992-retry/review.json",
+          "sha256": "1f4e2a08edaf316332bd04acfe4ec331649bcafab5f10d6bc4386693e722aa0e",
+          "scope": "Preserved separate acceptance of the earlier untyped receipt; this typed run passed its first attempt."
+        }
+      },
+      "limitations": [
+        "This verifies deployed public bytes and the UI over the receipt actually served. It does not perform a new SEC collection or verify raw SEC downloads against their original servers.",
+        "Partial, unavailable, no-candidate, inapplicable, expired or differently bound receipts cannot establish issuer-news or earnings clearance.",
+        "Fresh browser contexts exercise only an ephemeral synthetic cash input. No real balance, saved symbol, order, position or credential is supplied.",
+        "Two viewport observations do not establish provider availability on another run or future trading performance.",
+        "Observed HTTP403 comes from the committed production collector receipt; this browser acceptance did not call SEC directly or independently replay that response.",
+        "No broker action, real private trade, profit or first successful trade is evidenced."
+      ]
+    },
+    "review_receipt_sha256": "643650543dc509207b24b131e9fb0533823c10cb0c86afccad127c8b6c0fa01a",
+    "independent_recheck": {
+      "native_file_matches": 37,
+      "screenshot_hashes_matched": 18
+    },
+    "remaining_blocker": "The GitHub Actions request to the SEC company mapping URL returned HTTP 403. No response body or headers were retained, so the reason for denial is unknown. There were no submissions/document requests. Earlier HTTP errors without status remain unknown. The day has no remaining production collection starts."
+  }
+}

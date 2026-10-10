@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "status": "LOCAL_PREPARATION_ONLY",
+  "issue": 144,
+  "recorded_at": "2026-10-10T09:52:55.659998+00:00",
+  "scope": "Offline producer source and labelled synthetic private execution facts. No actual public deployment or Mo execution/profit; reviewed runtime source unchanged from owner commits. Final integration exact-head review and hosted checks remain pending.",
+  "commits": {
+    "model": "cad52c8036153612251ff9b2407011255d2d0fcd",
+    "ui": "7c6e7f09c84d649edff9d09373e351bb9d2585d5",
+    "browser": "ab6e97d6374c8bd08d94b36d909e1a195c315770"
+  },
+  "source_sha256": {
+    "docs/app-handoff.js": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5",
+    "docs/app-handoff-ui.js": "f643280d144d98cf707dd52fe0641038b0593c94d4866ddcf212c652c477978d",
+    "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+    "docs/app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3",
+    "tools/handoff_model_cases.mjs": "07390d44cf9cbe38b82a695eb7a3c99529692c203a22dbaa93259816b8660b35",
+    "tools/independent_report_cases.mjs": "423df74ccb6b38d86b6be452f4c2fa611600a452039e06087b0c51c53fe155b1",
+    "tools/handoff_cases.mjs": "db04adc3a40547bd1e592f1562fd608b87dc76c8e7bcd4aa36c00fd1bebbe146",
+    "tools/page_smoke.mjs": "da7cc9ff13129b58d95edb74bfd54381aa9b2f71028606b4f3a89720aca9b754",
+    "tools/publication_recovery_cases.mjs": "9dd986b1b3be830e994036d84bd91807c6e5b92febc8e55d18fae236440c01fe"
+  },
+  "root_validation": {
+    "model": 49,
+    "legacy_browser": 269,
+    "compatibility_browser": 1475,
+    "documentation": 37,
+    "scope": "Distinct targeted suites; owner dedicated147 and independent139 are separate evidence below, not added into a purported single test run.",
+    "publication_recovery": 131
+  },
+  "evidence": [
+    {
+      "name": "spicystock-independent-reports-model-acceptance.json",
+      "sha256": "07d9b6284d6c9a5ab6c039a521d277b6a316560a0e9bf181e9383af8675fcfb1",
+      "bytes": 1465,
+      "receipt": {
+        "scope": "Issue144 private model/store only; no provider calls, real account facts, source publication mutations or order authority. Synthetic broker facts over exact retained current/priority research and cash producer fixtures.",
+        "source_sha256": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5",
+        "runner_sha256": "07390d44cf9cbe38b82a695eb7a3c99529692c203a22dbaa93259816b8660b35",
+        "model_tests": {
+          "passed": 49,
+          "total": 49,
+          "log": "/tmp/spicystock-independent-report-model-final.log"
+        },
+        "mutations": {
+          "killed": 12,
+          "unrelated_passed": 49,
+          "receipt": "/tmp/spicystock-independent-report-mutants/acceptance.json",
+          "script": "/tmp/spicystock-independent-report-mutations.py"
+        },
+        "legacy_original_bytes": {
+          "v1_preserved": true,
+          "v2_sha256": "f41e30bd89742d191ac16c6954a394028bf79b3ff4f34877be3f953051b0fd0d",
+          "v2_origin": "703032b97a604a07968b34e22e80a6852b1e2bf6 actual module over cash producer fixture; explicitly synthetic37share user execution",
+          "v2_capture_receipt": "/tmp/spicystock-independent-report-review/legacy-capture.json"
+        },
+        "secret_scans": {
+          "8.24.3": 0,
+          "8.30.1": 0,
+          "scope": "only two owned paths, correct original relative paths, existing repository configuration"
+        },
+        "syntax_and_diff_check": "pass",
+        "owned_paths": [
+          "docs/app-handoff.js",
+          "tools/handoff_model_cases.mjs"
+        ],
+        "commit": "cad52c8036153612251ff9b2407011255d2d0fcd"
+      }
+    },
+    {
+      "name": "spicystock-independent144-browser-acceptance.json",
+      "sha256": "34a7f13aec84fd4c33b480130d7b498d1315de7a7ca3c585dc6a504bc9c885ad",
+      "bytes": 2102,
+      "receipt": {
+        "schema_version": 1,
+        "status": "NO_BLOCKER",
+        "scope": "Offline genuine frozen producer bytes; synthetic private execution/control storage only. No actual public deployment, broker, provider, user profile, upload or repository data mutation.",
+        "base": "cad52c8036153612251ff9b2407011255d2d0fcd",
+        "source_sha256": {
+          "docs/app-handoff.js": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5",
+          "docs/app-handoff-ui.js": "f643280d144d98cf707dd52fe0641038b0593c94d4866ddcf212c652c477978d",
+          "docs/app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+          "docs/app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+        },
+        "test_sha256": "423df74ccb6b38d86b6be452f4c2fa611600a452039e06087b0c51c53fe155b1",
+        "shared_hook": "checkIndependentReports / --only independentreports",
+        "checks": 147,
+        "mutations": {
+          "negative_guards": 6,
+          "all_named_failures": true,
+          "unrelated_passed": 147,
+          "receipt": "/tmp/spicystock-independent144-mutants/results.json"
+        },
+        "screenshots_inspected": [
+          "independent-blank-390-light",
+          "independent-completed-390-light",
+          "independent-blank-1280-dark",
+          "independent-completed-1280-dark"
+        ],
+        "coverage": [
+          "zero actual tickets, blank/no-write opening/cancel and positive explicit first save",
+          "source-bound admitted/nonadmitted report-only without plan/draft/order/cash",
+          "exact7447777microusd net and fees/time/cancellation unknown refusal",
+          "original same-ticker priority/red closure refusal and saved-source corrections after replacement/expiry",
+          "shared original-ID planned/report-only duplicates",
+          "dirty/private node and cash continuity",
+          "real second-tab CAS and byte-identical quota prior/proposed recovery",
+          "v1/v2 read no-write and explicit v3 upgrade preserving terms, unknown version raw recovery",
+          "no reporting request/copy/model mutation; phone overflow regression fixed by owner"
+        ],
+        "owned_test_commit": "ab6e97d6374c8bd08d94b36d909e1a195c315770",
+        "index_empty_after_owned_commit": true
+      }
+    },
+    {
+      "name": "final-review.json",
+      "sha256": "83b04f100f24d537f920fca25c4ccb6159ae446b44568cda087411f78e0c30c7",
+      "bytes": 1586,
+      "receipt": {
+        "decision": "NO BLOCKER for reviewed model and UI source; final integration commit pin pending",
+        "model_commit": "cad52c8036153612251ff9b2407011255d2d0fcd",
+        "source_hashes": {
+          "app-handoff.js": "772e730b56c339cc1a4424599cf3c778ae2ea76e157e2f5554fd2b2faf2f70d5",
+          "app-handoff-ui.js": "f643280d144d98cf707dd52fe0641038b0593c94d4866ddcf212c652c477978d",
+          "app-stop-research.js": "bc2ebf45c462f7f82395558e0f1b5fbfa0fe99a2995f2a4b51bb40e26a844ebe",
+          "app.css": "00576124e0381f744e7fc545598dadcee3449878d04e480f947882db70e60dc3"
+        },
+        "independent_named_checks": 139,
+        "model_assertions": 86,
+        "browser_assertions": 53,
+        "clock_controls": "normal and 6-digit source success, 7-digit source and 6-digit manual broker event refusal; raw 6-digit source retained",
+        "scope": "Actual browser source verification at390/1280 over retained publication; report facts are synthetic. Includes model-only injected verifier controls explicitly identified in model receipt. No actual execution or profitability claim.",
+        "visual_inspection": [
+          "expanded-original-references-390.png",
+          "saved-correction-1280.png"
+        ],
+        "model_receipt": "/tmp/spicystock-independent-report-review/final-model-review.json",
+        "browser_receipt": "/tmp/spicystock-independent-report-review/browser/receipt.json",
+        "evidence_sha256": {
+          "final-model-review.json": "78a2235a6a712dad0ff668d80a8adca60a3b765ae445c0e0bdd27637729a8357",
+          "browser/receipt.json": "43502e3d1bff128f58d788c9695700a00633af4d9f8f718c0d7a12b24d98e870"
+        },
+        "repository_edits": false,
+        "provider_requests": 0
+      }
+    }
+  ],
+  "limits": [
+    "No strategy, provider, canonical publication or pinned design-system change.",
+    "Private factual reports do not grant entry authority or cash reservation.",
+    "Old v1/v2 byte-preserving reads migrate only on an explicit save.",
+    "Current actual public canonical still has zero baseline tickets."
+  ],
+  "recovery_fixture_correction": {
+    "recorded_at": "2026-10-10T10:07:05.180555+00:00",
+    "scope": "A synthetic v1 envelope built from the current v3 prepared record must omit kind, which was absent in genuine v1. Existing application validation remains unchanged.",
+    "prior_failure": "The successor backup compatibility run found two failed legacy readability/disabled-copy checks (129/131).",
+    "final_validation": "Corrected fixture on this report-only branch passes all 131 actual local HTTP publication-recovery controls.",
+    "runtime_changed": false,
+    "previous_head": "e556a5c0645eb6a1219aecada8b8582bb448073a",
+    "hosted_status": "The prior head checks are historical; the corrected exact head requires new hosted checks and review."
+  }
+}

@@ -1,0 +1,764 @@
+{
+  "schema": "spicystock-research-follow-through-release-v1",
+  "status": "ACCEPTED_ACTUAL_PUBLIC_PENDING_JOURNAL",
+  "recorded_at": "2026-10-10T09:51:17.609130+00:00",
+  "issue": 136,
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/140",
+  "reviewed_head": "84a0a0cd0218e011255f277bd932d803056995ef",
+  "merge_commit": "62f7905d4b2db24460346bf2b471210ca0737b18",
+  "merged_at": "2026-10-10T09:47:46Z",
+  "scope": "Actual public release of a research follow-through reader derived from retained production bytes. No new provider/model collection, personal execution, model fill, return or strategy edge is established.",
+  "hosted_exact_head": {
+    "schema_version": 1,
+    "status": "PASS",
+    "repository": "spicyChicken59/SpicyStock",
+    "pull_request": 140,
+    "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+    "tests_run_id": 38039612984,
+    "tests_conclusion": "success",
+    "recorded_at": "2026-10-10T09:47:18.545Z",
+    "checks": [
+      {
+        "id": 114177103061,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:34Z",
+        "completed_at": "2026-10-10T09:45:01Z"
+      },
+      {
+        "id": 114177103037,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:35Z",
+        "completed_at": "2026-10-10T09:46:15Z"
+      },
+      {
+        "id": 114177063007,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:19Z",
+        "completed_at": "2026-10-10T09:06:23Z"
+      },
+      {
+        "id": 114177062971,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:20Z",
+        "completed_at": "2026-10-10T08:56:32Z"
+      },
+      {
+        "id": 114177062825,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:19Z",
+        "completed_at": "2026-10-10T09:08:11Z"
+      },
+      {
+        "id": 114177062824,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:19Z",
+        "completed_at": "2026-10-10T08:56:38Z"
+      },
+      {
+        "id": 114177053427,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "84a0a0cd0218e011255f277bd932d803056995ef",
+        "started_at": "2026-10-10T08:56:16Z",
+        "completed_at": "2026-10-10T08:56:26Z"
+      }
+    ],
+    "counts": {
+      "pytest_passed": 3813,
+      "pytest_seconds": 486.85,
+      "page_passed": 13014,
+      "page_total": 13014,
+      "chart_passed": 378,
+      "chart_total": 378,
+      "continuity_passed": 137,
+      "fixtures": {
+        "page": 13,
+        "morning": 21,
+        "issuer": 14,
+        "stop_research": 22,
+        "research_outcomes": 40
+      }
+    },
+    "native": [
+      {
+        "case": "central",
+        "job_id": 114177103061,
+        "started_at": "2026-10-10T08:56:34Z",
+        "completed_at": "2026-10-10T09:45:01Z",
+        "runtime_seconds": 2868.849212,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11666492833,
+        "artifact_name": "historical-runtime-central-38039612984-1",
+        "artifact_sha256": "91b181e9428ceb490e4d632ab6ceb3cc4179a55e1d08bc0874a03d4dbcac0845",
+        "artifact_bytes": 26656
+      },
+      {
+        "case": "stress",
+        "job_id": 114177103037,
+        "started_at": "2026-10-10T08:56:35Z",
+        "completed_at": "2026-10-10T09:46:15Z",
+        "runtime_seconds": 2942.946922,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11666003466,
+        "artifact_name": "historical-runtime-stress-38039612984-1",
+        "artifact_sha256": "f5bbaf7f729345a9ab86e2e1d56ddfdaa639710407bd280ac0b0d3f0b815046d",
+        "artifact_bytes": 26560
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11666492833,
+        "name": "historical-runtime-central-38039612984-1",
+        "size_in_bytes": 26656,
+        "digest": "sha256:91b181e9428ceb490e4d632ab6ceb3cc4179a55e1d08bc0874a03d4dbcac0845"
+      },
+      {
+        "id": 11666003466,
+        "name": "historical-runtime-stress-38039612984-1",
+        "size_in_bytes": 26560,
+        "digest": "sha256:f5bbaf7f729345a9ab86e2e1d56ddfdaa639710407bd280ac0b0d3f0b815046d"
+      },
+      {
+        "id": 11665765599,
+        "name": "historical-runtime-gate-38039612984-1",
+        "size_in_bytes": 336,
+        "digest": "sha256:012ace90ae93f8299340610b43d7cf74260048620a94d906e54d44d033c4f3de"
+      },
+      {
+        "id": 11665491732,
+        "name": "page-shots",
+        "size_in_bytes": 80927924,
+        "digest": "sha256:ccfbeee6760e7cc0d1759f24775dc6745c04af2594c6e46edbaa8a6a2405b657"
+      }
+    ],
+    "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. Exact-head hosted acceptance only."
+  },
+  "delivery": {
+    "publisher": {
+      "run_id": 38042651865,
+      "public_files_verified": 40,
+      "verified_log_line": "2026-10-10T09:48:53.0003955Z Verified: every one of the 40 public files matches committed main.",
+      "log": "/tmp/spicystock-pr140-publisher-38042651865.log",
+      "jobs": [
+        {
+          "id": 114185810608,
+          "name": "publish",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:47:52Z",
+          "completed_at": "2026-10-10T09:48:55Z"
+        }
+      ]
+    },
+    "pages": {
+      "run_id": 38042666532,
+      "jobs": [
+        {
+          "id": 114185863761,
+          "name": "build",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:48:09Z",
+          "completed_at": "2026-10-10T09:48:26Z"
+        },
+        {
+          "id": 114185923940,
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:48:30Z",
+          "completed_at": "2026-10-10T09:48:40Z"
+        },
+        {
+          "id": 114185924010,
+          "name": "report-build-status",
+          "status": "completed",
+          "conclusion": "success",
+          "started_at": "2026-10-10T09:48:29Z",
+          "completed_at": "2026-10-10T09:48:35Z"
+        }
+      ]
+    },
+    "superseded_pages": {
+      "run_id": 38042651290,
+      "head_sha": "62f7905d4b2db24460346bf2b471210ca0737b18",
+      "conclusion": "cancelled"
+    }
+  },
+  "preparation": {
+    "path": "release-evidence/2026-10-10-research-follow-through/prepared.json",
+    "file": "release-evidence/2026-10-10-research-follow-through/prepared.json",
+    "sha256": "8c485243439791498da569e1207435c83d937a5da1775cefb6d745c179d46561",
+    "bytes": 67359,
+    "inline_receipts_verified": 9,
+    "status": "LOCAL_PREPARATION_ONLY",
+    "independent_exact_head_verdict": "NO_BLOCKER",
+    "journal_runtime_and_exact_artifacts_preserved_at_merge": true
+  },
+  "production_source": {
+    "publication": {
+      "applicable_session": "2026-10-12",
+      "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+      "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+      "measured_session": "2026-10-09",
+      "published_at": "2026-10-10T07:30:15.553690+00:00",
+      "reader_projection_version": 1,
+      "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+      "rules_version": "c9dc7d6d1d87",
+      "run_id": "38034610157"
+    },
+    "actual_generation_time": "2026-10-10T08:50:21.159749+00:00",
+    "derivation": "Local deterministic derivation from retained actual production bytes; socket-denied source replay was verified before merge. This release did not execute a new evening scan.",
+    "receipt_sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2",
+    "receipt_bytes": 2132,
+    "bundle": {
+      "bytes": 17104,
+      "path": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+      "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172"
+    },
+    "original_cohort_sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0",
+    "original_cohort_generated_at": "2026-10-10T08:11:55.173159+00:00",
+    "counts": {
+      "by_status": {
+        "basis_conflict": 0,
+        "excluded": 3,
+        "missing": 0,
+        "not_filled": 0,
+        "open": 0,
+        "origin_unavailable": 0,
+        "pending": 2,
+        "resolved": 0,
+        "uncertain": 0,
+        "unreadable": 0,
+        "unsupported": 0
+      },
+      "cohorts": 1,
+      "eligible": 2,
+      "primary_cohorts": 1,
+      "rows": 5
+    },
+    "models": {
+      "MG": {
+        "current_stop": null,
+        "day": 0,
+        "entry": null,
+        "events": [],
+        "expected_sessions": [],
+        "missing_sessions": [],
+        "original_shares": 3,
+        "r": null,
+        "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+        "remaining_shares": null,
+        "sessions": 0,
+        "sold_shares": null,
+        "status": "excluded",
+        "uncertainty": null
+      },
+      "KE": {
+        "current_stop": null,
+        "day": 0,
+        "entry": null,
+        "events": [],
+        "expected_sessions": [],
+        "missing_sessions": [],
+        "original_shares": 1,
+        "r": null,
+        "reason": "Awaiting 2026-10-12 entry-session observations.",
+        "remaining_shares": null,
+        "sessions": 0,
+        "sold_shares": null,
+        "status": "pending",
+        "uncertainty": null
+      },
+      "ZIM": {
+        "current_stop": null,
+        "day": 0,
+        "entry": null,
+        "events": [],
+        "expected_sessions": [],
+        "missing_sessions": [],
+        "original_shares": 2,
+        "r": null,
+        "reason": "Not an allocated research idea in the frozen cohort: outside_band, known_event",
+        "remaining_shares": null,
+        "sessions": 0,
+        "sold_shares": null,
+        "status": "excluded",
+        "uncertainty": null
+      },
+      "SN": {
+        "current_stop": null,
+        "day": 0,
+        "entry": null,
+        "events": [],
+        "expected_sessions": [],
+        "missing_sessions": [],
+        "original_shares": 0,
+        "r": null,
+        "reason": "Not an allocated research idea in the frozen cohort: no_whole_share, occupied_model_symbol",
+        "remaining_shares": null,
+        "sessions": 0,
+        "sold_shares": null,
+        "status": "excluded",
+        "uncertainty": null
+      },
+      "PSNL": {
+        "current_stop": null,
+        "day": 0,
+        "entry": null,
+        "events": [],
+        "expected_sessions": [],
+        "missing_sessions": [],
+        "original_shares": 3,
+        "r": null,
+        "reason": "Awaiting 2026-10-12 entry-session observations.",
+        "remaining_shares": null,
+        "sessions": 0,
+        "sold_shares": null,
+        "status": "pending",
+        "uncertainty": null
+      }
+    },
+    "baseline_tickets": 0,
+    "immutable_before_merge": {
+      "parent": "22309bb1f186e3013a6acd4fae71d83d1700ea76",
+      "files_preserved": 18584,
+      "paths": "docs/evidence/**, docs/history/** and docs/stop-research/** excluding mutable history/stop indexes",
+      "changed_or_missing": []
+    }
+  },
+  "public_acceptance": {
+    "url": "https://spicychicken59.github.io/SpicyStock/",
+    "started_at": "2026-10-10T09:49:23.679Z",
+    "finished_at": "2026-10-10T09:49:32.865Z",
+    "status": "PASS_PUBLIC_RETAINED_PENDING_JOURNAL",
+    "checks_passed": 127,
+    "exact_files_matched_git": 40,
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 17012,
+        "sha256": "228f5fdfe586c068fe46e921408ae31d084c4cefdca716e089091e6517d46a2d"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "historical-validation.json",
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+      },
+      {
+        "name": "historical-findings.json",
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "app.css",
+        "bytes": 87849,
+        "sha256": "2a6b9a2c1223451fd6e26058baf29fbae2fbf673076cbc0e08c265375c8455b8"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 29626,
+        "sha256": "c8c30697753b54a5bb114e18338c9218d5788954205c7bb3f1c48925865a5ddb"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 23842,
+        "sha256": "4c0195285e93e9025cbbe6dfc1c55ca2894bc01638107c9171f926ff99a8ecf2"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 37160,
+        "sha256": "c99a2f6ce0bd16236520964538811aa6f07e8cec5e29b9f27f5b7a3b93320a4c"
+      },
+      {
+        "name": "app-stop-research.js",
+        "bytes": 34320,
+        "sha256": "ff822191d5712409bf6b175ae7d83840cb9541b60fed67c7dfe1312ecf1394bb"
+      },
+      {
+        "name": "app-research-outcomes.js",
+        "bytes": 40344,
+        "sha256": "fa3a5d525670fe412b9040f90a2cb66fc08a33b7c75fc22327ad2474710255e4"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 23979,
+        "sha256": "6f799ae5563ca961fc5e4e2b7a60258be498daf0419c4e151f4afcca24b3cfb5"
+      },
+      {
+        "name": "app.js",
+        "bytes": 392190,
+        "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1768,
+        "sha256": "f36c6b4e359f78b41a8f84d06589cfbf90054e98932ee8c1464a1f40795bb5ab"
+      },
+      {
+        "name": "issuer-evidence/f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac.json",
+        "bytes": 5687,
+        "sha256": "f525a5f9078821fa8d238288d624903c47a201a430f862724c10137059c001ac"
+      },
+      {
+        "name": "stop-research.json",
+        "bytes": 1650,
+        "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+      },
+      {
+        "name": "stop-research/249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0.json",
+        "bytes": 8918,
+        "sha256": "249b60c01b702eabc05bba17b0160c7664177e34cfdf26e217c5dbbd1db788f0"
+      },
+      {
+        "name": "research-outcomes.json",
+        "bytes": 2132,
+        "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+      },
+      {
+        "name": "research-outcomes/31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172.json",
+        "bytes": 17104,
+        "sha256": "31f3b94cfb219a2fe4a9a779e3f04f352228cedaf5909c8b5a0840aa1a0f1172"
+      }
+    ],
+    "viewports": [
+      1280,
+      390
+    ],
+    "wall_clock_and_default_loader": true,
+    "route_data_clock_overrides": false,
+    "fresh_private_reports": 0,
+    "settled_cash": "unknown",
+    "journal_order_or_report_actions": 0,
+    "screenshots": [
+      {
+        "path": "journal-1280.png",
+        "sha256": "00bfd602b76671c054474bd7ef047c48b97728e7eba0004ace35034a342fd24b",
+        "width": 1280,
+        "visually_inspected": true
+      },
+      {
+        "path": "journal-KE-1280.png",
+        "sha256": "559fa86907a26768aadb4d66283e08c72d959359e1f7c0eb80f8f0f13d82775f",
+        "width": 1280,
+        "visually_inspected": true
+      },
+      {
+        "path": "journal-PSNL-1280.png",
+        "sha256": "74b452e0a1a5f5257436fe040d6e102317c73dab204a98d8863b4f07918c2840",
+        "width": 1280,
+        "visually_inspected": true
+      },
+      {
+        "path": "journal-390.png",
+        "sha256": "93824625885ff074f01e0641f0d81920872bf196f66beab129876d9aee5f33d5",
+        "width": 390,
+        "visually_inspected": true
+      },
+      {
+        "path": "journal-KE-390.png",
+        "sha256": "580b2533d06dce5cb0c68f67ec2d2236e3c7f792438f7e572d49b54db1c5363c",
+        "width": 390,
+        "visually_inspected": true
+      },
+      {
+        "path": "journal-PSNL-390.png",
+        "sha256": "297a0900a938064b900cf7962749cbb027be0c4b860a3dbda0290fb07984a9ca",
+        "width": 390,
+        "visually_inspected": true
+      }
+    ],
+    "visual_review": {
+      "status": "PASS_PUBLIC_RETAINED_PENDING_JOURNAL_REVIEWED",
+      "reviewed_at": "2026-10-10T09:50:36.380472+00:00",
+      "actual_public": {
+        "scope": "ACTUAL PUBLIC RESEARCH JOURNAL; actual wall clock, default loader; no route/data/clock override or fabricated broker/model outcome",
+        "started_at": "2026-10-10T09:49:23.679Z",
+        "finished_at": "2026-10-10T09:49:32.865Z",
+        "checks_passed": 127,
+        "checks_total": 127,
+        "required_native_file_matches": 40,
+        "all_required_inventory_verified": true,
+        "viewports": [
+          {
+            "width": 1280,
+            "theme": "dark"
+          },
+          {
+            "width": 390,
+            "theme": "light"
+          }
+        ],
+        "browser_errors": [],
+        "horizontal_overflow": false,
+        "route_data_clock_overrides": false,
+        "initial_private_cash": "unknown",
+        "initial_private_history": "empty",
+        "private_seed_or_input": false,
+        "saved_report_or_order": false,
+        "all_public_reads_finished": true
+      },
+      "truthful_scope": {
+        "primary_pre_entry_cohorts": 1,
+        "original_rows": 5,
+        "eligible_rows": 2,
+        "pending": [
+          {
+            "ticker": "KE",
+            "frozen_hypothetical_whole_shares": 1
+          },
+          {
+            "ticker": "PSNL",
+            "frozen_hypothetical_whole_shares": 3
+          }
+        ],
+        "excluded": [
+          "MG",
+          "ZIM",
+          "SN"
+        ],
+        "entry_exit_remaining_R": "Not established for pending rows; no return recorded for any row.",
+        "source_session": "2026-10-09",
+        "applicable_entry_session": "2026-10-12",
+        "measured_model_day": "0 of 5",
+        "event_coverage": "Original registry is not issuer-news/earnings clearance; journal adds no current event check.",
+        "no_personal_execution_or_profit": true,
+        "no_first_success_claim": true,
+        "no_portfolio_or_strategy_edge_claim": true
+      },
+      "screenshots_inspected": {
+        "journal-1280.png": {
+          "sha256": "00bfd602b76671c054474bd7ef047c48b97728e7eba0004ace35034a342fd24b",
+          "bytes": 147223,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        },
+        "journal-390.png": {
+          "sha256": "93824625885ff074f01e0641f0d81920872bf196f66beab129876d9aee5f33d5",
+          "bytes": 70820,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        },
+        "journal-KE-1280.png": {
+          "sha256": "559fa86907a26768aadb4d66283e08c72d959359e1f7c0eb80f8f0f13d82775f",
+          "bytes": 119241,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        },
+        "journal-KE-390.png": {
+          "sha256": "580b2533d06dce5cb0c68f67ec2d2236e3c7f792438f7e572d49b54db1c5363c",
+          "bytes": 53357,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        },
+        "journal-PSNL-1280.png": {
+          "sha256": "74b452e0a1a5f5257436fe040d6e102317c73dab204a98d8863b4f07918c2840",
+          "bytes": 127024,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        },
+        "journal-PSNL-390.png": {
+          "sha256": "297a0900a938064b900cf7962749cbb027be0c4b860a3dbda0290fb07984a9ca",
+          "bytes": 53876,
+          "visually_inspected": true,
+          "scope": "ACTUAL PUBLIC defaultclock/currentretainedrecord; no private seed"
+        }
+      },
+      "limitations": [
+        "Required public native response bytes match exact designated main; loaded reader independently supplies its own original-byte SHA.",
+        "Pinned stdlib validation verifies bounded companion and embedded original cohort integrity. Original source-frame and complete producer replay were independently reviewed before deployment; this runner does not query providers.",
+        "Known Oct9 source gets explicit frozen KE1/PSNL3 pending assertions. A different publication cannot inherit those assertions; stale receipts must show unavailable and newly bound sources are reported separately.",
+        "Fresh browser contexts only: no saved user profile, private seed, real cash, reported execution or order action. Settled cash remains blank/unknown.",
+        "All six captured images were subsequently inspected: overview and pending KE/PSNL on phone/desktop. Desktop captures visibly include unknown R; phone captures show unknown entry/exits/remaining with R also checked in the DOM.",
+        "No entry-session bars yet: this release acceptance cannot establish an actual research-model outcome or real trading performance.",
+        "Resolved positive/negative model examples belong to separate offline producer tests, not this actual public receipt."
+      ]
+    }
+  },
+  "limits": [
+    "KE and PSNL await October12 observations: day0, no established entry and no R. MG, ZIM and SN remain excluded from this frozen research cohort.",
+    "Conditional daily-bar replay is separate from personally reported broker executions. Future fills and first-30-minute sequencing are not established by the retained source.",
+    "No portfolio win rate, profit, successful personal trade or proven strategy edge is claimed.",
+    "The original publication offers zero baseline entry tickets. Research viewing does not change entry/cash/protection/order authority.",
+    "Fresh disposable browser contexts had no personal reports and blank settled cash; no Mo account balance or actual holdings were inspected.",
+    "Timely morning delivery, current source coverage, broker terms and the first actual successful trade remain open goals."
+  ],
+  "evidence_inputs": {
+    "hosted": {
+      "file": "spicystock-pr140-hosted-acceptance.json",
+      "sha256": "cbd5ba7fc54c5d273172a33af39d43db457e5518af1257f666fe1105791ee995",
+      "bytes": 4641
+    },
+    "premerge": {
+      "file": "spicystock-pr140-premerge-checks.json",
+      "sha256": "c5bd201d6474e55abb0360b58492a16ff50dc8c8edcb7b12c2a80a88310cfd63",
+      "bytes": 2261
+    },
+    "merge": {
+      "file": "spicystock-pr140-merge.json",
+      "sha256": "8bb95e2c7b7f232e3763c58be53596c3e99336a536fde0edabee6ff407353296",
+      "bytes": 249
+    },
+    "exact_head_review": {
+      "file": "spicystock-research-outcomes-exact-head-review.json",
+      "sha256": "9dd71a23ffd3487a3f889009d14d91a64d6718e3c18226eb29394d53e1ca18e0",
+      "bytes": 3157
+    },
+    "prepared": {
+      "file": "release-evidence/2026-10-10-research-follow-through/prepared.json",
+      "sha256": "8c485243439791498da569e1207435c83d937a5da1775cefb6d745c179d46561",
+      "bytes": 67359,
+      "inline_receipts_verified": 9
+    },
+    "delivery": {
+      "file": "spicystock-pr140-delivery-acceptance.json",
+      "sha256": "8acba7ae5b697d1a8a46a9b169c7054920fadf18c9b7e927a2655564d7c79aff",
+      "bytes": 1795
+    },
+    "public_acceptance": {
+      "file": "acceptance.json",
+      "sha256": "e7bb84241ea21202021b2862d91ea333c78231959afccde9ea60e5c58563f97a",
+      "bytes": 80995
+    },
+    "public_review": {
+      "file": "review.json",
+      "sha256": "5540b494e8c9028a056aae69e5105c1f3004db3b7d137c2228297269d22962fb",
+      "bytes": 10691
+    }
+  },
+  "generator_sha256": "696e1adaac12f617c75c8c77a2d0d32c2fea1964e8b956b70a539c9f22596dbf"
+}

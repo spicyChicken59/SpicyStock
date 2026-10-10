@@ -155,6 +155,33 @@ null or a source error code. Source error codes are `rate_limit`, `http_error`,
 `time_budget`, `invalid_response`, `identity_unverified`, `metadata_invalid`,
 `document_invalid`, and `history_incomplete`.
 
+## Evidence consistency
+
+Validation reconciles trust labels with the already shape-validated evidence.
+An unverified identity has an unknown empty index and no matched documents or
+submissions source, and cannot claim a collected or partial issuer. A verified
+identity has an observed window only when its observed range reaches the
+requested start and no mapping/submissions/history-stage error remains.
+A later primary or exhibit failure can leave that index observed while the
+issuer is partial. The listed metadata count reconciles to the bounded eligible
+report population. A collected issuer has complete selected primaries and no
+index gap, recorded error, unselected reports, unfetched exhibits or truncated
+excerpts. Receipt status reconciles with the issuer states and omitted issuers.
+
+Visible evidence establishes conservative lower bounds, not exact request totals.
+Each distinct body SHA contributes once to retained capture bytes; the same
+SHA cannot claim different sizes. Network source events are deduplicated by
+URL, body digest, size and fetch/check instants normalized to UTC. Distinct
+visible network events contribute their request and download minima, while
+verified-cache sources contribute only capture bytes. Explicit HTTP failures
+are deduplicated by original URL, code, status and phase; one shared failure
+copied into multiple issuer rows counts once. Legacy errors without an observed
+HTTP status do not invent a request. Downloaded bytes require a request, but
+capture bytes can exceed downloaded bytes when source bodies are reused.
+Additional attempted requests or discarded response bodies can make actual
+counts larger than these minima. These checks neither authenticate the SEC nor
+establish complete news or earnings coverage.
+
 ## Selection and limits
 
 Select admitted candidates first, then current known-event-excluded candidates,

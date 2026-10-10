@@ -38,6 +38,8 @@ import { checkHandoff } from './handoff_cases.mjs';
 import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkStopResearch } from './stop_research_cases.mjs';
 import { checkResearchOutcomes } from './research_outcomes_cases.mjs';
+import { checkDecisionInspection } from './check_decision_inspection.mjs';
+import { checkIndependentReports } from './independent_report_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
@@ -3917,6 +3919,8 @@ async function main() {
       if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('stop-research')) await checkStopResearch({ browser, base, open, check, eq, shotsDir });
       if (runs('research-outcomes')) await checkResearchOutcomes({ browser, base, open, check, eq, shotsDir });
+      if (runs('decisioninspection')) await checkDecisionInspection({ browser, base, check, shotsDir });
+      if (runs('independentreports')) await checkIndependentReports({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
