@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 from types import SimpleNamespace
 from urllib.error import HTTPError, URLError
+from urllib.request import Request
 
 import pytest
 
@@ -13,7 +14,9 @@ from tests.test_issuer_evidence import Clock, Response, packet, producer, repack
 class UnreadBody:
     def __init__(self):
         self.closed = False
+        self.reads = 0
     def read(self, *args):
+        self.reads += 1
         pytest.fail('an HTTP error body was read')
     def close(self):
         self.closed = True
@@ -34,7 +37,7 @@ def test_real_http_error_retains_only_status_and_counts_one_attempt(monkeypatch,
     code = 'redirect_refused' if status < 400 else 'rate_limit' if status == 429 else 'http_error'
     assert (failed.value.code, failed.value.http_status, str(failed.value)) == (code, status, code)
     assert calls == [(issuer.MAPPING_URL, issuer.USER_AGENT, 10)]
-    assert body.closed and budget.requests == 1 and budget.bytes == 0
+    assert body.closed and body.reads == 0 and budget.requests == 1 and budget.bytes == 0
 
 
 @pytest.mark.parametrize('status', [True, False, '403', 403.0, None, 0, 299, 600])
@@ -47,7 +50,7 @@ def test_malformed_http_error_never_fabricates_a_status(monkeypatch, status):
     with pytest.raises(issuer.SourceError) as failed:
         transport.fetch(issuer.MAPPING_URL, budget)
     assert failed.value.code == 'invalid_response' and failed.value.http_status is None
-    assert budget.requests == 1 and budget.bytes == 0 and body.closed
+    assert budget.requests == 1 and budget.bytes == 0 and body.closed and body.reads == 0
 
 
 @pytest.mark.parametrize('problem,code', [(TimeoutError(), 'timeout'), (URLError('private transport text'), 'network_error')])
@@ -69,6 +72,46 @@ def test_redirect_handler_keeps_original_status_without_following_destination():
     assert str(failure.value) == 'redirect_refused'
 
 
+@pytest.mark.parametrize('status', [301, 302, 303, 307, 308])
+@pytest.mark.parametrize('close_fails', [False, True])
+def test_real_redirect_dispatch_closes_original_response_without_read_or_follow(status, close_fails):
+    class Body(UnreadBody):
+        def info(self):
+            return {'location': 'https://untrusted.invalid/response-destination'}
+        def close(self):
+            self.closed = True
+            if close_fails:
+                raise OSError('private response close diagnostic')
+    def followed(*args, **kwargs):
+        pytest.fail('redirect destination was followed')
+    body = Body(); handler = issuer._NoRedirect()
+    handler.parent = SimpleNamespace(open=followed)
+    request = Request(issuer.MAPPING_URL)
+    with pytest.raises(issuer.SourceError) as failure:
+        getattr(handler, f'http_error_{status}')(
+            request, body, status, 'private HTTP reason', body.info())
+    assert body.closed and body.reads == 0 and request.full_url == issuer.MAPPING_URL
+    assert failure.value.code == 'redirect_refused' and failure.value.http_status == status
+    assert str(failure.value) == 'redirect_refused' and failure.value.__suppress_context__
+
+
+def test_http_error_close_failure_keeps_bounded_observed_status(monkeypatch):
+    class Body(UnreadBody):
+        def close(self):
+            self.closed = True
+            raise OSError('private close diagnostic')
+    transport, budget = wire_transport(monkeypatch, Response(b'', Clock()))
+    body = Body()
+    def denied(request, timeout):
+        raise HTTPError(issuer.MAPPING_URL, 403, 'private diagnostic', {}, body)
+    transport.opener.open = denied
+    with pytest.raises(issuer.SourceError) as failure:
+        transport.fetch(issuer.MAPPING_URL, budget)
+    assert body.closed and body.reads == 0 and budget.requests == 1 and budget.bytes == 0
+    assert (failure.value.code, failure.value.http_status, str(failure.value)) == ('http_error', 403, 'http_error')
+    assert failure.value.__suppress_context__
+
+
 def test_collector_serializes_actual_http_error_with_fixed_mapping_phase(packet, producer, monkeypatch):
     canonical, _ = packet
     original = issuer._Transport.__init__
@@ -87,7 +130,7 @@ def test_collector_serializes_actual_http_error_with_fixed_mapping_phase(packet,
     expected = {'code': 'http_error', 'source_url': issuer.MAPPING_URL,
                 'http_status': 403, 'source_phase': 'mapping'}
     assert all(row['errors'] == [expected] for row in result['bundle']['issuers'])
-    assert requests == [issuer.MAPPING_URL] and all(body.closed for body in bodies)
+    assert requests == [issuer.MAPPING_URL] and all(body.closed and body.reads == 0 for body in bodies)
     assert result['bundle']['stats'] == {'request_count': 1, 'downloaded_bytes': 0, 'capture_bytes': 0, 'budget_stop': None}
     assert result['captures'] == {} and result['receipt']['coverage'] == issuer.COVERAGE
     assert b'private' not in result['bundle_bytes'] and b'untrusted.invalid' not in result['bundle_bytes']

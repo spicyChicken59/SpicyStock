@@ -112,7 +112,8 @@ requested URL; neither comes from a response body, header or redirect target.
 Mapping uses the one fixed mapping URL. Submissions and history use the current
 issuer CIK. Primary documents exactly match a selected filing; exhibits remain
 under that selected accession, use a safe HTML filename and cannot be its primary
-document. Error bodies, exception text and headers are never read or retained.
+document. Error bodies are never read or retained. Exception text and response
+headers are not retained; HTTP processing still reads status and protocol headers.
 This diagnostic does not change source coverage, clearance, budgets, caching,
 retry behavior or redirect refusal. Existing two-field errors remain valid and
 are not rewritten.

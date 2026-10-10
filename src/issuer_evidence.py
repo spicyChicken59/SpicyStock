@@ -606,7 +606,13 @@ def parse_primary(raw, url):
 
 class _NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
-        raise SourceError("redirect_refused", http_status=code)
+        try:
+            if fp is not None:
+                fp.close()
+        finally:
+            # urllib closes only after redirect_request returns; refusal must
+            # release the original response without reading or following it.
+            raise SourceError("redirect_refused", http_status=code) from None
 
 
 class _RequestDeadline:
@@ -814,11 +820,13 @@ class _Transport:
                     raise SourceError("invalid_response")
         except HTTPError as error:
             status = error.code
-            error.close()  # Never read or persist an arbitrary error body.
-            if type(status) is not int or not 300 <= status <= 599:
-                raise SourceError("invalid_response") from None
-            code = "redirect_refused" if status < 400 else "rate_limit" if status == 429 else "http_error"
-            raise SourceError(code, http_status=status) from None
+            try:
+                error.close()  # Never read or persist an arbitrary error body.
+            finally:
+                if type(status) is not int or not 300 <= status <= 599:
+                    raise SourceError("invalid_response") from None
+                code = "redirect_refused" if status < 400 else "rate_limit" if status == 429 else "http_error"
+                raise SourceError(code, http_status=status) from None
         except (TimeoutError, URLError, OSError) as error:
             code = "timeout" if isinstance(error, TimeoutError) or isinstance(getattr(error, "reason", None), TimeoutError) else "network_error"
             raise SourceError(code) from None
