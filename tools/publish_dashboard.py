@@ -106,6 +106,29 @@ def issuer_files(root: Path) -> tuple[str, ...]:
     return ('issuer-evidence.json', ref['path'])
 
 
+def stop_research_files(root: Path) -> tuple[str, ...]:
+    """Verify an optional research receipt and only its referenced cohort.
+
+    Older valid receipts may remain after an optional derivation refusal;
+    their source binding is checked by the browser before display. The
+    append-only cohort index and unreferenced cohorts are not browser assets.
+    """
+    docs = root / 'docs'
+    path = docs / 'stop-research.json'
+    if not path.exists() and not path.is_symlink():
+        return ()
+    from src.stop_research import MAX_RECEIPT_BYTES, parse_receipt, validate_bundle
+    try:
+        receipt_raw = reader_asset(docs, 'stop-research.json', MAX_RECEIPT_BYTES)
+        receipt = parse_receipt(receipt_raw)
+        ref = receipt['bundle']
+        bundle_raw = reader_asset(docs, ref['path'], ref['bytes'])
+        validate_bundle(receipt_raw, bundle_raw)
+    except (OSError, ValueError, TypeError, KeyError):
+        raise RuntimeError('Stop research companion does not match its committed receipt.') from None
+    return ('stop-research.json', ref['path'])
+
+
 def public_files(root: Path) -> tuple[str, ...]:
     """Every file a reader's browser is asked for: index.html, each local asset
     it references -- its own modules AND the vendored design system -- and the
@@ -140,6 +163,7 @@ def public_files(root: Path) -> tuple[str, ...]:
                            + ", ".join(absent))
     names.extend(name for name in reader_files(root) if name not in names)
     names.extend(name for name in issuer_files(root) if name not in names)
+    names.extend(name for name in stop_research_files(root) if name not in names)
     return tuple(names)
 
 

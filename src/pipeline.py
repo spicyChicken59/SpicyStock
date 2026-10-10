@@ -958,6 +958,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 restamp(data, rep, closed)
                 from src import reader
                 reader.write_publication(data, docs)
+                publish_stop_research(docs, rec)
                 if not data.get("fixture"):
                     history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
                 rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
@@ -966,6 +967,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         restamp(data, rep, closed)
         from src import reader
         reader.write_publication(data, docs)
+        publish_stop_research(docs, rec)
         if not data.get("fixture"):
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
         rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
@@ -992,6 +994,22 @@ def slots_held(open_plans: list[dict]) -> int:
     """How many of the configured slots the open model plans occupy: model
     allocation over configured sizing assumptions, not a holding count."""
     return sum(1 for o in open_plans if o.get("status") in SLOT_STATUSES)
+
+
+def publish_stop_research(docs: Path, rec: dict) -> None:
+    """Derive optional research from final bytes without changing the record.
+
+    The writer owns only its receipt and append-only research cohorts. A
+    refused research write leaves the evening publication and its history
+    usable; any older receipt remains visibly bound to its original source.
+    """
+    try:
+        from src import stop_research
+        stop_research.write_publication((docs / DATA_FILE).read_bytes(), docs,
+                                        objects=docs / "evidence", picks=rec)
+    except Exception as exc:  # noqa: BLE001 — optional derived research only
+        log.warning("Stop research publication unavailable (%s); evening record retained.",
+                    type(exc).__name__)
 
 
 def restamp(data: dict, rep: RunReport, closed: bool) -> None:

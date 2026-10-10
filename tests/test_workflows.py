@@ -191,6 +191,7 @@ def test_the_artifact_keeps_records_charts_and_retained_evidence():
     assert art["if"].startswith("(success() || failure())")
     assert "!= 'no_session'" in art["if"] and "!= 'session_incomplete'" in art["if"]
     assert set(art["with"]["path"].split()) == {"docs/data.json", "docs/reader.json", "docs/reader-observations/",
+                                             "docs/stop-research.json", "docs/stop-research/",
                                              "docs/picks.json", "docs/charts/", "docs/evidence/", "docs/history/"}
 
 
