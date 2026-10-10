@@ -6035,3 +6035,86 @@ hosted counts and separate actual/private verification are retained in
 The current baseline still has zero tickets; registered research is hypothetical.
 Next are the reviewed research journal and issuer consistency releases after their
 native gates, then the anticipation explanation/chart-inspection milestone.
+
+
+## Checkpoint, 10 Oct 2026 — independently executed research reports
+
+Issue #144 addresses a concrete gap: a trade executed independently from a
+retained research idea could not be recorded without first creating an admitted
+personal entry draft. The new explicit research-row action opens a blank,
+unsaved report. Its first save requires a positive actual fill and the matching
+submitted quantity. Every other unknown broker fact remains unknown; published
+research quantities and prices are never inserted as actual executions.
+
+The version-3 private store distinguishes planned handoffs from independent
+research reports. The latter preserve the exact original publication, cohort,
+evidence and actual baseline-admission boolean, without any order, plan, draft
+or cash payload. Both admitted and withheld original ideas can be recorded after
+cutoff. The same publication/evidence identity cannot be duplicated or converted
+over an existing planned handoff. Corrections keep the original source after
+expiry or publication replacement. Model exit schedules, entry-copy authority,
+settled cash and positions are not inferred from independent reports.
+
+Model commit `cad52c80` passes 49 direct controls; 12 isolated guard mutations
+fail their named checks and an unrelated control passes all 49. Independent
+model review passes 86 complementary controls over genuine legacy bytes,
+reported result arithmetic, both origin kinds, shared-identity collisions,
+source binding and storage failures. Version-1 and version-2 reads preserve
+original bytes; only an explicit successful save migrates them, retaining
+existing values and validation. The shared 100-record/1 MiB cap, locking,
+compare-and-swap and recovery remain in force.
+
+Independent review also reproduced an existing planned-handoff refusal when a
+valid upstream publication timestamp contained six fractional digits. A genuine
+positive producer fixture succeeds before that single labelled source-clock
+projection and failed after it. The corrected source-time validator preserves
+the original six-digit clock; seven-digit source clocks and six-digit manually
+entered broker times still fail. This is an executed transport-format control,
+not a claim that an actual Mo order failed or that the current zero-ticket
+publication admits a trade.
+
+The initial browser acceptance found phone select overflow. A scoped Morning
+desk select-width constraint fixes the measured overflow. Original admission,
+dates and report status remain visible; technical source identifiers sit in an
+optional disclosure. The legacy handoff suite passes 269 controls after its
+synthetic v1 envelope omits the newly introduced kind field and expects version
+3 only after explicit save. The combined morning, status, cash-preview, research, journal, decision and
+refresh compatibility run passes 1,475 controls. The final dedicated browser
+suite passes 147 controls; six isolated mutations fail their named assertions,
+and an unrelated timeout change passes all 147. Four blank/completed phone and
+desktop captures are inspected. Independent final-source browser review passes
+53 additional source-binding, stale-reference, private-input and correction
+controls. Exact-head integration review, hosted checks and actual public
+acceptance remain pending. README and
+configuration documentation are swept, with 37 documentation checks passing.
+No strategy, provider, production source or design-system pin is changed.
+
+
+## Checkpoint, 10 Oct 2026 — frozen research follow-through released
+
+[PR #140](https://github.com/spicyChicken59/SpicyStock/pull/140) merged reviewed
+head `84a0a0cd` at `62f7905d`. All seven exact-head gates passed: 3,813 Python,
+13,014 page, 378 chart and 137 continuity checks, both native jobs and both
+secret checks. Native memory supervision passed; official upload/API artifact
+digests match, without claiming a separate artifact-payload download.
+
+Publisher `38042651865` verified all 40 public files and completed successfully.
+Its Pages build `38042666532` deployed successfully; the initial push-triggered
+Pages build was superseded/cancelled and is recorded separately. The unchanged
+strict public runner passed 127/127 on its first attempt against that exact
+merge, with all 40 native hashes matched and six phone/desktop captures inspected.
+The default clock and actual public source were used; private records remained
+empty and settled cash remained unknown. There were no browser errors,
+overflow, provider calls, private saves or order-copy actions.
+
+The actual journal contains one original cohort with five rows. KE's one-share
+and PSNL's three-share research allocations are pending at zero of five observed
+sessions; MG, ZIM and SN remain excluded. All result-R fields are null. This
+records what is awaiting observation, not a model fill, personal execution,
+portfolio, return or demonstrated strategy edge. Opening the disclosure loads
+only the two bound journal files; closing it leaves initial loading deferred.
+Exact checks, publication identities and screenshots are retained in
+[the released journal receipt](release-evidence/2026-10-10-research-follow-through/acceptance.json).
+The current canonical scan still supplies zero baseline tickets. Next are the
+reviewed issuer-consistency and decision-inspection releases after their gates,
+then the independently executed report milestone.

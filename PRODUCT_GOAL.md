@@ -337,3 +337,16 @@ continuation, not a continuously running process or a guarantee that a future
 runtime has the same workspace. The repository's market-data workflows retain
 their own schedules. No broker execution, paid infrastructure, or new outbound
 messages are authorized by this development loop.
+
+
+## Research follow-through released — 10 October 2026
+
+[PR #140](https://github.com/spicyChicken59/SpicyStock/pull/140) is deployed.
+The frozen research journal retains the original cohort and later dated
+observations separately from private trade reports. Actual public acceptance
+passed 127 checks with all 40 public files matched and phone/desktop views
+inspected. KE and PSNL are currently pending with zero observed sessions;
+MG, ZIM and SN are excluded, and no result or personal trade is inferred.
+[Release evidence](release-evidence/2026-10-10-research-follow-through/acceptance.json)
+records the exact checked head and public release. The first actual successful
+trade, timely live-data delivery and broader issuer coverage remain open.

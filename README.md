@@ -129,7 +129,7 @@ the draft as a new entry to copy. Corrections are explicit; stale revisions
 cannot overwrite a newer report. Dates require an explicit time-zone offset
 and are displayed in Chicago time.
 
-The private store holds at most 100 handoffs and 1 MiB, never silently evicts
+The private store holds at most 100 records and 1 MiB, never silently evicts
 records, and serializes writes with browser Web Locks. Unavailable, unreadable
 or future-version storage is preserved and reported; it does not imply no
 holdings. Saved drafts and reports persist across reloads, but clearing this
@@ -137,6 +137,29 @@ site's browser data removes them. They are not uploaded, backed up in the cloud,
 added to model performance, or used to infer buying power. The handoff creates
 no broker connection, reserves no cash, and neither places nor cancels a
 protective order.
+
+**Independently executed research trade.** A verified retained research row also
+offers **Record an already executed trade**. This opens a blank private report
+without saving anything. The first explicit save requires a positive quantity
+reported filled and the corresponding submitted quantity; prices, fees, times,
+exits and protection remain unknown until entered. Research quantities and
+prices are never filled in as actual broker facts.
+
+The record preserves its original publication, cohort, evidence and baseline
+admission status. Both admitted and withheld comparison rows can be recorded
+after the entry window, including a trade for which no personal draft was saved.
+Reported quantities may differ from the hypothetical allocation. An existing
+record for the same publication and evidence cannot be duplicated or overwritten
+by this creation path; its existing correction form remains available.
+
+This report-only kind contains no draft, cash assumption or order payload, and
+never gains entry-copy or preparation authority. It shows actual reported
+holdings/protection and, when reconciled, the same personal result described
+below. No original model exit schedule is inferred for an independent execution.
+Initial creation rechecks the verified source inside the save operation. Later
+corrections retain the frozen original evidence even after publication replacement
+or expiry. Modal close/reopen preserves unsaved input; cancelling the new unsaved
+report is an explicit action. Reports remain private on this device.
 
 **Personal completed-trade result.** A separate, user-reported result requires
 positive entry fills, all filled shares exited, and submitted shares fully
@@ -154,11 +177,14 @@ gain or loss is named explicitly. Corrections recompute this personal result.
 It is not broker-verified, tax accounting, settlement confirmation, model
 performance or evidence of a strategy's future returns.
 
-Existing version-1 private records remain readable with new result fields
-unknown. Reading does not rewrite storage. An explicit successful save writes
-the current version, retaining the original identities and previously reported
-facts. Failed writes retain prior and proposed recovery bytes; unknown versions
-remain untouched. Upgrading does not expand the storage limit.
+Existing version-1 and version-2 private records remain readable. Missing
+version-1 result fields stay unknown; recorded version-2 prices and costs retain
+their validation and values. Reading adapts them in memory without rewriting
+storage. An explicit successful save writes version 3, retaining the original
+identities and previously reported facts and distinguishing planned handoffs
+from independent research reports. Failed writes retain prior and proposed
+recovery bytes; unknown versions remain untouched. Upgrading does not expand
+the shared 100-record / 1 MiB limit.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
