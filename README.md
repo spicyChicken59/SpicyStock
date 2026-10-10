@@ -5,10 +5,17 @@ trading workspace for a $2,000 cash account in Chicago time: trustworthy data,
 clear conditional setups, bounded sizing and an explained wait when nothing
 qualifies. Milestone 1 is live with morning preparation, combined cash
 allocation, known corporate-action exclusions and dependable session handling.
-The next milestone is verified morning quotes/events and a smaller initial
-payload; [implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
-track the remaining work. The fresh October 9 morning publication has zero
-qualifying tickets; a successful real-money trade has not yet been recorded.
+Verified morning observations and the compact reader are deployed; reliable
+on-time delivery and broader event coverage remain open. The
+[implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
+track this work and the practical first-trade workflow. The original October 9
+evening publication exposed a missing ZIM takeover exclusion; the source-backed
+correction and its production verification are tracked in
+[PR #115](https://github.com/spicyChicken59/SpicyStock/pull/115). A successful
+real-money trade has not yet been recorded. Mo authorizes continued
+milestone releases with tests, independent review and public verification. The
+hourly **Build SpicyStock milestones** ChatGPT task supports resuming that work;
+see the goal's continuation contract.
 
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The
@@ -65,10 +72,24 @@ window in America/Chicago, publication and market state, separate reaction and
 setting-up ticket counts, and the account assumptions beside the next step.
 The personal reference is a $2,000 cash account, $10 base planned risk and a
 $500 per-name cap before existing strategy reductions. An older publication
-sized for another account says so; the browser does not resize its tickets.
-Optional settled cash begins unknown and stays in this browser. Preparation
-checks do not establish live quotes, news coverage, broker buying power or
-execution, and cannot turn an unavailable setup into an order.
+sized for another account says so; the published tickets retain their quantities.
+Optional settled cash begins unknown and stays in this tab. A separate cash-aware
+preview uses that entered cash, an explicit fees buffer, and an optional smaller
+whole-share quantity. It caps the calculation at the published shares and the
+cash affordable at the entry limit, then shows principal, total cash, planned
+limit-to-stop risk and remaining cash. Decimal amounts are calculated in integer
+cents. Unknown or invalid inputs, unavailable plans, event restrictions and
+mismatched account assumptions cannot produce a current personal preview.
+
+Each preview considers one plan independently and reserves no cash. Account for
+other orders and broker holds before entering available settled cash. Changing
+plans clears the fees and quantity inputs; a new session clears cash too, and a
+reload clears all entries. Published copy controls still copy the original model
+quantity, clearly identified beside the preview. The calculation does not submit
+an order or verify a balance. Preparation checks do not establish live quotes,
+news coverage, broker buying power or execution, and cannot turn an unavailable
+setup into an order. Planned price-to-stop risk excludes fees, gaps and slippage.
+
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
 In recovery notices, the latest evening workflow is reported separately: a
@@ -1127,7 +1148,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-observations.js · app-reader.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-observations.js · app-reader.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
