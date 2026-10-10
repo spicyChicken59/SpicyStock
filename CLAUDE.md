@@ -5908,3 +5908,56 @@ browser invocations (1,935 total), after incorporating the actual current
 morning/issuer receipts from main. All reviewed runtime hashes are unchanged.
 Final documentation checks pass 37/37; the current 40-file publisher inventory
 and exact production issuer companion validate with zero network attempts.
+
+## Checkpoint, 10 Oct 2026 — HTTP diagnostics released
+
+[PR #135](https://github.com/spicyChicken59/SpicyStock/pull/135) merged reviewed
+head `ce1184c5` at `d72bcf35` after all seven required checks passed. Hosted
+verification records 3,734 Python, 12,640 page, 378 chart and 137 continuity
+checks, both native runtime jobs and both secret scans. Official native artifact
+digests match the upload logs and API metadata; their payloads were not separately
+downloaded. Publisher `38040596719` and Pages `38040608992` succeeded.
+
+Actual public acceptance passed 183 checks and all 37 required native file hashes.
+Eighteen phone/desktop captures were inspected. The first attempt stopped on an
+external Google Fonts CORS failure; its 130/131 results remain in the receipt.
+A fresh run of the unchanged strict checker passed, with no error exemption or
+substituted asset. This establishes that run's result, not continuous availability
+of the third-party font service.
+
+The legacy issuer receipt `c0d1c97f…` / bundle `c20f9e4d…` remains honestly
+unavailable: one request, zero downloaded/captured bytes, identity/index unknown.
+The UI labels its source error "HTTP status not recorded" and preserves the
+original requested URL. It does not infer 403 from missing metadata. MG/ZIM's
+dated acquisition exclusions remain intact. A separately disclosed disposable
+synthetic cash input checks local continuity; it is not Mo's actual balance.
+The canonical publication, reader, picks, histories, retained sources, morning
+and issuer companions, research cohort and pinned design system are unchanged.
+
+Exact heads, gate results, independent source review, public hashes, screenshot
+digests and the failed attempt are retained in
+[the diagnostic release receipt](release-evidence/2026-10-10-issuer-diagnostics/acceptance.json).
+The day's one remaining authorized production issuer collection is a separate
+verification step; its result must not be attributed to this legacy acceptance.
+
+That subsequent collection, `38040893686`, published `f9b91d00` with receipt
+`f36c6b4e…` and bundle `f525a5f9…`. It observed HTTP 403 at the original SEC
+ticker-mapping URL. One shared request failed for both selected MG/ZIM rows;
+there were no submissions/document requests, downloads or captures. The failure
+body/headers are deliberately absent, so the denial's cause is not established.
+Both the deployed validator and queued issuer-consistency validator accept the
+exact source, prior-receipt compare-and-swap and current canonical/reader binding.
+All 18,594 protected prior docs blobs retain their bytes.
+
+Publisher `38040976621` verified all 37 files; Pages `38040987252` succeeded.
+The unchanged strict browser checker passed 183/183 on its first typed-response
+attempt, with 37 exact native hashes and 18 inspected captures. The public UI
+says "Observed HTTP 403 · SEC ticker mapping" and retains unknown identity/index
+coverage, no filing excerpts and both known event exclusions. This separate
+collection and acceptance are appended to the same dated release receipt.
+The unchanged daily guard's complete run/attempt history counts exactly three
+production starts today, leaving zero. No fourth start is authorized by the
+current budget. A public-contact/client-identification change would be an
+unproven access hypothesis, requiring a designated contact and a future budgeted
+verification; never infer one from private email credentials. Broader source
+coverage and a first actual trade remain open.

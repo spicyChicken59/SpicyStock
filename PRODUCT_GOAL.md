@@ -109,6 +109,23 @@ Automatic triggering required the separately tracked workflow-path fix (#128 /
 These release results do not establish fresh filing coverage, on-time morning
 quotes or an actual personal trade. The dated checkpoint records each limitation.
 
+The [HTTP diagnostic release](https://github.com/spicyChicken59/SpicyStock/pull/135)
+is also merged and deployed. Its [dated acceptance](release-evidence/2026-10-10-issuer-diagnostics/acceptance.json)
+records the reviewed head, all seven hosted gates, 183 actual public checks and
+37 exact public-file matches. The existing legacy receipt correctly shows an
+unknown HTTP status, unknown issuer identity/index coverage and no new filings.
+One initial external Google Fonts CORS failure remains in the evidence; a fresh
+run with the unchanged strict checks passed. The diagnostic release by itself
+does not establish a cause for the older SEC failure or new source availability.
+
+The separately authorized final daily [issuer collection](https://github.com/spicyChicken59/SpicyStock/actions/runs/38040893686)
+then recorded **HTTP 403 during SEC ticker mapping**. Its publisher and Pages
+deployment succeeded; a second 183-check public verification matched all 37
+files and inspected the actual typed error at both screen sizes. One request
+returned no filing content or captured bytes. The reason for denial is unknown.
+The three permitted UTC-day production collection starts are exhausted; the
+source access problem remains open while independent product work continues.
+
 ## Operating contract
 
 - Use the existing SpicyChicken design system and GitHub Pages deployment.

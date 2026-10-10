@@ -162,6 +162,10 @@ remain untouched. Upgrading does not expand the storage limit.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
+The wait explanation separates the reaction review gates from the original
+anticipation decisions. Each retained top anticipation row keeps its recorded
+ticket status and refusal reason; an absent reason stays unknown rather than
+being reconstructed from the experimental policy.
 On a weekend or holiday, the next-action message names the closed viewing date
 and the next session from the recorded calendar; it does not relabel the last
 measured open session as closed. In recovery notices, the latest evening
@@ -960,6 +964,11 @@ anticipation calculation for applicable sessions **October 12 through November
 6, 2026**. The versioned experiment is `anticipation_stop_width_4_to_5_v1`.
 It changes no production ticket, reaction/burst stop selection or model record.
 There is no research order-copy or broker-draft action.
+An **Inspect recorded chart** action opens the same publication's existing
+anticipation chart and baseline decision. It checks the publication and retained
+evidence identity again when pressed, including after a same-ticker refresh.
+Missing or changed identity leaves an explanation in the research panel.
+Inspection preserves private preparation and adds no current quote or order.
 
 The producer uses the actual retained planning inputs and the same pure planner,
 changing only the anticipation cap. Original trigger, limit and structural stop
