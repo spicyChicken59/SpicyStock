@@ -16,6 +16,7 @@ export async function checkMorningStatus({ browser, base, open, check, eq, shots
     return record;
   };
   const anticipation = await fixture('notrade'), burstOnly = await fixture('full');
+  const weekend = await fixture('next'), holiday = await fixture('closed');
   const mixed = structuredClone(burstOnly);
   mixed.watchlist.top = structuredClone(anticipation.watchlist.top);
   // These are UI controls, not newly generated or verified strategy records.
@@ -68,6 +69,23 @@ export async function checkMorningStatus({ browser, base, open, check, eq, shots
       }
       await render(withheld, OPEN);
       check(`${width} zero tickets: explanation covers both stages`, !(await body()).includes('No burst qualified'));
+      for (const [name, record, now, measured, closedDay, nextDay] of [
+        ['weekend after an open Friday', weekend, '2026-09-12T14:00:00Z', 'Fri 11 Sep', 'Sat 12 Sep', 'Mon 14 Sep'],
+        ['holiday after an open Friday', holiday, '2026-09-07T14:00:00Z', 'Fri 4 Sep', 'Mon 7 Sep', 'Tue 8 Sep']
+      ]) {
+        const original = JSON.stringify(record);
+        await render(record, now);
+        eq(`${width} ${name}: measured session was open`, record.run.session_state, 'open');
+        eq(`${width} ${name}: viewing date is closed`, await page.evaluate(() => SCStock.state.state), 'closed');
+        check(`${width} ${name}: next step names the actual closed date`, (await body()).includes('market was closed on ' + closedDay), await body());
+        check(`${width} ${name}: next session comes from the recorded calendar`, (await body()).includes('next applicable session is ' + nextDay), await body());
+        check(`${width} ${name}: measured Friday is never called sessionless`, !(await body()).includes('closed on ' + measured) && !(await body()).includes('had no session'), await body());
+        eq(`${width} ${name}: calendar wording changes no published plans`, await page.evaluate(() => JSON.stringify(SCStock.data)), original);
+        if (shotsDir) {
+          await mkdir(shotsDir, { recursive: true });
+          await page.locator('#next').screenshot({ path: path.join(shotsDir, `status-${name.startsWith('weekend') ? 'weekend' : 'holiday'}-${width}.png`) });
+        }
+      }
       for (const [status, conclusion, expected] of [
         ['completed', 'success', 'completed successfully'],
         ['completed', 'cancelled', 'cancelled'],

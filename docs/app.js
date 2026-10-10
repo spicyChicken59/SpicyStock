@@ -4593,7 +4593,7 @@
     const day = tm.known ? dateWords(tm.session) : null;
     const by_ = tm.prepareBy ? timeET(tm.prepareBy.toISOString()) : ORDERS_BY;
     // the record's own safeguards first, with the window's state beside them
-    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', 'The market was closed on ' + dateWords(tm.closedSession || s.expected) + ', so the plans dated for it had no session. ' + line, 'closed'];
+    if (s.state === 'closed') return ['Plans unchanged. Check the open model plans.', s.sentence + ' ' + line, 'closed'];
     if (red) return ['No new longs.' + (open ? ' Review the open public-model plans.' : ' Wait for the next published scan.'), 'The recorded market filter refuses new entries. ' + (open ? 'Open model plans keep their recorded exit rules; they do not establish what you hold. ' : 'There are no open public-model plans in this record. ') + line, 'red'];
     if (ph === 'unknown') return ['Entry timing unavailable — research only.', line + ' Read the setups and the evidence; do not place an order from a page that cannot date it.', 'stale'];
     if (ph === 'ended') {
