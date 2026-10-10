@@ -1,7 +1,7 @@
 """Offline regression of the exact public-hash disposition with gitleaks 8.24.3.
 
 Run explicitly with an installed, verified binary; this never downloads tools.
-Only invented canaries and the existing public CI observation enter scratch.
+Only invented canaries and retained public evidence enter scratch.
 No provider credentials, network calls, Git writes or broad scanner exclusions.
 """
 from __future__ import annotations
@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -33,6 +34,23 @@ BOUNDED_VALUES = (
 NATIVE5_PRESERVATION = "docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation.json"
 NATIVE5_WORKFLOW = ".github/workflows/secret-scan.yml"
 NATIVE5_PUBLIC_BLOB = "f568689c3789a53835708b676ef6c2dcc418fd6f"
+PUBLIC_SITE_CAPTURE = "release-evidence/2026-10-10-zim/ir-merger-announcement.html"
+PUBLIC_SITE_CAPTURE_SHA256 = "32b3411f00b61f712fff475a3b69d63a5de1f8589c71fee4afb6adfc8637a519"
+
+
+def public_site_capture():
+    """Read the pinned public HTML; never log its client identifier."""
+    raw = (ROOT / PUBLIC_SITE_CAPTURE).read_bytes()
+    manifest = json.loads((ROOT / PUBLIC_SITE_CAPTURE).with_name("manifest.json").read_bytes())
+    capture = next(row for row in manifest["captures"] if row["file"] == Path(PUBLIC_SITE_CAPTURE).name)
+    if (hashlib.sha256(raw).hexdigest() != PUBLIC_SITE_CAPTURE_SHA256
+            or capture["sha256"] != PUBLIC_SITE_CAPTURE_SHA256
+            or capture["bytes"] != len(raw)):
+        raise ValueError("public_site_capture_changed")
+    matches = re.findall(rb"grecaptcha\.render\('[^']+',\s*\{\s*'sitekey':\s*'([^']+)'", raw)
+    if len(matches) != 1:
+        raise ValueError("public_site_client_context_changed")
+    return raw, matches[0].decode("ascii")
 
 
 def native5_public_preservation():
@@ -148,6 +166,20 @@ def run_controls(binary: Path, workspace: Path):
         ("native5_original_path_prefix", config, "copied/" + NATIVE5_PRESERVATION, preservation, 2, ["generic-api-key"]),
         ("native5_default_detector", config, NATIVE5_PRESERVATION, default_detector, 2, ["github-pat"]),
     ])
+    site_capture, public_identifier = public_site_capture()
+    changed_identifier = ("A" if public_identifier[0] != "A" else "B") + public_identifier[1:]
+    cases.extend([
+        ("public_site_defaults", baseline, PUBLIC_SITE_CAPTURE, site_capture, 2, ["generic-api-key"]),
+        ("public_site_exact", config, PUBLIC_SITE_CAPTURE, site_capture, 0, []),
+        ("public_site_unrelated_same_path", config, PUBLIC_SITE_CAPTURE, other_value, 2, ["generic-api-key"]),
+        ("public_site_altered_value", config, PUBLIC_SITE_CAPTURE,
+         site_capture.replace(public_identifier.encode(), changed_identifier.encode()), 2, ["generic-api-key"]),
+        ("public_site_other_path", config, PUBLIC_SITE_CAPTURE.replace("ir-merger-announcement.html", "another.html"),
+         site_capture, 2, ["generic-api-key"]),
+        ("public_site_path_suffix", config, PUBLIC_SITE_CAPTURE + ".backup", site_capture, 2, ["generic-api-key"]),
+        ("public_site_path_prefix", config, "copied/" + PUBLIC_SITE_CAPTURE, site_capture, 2, ["generic-api-key"]),
+        ("public_site_default_detector", config, PUBLIC_SITE_CAPTURE, default_detector, 2, ["github-pat"]),
+    ])
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence
@@ -165,6 +197,7 @@ def run_controls(binary: Path, workspace: Path):
             "retained_documents": [{"path": path, "sha256": sha(raw)} for path, raw in zip(BOUNDED_PATHS, documents)],
             "native5_preservation": {"path": NATIVE5_PRESERVATION, "sha256": sha(preservation),
                                      "public_workflow_path": NATIVE5_WORKFLOW, "public_git_blob": NATIVE5_PUBLIC_BLOB},
+            "public_site_capture": {"path": PUBLIC_SITE_CAPTURE, "sha256": sha(site_capture)},
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 
