@@ -102,8 +102,9 @@ operation, not a broker order format or a confirmation of execution.
 New preparation and copying recheck the current publication, account, entry
 window and event restrictions. A superseded or expired draft remains readable.
 Manual broker reports remain editable afterward: submitted quantity, cumulative
-entry fills and average price/time, cancelled remainder, cumulative exits/time,
-and the broker-reported protective quantity. Actual submissions, prices and
+entry fills and average price/time, cancelled remainder, cumulative exits and
+average exit price/time, actual entry/exit fees, and the broker-reported
+protective quantity. Actual submissions, prices and
 times can differ from the draft and are labeled as deviations. They do not
 rewrite the strategy or the original terms. Copying, saving and market prices
 never create a reported fill.
@@ -125,7 +126,29 @@ holdings. Saved drafts and reports persist across reloads, but clearing this
 site's browser data removes them. They are not uploaded, backed up in the cloud,
 added to model performance, or used to infer buying power. The handoff creates
 no broker connection, reserves no cash, and neither places nor cancels a
-protective order. Exit prices and actual P&L are outside this first slice.
+protective order.
+
+**Personal completed-trade result.** A separate, user-reported result requires
+positive entry fills, all filled shares exited, and submitted shares fully
+reconciled as filled or cancelled (including an explicit zero cancellation).
+Both average prices, actual entry/exit fees and latest entry/exit times must be
+reported. Blank costs remain unknown; explicit zero fees means no reported fee.
+The draft's estimated fee buffer is never substituted for actual costs.
+Partial exits retain their facts without estimating a realized cost basis.
+
+Gross result is filled shares multiplied by the difference between average
+exit and entry prices; net subtracts the reported entry and exit fees. Prices use at most six
+decimal places and actual fees use cents. Integer arithmetic retains exact
+microdollars, rounding only the displayed amount to cents; a nonzero sub-cent
+gain or loss is named explicitly. Corrections recompute this personal result.
+It is not broker-verified, tax accounting, settlement confirmation, model
+performance or evidence of a strategy's future returns.
+
+Existing version-1 private records remain readable with new result fields
+unknown. Reading does not rewrite storage. An explicit successful save writes
+the current version, retaining the original identities and previously reported
+facts. Failed writes retain prior and proposed recovery bytes; unknown versions
+remain untouched. Upgrading does not expand the storage limit.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
