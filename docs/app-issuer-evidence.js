@@ -10,6 +10,7 @@
     receipt_ttl_seconds: 86400, max_future_skew_seconds: 5, max_requests: 96, max_response_bytes: 2097152,
     max_download_bytes: 33554432, max_collection_seconds: 240, min_request_interval_seconds: 1 };
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
+  const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const require = (ok, why) => { if (!ok) throw Error(why); };
   const canonical = x => Array.isArray(x) ? x.map(canonical) : object(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
@@ -109,6 +110,30 @@
     const hash = await w.crypto.subtle.digest('SHA-256', typeof raw === 'string' ? new TextEncoder().encode(raw) : raw);
     return Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, '0')).join('');
   }
+  function sourceError(error, row) {
+    require((keys(error, 'code source_url') || keys(error, 'code source_url http_status source_phase')) &&
+      ERRORS.includes(error.code) && (error.source_url === null || safeUrl(error.source_url)), 'Issuer error metadata is invalid.');
+    if (!Object.hasOwn(error, 'http_status')) return;
+    require(Number.isInteger(error.http_status) && error.http_status >= 300 && error.http_status <= 599 &&
+      Object.hasOwn(SOURCE_PHASES, error.source_phase), 'Issuer HTTP diagnostic fields are invalid.');
+    const code = error.http_status < 400 ? 'redirect_refused' : error.http_status === 429 ? 'rate_limit' : 'http_error';
+    require(error.code === code, 'Issuer HTTP status contradicts its error code.');
+    const cik = row.identity.cik, phase = error.source_phase, url = error.source_url;
+    let matches = phase === 'mapping' && url === 'https://www.sec.gov/files/company_tickers_exchange.json';
+    if (Number.isSafeInteger(cik) && cik > 0) {
+      const submissions = 'https://data.sec.gov/submissions/CIK' + String(cik).padStart(10, '0');
+      if (phase === 'submissions') matches = url === submissions + '.json';
+      if (phase === 'history') matches = new RegExp('^' + submissions.replaceAll('.', '\\.') + '-submissions-[0-9]{3}\\.json$').test(url);
+      if (phase === 'primary' || phase === 'exhibit') matches = row.index.listed_filings.some(filing => {
+        if (!row.index.selected_accessions.includes(filing.accession)) return false;
+        const prefix = 'https://www.sec.gov/Archives/edgar/data/' + cik + '/' + filing.accession.replaceAll('-', '') + '/';
+        if (phase === 'primary') return url === prefix + filing.primary_document;
+        const filename = typeof url === 'string' && url.startsWith(prefix) ? url.slice(prefix.length) : '';
+        return /^[A-Za-z0-9_.-]+\.(?:htm|html)$/i.test(filename) && !filename.includes('..') && filename !== filing.primary_document;
+      });
+    }
+    require(matches, 'Issuer HTTP diagnostic source differs from its collection phase.');
+  }
   async function validateBundle(value, r) {
     require(keys(value, 'schema_version publication collection_started_at generated_at as_of window_start candidates issuers stats') && value.schema_version === 1 &&
       equal(value.publication, r.publication) && value.collection_started_at === r.collection_started_at && value.generated_at === r.generated_at && value.as_of === r.collection_started_at && day(value.window_start), 'Issuer bundle metadata differs from its receipt.');
@@ -174,7 +199,8 @@
         require(!row.documents.some(x => x.accession === accession && x.role === 'exhibit') || row.documents.some(x => x.accession === accession && x.role === 'primary'), 'Issuer exhibit lacks its primary document.');
       }
       require(index.exhibit_links_observed - index.exhibit_links_not_fetched === row.documents.filter(x => x.role === 'exhibit').length, 'Issuer exhibit remainder differs from retrieved content.');
-      require(Array.isArray(row.errors) && row.errors.length <= 96 && row.errors.every(x => keys(x, 'code source_url') && ERRORS.includes(x.code) && (x.source_url === null || safeUrl(x.source_url))), 'Issuer error metadata is invalid.');
+      require(Array.isArray(row.errors) && row.errors.length <= 96, 'Issuer error metadata is invalid.');
+      row.errors.forEach(error => sourceError(error, row));
     }
     require(keys(value.stats, 'request_count downloaded_bytes capture_bytes budget_stop') && integer(value.stats.request_count, 96) && integer(value.stats.downloaded_bytes, 34 * 1024 * 1024) &&
       integer(value.stats.capture_bytes, 32 * 1024 * 1024) && (value.stats.budget_stop === null || ERRORS.includes(value.stats.budget_stop)) &&
@@ -283,7 +309,15 @@
       const p = node('p', { class: 'sc-hint' }); p.append(link(label, src.url)); body.append(p);
       paragraph(body, 'Retrieved / checked:', stamp(src.fetched_at) + ' / ' + stamp(src.checked_at) + ' · ' + src.cache_status.replaceAll('_', ' '));
     }
-    if (row.reason || row.errors.length) paragraph(body, 'Missing coverage:', [row.reason, ...row.errors.map(x => x.code.replaceAll('_', ' '))].filter(Boolean).join(' · '));
+    if (row.reason) paragraph(body, 'Missing coverage:', row.reason);
+    for (const error of row.errors) {
+      const detail = node('p', { class: 'sc-hint', 'data-issuer-error': '' });
+      detail.append(node('strong', {}, 'Source retrieval: '), d.createTextNode(Object.hasOwn(error, 'http_status')
+        ? 'Observed HTTP ' + error.http_status + ' · ' + SOURCE_PHASES[error.source_phase] + ' · ' + error.code.replaceAll('_', ' ')
+        : error.code.replaceAll('_', ' ') + ' · HTTP status not recorded'));
+      if (error.source_url) detail.append(d.createTextNode(' · '), link('SEC request URL', error.source_url));
+      body.append(detail);
+    }
     const metadata = node('details', { class: 'sc-disclosure' }); metadata.append(node('summary', {}, 'Listed filing metadata (' + index.listed_filings.length + ')'));
     for (const item of index.listed_filings) paragraph(metadata, item.form + ' · ' + item.filing_date, 'SEC accepted ' + stamp(item.accepted_at) + ' · report date ' + (item.report_date || 'not supplied') + ' · accession ' + item.accession);
     body.append(metadata);
