@@ -7,6 +7,17 @@ workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
 default model assumptions retain their own values. Continue from the first
 unfinished milestone and record production evidence before calling it complete.
 
+**Queued review-budget policy (10 October 2026):** `src/review_selection.py`
+archives `account_feasible_first_research_v1`. The evening run selects feasible
+private mechanical previews first, retaining the twelve-read ceiling and existing
+rank. At most two spare A+/A reads retain research (ranked plus deterministic
+session/ticker rotation); zero feasible names does not consume twelve reads.
+Per-row purposes/blockers and reconciled run counts are provenance-bound and
+replayed with the production planner and archived event registry. This changes
+selection and rules identity, not final trade guards or historical records.
+The existing conservative model-plan reservation policy still applies across
+rules identities. No production spend or improvement in outcomes is yet claimed.
+
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
 `knowledge/method.md` says whose number every rule is, `README.md` says what
@@ -290,7 +301,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3376 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3413 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the

@@ -21,12 +21,12 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk
+from src import watchlist, allocation, event_risk, review_selection
 
 log = logging.getLogger("spicystock.pipeline")
 
 # ------------------------------------------------------------------ rules ---
-MAX_READS = 12                 # Claude reads per night, by mechanical grade (P)
+MAX_READS = 12                 # Claude reads per night; feasible first, bounded spare research (P)
 FETCH_BUDGET_SECONDS = 900     # past this the run continues with what it has (P)
 FETCH_CHUNK = 500              # symbols per timed fetch step (plumbing)
 LOOKBACK_DAYS = 260            # sessions: Double Trouble needs 252 (B)
@@ -440,11 +440,20 @@ def admitted_grades(verdict: str) -> tuple[str, ...]:
 
 
 def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], rep: RunReport,
-                          charts_dir: Path, system_prompt: str, dry_run: bool, admitted=None) -> dict:
-    """Render a chart and ask Claude for the top MAX_READS bursts by mechanical
-    grade; clamp the reply to at most the mechanical grade."""
+                          charts_dir: Path, system_prompt: str, dry_run: bool, admitted=None,
+                          selected_tickers=None) -> dict:
+    """Read the prepared selection; clamp replies to the mechanical grade.
+
+    Standalone grader callers may omit selection and supply their own input
+    population. The evening run always supplies its versioned selection.
+    """
     ordered = sorted(bursts, key=lambda b: (GRADE_ORDER.get(b["grade_mechanical"], 9),
                                             -(b["score"] or 0), b["ticker"]))
+    if selected_tickers is not None:
+        by_ticker = {b["ticker"]: b for b in bursts}
+        if len(set(selected_tickers)) != len(selected_tickers) or len(selected_tickers) > MAX_READS:
+            raise ValueError("invalid review selection")
+        ordered = [by_ticker[t] for t in selected_tickers]
     candidates = []
     for b in ordered[:MAX_READS]:
         assessment: quality.Assessment = b["_assessment"]
@@ -647,7 +656,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -822,6 +831,10 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         # These plans are discarded by make_plans after grading; preview tickets
         # and budgets are never recorded, published, or used as final permission.
         _make_plans(bursts, account, regime, held, session, require_reader=False)
+        decisions, selected = review_selection.select(bursts, session, max_reads=MAX_READS,
+            admitted=admitted_grades(regime.get("verdict", "green")), research_grades=TRADE_GRADES)
+        for b in bursts:
+            b["review_selection"] = decisions[b["ticker"]]
 
         rep.stage = "grade"
         charts_dir = docs / CHARTS_DIR_NAME
@@ -829,7 +842,9 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         if bursts:
             system_prompt = grader_prompt()
             reads = read_charts_and_grade(bursts, fresh, rep, charts_dir, system_prompt, dry_run,
-                                          admitted=admitted_grades(regime.get("verdict", "green")))
+                                          admitted=admitted_grades(regime.get("verdict", "green")),
+                                          selected_tickers=selected)
+        selection_receipt = review_selection.receipt(bursts, decisions, selected, session, max_reads=MAX_READS)
         rank(bursts)
         trades, beyond_cap, budget = make_plans(bursts, fresh, account, regime, held, session)
 
@@ -859,7 +874,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                             "timeframe": "1Day", "expected_session": expected.isoformat(),
                             "evaluated_session": session.isoformat()},
             "coverage": coverage, "input_tolerance": tolerance, "stale_followup": followed,
-            "bursts": len(bursts), "graded": graded, "reads": reads,
+            "bursts": len(bursts), "graded": graded, "reads": reads, "review_selection": selection_receipt,
             "email": "skipped", "published_at": generated,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),

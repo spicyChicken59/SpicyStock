@@ -21,7 +21,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs, allocation, event_risk
+from src import discovery, grader, plan, quality, reader_authority, reader_coverage, scans, watchlist, sessions, inputs, allocation, event_risk, review_selection
 
 VERSION = 1
 OBJECT_DIR = "evidence"
@@ -130,6 +130,8 @@ def prepare_reader(row, metrics, chart_path, system):
 
 def seal_reader(row):
     if "_evidence" in row:
+        if "review_selection" in row:
+            row["_evidence"]["review_selection"] = deepcopy(row["review_selection"])
         if "reader_coverage" in row:
             row["_evidence"]["reader_coverage"] = row["reader_coverage"]
         row["_evidence"]["reader_sha256"] = digest(row.get("claude"))
@@ -144,7 +146,8 @@ def seal_plan(row, inputs, regime, session, error=None):
 
 
 def context(data):
-    return {"run": {k: data["run"].get(k) for k in RUN_FACTS}, "rules": data["rules"],
+    run_fields = RUN_FACTS + (("review_selection",) if "review_selection" in data["rules"] else ())
+    return {"run": {k: data["run"].get(k) for k in run_fields}, "rules": data["rules"],
             "breadth": data["breadth"], "account": {k: data["account"].get(k) for k in ACCOUNT_FIELDS},
             "cash_budget": data["cash_budget"],
             "candidates": [["burst", r["ticker"]] for r in data["bursts"]]
@@ -199,6 +202,8 @@ def finish(data, bursts):
         _same(digest(row.get("claude")), e["reader_sha256"], "reader result changed after grading")
         if "reader_coverage" in e:
             _same(row.get("reader_coverage"), e["reader_coverage"], "reader coverage changed after grading")
+        if "review_selection" in data["rules"]:
+            _same(row.get("review_selection"), e.get("review_selection"), "review selection changed after grading")
         _same(row["grade"], e["final_grade"], "final grade changed after grading")
         _same(digest(plain_plan(row)), e["planning"]["output_sha256"], "plan changed after construction")
         e.update(version=VERSION, kind="burst", ticker=row["ticker"], session=data["run"]["session"],
@@ -494,6 +499,12 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                 family, _, name = key.partition(".")
                 if digest(data["rules"].get(family, {}).get(name)) != digest(value):
                     mismatches.append(key)
+        selection_supported = False
+        if "review_selection" in data["rules"]:
+            selection_supported = digest(data["rules"]["review_selection"]) == digest(
+                {k.partition(".")[2]: v for k, v in review_selection.RULES.items()})
+            if not selection_supported:
+                mismatches.append("review_selection")
         if "event_risk" in data["rules"]:
             event_rules = data["rules"]["event_risk"]
             for key, value in event_risk.RULES.items():
@@ -511,6 +522,9 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                 raise ValueError("input/calendar contract: " + "; ".join(existing_faults))
         if data["breadth"]["regime"]["verdict"] not in ("red", "yellow", "green"):
             raise ValueError("unknown regime")
+        selection_decisions = selection_receipt = None
+        if "review_selection" in data["rules"] and compatible:
+            selection_decisions, selection_receipt = review_selection.replay(data)
         candidates = [("burst", r) for r in data["bursts"]] + [("anticipation", r) for r in data.get("watchlist", {}).get("top", [])]
         for kind, row in candidates:
             ticker = row.get("ticker", "?")
@@ -526,6 +540,13 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                     if compatible:
                         _check_mechanical(row)
                     _check_reader(row, e, compatible)
+                    if "review_selection" in data["rules"]:
+                        decision = row.get("review_selection")
+                        _same(decision, e.get("review_selection"), "review selection evidence mismatch")
+                        if selection_decisions is not None:
+                            _same(decision, selection_decisions[ticker], "review selection decision differs from replay")
+                        if selection_supported:
+                            _same(bool(e.get("reader_input")), decision["selected"], "reader input contradicts review selection")
                     _check_plan(data, row, e, compatible)
                     if objects is not None and compatible:
                         _check_source(data, row, e, objects)
@@ -551,6 +572,11 @@ archive. Integrity-only callers explicitly disable the source replay requirement
                 checked.append(e["id"])
             except (ValueError, KeyError, TypeError, IndexError, OSError, AttributeError) as exc:
                 breaks.append(f"{ticker}: {exc}")
+        if selection_receipt is not None:
+            _same(data["run"].get("review_selection"), selection_receipt, "review selection receipt differs from replay")
+            _same(data["run"]["reads"]["requested"], selection_receipt["requested"], "review selection requested count mismatch")
+            _same(data["run"]["reads"]["done"], sum(c["accepted"] for c in selection_receipt["by_purpose"].values()),
+                  "review selection accepted count mismatch")
         if picks is not None:
             current = [p for p in picks["picks"] if p["date"] == data["run"]["session"] and (p.get("evidence_ref") or {}).get("context_sha256") == ctx]
             expected = {(kind, r["ticker"]) for kind, r in candidates if r["evidence"]["gate"]["ticket"]}

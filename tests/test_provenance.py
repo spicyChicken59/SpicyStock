@@ -119,11 +119,15 @@ def test_regime_and_reader_decisions_are_distinct_from_quality():
     assert all(b["grade"] == "A+" for b in yellow["bursts"] if b["evidence"]["gate"]["ticket"])
     assert any(b["grade_mechanical"] == "A+" and b["grade"] == "C" and b["claude"]["returned_grade"] == "C" for b in lower["bursts"])
     for b in down["bursts"]:
-        assert b["reader_coverage"] == "fallback" and b["plan"] is None
+        assert b["plan"] is None
         assert b["grade"] == b["grade_mechanical"]
-        assert b["claude"]["source"] == "fallback"
-        assert b["claude"]["score"] is None and b["claude"]["reason"] is None
-        assert b["claude"]["attempts"][-1]["outcome"] == "rejected"
+        if b["review_selection"]["selected"]:
+            assert b["reader_coverage"] == "fallback" and b["claude"]["source"] == "fallback"
+            assert b["claude"]["score"] is None and b["claude"]["reason"] is None
+            assert b["claude"]["attempts"][-1]["outcome"] == "rejected"
+        else:
+            assert b["reader_coverage"] == "not_selected_budget" and b["claude"] is None
+            assert "reader_input" not in b["evidence"]
 
 
 @pytest.mark.parametrize("case,reason", [("discovery", "discovery digest"), ("threshold", "quality digest"),
@@ -319,8 +323,8 @@ def test_yellow_withholds_a_even_when_mechanical_is_a_plus(market, claude, fake_
 
 def test_discovery_contradiction_is_archived_as_fallback(market, claude, fake_alpaca, fake_resend, tmp_path, seed):
     from src import provenance
-    from tests.test_pipeline import dollar_day
-    fake_alpaca.add_history("AAA", dollar_day(seed, 1, ratio=0.86, gain=2.0))
+    # A-quality dollar-only shape remains in the versioned review pool.
+    fake_alpaca.add_history("AAA", qframe(ideal_bars(burst_gain=2.0)))
     claude.set_payload({"score": 3.0, "grade": "skip", "reason": "The gain is below the required 4% burst minimum.", "key_risk": "gap", "entry_note": "pass"})
     rep, data, docs = evening(tmp_path, market)
     assert rep.published, rep.failure
@@ -350,6 +354,7 @@ def test_reader_lowering_removes_the_provisional_ticket(grade, score, market, cl
 def test_unattempted_reader_never_invents_an_ai_result(market, claude, fake_resend, tmp_path, monkeypatch):
     from src import provenance
     monkeypatch.setattr(pipeline, "MAX_READS", 0)
+    monkeypatch.setitem(pipeline.RULES, "pipeline.max_reads", 0)
     rep, data, docs = evening(tmp_path, market)
     assert rep.published, rep.failure
     b = data["bursts"][0]

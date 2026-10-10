@@ -587,8 +587,26 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   The [retained C audit](docs/input-truthfulness/2026-09-22-consolidation-source-fidelity.md)
   reproduces the measurements and their sensitivity without retuning thresholds.
 - **grade** — Claude reads the chart and the numbers for up to twelve
-  bursts by mechanical grade and may only LOWER a grade, never raise it;
-  the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
+  bursts and may only LOWER a grade, never raise it. The versioned
+  `account_feasible_first_research_v1` policy prioritizes private pre-review
+  plans that satisfy the mechanical grade/regime, veto, known-event, entry
+  geometry and whole-share checks. Their existing mechanical grade / descending
+  score / ticker order is preserved. All feasible names are covered when the
+  twelve-name budget permits; none is displaced for research. At most 2 spare
+  reads go to infeasible mechanical A+/A research: one by that same rank, then
+  one by the lowest SHA-256 of policy, measured session and ticker. With no
+  feasible names this is at most two reads, and an empty research pool makes
+  no model calls. This near-admission sample is not an unbiased market sample.
+  `bursts[].review_selection` retains each purpose and checked blocker;
+  `run.review_selection` reconciles feasibility, research-pool size, selected
+  names, accepted/unaccepted/refused results, actual retained attempts and
+  unused capacity. Attempts are distinct from requested names and billed cost.
+  The private preview precedes combined allocation; selection grants no ticket.
+  Final accepted-review, grade/regime, sizing, event and allocation guards
+  remain unchanged. Archived records without this policy keep their original
+  selection contract. A new rules identity also retains the existing
+  conservative reservation behavior for open model plans.
+  The rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
   key, leaves the checklist's grade standing for research and marks the night
   `claude_unavailable`. Every new reaction row records `reader_coverage`:
   `accepted`, `fallback` (selected but no accepted result), or
@@ -1105,7 +1123,8 @@ the first stays a session behind (within the limit, so the night is ok and
 names it), the follow-up reads the first evening's two again from the second's
 fetch at every session each missed -- three readings over two stocks, each a
 flat, zero-volume bar the publication for that session would not have listed --
-and reader authority refuses one reply, within the night's limit of one. These
+and the red regime uses only two accepted near-admission research reads. Reader
+refusal limits remain covered by pinned offline policy tests. These
 are offline fixtures, not historical point-in-time universe or profitability
 evidence.
 
@@ -1118,6 +1137,7 @@ src/            history.py (public recovery and coverage)
                 input_diagnostics.py (run-scoped exception membership and observations)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
+                review_selection.py (feasible-first chart review and bounded spare research)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
