@@ -224,6 +224,7 @@
     details.append(body);
     const next = node('button', { type: 'button', class: 'sc-btn sc-btn--secondary sc-btn--sm', 'data-morning': 'next' });
     next.addEventListener('click', () => {
+      if (!api.data || !api.avail || !api.model) return;
       // Open the current record's research; this control places/copies nothing.
       const current = api.morning.facts(api.data, api.avail, api.model);
       returnToOpener = false;
@@ -268,6 +269,7 @@
     field(host, 'phase', latest.phase + (latest.prepare ? ' · ' + latest.prepare : ''));
     field(host, 'plans', latest.bursts + ' burst · ' + latest.setups + ' setting up' + (latest.allowed ? '' : ' · inspect only'));
     field(host, 'next', latest.tickets.length ? 'Inspect first recorded plan' : 'See why we’re waiting');
+    host.querySelector('[data-morning="next"]').disabled = false;
     const restrictions = new Set(api.observations.facts().restricted);
     const blocked = latest.tickets.filter(candidate => restrictions.has((candidate.stage === 'bursts' ? 'burst:' : 'anticipation:') + candidate.ticker));
     if (blocked.length) {
@@ -281,5 +283,22 @@
     if (api.handoffUI) api.handoffUI.update();
     if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
   }
-  api.morning = { render, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
+  function unavailable(host) {
+    if (!host) return;
+    if (mounted !== host) mount(host);
+    latest = { allowed: false, matched: false, tickets: [], fixture: false,
+      reason: 'No current publication. Saved broker reports remain readable and editable; check current prices, holdings and protective orders at your broker.' };
+    const labels = { headline: 'No current publication', window: 'Entry session unavailable', phase: 'New entries unavailable',
+      publication: 'Not loaded', market: 'Unknown', plans: 'No current entry authority', reason: latest.reason,
+      sizing: 'No published order is available for a cash preview.', next: 'Current research unavailable' };
+    Object.entries(labels).forEach(([key, value]) => field(host, key, value));
+    host.querySelector('[data-morning="next"]').disabled = true;
+    host.setAttribute('data-sizing-match', 'false');
+    host.setAttribute('data-morning-offered', 'false');
+    const opener = d.getElementById('morning-open');
+    if (opener) opener.title = 'Morning desk · No current publication · Saved private broker reports remain accessible';
+    refreshCash(host);
+    if (api.handoffUI) api.handoffUI.update();
+  }
+  api.morning = { render, unavailable, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
 })(window);
