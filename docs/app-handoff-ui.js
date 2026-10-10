@@ -7,14 +7,16 @@
     submitted_quantity: 'Total shares submitted', submitted_at: 'Submission time',
     filled_quantity: 'Cumulative entry shares filled', average_price: 'Average entry fill price ($)', filled_at: 'Latest entry fill time',
     cancelled_quantity: 'Unfilled entry shares cancelled', cancelled_at: 'Remainder cancellation time',
-    exited_quantity: 'Cumulative filled shares sold / exited', exited_at: 'Latest exit time',
+    exited_quantity: 'Cumulative filled shares sold / exited', average_exit_price: 'Average exit fill price ($)', exited_at: 'Latest exit time',
+    entry_fees: 'Actual total entry fees ($)', exit_fees: 'Actual total exit fees ($)',
     protected_quantity: 'Current broker-confirmed protective shares', protection_confirmed_at: 'Protection checked by you at'
   };
   const groups = [
     ['Entry submission', ['submitted_quantity', 'submitted_at']],
     ['Entry fills', ['filled_quantity', 'average_price', 'filled_at']],
     ['Unfilled entry cancellation', ['cancelled_quantity', 'cancelled_at']],
-    ['Exits after entry', ['exited_quantity', 'exited_at']],
+    ['Exits after entry', ['exited_quantity', 'average_exit_price', 'exited_at']],
+    ['Actual transaction costs', ['entry_fees', 'exit_fees']],
     ['Protective order at the broker', ['protected_quantity', 'protection_confirmed_at']]
   ];
   const money = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
@@ -97,6 +99,12 @@
     panel.append(node('h3', { id: 'handoff-title', tabindex: '-1' }), node('p', { class: 'sc-hint', 'data-handoff-identity': '' }),
       node('dl', { class: 'sc-facts', 'data-handoff-summary': '' }), node('p', { class: 'sc-hint', 'data-handoff-protection': '' }),
       node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }));
+    const completed = node('section', { 'data-handoff-completed': '', 'aria-labelledby': 'handoff-result-title' });
+    completed.append(node('h4', { id: 'handoff-result-title' }, 'Reported completed result'),
+      node('p', { class: 'sc-hint', 'data-handoff-result-status': '', role: 'status' }),
+      node('dl', { class: 'sc-facts', 'data-handoff-result-amounts': '' }),
+      node('p', { class: 'sc-hint' }, 'Calculated only from your reported entry, exit and actual fees after all filled shares are exited and the entry remainder is reconciled. Partial exits have no completed result here. Broker records are not verified; published model outcomes stay separate.'));
+    panel.append(completed);
     const readback = node('details', { class: 'sc-disclosure', 'data-handoff-readback': '' });
     readback.append(node('summary', {}, 'Saved draft readback and dated exit plan'),
       node('p', { class: 'sc-hint' }, 'Original personal draft, retained as history after broker facts are reported. A planned protective order is not confirmed protection.'),
@@ -110,11 +118,12 @@
     groups.forEach(([legend, keys]) => {
       const group = node('fieldset', { class: 'ss-handoff__fields' }); group.append(node('legend', {}, legend));
       if (legend === 'Exits after entry') group.append(node('p', { class: 'sc-hint' }, 'Explicit 0 exits is needed to calculate remaining reported holdings. Leave blank if you have not checked.'));
+      if (legend === 'Actual transaction costs') group.append(node('p', { class: 'sc-hint' }, 'Enter actual total fees from your broker for entry and exit separately. Blank is unknown; enter 0 only for confirmed zero fees. The draft fee buffer is an estimate and is never used as an actual cost.'));
       if (legend === 'Protective order at the broker') group.append(node('p', { class: 'sc-hint' }, 'Check active protective sell quantity against remaining holdings after fills or exits. Draft instructions never confirm a live stop.'));
       keys.forEach(key => {
         const time = key.endsWith('_at'), id = 'handoff-' + key;
         const field = node('div', { class: 'ss-handoff__field' });
-        const input = node('input', { id, class: 'sc-input', type: 'text', 'data-handoff-field': key, autocomplete: 'off', spellcheck: 'false', placeholder: time ? 'Unknown; include Z or ±HH:MM' : 'Unknown', ...(time ? {} : { inputmode: key === 'average_price' ? 'decimal' : 'numeric' }) });
+        const input = node('input', { id, class: 'sc-input', type: 'text', 'data-handoff-field': key, autocomplete: 'off', spellcheck: 'false', placeholder: time ? 'Unknown; include Z or ±HH:MM' : 'Unknown', ...(time ? {} : { inputmode: ['average_price', 'average_exit_price', 'entry_fees', 'exit_fees'].includes(key) ? 'decimal' : 'numeric' }) });
         input.addEventListener('input', () => { dirty = true; refreshEditorStatus(); });
         field.append(node('label', { for: id }, labels[key]), input);
         if (time) {
@@ -172,15 +181,29 @@
     facts(host.querySelector('[data-handoff-summary]'), [
       ['Personal draft / published shares', item.draft.quantity + ' / ' + item.plan.order.quantity],
       ['Draft cash at limit including buffer', money(summary.calculation.commitmentCents)], ['Draft price-to-stop risk', money(summary.calculation.riskCents) + ' before fees, gaps and slippage'],
+      ['Draft fee buffer (estimate)', money(item.draft.fee_cents)],
       ['Reported submitted', amount(item.report.submitted_quantity)], ['Cumulative entry filled', amount(item.report.filled_quantity)],
       ['Reported exited', amount(item.report.exited_quantity)], ['Remaining reported holdings', amount(summary.reported_held_quantity)],
       ['Entry shares not filled', amount(summary.unfilled_quantity)], ['Unfilled shares cancelled', amount(item.report.cancelled_quantity)],
       ['Entry remainder not reported cancelled', amount(summary.uncancelled_quantity)], ['Reported average entry fill', item.report.average_price === null ? 'Unknown' : '$' + item.report.average_price],
+      ['Reported average exit fill', item.report.average_exit_price == null ? 'Unknown' : '$' + item.report.average_exit_price],
       ['Protective shares reported', amount(item.report.protected_quantity)], ['Protection checked by you', clock(item.report.protection_confirmed_at)],
       ['Submission / latest entry fill', clock(item.report.submitted_at) + ' / ' + clock(item.report.filled_at)],
       ['Cancellation / latest exit', clock(item.report.cancelled_at) + ' / ' + clock(item.report.exited_at)],
       ['Report saved on this device', clock(item.report_updated_at)]
     ]);
+    const result = summary.completed_result, complete = result && result.state === 'complete';
+    host.querySelector('[data-handoff-completed]').setAttribute('data-result-state', complete ? 'complete' : 'incomplete');
+    host.querySelector('[data-handoff-completed]').setAttribute('data-result-outcome', complete ? result.outcome : 'unknown');
+    const outcomes = { gain: 'User-reported net gain', loss: 'User-reported net loss', breakeven: 'User-reported break-even' };
+    host.querySelector('[data-handoff-result-status]').textContent = complete
+      ? outcomes[result.outcome] + ' · ' + result.quantity + ' reported ' + (result.quantity === 1 ? 'share' : 'shares') + ' fully exited. Amounts are rounded for display; gain or loss uses the exact reported values.'
+      : 'Completed result unavailable. ' + (result ? result.reasons.join(' ') : 'Entry, exit and actual costs are not yet available.');
+    facts(host.querySelector('[data-handoff-result-amounts]'), complete ? [
+      ['Reported gross result', result.gross_display],
+      ['Reported actual costs', result.fees_display + ' (entry $' + item.report.entry_fees + ' + exit $' + item.report.exit_fees + ')'],
+      ['Reported net result', result.net_display]
+    ] : []);
     const protection = { unknown: 'Protection is unknown. Check your remaining holdings and active protective orders at your broker.', matched: 'Reported protective quantity matches reported remaining holdings. SpicyStock does not verify an active stop.', under: 'Reported protective quantity is below remaining reported holdings. Reconcile protection at your broker.', over: 'Reported protective quantity exceeds remaining reported holdings. Reconcile the sell quantity at your broker.' };
     host.querySelector('[data-handoff-protection]').textContent = protection[summary.protection] || 'Protection needs reconciliation at your broker.';
     host.querySelector('[data-handoff-warnings]').replaceChildren(...summary.warnings.map(text => node('li', {}, text)));

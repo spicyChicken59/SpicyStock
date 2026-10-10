@@ -8,6 +8,7 @@ const NOW = '2026-09-11T13:35:00Z';
 const KEY = 'spicystock:handoff:v1';
 const field = (page, key) => page.locator('[data-handoff-field="' + key + '"]');
 const state = page => page.locator('[data-handoff-summary]').evaluate(node => Object.fromEntries([...node.children].map(row => [row.querySelector('dt').textContent, row.querySelector('dd').textContent])));
+const resultAmounts = page => page.locator('[data-handoff-result-amounts]').evaluate(node => Object.fromEntries([...node.children].map(row => [row.querySelector('dt').textContent, row.querySelector('dd').textContent])));
 const saved = page => page.evaluate(() => SCStock.handoff.list());
 const set = async (page, fields) => { for (const [key, value] of Object.entries(fields)) await field(page, key).fill(value); };
 async function save(page) {
@@ -87,6 +88,13 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       await set(page, { exited_quantity: '1', exited_at: '2026-09-11T09:00:00-05:00' }); await save(page);
       eq('exit preserves entry history while reducing held shares', [(await state(page))['Cumulative entry filled'], (await state(page))['Reported exited'], (await state(page))['Remaining reported holdings']], ['1', '1', '0']);
       check('remaining protective sell needs reconciliation after exit', /exceeds/.test(await page.locator('[data-handoff-protection]').textContent()));
+      eq('missing actual exit price and costs never borrow draft buffer', [(await state(page))['Draft fee buffer (estimate)'], await resultAmounts(page)], ['$1.00', {}]);
+      await set(page, { average_price: '111.23', average_exit_price: '115', entry_fees: '0.05', exit_fees: '0.07' }); await save(page);
+      eq('one filled share plus explicitly cancelled remainder gives reported net3.65', await resultAmounts(page), {
+        'Reported gross result': '$3.77', 'Reported actual costs': '$0.12 (entry $0.05 + exit $0.07)', 'Reported net result': '$3.65'
+      });
+      check('completed gain remains expressly user-reported', /User-reported net gain/.test(await page.locator('[data-handoff-result-status]').textContent()) && /Broker records are not verified/.test(await page.locator('[data-handoff-completed]').textContent()));
+      if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.locator('[data-handoff-completed]').scrollIntoViewIfNeeded(); await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'reported-result-' + width + '-' + theme + '.png') }); }
       check('entry draft and published record remain separate', await page.evaluate(before => JSON.stringify(SCStock.data) === before.data && localStorage.getItem('spicystock:following:v1') === before.following, before));
       eq('no private report data reached a request', requests.slice(requestCount).map(request => [new URL(request.url).pathname, request.method, request.body]), [['/docs/morning.json', 'GET', null]]);
       check(width + '/' + theme + ': handoff fits phone and page', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
@@ -138,6 +146,75 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     eq('unknown correction still remains editable', await page.locator('[data-handoff-save]').isDisabled(), false);
     await other.close();
   } finally { await context.close(); }
+
+  const completedTab = await launch(390, 'light');
+  try {
+    const page = completedTab.page;
+    await prepare(page); await page.locator('[data-handoff-report] > summary').click();
+    const original = await page.evaluate(() => JSON.stringify({ record: SCStock.data, following: localStorage.getItem('spicystock:following:v1') }));
+    const requestCount = completedTab.requests.length;
+    const fullyExited = { submitted_quantity: '2', filled_quantity: '2', cancelled_quantity: '0', exited_quantity: '2', average_price: '111.23', average_exit_price: '115',
+      filled_at: '2026-09-11T08:34:00-05:00', exited_at: '2026-09-11T09:00:00-05:00', entry_fees: '0.05', exit_fees: '0.07' };
+    await set(page, fullyExited); await save(page);
+    eq('two-share reported result uses actual fees rather than draft estimate', await resultAmounts(page), {
+      'Reported gross result': '$7.54', 'Reported actual costs': '$0.12 (entry $0.05 + exit $0.07)', 'Reported net result': '$7.42'
+    });
+    eq('result does not change draft fee buffer', (await saved(page))[0].draft.fee_cents, 100);
+    await set(page, { average_exit_price: '109.50' }); await save(page);
+    eq('exit correction recomputes gross and net loss', [(await resultAmounts(page))['Reported gross result'], (await resultAmounts(page))['Reported net result']], ['-$3.46', '-$3.58']);
+    check('loss is labelled only as user-reported', /User-reported net loss/.test(await page.locator('[data-handoff-result-status]').textContent()));
+    for (const [name, patch] of [
+      ['partial exit', { exited_quantity: '1' }], ['unknown cancellation', { cancelled_quantity: '' }],
+      ['unknown entry price', { average_price: '' }], ['unknown exit price', { average_exit_price: '' }],
+      ['unknown entry fees', { entry_fees: '' }], ['unknown exit fees', { exit_fees: '' }],
+      ['undated entry fill', { filled_at: '' }], ['undated exit', { exited_at: '' }]
+    ]) {
+      await set(page, { ...fullyExited, ...patch }); await save(page);
+      eq(name + ' withholds every completed amount', await resultAmounts(page), {});
+      eq(name + ' never retains a stale gain/loss marker', await page.locator('[data-handoff-completed]').getAttribute('data-result-outcome'), 'unknown');
+      check(name + ' explains an incomplete result', /Completed result unavailable/.test(await page.locator('[data-handoff-result-status]').textContent()));
+    }
+    await set(page, { ...fullyExited, entry_fees: '0', exit_fees: '0' }); await save(page);
+    eq('explicit zero actual fees is accepted as zero, not unknown', [(await resultAmounts(page))['Reported actual costs'], (await resultAmounts(page))['Reported net result']], ['$0.00 (entry $0.00 + exit $0.00)', '$7.54']);
+    await set(page, { average_exit_price: '111.23' }); await save(page);
+    eq('exact zero net is the only break-even result', [(await resultAmounts(page))['Reported net result'], await page.locator('[data-handoff-completed]').getAttribute('data-result-outcome')], ['$0.00', 'breakeven']);
+    for (const [price, display, outcome] of [['111.230001', '<$0.01', 'gain'], ['111.229999', '-<$0.01', 'loss']]) {
+      await set(page, { average_exit_price: price }); await save(page);
+      eq('sub-cent ' + outcome + ' retains exact sign without false zero', [(await resultAmounts(page))['Reported net result'], await page.locator('[data-handoff-completed]').getAttribute('data-result-outcome')], [display, outcome]);
+    }
+    await set(page, fullyExited); await save(page);
+    await set(page, { exit_fees: '0.08' }); await field(page, 'exit_fees').focus();
+    await page.evaluate(() => { window.__costInput = document.querySelector('[data-handoff-field="exit_fees"]'); SCStock.now = '2026-09-11T14:01:00Z'; SCStock.reclock(); });
+    await completedTab.halt();
+    eq('new cost correction keeps its node, draft and focus across expiry/event', await field(page, 'exit_fees').evaluate(node => [node === window.__costInput, node.value, document.activeElement === node]), [true, '0.08', true]);
+    eq('unsaved fee edit does not alter saved completed result', (await resultAmounts(page))['Reported net result'], '$7.42');
+    await save(page);
+    eq('actual result correction remains available after entry expiry/event', (await resultAmounts(page))['Reported net result'], '$7.41');
+    eq('result calculation does not mutate publication or following snapshots', await page.evaluate(() => JSON.stringify({ record: SCStock.data, following: localStorage.getItem('spicystock:following:v1') })), original);
+    eq('private actual costs never reach a request', completedTab.requests.slice(requestCount).map(request => [new URL(request.url).pathname, request.method, request.body]), [['/docs/morning.json', 'GET', null]]);
+
+    // A legacy private-store envelope, formed from an actual prepared/reporting
+    // item, uses the prior eleven report fields. This is no publication change.
+    const legacyRaw = await page.evaluate(() => {
+      const item = SCStock.handoff.list()[0]; item.version = 1;
+      for (const key of ['average_exit_price', 'entry_fees', 'exit_fees']) delete item.report[key];
+      const raw = JSON.stringify({ version: 1, items: [item] }); localStorage.setItem(SCStock.handoff.KEY, raw); return raw;
+    });
+    await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+    await page.locator('#morning-open').click(); await page.locator('#morning-handoffs > summary').click(); await page.locator('[data-handoff-report] > summary').click();
+    eq('reading legacy store performs no write', await page.evaluate(key => localStorage.getItem(key), KEY), legacyRaw);
+    eq('legacy report fields survive with new fields unknown', [(await state(page))['Cumulative entry filled'], (await state(page))['Reported exited'], await field(page, 'average_exit_price').inputValue(), await field(page, 'entry_fees').inputValue(), await field(page, 'exit_fees').inputValue()], ['2', '2', '', '', '']);
+    eq('legacy report does not acquire a fabricated result', await resultAmounts(page), {});
+    await set(page, { average_exit_price: '115', entry_fees: '0.05', exit_fees: '0.001' }); await save(page);
+    eq('invalid new fees do not migrate or overwrite legacy bytes', await page.evaluate(key => localStorage.getItem(key), KEY), legacyRaw);
+    eq('invalid actual fee correction remains editable', await field(page, 'exit_fees').inputValue(), '0.001');
+    await set(page, { exit_fees: '0.07' }); await save(page);
+    eq('explicit valid report save advances store version', await page.evaluate(key => JSON.parse(localStorage.getItem(key)).version, KEY), 2);
+    eq('explicit legacy completion computes the known reported net', (await resultAmounts(page))['Reported net result'], '$7.42');
+    check('completed result and form still fit phone', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+    if (shotsDir) { await field(page, 'entry_fees').scrollIntoViewIfNeeded(); await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'reported-result-form-390-light.png') }); }
+    eq('completed-result browser errors', [...completedTab.errors], []);
+  } finally { await completedTab.context.close(); }
 
   const multi = await launch(390, 'light', null, true);
   try {
