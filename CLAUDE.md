@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3664 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3734 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5541,3 +5541,56 @@ inventory. The 22 producer fixtures remain current. The new generator-command
 removal is detected, while its unrelated timeout control passes. Integrated
 phone/desktop research captures were inspected. The prepared files enter the
 existing required exact-head hosted gates before any merge or public claim.
+
+## Checkpoint, 10 Oct 2026 — bounded issuer HTTP diagnostics ready for hosted review
+
+Issue #133 retains an observed HTTP response status and a fixed source phase
+beside the original requested SEC URL. The optional pair is backward compatible:
+legacy errors and failures without a response retain unknown status. Strict
+status/code/phase and current CIK/selected-accession checks apply in both the
+stdlib validator and browser. Mapping, submissions, history, primary reports
+and exhibits remain distinct. Diagnostic fields contain no response bodies,
+headers, redirect destinations or exception text. Coverage, provider identity,
+request/download/cache bounds, retry policy and trading authority are unchanged.
+
+A bounded environment-only mapping probe at 08:02:15 UTC returned HTTP 200 and
+524,131 bytes (SHA-256
+`33b3998934205f0ce54c874470a41689ea5aaaba7d04c909f20976eb3e551ba4`).
+This does not explain or overwrite the earlier Actions receipt's generic HTTP
+failure. The next actual collection can now identify its observed status and
+phase without guessing. No new production collection was used for this change.
+
+Independent review found and reproduced two new browser filename-boundary gaps;
+primary and exhibit diagnostics now use the collector's bounded safe basename.
+A reproduced existing urllib redirect-response leak is also fixed: all five
+supported redirect statuses close the original response without reading or
+following it, including when close itself raises. The refusal status, one
+attempted request and zero downloaded bytes remain accurate.
+
+Owned commits are backend `933f896d`, UI `7c6b6665` / `346254b7`, and redirect
+cleanup `9989ea6c`. Owner validation passes 303 focused Python checks and 358
+browser checks; all 14 producer outputs reproduce and all 13 existing fixture
+JSON files retain their bytes. Independent validation passes 166 Python, 358
+browser and ten actual stdlib redirect-dispatch controls. Seven backend
+mutations fail their intended checks with an unrelated 70-check control passing;
+primary/exhibit browser guard removal fails six targeted cases each, while an
+unrelated control passes all 358. Phone and desktop screenshots were inspected.
+
+The diagnostics branch incorporates exact reviewed research/recovery head
+`49d96480` without conflicts. Python 3.12.14 collects 3,734 tests. README and
+`.env.example` now explain observed/unknown status and the absence of new
+credentials/settings. Existing production artifacts and the pinned design
+system remain unchanged by these diagnostics. Integrated checks, required
+hosted exact-head gates and actual public acceptance are still pending; local
+HTTP success does not establish Actions access or fresh news coverage.
+
+Integrated verification passes 397 focused Python checks and 1,751 browser
+checks across issuer diagnostics, cash preview, private handoff/results,
+registered research, publication recovery, status, morning and refresh. All
+14 issuer and 22 research fixture outputs remain current. Integrated phone
+and desktop diagnostic captures were inspected. The 28-commit range scans
+clean with gitleaks 8.30.1. The final independent research review also approved
+`49d96480`: 332 browser, 54 clock/private-continuity and 52 HTTP integration
+checks, plus exact production-companion validation/replay with sockets denied
+and independent Decimal sizing. Those are local review results, not a public
+release or a reported personal trade.

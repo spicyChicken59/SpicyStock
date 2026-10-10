@@ -912,6 +912,14 @@ last network-check time. Mapping cache lifetime is seven days and document
 cache lifetime is 24 hours; submissions are requested on each collection.
 The cache is bounded to 256 entries and 128 MiB.
 
+When an HTTP response refuses a request, the reader shows its observed status
+and source stage (mapping, submissions, history, primary report or exhibit).
+Older receipts and failures without an HTTP response leave the status unknown.
+Diagnostics retain the original requested SEC URL, never a redirect destination,
+response body, headers or exception text. Redirects remain refused; refused
+responses are closed without reading their bodies. A status explains a failed
+source request and does not establish news or earnings coverage.
+
 The receipt expires 24 hours after collection; individual source ages remain
 visible, and this period is not news clearance. Up to 16 KiB of normalized
 text is retained per excerpt, with a separate excerpt digest and original-body
