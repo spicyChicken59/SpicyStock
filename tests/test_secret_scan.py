@@ -15,6 +15,7 @@ from tests.secret_scan_controls import (
     retained_documents, NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB,
     NATIVE5_WORKFLOW, native5_public_preservation,
     PUBLIC_SITE_CAPTURE, PUBLIC_SITE_CAPTURE_SHA256, public_site_capture,
+    CASH_PUBLICATIONS, CASH_RULE_IDENTIFIERS,
 )
 
 
@@ -107,7 +108,7 @@ def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
     document = json.loads(native5_public_preservation())
     assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
     assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
-    assert len(dispositions()) == 9
+    assert len(dispositions()) == 10
     entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
     assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
     assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
@@ -180,3 +181,28 @@ def test_public_site_path_does_not_allow_unrelated_or_altered_values():
     altered = ("A" if identifier[0] != "A" else "B") + identifier[1:]
     for value in (altered, "x" + identifier, identifier + "x", identifier.upper(), PUBLIC_VALUES[0]):
         assert not allowed(PUBLIC_SITE_CAPTURE, value)
+
+
+def test_cash_rule_disposition_requires_exact_publications_and_identifiers():
+    entry = next(item for item in dispositions() if "generated cash-preview publications" in item["description"])
+    assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+    assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
+    assert entry["regexes"] == ["^(" + "|".join(CASH_RULE_IDENTIFIERS) + ")$"]
+    assert entry["paths"] == [r"^tests/fixtures/cash-preview/publication(-multiple)?\.json$"]
+    for path in CASH_PUBLICATIONS:
+        assert all(allowed(path, value) for value in CASH_RULE_IDENTIFIERS)
+
+
+def test_cash_public_identifiers_remain_detectable_elsewhere():
+    for path in CASH_PUBLICATIONS:
+        for altered in ("copied/" + path, path + ".backup", path.replace("publication", "another")):
+            assert all(not allowed(altered, value) for value in CASH_RULE_IDENTIFIERS)
+    for name in ("observed", "observed-multiple", "halted", "corporate-excluded"):
+        assert all(not allowed(f"tests/fixtures/cash-preview/{name}.json", value) for value in CASH_RULE_IDENTIFIERS)
+
+
+def test_cash_publication_paths_do_not_allow_unrelated_or_altered_values():
+    for path in CASH_PUBLICATIONS:
+        for value in CASH_RULE_IDENTIFIERS:
+            for altered in ("x" + value, value + "x", value.upper(), PUBLIC_VALUES[0]):
+                assert not allowed(path, altered)

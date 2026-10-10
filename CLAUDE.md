@@ -1,11 +1,15 @@
 # SpicyStock — working notes
 
-**Active goal (9 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
-current product direction and milestone contract. The owner uses a $2,000 cash
+**Active goal (updated 10 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
+current product direction and milestone contract. Mo uses a $2,000 cash
 account and America/Chicago time; the broker is unspecified. New production
 workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
-default model assumptions retain their own values. Continue from the first
-unfinished milestone and record production evidence before calling it complete.
+default model assumptions retain their own values. Mo explicitly authorizes an
+ongoing choose/build/test/review/merge/verify loop until manually stopped. Resume
+unfinished work, choose the next useful independent milestone, and record actual
+production evidence before calling a release complete. The hourly ChatGPT task
+**Build SpicyStock milestones** supports continuation; coordinate with active
+builders and do not open duplicate work.
 
 **Queued review-budget policy (10 October 2026):** `src/review_selection.py`
 archives `account_feasible_first_research_v1`. The evening run selects feasible
@@ -301,7 +305,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3413 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3423 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4992,3 +4996,72 @@ banking calendars differ that day, so cash still comes from the broker.
 Broker identity, pre-open operational acceptance, actual fills and the first
 successful trade remain outstanding. Continue from these gaps; do not mark the
 whole goal or milestone 2 complete.
+
+## Checkpoint, 10 Oct 2026 — consistent ticket and workflow status (local)
+
+**Executed defect.** The October 9 publication at `62bce72d` admits one ZIM
+anticipation ticket for October 12. At phone and desktop sizes, the morning
+desk counted it while `nextActionCore()` counted bursts alone: it offered no
+next step for the coil and said nothing had been offered once the window ended.
+The same contradiction occurs with the pipeline-generated `notrade` fixture.
+The optional stale-page run log also called an already-published, skipped
+scheduled attempt “tonight’s run: completed.” Its success was workflow evidence,
+not a new publication.
+
+**Correction.** The next-action message reads both existing model ticket counts,
+preserving publication, market and clock refusal precedence. Zero-ticket wording
+covers both setup families, and cutoff retains the published ticket count as
+history. The optional run log names the latest evening workflow, includes its
+exchange-local date, distinguishes cancellation/skipping from failure, and says
+successful workflows can skip publication. It makes no new data or delivery
+claim. No strategy number, ticket, source record, provider request or workflow
+changed; `.env.example` was reviewed and needs no new setting.
+
+**Local evidence.** The new `status` browser suite plus `full`, `degraded` and
+`notrade` pass 1,424 checks. Independent review passed all 106 status checks.
+Docs/secret tests pass 92. Isolated burst-only and false-publication-claim
+mutations fail their intended assertions (92/106 and 94/106); an unrelated
+coil-sorting mutation still passes 106/106. Exact current publication bytes
+were also replayed at 1280 and 390 pixels with explicitly pinned pre-open, open,
+cutoff and stale clocks; before/after screenshots were inspected. This local
+browser work does not establish future pre-open delivery or a live trade.
+Runtime: Node 24.19.0, Playwright Chromium 151, Python 3.12.14.
+Hosted and public acceptance remain the release owner's next steps.
+
+## Checkpoint, 10 Oct 2026 — personal cash preview ready for release
+
+Mo expanded the operating contract to continued milestone releases until
+manually stopped. `PRODUCT_GOAL.md` records that contract; the hourly ChatGPT
+continuation task resumes work but is not an uninterrupted process. Both
+repositories remain connected, and the pinned design-system assets are reused.
+
+The morning desk now offers a separate, tab-local preview of one admitted
+published plan using entered settled cash, an explicit fees buffer and optional
+smaller whole-share quantity. Integer-cent arithmetic caps at both published
+quantity and cash affordable at the limit. It shows principal, fees, total
+cash, limit-to-stop risk and cash remaining. Published order copying retains
+the original quantity and says so beside the preview. Nothing reserves cash,
+submits an order or reads a broker balance. Invalid or unknown inputs, zero
+affordability, incompatible account assumptions, fixture publications, entry-window expiry
+and event refusal cannot produce a current preview. Inputs are reconsidered
+against the current clock and publication; session changes clear settled cash.
+
+The asynchronous observations callback now checks that the application is
+still mounted. The prior teardown exception was reproduced on unchanged main;
+a held-crypto teardown control passes and deleting the guard restores failure.
+
+Executed local evidence: 534 morning/cash browser assertions, 137 continuity
+assertions, seven producer-fixture tests and six reproduced fixture files.
+Independent review passed 421 browser assertions and 10,014 arithmetic cases,
+and inspected phone/desktop captures. Quantity, fees, event, account and cutoff
+mutations fail their intended controls; an unrelated maximum-share mutation
+passes. The publisher inventory includes all 29 files, including the new
+`app-cash-preview.js`. After incorporating the ZIM registry and narrow scanner
+correction, 44 documentation/fixture tests pass and collection finds 3,383
+Python tests. Runtime: Python 3.12.14 and Node 24.19.0. `.env.example` documents
+that this calculation needs no broker credential or new environment variable.
+
+Hosted checks and actual public acceptance remain outstanding. The original
+October 9 ZIM ticket must be superseded through normal production after PR #115;
+its retained model history must not be erased. No actual fill or successful
+trade has been reported by Mo.
