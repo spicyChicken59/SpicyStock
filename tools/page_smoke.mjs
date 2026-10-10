@@ -31,6 +31,10 @@ import { checkHistoricalJourneys } from './historical_cases.mjs';
 import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
+import { checkMorningStatus } from './status_cases.mjs';
+import { checkReviewSelection } from './review_selection_cases.mjs';
+import { checkCashPreview } from './cash_preview_cases.mjs';
+import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -87,6 +91,8 @@ async function serve() {
       // Read-only isolated source controls; never mutate the working tree.
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
+        : url.pathname === '/docs/app-cash-preview.js' ? process.env.SCSTOCK_CASH_PREVIEW
+        : url.pathname === '/docs/app-issuer-evidence.js' ? process.env.SCSTOCK_ISSUER_EVIDENCE
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
@@ -114,7 +120,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
   // system declares a fallback stack) and the optional run-log fetch to the
   // GitHub API are the three requests this page may lose offline; the console
   // reports each as one "Failed to load resource", matched off below.
-  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u);
+  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u);
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const u = r.url();
@@ -744,8 +750,11 @@ async function checkVariant(browser, base, variant, data) {
   const next = await text(page, '#next-h3'), forDay = dateWords(data.run.timing.applicable_session);
   if (variant === 'closed') check(`${variant} next: plans unchanged`, next.startsWith('Plans unchanged'), next);
   else if (data.breadth.regime.verdict === 'red') check(`${variant} next: no new longs`, next.startsWith('No new longs'), next);
-  else if (withOrders.length) check(`${variant} next: review conditional tickets, for a named session`,
-    next === `Review ${withOrders.length} conditional ticket${withOrders.length === 1 ? '' : 's'} for ${forDay}.`, next);
+  else if (withOrders.length + top.filter(row => row.plan && row.plan.order_json).length) {
+    const publishedCount = withOrders.length + top.filter(row => row.plan && row.plan.order_json).length;
+    check(`${variant} next: review both stages' conditional tickets, for a named session`,
+      next === `Review ${publishedCount} conditional ticket${publishedCount === 1 ? '' : 's'} for ${forDay}.`, next);
+  }
   else check(`${variant} next: nothing new, for a named session`, /^(Nothing|No new burst ticket)/.test(next) && next.includes(forDay), next);
   check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
     `${next} @ window ${await attr(page, 'html', 'data-ss-window')}`);
@@ -3672,14 +3681,15 @@ async function checkInputCoverage(browser, base) {
 
 // A night whose only gap is a stale tail the recorded tolerance allows: not
 // degraded, the tail counted and named, last night's stale stocks read again,
-// and the chart reader's one refusal counted beside the rest. Every sentence
+// and the chart reader's bounded research sample counted beside the rest. Every sentence
 // is the record's own; the page decides nothing about any of it.
 async function checkStaleTolerance(browser, base) {
   console.log('-- the stale tolerance');
   const thin = JSON.parse(await readFile(path.join(FIXTURES, 'thin.json'), 'utf8'));
   const tol = thin.run.input_tolerance, follow = thin.run.stale_followup, reads = thin.run.reads;
   check('thin: the fixture is the case it names', thin.run.status === 'ok' && tol.verdict === 'tolerated' && tol.names.length === 1 &&
-    follow.status === 'applied' && reads.verdict === 'tolerated', [thin.run.status, tol.verdict, follow.status, reads.verdict]);
+    follow.status === 'applied' && reads.verdict === 'complete' && reads.requested === 2,
+    [thin.run.status, tol.verdict, follow.status, reads.verdict, reads.requested]);
   const pct = 'at most ' + (100 * thin.rules.pipeline.stale_tolerance_fraction) + '% of the intended stocks';
   for (const width of [1280, 390, 320]) {
     for (const theme of ['dark', 'light']) {
@@ -3706,10 +3716,11 @@ async function checkStaleTolerance(browser, base) {
         method.includes('reads every session each of them missed again') && !method.includes('ending on the previous session'), method.slice(0, 900));
       check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
-      check(tag + ': Method quotes the reader rule and prints the reads', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && method.includes(reads.sentence), method);
+      check(tag + ': Method keeps the reader refusal rule under bounded selection', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && reads.sentence === null, method);
       const strip = await said(page, '#run-strip');
       check(tag + ': the strip says incomplete, tolerated', strip.includes('incomplete, tolerated'), strip);
-      check(tag + ': the strip counts the refusal', strip.includes(reads.causes.refused + ' refused, within ' + reads.refusal_limit + ' tolerated'), strip);
+      check(tag + ': the strip counts the completed research reads without inventing refusals',
+        strip.includes(reads.done + ' of ' + reads.requested + ' read') && !strip.includes('refused, within'), strip);
       check(tag + ': no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       if (shotsDir) await page.screenshot({ path: path.join(shotsDir, `thin-method-${width}-${theme}.png`), fullPage: true });
       eq(tag + ': page errors', errors, []);
@@ -3880,6 +3891,10 @@ async function main() {
       }
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('status')) await checkMorningStatus({ browser, base, open, check, eq, shotsDir });
+      if (runs('review-selection')) await checkReviewSelection({ browser, base, open, check, eq, shotsDir });
+      if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
+      if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });

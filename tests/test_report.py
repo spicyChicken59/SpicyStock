@@ -953,13 +953,14 @@ def test_the_mail_past_the_tolerance_prints_the_problem_sentence(wide, claude, f
     assert 'Without a 2026-09-10 bar: QAAA, QAAB, QAAC.' in text
 
 
-def test_the_mail_on_the_thin_fixture_says_its_reads_outside_the_problems():
+def test_the_mail_on_the_thin_fixture_reports_followup_without_inventing_reader_failures():
     data = json.loads((PAGE_FIXTURES / 'thin.json').read_text())
     data.pop('fixture', None)
     validate(data)
     text = _mail_text(data)
     assert 'what went wrong' not in text
-    assert data['run']['reads']['sentence'] in text and '1 reply (PLUG) refused by reader authority' in text
+    assert data['run']['reads']['verdict'] == 'complete' and data['run']['reads']['requested'] == 2
+    assert data['run']['reads']['sentence'] is None and 'refused by reader authority' not in text
     assert data['run']['stale_followup']['sentence'] in text
 
 

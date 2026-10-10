@@ -85,9 +85,6 @@ THIN_STOCKS = 100
 #: both sessions it missed and the second at its one
 THIN_STALE = ("QAA", "QAB")
 THIN_BEHIND = {"QAA": 2, "QAB": 1}
-#: the thin night's one reply reader authority refuses: a burst graded below
-#: A-quality, so on its red night no plan waited on it
-THIN_REFUSED = "PLUG"
 FOLLOW_SESSION = date(2026, 9, 11)
 #: cents the revised run's AAPL close sits off the one `next` published: the
 #: same session on later bars, which is a correction and not a new day
@@ -436,12 +433,6 @@ def run_variant(variant: str, docs: Path) -> dict:
     def answer(metrics: dict) -> dict:
         from tests.test_reader_authority import finding
         grade = metrics.get("quality_grade")
-        if variant == "thin" and metrics.get("ticker") == THIN_REFUSED:
-            # cites the base check with a status its record does not carry, so
-            # reader authority refuses the reply: one refusal of the night's reads
-            status = metrics["reader_evidence"]["checks"]["C"]["status"]
-            wrong = next(s for s in ("PASS", "FAIL", "PARTIAL") if s != status)
-            return {**CLAUDE["C"], "findings": [finding(evidence=[{"path": "checks.C.status", "value": wrong}])]}
         if variant == "notrade" or grade not in ("A+", "A"):
             # Scripted subjective judgement, not a claim a real model saw it.
             status = metrics["reader_evidence"]["checks"]["C"]["status"]
@@ -599,12 +590,13 @@ def expected_shape(variant: str, data: dict) -> None:
         assert [(r["ticker"], r["session"]) for r in follow["rows"]] == \
             [(THIN_STALE[0], "2026-09-08"), (THIN_STALE[0], "2026-09-09"), (THIN_STALE[1], "2026-09-09")], follow["rows"]
         assert follow["outcomes"]["no_match"] == 3 and follow["zero_volume"] == 3 and follow["matched"] == [], follow
-        # and one reply refused by reader authority, within the night's limit
+        # Red permits no opportunity reviews. The bounded research sample
+        # is accepted; below-A PLUG no longer consumes reader capacity.
         reads = run["reads"]
-        assert (reads["verdict"], reads["causes"]["refused"], reads["refused_admissible"]) == ("tolerated", 1, []), reads
-        assert reads["done"] == reads["requested"] - 1 and reads["refusal_limit"] >= 1, reads
-        plug = next(b for b in data["bursts"] if b["ticker"] == THIN_REFUSED)
-        assert plug["claude"]["source"] == "fallback" and plug["claude"]["error"].startswith("src.ReaderAuthorityError:"), plug["claude"]
+        assert (reads["verdict"], reads["requested"], reads["done"]) == ("complete", 2, 2), reads
+        assert run["review_selection"]["feasible"] == 0
+        plug = next(b for b in data["bursts"] if b["ticker"] == "PLUG")
+        assert plug["claude"] is None and plug["review_selection"]["purpose"] == "outside_research_pool"
     elif variant == "early":
         assert data["run"]["timing"]["closes_at"] == "2024-11-29T13:00:00-05:00"
         assert data["run"]["timing"]["shortened"] is True

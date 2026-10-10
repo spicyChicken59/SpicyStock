@@ -5,10 +5,17 @@ trading workspace for a $2,000 cash account in Chicago time: trustworthy data,
 clear conditional setups, bounded sizing and an explained wait when nothing
 qualifies. Milestone 1 is live with morning preparation, combined cash
 allocation, known corporate-action exclusions and dependable session handling.
-The next milestone is verified morning quotes/events and a smaller initial
-payload; [implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
-track the remaining work. The fresh October 9 morning publication has zero
-qualifying tickets; a successful real-money trade has not yet been recorded.
+Verified morning observations and the compact reader are deployed; reliable
+on-time delivery and broader event coverage remain open. The
+[implementation tickets](https://github.com/spicyChicken59/SpicyStock/milestone/1)
+track this work and the practical first-trade workflow. The original October 9
+evening publication exposed a missing ZIM takeover exclusion; the source-backed
+correction and its production verification are tracked in
+[PR #115](https://github.com/spicyChicken59/SpicyStock/pull/115). A successful
+real-money trade has not yet been recorded. Mo authorizes continued
+milestone releases with tests, independent review and public verification. The
+hourly **Build SpicyStock milestones** ChatGPT task supports resuming that work;
+see the goal's continuation contract.
 
 One evening run over an explicitly selected US-stock universe, one page that says what
 to do next session and why, one email that says the same in fewer words. The
@@ -65,10 +72,28 @@ window in America/Chicago, publication and market state, separate reaction and
 setting-up ticket counts, and the account assumptions beside the next step.
 The personal reference is a $2,000 cash account, $10 base planned risk and a
 $500 per-name cap before existing strategy reductions. An older publication
-sized for another account says so; the browser does not resize its tickets.
-Optional settled cash begins unknown and stays in this browser. Preparation
-checks do not establish live quotes, news coverage, broker buying power or
-execution, and cannot turn an unavailable setup into an order.
+sized for another account says so; the published tickets retain their quantities.
+Optional settled cash begins unknown and stays in this tab. A separate cash-aware
+preview uses that entered cash, an explicit fees buffer, and an optional smaller
+whole-share quantity. It caps the calculation at the published shares and the
+cash affordable at the entry limit, then shows principal, total cash, planned
+limit-to-stop risk and remaining cash. Decimal amounts are calculated in integer
+cents. Unknown or invalid inputs, unavailable plans, event restrictions and
+mismatched account assumptions cannot produce a current personal preview.
+
+Each preview considers one plan independently and reserves no cash. Account for
+other orders and broker holds before entering available settled cash. Changing
+plans clears the fees and quantity inputs; a new session clears cash too, and a
+reload clears all entries. Published copy controls still copy the original model
+quantity, clearly identified beside the preview. The calculation does not submit
+an order or verify a balance. Preparation checks do not establish live quotes,
+news coverage, broker buying power or execution, and cannot turn an unavailable
+setup into an order. Planned price-to-stop risk excludes fees, gaps and slippage.
+
+The next-action message counts the same published reaction and anticipation
+tickets as the desk, including tickets retained for inspection after cutoff.
+In recovery notices, the latest evening workflow is reported separately: a
+successful scheduled check may skip publication and does not refresh the record.
 
 The page is a small application over one record: five views behind the
 masthead, the state kept in the hash (`#/explore/bursts/AAPL`,
@@ -587,8 +612,29 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   The [retained C audit](docs/input-truthfulness/2026-09-22-consolidation-source-fidelity.md)
   reproduces the measurements and their sensitivity without retuning thresholds.
 - **grade** — Claude reads the chart and the numbers for up to twelve
-  bursts by mechanical grade and may only LOWER a grade, never raise it;
-  the rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
+  bursts and may only LOWER a grade, never raise it. The versioned
+  `account_feasible_first_research_v1` policy prioritizes private pre-review
+  plans that satisfy the mechanical grade/regime, veto, known-event, entry
+  geometry and whole-share checks. Their existing mechanical grade / descending
+  score / ticker order is preserved. All feasible names are covered when the
+  twelve-name budget permits; none is displaced for research. At most 2 spare
+  reads go to infeasible mechanical A+/A research: one by that same rank, then
+  one by the lowest SHA-256 of policy, measured session and ticker. With no
+  feasible names this is at most two reads, and an empty research pool makes
+  no model calls. This near-admission sample is not an unbiased market sample.
+  `bursts[].review_selection` retains each purpose and checked blocker;
+  `run.review_selection` reconciles feasibility, research-pool size, selected
+  names, accepted/unaccepted/refused results, actual retained attempts and
+  unused capacity. Attempts are distinct from requested names and billed cost.
+  Method explains the recorded pre-review fit, opportunity/research selection
+  and feasible names left unreviewed; older or unsupported receipts make no
+  selection claim.
+  The private preview precedes combined allocation; selection grants no ticket.
+  Final accepted-review, grade/regime, sizing, event and allocation guards
+  remain unchanged. Archived records without this policy keep their original
+  selection contract. A new rules identity also retains the existing
+  conservative reservation behavior for open model plans.
+  The rulebook it reads is `knowledge/strategy.md`. No reply, or a refused
   key, leaves the checklist's grade standing for research and marks the night
   `claude_unavailable`. Every new reaction row records `reader_coverage`:
   `accepted`, `fallback` (selected but no accepted result), or
@@ -755,6 +801,59 @@ credentials, and no provider secret reaches the browser. No new subscription
 or environment variable is required. Timely morning delivery and comprehensive
 event coverage remain acceptance work for milestone 2.
 
+### SEC issuer evidence
+
+The Morning desk includes an optional filing reader for current admitted plans
+and candidates withheld by known corporate events. Opening it loads a small
+publication-bound receipt and one verified source bundle. It shows the issuer,
+SEC identity, filing and acceptance dates, retrieval time, primary links and
+short text excerpts. Private cash, notes and selected symbols are never sent
+to a source service. The closed reader makes no additional browser requests.
+
+The collector verifies ticker/CIK identity and lists current-report metadata
+from a trailing 365-day window. It selects up to eight issuers, prioritizing
+admitted plans, then retrieves at most three recent 8-K/6-K reports per issuer
+and two same-accession exhibits per report. One bounded history file may extend
+the metadata window. Missing history, omitted issuers, unfetched reports and
+truncated excerpts are explicit; a recent-document sample does not establish
+complete news coverage. Domestic 8-K and foreign 6-K reports retain their own
+dates and document types. An acquisition mentioned by an issuer does not, by
+itself, establish that the issuer is a takeover target.
+
+Known unresolved events remain separate, source-backed anchors. The collector
+does not classify new events or clear an existing exclusion. In the 10 October
+2026 source audit, the original ZIM merger report was seventeenth newest among
+33 trailing-year current reports, illustrating why a recent-filings panel
+cannot replace those anchors.
+Future earnings and comprehensive issuer news still require verification.
+This reader does not change a ticket, copied quantity or cash preview.
+
+`issuer-evidence.yml` follows an actual committed evening or morning publication;
+it adds no polling schedule. Production collection is capped at three starts
+per UTC day, including failed attempts and reruns, with a serialized guard that
+refuses incomplete Actions history. Manual dispatch defaults to a rehearsal.
+The SEC-only client uses the public project identity, no provider credential,
+and at most one request per second, 96 requests, 2 MiB per response, 32 MiB of
+downloads and four minutes per collection. Retained raw captures, including
+reused cache bodies, have a separate 32 MiB cap. Cached source bodies retain their
+last network-check time. Mapping cache lifetime is seven days and document
+cache lifetime is 24 hours; submissions are requested on each collection.
+The cache is bounded to 256 entries and 128 MiB.
+
+The receipt expires 24 hours after collection; individual source ages remain
+visible, and this period is not news clearance. Up to 16 KiB of normalized
+text is retained per excerpt, with a separate excerpt digest and original-body
+digest. Raw captures are kept in a 30-day Actions artifact, rather than claimed
+as a permanent complete archive. The public receipt is limited to 64 KiB and
+its digest-addressed bundle to 2 MiB. A main-only publisher revalidates the
+source publication, previous receipt and current branch before committing.
+It retains superseded bundles for at least 21 days and protects the current
+bundle; its owned store is bounded to 256 objects and 256 MiB.
+Previously published receipts remain readable as dated evidence but cannot
+attach to a different scan. An issuer-source failure does not prevent the
+evening record from publishing. See the
+[versioned source contract](docs/ISSUER_EVIDENCE_SCHEMA.md) for exact fields.
+
 ### Reader payload and saved research
 
 The page initially loads `reader.json`, a compact projection of the complete
@@ -846,6 +945,7 @@ pytest tests/ -q                            # every boundary is a double
 node tools/chart_check.mjs                  # the chart's geometry, and a render
 node tools/page_smoke.mjs --shots /tmp/shots   # the page against every fixture, read back
 node tools/page_smoke.mjs --only reading      # recorded meanings, help and review journey
+node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
@@ -1105,7 +1205,8 @@ the first stays a session behind (within the limit, so the night is ok and
 names it), the follow-up reads the first evening's two again from the second's
 fetch at every session each missed -- three readings over two stocks, each a
 flat, zero-volume bar the publication for that session would not have listed --
-and reader authority refuses one reply, within the night's limit of one. These
+and the red regime uses only two accepted near-admission research reads. Reader
+refusal limits remain covered by pinned offline policy tests. These
 are offline fixtures, not historical point-in-time universe or profitability
 evidence.
 
@@ -1118,11 +1219,12 @@ src/            history.py (public recovery and coverage)
                 input_diagnostics.py (run-scoped exception membership and observations)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
+                review_selection.py (feasible-first chart review and bounded spare research)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-observations.js · app-reader.js · design-system/
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-observations.js · app-reader.js · app-issuer-evidence.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
@@ -1138,7 +1240,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
-.github/        evening.yml · intraday.yml · morning.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
+.github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.

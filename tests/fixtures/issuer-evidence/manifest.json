@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "purpose": "Bounded captured SEC inputs for source parser tests; not a complete news screen.",
+  "captures": [
+    {
+      "file": "sources/zim-submissions.json",
+      "url": "https://data.sec.gov/submissions/CIK0001654126.json",
+      "final_url": "https://data.sec.gov/submissions/CIK0001654126.json",
+      "fetched_at": "2026-10-10T06:02:31.434917+00:00",
+      "bytes": 39055,
+      "sha256": "dc2605ad9498ed77c1fb221db2769841f1c69ef4301e430c54fd496cfd291bb9",
+      "status": 200,
+      "fixture_kind": "captured_raw_response"
+    },
+    {
+      "file": "sources/zim-2026-02-17-6k.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326000483/zk2634378.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326000483/zk2634378.htm",
+      "fetched_at": "2026-10-10T06:02:52.112442+00:00",
+      "bytes": 48594,
+      "sha256": "b48d4bd85696e24996b1837251b4f6414ed713ac16651f623fa7b0fd6f9153f4",
+      "status": 200,
+      "fixture_kind": "captured_raw_response"
+    },
+    {
+      "file": "sources/zim-2026-09-30-6k.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004656/zk2636172.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004656/zk2636172.htm",
+      "fetched_at": "2026-10-10T06:02:51.961810+00:00",
+      "bytes": 12127,
+      "sha256": "a7e23f853c80a6525bb283e3ca57077e388376dee8b41264d21cc54abb72f9ed",
+      "status": 200,
+      "fixture_kind": "captured_raw_response"
+    },
+    {
+      "file": "sources/zim-2026-10-06-6k.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/zk2636204.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/zk2636204.htm",
+      "fetched_at": "2026-10-10T06:02:51.937130+00:00",
+      "bytes": 10909,
+      "sha256": "3c0616cde36bf5fe5bdbc7afda758a8191dfbe379c063a035575179790f7fccd",
+      "status": 200,
+      "fixture_kind": "captured_raw_response"
+    },
+    {
+      "file": "sources/zim-2026-10-06-release.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
+      "fetched_at": "2026-10-10T06:03:06.325905+00:00",
+      "bytes": 16996,
+      "sha256": "9c4ac3ec5770dfacf5cadc7a392c65c06c20837fd078e9d26950e02f3a9edff6",
+      "status": 200,
+      "fixture_kind": "captured_raw_response"
+    }
+  ]
+}

@@ -1,11 +1,28 @@
 # SpicyStock — working notes
 
-**Active goal (9 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
-current product direction and milestone contract. The owner uses a $2,000 cash
+**Active goal (updated 10 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
+current product direction and milestone contract. Mo uses a $2,000 cash
 account and America/Chicago time; the broker is unspecified. New production
 workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
-default model assumptions retain their own values. Continue from the first
-unfinished milestone and record production evidence before calling it complete.
+default model assumptions retain their own values. Mo explicitly authorizes an
+ongoing choose/build/test/review/merge/verify loop until manually stopped. Resume
+unfinished work, choose the next useful independent milestone, and record actual
+production evidence before calling a release complete. The hourly ChatGPT task
+**Build SpicyStock milestones** supports continuation; coordinate with active
+builders and do not open duplicate work.
+
+**Queued review-budget policy (10 October 2026):** `src/review_selection.py`
+archives `account_feasible_first_research_v1`. The evening run selects feasible
+private mechanical previews first, retaining the twelve-read ceiling and existing
+rank. At most two spare A+/A reads retain research (ranked plus deterministic
+session/ticker rotation); zero feasible names does not consume twelve reads.
+Per-row purposes/blockers and reconciled run counts are provenance-bound and
+replayed with the production planner and archived event registry. This changes
+selection and rules identity, not final trade guards or historical records.
+Method explains the recorded pre-review fit, opportunity/research split and
+feasible names left unreviewed only for a reconciled, supported receipt.
+The existing conservative model-plan reservation policy still applies across
+rules identities. No production spend or improvement in outcomes is yet claimed.
 
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
@@ -290,7 +307,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3376 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3577 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4981,3 +4998,139 @@ banking calendars differ that day, so cash still comes from the broker.
 Broker identity, pre-open operational acceptance, actual fills and the first
 successful trade remain outstanding. Continue from these gaps; do not mark the
 whole goal or milestone 2 complete.
+
+## Checkpoint, 10 Oct 2026 — consistent ticket and workflow status (local)
+
+**Executed defect.** The October 9 publication at `62bce72d` admits one ZIM
+anticipation ticket for October 12. At phone and desktop sizes, the morning
+desk counted it while `nextActionCore()` counted bursts alone: it offered no
+next step for the coil and said nothing had been offered once the window ended.
+The same contradiction occurs with the pipeline-generated `notrade` fixture.
+The optional stale-page run log also called an already-published, skipped
+scheduled attempt “tonight’s run: completed.” Its success was workflow evidence,
+not a new publication.
+
+**Correction.** The next-action message reads both existing model ticket counts,
+preserving publication, market and clock refusal precedence. Zero-ticket wording
+covers both setup families, and cutoff retains the published ticket count as
+history. The optional run log names the latest evening workflow, includes its
+exchange-local date, distinguishes cancellation/skipping from failure, and says
+successful workflows can skip publication. It makes no new data or delivery
+claim. No strategy number, ticket, source record, provider request or workflow
+changed; `.env.example` was reviewed and needs no new setting.
+
+**Local evidence.** The new `status` browser suite plus `full`, `degraded` and
+`notrade` pass 1,424 checks. Independent review passed all 106 status checks.
+Docs/secret tests pass 92. Isolated burst-only and false-publication-claim
+mutations fail their intended assertions (92/106 and 94/106); an unrelated
+coil-sorting mutation still passes 106/106. Exact current publication bytes
+were also replayed at 1280 and 390 pixels with explicitly pinned pre-open, open,
+cutoff and stale clocks; before/after screenshots were inspected. This local
+browser work does not establish future pre-open delivery or a live trade.
+Runtime: Node 24.19.0, Playwright Chromium 151, Python 3.12.14.
+Hosted and public acceptance remain the release owner's next steps.
+
+## Checkpoint, 10 Oct 2026 — personal cash preview ready for release
+
+Mo expanded the operating contract to continued milestone releases until
+manually stopped. `PRODUCT_GOAL.md` records that contract; the hourly ChatGPT
+continuation task resumes work but is not an uninterrupted process. Both
+repositories remain connected, and the pinned design-system assets are reused.
+
+The morning desk now offers a separate, tab-local preview of one admitted
+published plan using entered settled cash, an explicit fees buffer and optional
+smaller whole-share quantity. Integer-cent arithmetic caps at both published
+quantity and cash affordable at the limit. It shows principal, fees, total
+cash, limit-to-stop risk and cash remaining. Published order copying retains
+the original quantity and says so beside the preview. Nothing reserves cash,
+submits an order or reads a broker balance. Invalid or unknown inputs, zero
+affordability, incompatible account assumptions, fixture publications, entry-window expiry
+and event refusal cannot produce a current preview. Inputs are reconsidered
+against the current clock and publication; session changes clear settled cash.
+
+The asynchronous observations callback now checks that the application is
+still mounted. The prior teardown exception was reproduced on unchanged main;
+a held-crypto teardown control passes and deleting the guard restores failure.
+
+Executed local evidence: 534 morning/cash browser assertions, 137 continuity
+assertions, seven producer-fixture tests and six reproduced fixture files.
+Independent review passed 421 browser assertions and 10,014 arithmetic cases,
+and inspected phone/desktop captures. Quantity, fees, event, account and cutoff
+mutations fail their intended controls; an unrelated maximum-share mutation
+passes. The publisher inventory includes all 29 files, including the new
+`app-cash-preview.js`. After incorporating the ZIM registry and narrow scanner
+correction, 44 documentation/fixture tests pass and collection finds 3,383
+Python tests. Runtime: Python 3.12.14 and Node 24.19.0. `.env.example` documents
+that this calculation needs no broker credential or new environment variable.
+
+Hosted checks and actual public acceptance remain outstanding. The original
+October 9 ZIM ticket must be superseded through normal production after PR #115;
+its retained model history must not be erased. No actual fill or successful
+trade has been reported by Mo.
+
+## Checkpoint, 10 Oct 2026 — enforce cash-fixture integrity (PR #119)
+
+Independent review found that the cash-preview generator and publication test
+called `provenance.verify()` without checking its returned status. Both now
+require PASS with `require_sources=False`. The generator's temporary source
+objects are not retained, so this checks publication integrity and compatible
+rule replay; it does not claim a retained-source audit.
+
+The new regression runs the real offline producer, changes only a candidate's
+recorded review-selection decision, and requires the generator to reject the
+evidence mismatch. In an isolated copy, deleting only the new assertion makes
+that regression fail with a missing rejection; changing unrelated archive
+capacity keeps it passing. All six cash-preview fixture files reproduce their
+existing bytes. Collection now finds 3,424 Python tests.
+
+The preceding independent selector review passed 156 targeted Python and 427
+browser checks, with phone and desktop explanations inspected. This follow-up
+changes test enforcement only; it does not change an application asset,
+published plan, fixture JSON, strategy rule or source record. README and
+`.env.example` need no factual change for this test-only correction. Hosted
+checks and public acceptance remain the release owner's responsibility.
+
+## Checkpoint, 10 Oct 2026 — bounded SEC evidence ready for hosted review
+
+Issue #118 adds an optional Morning desk source reader for admitted plans and
+known-event-excluded candidates. It binds a small receipt and digest-named
+bundle to the exact canonical record, compact reader and candidate plans.
+The SEC-only collector cross-checks ticker/CIK identity, records separate
+filing, acceptance and retrieval clocks, and retains incomplete excerpts with
+raw and displayed-text digests. A recent filing sample never clears a known
+event or the unchecked future earnings calendar. ZIM's original merger anchor
+survives newer filings, source outages and omitted collection.
+
+Collection is bounded by source paths, request spacing, requests, response
+bytes, aggregate network bytes, distinct captured bytes and an absolute request
+deadline within the run budget. Verified cache reuse preserves the last network
+clock. Main-only workflow guards serialize at most three production starts per
+UTC day, including failed attempts and reruns. The collector has a read-only
+token; a separate publisher revalidates current main, canonical bytes and the
+previous receipt before writing only its owned receipt, immutable bundle and
+retention manifest. Superseded bundles have a 21-day elapsed-time grace period;
+unknown files remain untouched. Older valid evidence cannot attach to another
+scan and does not block an evening publication.
+
+After integration with the exact PR #119 ancestry, 12 issuer producer fixtures
+reproduce and 203 focused collector/source/publisher/workflow Python checks
+pass. The combined issuer, cash, morning, status, review-selection, session and
+refresh browser checks pass 1,054/1,054. Phone and desktop screenshots were
+inspected. Independent issuer review passed 220 checks plus real-producer
+inapplicable and long-excerpt controls; a 3,677-pixel phone overflow was
+reproduced and corrected to the 352-pixel dialog width. Continuity passed 137
+checks. Source, raw-byte digest, publication binding, cache clock, publisher
+race, retention and layout mutations fail their intended controls, with
+unrelated controls passing. Absolute transport deadlines were exercised with
+an actually blocked transport, not inferred from timeout configuration.
+
+Generated publication/reader fixtures carry the same three public numeric rule
+identifiers as existing fixtures. The scanner disposition requires one of
+those exact values AND one of the two exact new paths; default detectors remain
+enabled. All 76 real-engine controls pass on each of pinned gitleaks 8.24.3 and
+current 8.30.1. No producer or captured source bytes are rewritten for scanning.
+Collection finds 3,577 Python tests. Runtime: Python 3.12.14 and Node 24.19.0.
+README and `.env.example` describe the source bounds, retention and absence of
+new credentials. Hosted gates and actual main/public-site acceptance remain
+outstanding; these offline checks do not establish live filing coverage,
+morning delivery or a successful trade.

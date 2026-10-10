@@ -187,17 +187,18 @@ def test_claude_may_lower_a_grade_and_never_raise_it(market, claude, fake_resend
 
 
 def test_claude_cannot_raise_a_grade_the_checklist_capped(fake_alpaca, seed, claude, fake_resend, tmp_path):
-    """An H-only miss is capped at B by the checklist; Claude answering A+ is
-    kept as its opinion and the grade stays B, so the name is not traded."""
-    fake_alpaca.add_history("HMISS", qframe(ideal_bars(close_pos=0.55)))
+    """A mechanical A remains A despite an A+ reply. B names now remain outside
+    the review pool; this A shape exercises the actual selected-reader path."""
+    fake_alpaca.add_history("AMECH", qframe(ideal_bars(base_range=3.2)))
     for name, df in base_frames(11, seed).items():
         fake_alpaca.add_history(name, df)
     fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260))
-    rep, data, docs = evening(tmp_path, ["HMISS"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+    rep, data, docs = evening(tmp_path, ["AMECH"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
     burst = data["bursts"][0]
-    assert burst["quality"]["grade"] == "B" and burst["claude"]["source"] == "claude"
-    assert burst["grade"] == "B" and burst["claude"]["grade"] == "B" and burst["claude"]["agree"] is True
-    assert data["trades"] == [] and data["run"]["graded"] == {"a_plus": 0, "a": 0, "b": 1, "c": 0, "skip": 0}
+    assert burst["quality"]["grade"] == "A" and burst["claude"]["source"] == "claude"
+    assert burst["claude"]["returned_grade"] == "A+"
+    assert burst["grade"] == "A" and burst["claude"]["grade"] == "A" and burst["claude"]["agree"] is True
+    assert data["run"]["graded"] == {"a_plus": 0, "a": 1, "b": 0, "c": 0, "skip": 0}
 
 
 def dollar_day(seed: int, variant: int, *, ratio: float, gain: float = 2.0, prev_volume: float | None = None) -> pd.DataFrame:

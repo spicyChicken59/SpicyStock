@@ -1,0 +1,132 @@
+name: Issuer evidence (SEC sources)
+# Dated, incomplete SEC source material; never news clearance or order authority.
+# Trigger only after a real committed evening/morning publication. The guard
+# caps actual production collection starts (including failed/retried attempts)
+# at three per UTC day and fails closed if Actions history is incomplete.
+on:
+  workflow_run:
+    workflows: ["Evening scan (6:16 PM ET)", "Morning observation (best effort)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Retain a source-evidence artifact only; no publication, email or orders."
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+  actions: read
+
+# Serialize guard, collection and persistence together. A running collection
+# reserves one daily slot; a queued run cannot inspect an uncommitted budget.
+concurrency:
+  group: issuer-evidence
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: >-
+      (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == true))
+      && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      ready: ${{ steps.production.outputs.ready || steps.rehearsal.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Guard the trigger and daily collection budget
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m tools.publish_issuer_evidence guard
+      - name: Restore verified main source cache
+        if: steps.guard.outputs.go == 'true' && github.ref == 'refs/heads/main'
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/issuer-source-cache
+          key: issuer-source-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: issuer-source-v1-
+      - name: Collect issuer evidence (production)
+        id: production
+        if: steps.guard.outputs.go == 'true' && (github.event_name != 'workflow_dispatch' || inputs.dry_run == false)
+        env:
+          SCAN_SEND_EMAIL: "false"
+        run: |
+          python -m src.issuer_evidence --record docs/data.json --previous docs/issuer-evidence.json --output "$RUNNER_TEMP/issuer-output" --cache-dir "$RUNNER_TEMP/issuer-source-cache"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Collect issuer evidence (rehearsal)
+        id: rehearsal
+        if: steps.guard.outputs.go == 'true' && github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        env:
+          SCAN_SEND_EMAIL: "false"
+        run: |
+          python -m src.issuer_evidence --record docs/data.json --previous docs/issuer-evidence.json --output "$RUNNER_TEMP/issuer-output" --cache-dir "$RUNNER_TEMP/issuer-source-cache" --dry-run
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Retain this run's validated public candidate
+        if: steps.production.outputs.ready == 'true' || steps.rehearsal.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issuer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/issuer-output/issuer-evidence.json
+            ${{ runner.temp }}/issuer-output/issuer-evidence/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Retain bounded source captures separately
+        if: (success() || failure()) && steps.guard.outputs.go == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issuer-captures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/issuer-output/captures/
+            ${{ runner.temp }}/issuer-output/manifest.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Verify source cache before save
+        if: github.ref == 'refs/heads/main' && (steps.production.outputs.ready == 'true' || steps.rehearsal.outputs.ready == 'true')
+        id: cache
+        run: python -m tools.publish_issuer_evidence cache-check --path "$RUNNER_TEMP/issuer-source-cache"
+      - name: Save main-only verified source cache
+        if: github.ref == 'refs/heads/main' && steps.cache.outputs.valid == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/issuer-source-cache
+          key: issuer-source-v1-${{ github.run_id }}-${{ github.run_attempt }}
+
+  persist:
+    needs: collect
+    if: >-
+      github.ref == 'refs/heads/main'
+      && needs.collect.outputs.ready == 'true'
+      && (github.event_name == 'workflow_run' || inputs.dry_run == false)
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      # Consume only the read-only job's artifact from this exact run/attempt.
+      - uses: actions/download-artifact@v4
+        with:
+          name: issuer-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/issuer-candidate
+      - name: Publish only against unchanged main source and receipt
+        run: python -m tools.publish_issuer_evidence publish --input "$RUNNER_TEMP/issuer-candidate"
