@@ -4690,7 +4690,8 @@
       if (current === change.data) refreshResearchViews();
     });
     SCStock.observations.onChange(() => {
-      if (!loaded || !model) return;
+      // A digest or fetch may settle after the window's DOM is disposed.
+      if (!loaded || !model || !$('orders-summary')) return;
       SCStock.morning.render($('morning-desk'), current, av, model);
       reclockDetail(); renderTickets(current);
       if (comparePanels.length && state.pins.length === 2) reclockCompare();

@@ -30,7 +30,7 @@ async function open(data, shared=hub()) {
  const storage={get length(){return shared.values.size},key(i){return [...shared.values.keys()][i]??null},getItem(k){if(shared.fail==='read')throw Error('read blocked');return shared.values.get(k)??null},setItem(k,v){if(shared.fail==='write'||shared.fail==='quota'&&String(v).length>4000)throw Error('quota');if(shared.fail==='readback'&&!k.endsWith('.probe'))return;const old=shared.values.get(k)??null;shared.values.set(k,String(v));if(old!==String(v))setTimeout(()=>{for(const other of shared.windows)if(other!==w&&!other.closed)other.dispatchEvent(new other.StorageEvent('storage',{key:k,oldValue:old,newValue:String(v)}));},0)},removeItem(k){shared.values.delete(k)},clear(){shared.values.clear()}};
  Object.defineProperty(w,'localStorage',{value:storage});
  Object.defineProperty(w.navigator,'locks',{value:{request:async(name,fn)=>{const previous=shared.locks.get(name)||Promise.resolve();const next=previous.catch(()=>{}).then(fn);shared.locks.set(name,next);return next;}}});
- Object.defineProperty(w,'crypto',{value:webcrypto});w.TextDecoder=TextDecoder;w.TextEncoder=TextEncoder;
+ Object.defineProperty(w,'crypto',{value:shared.cryptoGate?{subtle:{digest:async(...args)=>{await shared.cryptoGate;return webcrypto.subtle.digest(...args);}}}:webcrypto});w.TextDecoder=TextDecoder;w.TextEncoder=TextEncoder;
  w.matchMedia=()=>({matches:false,addListener(){},addEventListener(){}});w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};
  w.ResizeObserver=class{observe(){}disconnect(){}};w.IntersectionObserver=class{observe(){}disconnect(){}};
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new w.Event('close'))};
@@ -42,7 +42,7 @@ async function open(data, shared=hub()) {
  return {ok:true,status:200,text:async()=>body.toString(),json:async()=>JSON.parse(body),arrayBuffer:async()=>body.buffer.slice(body.byteOffset,body.byteOffset+body.byteLength)};
  };
  w.SCStock={dataUrl:'data.json',now:'2026-09-14T23:00:00Z'};
- for(const f of ['docs/design-system/sc-charts.js','docs/app-chart.js','docs/app-map.js','docs/app-follow.js','docs/app-reading.js','docs/app-method.js','docs/app-findings.js','docs/app-reader.js','docs/app-observations.js','docs/app-morning.js','docs/app.js']) { if(baseline && (f==='docs/app-reading.js'||f==='docs/app-method.js'||f==='docs/app-findings.js'||f==='docs/app-morning.js'||f==='docs/app-observations.js'||f==='docs/app-reader.js')) continue; w.eval(await source(f)); }
+ for(const f of ['docs/design-system/sc-charts.js','docs/app-chart.js','docs/app-map.js','docs/app-follow.js','docs/app-reading.js','docs/app-method.js','docs/app-findings.js','docs/app-reader.js','docs/app-observations.js','docs/app-cash-preview.js','docs/app-morning.js','docs/app.js']) { if(baseline && (f==='docs/app-reading.js'||f==='docs/app-method.js'||f==='docs/app-findings.js'||f==='docs/app-cash-preview.js'||f==='docs/app-morning.js'||f==='docs/app-observations.js'||f==='docs/app-reader.js')) continue; w.eval(await source(f)); }
  await pause();await pause();
  check(!!w.SCStock.model,'app loaded with the real published record: '+errors.join(';'));
  return {w,dom,shared,errors,close(){shared.windows=shared.windows.filter(x=>x!==w);dom.window.close();}};
@@ -194,6 +194,17 @@ try{
   gone.close();await new Promise(r=>setTimeout(r,500));
   process.off('unhandledRejection',onLate);process.off('uncaughtException',onLate);
   check(late.length===0&&gone.errors.length===0,'a window closed with the historical files in flight raises nothing when they '+(refuse?'fail':'answer')+': '+late.concat(gone.errors).join(';'));
+ }
+ // The publication digest is asynchronous too. Closing before it completes
+ // must neither recreate UI nor reject when its observer callback settles.
+ {
+  const late=[];const onLate=e=>late.push(String(e&&e.message||e));process.on('unhandledRejection',onLate);process.on('uncaughtException',onLate);
+  const delayed=hub();let releaseDigest;delayed.cryptoGate=new Promise(resolve=>{releaseDigest=resolve;});
+  const gone=await open(records['2026-09-14'],delayed);
+  check(gone.w.SCStock.observations.facts().state==='unbound','publication digest is held while the page is mounted');
+  gone.close();releaseDigest();await new Promise(r=>setTimeout(r,200));
+  process.off('unhandledRejection',onLate);process.off('uncaughtException',onLate);
+  check(late.length===0&&gone.errors.length===0,'a publication digest completing after window disposal raises nothing: '+late.concat(gone.errors).join(';'));
  }
  check(errors.length===0,'no DOM runtime errors: '+errors.join(';'));
  console.log(JSON.stringify({status:'PASS: offline DOM/store checks; not browser/layout acceptance',checks,requests:shared.requests.filter(u=>u.includes('history/'))}));
