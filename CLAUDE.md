@@ -6338,3 +6338,44 @@ readback checked 26 proof, source, image and release identities. Actual public
 reads are complete and the main-release hold is lifted. PR #150 review clarity
 is undergoing hosted checks; #149 retained-journal reporting is locally verified
 and being prepared for review; #151 research observations is in implementation.
+
+## Checkpoint, 10 Oct 2026 — #150 and #152 finished in one PR
+
+Mo asked Claude to find where the hourly ChatGPT loop stopped and to finish and
+merge it. It had stopped with two open PRs: #150 (review clarity, `31c32fbb`)
+and #152 (retained-journal reports, `d830f75b`, built on #150). Both failed the
+same three page checks, and #152's page job was cancelled at its 15-minute cap
+with 13,951 of 13,954 checks done. Main was green. This branch restarts
+`claude/spicystock-historical-workflow-i53ud1` from main, merges #152's exact
+head (which carries #150's), and adds two corrections, so merging it lands both
+reviewed heads by ancestry. Nothing of either PR's reviewed code is rewritten.
+
+**The first screen.** Reproduced in Chromium on #150's head: the cover's new
+review paragraph and original-verdict card took the market bar from 166 to
+326 px at 1280 (first stock at 1021 against the 900 gate) and the stage cards
+and search below the 844 px phone screen, on EVERY record, while the facts
+answer only one headline. The cover now carries them only under the
+reader-wait headline (`report.H1_READER_WAIT`, which `reader_pending()` writes
+when an A+/A burst lacks accepted review), as one collapsed line naming the
+accepted selected reviews and the mechanical A+/A still unreviewed ("Chart
+reviews: 2 of 2 selected accepted · 51 mechanical A+/A not reviewed" on the
+retained Oct 9 record); opening it shows the full reconciled summary and the
+dated original headline. Every other night's first screen measures main's to
+the pixel at 320, 390 and 1280. The Morning desk and Method keep the facts for
+every record, and the clarified headline rewrite is unchanged.
+`tools/review_selection_cases.mjs` now asserts that contract and the line's
+visibility, not just text present in the DOM: always-visible, never-visible
+and dropped-count mutants fail 7, 20 and 5 of the review and phone suites'
+402 checks; an unrelated control passes all 402.
+
+**The CI caps.** On main (`a9862564`) the pytest job took 14m13s and the page
+job 14m11s against 15-minute caps. `tests.yml` is no longer a pinned source (the
+loop has edited it five times since), so both caps are 30 minutes now: a cap
+stops a hang and does not bound a suite. No suite, check or lane changed.
+
+**Not done here, and why.** #151 (current-cohort research quotes) was "in
+implementation" in the loop's own notes and has no pushed branch or PR, so there
+is nothing of it to finish. Public acceptance is the publication gate's: this
+sandbox's proxy refuses github.io, so the served page is read on GitHub's
+runner (`publish_dashboard.py`, every public file against committed main), not
+here. No run, mail, provider call or record change.
