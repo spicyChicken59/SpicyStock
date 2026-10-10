@@ -1,9 +1,10 @@
 # SpicyStock product goal
 
-Set 9 October 2026. This is the active product goal and release sequence.
+Set 9 October 2026; continuation expanded by Mo on 10 October 2026.
+This is the active product goal and release sequence.
 
 Build a dependable morning workspace for an educated first real-money trade,
-then make that preparation repeatable. The owner uses a **$2,000 cash account**
+then make that preparation repeatable. Mo uses a **$2,000 cash account**
 and **America/Chicago** time. The broker is not yet specified. The desired
 personal outcome is a first profitable trade; product acceptance is based on
 verifiable data, usable decisions and accurately measured outcomes, not a
@@ -194,8 +195,27 @@ unobserved financial outcome complete.
 
 ## Continuation
 
-Continue from the first unfinished milestone. At each release, record the
-changes, tests, production evidence and remaining gap in `CLAUDE.md`; keep this
-goal and the README accurate. The repository's workflows are the recurring
-automation. This document does not create a background agent or a promise of
-unattended future development.
+Mo explicitly authorizes an ongoing loop: choose the next useful deliverable,
+build it, test it, obtain independent review, merge the verified head, check the
+published result, and choose the next milestone. Continue until Mo manually
+stops the work. The decision standard is practical progress toward informed
+morning trades with trustworthy data and a clear strategy, including labelled
+experiments where useful. Ordinary trading uncertainty is not a reason to
+stall; successful tests and attractive setups are not a promise of profit.
+
+Resume unfinished work before opening competing changes. Prefer the most
+valuable deliverable that available access can complete; a missing hosting or
+broker decision must not block independent improvements. Keep required checks,
+credential boundaries, immutable evidence and existing shared allocation intact.
+Record each release's changes, tests, production evidence and next step in
+`CLAUDE.md`; keep this goal and the README accurate. Do not mark the financial
+outcome achieved without actual reported executions.
+
+The ChatGPT task **Build SpicyStock milestones**, created 10 October 2026,
+requests hourly continuation in America/Chicago. Each run must check current
+instructions and concurrent work, resume the existing milestone, and report a
+concrete access/runtime blocker if it cannot proceed. This is scheduled
+continuation, not a continuously running process or a guarantee that a future
+runtime has the same workspace. The repository's market-data workflows retain
+their own schedules. No broker execution, paid infrastructure, or new outbound
+messages are authorized by this development loop.

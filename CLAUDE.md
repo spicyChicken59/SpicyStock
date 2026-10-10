@@ -1,11 +1,15 @@
 # SpicyStock — working notes
 
-**Active goal (9 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
-current product direction and milestone contract. The owner uses a $2,000 cash
+**Active goal (updated 10 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
+current product direction and milestone contract. Mo uses a $2,000 cash
 account and America/Chicago time; the broker is unspecified. New production
 workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
-default model assumptions retain their own values. Continue from the first
-unfinished milestone and record production evidence before calling it complete.
+default model assumptions retain their own values. Mo explicitly authorizes an
+ongoing choose/build/test/review/merge/verify loop until manually stopped. Resume
+unfinished work, choose the next useful independent milestone, and record actual
+production evidence before calling a release complete. The hourly ChatGPT task
+**Build SpicyStock milestones** supports continuation; coordinate with active
+builders and do not open duplicate work.
 
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
