@@ -70,8 +70,8 @@
       "discovered_reaction_candidates": 479,
       "accepted": 12,
       "not_selected_budget": 467,
-      "mechanical_A_plus": 0,
-      "mechanical_A": 41,
+      "final_A_plus": 0,
+      "final_A": 41,
       "limit": "12/12 describes the requested review batch, not complete candidate, issuer-news or earnings coverage."
     },
     "input_coverage": {
