@@ -34,6 +34,7 @@ import { checkMorning } from './morning_cases.mjs';
 import { checkMorningStatus } from './status_cases.mjs';
 import { checkReviewSelection } from './review_selection_cases.mjs';
 import { checkCashPreview } from './cash_preview_cases.mjs';
+import { checkHandoff } from './handoff_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -91,6 +92,8 @@ async function serve() {
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
         : url.pathname === '/docs/app-cash-preview.js' ? process.env.SCSTOCK_CASH_PREVIEW
+        : url.pathname === '/docs/app-handoff.js' ? process.env.SCSTOCK_HANDOFF
+        : url.pathname === '/docs/app-handoff-ui.js' ? process.env.SCSTOCK_HANDOFF_UI
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
@@ -3892,6 +3895,7 @@ async function main() {
       if (runs('status')) await checkMorningStatus({ browser, base, open, check, eq, shotsDir });
       if (runs('review-selection')) await checkReviewSelection({ browser, base, open, check, eq, shotsDir });
       if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
+      if (runs('handoff')) await checkHandoff({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
