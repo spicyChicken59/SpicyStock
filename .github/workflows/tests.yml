@@ -131,6 +131,7 @@ jobs:
           .github/workflows/historical-input-proof.yml .github/workflows/tests.yml
           .github/workflows/morning.yml .github/workflows/intraday.yml
           .github/workflows/publish-dashboard.yml
+          .github/workflows/issuer-evidence.yml
       - name: Install verified age for offline historical transport controls
         run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
@@ -147,6 +148,7 @@ jobs:
         run: |
           python tools/make_fixture.py --check
           python tests/fixtures/morning/generate.py --check
+          python tests/fixtures/issuer-evidence/generate.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail
