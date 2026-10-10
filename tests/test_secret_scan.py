@@ -14,6 +14,7 @@ from tests.secret_scan_controls import (
     BOUNDED_PATHS, BOUNDED_VALUES, OBSERVATION, PUBLIC_VALUES, ROOT,
     retained_documents, NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB,
     NATIVE5_WORKFLOW, native5_public_preservation,
+    PUBLIC_SITE_CAPTURE, PUBLIC_SITE_CAPTURE_SHA256, public_site_capture,
 )
 
 
@@ -106,7 +107,7 @@ def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
     document = json.loads(native5_public_preservation())
     assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
     assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
-    assert len(dispositions()) == 8
+    assert len(dispositions()) == 9
     entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
     assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
     assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
@@ -154,3 +155,28 @@ def test_reader_rule_disposition_requires_exact_asset_and_public_value():
         assert all(not allowed(path, value) for value in values)
     for value in (*PUBLIC_VALUES, "unrelated_rule", "x" + values[0], values[0] + "x", values[0].upper()):
         assert not allowed("docs/reader.json", value)
+
+
+def test_public_site_disposition_requires_pinned_capture_and_client_context():
+    raw, identifier = public_site_capture()
+    assert hashlib.sha256(raw).hexdigest() == PUBLIC_SITE_CAPTURE_SHA256
+    assert allowed(PUBLIC_SITE_CAPTURE, identifier)
+    entry = next(item for item in dispositions() if item["description"].startswith("Captured public reCAPTCHA"))
+    assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+    assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
+    assert entry["paths"] == ["^" + re.escape(PUBLIC_SITE_CAPTURE).replace(r"\-", "-") + "$"]
+    assert entry["regexes"] == ["^(" + re.escape(identifier).replace(r"\-", "-") + ")$"]
+
+
+def test_public_site_identifier_remains_detectable_elsewhere():
+    _, identifier = public_site_capture()
+    for path in ("copied/" + PUBLIC_SITE_CAPTURE, PUBLIC_SITE_CAPTURE + ".backup",
+                 PUBLIC_SITE_CAPTURE.replace("ir-merger-announcement.html", "another.html"), OBSERVATION):
+        assert not allowed(path, identifier)
+
+
+def test_public_site_path_does_not_allow_unrelated_or_altered_values():
+    _, identifier = public_site_capture()
+    altered = ("A" if identifier[0] != "A" else "B") + identifier[1:]
+    for value in (altered, "x" + identifier, identifier + "x", identifier.upper(), PUBLIC_VALUES[0]):
+        assert not allowed(PUBLIC_SITE_CAPTURE, value)

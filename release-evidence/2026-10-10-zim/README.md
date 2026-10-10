@@ -42,3 +42,11 @@ digests and exact excerpts used in the registry:
 Historical production bytes are preserved. This source correction takes effect
 in newly generated publications; adding the evidence alone does not change an
 already published ticket.
+
+The issuer announcement also contains a public reCAPTCHA client site key used
+by `grecaptcha.render`. [Google's key documentation](https://developers.google.com/recaptcha/intro)
+distinguishes this browser identifier from the private server verification key.
+The scanner disposition requires both that exact public value and this exact
+capture path; the raw HTML and its manifest digest are unchanged. Offline
+controls retain detection for other values, copied paths and other credential
+types. No detector or complete file is excluded.
