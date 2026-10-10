@@ -290,7 +290,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3368 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3373 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4577,12 +4577,48 @@ plan families, event refusals and the combined budget. The offline historical
 reaction study stays reaction-only but uses the same reservation; entry-limit
 comparisons read the record's account and archived gates.
 
-`knowledge/event-risk.json` contains dated SEC issuer sources for MG, PRTH,
-ARX, BWIN and ACVA. `src/event_risk.py` refuses their unresolved cash-acquisition
+`knowledge/event-risk.json` contains dated SEC and issuer sources for MG, PRTH,
+ARX, BWIN, ACVA and ZIM. `src/event_risk.py` refuses their unresolved cash-acquisition
 momentum tickets, archives the bounded registry and its digest in the rules,
 keeps overdue reviews blocked, and requires a sourced resolution to end one.
 Evidence from after the evaluated date is not presented as then available.
 Unlisted stocks have not been cleared by live news; this is a manual registry.
+
+The 10 October 2026 ZIM correction reviewed the actual 9 October publication
+at `62bce72d`: its anticipation plan offered two shares with $61.36 maximum
+order cost and $2.04 planned price-to-stop risk, despite the unresolved
+Hapag-Lloyd $35 cash merger. The issuer's 16 February announcement, 30
+September SEC approval-process update and 6 October guidance release are
+captured byte-for-byte under `release-evidence/2026-10-10-zim/`, with exact
+excerpts, URL, retrieval time and raw SHA in its manifest. The September report
+says the Israeli GCA stopped handling the existing application and Hapag-Lloyd
+intended to submit a revised proposal; this is not a sourced deal termination.
+The October guidance increase remains research context, not an exception to
+the existing cash-acquisition policy. The registry reason uses only the
+original announcement, so later updates are not leaked into earlier sessions.
+The old production data, picks and morning receipt were not rewritten; a new
+verified publication must establish the exclusion on the live site.
+
+Validation on Python 3.12.14: 257 targeted event, pipeline, provenance, morning
+and documentation tests passed; 13 current-pipeline page fixtures and 21 morning
+receipt fixtures passed their generator checks. Removing only ZIM from an
+isolated registry copy made all four ZIM tests fail; removing unrelated MG kept
+those four green. The original morning full/red publications are now immutable
+SHA-pinned source inputs, not regenerated outputs. Receipt generation uses their
+archived registry; current page fixtures continue to exercise today's pipeline.
+The original legacy receipt bytes remain unchanged. Removing the archived-input
+digest guard failed its new test; an unrelated captured-halt clock edit passed.
+Source hashes and excerpts were checked against the retained response bytes.
+`.env.example` was reviewed: this evidence-only correction needs no new variable.
+These are local checks, not a claim about later hosted CI or production release.
+
+Next event-coverage milestone: inspect provisionally executable candidates via
+verified CIK/SEC submissions and bounded issuer releases, retain dated source
+evidence, and expose unavailable or unreviewed coverage explicitly. Unresolved
+older agreements need their latest updates; a recent-headlines-only window
+would miss ZIM's February agreement. No upcoming ZIM earnings date was verified
+in this bounded review, and source discovery must never mean comprehensive
+news clearance.
 
 `evening.yml` explicitly configures $2,000 and 0.5%; local defaults retain the
 old model for compatibility. Both scheduled slots check the intended nominal
