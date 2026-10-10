@@ -5134,3 +5134,46 @@ README and `.env.example` describe the source bounds, retention and absence of
 new credentials. Hosted gates and actual main/public-site acceptance remain
 outstanding; these offline checks do not establish live filing coverage,
 morning delivery or a successful trade.
+
+## Checkpoint, 10 Oct 2026 — private broker handoff ready for hosted review
+
+Issue #120 closes the gap between a smaller personal cash preview and the
+unchanged original ticket. An explicitly saved, browser-local draft carries
+the chosen whole-share quantity, exact publication and plan identities,
+unchanged levels, dated exit instructions and a separate broker readback.
+Current publication, cash, account, event and entry-window guards apply to new
+drafts and copying. Manual reports remain correctable after expiry or a known
+event; reported facts do not authorize another entry.
+
+The owner reports cumulative submitted, filled, cancelled, exited and
+protective quantities with explicit-offset event times. Remaining holdings
+are calculated only when both filled and exited quantities are known;
+explicit zero exits differs from unknown. Protection is compared with those
+remaining reported holdings, not cumulative entry fills. Clearing a report to
+unknown cannot revive its entry copy. There is no broker submission,
+observation of fills, account balance inference or realized-P&L calculation.
+
+Private storage is bounded to 100 items and 1 MiB with serialized,
+revision-checked writes. Unknown or corrupt storage remains untouched.
+Readback and rollback faults retain exact prior/proposed recovery data.
+Preparing another setup and delayed save completion preserve unsaved edits.
+Explicit draft creation persists the entered cash and fee buffer locally;
+the unsaved cash preview remains tab-local. README and `.env.example` state
+these distinctions and the absence of new credentials.
+
+Independent execution passed 161 browser checks, 19 named model controls and
+36 additional workflow controls, including actual double storage faults.
+Two reproduced defects were corrected and rechecked: clearing all reported
+fields had revived entry copying, and switching drafts had discarded unsaved
+edits. Five model and two UI mutations fail the intended controls while
+unrelated controls pass. CI directly executes the named model runner.
+
+After merging the exact PR #121 issuer ancestry, combined handoff, issuer,
+cash, morning, status, review-selection, session and refresh checks pass
+1,215/1,215; phone and desktop screenshots were inspected. Focused Python
+checks pass 274/274, continuity passes 137/137, all six cash and twelve issuer
+producer fixtures reproduce, and actionlint passes. The 31-commit PR range
+has no gitleaks findings. Collection remains 3,577 Python tests; local runtime
+is Python 3.12.14 and Node 24.19.0. Hosted exact-head gates and actual public
+acceptance remain outstanding. All fill examples are synthetic; no real fill,
+exit, profit or successful trade is established by this release work.
