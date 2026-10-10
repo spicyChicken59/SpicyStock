@@ -129,6 +129,29 @@ def stop_research_files(root: Path) -> tuple[str, ...]:
     return ('stop-research.json', ref['path'])
 
 
+def research_outcomes_files(root: Path) -> tuple[str, ...]:
+    """Verify the optional current journal receipt and its immutable snapshot.
+
+    Older valid bindings remain deployable after an optional writer refusal;
+    the browser separately refuses their attachment to a different record.
+    The append-only index and other snapshots are not implicit browser reads.
+    """
+    docs = root / 'docs'
+    path = docs / 'research-outcomes.json'
+    if not path.exists() and not path.is_symlink():
+        return ()
+    from src.research_outcomes import MAX_RECEIPT_BYTES, parse_receipt, validate_bundle
+    try:
+        receipt_raw = reader_asset(docs, 'research-outcomes.json', MAX_RECEIPT_BYTES)
+        receipt = parse_receipt(receipt_raw)
+        ref = receipt['bundle']
+        bundle_raw = reader_asset(docs, ref['path'], ref['bytes'])
+        validate_bundle(receipt_raw, bundle_raw)
+    except (OSError, ValueError, TypeError, KeyError):
+        raise RuntimeError('Research outcomes companion does not match its committed receipt.') from None
+    return ('research-outcomes.json', ref['path'])
+
+
 def public_files(root: Path) -> tuple[str, ...]:
     """Every file a reader's browser is asked for: index.html, each local asset
     it references -- its own modules AND the vendored design system -- and the
@@ -164,6 +187,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in reader_files(root) if name not in names)
     names.extend(name for name in issuer_files(root) if name not in names)
     names.extend(name for name in stop_research_files(root) if name not in names)
+    names.extend(name for name in research_outcomes_files(root) if name not in names)
     return tuple(names)
 
 

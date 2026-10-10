@@ -206,6 +206,8 @@ jobs:
             docs/reader-observations/
             docs/stop-research.json
             docs/stop-research/
+            docs/research-outcomes.json
+            docs/research-outcomes/
             docs/picks.json
             docs/charts/
             docs/evidence/
