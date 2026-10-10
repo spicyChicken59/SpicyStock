@@ -21,7 +21,7 @@ def burst(ticker="MG"):
 
 @pytest.mark.parametrize("symbol,announced", [
     ("MG", "2026-09-18"), ("PRTH", "2026-09-21"), ("ARX", "2026-08-13"),
-    ("BWIN", "2026-09-14"), ("ACVA", "2026-09-10"),
+    ("BWIN", "2026-09-14"), ("ACVA", "2026-09-10"), ("ZIM", "2026-02-16"),
 ])
 def test_public_announcement_is_first_blocked_session(symbol, announced):
     start = date.fromisoformat(announced)
@@ -53,6 +53,47 @@ def test_same_deal_refuses_otherwise_executable_anticipation():
     rejected = event_risk.apply(original, "MG", date(2026, 10, 9))
     assert rejected["action"] == "refused" and rejected["eligible"] is False
     assert rejected["order_json"] is None and rejected["order_readback"] is None
+
+
+def test_zim_cash_deal_refuses_oct9_anticipation_ticket_for_monday_without_rewriting_geometry():
+    # Inputs from the real 2026-10-09 publication at commit 62bce72d. The
+    # source ticket was executable before the missing known event was added.
+    original = plan.anticipation_plan(ticker="ZIM", close=29.99, box_high=30.35,
+        box_low=29.66, lows_last3=[29.66, 29.9717, 29.91],
+        account=plan.Account(equity=2000, risk_pct=0.5), size_multiplier=0.5)
+    assert original["eligible"] and original["order_json"]
+    assert (original["shares"], original["position_usd"], original["risk_usd"]) == (2, 61.36, 2.04)
+    for session in ("2026-10-09", "2026-10-12", "2026-10-17"):
+        rejected = event_risk.apply(original, "ZIM", session)
+        assert rejected["eligible"] is False and rejected["action"] == "refused"
+        assert {name: rejected[name] for name in plan.NO_ORDER} == plan.NO_ORDER
+        assert "35.00" in rejected["reason"] and "Hapag-Lloyd" in rejected["reason"]
+        assert rejected["event_risk"]["blocked"] is True
+        for field in ("trigger", "limit", "stop", "shares", "position_usd", "risk_usd"):
+            assert rejected[field] == original[field]
+    assert original["eligible"] and original["order_json"]
+
+
+def test_zim_cash_deal_also_refuses_reaction_but_not_unlisted_control():
+    original = burst("ZIM")
+    assert original["eligible"] and original["order_json"]
+    rejected = event_risk.apply(original, "ZIM", "2026-10-09")
+    assert rejected["eligible"] is False and rejected["order_json"] is None
+    control = burst("NVDA")
+    kept = event_risk.apply(control, "NVDA", "2026-10-09")
+    assert {k: v for k, v in kept.items() if k != "event_risk"} == control
+
+
+def test_zim_historical_evidence_does_not_borrow_later_merger_updates():
+    before = event_risk.classify("ZIM", "2026-09-29")["matches"][0]
+    setback = event_risk.classify("ZIM", "2026-09-30")["matches"][0]
+    latest = event_risk.classify("ZIM", "2026-10-09")["matches"][0]
+    assert [s["published_on"] for s in before["sources"]] == ["2026-02-16"]
+    assert [s["published_on"] for s in setback["sources"]] == ["2026-02-16", "2026-09-30"]
+    assert [s["published_on"] for s in latest["sources"]] == ["2026-02-16", "2026-09-30", "2026-10-06"]
+    assert before["reason"] == setback["reason"] == latest["reason"]
+    assert not any(word in before["reason"] for word in ("GCA", "revised proposal", "guidance"))
+    assert latest["active_until"] is None
 
 
 def test_unlisted_stock_keeps_its_ticket_and_does_not_claim_news_clearance():

@@ -1,12 +1,11 @@
-"""Build synthetic browser observations via the real offline pipeline and collector."""
+"""Build browser observations from frozen pipeline inputs and the real collector."""
 import argparse
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
-import os
 from pathlib import Path
 import sys
-import tempfile
 from unittest import mock
 import xml.etree.ElementTree as ET
 
@@ -15,9 +14,12 @@ sys.path.insert(0, str(ROOT))
 
 from src import event_risk, morning, morning_halts
 from tests.test_morning import Client, NOW
-from tools.make_fixture import run_variant
 
 TARGET = Path(__file__).parent
+ARCHIVED_PUBLICATIONS = {
+    "full": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+    "red": "7495f4172806974cbb34a1c4582dd85b693bdab2c235b744cb794ebfdf373489",
+}
 
 
 def encoded(value):
@@ -108,14 +110,28 @@ def build_receipts(full, red, *, legacy=False):
 
 
 def build():
+    # These exact publications were produced by the prior real pipeline and
+    # now serve as immutable migration inputs. Today's pipeline remains
+    # exercised separately by page fixtures; it cannot recreate old code.
+    inputs = {}
+    for name, digest in ARCHIVED_PUBLICATIONS.items():
+        raw = (TARGET / (name + "-publication.json")).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != digest:
+            raise ValueError("Archived morning publication bytes changed: " + name)
+        inputs[name] = raw
+    authority = json.loads(inputs["full"])["rules"]["event_risk"]
+    if json.loads(inputs["red"])["rules"]["event_risk"] != authority:
+        raise ValueError("Archived morning event authorities differ")
+    registry = event_risk.validate_registry(deepcopy(authority["registry"]))
+    if event_risk.registry_digest(registry) != authority["registry_sha256"]:
+        raise ValueError("Archived morning event registry digest differs")
+    rules = {"event_risk." + key: deepcopy(value) for key, value in authority.items()}
+    with mock.patch.object(event_risk, "REGISTRY", registry), mock.patch.object(event_risk, "RULES", rules):
+        return _build(inputs["full"], inputs["red"])
+
+
+def _build(full, red):
     files = {}
-    with tempfile.TemporaryDirectory() as temporary:
-        for variant in ("full", "red"):
-            with mock.patch.dict(os.environ, {"GITHUB_RUN_ID_FOR_RECORD": "synthetic-morning-" + variant}):
-                data = run_variant(variant, Path(temporary) / variant)
-            data.pop("fixture")
-            files[variant + "-publication.json"] = encoded(data)
-    full, red = files["full-publication.json"], files["red-publication.json"]
     files.update(build_receipts(full, red, legacy=True))
     files.update({"reader-" + name: body for name, body in build_receipts(full, red).items()})
     from tests.test_morning import event_outage

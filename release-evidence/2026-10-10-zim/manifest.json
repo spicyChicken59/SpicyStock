@@ -1,0 +1,38 @@
+{
+  "purpose": "Primary-source evidence for the manually reviewed ZIM cash-acquisition exclusion; not a comprehensive news or earnings check.",
+  "captures": [
+    {
+      "file": "ir-merger-announcement.html",
+      "url": "https://investors.zim.com/news/news-details/2026/ZIM-to-be-Acquired-by-Hapag-Lloyd-for-35-00-per-Share-in-Cash-at-Aggregate-Cash-Consideration-of-Approximately-4-2-Billion-New-Israeli-Company-New-ZIM-to-Acquire-Portion-of-ZIMs-Business/default.aspx",
+      "final_url": "https://investors.zim.com/news/news-details/2026/ZIM-to-be-Acquired-by-Hapag-Lloyd-for-35-00-per-Share-in-Cash-at-Aggregate-Cash-Consideration-of-Approximately-4-2-Billion-New-Israeli-Company-New-ZIM-to-Acquire-Portion-of-ZIMs-Business/default.aspx",
+      "fetched_at": "2026-10-10T06:04:01.979768+00:00",
+      "bytes": 147031,
+      "sha256": "32b3411f00b61f712fff475a3b69d63a5de1f8589c71fee4afb6adfc8637a519",
+      "status": 200,
+      "published_on": "2026-02-16",
+      "quote": "Hapag-Lloyd will acquire ZIM for $35.00 per share in cash."
+    },
+    {
+      "file": "2026-09-30-6k.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004656/zk2636172.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004656/zk2636172.htm",
+      "fetched_at": "2026-10-10T06:02:51.961810+00:00",
+      "bytes": 12127,
+      "sha256": "a7e23f853c80a6525bb283e3ca57077e388376dee8b41264d21cc54abb72f9ed",
+      "status": 200,
+      "published_on": "2026-09-30",
+      "quote": "the GCA has determined to cease handling the pending application for approval of the requested changes in the special state share"
+    },
+    {
+      "file": "2026-10-06-release.html",
+      "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
+      "final_url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
+      "fetched_at": "2026-10-10T06:03:06.325905+00:00",
+      "bytes": 16996,
+      "sha256": "9c4ac3ec5770dfacf5cadc7a392c65c06c20837fd078e9d26950e02f3a9edff6",
+      "status": 200,
+      "published_on": "2026-10-06",
+      "quote": "statements relating to the timing and closing of the pending transaction with Hapag-Lloyd"
+    }
+  ]
+}
