@@ -161,6 +161,14 @@ corrections retain the frozen original evidence even after publication replaceme
 or expiry. Modal close/reopen preserves unsaved input; cancelling the new unsaved
 report is an explicit action. Reports remain private on this device.
 
+The verified research journal also offers this blank report for an original
+cohort retained after a newer scan arrives. The loaded journal must match the
+current publication, and the selected row must match its exact original cohort
+and evidence. A refreshed journal requires an explicit reopen before the first
+save; reopening the same verified original preserves unsaved broker inputs.
+Different cohort revisions sharing an original publication/evidence identity
+open the same private record. Conditional model outcomes never supply fill facts.
+
 **Personal completed-trade result.** A separate, user-reported result requires
 positive entry fills, all filled shares exited, and submitted shares fully
 reconciled as filled or cancelled (including an explicit zero cancellation).
@@ -757,9 +765,16 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   `run.review_selection` reconciles feasibility, research-pool size, selected
   names, accepted/unaccepted/refused results, actual retained attempts and
   unused capacity. Attempts are distinct from requested names and billed cost.
-  Method explains the recorded pre-review fit, opportunity/research selection
-  and feasible names left unreviewed; older or unsupported receipts make no
-  selection claim.
+  Method explains reconciled pre-review fit and opportunity/research selection.
+  The Morning desk adds selected-batch completion separately from broader
+  review coverage only when the supporting counts reconcile. The cover carries
+  the same facts only under the reader-wait headline (`report.H1_READER_WAIT`),
+  as one collapsed line naming the accepted selected reviews and the mechanical
+  A+/A names still unreviewed; every other night's first screen is unchanged.
+  A completed research batch does not mean all discovered candidates were
+  reviewed or that any plan is admitted. The original published summary remains
+  available; missing, unsupported or contradictory completion evidence leaves
+  that wording in place without the new completion claim.
   The private preview precedes combined allocation; selection grants no ticket.
   Final accepted-review, grade/regime, sizing, event and allocation guards
   remain unchanged. Archived records without this policy keep their original
@@ -1073,7 +1088,9 @@ wider-stop cohort using observations already retained by normal publications.
 It makes no new provider or model requests. The first before-entry cohort for
 an applicable session is identified as primary; later revisions and late
 captures remain visible. Original exclusions, quantities and levels stay frozen.
-There is no order, personal draft or reported-execution action in this view.
+Each verified original row can open a blank private actual-fill report. Its
+explicitly entered broker facts stay separate from these conditional model
+outcomes; the journal adds no order or personal entry-draft action.
 
 The companion reports pending, missing, uncertain, not-filled, open or resolved
 conditional daily-bar models, plus explicit unsupported-source states. Before

@@ -294,7 +294,43 @@
         ' · volume ' + (bar.v === null ? 'unknown' : new Intl.NumberFormat('en-US').format(bar.v)) + ' · from ' + bar.from_session)));
       evidence.append(list);
     }
+    const report = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-outcome-report': row.ticker,
+      'aria-label': 'Record an already executed ' + row.ticker + ' trade from this original cohort' }, 'Record an already executed trade');
+    const request = reportRequest(original, source, entry);
+    const status = node('p', { class: 'sc-hint', role: 'status', 'data-outcome-report-status': '' },
+      'Reference this original cohort with your actual broker facts. Model fills and results are not entered for you; opening saves nothing and creates no order or cash reservation.');
+    report.addEventListener('click', () => {
+      const result = api.handoffUI && api.handoffUI.openResearch ? api.handoffUI.openResearch(request)
+        : { ok: false, error: 'Private trade reporting is unavailable in this page.' };
+      if (!result.ok) status.textContent = result.error;
+    });
+    article.append(report, status);
     host.append(article);
+  }
+  function reportRequest(row, source, entry) {
+    const hashes = fingerprint();
+    return JSON.parse(JSON.stringify({ origin: 'retained_journal', recordHash: hashes.recordHash, projected: hashes.projected,
+      publication: receipt.publication,
+      journal: { sha256: receipt.bundle.sha256, bytes: receipt.bundle.bytes, generated_at: receipt.generated_at, cohort_set_sha256: receipt.cohort_set_sha256 },
+      cohort: { sha256: entry.source.sha256, bytes: entry.source.bytes, generated_at: source.timing.generated_at, policy_id: source.policy.id },
+      ticker: row.ticker, evidence: row.evidence }));
+  }
+  function reportReference(request) {
+    const failure = { ok: false, error: 'This report reference no longer matches the verified journal and original cohort. Your unsaved facts remain available; reload the matching journal and explicitly reopen its row.' };
+    if (!record || record !== api.data || state !== 'loaded' || !receipt || !bundle || !object(request) ||
+        request.origin !== 'retained_journal' || !object(request.cohort)) return failure;
+    try {
+      binding(receipt.publication);
+      const matches = bundle.cohorts.map((entry, index) => ({ entry, source: sources[index] }))
+        .filter(({ entry }) => entry.source.sha256 === request.cohort.sha256);
+      if (matches.length !== 1 || !matches[0].source) return failure;
+      const { entry, source } = matches[0], rows = source.rows.filter(row => row.ticker === request.ticker);
+      if (rows.length !== 1 || !equal(request, reportRequest(rows[0], source, entry)) || typeof (rows[0].baseline || {}).admitted !== 'boolean') return failure;
+      const expected = reportRequest(rows[0], source, entry);
+      return { ok: true, publication: JSON.parse(JSON.stringify(receipt.publication)), source: JSON.parse(JSON.stringify({
+        ticker: rows[0].ticker, stage: 'setting-up', publication: source.publication,
+        cohort: expected.cohort, evidence: rows[0].evidence, baseline_admitted: rows[0].baseline.admitted })) };
+    } catch (_) { return failure; }
   }
   function renderJournal(host) {
     paragraph(host, 'Conditional daily-bar model.', 'A known model fill requires the entry-session open inside the frozen trigger and limit. Later intraday crossings cannot establish the first thirty minutes. When daily events conflict, the model uses the stop-first convention and whole-share exits over at most five sessions.');
@@ -388,5 +424,5 @@
       paint(); if (mounted && mounted.open && record && hashes.recordHash) load();
     } else paintStatus();
   }
-  api.researchOutcomes = { mount, update, reload: load, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.counts.rows : 0, cohorts: bundle ? bundle.counts.cohorts : 0 }) };
+  api.researchOutcomes = { mount, update, reload: load, reportReference, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.counts.rows : 0, cohorts: bundle ? bundle.counts.cohorts : 0 }) };
 })(window);

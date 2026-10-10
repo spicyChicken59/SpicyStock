@@ -6176,3 +6176,206 @@ The correction belongs to existing PR #145 and is published at `75f5bbc7`, with
 Its runtime is unchanged; the earlier `e556a5c0` hosted checks are historical,
 and new exact-head gates must pass. That correction is merged into this branch.
 No storage validation or trading guard was weakened to accept the bad seed.
+
+
+## Checkpoint, 10 Oct 2026 — issuer, inspection and independent reporting released
+
+[PR #145](https://github.com/spicyChicken59/SpicyStock/pull/145) merged exact
+reviewed head `75f5bbc7` at `e081535d`, 13:25:38 UTC. All seven required checks
+passed on that corrected head: 3,850 Python, 13,387 page, 378 chart and 137
+continuity checks, both native cases and both secret scans. Native memory
+supervision passed; official artifact API/upload digests matched. No separate
+artifact-payload download is claimed. The earlier `e556a5c0` run remains
+historical. Exact-head independent review preserved the initial 32 integration
+checks and added 22 correction-integrity and five executed legacy controls.
+
+GitHub had refused the older issuer branch as conflicting. This release uses
+the already reviewed successor's own successful checks and normal expected-head
+merge. GitHub automatically marked #141 and #143 merged by ancestry, closing
+#138, #142 and #144. Their independently reviewed heads and separate seven-gate
+receipts are retained. No required gate was bypassed or unreviewed head merged.
+
+Publisher `38055671203` verified all 40 public files and completed at 13:27:01
+UTC. Final Pages `38055685479` deployed successfully at 13:26:44; initial Pages
+`38055671329` was superseded/cancelled and is recorded separately. Three unchanged
+strict runners passed their first actual public attempt at the exact merge:
+189 issuer, 147 decision-inspection and 163 independent-report checks. Each
+matched all 40 native file hashes. All 30 phone/desktop screenshots were directly
+inspected, with no browser/transport errors or overflow. The issuer runner's
+synthetic cash-only DOM control is separately labelled; it is not Mo's balance.
+
+Actual issuer evidence still records HTTP 403 during SEC ticker mapping,
+unverified identity, unknown index coverage and no documents. Its cause is
+unknown; the retained MG/ZIM exclusions remain visible. The five original
+anticipation refusals remain separate from ten quiet setups and zero tickets.
+Research inspection opens the exact recorded KE chart without promoting a
+research allocation or creating entry authority. Every actual bound research
+row opens a blank independent report with 14 unknown fields and can be cancelled
+without a private write. No provider request, broker action, actual fill or
+personal profit was produced by acceptance. The journal remains pending/excluded.
+
+The [combined durable receipt](release-evidence/2026-10-10-independent-reports/acceptance.json)
+binds each exact head, hosted run, public file and inspected screenshot. Runtime
+and original source identity checks keep scope separate from the displayed
+research and synthetic private controls. Prior evidence, history, strategy and
+the pinned design system retain their bytes.
+
+Next: #147 adds the locally verified exact-byte private backup; its unchanged
+remote head `101dc9ff` has independent complete-tree approval and is awaiting
+hosted checks. #148 addresses an executed decision-clarity gap: the selected
+reader batch completed 2/2, with zero feasible reaction candidates and two
+intentional research reads, while the original headline says reader review is
+incomplete. Coverage remains partial. The new display must separate these facts
+without changing historical publications, strategy gates or order authority.
+
+## Checkpoint, 10 Oct 2026 — selected review completion and wider coverage
+
+Issue #148 addresses that reproduced wording gap. The cover and Morning desk
+now show reconciled selection, selected-batch completion and wider coverage as
+separate facts. The actual retained publication selected and accepted two
+intentional research reviews, with zero individually feasible reaction candidates
+before review. Of 479 discovered candidates, 477 were not selected; 51 mechanical
+A-band names lacked accepted review under the archived Yellow A+-only gate.
+Completing the selected batch does not establish full coverage or admit a trade.
+
+The shared helper checks supported archived policy semantics, row/evidence
+agreement, purposes, feasibility, attempts, reader outcomes and broader counts.
+Missing or contradictory completion evidence preserves original wording. The
+narrow current-session headline correction keeps the dated published headline
+available; ended or unavailable sessions retain their original primary verdict.
+Reaction selection stays separate from anticipation and from portfolio cash.
+
+Local UI commit `95957c93` and test commit `e46b9703` pass 349 dedicated browser
+controls. Seven isolated guard mutations fail their named assertions; the
+unrelated control passes all 349. Eleven explicitly renderer-only outcome
+packets agree with the unchanged backend helpers; they are not new canonical
+publications. Independent review passes 57 helper and 20 browser controls on
+the actual compact reader and genuine offline fixtures. Six owner and six
+independent phone/desktop screenshots were inspected. Review resolved unsupported
+policy metadata, archived-headline substitution and exact backend error-prefix
+classification before source freeze.
+
+The root's ten existing compatibility suites pass 2,124 controls on the final
+runtime hashes. Dirty private forms, saved legacy bytes, unknown cash and
+existing entry gates remain intact. README and configuration documentation are
+swept. The [preparation receipt](release-evidence/2026-10-10-review-clarity/prepared.json)
+distinguishes local component commits, synthetic controls and the still-pending
+hosted and actual public release acceptance. No original publication, source,
+strategy, provider, account safeguard or design-system pin changes.
+
+Next: release #147 after its remaining required gate, finish exact-head review
+and hosted acceptance for #148, then #149 enables a first actual-fill report from
+a verified retained journal row after a newer scan replaces the current cohort.
+Timely morning delivery, SEC source access and the first actual trade remain open.
+
+## Checkpoint, 10 Oct 2026 — first reports from retained journal cohorts
+
+Issue #149 closes a reproduced gap after publication replacement: the current
+research comparison can be empty while the verified journal retains original
+ideas. Each verified original row now offers a blank actual-fill report. Its
+request binds the currently loaded journal to the current publication and the
+selected original cohort, row and evidence. Stored version-3 source identity
+remains the original publication; current journal identity is only a transient
+lookup prerequisite. Unknown origins and arbitrary ticker requests refuse.
+
+The existing current-comparison path retains its original publication guard.
+First saves still require actual positive fills and submitted quantities, and
+recheck the source inside the existing storage lock. A replaced journal requires
+an explicit verified reopen; reopening the same original preserves mounted dirty
+inputs, focus and caret. Busy saves refuse reference replacement. Different
+cohort revisions of the same original publication/evidence open the same private
+record, rather than creating duplicate trades. Saved corrections remain available
+after source disappearance. Model outcomes never fill in actual broker facts.
+
+Local model commit `bca160e5` passes 76 controls, including nine new journal
+boundaries. Nine isolated model guard mutations fail their named controls;
+an unrelated share-cap change passes the nine journal controls. Local UI commit
+`7b2c71f9` and browser-suite commit `020298fb` pass 128 dedicated controls.
+Three isolated browser guard removals fail exact-reference, loaded-state and
+explicit-reopen assertions; an unrelated control passes all 128. Independent
+browser review passes 41 complementary controls, including a real Web Lock wait,
+journal replacement, original-source deduplication and unavailable-source
+correction. Eight bounded owner and two independent phone/desktop screenshots
+were inspected. The normal page gate includes `journalreports`.
+
+These local receipts use genuine producer fixtures with clearly labelled
+synthetic private fills. They establish neither a real execution nor public
+release acceptance. README and configuration documentation describe the loaded
+journal path without new provider calls or settings. Exact-head integration
+review, hosted checks and actual public acceptance remain pending. The
+[preparation receipt](release-evidence/2026-10-10-journal-reports/prepared.json)
+preserves component hashes and evidence boundaries.
+
+Next independent data milestone #151 adds a separate dated IEX observation for
+the current registered research cohort's allocation-fit rows. An offline source
+replay demonstrates that the admitted-only morning collector supplies no quotes
+for current KE/PSNL research, even at an eligible synthetic Monday clock. The
+new work must preserve ticket admission and label unchecked halt, volume and
+event coverage. It does not resolve best-effort delivery or SEC HTTP 403 access.
+
+## Checkpoint, 10 Oct 2026 — private backup released
+
+[PR #147](https://github.com/spicyChicken59/SpicyStock/pull/147) merged reviewed
+head `101dc9ff` at `a9862564`. All seven exact-head gates passed: 3,850 Python,
+13,524 page, 378 chart and 137 continuity checks, both native jobs and both
+secret checks. Native memory supervision passed and official upload/API artifact
+digests matched; artifact payloads were not separately downloaded. Publisher
+`38058127724` verified all 40 public files and final Pages `38058141730` deployed.
+
+First-attempt public acceptance passed 68 actual-empty controls and matched all
+40 files. Cash stayed unknown, no private records existed and empty download made
+no write or download. A separate synthetic rehearsal passed 45 controls: a real
+file download, new browser chooser, zero-write preview/cancel, explicit restore
+and re-export preserved exactly 4,773 bytes. Both legacy and independent report
+origins and unknown costs/times survived. All seven phone/desktop screenshots
+were directly inspected without errors or overflow. Synthetic fields are not
+Mo's account facts, execution or successful trade.
+
+The [durable release receipt](release-evidence/2026-10-10-private-backup/acceptance.json)
+embeds eight original proof files with exact byte digests, the reviewed/merged
+identities, delivery, source hashes and separate public/private scopes. Root
+readback checked 26 proof, source, image and release identities. Actual public
+reads are complete and the main-release hold is lifted. PR #150 review clarity
+is undergoing hosted checks; #149 retained-journal reporting is locally verified
+and being prepared for review; #151 research observations is in implementation.
+
+## Checkpoint, 10 Oct 2026 — #150 and #152 finished in one PR
+
+Mo asked Claude to find where the hourly ChatGPT loop stopped and to finish and
+merge it. It had stopped with two open PRs: #150 (review clarity, `31c32fbb`)
+and #152 (retained-journal reports, `d830f75b`, built on #150). Both failed the
+same three page checks, and #152's page job was cancelled at its 15-minute cap
+with 13,951 of 13,954 checks done. Main was green. This branch restarts
+`claude/spicystock-historical-workflow-i53ud1` from main, merges #152's exact
+head (which carries #150's), and adds two corrections, so merging it lands both
+reviewed heads by ancestry. Nothing of either PR's reviewed code is rewritten.
+
+**The first screen.** Reproduced in Chromium on #150's head: the cover's new
+review paragraph and original-verdict card took the market bar from 166 to
+326 px at 1280 (first stock at 1021 against the 900 gate) and the stage cards
+and search below the 844 px phone screen, on EVERY record, while the facts
+answer only one headline. The cover now carries them only under the
+reader-wait headline (`report.H1_READER_WAIT`, which `reader_pending()` writes
+when an A+/A burst lacks accepted review), as one collapsed line naming the
+accepted selected reviews and the mechanical A+/A still unreviewed ("Chart
+reviews: 2 of 2 selected accepted · 51 mechanical A+/A not reviewed" on the
+retained Oct 9 record); opening it shows the full reconciled summary and the
+dated original headline. Every other night's first screen measures main's to
+the pixel at 320, 390 and 1280. The Morning desk and Method keep the facts for
+every record, and the clarified headline rewrite is unchanged.
+`tools/review_selection_cases.mjs` now asserts that contract and the line's
+visibility, not just text present in the DOM: always-visible, never-visible
+and dropped-count mutants fail 7, 20 and 5 of the review and phone suites'
+402 checks; an unrelated control passes all 402.
+
+**The CI caps.** On main (`a9862564`) the pytest job took 14m13s and the page
+job 14m11s against 15-minute caps. `tests.yml` is no longer a pinned source (the
+loop has edited it five times since), so both caps are 30 minutes now: a cap
+stops a hang and does not bound a suite. No suite, check or lane changed.
+
+**Not done here, and why.** #151 (current-cohort research quotes) was "in
+implementation" in the loop's own notes and has no pushed branch or PR, so there
+is nothing of it to finish. Public acceptance is the publication gate's: this
+sandbox's proxy refuses github.io, so the served page is read on GitHub's
+runner (`publish_dashboard.py`, every public file against committed main), not
+here. No run, mail, provider call or record change.

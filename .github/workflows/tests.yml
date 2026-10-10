@@ -106,7 +106,9 @@ jobs:
 
   pytest:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # A cap stops a hang; it does not bound the suite. Measured at 14m13s on
+    # main (a9862564) against the old 15, so one more test file would cancel it.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -165,7 +167,9 @@ jobs:
 
   page:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Measured at 14m11s on main (a9862564) against the old 15; #152's journal
+    # suite took it past the cap with 13951 of 13954 checks done.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

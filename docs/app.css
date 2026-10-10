@@ -110,6 +110,10 @@
 .ss-market__dek { margin: var(--sc-s1) 0 0; color: var(--sc-text); font-size: var(--sc-text-md); max-width: 62ch; }
 /* the regime beside the verdict it belongs to, one line at every width */
 .ss-market__regime { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: var(--sc-s1) 0 0; color: var(--sc-text-2); font-size: var(--sc-text-sm); }
+/* the reader-wait headline's own answer: one collapsed line, opened on request */
+.ss-market__review { margin: var(--sc-s1) 0 0; max-width: 62ch; font-size: var(--sc-text-sm); }
+.ss-market__review > summary { cursor: pointer; padding-block: 2px; color: var(--sc-brand); }
+.ss-market__review > p { margin: var(--sc-s1) 0 0; }
 .ss-market__facts { display: flex; flex-wrap: wrap; gap: 4px var(--sc-s3); margin: 0; }
 .ss-market__facts > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 /* the label and the chip that qualifies it, on one line: the chip belongs to

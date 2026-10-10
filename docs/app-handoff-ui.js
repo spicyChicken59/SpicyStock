@@ -73,9 +73,15 @@
   function openResearch(request) {
     const fail = error => ({ ok: false, error });
     if (!host || !api.handoff.inspectResearch) return fail('Private research reporting is unavailable in this page.');
+    if (busy) return fail('A private save is in progress. Your current report and its original reference have been kept; wait before reopening a report.');
     const checked = api.handoff.inspectResearch(request);
     if (!checked.ok) return checked;
-    if (research && JSON.stringify(research.source) === JSON.stringify(checked.source)) { revealEditor(); return { ok: true }; }
+    if (research && JSON.stringify(research.source) === JSON.stringify(checked.source)) {
+      // Only an explicit, verified reopen renews the transient lookup. Its
+      // original source and the mounted broker-fact inputs stay untouched.
+      research.request = JSON.parse(JSON.stringify(request));
+      revealEditor(); return { ok: true };
+    }
     if (dirty || busy) return fail('Your current broker report has unsaved entries. Save or explicitly discard them before opening another report; those entries have been kept.');
     const id = checked.source.publication.data_sha256 + ':' + checked.source.evidence.id;
     const existing = api.handoff.find(id);
