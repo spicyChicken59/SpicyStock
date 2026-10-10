@@ -294,7 +294,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3383 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3386 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5000,7 +5000,7 @@ quantity and cash affordable at the limit. It shows principal, fees, total
 cash, limit-to-stop risk and cash remaining. Published order copying retains
 the original quantity and says so beside the preview. Nothing reserves cash,
 submits an order or reads a broker balance. Invalid or unknown inputs, zero
-affordability, incompatible account assumptions, fixture publications, expiry
+affordability, incompatible account assumptions, fixture publications, entry-window expiry
 and event refusal cannot produce a current preview. Inputs are reconsidered
 against the current clock and publication; session changes clear settled cash.
 

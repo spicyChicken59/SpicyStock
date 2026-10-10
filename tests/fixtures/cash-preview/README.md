@@ -45,3 +45,9 @@ the same command and `--check`. The generator writes only the six JSON controls
 in this directory. Derive reader/sidecar transport controls with
 `src.reader.derive(publication_bytes)` when a browser test needs the projected
 load path.
+
+The two complete publications retain three public strategy rule identifiers
+that the generic credential detector flags. Their scanner disposition matches
+only those exact identifiers AND these two publication paths. The offline
+scanner controls prove copied paths, altered identifiers, unrelated values and
+other credential types remain detectable; no file or detector is excluded.
