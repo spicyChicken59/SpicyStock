@@ -307,7 +307,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3577 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3607 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5134,3 +5134,33 @@ README and `.env.example` describe the source bounds, retention and absence of
 new credentials. Hosted gates and actual main/public-site acceptance remain
 outstanding; these offline checks do not establish live filing coverage,
 morning delivery or a successful trade.
+
+## Issuer parent workflow identity correction — 10 October 2026
+
+The first automatic issuer run, `38034801783`, refused its successful evening
+parent `38034610157` as `unknown_parent`. GitHub supplied the dynamic run name
+`Evening backfill 2026-10-09`, while the guard expected the workflow's static
+title. The actual parent metadata and current publication reproduced the refusal
+offline. The corrected guard identifies only the exact workflow paths
+`.github/workflows/evening.yml` and `.github/workflows/morning.yml`. It still
+requires the same repository, completed main parent, current publication or
+morning binding, and bounded daily collection history. Friendly display names
+cannot authorize missing, unknown or lookalike paths. Publisher recursion is
+still refused; no schedule, permission, source request or daily limit changed.
+
+The publisher, dashboard and workflow suites pass 137 checks, including 30 new
+path and parent-trust cases. Six isolated mutants fail for the intended dynamic
+name, friendly-name bypass, suffix-path bypass, repository, current-publication
+binding and daily-limit defects; an unrelated retention-cap mutant passes all
+33 targeted guard controls. The docs/scanner suite passes 116 checks and
+actionlint passes for the issuer, dashboard publisher and test workflows.
+Collection finds 3,607 Python tests. Runtime is Python 3.12.14.
+The other workflow guards were searched for display-name identity
+comparisons; no additional instance was found. README was clarified and
+`.env.example` remains accurate with no new variables or credentials.
+
+This correction has not yet passed hosted CI or an actual automatic production
+collection. The earlier SEC rehearsal truthfully reported unavailable source
+coverage after an HTTP failure; fixing the trigger does not establish SEC
+availability, event clearance or trading permission. Canonical publications,
+immutable evidence and model history were not edited.

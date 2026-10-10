@@ -829,7 +829,10 @@ Future earnings and comprehensive issuer news still require verification.
 This reader does not change a ticket, copied quantity or cash preview.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
-it adds no polling schedule. Production collection is capped at three starts
+the guard identifies the parent by its exact workflow file path, then checks
+its repository, main branch and current publication binding. Dynamic run titles
+are display text. It adds no polling schedule. Production collection is capped
+at three starts
 per UTC day, including failed attempts and reruns, with a serialized guard that
 refuses incomplete Actions history. Manual dispatch defaults to a rehearsal.
 The SEC-only client uses the public project identity, no provider credential,

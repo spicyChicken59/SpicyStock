@@ -303,9 +303,10 @@ def test_missing_job_step_metadata_cannot_be_assumed_to_cost_zero(bad):
             publisher.daily_collections('owner/repo', NOW, fetch=fetch)
 
 
-def parent(name=publisher.EVENING_NAME, number=99, conclusion='success'):
+def parent(path=publisher.EVENING_PATH, number=99, conclusion='success',
+           name='Evening backfill 2026-10-09'):
     return {'workflow_run': {'head_repository': {'full_name': 'owner/repo'}, 'head_branch': 'main',
-            'name': name, 'id': number, 'status': 'completed', 'conclusion': conclusion}}
+            'path': path, 'name': name, 'id': number, 'status': 'completed', 'conclusion': conclusion}}
 
 
 def guard(event, *, raw=b'{"run":{"run_id":"99"}}', morning=None, name='workflow_run',
@@ -319,8 +320,8 @@ def test_inactive_or_unpublished_parents_spend_no_collection_budget():
         pytest.fail('ineligible parent queried collection history')
     assert guard(parent(number=98), fetch=unexpected)[0] is False
     assert guard(parent(conclusion='failure'), fetch=unexpected)[0] is False
-    assert guard(parent(publisher.MORNING_NAME), fetch=unexpected)[0] is False
-    assert guard(parent('Publish committed dashboard'), fetch=unexpected)[0] is False
+    assert guard(parent(publisher.MORNING_PATH), fetch=unexpected)[0] is False
+    assert guard(parent('.github/workflows/publish-dashboard.yml'), fetch=unexpected)[0] is False
     assert guard(parent(), ref='refs/heads/branch', fetch=unexpected)[0] is False
     missing_id = parent(); del missing_id['workflow_run']['id']
     assert guard(missing_id, fetch=unexpected)[0] is False
@@ -331,8 +332,47 @@ def test_current_publication_and_bound_morning_trigger_production():
     raw = b'{"run":{"run_id":"99"}}'
     morning = publisher.encode({'observation_run_id': '100', 'publication': {'data_sha256': publisher.digest(raw)}})
     assert guard(parent()) == (True, 'production_collection')
-    assert guard(parent(publisher.MORNING_NAME, number=100), morning=morning) == (True, 'production_collection')
-    assert guard(parent(publisher.MORNING_NAME, number=100), raw=raw + b' ', morning=morning)[0] is False
+    assert guard(parent(publisher.MORNING_PATH, number=100), morning=morning) == (True, 'production_collection')
+    assert guard(parent(publisher.MORNING_PATH, number=100), raw=raw + b' ', morning=morning)[0] is False
+
+
+@pytest.mark.parametrize('path,name,number', [
+    ('.github/workflows/evening.yml', 'Evening backfill 2026-10-09', 99),
+    ('.github/workflows/evening.yml', 'Evening cron 16 1 * * 2-6', 99),
+    ('.github/workflows/morning.yml', 'Morning observation (best effort)', 100),
+    ('.github/workflows/morning.yml', 'Morning manual verification 2026-10-12', 100),
+])
+def test_exact_workflow_paths_accept_dynamic_run_names(path, name, number):
+    raw = b'{"run":{"run_id":"99"}}'
+    morning = publisher.encode({'observation_run_id': '100', 'publication': {'data_sha256': publisher.digest(raw)}})
+    assert guard(parent(path, number=number, name=name), morning=morning) == (True, 'production_collection')
+
+
+@pytest.mark.parametrize('name', ['Evening scan (6:16 PM ET)', 'Morning observation (best effort)'])
+@pytest.mark.parametrize('path', [
+    None, '', [], {}, 'evening.yml', '.github/workflows/publish-dashboard.yml',
+    '.github/workflows/issuer-evidence.yml', '.github/workflows/evening.yml.bak',
+    '.github/workflows/not/evening.yml', '.github/workflows/evening.yml@refs/heads/main',
+    '.github/workflows/../workflows/evening.yml',
+])
+def test_unknown_or_lookalike_paths_refuse_even_friendly_run_names(path, name):
+    def unexpected(*args):
+        pytest.fail('unknown workflow path queried collection history')
+    event = parent(path, name=name)
+    if path is None:
+        del event['workflow_run']['path']
+    assert guard(event, fetch=unexpected) == (False, 'unknown_parent')
+
+
+@pytest.mark.parametrize('field,value', [
+    ('head_repository', {'full_name': 'other/repo'}), ('head_branch', 'untrusted'),
+    ('status', 'in_progress'), ('id', '99'),
+])
+def test_approved_workflow_path_still_requires_trusted_completed_parent(field, value):
+    def unexpected(*args):
+        pytest.fail('untrusted parent queried collection history')
+    event = parent(); event['workflow_run'][field] = value
+    assert guard(event, fetch=unexpected) == (False, 'untrusted_parent')
 
 
 def test_main_manual_real_collection_shares_production_daily_limit():
