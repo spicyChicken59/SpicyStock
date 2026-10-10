@@ -5297,3 +5297,28 @@ intended checks, with unrelated wording still passing. README and
 `.env.example` describe the private schema and absence of new credentials.
 These are synthetic local rehearsals. Hosted exact-head gates and actual
 public acceptance remain outstanding; no real entry, exit or profit is claimed.
+
+The combined branch also corrects the two executed walkthrough failures from
+PR #123 and PR #125. A delayed hosted runner could observe a valid later
+playback step instead of the synchronous restart; the test now captures the
+transient state inside its browser event task, then separately verifies
+advancement. The intentional missing-publication response is required to be
+HTTP 404 before its exact request cancellation is accepted. Other errors stay
+failures. Independent baseline checks pass 109/109 (110 with screenshots),
+delayed observations pass, deleting restart fails, and HTTP 500 plus unrelated
+404/cancellation controls fail. Application behavior and required gates did
+not change. Those failed prior runs are superseded, not called passing.
+
+PR #121 is merged at `ef9f150d64e47e0241c58d749ff1bc27f17d8a86`, incorporating
+#116, #117 and #119 by ancestry. Exact head
+`c0cc1720a5655561c1752837aa7dbded3c9a1611` passed all seven hosted checks:
+3,577 Python tests, 11,761 page checks, 378 chart and 137 continuity checks,
+both native recovery jobs and both secret scans. Its actual production
+acceptance is in progress. The live SEC rehearsal `38034513636` completed
+with an honest unavailable result: the ticker-mapping request returned an
+HTTP error, two selected issuers were unverified, and no fresh filing bytes
+were retrieved. Existing event anchors remain retained. This is not live
+filing-coverage acceptance. Evening `38034610157` will verify the new review
+selector and trigger the bounded production collector. Continue by verifying
+that real publication, then the combined private-result release; on-time
+quotes, broader event/earnings coverage and an actual owner trade remain open.
