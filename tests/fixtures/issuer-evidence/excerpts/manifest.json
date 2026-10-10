@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "purpose": "Exact observed excerpts, not substitutes for the original full HTTP response bytes.",
+  "excerpts": [
+    {
+      "file": "nvda-acquirer.txt",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000078/nvda-20260902.htm",
+      "source_bytes": 29297,
+      "source_sha256": "144607f6edde018c50dc73f3bf14d4b994fe20f01630ad5c03a55497c3376730",
+      "observed_at": "2026-10-10T06:17:22.348875+00:00",
+      "filing_date": "2026-09-03",
+      "report_date": "2026-09-02",
+      "accepted_at": "2026-09-03T16:03:56.000Z",
+      "fixture_kind": "captured_excerpt",
+      "bytes": 589,
+      "sha256": "2556e5c164d4c4ddd2a8d303f875bfbd61a00e3e40bd3973e88a1daa9c4d4abf",
+      "full_source_body_retained": false
+    },
+    {
+      "file": "nvda-credit-support.txt",
+      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000069/nvda-20260817.htm",
+      "source_bytes": 31534,
+      "source_sha256": "4b442682939403d4eac9354d5d790d0e1e099fbff4a4807975c13488e4701889",
+      "observed_at": "2026-10-10T06:17:22.435043+00:00",
+      "filing_date": "2026-08-17",
+      "report_date": "2026-08-17",
+      "accepted_at": "2026-08-17T16:41:33.000Z",
+      "fixture_kind": "captured_excerpt",
+      "bytes": 690,
+      "sha256": "87235eaef5e872f5b39edf4438482059087e00a54bd260ee001c9d6da12609b4",
+      "full_source_body_retained": false
+    }
+  ]
+}
