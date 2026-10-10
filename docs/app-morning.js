@@ -239,7 +239,9 @@
     });
     const foot = node('div', { class: 'ss-morning__foot' });
     foot.append(details, next);
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), foot);
+    const issuer = api.issuerEvidence && typeof api.issuerEvidence.mount === 'function' && typeof api.issuerEvidence.update === 'function'
+      ? api.issuerEvidence.mount() : node('p', { class: 'sc-hint', 'data-issuer-unavailable': '' }, 'Issuer source reader unavailable. Check company filings, news and earnings independently; this does not clear any known event.');
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, foot);
     host.append(content);
     mounted = host;
   }
@@ -266,6 +268,7 @@
     host.setAttribute('data-sizing-match', String(latest.matched));
     host.setAttribute('data-morning-offered', String(latest.allowed));
     refreshCash(host);
+    if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
   }
   api.morning = { render, facts, cashValue, profile: PROFILE };
 })(window);

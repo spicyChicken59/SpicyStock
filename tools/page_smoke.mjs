@@ -32,6 +32,7 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
 import { checkCashPreview } from './cash_preview_cases.mjs';
+import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -89,6 +90,7 @@ async function serve() {
       const override = url.pathname === '/docs/app.js' ? process.env.SCSTOCK_APP
         : url.pathname === '/docs/app-morning.js' ? process.env.SCSTOCK_MORNING
         : url.pathname === '/docs/app-cash-preview.js' ? process.env.SCSTOCK_CASH_PREVIEW
+        : url.pathname === '/docs/app-issuer-evidence.js' ? process.env.SCSTOCK_ISSUER_EVIDENCE
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
@@ -116,7 +118,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
   // system declares a fallback stack) and the optional run-log fetch to the
   // GitHub API are the three requests this page may lose offline; the console
   // reports each as one "Failed to load resource", matched off below.
-  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u);
+  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u);
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const u = r.url();
@@ -3883,6 +3885,7 @@ async function main() {
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
+      if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
