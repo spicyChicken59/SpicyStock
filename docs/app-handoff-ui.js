@@ -98,7 +98,8 @@
     const panel = node('section', { 'data-handoff-selected': '', 'aria-labelledby': 'handoff-title' });
     panel.append(node('h3', { id: 'handoff-title', tabindex: '-1' }), node('p', { class: 'sc-hint', 'data-handoff-identity': '' }),
       node('dl', { class: 'sc-facts', 'data-handoff-summary': '' }), node('p', { class: 'sc-hint', 'data-handoff-protection': '' }),
-      node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }));
+      node('ul', { class: 'ss-notes', 'data-handoff-warnings': '' }),
+      node('h4', {}, 'Whole-share exit check'), node('p', { class: 'sc-hint', 'data-handoff-exit-review': '' }));
     const completed = node('section', { 'data-handoff-completed': '', 'aria-labelledby': 'handoff-result-title' });
     completed.append(node('h4', { id: 'handoff-result-title' }, 'Reported completed result'),
       node('p', { class: 'sc-hint', 'data-handoff-result-status': '', role: 'status' }),
@@ -108,7 +109,10 @@
     const readback = node('details', { class: 'sc-disclosure', 'data-handoff-readback': '' });
     readback.append(node('summary', {}, 'Saved draft readback and dated exit plan'),
       node('p', { class: 'sc-hint' }, 'Original personal draft, retained as history after broker facts are reported. A planned protective order is not confirmed protection.'),
-      node('pre', { class: 'ss-handoff__readback', 'data-handoff-text': '' }), node('ul', { class: 'ss-notes', 'data-handoff-exits': '' }));
+      node('pre', { class: 'ss-handoff__readback', 'data-handoff-text': '' }),
+      node('h4', {}, 'Archived model exit schedule'),
+      node('p', { class: 'sc-hint' }, 'Original published dates and wording. This schedule is not resized to your personal draft or reported holdings; review the whole-share exit check and your prior exits before acting.'),
+      node('ul', { class: 'ss-notes', 'data-handoff-exits': '' }));
     const copy = button('Copy personal broker readback', { 'data-handoff-copy': '' }); copy.addEventListener('click', copyDraft);
     readback.append(copy, node('p', { class: 'sc-hint', 'data-handoff-copy-status': '' }));
     const report = node('details', { class: 'sc-disclosure', 'data-handoff-report': '' });
@@ -207,6 +211,7 @@
     const protection = { unknown: 'Protection is unknown. Check your remaining holdings and active protective orders at your broker.', matched: 'Reported protective quantity matches reported remaining holdings. SpicyStock does not verify an active stop.', under: 'Reported protective quantity is below remaining reported holdings. Reconcile protection at your broker.', over: 'Reported protective quantity exceeds remaining reported holdings. Reconcile the sell quantity at your broker.' };
     host.querySelector('[data-handoff-protection]').textContent = protection[summary.protection] || 'Protection needs reconciliation at your broker.';
     host.querySelector('[data-handoff-warnings]').replaceChildren(...summary.warnings.map(text => node('li', {}, text)));
+    host.querySelector('[data-handoff-exit-review]').textContent = summary.exit_review.message;
     host.querySelector('[data-handoff-text]').textContent = api.handoff.readback(item);
     host.querySelector('[data-handoff-exits]').replaceChildren(...item.plan.exit_schedule.map(row => node('li', {}, row.date + ' · ' + row.instruction)));
     const available = current ? api.handoff.availability(current) : { ok: false, error: 'This handoff is no longer available in saved storage.' };

@@ -253,6 +253,25 @@ times are retained alongside possible fits. This is research preparation;
 hosted release and actual public acceptance are recorded in the checkpoint when
 completed. It establishes no strategy return, personal fill or successful trade.
 
+## Personal trade reporting — released 10 October 2026
+
+[PR #126](https://github.com/spicyChicken59/SpicyStock/pull/126) is deployed and
+verified on the actual public site. It retains optional private broker drafts,
+cumulative entry/exit reports and reproducible completed results using reported
+prices and actual fees. All seven exact-head checks passed; public acceptance
+matched 32 original files and passed 56 phone/desktop checks. A separate synthetic
+private rehearsal passed 17 checks for legacy storage, gains, losses and unknown
+fees. Those examples are not Mo's executions or evidence of a successful trade.
+The [scoped release receipt](release-evidence/2026-10-10-personal-results/acceptance.json)
+records the exact release, checks and remaining limitations.
+
+Milestone 4's reporting foundation is available. Broker-specific preparation,
+an actual eligible live opportunity and the first reported real trade remain
+open. Whole-share exit clarity is tracked in #137; dated research follow-through
+from already retained observations is tracked in #136. Automatic issuer
+collection and closed-session/retry corrections are awaiting the integrated
+release #132 and its actual production verification.
+
 ## Continuation
 
 Mo explicitly authorizes an ongoing loop: choose the next useful deliverable,
