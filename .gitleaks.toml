@@ -83,3 +83,13 @@ condition = "AND"
 regexes = ['''^(f568689c3789a53835708b676ef6c2dcc418fd6f)$''']
 paths = ['''^docs/input-truthfulness/2026-09-30-delivery-readiness-evidence/native5-recovery/preservation\.json$''']
 regexTarget = "secret"
+
+# The captured issuer HTML exposes this public browser reCAPTCHA site key.
+# Google distinguishes client site keys from private server verification keys.
+# Preserve the source bytes; require this exact value AND this exact path.
+[[rules.allowlists]]
+description = "Captured public reCAPTCHA client site key in the ZIM issuer announcement"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(6LcKf8wZAAAAADYEeFvKUvdj80FVct5G98mSJ29W)$''']
+paths = ['''^release-evidence/2026-10-10-zim/ir-merger-announcement\.html$''']
