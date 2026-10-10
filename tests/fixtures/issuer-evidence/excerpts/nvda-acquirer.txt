@@ -1,0 +1,3 @@
+On September 2, 2026, NVIDIA Corporation (“NVIDIA”) entered into a definitive agreement to acquire Hugging Face, Inc. (“Hugging Face”).
+The transaction includes an approximately $11.9 billion purchase price payable to Hugging Face stockholders, subject to certain adjustments, and an equity-based retention program of up to approximately $1.0 billion for Hugging Face employees joining NVIDIA.
+The transaction is expected to close in the first half of 2027, subject to the satisfaction or waiver of customary closing conditions, including receipt of required regulatory approvals.

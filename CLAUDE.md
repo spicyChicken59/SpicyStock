@@ -328,7 +328,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3424 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3577 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5110,3 +5110,91 @@ changes test enforcement only; it does not change an application asset,
 published plan, fixture JSON, strategy rule or source record. README and
 `.env.example` need no factual change for this test-only correction. Hosted
 checks and public acceptance remain the release owner's responsibility.
+
+## Checkpoint, 10 Oct 2026 — bounded SEC evidence ready for hosted review
+
+Issue #118 adds an optional Morning desk source reader for admitted plans and
+known-event-excluded candidates. It binds a small receipt and digest-named
+bundle to the exact canonical record, compact reader and candidate plans.
+The SEC-only collector cross-checks ticker/CIK identity, records separate
+filing, acceptance and retrieval clocks, and retains incomplete excerpts with
+raw and displayed-text digests. A recent filing sample never clears a known
+event or the unchecked future earnings calendar. ZIM's original merger anchor
+survives newer filings, source outages and omitted collection.
+
+Collection is bounded by source paths, request spacing, requests, response
+bytes, aggregate network bytes, distinct captured bytes and an absolute request
+deadline within the run budget. Verified cache reuse preserves the last network
+clock. Main-only workflow guards serialize at most three production starts per
+UTC day, including failed attempts and reruns. The collector has a read-only
+token; a separate publisher revalidates current main, canonical bytes and the
+previous receipt before writing only its owned receipt, immutable bundle and
+retention manifest. Superseded bundles have a 21-day elapsed-time grace period;
+unknown files remain untouched. Older valid evidence cannot attach to another
+scan and does not block an evening publication.
+
+After integration with the exact PR #119 ancestry, 12 issuer producer fixtures
+reproduce and 203 focused collector/source/publisher/workflow Python checks
+pass. The combined issuer, cash, morning, status, review-selection, session and
+refresh browser checks pass 1,054/1,054. Phone and desktop screenshots were
+inspected. Independent issuer review passed 220 checks plus real-producer
+inapplicable and long-excerpt controls; a 3,677-pixel phone overflow was
+reproduced and corrected to the 352-pixel dialog width. Continuity passed 137
+checks. Source, raw-byte digest, publication binding, cache clock, publisher
+race, retention and layout mutations fail their intended controls, with
+unrelated controls passing. Absolute transport deadlines were exercised with
+an actually blocked transport, not inferred from timeout configuration.
+
+Generated publication/reader fixtures carry the same three public numeric rule
+identifiers as existing fixtures. The scanner disposition requires one of
+those exact values AND one of the two exact new paths; default detectors remain
+enabled. All 76 real-engine controls pass on each of pinned gitleaks 8.24.3 and
+current 8.30.1. No producer or captured source bytes are rewritten for scanning.
+Collection finds 3,577 Python tests. Runtime: Python 3.12.14 and Node 24.19.0.
+README and `.env.example` describe the source bounds, retention and absence of
+new credentials. Hosted gates and actual main/public-site acceptance remain
+outstanding; these offline checks do not establish live filing coverage,
+morning delivery or a successful trade.
+
+## Checkpoint, 10 Oct 2026 — private broker handoff ready for hosted review
+
+Issue #120 closes the gap between a smaller personal cash preview and the
+unchanged original ticket. An explicitly saved, browser-local draft carries
+the chosen whole-share quantity, exact publication and plan identities,
+unchanged levels, dated exit instructions and a separate broker readback.
+Current publication, cash, account, event and entry-window guards apply to new
+drafts and copying. Manual reports remain correctable after expiry or a known
+event; reported facts do not authorize another entry.
+
+The owner reports cumulative submitted, filled, cancelled, exited and
+protective quantities with explicit-offset event times. Remaining holdings
+are calculated only when both filled and exited quantities are known;
+explicit zero exits differs from unknown. Protection is compared with those
+remaining reported holdings, not cumulative entry fills. Clearing a report to
+unknown cannot revive its entry copy. There is no broker submission,
+observation of fills, account balance inference or realized-P&L calculation.
+
+Private storage is bounded to 100 items and 1 MiB with serialized,
+revision-checked writes. Unknown or corrupt storage remains untouched.
+Readback and rollback faults retain exact prior/proposed recovery data.
+Preparing another setup and delayed save completion preserve unsaved edits.
+Explicit draft creation persists the entered cash and fee buffer locally;
+the unsaved cash preview remains tab-local. README and `.env.example` state
+these distinctions and the absence of new credentials.
+
+Independent execution passed 161 browser checks, 19 named model controls and
+36 additional workflow controls, including actual double storage faults.
+Two reproduced defects were corrected and rechecked: clearing all reported
+fields had revived entry copying, and switching drafts had discarded unsaved
+edits. Five model and two UI mutations fail the intended controls while
+unrelated controls pass. CI directly executes the named model runner.
+
+After merging the exact PR #121 issuer ancestry, combined handoff, issuer,
+cash, morning, status, review-selection, session and refresh checks pass
+1,215/1,215; phone and desktop screenshots were inspected. Focused Python
+checks pass 274/274, continuity passes 137/137, all six cash and twelve issuer
+producer fixtures reproduce, and actionlint passes. The 31-commit PR range
+has no gitleaks findings. Collection remains 3,577 Python tests; local runtime
+is Python 3.12.14 and Node 24.19.0. Hosted exact-head gates and actual public
+acceptance remain outstanding. All fill examples are synthetic; no real fill,
+exit, profit or successful trade is established by this release work.

@@ -102,3 +102,12 @@ condition = "AND"
 regexTarget = "secret"
 regexes = ['''^(abnormal_10pct|down25_quarter|pct_above_40ma)$''']
 paths = ['''^tests/fixtures/cash-preview/publication(-multiple)?\.json$''']
+
+# Issuer-evidence controls contain the unchanged producer's public rules.
+# Disposition exactly these values at the canonical/compact control paths.
+[[rules.allowlists]]
+description = "Three public rule identifiers in the generated issuer evidence publication and reader fixtures"
+condition = "AND"
+regexTarget = "secret"
+regexes = ['''^(abnormal_10pct|down25_quarter|pct_above_40ma)$''']
+paths = ['''^tests/fixtures/issuer-evidence/(publication|reader)\.json$''']

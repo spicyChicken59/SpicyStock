@@ -15,7 +15,8 @@ from tests.secret_scan_controls import (
     retained_documents, NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB,
     NATIVE5_WORKFLOW, native5_public_preservation,
     PUBLIC_SITE_CAPTURE, PUBLIC_SITE_CAPTURE_SHA256, public_site_capture,
-    CASH_PUBLICATIONS, CASH_RULE_IDENTIFIERS,
+    CASH_PUBLICATIONS, CASH_RULE_IDENTIFIERS, ISSUER_PUBLICATIONS,
+    ISSUER_RULE_IDENTIFIERS, ISSUER_DISPOSITION, public_rule_occurrences,
 )
 
 
@@ -108,7 +109,7 @@ def test_native5_disposition_is_exact_public_blob_at_exact_preservation_path():
     document = json.loads(native5_public_preservation())
     assert document["protected_git_objects"][NATIVE5_WORKFLOW] == NATIVE5_PUBLIC_BLOB
     assert allowed(NATIVE5_PRESERVATION, NATIVE5_PUBLIC_BLOB)
-    assert len(dispositions()) == 10
+    assert len(dispositions()) == 11
     entry = next(item for item in dispositions() if item["description"].startswith("Native5 recovery"))
     assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
     assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
@@ -206,3 +207,39 @@ def test_cash_publication_paths_do_not_allow_unrelated_or_altered_values():
         for value in CASH_RULE_IDENTIFIERS:
             for altered in ("x" + value, value + "x", value.upper(), PUBLIC_VALUES[0]):
                 assert not allowed(path, altered)
+
+
+def test_issuer_rule_disposition_requires_exact_two_paths_and_three_identifiers():
+    entry = next(item for item in dispositions() if item["description"] == ISSUER_DISPOSITION)
+    assert set(entry) == {"description", "condition", "regexTarget", "regexes", "paths"}
+    assert entry["condition"] == "AND" and entry["regexTarget"] == "secret"
+    assert entry["regexes"] == ["^(" + "|".join(ISSUER_RULE_IDENTIFIERS) + ")$"]
+    assert entry["paths"] == [r"^tests/fixtures/issuer-evidence/(publication|reader)\.json$"]
+    for path in ISSUER_PUBLICATIONS:
+        assert all(allowed(path, value) for value in ISSUER_RULE_IDENTIFIERS)
+        occurrences = public_rule_occurrences((ROOT / path).read_bytes(), ISSUER_RULE_IDENTIFIERS)
+        assert set(occurrences) == set(ISSUER_RULE_IDENTIFIERS)
+        assert all(type(count) is int and count > 0 for count in occurrences.values())
+
+
+@pytest.mark.parametrize("path", ISSUER_PUBLICATIONS)
+@pytest.mark.parametrize("variant", ("prefix", "suffix", "sibling", "receipt", "bundle"))
+def test_issuer_public_identifiers_remain_detectable_outside_exact_paths(path, variant):
+    altered = {"prefix": "copied/" + path, "suffix": path + ".backup",
+               "sibling": path.rsplit("/", 1)[0] + "/another.json",
+               "receipt": "tests/fixtures/issuer-evidence/collected-receipt.json",
+               "bundle": "tests/fixtures/issuer-evidence/collected-bundle.json"}[variant]
+    assert all(not allowed(altered, value) for value in ISSUER_RULE_IDENTIFIERS)
+
+
+@pytest.mark.parametrize("path", ISSUER_PUBLICATIONS)
+@pytest.mark.parametrize("value", ISSUER_RULE_IDENTIFIERS)
+def test_issuer_paths_do_not_allow_other_or_altered_values(path, value):
+    for altered in ("x" + value, value + "x", value.upper(), "unrelated_rule", PUBLIC_VALUES[0]):
+        assert not allowed(path, altered)
+
+
+def test_rule_occurrence_count_requires_each_dispositioned_value():
+    raw = json.dumps({"key": ISSUER_RULE_IDENTIFIERS[0]}).encode()
+    with pytest.raises(ValueError, match="not_exercised"):
+        public_rule_occurrences(raw, ISSUER_RULE_IDENTIFIERS)

@@ -63,6 +63,15 @@
 .ss-morning__checks .sc-check { align-items: start; min-height: 44px; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-body); letter-spacing: normal; text-transform: none; }
 .ss-morning__checks input { flex-shrink: 0; margin-top: var(--sc-s0); }
 .ss-morning__body > p { font-size: var(--sc-text-sm); }
+.ss-handoff { margin-top: var(--sc-s2); overflow-wrap: anywhere; }
+.ss-handoff__readback { white-space: pre-wrap; font: 400 var(--sc-text-sm)/var(--sc-lh-body) var(--sc-font-mono); }
+.ss-handoff__fields { border: 0; padding: 0; margin: var(--sc-s2) 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--sc-s2); }
+.ss-handoff__fields legend { color: var(--sc-heading); font-weight: 600; margin-bottom: var(--sc-s1); }
+.ss-handoff__fields > p { grid-column: 1 / -1; margin: 0; }
+.ss-handoff__field { min-width: 0; display: flex; flex-direction: column; align-items: start; gap: var(--sc-s1); }
+.ss-handoff__field input { width: 100%; min-width: 0; }
+.ss-handoff__actions { display: flex; flex-wrap: wrap; gap: var(--sc-s1); }
+.ss-issuer { overflow-wrap: anywhere; }
 .ss-observations { min-width: 0; margin-block: var(--sc-s2); border-top: 1px solid var(--sc-border); padding-top: var(--sc-s2); overflow-wrap: anywhere; }
 .ss-observations > h3 { margin: 0 0 var(--sc-s1); font-size: var(--sc-text-md); }
 .ss-observations [data-observation-body] { padding: var(--sc-s1) var(--sc-s2); }

@@ -4713,6 +4713,9 @@
 
   // ---------------------------------------------------------------- wiring (once)
   function wire() {
+    if (SCStock.handoff) SCStock.handoff.onChange(() => {
+      if (loaded && model && $('morning-desk')) SCStock.morning.render($('morning-desk'), current, av, model);
+    });
     SCStock.reader.onChange(async change => {
       if (!loaded || current !== change.data) return;
       if (change.state === 'complete') await recordObservations();

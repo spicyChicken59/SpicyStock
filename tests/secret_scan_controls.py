@@ -1,4 +1,4 @@
-"""Offline regression of the exact public-hash disposition with gitleaks 8.24.3.
+"""Offline exact dispositions with pinned 8.24.3 or explicitly selected 8.30.1.
 
 Run explicitly with an installed, verified binary; this never downloads tools.
 Only invented canaries and retained public evidence enter scratch.
@@ -39,6 +39,28 @@ PUBLIC_SITE_CAPTURE_SHA256 = "32b3411f00b61f712fff475a3b69d63a5de1f8589c71fee4af
 CASH_PUBLICATIONS = ("tests/fixtures/cash-preview/publication.json",
                      "tests/fixtures/cash-preview/publication-multiple.json")
 CASH_RULE_IDENTIFIERS = ("abnormal_10pct", "down25_quarter", "pct_above_40ma")
+ISSUER_PUBLICATIONS = ("tests/fixtures/issuer-evidence/publication.json",
+                       "tests/fixtures/issuer-evidence/reader.json")
+ISSUER_RULE_IDENTIFIERS = ("abnormal_10pct", "down25_quarter", "pct_above_40ma")
+ISSUER_DISPOSITION = "Three public rule identifiers in the generated issuer evidence publication and reader fixtures"
+VERIFIED_VERSIONS = ("8.24.3", "8.30.1")
+
+
+def public_rule_occurrences(raw, identifiers):
+    """Derive expected generic detections from actual producer key fields."""
+    pending, occurrences = [json.loads(raw)], dict.fromkeys(identifiers, 0)
+    while pending:
+        node = pending.pop()
+        if isinstance(node, dict):
+            key = node.get("key")
+            if isinstance(key, str) and key in occurrences:
+                occurrences[key] += 1
+            pending.extend(node.values())
+        elif isinstance(node, list):
+            pending.extend(node)
+    if not all(occurrences.values()):
+        raise ValueError("public_rule_identifier_not_exercised")
+    return occurrences
 
 
 def public_site_capture():
@@ -117,14 +139,14 @@ def scan(binary, config, workspace, path, raw):
             "diagnostic_sha256": sha(result.stdout + result.stderr)}
 
 
-def run_controls(binary: Path, workspace: Path):
+def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
     binary = binary.resolve(strict=True)
     workspace = workspace.resolve()
     if workspace.exists() or workspace.is_relative_to(ROOT):
         raise ValueError("fresh_scratch_outside_repository_required")
     version = subprocess.run([str(binary), "version"], capture_output=True, check=True, timeout=10).stdout.decode().strip()
-    if version != "8.24.3":
-        raise ValueError("gitleaks_8_24_3_required")
+    if expected_version not in VERIFIED_VERSIONS or version != expected_version:
+        raise ValueError("explicit_verified_gitleaks_version_required")
     observation = (ROOT / OBSERVATION).read_bytes()
     document = json.loads(observation)
     if tuple(document["retained_response_sha256"].values()) != PUBLIC_VALUES:
@@ -189,17 +211,8 @@ def run_controls(binary: Path, workspace: Path):
         # The selector changes how many chart-input copies retain these public
         # rule keys. Count the actual fixture fields, independently of scanner
         # output; require every allowlisted identifier to remain exercised.
-        pending, public_keys = [json.loads(raw)], []
-        while pending:
-            node = pending.pop()
-            if isinstance(node, dict):
-                if node.get("key") in CASH_RULE_IDENTIFIERS:
-                    public_keys.append(node["key"])
-                pending.extend(node.values())
-            elif isinstance(node, list):
-                pending.extend(node)
-        assert set(public_keys) == set(CASH_RULE_IDENTIFIERS)
-        detected = ["generic-api-key"] * len(public_keys)
+        occurrences = public_rule_occurrences(raw, CASH_RULE_IDENTIFIERS)
+        detected = ["generic-api-key"] * sum(occurrences.values())
         altered = raw
         for value in CASH_RULE_IDENTIFIERS:
             altered = altered.replace(f'"{value}"'.encode(), f'"x{value}"'.encode())
@@ -213,6 +226,37 @@ def run_controls(binary: Path, workspace: Path):
             (label + "_suffix", config, path + ".backup", raw, 2, detected),
             (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
         ])
+    config_text = config.read_text(encoding="utf-8")
+    # Remove only this exact allowlist in scratch. The retained defaults and
+    # every other disposition must stay intact for the mutation control.
+    block = re.search(r'(?ms)^\[\[rules\.allowlists\]\]\n(?=description = "' +
+                      re.escape(ISSUER_DISPOSITION) + r'").*?(?=^\[\[rules\.allowlists\]\]|\Z)', config_text)
+    if block is None:
+        raise ValueError("issuer_exact_disposition_missing")
+    issuer_without = workspace / "issuer-without-disposition.toml"
+    issuer_without.write_text(config_text[:block.start()] + config_text[block.end():], encoding="utf-8")
+    issuer_documents = [(ROOT / path).read_bytes() for path in ISSUER_PUBLICATIONS]
+    issuer_occurrences = []
+    for index, (path, raw) in enumerate(zip(ISSUER_PUBLICATIONS, issuer_documents)):
+        occurrences = public_rule_occurrences(raw, ISSUER_RULE_IDENTIFIERS)
+        issuer_occurrences.append(occurrences)
+        detected = ["generic-api-key"] * sum(occurrences.values())
+        label = f"issuer_publication_{index}"
+        altered = raw
+        for value in ISSUER_RULE_IDENTIFIERS:
+            altered = altered.replace(f'"{value}"'.encode(), f'"x{value}"'.encode())
+        cases.extend([
+            (label + "_defaults", baseline, path, raw, 2, detected),
+            (label + "_without_exact_disposition", issuer_without, path, raw, 2, detected),
+            (label + "_exact", config, path, raw, 0, []),
+            (label + "_unrelated", config, path, other_value, 2, ["generic-api-key"]),
+            (label + "_altered", config, path, altered, 2, detected),
+            (label + "_sibling", config, path.rsplit('/', 1)[0] + "/another.json", raw, 2, detected),
+            (label + "_prefix", config, "copied/" + path, raw, 2, detected),
+            (label + "_suffix", config, path + ".backup", raw, 2, detected),
+            (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
+            (label + "_mutant_default_detector", issuer_without, path, default_detector, 2, ["github-pat"]),
+        ])
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence
@@ -223,8 +267,8 @@ def run_controls(binary: Path, workspace: Path):
             success = success and actual["finding_paths"] == [path]
         results.append({"case": name, "status": "PASS" if success else "FAIL", "expected_exit_code": code,
                         "expected_rule_ids": rules, **actual})
-    return {"schema": "historical-exact-disposition-controls-v3", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
-            "scope": "Actual offline gitleaks 8.24.3 on isolated public evidence and invented canaries; not a credential or provider test.",
+    return {"schema": "historical-exact-disposition-controls-v4", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
+            "scope": f"Actual offline gitleaks {version} on isolated public evidence and invented canaries; not a credential or provider test.",
             "version": version, "binary_sha256": sha(binary.read_bytes()), "config_sha256": sha(config.read_bytes()),
             "observation_path": OBSERVATION, "observation_sha256": sha(observation), "results": results,
             "retained_documents": [{"path": path, "sha256": sha(raw)} for path, raw in zip(BOUNDED_PATHS, documents)],
@@ -232,19 +276,22 @@ def run_controls(binary: Path, workspace: Path):
                                      "public_workflow_path": NATIVE5_WORKFLOW, "public_git_blob": NATIVE5_PUBLIC_BLOB},
             "public_site_capture": {"path": PUBLIC_SITE_CAPTURE, "sha256": sha(site_capture)},
             "cash_publications": [{"path": path, "sha256": sha(raw)} for path, raw in zip(CASH_PUBLICATIONS, cash_documents)],
+            "issuer_publications": [{"path": path, "sha256": sha(raw), "public_rule_occurrences": occurrences}
+                                    for path, raw, occurrences in zip(ISSUER_PUBLICATIONS, issuer_documents, issuer_occurrences)],
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gitleaks", type=Path, required=True)
+    parser.add_argument("--expected-version", choices=VERIFIED_VERSIONS, default="8.24.3")
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     args = parser.parse_args()
     receipt = args.receipt.resolve()
     if receipt.exists() or receipt.is_relative_to(ROOT):
         parser.error("receipt must be fresh and outside the repository")
-    result = run_controls(args.gitleaks, args.workspace)
+    result = run_controls(args.gitleaks, args.workspace, expected_version=args.expected_version)
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_bytes(encode(result))
     print(json.dumps({"status": result["status"], "cases": len(result["results"]), "version": result["version"]}))

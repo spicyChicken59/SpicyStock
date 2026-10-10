@@ -73,7 +73,7 @@ export async function checkCashPreview({ browser, base, open, check, eq, shotsDi
       await fill(page, '446.88');
       eq('calculator leaves record, saved private data and published copy unchanged', await page.evaluate(() => ({ record: JSON.stringify(SCStock.data), storage: JSON.stringify(localStorage), copies: [...document.querySelectorAll('[data-copy]')].map(n => n.getAttribute('data-copy')) })), before);
       eq('cash edits make no requests', requests.length, requestCount);
-      eq('preview contains no executable copy/submit controls', await page.locator('[data-cash-preview] [data-copy], [data-cash-preview] [data-order], [data-cash-preview] button').count(), 0);
+      eq('preview contains no executable copy/submit controls', await page.locator('[data-cash-preview] [data-copy], [data-cash-preview] [data-order], [data-cash-preview] button:not([data-handoff-prepare])').count(), 0);
       check('independent cash and original quantity are explicit', (await page.locator('[data-cash-preview]').textContent()).includes('it reserves nothing') && (await page.locator('[data-cash-preview-copy-note]').textContent()).includes('published 4 shares'));
       check(`${width}/${theme}: preview fits dialog and document`, await page.locator('#morning-desk').evaluate(n => n.scrollWidth <= n.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
       if (shotsDir) {

@@ -131,6 +131,7 @@ jobs:
           .github/workflows/historical-input-proof.yml .github/workflows/tests.yml
           .github/workflows/morning.yml .github/workflows/intraday.yml
           .github/workflows/publish-dashboard.yml
+          .github/workflows/issuer-evidence.yml
       - name: Install verified age for offline historical transport controls
         run: python tools/install_historical_age.py --destination "$RUNNER_TEMP/historical-age"
       - name: Run tests
@@ -147,6 +148,7 @@ jobs:
         run: |
           python tools/make_fixture.py --check
           python tests/fixtures/morning/generate.py --check
+          python tests/fixtures/issuer-evidence/generate.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail
@@ -172,6 +174,7 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           set -o pipefail
+          node tools/handoff_model_cases.mjs
           node tools/continuity_check.mjs
           node tools/chart_check.mjs
           node tools/page_smoke.mjs --shots /tmp/shots

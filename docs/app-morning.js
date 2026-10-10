@@ -1,5 +1,5 @@
-/* Personal morning preparation over the published record. No provider requests,
-   sizing engine or order creation. Publication/timing permission comes from
+/* Personal morning preparation over the published record. No provider requests
+   or broker order creation. Publication/timing permission comes from
    app.js availability(); candidate ticket status comes from its existing model.
    Cash and checklist entries live only in this tab, never in the publication. */
 (function (w) {
@@ -146,6 +146,14 @@
     }
     const copy = host.querySelector('[data-cash-preview-copy-note]');
     copy.textContent = order ? 'Copy order elsewhere still uses the published ' + order.quantity + ' shares. This preview does not change, copy or submit that order.' : 'This preview creates no order.';
+    if (api.handoffUI) {
+      const binding = api.observations.facts();
+      const intent = calculation && calculation.state === 'calculated' && /^[a-f0-9]{64}$/.test(binding.canonicalHash || '') ? {
+        key: planKey(candidate), referenceId: (plan.evidence_ref || {}).id, expectedPublication: binding.canonicalHash,
+        cash: host.querySelector('#morning-cash').value, fees: host.querySelector('#morning-preview-fees').value, quantity: String(calculation.quantity)
+      } : null;
+      api.handoffUI.preview(host.querySelector('[data-cash-preview]'), intent);
+    }
   }
   function previewControl() {
     const section = node('section', { 'data-cash-preview': '', 'aria-labelledby': 'morning-preview-title' });
@@ -239,7 +247,11 @@
     });
     const foot = node('div', { class: 'ss-morning__foot' });
     foot.append(details, next);
-    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), foot);
+    const issuer = api.issuerEvidence && typeof api.issuerEvidence.mount === 'function' && typeof api.issuerEvidence.update === 'function'
+      ? api.issuerEvidence.mount() : node('p', { class: 'sc-hint', 'data-issuer-unavailable': '' }, 'Issuer source reader unavailable. Check company filings, news and earnings independently; this does not clear any known event.');
+    content.append(head, factsRow, reason, account, sizing, api.observations.summary(), issuer, foot);
+    if (api.handoffUI && api.handoff) api.handoffUI.mount(content);
+    else content.append(node('p', { class: 'sc-hint' }, 'Private broker handoffs are unavailable in this page. Cash preview and published research remain available.'));
     host.append(content);
     mounted = host;
   }
@@ -266,6 +278,8 @@
     host.setAttribute('data-sizing-match', String(latest.matched));
     host.setAttribute('data-morning-offered', String(latest.allowed));
     refreshCash(host);
+    if (api.handoffUI) api.handoffUI.update();
+    if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
   }
-  api.morning = { render, facts, cashValue, profile: PROFILE };
+  api.morning = { render, facts, cashValue, profile: PROFILE, refreshPersonal: () => { if (mounted) refreshPreview(mounted); } };
 })(window);
