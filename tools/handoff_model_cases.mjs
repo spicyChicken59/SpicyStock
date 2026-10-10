@@ -53,8 +53,8 @@ function environment(options = {}) {
     if (state.blockLock) { const waiting = state.blockLock; state.blockLock = null; await waiting; }
     const result = queue.then(fn); queue = result.catch(() => {}); return result;
   } };
-  const storage = { getItem: key => { if (state.readFails) throw Error('read blocked'); const got = store.get(key) ?? null; return state.badReadback && got !== null ? got + ' ' : got; },
-    setItem: (key, value) => { state.writes++; if (state.writeFails) throw Error('quota'); store.set(key, value); }, removeItem: key => store.delete(key) };
+  const storage = { getItem: key => { if (state.beforeGet) state.beforeGet(); if (state.readFails) throw Error('read blocked'); const got = store.get(key) ?? null; if (state.readbackFaultPending) { state.readbackFaultPending = false; return got + ' '; } return state.badReadback && got !== null ? got + ' ' : got; },
+    setItem: (key, value) => { state.writes++; if (state.writeFails) throw Error('quota'); store.set(key, value); if (state.failNextReadback) { state.failNextReadback = false; state.readbackFaultPending = true; } }, removeItem: key => store.delete(key) };
   const window = { SCStock: api, localStorage: storage, navigator: state.noLocks ? {} : { locks }, TextEncoder, addEventListener: (type, fn) => events.set(type, fn) };
   class Clock extends Date { constructor(...args) { super(...(args.length ? args : [state.now])); } static now() { return Date.parse(state.now); } }
   const context = vm.createContext({ window, Date: Clock });
@@ -240,6 +240,178 @@ test('planned source clocks preserve upstream microseconds while manual event cl
   assert.equal(manual.ok, false); assert.match(manual.error, /valid date and time/);
   env.api.data.run.published_at = '2026-09-10T22:30:00.1234567+00:00'; env.state.hash = createHash('sha256').update(JSON.stringify(env.api.data)).digest('hex');
   assert.equal((await env.prepare({ expectedPublication: env.state.hash })).ok, false);
+});
+
+test('backup exports and restores exact original legacy bytes including whitespace without migration', async () => {
+  for (const original of [LEGACY_RAW, LEGACY_V2_RAW]) {
+    const raw = ' \n' + original + '\t\n', saved = JSON.parse(raw), source = environment({ store: new Map([['spicystock:handoff:v1', raw]]) });
+    const backup = source.handoff.exportBackup(); assert.equal(backup.ok, true, backup.error); assert.equal(backup.raw, raw);
+    assert.equal(backup.summary.version, saved.version); assert.equal(backup.summary.count, 1); assert.equal(backup.summary.planned_count, 1); assert.equal(backup.summary.independent_count, 0);
+    assert.equal(backup.summary.records[0].published_at, saved.items[0].publication.published_at); assert.equal(backup.summary.records[0].updated_at, saved.items[0].updated_at);
+    assert.equal(source.state.writes, 0); assert.equal(source.store.get(source.handoff.KEY), raw);
+    const destination = environment(), preview = destination.handoff.previewBackup(raw); assert.equal(preview.ok, true, preview.error);
+    assert.equal(preview.preview.expectedRaw, null); assert.equal(destination.state.writes, 0); assert.equal(destination.handoff.list().length, 0);
+    const restored = await destination.handoff.restoreBackup(preview.preview); assert.equal(restored.ok, true, restored.error);
+    assert.equal(destination.store.get(destination.handoff.KEY), raw); assert.equal(destination.state.writes, 1); assert.equal(destination.handoff.exportBackup().raw, raw);
+    assert.equal(JSON.parse(destination.handoff.exportBackup().raw).version, saved.version);
+    const view = destination.handoff.list()[0]; assert.deepEqual(plain(view.report), plain(source.handoff.list()[0].report));
+    assert.equal(destination.handoff.copy(view.id).ok, false); assert.equal(destination.handoff.recovery().proposed, null);
+  }
+});
+
+test('mixed planned and independent backups preserve unknown corrections source identity and authority', async () => {
+  const source = researchEnvironment('current', 'KE', { store: new Map([['spicystock:handoff:v1', LEGACY_V2_RAW]]) });
+  const created = await source.create({ submitted_quantity: '9', filled_quantity: '7' }); assert.equal(created.ok, true, created.error);
+  const corrected = await source.handoff.report(created.item.id, reportFields({}), 1); assert.equal(corrected.ok, true, corrected.error);
+  const original = source.store.get(source.handoff.KEY), backup = source.handoff.exportBackup();
+  assert.equal(backup.ok, true, backup.error); assert.equal(backup.summary.version, 3); assert.equal(backup.summary.count, 2); assert.equal(backup.summary.planned_count, 1); assert.equal(backup.summary.independent_count, 1);
+  assert.equal(backup.summary.records[1].ticker, 'KE'); assert.equal(backup.summary.records[1].session, '2026-10-09'); assert.equal(backup.summary.records[1].published_at, source.source.publication.published_at);
+  const dest = environment({ now: '2030-01-02T16:00:00Z', hash: null }); dest.api.data = null; dest.api.model = null;
+  const preview = dest.handoff.previewBackup(backup.raw); assert.equal(preview.ok, true, preview.error);
+  const restored = await dest.handoff.restoreBackup(preview.preview); assert.equal(restored.ok, true, restored.error); assert.equal(dest.store.get(dest.handoff.KEY), original);
+  const independent = dest.handoff.find(created.item.id); assert.deepEqual(plain(independent), plain(corrected.item)); assert.equal(dest.handoff.readback(independent), ''); assert.equal(dest.handoff.copy(independent.id).ok, false);
+  assert.equal(dest.handoff.summary(independent).state, 'reported_unknown_fill'); assert.equal(dest.handoff.summary(independent).calculation, null);
+  assert.equal(dest.handoff.summary(dest.handoff.list()[0]).completed_result.net_microusd, '33430185');
+});
+
+test('restored unreported planned draft still needs exact current publication time and event guards', async () => {
+  const source = environment(), saved = await source.prepare(); assert.equal(saved.ok, true, saved.error);
+  const raw = source.handoff.exportBackup().raw, dest = environment(), preview = dest.handoff.previewBackup(raw);
+  assert.equal((await dest.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(dest.handoff.copy(saved.item.id).ok, true);
+  dest.state.hash = 'a'.repeat(64); assert.equal(dest.handoff.copy(saved.item.id).ok, false);
+  dest.state.hash = HASH; dest.state.restriction = 'Reported halt'; assert.equal(dest.handoff.copy(saved.item.id).ok, false);
+  dest.state.restriction = null; dest.state.now = '2026-09-11T16:00:00Z'; assert.equal(dest.handoff.copy(saved.item.id).ok, false);
+  assert.equal(dest.store.get(dest.handoff.KEY), raw);
+});
+
+test('empty supported envelopes retain exact raw distinction while absent export refuses', async () => {
+  const absent = environment(); assert.equal(absent.handoff.exportBackup().ok, false); assert.equal(absent.state.writes, 0);
+  for (const version of [1, 2, 3]) {
+    const prior = '{ "version": ' + version + ', "items": [] }\n', env = environment({ store: new Map([['spicystock:handoff:v1', prior]]) });
+    const backup = env.handoff.exportBackup(); assert.equal(backup.ok, true, backup.error); assert.equal(backup.raw, prior); assert.equal(backup.summary.count, 0);
+    const incoming = '\n{"items":[],"version":1}\n', preview = env.handoff.previewBackup(incoming); assert.equal(preview.ok, true, preview.error); assert.equal(preview.preview.expectedRaw, prior);
+    assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(env.store.get(env.handoff.KEY), incoming); assert.equal(env.handoff.exportBackup().summary.version, 1);
+  }
+});
+
+test('bad selected backups do not poison healthy destination records errors or recovery', () => {
+  const env = environment({ store: new Map([['spicystock:handoff:v1', LEGACY_V2_RAW]]) }), before = plain(env.handoff.status()), recovery = plain(env.handoff.recovery());
+  for (const raw of ['{', '\uFEFF' + LEGACY_RAW, '{"version":99,"items":[]}', JSON.stringify({ prior: LEGACY_RAW, proposed: LEGACY_V2_RAW }), '[]', null]) {
+    const preview = env.handoff.previewBackup(raw); assert.equal(preview.ok, false); assert.match(preview.error, /not a supported private backup/);
+    assert.deepEqual(plain(env.handoff.status()), before); assert.deepEqual(plain(env.handoff.recovery()), recovery); assert.equal(env.handoff.list().length, 1); assert.equal(env.state.writes, 0);
+  }
+});
+
+test('backup rejects duplicate inconsistent mixed-version and unknown fields with no destination writes', () => {
+  const env = environment();
+  for (const change of [store => store.items.push(store.items[0]), store => { store.items[0].report.filled_quantity = 99; }, store => { store.items[0].version = 3; }, store => { store.items[0].report.entry_fees = '-1'; }, store => { store.items[0].new_field = true; }, store => { store.extra = 0; }]) {
+    const data = JSON.parse(LEGACY_V2_RAW); change(data); assert.equal(env.handoff.previewBackup(JSON.stringify(data)).ok, false);
+  }
+  assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0);
+});
+
+test('occupied unreadable or inaccessible destinations cannot be previewed or overwritten', async () => {
+  for (const prior of [LEGACY_RAW, '{bad', '{"version":99,"items":[]}']) {
+    const env = environment({ store: new Map([['spicystock:handoff:v1', prior]]) }), preview = env.handoff.previewBackup(LEGACY_RAW);
+    assert.equal(preview.ok, false); assert.equal(env.store.get(env.handoff.KEY), prior); assert.equal(env.state.writes, 0);
+    const forged = { raw: LEGACY_RAW, expectedRaw: prior, summary: environment({ store: new Map([['spicystock:handoff:v1', LEGACY_RAW]]) }).handoff.exportBackup().summary };
+    assert.equal((await env.handoff.restoreBackup(forged)).ok, false); assert.equal(env.store.get(env.handoff.KEY), prior); assert.equal(env.state.writes, 0);
+  }
+  const inaccessible = environment({ readFails: true }); assert.equal(inaccessible.handoff.previewBackup(LEGACY_RAW).ok, false); assert.equal(inaccessible.handoff.exportBackup().ok, false); assert.equal(inaccessible.state.writes, 0);
+});
+
+test('restore compares exact empty destination bytes after lock wait including null versus empty envelope', async () => {
+  for (const prior of [null, '{"version":1,"items":[]}']) {
+    const env = environment({ store: new Map(prior === null ? [] : [['spicystock:handoff:v1', prior]]) }), preview = env.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true, preview.error);
+    let unlock; env.state.blockLock = new Promise(resolve => { unlock = resolve; }); const pending = env.handoff.restoreBackup(preview.preview);
+    const changed = prior === null ? '{"version":1,"items":[]}' : prior + ' '; env.store.set(env.handoff.KEY, changed); unlock();
+    const result = await pending; assert.equal(result.ok, false); assert.match(result.error, /changed since preview/); assert.equal(env.store.get(env.handoff.KEY), changed); assert.equal(env.state.writes, 0);
+  }
+});
+
+test('the shared raw writer rechecks storage immediately before restore and never writes after a failed check', async () => {
+  for (const mode of ['changed', 'unavailable']) {
+    const env = environment(), preview = env.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true);
+    const changed = '{"version":2,"items":[]}'; let reads = 0;
+    env.state.beforeGet = () => { if (++reads === 2) { if (mode === 'changed') env.store.set(env.handoff.KEY, changed); else env.state.readFails = true; } };
+    const result = await env.handoff.restoreBackup(preview.preview); assert.equal(result.ok, false);
+    assert.match(result.error, mode === 'changed' ? /changed in another view/ : /could not be checked/);
+    assert.equal(env.state.writes, 0); assert.equal(env.store.get(env.handoff.KEY) ?? null, mode === 'changed' ? changed : null);
+  }
+});
+
+test('a concurrent saved report wins over an earlier empty-destination preview', async () => {
+  const env = environment(), preview = env.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true);
+  const created = await env.prepare(); assert.equal(created.ok, true, created.error); const saved = env.store.get(env.handoff.KEY), writes = env.state.writes;
+  const result = await env.handoff.restoreBackup(preview.preview); assert.equal(result.ok, false); assert.equal(env.store.get(env.handoff.KEY), saved); assert.equal(env.state.writes, writes);
+});
+
+test('restore revalidates selected raw and displayed summary rather than trusting a mutable preview', async () => {
+  for (const alter of [p => { p.raw = '{"version":99,"items":[]}'; }, p => { p.summary.count = 2; }, p => { p.extra = true; }, p => { delete p.expectedRaw; }]) {
+    const env = environment(), preview = env.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true); alter(preview.preview);
+    assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, false); assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0);
+  }
+});
+
+test('restore quota and readback failures preserve exact prior and proposed bytes for recovery', async () => {
+  for (const mode of ['quota', 'readback']) for (const prior of [null, ' {"version":1,"items":[]}\n']) {
+    const env = environment({ store: new Map(prior === null ? [] : [['spicystock:handoff:v1', prior]]) }), raw = '\n' + LEGACY_V2_RAW + ' ', preview = env.handoff.previewBackup(raw);
+    assert.equal(preview.ok, true, preview.error); if (mode === 'quota') env.state.writeFails = true; else env.state.failNextReadback = true;
+    const failed = await env.handoff.restoreBackup(preview.preview); assert.equal(failed.ok, false); assert.match(failed.error, /could not be confirmed/);
+    assert.equal(env.store.get(env.handoff.KEY) ?? null, prior); assert.deepEqual(plain(env.handoff.recovery()), { prior, proposed: raw });
+    env.state.writeFails = false; const saved = await env.handoff.restoreBackup(preview.preview); assert.equal(saved.ok, true, saved.error); assert.equal(env.store.get(env.handoff.KEY), raw); assert.equal(env.handoff.recovery().proposed, null);
+  }
+});
+
+test('restore binds the exact issued bytes even when changed actual fees keep the same preview summary', async () => {
+  const env = environment(), preview = env.handoff.previewBackup(LEGACY_V2_RAW); assert.equal(preview.ok, true);
+  const changed = JSON.parse(LEGACY_V2_RAW); changed.items[0].report.entry_fees = '9.99'; const raw = JSON.stringify(changed);
+  assert.notEqual(raw, LEGACY_V2_RAW); const other = env.handoff.previewBackup(raw); assert.equal(other.ok, true);
+  assert.deepEqual(plain(other.preview.summary), plain(preview.preview.summary));
+  let unlock; env.state.blockLock = new Promise(resolve => { unlock = resolve; }); const pending = env.handoff.restoreBackup(preview.preview);
+  preview.preview.raw = raw; unlock(); const refused = await pending;
+  assert.equal(refused.ok, false); assert.match(refused.error, /differs from its preview/); assert.equal(env.state.writes, 0); assert.equal(env.store.size, 0);
+  preview.preview.raw = LEGACY_V2_RAW; assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(env.store.get(env.handoff.KEY), LEGACY_V2_RAW);
+});
+
+test('restore refuses copied preview objects and changed expected destination while preserving issued previews', async () => {
+  const env = environment(), preview = env.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true);
+  const copy = plain(preview.preview); assert.equal((await env.handoff.restoreBackup(copy)).ok, false); assert.equal(env.state.writes, 0);
+  const changed = '{"version":1,"items":[]}'; env.store.set(env.handoff.KEY, changed); preview.preview.expectedRaw = changed;
+  const refused = await env.handoff.restoreBackup(preview.preview); assert.equal(refused.ok, false); assert.match(refused.error, /differs from its preview/); assert.equal(env.state.writes, 0);
+  env.store.delete(env.handoff.KEY); preview.preview.expectedRaw = null; assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true);
+});
+
+test('a successful empty backup restore consumes its confirmation but another explicit preview works', async () => {
+  const raw = '{"version":1,"items":[]}', env = environment({ store: new Map([['spicystock:handoff:v1', raw]]) }), preview = env.handoff.previewBackup(raw);
+  assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true); const writes = env.state.writes;
+  assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, false); assert.equal(env.state.writes, writes);
+  const fresh = env.handoff.previewBackup(raw); assert.equal((await env.handoff.restoreBackup(fresh.preview)).ok, true);
+});
+
+test('normal export needs no saving permission but restore never bypasses the lock requirement', async () => {
+  const source = environment({ noLocks: true, store: new Map([['spicystock:handoff:v1', LEGACY_RAW]]) }); assert.equal(source.handoff.exportBackup().ok, true); assert.equal(source.state.writes, 0);
+  const dest = environment({ noLocks: true }), preview = dest.handoff.previewBackup(LEGACY_RAW); assert.equal(preview.ok, true); assert.equal((await dest.handoff.restoreBackup(preview.preview)).ok, false); assert.equal(dest.state.writes, 0);
+});
+
+test('backup UTF8 and record bounds are shared with storage and never truncate records', async () => {
+  const env = environment(), max = env.handoff.MAX_BYTES;
+  const data = JSON.parse(LEGACY_RAW); data.items[0].plan.exit_schedule[0].instruction = 'Price reference café 🐔';
+  const prefix = JSON.stringify(data), exact = prefix + ' '.repeat(max - Buffer.byteLength(prefix)); assert.equal(Buffer.byteLength(exact), max);
+  const preview = env.handoff.previewBackup(exact); assert.equal(preview.ok, true, preview.error); assert.equal(env.handoff.previewBackup(exact + ' ').ok, false);
+  assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(env.handoff.exportBackup().raw, exact);
+  const item = JSON.parse(LEGACY_RAW).items[0], items = Array.from({ length: 100 }, (_, i) => { const copy = plain(item); copy.publication.sha256 = i.toString(16).padStart(64, '0'); copy.id = copy.publication.sha256 + ':' + copy.plan.reference.id; return copy; });
+  const dest = environment(), valid = JSON.stringify({ version: 1, items }); assert.equal(dest.handoff.previewBackup(valid).ok, true);
+  const extra = plain(items[0]); extra.publication.sha256 = 'f'.repeat(64); extra.id = extra.publication.sha256 + ':' + extra.plan.reference.id;
+  assert.equal(dest.handoff.previewBackup(JSON.stringify({ version: 1, items: [...items, extra] })).ok, false); assert.equal(dest.state.writes, 0);
+});
+
+test('raw lone surrogate cannot silently change exported bytes while escaped JSON remains exact', async () => {
+  const data = JSON.parse(LEGACY_RAW); data.items[0].plan.exit_schedule[0].instruction = '\uD800';
+  const escaped = JSON.stringify(data), literal = escaped.replace('\\ud800', '\uD800'), env = environment(); assert.notEqual(literal, escaped);
+  assert.equal(env.handoff.previewBackup(literal).ok, false);
+  const invalidStore = environment({ store: new Map([['spicystock:handoff:v1', literal]]) }); assert.equal(invalidStore.handoff.exportBackup().ok, false); assert.equal(invalidStore.store.get(invalidStore.handoff.KEY), literal); assert.equal(invalidStore.state.writes, 0);
+  const preview = env.handoff.previewBackup(escaped); assert.equal(preview.ok, true, preview.error); assert.equal((await env.handoff.restoreBackup(preview.preview)).ok, true); assert.equal(env.handoff.exportBackup().raw, escaped);
 });
 
 test('real producer draft keeps published four and personally reads back two without inferred execution', async () => {

@@ -186,6 +186,27 @@ from independent research reports. Failed writes retain prior and proposed
 recovery bytes; unknown versions remain untouched. Upgrading does not expand
 the shared 100-record / 1 MiB limit.
 
+**Local private backup.** In Private broker handoffs and reports, **Download
+private backup** saves the exact supported store bytes to a file on this device.
+It includes private broker facts; keep the file private. Downloading does not
+change the saved records, migrate older versions or upload anything. Unsaved
+form edits are not included. This is separate from the emergency recovery file
+containing prior/proposed payloads after a failed write.
+
+**Restore private backup** reads a bounded local file and previews its validated
+record count, kinds and original dates. Only a separate explicit restore click
+writes it, and only into an empty, readable destination. Existing, unreadable
+or concurrently changed storage is refused without overwrite. Choosing,
+previewing, cancelling or rejecting a file preserves the mounted editor and
+unsaved input; restore cannot replace a dirty or new unsaved report.
+
+Supported legacy bytes, unknown broker facts, decimal strings and original
+source references are preserved. Restore grants no new order-copy authority;
+independent reports remain report-only, and planned handoffs retain all ordinary
+current-publication checks. The shared 100-record / 1 MiB limit, Web Lock,
+readback and failure recovery still apply. There is no cloud backup or sync,
+and public data need not be available to access this local recovery path.
+
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
 The wait explanation separates the reaction review gates from the original
