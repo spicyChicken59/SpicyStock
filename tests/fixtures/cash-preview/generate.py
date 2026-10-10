@@ -75,7 +75,10 @@ def publication(*, multiple=False):
                 mock.patch.object(make_fixture, "register", register):
             data = make_fixture.run_variant("full", Path(temporary))
     data.pop("fixture")
-    provenance.verify(data)
+    # Temporary source objects are not retained: this checks publication
+    # integrity and compatible rule replay, not a retained-source audit.
+    integrity = provenance.verify(data, require_sources=False)
+    assert integrity["status"] == "PASS", f"cash-preview fixture integrity failed: {integrity}"
     assert {k: data["account"][k] for k in ACCOUNT_FIELDS} == {
         "equity": 2000, "risk_pct": 0.5, "max_position_pct": 25, "max_open_positions": 4}
     rows = morning.admitted_rows(data)

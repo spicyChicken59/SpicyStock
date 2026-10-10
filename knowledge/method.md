@@ -79,6 +79,17 @@ miss a qualitative defect; the reader can still name that defect with the
 chart present. Code validates authority and cited facts, not subjective visual
 truth. Free commentary does not create order terms or an executable rule.
 
+Review selection (`src/review_selection.py`) is DERIVED (P) resource allocation,
+not a Bonde threshold or a performance claim. `account_feasible_first_research_v1`
+keeps the twelve-read ceiling. Feasible private mechanical plans get first
+priority in mechanical-grade / descending-score / ticker order; at most 2
+spare reviews sample infeasible mechanical A+/A names, one ranked and one
+rotated by SHA-256 of policy, measured session and ticker. No feasible review
+is displaced. This near-admission research pool is explicitly selection-biased.
+Per-candidate blockers/purposes and requested/result/attempt counts are retained
+under the rules identity. Final accepted review, regime, sizing, event and
+combined-allocation requirements remain separate and unchanged.
+
 ## Run status (`src/inputs.py`, `src/followup.py`, `src/reader_coverage.py`)
 
 Two tolerances decide whether a night is called degraded, and nothing else

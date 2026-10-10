@@ -4,11 +4,11 @@
   "app": {
     "name": "SpicyStock",
     "version": "2.0",
-    "rules_version": "75c237d78018"
+    "rules_version": "e87cdf5b1bbe"
   },
   "cover": {
-    "h1": "Nothing qualifies. Keep cash.",
-    "dek": "6 bursts found, 4 with a qualifying setup and no ticket (withheld by the stop rule at the limit, or cut); each card says why. The closest miss is below.",
+    "h1": "No new burst tickets. Reader review incomplete.",
+    "dek": "6 bursts found; 2 with mechanical A+/A grades lack accepted reader review. They remain visible for research, without new plans or tickets. Missing review is not a measured setup failure. The closest miss is below.",
     "action_label": "Open model plans",
     "action_target": "#hold",
     "verb": "keep cash"
@@ -231,13 +231,13 @@
     "graded": {
       "a_plus": 4,
       "a": 0,
-      "b": 0,
-      "c": 2,
+      "b": 2,
+      "c": 0,
       "skip": 0
     },
     "reads": {
-      "requested": 6,
-      "done": 6,
+      "requested": 2,
+      "done": 2,
       "unavailable_reason": null,
       "version": 1,
       "causes": {
@@ -247,11 +247,67 @@
         "credit": 0,
         "transport": 0
       },
-      "refusal_limit": 1,
+      "refusal_limit": 0,
       "refused_names": [],
       "refused_admissible": [],
       "verdict": "complete",
       "sentence": null
+    },
+    "review_selection": {
+      "version": 1,
+      "policy": "account_feasible_first_research_v1",
+      "session": "2026-09-10",
+      "max_reads": 12,
+      "research_max": 2,
+      "discovered": 6,
+      "feasible": 0,
+      "blockers": {
+        "grade_not_admitted": 2,
+        "quality_veto": 0,
+        "preview_unavailable": 0,
+        "known_event": 0,
+        "plan_withheld": 1,
+        "no_whole_share": 4,
+        "no_order": 0
+      },
+      "research_pool": 4,
+      "selected": [
+        {
+          "ticker": "AAPL",
+          "purpose": "research_ranked"
+        },
+        {
+          "ticker": "TSLA",
+          "purpose": "research_rotating"
+        }
+      ],
+      "requested": 2,
+      "by_purpose": {
+        "opportunity": {
+          "requested": 0,
+          "accepted": 0,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 0
+        },
+        "research_ranked": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        },
+        "research_rotating": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        }
+      },
+      "feasible_unselected": 0,
+      "unused_capacity": 10,
+      "attempts": 2
     },
     "email": "skipped",
     "published_at": "2026-09-10T22:30:00+00:00",
@@ -783,7 +839,7 @@
     },
     "evidence": {
       "version": 1,
-      "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0"
+      "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4"
     },
     "sanitised": {
       "replaced": 0,
@@ -1266,6 +1322,23 @@
           }
         ]
       }
+    },
+    "review_selection": {
+      "version": 1,
+      "policy": "account_feasible_first_research_v1",
+      "research_max": 2,
+      "ranked_research": 1,
+      "grade_order": [
+        "A+",
+        "A",
+        "B",
+        "C",
+        "skip"
+      ],
+      "order": "mechanical_grade,descending_score,ticker",
+      "rotation": "sha256(policy|measured_session|ticker),ticker",
+      "research_pool": "infeasible mechanical pipeline.trade_grades",
+      "feasibility": "private per-candidate plan before reader and combined allocation"
     },
     "pipeline": {
       "max_reads": 12,
@@ -2135,11 +2208,21 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "ea59017d7d6f16485a47d962899adf0329ae53e9195f4b5f09ebff579fe802b4",
-          "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+          "id": "bda3c6896bb262ddbb8e7ba3918a6de9c545fe6e1ab4afa9f63273d9e1adf2be",
+          "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
           "plan_sha256": "7d5d6a296dccb03afc876f15033d811d0b777702ff4fdf5dc4dd478cabd6c2f7",
           "pick_sha256": "0d41f5714b6a5b46dbe84378945e73ad6988aa2ed0dcaf2d36fec945f8fdc719"
         }
+      },
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "no_whole_share"
+        ],
+        "research_pool": true,
+        "selected": true,
+        "purpose": "research_ranked"
       },
       "chart": "charts/AAPL.png",
       "claude": {
@@ -2226,6 +2309,16 @@
           "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
           "request_text_sha256": "b32390d7519c17f30ff6aa9ccb79a5b2a434f385c1060f5ab75cdf73bc492940"
         },
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "no_whole_share"
+          ],
+          "research_pool": true,
+          "selected": true,
+          "purpose": "research_ranked"
+        },
         "reader_coverage": "accepted",
         "reader_sha256": "f50339ddd245257f4d9cd717167fecbd09a854c6ae7fb74692bcf0952b321b3e",
         "reader_source": "claude",
@@ -2234,8 +2327,8 @@
         "kind": "burst",
         "ticker": "AAPL",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
           "reader_coverage": "accepted",
           "regime": "green",
@@ -2248,7 +2341,7 @@
           "reason": "no_shares",
           "detail": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.05 risk per share) and the $500.00 position cap ($126.47 sizing limit)"
         },
-        "id": "ea59017d7d6f16485a47d962899adf0329ae53e9195f4b5f09ebff579fe802b4"
+        "id": "bda3c6896bb262ddbb8e7ba3918a6de9c545fe6e1ab4afa9f63273d9e1adf2be"
       },
       "series": [
         {
@@ -3429,300 +3522,19 @@
         }
       },
       "grade": "A+",
-      "plan": {
-        "ticker": "AMD",
-        "kind": "burst",
-        "scan": "4pct",
-        "action": "no_order",
-        "eligible": true,
-        "reason": null,
-        "entry_ref": 123.27,
-        "entry_low": 120.8,
-        "entry_high": 128.2,
-        "limit": 128.2,
-        "limit_basis": "outer_ceiling",
-        "limit_narrowed": false,
-        "limit_note": "the ticket's limit is $128.20, the day-2 ceiling itself (the close +4%): the stop is inside his 4% line there",
-        "day2_spent_above": 128.2,
-        "day2_spent_pct": 4.0,
-        "ticket_refusal": null,
-        "skip_if_open_above": 128.2,
-        "skip_if_open_below": 120.8,
-        "extended_above": 133.13,
-        "entry_window": "first 30 minutes",
-        "pre_open_check": "before the open: if the pre-market print is under $120.80 the burst is failing, over $128.20 (+4%) day 2 is spent, and over $133.13 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $128.20, the day-2 line itself: an open above it does not fill at the open, though a resting order stays live",
-        "planned_entry": 124.5,
-        "assumed_slippage_pct": 1.0,
-        "planned_entry_capped": false,
-        "planned_entry_note": "an indicative entry, the close plus 1%, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
-        "stop": 123.1,
-        "stop_basis": "burst_low",
-        "stop_pct": 3.98,
-        "stop_note": null,
-        "stop_candidates": [
-          {
-            "basis": "burst_low",
-            "price": 123.1,
-            "pct_below_entry": 3.98,
-            "within_max": true,
-            "under_trigger": true
-          },
-          {
-            "basis": "half_range",
-            "price": 123.19,
-            "pct_below_entry": 3.91,
-            "within_max": true,
-            "under_trigger": true
-          }
+      "plan": null,
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "no_whole_share"
         ],
-        "risk_per_share": 5.1,
-        "shares": 0,
-        "position_usd": 0.0,
-        "position_pct": 0.0,
-        "risk_usd": 0.0,
-        "capped_by": "none",
-        "size_multiplier": 0.5,
-        "sizing": {
-          "shares": 0,
-          "position_usd": 0.0,
-          "position_pct": 0.0,
-          "risk_usd": 0.0,
-          "risk_per_share": 5.1,
-          "stop_pct": 3.98,
-          "capped_by": "none",
-          "note": "the $5.00 risk budget cannot buy one share at a $5.10 stop",
-          "multiplier": 0.5,
-          "budget_usd": 5.0,
-          "cap_usd": 500.0,
-          "price": 128.2
-        },
-        "sizing_price": 128.2,
-        "sizing_basis": "order_limit",
-        "sizing_note": "sized at the $128.20 limit, the highest fill the ticket permits: 0 shares put $0.00 between that fill and the $123.10 stop, planned price-to-stop risk, not a maximum loss",
-        "resize_rule": "if your fill differs, shares = $5.00 / (fill - $123.10), and no more than $500.00 of stock",
-        "multipliers": {
-          "regime": 1.0,
-          "hazard": 1.0,
-          "stop_risk": 0.5,
-          "total": 0.5
-        },
-        "hazards": [],
-        "hazard_multiplier": 1.0,
-        "stop_risk_multiplier": 0.5,
-        "stop_risk_reason": "the stop is 3.98% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
-        "extension_pct": 4.9,
-        "targets": {
-          "low_pct": 8.0,
-          "high_pct": 20.0,
-          "low": 134.46,
-          "high": 149.4,
-          "note": "above $40 he measures the move in dollars: $5-25",
-          "dollar_low": 129.5,
-          "dollar_high": 149.5
-        },
-        "exits": [
-          {
-            "key": "sell_half_8pct",
-            "source": "B",
-            "when": "same or next day, the price reaches $134.46 (+8% from $124.50)",
-            "rule": "sell half and move the stop to 25-50 cents under that day's high",
-            "price": 134.46
-          },
-          {
-            "key": "abnormal_10pct",
-            "source": "B",
-            "when": "any single day closes at or above $136.95 (+10%)",
-            "rule": "take at least partial profit and move the stop up to protect the rest",
-            "price": 136.95
-          },
-          {
-            "key": "gap_20pct",
-            "source": "B",
-            "when": "it opens at or above $149.40 (+20%) after entry",
-            "rule": "sell at the open (or pre-market)",
-            "price": 149.4
-          },
-          {
-            "key": "entry_day_low",
-            "source": "B",
-            "when": "the close of day 1",
-            "rule": "the stop rises to the entry day's low if that is above $123.10",
-            "price": null
-          },
-          {
-            "key": "day3_sell_half",
-            "source": "B",
-            "when": "day 3 close",
-            "rule": "sell at least half at the close",
-            "price": null
-          },
-          {
-            "key": "day3_no_progress",
-            "source": "B",
-            "when": "day 3 closes at or below $124.50",
-            "rule": "exit: no follow-through",
-            "price": 124.5
-          },
-          {
-            "key": "trail_after_day3",
-            "source": "P",
-            "when": "from the close of day 3",
-            "rule": "raise the stop to each day's low (it never moves down)",
-            "price": null
-          },
-          {
-            "key": "day5_exit",
-            "source": "B",
-            "when": "day 5 close",
-            "rule": "exit the remainder into strength",
-            "price": null
-          },
-          {
-            "key": "stop",
-            "source": "B",
-            "when": "the protective stop at $123.10 is a stop-market order, live intraday from the moment the buy fills",
-            "rule": "if it is somehow not filled, exit on any close below it",
-            "price": 123.1
-          },
-          {
-            "key": "no_breakeven",
-            "source": "T",
-            "when": "day 2 is green",
-            "rule": "do not move the stop to break-even before day 5 just because it is green (theStrat Lab EP9M backtest: the win rate collapses from 29.8% to 7.25%; delaying to day 5 restores it); the +8% raise above is a different rule",
-            "price": null
-          }
-        ],
-        "order_line": null,
-        "order_json": null,
-        "order_readback": null,
-        "order_terms": null,
-        "burst": {
-          "close": 123.27,
-          "low": 123.1,
-          "high": 123.28,
-          "open": 123.12,
-          "prev_close": 117.18,
-          "gain_pct": 5.2,
-          "gap_pct": 5.07,
-          "dollar_move": 0.15,
-          "close_in_range_pct": 94.44
-        },
-        "flags": [
-          "risk_halved"
-        ],
-        "notes": [
-          "the stop is 3.98% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
-          "the $5.00 risk budget cannot buy one share at a $5.10 stop"
-        ],
-        "exit_schedule": [
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "entry",
-            "instruction": "buy in the first 30 minutes inside $120.80–$128.20; the sell stop at $123.10 is live from the fill. Skip it if it opens above $128.20 or under $120.80; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
-          },
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "sell_half_8pct",
-            "instruction": "if same or next day, the price reaches $134.46 (+8% from $124.50): sell half and move the stop to 25-50 cents under that day's high."
-          },
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "entry_day_low",
-            "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $123.10."
-          },
-          {
-            "day": 2,
-            "date": "2026-09-14",
-            "key": "no_breakeven",
-            "instruction": "if day 2 is green: do not move the stop to break-even before day 5 just because it is green."
-          },
-          {
-            "day": 3,
-            "date": "2026-09-15",
-            "key": "day3",
-            "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $124.50: exit: no follow-through."
-          },
-          {
-            "day": 4,
-            "date": "2026-09-16",
-            "key": "trail",
-            "instruction": "raise the stop to each day's low (it never moves down); sell the rest into strength."
-          },
-          {
-            "day": 5,
-            "date": "2026-09-17",
-            "key": "day5_exit",
-            "instruction": "at the day 5 close: exit the remainder into strength."
-          }
-        ],
-        "event_risk": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
-          "registry_reviewed_on": "2026-10-10",
-          "session": "2026-09-10",
-          "symbol": "AMD",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "allocation": {
-          "policy": "combined_stages_reserved_principal_v1",
-          "admitted": false,
-          "reason": "no_shares"
-        },
-        "evidence_ref": {
-          "version": 1,
-          "id": "d12d8dc4676fb1f52f402309078cf33708b88a45fd11da8ae3009cc7a3411e40",
-          "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
-          "plan_sha256": "1c89a28ded673abad6306ce7b8f3663091c3da013e90a6f31076a001af54f2d7",
-          "pick_sha256": "8fe9361a9304f0983e4b2dc00b1999b4fffdf509fca5cfb53abd7436b05adb09"
-        }
+        "research_pool": true,
+        "selected": false,
+        "purpose": "research_cap_not_selected"
       },
-      "chart": "charts/AMD.png",
-      "claude": {
-        "agree": true,
-        "grade": "A+",
-        "score": 9.3,
-        "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
-        "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
-        "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
-        "source": "claude",
-        "chart_seen": true,
-        "error": null,
-        "returned_grade": "A+",
-        "model": "claude-sonnet-4-6",
-        "findings": [],
-        "authority_version": 1,
-        "request_text_sha256": "97a751433c6417cb6850718f930c2dec72272bc8cac8718cd47866cd79aee783",
-        "input": {
-          "metrics_sha256": "178acb9bcd67549ca60ab2491d9acbad45d32a60c2b43341e2b1c13b1af43358",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
-        },
-        "attempts": [
-          {
-            "request_sha256": "a33e33f1d476eaf5c5b5c950112c159d8c418f4bab93bf521a5fbaef1bd9f593",
-            "correction": false,
-            "outcome": "model",
-            "response": {
-              "text": "{\"score\": 9.3, \"grade\": \"A+\", \"reason\": \"A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.\", \"key_risk\": \"A gap over the ceiling at the open leaves no stop the bar supports.\", \"entry_note\": \"Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.\", \"findings\": []}",
-              "text_sha256": "1a1853a30c9316a3e8a7bbdc69da852fbb149c94d0379834bbcf917061a4ef60",
-              "bytes": 449,
-              "retention": "complete",
-              "stop_reason": null,
-              "message_id": null
-            }
-          }
-        ],
-        "attempted_model": "claude-sonnet-4-6",
-        "discovery_version": 1
-      },
-      "reader_coverage": "accepted",
+      "claude": null,
+      "reader_coverage": "not_selected_budget",
       "rank": 2,
       "evidence": {
         "source": {
@@ -3737,49 +3549,35 @@
         "discovery_sha256": "50d2f2c37b0a0422cf6c737c55e1245119278fd53bebc4985ac329aab7f87f1f",
         "quality_sha256": "8b2421270c4a1a7fe655964f8695ab62dbc8c097ab9093398769e40d77b78768",
         "planning": {
-          "inputs": {
-            "ticker": "AMD",
-            "close": 123.27,
-            "low": 123.1,
-            "high": 123.28,
-            "open_": 123.12,
-            "prev_close": 117.18,
-            "gain_pct": 5.2,
-            "account": {
-              "equity": 2000.0,
-              "risk_pct": 0.5,
-              "max_position_pct": 25.0,
-              "max_open_positions": 4
-            },
-            "size_multiplier": 1.0,
-            "scan": "4pct",
-            "extension_pct": 4.9
-          },
+          "inputs": null,
           "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
           "session": "2026-09-10",
-          "output_sha256": "1c89a28ded673abad6306ce7b8f3663091c3da013e90a6f31076a001af54f2d7",
+          "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
           "error": null,
-          "pick_sha256": "8fe9361a9304f0983e4b2dc00b1999b4fffdf509fca5cfb53abd7436b05adb09"
+          "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
         },
-        "reader_input": {
-          "metrics_sha256": "178acb9bcd67549ca60ab2491d9acbad45d32a60c2b43341e2b1c13b1af43358",
-          "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "97a751433c6417cb6850718f930c2dec72272bc8cac8718cd47866cd79aee783"
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "no_whole_share"
+          ],
+          "research_pool": true,
+          "selected": false,
+          "purpose": "research_cap_not_selected"
         },
-        "reader_coverage": "accepted",
-        "reader_sha256": "07f22d208cd44d27cdc06aa743fcef89a576214512ad3f6c4638e2925164697a",
-        "reader_source": "claude",
+        "reader_coverage": "not_selected_budget",
+        "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+        "reader_source": "not_graded",
         "final_grade": "A+",
         "version": 1,
         "kind": "burst",
         "ticker": "AMD",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
-          "reader_coverage": "accepted",
+          "reader_coverage": "not_selected_budget",
           "regime": "green",
           "final_grade": "A+",
           "allowed_grades": [
@@ -3787,10 +3585,10 @@
             "A"
           ],
           "ticket": false,
-          "reason": "no_shares",
-          "detail": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.10 risk per share) and the $500.00 position cap ($128.20 sizing limit)"
+          "reason": "reader_coverage",
+          "detail": null
         },
-        "id": "d12d8dc4676fb1f52f402309078cf33708b88a45fd11da8ae3009cc7a3411e40"
+        "id": "1cd0be9f0187234fa3e3551e5bcca6aa5ffe7365dd49197ee90234a464cff050"
       },
       "series": [
         {
@@ -4666,7 +4464,7 @@
           "v": 2600000.0
         }
       ],
-      "summary": "AMD: +5.2% on 4.3× volume out of a base 3.3% deep. Buy 120.80–128.20 next session in the first 30 minutes, stop 123.10, aim 134.46–149.40. A+ 10.0, 6 of 6 criteria."
+      "summary": "AMD: +5.2% on 4.3× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
     },
     {
       "ticker": "NVDA",
@@ -4939,301 +4737,19 @@
         }
       },
       "grade": "A+",
-      "plan": {
-        "ticker": "NVDA",
-        "kind": "burst",
-        "scan": "4pct",
-        "action": "no_order",
-        "eligible": true,
-        "reason": null,
-        "entry_ref": 126.88,
-        "entry_low": 124.34,
-        "entry_high": 128.12,
-        "limit": 128.12,
-        "limit_basis": "stop_line",
-        "limit_narrowed": true,
-        "limit_note": "the ticket's limit is $128.12: the $131.96 day-2 ceiling (the close +4%) narrowed to the highest price at which the burst day's low $123.00 is still inside his 4% line",
-        "day2_spent_above": 131.96,
-        "day2_spent_pct": 4.0,
-        "ticket_refusal": null,
-        "skip_if_open_above": 131.96,
-        "skip_if_open_below": 124.34,
-        "extended_above": 137.03,
-        "entry_window": "first 30 minutes",
-        "pre_open_check": "before the open: if the pre-market print is under $124.34 the burst is failing, over $131.96 (+4%) day 2 is spent, and over $137.03 (+8%) he would be selling; do not place the order in any of the three. The ticket's own limit is $128.12, under that day-2 line: an open above it does not fill at the open, though a resting order stays live",
-        "planned_entry": 128.12,
-        "assumed_slippage_pct": 1.0,
-        "planned_entry_capped": true,
-        "planned_entry_note": "an indicative entry, the close plus 1% capped at the $128.12 limit, which it would otherwise sit above, that the exit levels and targets are quoted from; not a fill, and not the sizing price",
-        "stop": 123.0,
-        "stop_basis": "burst_low",
-        "stop_pct": 4.0,
-        "stop_note": null,
-        "stop_candidates": [
-          {
-            "basis": "burst_low",
-            "price": 123.0,
-            "pct_below_entry": 4.0,
-            "within_max": true,
-            "under_trigger": true
-          },
-          {
-            "basis": "half_range",
-            "price": 125.28,
-            "pct_below_entry": 2.22,
-            "within_max": true,
-            "under_trigger": true
-          }
+      "plan": null,
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "no_whole_share"
         ],
-        "risk_per_share": 5.12,
-        "shares": 0,
-        "position_usd": 0.0,
-        "position_pct": 0.0,
-        "risk_usd": 0.0,
-        "capped_by": "none",
-        "size_multiplier": 0.5,
-        "sizing": {
-          "shares": 0,
-          "position_usd": 0.0,
-          "position_pct": 0.0,
-          "risk_usd": 0.0,
-          "risk_per_share": 5.12,
-          "stop_pct": 4.0,
-          "capped_by": "none",
-          "note": "the $5.00 risk budget cannot buy one share at a $5.12 stop",
-          "multiplier": 0.5,
-          "budget_usd": 5.0,
-          "cap_usd": 500.0,
-          "price": 128.12
-        },
-        "sizing_price": 128.12,
-        "sizing_basis": "order_limit",
-        "sizing_note": "sized at the $128.12 limit, the highest fill the ticket permits: 0 shares put $0.00 between that fill and the $123.00 stop, planned price-to-stop risk, not a maximum loss",
-        "resize_rule": "if your fill differs, shares = $5.00 / (fill - $123.00), and no more than $500.00 of stock",
-        "multipliers": {
-          "regime": 1.0,
-          "hazard": 1.0,
-          "stop_risk": 0.5,
-          "total": 0.5
-        },
-        "hazards": [],
-        "hazard_multiplier": 1.0,
-        "stop_risk_multiplier": 0.5,
-        "stop_risk_reason": "the stop is 4% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
-        "extension_pct": 6.8,
-        "targets": {
-          "low_pct": 8.0,
-          "high_pct": 20.0,
-          "low": 138.37,
-          "high": 153.74,
-          "note": "above $40 he measures the move in dollars: $5-25",
-          "dollar_low": 133.12,
-          "dollar_high": 153.12
-        },
-        "exits": [
-          {
-            "key": "sell_half_8pct",
-            "source": "B",
-            "when": "same or next day, the price reaches $138.37 (+8% from $128.12)",
-            "rule": "sell half and move the stop to 25-50 cents under that day's high",
-            "price": 138.37
-          },
-          {
-            "key": "abnormal_10pct",
-            "source": "B",
-            "when": "any single day closes at or above $140.93 (+10%)",
-            "rule": "take at least partial profit and move the stop up to protect the rest",
-            "price": 140.93
-          },
-          {
-            "key": "gap_20pct",
-            "source": "B",
-            "when": "it opens at or above $153.74 (+20%) after entry",
-            "rule": "sell at the open (or pre-market)",
-            "price": 153.74
-          },
-          {
-            "key": "entry_day_low",
-            "source": "B",
-            "when": "the close of day 1",
-            "rule": "the stop rises to the entry day's low if that is above $123.00",
-            "price": null
-          },
-          {
-            "key": "day3_sell_half",
-            "source": "B",
-            "when": "day 3 close",
-            "rule": "sell at least half at the close",
-            "price": null
-          },
-          {
-            "key": "day3_no_progress",
-            "source": "B",
-            "when": "day 3 closes at or below $128.12",
-            "rule": "exit: no follow-through",
-            "price": 128.12
-          },
-          {
-            "key": "trail_after_day3",
-            "source": "P",
-            "when": "from the close of day 3",
-            "rule": "raise the stop to each day's low (it never moves down)",
-            "price": null
-          },
-          {
-            "key": "day5_exit",
-            "source": "B",
-            "when": "day 5 close",
-            "rule": "exit the remainder into strength",
-            "price": null
-          },
-          {
-            "key": "stop",
-            "source": "B",
-            "when": "the protective stop at $123.00 is a stop-market order, live intraday from the moment the buy fills",
-            "rule": "if it is somehow not filled, exit on any close below it",
-            "price": 123.0
-          },
-          {
-            "key": "no_breakeven",
-            "source": "T",
-            "when": "day 2 is green",
-            "rule": "do not move the stop to break-even before day 5 just because it is green (theStrat Lab EP9M backtest: the win rate collapses from 29.8% to 7.25%; delaying to day 5 restores it); the +8% raise above is a different rule",
-            "price": null
-          }
-        ],
-        "order_line": null,
-        "order_json": null,
-        "order_readback": null,
-        "order_terms": null,
-        "burst": {
-          "close": 126.88,
-          "low": 123.0,
-          "high": 127.57,
-          "open": 123.46,
-          "prev_close": 118.14,
-          "gain_pct": 7.4,
-          "gap_pct": 4.5,
-          "dollar_move": 3.42,
-          "close_in_range_pct": 84.9
-        },
-        "flags": [
-          "limit_narrowed",
-          "risk_halved"
-        ],
-        "notes": [
-          "the stop is 4% under the ticket's limit, the highest fill it permits: inside his 4% line, wider than his ideal 2%, so the risk is multiplied by 0.5",
-          "the $5.00 risk budget cannot buy one share at a $5.12 stop"
-        ],
-        "exit_schedule": [
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "entry",
-            "instruction": "buy in the first 30 minutes inside $124.34–$128.12; the sell stop at $123.00 is live from the fill. Skip it if it opens above $131.96 or under $124.34; cancel the day order yourself if it has not filled by the end of the first 30 minutes."
-          },
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "sell_half_8pct",
-            "instruction": "if same or next day, the price reaches $138.37 (+8% from $128.12): sell half and move the stop to 25-50 cents under that day's high."
-          },
-          {
-            "day": 1,
-            "date": "2026-09-11",
-            "key": "entry_day_low",
-            "instruction": "at the close of day 1: the stop rises to the entry day's low if that is above $123.00."
-          },
-          {
-            "day": 2,
-            "date": "2026-09-14",
-            "key": "no_breakeven",
-            "instruction": "if day 2 is green: do not move the stop to break-even before day 5 just because it is green."
-          },
-          {
-            "day": 3,
-            "date": "2026-09-15",
-            "key": "day3",
-            "instruction": "at the day 3 close: sell at least half at the close. If day 3 closes at or below $128.12: exit: no follow-through."
-          },
-          {
-            "day": 4,
-            "date": "2026-09-16",
-            "key": "trail",
-            "instruction": "raise the stop to each day's low (it never moves down); sell the rest into strength."
-          },
-          {
-            "day": 5,
-            "date": "2026-09-17",
-            "key": "day5_exit",
-            "instruction": "at the day 5 close: exit the remainder into strength."
-          }
-        ],
-        "event_risk": {
-          "version": 1,
-          "coverage": "manual_known_events_only",
-          "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
-          "registry_reviewed_on": "2026-10-10",
-          "session": "2026-09-10",
-          "symbol": "NVDA",
-          "blocked": false,
-          "status": "not_in_registry",
-          "reason": "No applicable entry in the manual event registry; live news and other corporate events have not been cleared.",
-          "matches": []
-        },
-        "allocation": {
-          "policy": "combined_stages_reserved_principal_v1",
-          "admitted": false,
-          "reason": "no_shares"
-        },
-        "evidence_ref": {
-          "version": 1,
-          "id": "e4b1fc5a6a2c8e9c7190bdddd4f692e863692501810439916e7842e1b26d8767",
-          "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
-          "plan_sha256": "a85dc62bad5452a6327719d6f67c9536b2406de982cb0c001d924cbf151ce0e7",
-          "pick_sha256": "4a911cd01449542e40222fb349f6efc2b409c2fce114c8f12be213806f700907"
-        }
+        "research_pool": true,
+        "selected": false,
+        "purpose": "research_cap_not_selected"
       },
-      "chart": "charts/NVDA.png",
-      "claude": {
-        "agree": true,
-        "grade": "A+",
-        "score": 9.3,
-        "reason": "A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.",
-        "key_risk": "A gap over the ceiling at the open leaves no stop the bar supports.",
-        "entry_note": "Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.",
-        "source": "claude",
-        "chart_seen": true,
-        "error": null,
-        "returned_grade": "A+",
-        "model": "claude-sonnet-4-6",
-        "findings": [],
-        "authority_version": 1,
-        "request_text_sha256": "e22404c00b4917a46cc40924d7090ec6bcf92f8c2d5122cba340ae2d05fa43b3",
-        "input": {
-          "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
-        },
-        "attempts": [
-          {
-            "request_sha256": "dc07bdd2dd0562cf0e9daf72200e480b6c4a41705e51ab2f53dafc2b777e3e58",
-            "correction": false,
-            "outcome": "model",
-            "response": {
-              "text": "{\"score\": 9.3, \"grade\": \"A+\", \"reason\": \"A clean fifteen-session leg into a sixteen-session base that gave back under a quarter of the move, a negative narrow day, then a burst that closed at the high on three times the volume.\", \"key_risk\": \"A gap over the ceiling at the open leaves no stop the bar supports.\", \"entry_note\": \"Skip it if the first print is above the ceiling; a print under the skip line says the burst is failing.\", \"findings\": []}",
-              "text_sha256": "1a1853a30c9316a3e8a7bbdc69da852fbb149c94d0379834bbcf917061a4ef60",
-              "bytes": 449,
-              "retention": "complete",
-              "stop_reason": null,
-              "message_id": null
-            }
-          }
-        ],
-        "attempted_model": "claude-sonnet-4-6",
-        "discovery_version": 1
-      },
-      "reader_coverage": "accepted",
+      "claude": null,
+      "reader_coverage": "not_selected_budget",
       "rank": 3,
       "evidence": {
         "source": {
@@ -5248,49 +4764,35 @@
         "discovery_sha256": "0beb04596622067df5a879cd8139cbbb7110e36223c0a5ec2be4c6605d88990e",
         "quality_sha256": "12279adfeccce3d20926714b5fecba487e61446cafd75bc760482ddd2c0a204c",
         "planning": {
-          "inputs": {
-            "ticker": "NVDA",
-            "close": 126.88,
-            "low": 123.0,
-            "high": 127.57,
-            "open_": 123.46,
-            "prev_close": 118.14,
-            "gain_pct": 7.4,
-            "account": {
-              "equity": 2000.0,
-              "risk_pct": 0.5,
-              "max_position_pct": 25.0,
-              "max_open_positions": 4
-            },
-            "size_multiplier": 1.0,
-            "scan": "4pct",
-            "extension_pct": 6.8
-          },
+          "inputs": null,
           "regime_sha256": "c469f217694a86b46390e4490c49e814b1c5e390c31ffd03b798659288863774",
           "session": "2026-09-10",
-          "output_sha256": "a85dc62bad5452a6327719d6f67c9536b2406de982cb0c001d924cbf151ce0e7",
+          "output_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
           "error": null,
-          "pick_sha256": "4a911cd01449542e40222fb349f6efc2b409c2fce114c8f12be213806f700907"
+          "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
         },
-        "reader_input": {
-          "metrics_sha256": "743d3815c73ef97ddc8e3592eb17f805f23d0850762dcaf13807a1e8c8df5d90",
-          "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "e22404c00b4917a46cc40924d7090ec6bcf92f8c2d5122cba340ae2d05fa43b3"
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "no_whole_share"
+          ],
+          "research_pool": true,
+          "selected": false,
+          "purpose": "research_cap_not_selected"
         },
-        "reader_coverage": "accepted",
-        "reader_sha256": "384538b8f377ad0ad3a5b74823b24b77161a2df84725b6860b676d01ec44cdef",
-        "reader_source": "claude",
+        "reader_coverage": "not_selected_budget",
+        "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+        "reader_source": "not_graded",
         "final_grade": "A+",
         "version": 1,
         "kind": "burst",
         "ticker": "NVDA",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
-          "reader_coverage": "accepted",
+          "reader_coverage": "not_selected_budget",
           "regime": "green",
           "final_grade": "A+",
           "allowed_grades": [
@@ -5298,10 +4800,10 @@
             "A"
           ],
           "ticket": false,
-          "reason": "no_shares",
-          "detail": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.12 risk per share) and the $500.00 position cap ($128.12 sizing limit)"
+          "reason": "reader_coverage",
+          "detail": null
         },
-        "id": "e4b1fc5a6a2c8e9c7190bdddd4f692e863692501810439916e7842e1b26d8767"
+        "id": "f96948a9ff19de82ab7aa0ea53d6ad18ba662ef309cea8e2848a6eb14949b881"
       },
       "series": [
         {
@@ -6217,7 +5719,7 @@
           "v": 3400000.0
         }
       ],
-      "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.3% deep. Buy 124.34–128.12 next session in the first 30 minutes, stop 123.00, aim 138.37–153.74. A+ 10.0, 6 of 6 criteria."
+      "summary": "NVDA: +7.4% on 5.7× volume out of a base 3.3% deep. A+ 10.0, 6 of 6 criteria."
     },
     {
       "ticker": "TSLA",
@@ -6739,11 +6241,22 @@
         },
         "evidence_ref": {
           "version": 1,
-          "id": "e05c957509beaa15ba593eb796ca208ae8c253928eb0e59286011c03b8f23af3",
-          "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+          "id": "4e2c0cd0fceab7eb41522510c4805f18f88f5792cfb93537896c0034a94cd31d",
+          "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
           "plan_sha256": "db82574040dcb0bcbd9fb26680e368f877a9228c7efa91fb49af668aa08b4700",
           "pick_sha256": "62755251ba3dab6f072bc5e7ee5c3dffc646ed5a3de9fbfd0a12884bf34c1d11"
         }
+      },
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "plan_withheld",
+          "no_whole_share"
+        ],
+        "research_pool": true,
+        "selected": true,
+        "purpose": "research_rotating"
       },
       "chart": "charts/TSLA.png",
       "claude": {
@@ -6830,6 +6343,17 @@
           "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
           "request_text_sha256": "89eeeeab324d4a79c13311cdc6f23ed3f9d5c7a71d113b2396ea896a30738348"
         },
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "plan_withheld",
+            "no_whole_share"
+          ],
+          "research_pool": true,
+          "selected": true,
+          "purpose": "research_rotating"
+        },
         "reader_coverage": "accepted",
         "reader_sha256": "69fa5f625c918fc1c13d46a8fdef81edb84c2a09a305e8910c4f4c99f53ea125",
         "reader_source": "claude",
@@ -6838,8 +6362,8 @@
         "kind": "burst",
         "ticker": "TSLA",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
           "reader_coverage": "accepted",
           "regime": "green",
@@ -6852,7 +6376,7 @@
           "reason": "withheld",
           "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
         },
-        "id": "e05c957509beaa15ba593eb796ca208ae8c253928eb0e59286011c03b8f23af3"
+        "id": "4e2c0cd0fceab7eb41522510c4805f18f88f5792cfb93537896c0034a94cd31d"
       },
       "series": [
         {
@@ -8033,60 +7557,20 @@
           "dollar_move": 3.84
         }
       },
-      "grade": "C",
+      "grade": "B",
       "plan": null,
-      "chart": "charts/PLUG.png",
-      "claude": {
-        "agree": false,
-        "grade": "C",
-        "score": 5.2,
-        "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-        "key_risk": "It reverses through the burst low.",
-        "entry_note": "Pass.",
-        "source": "claude",
-        "chart_seen": true,
-        "error": null,
-        "returned_grade": "C",
-        "model": "claude-sonnet-4-6",
-        "findings": [
-          {
-            "criterion": "base_shape",
-            "source": "strategy.chart.base",
-            "evidence": [
-              {
-                "path": "checks.C.status",
-                "value": "PASS"
-              }
-            ],
-            "observation": "wide_overlapping_bars"
-          }
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "grade_not_admitted"
         ],
-        "authority_version": 1,
-        "request_text_sha256": "07d0293d5d6be3277bfddf6035bfb7996970697135d4631f6dc06049bc2c6878",
-        "input": {
-          "metrics_sha256": "59e6c6819ae6938c7066baa632790e211dd7a627d321e8acd077baeba29f1116",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
-        },
-        "attempts": [
-          {
-            "request_sha256": "5959f584d624b503ab2376cfed6cbd2ae0d2de66350d5f1d2634916372d0774f",
-            "correction": false,
-            "outcome": "model",
-            "response": {
-              "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"PASS\"}], \"observation\": \"wide_overlapping_bars\"}]}",
-              "text_sha256": "36a57db7e0cc4f89f42c703a2ab3f6daee1b64186ed6ba3477b516ec4fb0a15e",
-              "bytes": 414,
-              "retention": "complete",
-              "stop_reason": null,
-              "message_id": null
-            }
-          }
-        ],
-        "attempted_model": "claude-sonnet-4-6",
-        "discovery_version": 1
+        "research_pool": false,
+        "selected": false,
+        "purpose": "outside_research_pool"
       },
-      "reader_coverage": "accepted",
+      "claude": null,
+      "reader_coverage": "not_selected_budget",
       "rank": 5,
       "evidence": {
         "source": {
@@ -8108,27 +7592,30 @@
           "error": null,
           "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
         },
-        "reader_input": {
-          "metrics_sha256": "59e6c6819ae6938c7066baa632790e211dd7a627d321e8acd077baeba29f1116",
-          "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "07d0293d5d6be3277bfddf6035bfb7996970697135d4631f6dc06049bc2c6878"
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "grade_not_admitted"
+          ],
+          "research_pool": false,
+          "selected": false,
+          "purpose": "outside_research_pool"
         },
-        "reader_coverage": "accepted",
-        "reader_sha256": "773613bc10610fa1a6397bae8330a29629acc9f10fd5dad705421af651bece23",
-        "reader_source": "claude",
-        "final_grade": "C",
+        "reader_coverage": "not_selected_budget",
+        "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+        "reader_source": "not_graded",
+        "final_grade": "B",
         "version": 1,
         "kind": "burst",
         "ticker": "PLUG",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
-          "reader_coverage": "accepted",
+          "reader_coverage": "not_selected_budget",
           "regime": "green",
-          "final_grade": "C",
+          "final_grade": "B",
           "allowed_grades": [
             "A+",
             "A"
@@ -8137,7 +7624,7 @@
           "reason": "quality_grade",
           "detail": null
         },
-        "id": "e44ccbadd81b66055b8a5468de1957086055a7c2602260932cb4ec56410e60e3"
+        "id": "25a7499995cc510061a6045e3359319355573d3407ac0ade13f0da8aa47705c3"
       },
       "series": [
         {
@@ -9045,7 +8532,7 @@
           "v": 3000000.0
         }
       ],
-      "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. C 8.5, 5 of 6 criteria."
+      "summary": "PLUG: +5.0% on 5.0× volume out of a base 3.5% deep. B 8.5, 5 of 6 criteria."
     },
     {
       "ticker": "DLLR",
@@ -9318,60 +8805,20 @@
           "dollar_move": 1.43
         }
       },
-      "grade": "C",
+      "grade": "B",
       "plan": null,
-      "chart": "charts/DLLR.png",
-      "claude": {
-        "agree": false,
-        "grade": "C",
-        "score": 5.2,
-        "reason": "The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.",
-        "key_risk": "It reverses through the burst low.",
-        "entry_note": "Pass.",
-        "source": "claude",
-        "chart_seen": true,
-        "error": null,
-        "returned_grade": "C",
-        "model": "claude-sonnet-4-6",
-        "findings": [
-          {
-            "criterion": "base_shape",
-            "source": "strategy.chart.base",
-            "evidence": [
-              {
-                "path": "checks.C.status",
-                "value": "FAIL"
-              }
-            ],
-            "observation": "wide_overlapping_bars"
-          }
+      "review_selection": {
+        "policy": "account_feasible_first_research_v1",
+        "feasible": false,
+        "blockers": [
+          "grade_not_admitted"
         ],
-        "authority_version": 1,
-        "request_text_sha256": "e8fc2c0082f83aa0e3291a05313823613b1e2e742a13ab831436364dd7ade2a0",
-        "input": {
-          "metrics_sha256": "81a63bfc1ddf575064744ed6eeac56e2e0a309ec1c78a72cee9efc23bfc5383f",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56"
-        },
-        "attempts": [
-          {
-            "request_sha256": "b80ca8311826400db4c0457ee4fdf77f6a3f4680f720b8d5f2eb4c9fd3053a57",
-            "correction": false,
-            "outcome": "model",
-            "response": {
-              "text": "{\"score\": 5.2, \"grade\": \"C\", \"reason\": \"The leg is there but the base is loose and the burst bar closed off its high; not the tight, linear shape the method wants.\", \"key_risk\": \"It reverses through the burst low.\", \"entry_note\": \"Pass.\", \"findings\": [{\"criterion\": \"base_shape\", \"source\": \"strategy.chart.base\", \"evidence\": [{\"path\": \"checks.C.status\", \"value\": \"FAIL\"}], \"observation\": \"wide_overlapping_bars\"}]}",
-              "text_sha256": "ff6fc926b5e83c22b23d94a43d12433c01b8fe5a70827b1a4cf3429d0ac00add",
-              "bytes": 414,
-              "retention": "complete",
-              "stop_reason": null,
-              "message_id": null
-            }
-          }
-        ],
-        "attempted_model": "claude-sonnet-4-6",
-        "discovery_version": 1
+        "research_pool": false,
+        "selected": false,
+        "purpose": "outside_research_pool"
       },
-      "reader_coverage": "accepted",
+      "claude": null,
+      "reader_coverage": "not_selected_budget",
       "rank": 6,
       "evidence": {
         "source": {
@@ -9393,27 +8840,30 @@
           "error": null,
           "pick_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b"
         },
-        "reader_input": {
-          "metrics_sha256": "81a63bfc1ddf575064744ed6eeac56e2e0a309ec1c78a72cee9efc23bfc5383f",
-          "system_object": "19d137fb56ec1040f4c6973714f66d2a7c7c582cbecf1c5b238690fd541529ae",
-          "system_sha256": "57fef3e78dd53e5d731889cdf2fb06e4053414d48c2ae3648b7161975907b7e8",
-          "chart_sha256": "8c1a14e4340dcb9f9ed3bbc358277b6fa6dc2288e9cd8c564c97a9b67a295f56",
-          "request_text_sha256": "e8fc2c0082f83aa0e3291a05313823613b1e2e742a13ab831436364dd7ade2a0"
+        "review_selection": {
+          "policy": "account_feasible_first_research_v1",
+          "feasible": false,
+          "blockers": [
+            "grade_not_admitted"
+          ],
+          "research_pool": false,
+          "selected": false,
+          "purpose": "outside_research_pool"
         },
-        "reader_coverage": "accepted",
-        "reader_sha256": "d86ba5e26609c5696677faf25b7c070a093993128f0e0b566cb451486b961be2",
-        "reader_source": "claude",
-        "final_grade": "C",
+        "reader_coverage": "not_selected_budget",
+        "reader_sha256": "53b41ab0dae62befcb8708620b6d14794a24fedad6c24c03dd01e51fa698ff0b",
+        "reader_source": "not_graded",
+        "final_grade": "B",
         "version": 1,
         "kind": "burst",
         "ticker": "DLLR",
         "session": "2026-09-10",
-        "rules_version": "75c237d78018",
-        "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+        "rules_version": "e87cdf5b1bbe",
+        "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
         "gate": {
-          "reader_coverage": "accepted",
+          "reader_coverage": "not_selected_budget",
           "regime": "green",
-          "final_grade": "C",
+          "final_grade": "B",
           "allowed_grades": [
             "A+",
             "A"
@@ -9422,7 +8872,7 @@
           "reason": "quality_grade",
           "detail": null
         },
-        "id": "01ec2d215718db6450ab86c466047ee6e266cdc4e25be3d002c3f648bafbc662"
+        "id": "0bcd6e31b4cb557d876384a450919e04527d9c883eb10539a12267314f9a32c1"
       },
       "series": [
         {
@@ -10386,14 +9836,12 @@
           "v": 2781939.0
         }
       ],
-      "summary": "DLLR: +2.0% on 0.9× volume out of a base 3.5% deep. C 6.5, 4 of 6 criteria."
+      "summary": "DLLR: +2.0% on 0.9× volume out of a base 3.5% deep. B 6.5, 4 of 6 criteria."
     }
   ],
   "trades": [],
   "beyond_cap": [
     "AAPL",
-    "AMD",
-    "NVDA",
     "TSLA"
   ],
   "cash_budget": {
@@ -10424,18 +9872,6 @@
         "reason": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.05 risk per share) and the $500.00 position cap ($126.47 sizing limit)"
       },
       {
-        "ticker": "AMD",
-        "setup_kind": "burst",
-        "kind": "no_shares",
-        "reason": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.10 risk per share) and the $500.00 position cap ($128.20 sizing limit)"
-      },
-      {
-        "ticker": "NVDA",
-        "setup_kind": "burst",
-        "kind": "no_shares",
-        "reason": "the configured account cannot size it: no whole share fits both the $5.00 effective risk budget after size multipliers ($5.12 risk per share) and the $500.00 position cap ($128.12 sizing limit)"
-      },
-      {
         "ticker": "TSLA",
         "setup_kind": "burst",
         "kind": "withheld",
@@ -10450,21 +9886,9 @@
         "reason": "no_order"
       },
       {
-        "ticker": "AMD",
-        "setup_kind": "burst",
-        "rank": 2,
-        "reason": "no_order"
-      },
-      {
-        "ticker": "NVDA",
-        "setup_kind": "burst",
-        "rank": 3,
-        "reason": "no_order"
-      },
-      {
         "ticker": "TSLA",
         "setup_kind": "burst",
-        "rank": 4,
+        "rank": 2,
         "reason": "no_order"
       }
     ],
@@ -10751,8 +10175,8 @@
           },
           "evidence_ref": {
             "version": 1,
-            "id": "45465155fb5c13a7e5e07022173af7d7d06ee9a577232288717790549708f940",
-            "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+            "id": "4df6056f0f8d938f9a82186ecfec2ceef6c5f502bfc79f475a80f9d791193e9b",
+            "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
             "plan_sha256": "7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7",
             "pick_sha256": "52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a"
           }
@@ -11760,8 +11184,8 @@
           "kind": "anticipation",
           "ticker": "COIL",
           "session": "2026-09-10",
-          "rules_version": "75c237d78018",
-          "context_sha256": "531ddeb959e2d865ae7423651b8b814d0e6e215b755f192835ba5b96c976c5d0",
+          "rules_version": "e87cdf5b1bbe",
+          "context_sha256": "e7549e1ab149e27a3b207aa7a1bc801475732f4fb28af06994395d75e64d9cb4",
           "gate": {
             "regime": "green",
             "final_grade": "watch",
@@ -11770,7 +11194,7 @@
             "reason": null,
             "detail": null
           },
-          "id": "45465155fb5c13a7e5e07022173af7d7d06ee9a577232288717790549708f940"
+          "id": "4df6056f0f8d938f9a82186ecfec2ceef6c5f502bfc79f475a80f9d791193e9b"
         }
       }
     ],
@@ -11862,7 +11286,7 @@
       "expected_session": "2026-09-10",
       "evaluated_session": "2026-09-10"
     },
-    "replay_rules_version": "75c237d78018"
+    "replay_rules_version": "e87cdf5b1bbe"
   },
   "observations": {
     "as_of": "2026-09-10",
@@ -12017,64 +11441,64 @@
       }
     },
     "signals": {
-      "burst:AAPL:2026-09-10:75c237d78018": {
+      "burst:AAPL:2026-09-10:e87cdf5b1bbe": {
         "ticker": "AAPL",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "burst:AMD:2026-09-10:75c237d78018": {
+      "burst:AMD:2026-09-10:e87cdf5b1bbe": {
         "ticker": "AMD",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "burst:NVDA:2026-09-10:75c237d78018": {
+      "burst:NVDA:2026-09-10:e87cdf5b1bbe": {
         "ticker": "NVDA",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "burst:TSLA:2026-09-10:75c237d78018": {
+      "burst:TSLA:2026-09-10:e87cdf5b1bbe": {
         "ticker": "TSLA",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "burst:PLUG:2026-09-10:75c237d78018": {
+      "burst:PLUG:2026-09-10:e87cdf5b1bbe": {
         "ticker": "PLUG",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "burst:DLLR:2026-09-10:75c237d78018": {
+      "burst:DLLR:2026-09-10:e87cdf5b1bbe": {
         "ticker": "DLLR",
         "session": "2026-09-10",
         "kind": "burst",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       },
-      "anticipation:COIL:2026-09-10:75c237d78018": {
+      "anticipation:COIL:2026-09-10:e87cdf5b1bbe": {
         "ticker": "COIL",
         "session": "2026-09-10",
         "kind": "anticipation",
-        "rules_version": "75c237d78018",
+        "rules_version": "e87cdf5b1bbe",
         "coverage": "observed"
       }
     },
     "history_max": 20
   },
   "closest_miss": {
-    "ticker": "PLUG",
-    "grade": "C",
-    "score": 8.5,
-    "why": "fails close near the high",
-    "sentence": "PLUG came closest at C 8.5: fails close near the high."
+    "ticker": "AMD",
+    "grade": "A+",
+    "score": 10.0,
+    "why": "accepted reader review missing; mechanical grade retained for research, not a measured setup failure",
+    "sentence": "AMD came closest at A+ 10.0: accepted reader review missing; mechanical grade retained for research, not a measured setup failure."
   },
   "_contract": {
     "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

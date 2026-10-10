@@ -796,6 +796,29 @@
     }
     return reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade';
   }
+  function reviewSelectionNote(data) {
+    const run = data.run || {}, s = run.review_selection, rules = data.rules || {}, policy = rules.review_selection;
+    if (!s || !policy || s.version !== 1 || policy.version !== s.version ||
+        s.policy !== 'account_feasible_first_research_v1' || policy.policy !== s.policy || s.session !== run.session) return '';
+    const fields = ['discovered', 'feasible', 'research_pool', 'requested', 'max_reads', 'research_max', 'feasible_unselected', 'unused_capacity'];
+    const count = (v) => Number.isSafeInteger(v) && v >= 0;
+    const purposes = ['opportunity', 'research_ranked', 'research_rotating'], groups = s.by_purpose || {};
+    if (!fields.every((k) => count(s[k])) || !purposes.every((k) => groups[k] && count(groups[k].requested)) ||
+        !Array.isArray(s.selected) || s.selected.some((r) => !r || typeof r.ticker !== 'string' || !purposes.includes(r.purpose))) return '';
+    const opportunity = groups.opportunity.requested, research = groups.research_ranked.requested + groups.research_rotating.requested;
+    if (s.max_reads !== (rules.pipeline || {}).max_reads || s.research_max !== policy.research_max ||
+        s.discovered !== (data.bursts || []).length || s.feasible + s.research_pool > s.discovered ||
+        opportunity > s.feasible || research > s.research_pool || research > s.research_max ||
+        opportunity + research !== s.requested || s.requested > s.max_reads ||
+        s.feasible_unselected !== s.feasible - opportunity || s.unused_capacity !== s.max_reads - s.requested ||
+        s.requested !== (run.reads || {}).requested || s.selected.length !== s.requested ||
+        new Set(s.selected.map((r) => r.ticker)).size !== s.requested ||
+        !purposes.every((p) => s.selected.filter((r) => r.purpose === p).length === groups[p].requested)) return '';
+    return 'Before chart review, ' + num(s.feasible) + ' candidate' + (s.feasible === 1 ? '' : 's') +
+      ' fit the current regime and individual model sizing. ' + num(opportunity) + ' opportunity / ' + num(research) +
+      ' research reviews selected (' + num(s.requested) + ' of ' + num(s.max_reads) + ' available reads); ' +
+      num(s.feasible_unselected) + ' feasible candidates left unreviewed. Final review and combined cash allocation still decide tickets.';
+  }
   // the run's coverage rule, quoted from the rules the record archived: a record
   // made before the stale tolerance keeps the sentence it was published under
   function coverageRule(data, a) {
@@ -858,6 +881,8 @@
       line('Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
         plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
     }
+    const selectionNote = reviewSelectionNote(data);
+    if (selectionNote) line(selectionNote);
     if (text((run.reads || {}).sentence)) line(run.reads.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
@@ -4558,8 +4583,9 @@
     return result;
   }
   function nextActionCore(data, s) {
-    const bursts = by(data.bursts || []);
-    const orders = (data.trades || []).map((t) => bursts[t]).filter((b) => b && b.plan && b.plan.order_json).length;
+    // The same recorded ticket families used by the morning desk and stage
+    // counts. An anticipation ticket remains a plan when no burst qualified.
+    const orders = STAGES.reduce((count, stage) => count + model.tickets[stage], 0);
     const open = (data.open_plans || []).length, red = ((data.breadth || {}).regime || {}).verdict === 'red';
     if (blocked(s)) return ['Do not place these orders.', 'Wait for tonight’s run to publish, or check the run log. Nothing on this page is the next session’s plan.', 'stale'];
     const tm = av.timing, ph = av.phase, window = tm.window;
@@ -4581,11 +4607,11 @@
     if (ph === 'open') {
       return orders
         ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
-        : ['Nothing new to place in ' + day + '’s window.', 'No burst qualified with a ticket. ' + line, 'quiet'];
+        : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
     if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Attach its protective stop after a fill; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
-    if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No burst qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
-    return ['No new entry offered for ' + day + '.', 'No burst qualified and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
+    if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
+    return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }
   function renderNext(data, s) {
     const n = nextAction(data, s);
@@ -4613,9 +4639,12 @@
         const run = j && j.workflow_runs && j.workflow_runs[0];
         if (!run || !run.status) return;
         const when = run.status === 'completed' ? run.updated_at : run.run_started_at || run.created_at;
-        const word = run.status === 'completed' ? (run.conclusion === 'success' ? 'completed' : 'failed') : run.status.replace(/_/g, ' ');
+        const word = run.status === 'completed'
+          ? (run.conclusion === 'success' ? 'completed successfully' : words(run.conclusion) || 'completed (outcome unknown)')
+          : words(run.status);
+        const at = instant(when), dated = at ? ' on ' + dateWords(etParts(at).date) + ' at ' + timeET(when) : '';
         clear(slot);
-        slot.appendChild(d.createTextNode('tonight’s run: ' + word + (when ? ' at ' + timeET(when) : '') + ' — '));
+        slot.appendChild(d.createTextNode('Latest evening workflow: ' + word + dated + '. A successful workflow may skip publication; check the record’s session above. '));
         slot.appendChild(el('a', { href: run.html_url || RUNS_URL, target: '_blank', rel: 'noopener', text: 'open log' }));
         slot.hidden = false;
       })

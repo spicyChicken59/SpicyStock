@@ -21,6 +21,20 @@ def test_cash_preview_controls_reproduce_exact_offline_producer_bytes():
         assert (FIXTURES / name).read_bytes() == body, name
 
 
+def test_cash_preview_generator_rejects_tampered_producer_evidence(monkeypatch):
+    original = generator.make_fixture.run_variant
+
+    def tampered(*args, **kwargs):
+        data = original(*args, **kwargs)
+        decision = data["bursts"][0]["review_selection"]
+        decision["selected"] = not decision["selected"]
+        return data
+
+    monkeypatch.setattr(generator.make_fixture, "run_variant", tampered)
+    with pytest.raises(AssertionError, match="cash-preview fixture integrity failed:.*review selection evidence mismatch"):
+        generator.publication()
+
+
 @pytest.mark.parametrize("name,tickets,committed", [
     ("publication", [("anticipation", "COIL")], 446.88),
     ("publication-multiple", [("burst", "AAPL"), ("anticipation", "COIL")], 510.10),
@@ -34,7 +48,10 @@ def test_cash_preview_publications_preserve_account_allocation_and_provenance(na
     assert [(row["kind"], row["ticker"]) for row in morning.admitted_rows(data)] == tickets
     assert data["cash_budget"]["committed_usd"] == committed
     assert data["cash_budget"]["reserved_usd"] == 0
-    provenance.verify(data)
+    # These fixtures retain publication evidence, not the temporary source
+    # objects; require an integrity pass without claiming a source audit.
+    integrity = provenance.verify(data, require_sources=False)
+    assert integrity["status"] == "PASS", integrity
     projected, retained = reader.derive(raw)
     reader.validate_bundle(raw, projected, retained)
 

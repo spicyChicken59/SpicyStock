@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "75c237d78018"
+  "rules_version": "e87cdf5b1bbe"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -269,6 +269,53 @@
    "refused_admissible": [],
    "verdict": "not_asked",
    "sentence": null
+  },
+  "review_selection": {
+   "version": 1,
+   "policy": "account_feasible_first_research_v1",
+   "session": "2026-09-10",
+   "max_reads": 12,
+   "research_max": 2,
+   "discovered": 0,
+   "feasible": 0,
+   "blockers": {
+    "grade_not_admitted": 0,
+    "quality_veto": 0,
+    "preview_unavailable": 0,
+    "known_event": 0,
+    "plan_withheld": 0,
+    "no_whole_share": 0,
+    "no_order": 0
+   },
+   "research_pool": 0,
+   "selected": [],
+   "requested": 0,
+   "by_purpose": {
+    "opportunity": {
+     "requested": 0,
+     "accepted": 0,
+     "unaccepted": 0,
+     "refused": 0,
+     "attempts": 0
+    },
+    "research_ranked": {
+     "requested": 0,
+     "accepted": 0,
+     "unaccepted": 0,
+     "refused": 0,
+     "attempts": 0
+    },
+    "research_rotating": {
+     "requested": 0,
+     "accepted": 0,
+     "unaccepted": 0,
+     "refused": 0,
+     "attempts": 0
+    }
+   },
+   "feasible_unselected": 0,
+   "unused_capacity": 12,
+   "attempts": 0
   },
   "email": "skipped",
   "published_at": "2026-09-10T22:30:00+00:00",
@@ -800,7 +847,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "1e2d2392a2108681a74859c81eda6e8406fd7222ac5d2f0359c9459801e18e2c"
+   "context_sha256": "e012ad059b5ffbde4bb36a9a5603fb3e4eeffc0fb14a001dd3895d5a18fdb754"
   },
   "sanitised": {
    "replaced": 0,
@@ -1283,6 +1330,23 @@
      }
     ]
    }
+  },
+  "review_selection": {
+   "version": 1,
+   "policy": "account_feasible_first_research_v1",
+   "research_max": 2,
+   "ranked_research": 1,
+   "grade_order": [
+    "A+",
+    "A",
+    "B",
+    "C",
+    "skip"
+   ],
+   "order": "mechanical_grade,descending_score,ticker",
+   "rotation": "sha256(policy|measured_session|ticker),ticker",
+   "research_pool": "infeasible mechanical pipeline.trade_grades",
+   "feasibility": "private per-candidate plan before reader and combined allocation"
   },
   "pipeline": {
    "max_reads": 12,
@@ -1866,7 +1930,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "75c237d78018"
+  "replay_rules_version": "e87cdf5b1bbe"
  },
  "observations": {
   "as_of": "2026-09-10",

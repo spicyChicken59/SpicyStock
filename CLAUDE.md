@@ -11,6 +11,19 @@ production evidence before calling a release complete. The hourly ChatGPT task
 **Build SpicyStock milestones** supports continuation; coordinate with active
 builders and do not open duplicate work.
 
+**Queued review-budget policy (10 October 2026):** `src/review_selection.py`
+archives `account_feasible_first_research_v1`. The evening run selects feasible
+private mechanical previews first, retaining the twelve-read ceiling and existing
+rank. At most two spare A+/A reads retain research (ranked plus deterministic
+session/ticker rotation); zero feasible names does not consume twelve reads.
+Per-row purposes/blockers and reconciled run counts are provenance-bound and
+replayed with the production planner and archived event registry. This changes
+selection and rules identity, not final trade guards or historical records.
+Method explains the recorded pre-review fit, opportunity/research split and
+feasible names left unreviewed only for a reconciled, supported receipt.
+The existing conservative model-plan reservation policy still applies across
+rules identities. No production spend or improvement in outcomes is yet claimed.
+
 An evening run over an explicitly selected US-stock universe, a static page that says
 what to do tomorrow and why, and one email. Bonde's momentum burst method:
 `knowledge/method.md` says whose number every rule is, `README.md` says what
@@ -294,7 +307,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3383 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3424 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -4986,6 +4999,37 @@ Broker identity, pre-open operational acceptance, actual fills and the first
 successful trade remain outstanding. Continue from these gaps; do not mark the
 whole goal or milestone 2 complete.
 
+## Checkpoint, 10 Oct 2026 — consistent ticket and workflow status (local)
+
+**Executed defect.** The October 9 publication at `62bce72d` admits one ZIM
+anticipation ticket for October 12. At phone and desktop sizes, the morning
+desk counted it while `nextActionCore()` counted bursts alone: it offered no
+next step for the coil and said nothing had been offered once the window ended.
+The same contradiction occurs with the pipeline-generated `notrade` fixture.
+The optional stale-page run log also called an already-published, skipped
+scheduled attempt “tonight’s run: completed.” Its success was workflow evidence,
+not a new publication.
+
+**Correction.** The next-action message reads both existing model ticket counts,
+preserving publication, market and clock refusal precedence. Zero-ticket wording
+covers both setup families, and cutoff retains the published ticket count as
+history. The optional run log names the latest evening workflow, includes its
+exchange-local date, distinguishes cancellation/skipping from failure, and says
+successful workflows can skip publication. It makes no new data or delivery
+claim. No strategy number, ticket, source record, provider request or workflow
+changed; `.env.example` was reviewed and needs no new setting.
+
+**Local evidence.** The new `status` browser suite plus `full`, `degraded` and
+`notrade` pass 1,424 checks. Independent review passed all 106 status checks.
+Docs/secret tests pass 92. Isolated burst-only and false-publication-claim
+mutations fail their intended assertions (92/106 and 94/106); an unrelated
+coil-sorting mutation still passes 106/106. Exact current publication bytes
+were also replayed at 1280 and 390 pixels with explicitly pinned pre-open, open,
+cutoff and stale clocks; before/after screenshots were inspected. This local
+browser work does not establish future pre-open delivery or a live trade.
+Runtime: Node 24.19.0, Playwright Chromium 151, Python 3.12.14.
+Hosted and public acceptance remain the release owner's next steps.
+
 ## Checkpoint, 10 Oct 2026 — personal cash preview ready for release
 
 Mo expanded the operating contract to continued milestone releases until
@@ -5000,7 +5044,7 @@ quantity and cash affordable at the limit. It shows principal, fees, total
 cash, limit-to-stop risk and cash remaining. Published order copying retains
 the original quantity and says so beside the preview. Nothing reserves cash,
 submits an order or reads a broker balance. Invalid or unknown inputs, zero
-affordability, incompatible account assumptions, fixture publications, expiry
+affordability, incompatible account assumptions, fixture publications, entry-window expiry
 and event refusal cannot produce a current preview. Inputs are reconsidered
 against the current clock and publication; session changes clear settled cash.
 
@@ -5023,3 +5067,25 @@ Hosted checks and actual public acceptance remain outstanding. The original
 October 9 ZIM ticket must be superseded through normal production after PR #115;
 its retained model history must not be erased. No actual fill or successful
 trade has been reported by Mo.
+
+## Checkpoint, 10 Oct 2026 — enforce cash-fixture integrity (PR #119)
+
+Independent review found that the cash-preview generator and publication test
+called `provenance.verify()` without checking its returned status. Both now
+require PASS with `require_sources=False`. The generator's temporary source
+objects are not retained, so this checks publication integrity and compatible
+rule replay; it does not claim a retained-source audit.
+
+The new regression runs the real offline producer, changes only a candidate's
+recorded review-selection decision, and requires the generator to reject the
+evidence mismatch. In an isolated copy, deleting only the new assertion makes
+that regression fail with a missing rejection; changing unrelated archive
+capacity keeps it passing. All six cash-preview fixture files reproduce their
+existing bytes. Collection now finds 3,424 Python tests.
+
+The preceding independent selector review passed 156 targeted Python and 427
+browser checks, with phone and desktop explanations inspected. This follow-up
+changes test enforcement only; it does not change an application asset,
+published plan, fixture JSON, strategy rule or source record. README and
+`.env.example` need no factual change for this test-only correction. Hosted
+checks and public acceptance remain the release owner's responsibility.
