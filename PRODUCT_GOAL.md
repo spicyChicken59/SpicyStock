@@ -269,8 +269,10 @@ Milestone 4's reporting foundation is available. Broker-specific preparation,
 an actual eligible live opportunity and the first reported real trade remain
 open. Whole-share exit clarity is tracked in #137; dated research follow-through
 from already retained observations is tracked in #136. Automatic issuer
-collection and closed-session/retry corrections are awaiting the integrated
-release #132 and its actual production verification.
+collection and closed-session/retry corrections are released in #132. Its
+actual morning-to-issuer-to-Pages cycle passed; the SEC request itself remains
+unavailable. The [recovery release receipt](release-evidence/2026-10-10-recovery/acceptance.json)
+separates automatic delivery from missing source coverage.
 
 Issue #136 follows the frozen cohorts using already retained observations. Its
 dated snapshots keep original exclusions, share quantities, capture times and

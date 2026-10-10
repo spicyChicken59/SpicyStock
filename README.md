@@ -930,6 +930,14 @@ response body, headers or exception text. Redirects remain refused; refused
 responses are closed without reading their bodies. A status explains a failed
 source request and does not establish news or earnings coverage.
 
+Coverage labels must reconcile with the retained evidence. Unverified identity
+cannot claim an observed index or collected issuer. A complete index can coexist
+with a later filing-document failure; that issuer remains partial. Collected
+rows require every selected primary and no recorded omissions or truncation.
+Request and byte totals must cover the distinct visible source events and
+explicit HTTP failures, while preserving valid cached and legacy observations.
+These checks establish internal consistency, not comprehensive source truth.
+
 The receipt expires 24 hours after collection; individual source ages remain
 visible, and this period is not news clearance. Up to 16 KiB of normalized
 text is retained per excerpt, with a separate excerpt digest and original-body

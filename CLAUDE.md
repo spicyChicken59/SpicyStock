@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3813 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3850 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -5756,3 +5756,106 @@ unknown personal cash, empty private history and exactly two lazy public reads.
 All 19,058 original tracked docs files (191,243,348 bytes) retain their Git
 object bytes. These results establish local preparation; hosted and actual
 public acceptance will be recorded after the reviewed exact head passes.
+
+
+## Checkpoint, 10 Oct 2026 — recovery, calendar and automatic issuer delivery released
+
+[PR #132](https://github.com/spicyChicken59/SpicyStock/pull/132) merged the exact
+reviewed `d7e33174` head at `01632f44`, including the parent-workflow path fix
+from #129. All seven hosted gates passed: 3,607 Python, 12,170 page, 378 chart
+and 137 continuity checks; both native memory/runtime jobs and both secret
+checks succeeded. Native artifact upload hashes agree with official metadata;
+those archive payloads were not independently downloaded. Publisher
+`38039203191` and replacement Pages `38039216830` succeeded.
+
+Actual public acceptance matched 32 original served files to the merged commit
+and passed 54 real-clock phone/desktop checks. The closed-session sentence now
+correctly names Saturday October 10 and Monday October 12. A separate local
+rehearsal using the verified public assets passed 89 recovery checks: real
+header/body/refresh sockets closed around the 15-second deadline, explicit
+Retry recovered, and unsaved private values, focus and original storage bytes
+survived faults. These controlled failures are not reported public outages.
+All 18,584 immutable history/evidence objects retain their prior bytes.
+
+One authorized production morning dispatch, `38039598040`, published an honest
+Saturday `inapplicable / wrong_session` receipt with zero rows and no IEX,
+delayed-SIP or halt requests. Its commit `fa480f2a` automatically started issuer
+run `38039664597`; the guard correctly admitted `production_collection`. The
+issuer collector and persistence succeeded operationally, publishing commit
+`3e1dfed6`, but SEC identity retrieval remained unavailable: one request, zero
+downloaded/captured bytes, no matched issuer content. This proves automatic
+delivery, not fresh SEC coverage or timely morning quotes. The complete-history
+quota check records two of three allowed UTC-day production starts used.
+
+The subsequent publisher `38039736422` verified all 34 required public files,
+and Pages `38039747189` succeeded. Independent live verification passed 72
+checks with 32 native original-byte matches, actual default loading/clock,
+unknown settled cash and empty private history. Both MG/ZIM remain excluded
+with unverified identity, unknown index coverage and explicit source failure.
+A supplementary 40-check phone/desktop run scrolls the source-failure body
+into view. Its captures supplement the initial header/age captures. A first
+harness assertion wrongly expected the age caption to contain “unavailable”;
+that retained failed attempt was corrected to verify age and coverage in their
+actual separate fields. No product change or missing check was concealed.
+
+Strict exact-production validation of both companions passes with socket
+access denied. The morning receipt SHA is `97c60ab9…`; issuer receipt
+`c0d1c97f…` references bundle `c20f9e4d…`. Canonical `f5cbe38e…`, reader
+`f9282e90…`, picks, model history and source evidence are unchanged. Full run
+identities, hashes, scoped checks and limitations are retained in
+[the release receipt](release-evidence/2026-10-10-recovery/acceptance.json).
+
+Next: release the already reviewed registered comparison, HTTP diagnostics,
+whole-share personal guidance and dated follow-through after each exact head
+passes its required gates. Use at most the remaining daily issuer start for
+observed HTTP diagnostics after that code is public. Fresh SEC coverage,
+on-time market observations, broker-specific guidance and the first actual
+personal trade remain open; no profit or daily-ticket claim is made.
+
+
+## Checkpoint, 10 Oct 2026 — issuer evidence states reconciled
+
+Issue #138 closes reproducible internally inconsistent issuer states. The
+stdlib and browser validators now reconcile identity, index coverage, retrieved
+primaries and remaining omissions before accepting a collected label. Unknown
+identity cannot claim an observed window. A full metadata window can still be
+observed when a later document request fails; the issuer remains partial.
+Valid cache, empty-window, partial-history and legacy unknown-status cases
+remain readable. This is evidence consistency, not SEC authentication or news
+clearance, and changes no collection request, cache policy, trading gate or schema.
+
+Distinct visible network events and explicit HTTP refusals establish only
+request/download minima. Shared events copied into issuer rows are counted
+once using equivalent UTC instants; distinct body hashes establish captured
+byte minima. Cache hits can contribute captured bytes without a new request.
+Legacy errors without an HTTP status do not imply an observed response. Counts
+can exceed visible minima because attempts and discarded responses remain
+possible. Conflicting sizes for the same body digest are refused.
+
+Backend commit `09b12b6b` passes 231 core/source/semantic/publisher/dashboard
+checks, including 37 new semantic controls. Thirteen isolated mutations fail
+their intended checks; an unrelated control passes all 37. Independent review
+passes the 37 tests, 33 further controls, legal producer packets and all seven
+coherently resealed contradictions now rejected. The actual latest unavailable
+issuer receipt from `3e1dfed6` remains valid with its legacy unknown HTTP status:
+one request, zero downloaded/captured bytes. No HTTP 403 is inferred.
+
+Browser test commit `3a6a47e3` and UI commit `48f30d46` pass 476 checks: all
+358 prior assertions remain and 118 semantic checks are added. Twelve isolated
+guard mutations are detected; an unrelated timeout change passes 118 controls.
+Phone/desktop views of a genuine synthetic collector case retain the observed
+index beside a primary-document HTTP 403 failure. That fixture response is not
+the production SEC result. Eight new producer fixture pairs bring generated
+outputs to 30, while all prior 14 generated outputs and 17 tracked fixture JSON
+files retain their exact bytes. Packed source and fixture scans pass with both
+pinned and current engines without an exception.
+
+README, `.env.example` and the issuer schema document these facts and the
+absence of new configuration. Python 3.12.14 collects 3,850 tests; Node is
+24.19.0. No new source or provider request is made for this milestone. The
+implementation still requires final integrated review, hosted exact-head gates
+and actual public acceptance; no new source coverage or trade is claimed.
+
+Final combined documentation/workflow/issuer/publisher verification passes
+221 checks. The prepared-source validators also accept the latest actual
+unavailable issuer publication without guessing its missing HTTP status.

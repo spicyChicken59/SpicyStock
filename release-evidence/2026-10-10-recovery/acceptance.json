@@ -1,0 +1,1681 @@
+{
+  "schema_version": 1,
+  "status": "accepted_public_release",
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/132",
+  "included_trigger_pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/129",
+  "reviewed_head": "d7e331741a221d3b208bb5ea89183400b1079267",
+  "merged_commit": "01632f4453601856619eed7d32dbb07a9147465b",
+  "merged_at": "2026-10-10T08:49:10Z",
+  "public_url": "https://spicychicken59.github.io/SpicyStock/",
+  "publisher_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38039203191",
+  "pages_run": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38039216830",
+  "superseded_pages_run": {
+    "id": 38039202816,
+    "conclusion": "cancelled",
+    "replacement": 38039216830
+  },
+  "hosted_exact_head": {
+    "schema_version": 1,
+    "status": "PASS",
+    "repository": "spicyChicken59/SpicyStock",
+    "pull_request": 132,
+    "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+    "tests_run_id": 38036275499,
+    "tests_conclusion": "success",
+    "recorded_at": "2026-10-10T08:49:21.159Z",
+    "checks": [
+      {
+        "id": 114167279507,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:57Z",
+        "completed_at": "2026-10-10T08:48:12Z"
+      },
+      {
+        "id": 114167279486,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:57Z",
+        "completed_at": "2026-10-10T08:48:28Z"
+      },
+      {
+        "id": 114167244295,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:45Z",
+        "completed_at": "2026-10-10T08:09:52Z"
+      },
+      {
+        "id": 114167244253,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:45Z",
+        "completed_at": "2026-10-10T07:58:55Z"
+      },
+      {
+        "id": 114167244165,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:45Z",
+        "completed_at": "2026-10-10T08:08:29Z"
+      },
+      {
+        "id": 114167244131,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:45Z",
+        "completed_at": "2026-10-10T07:59:00Z"
+      },
+      {
+        "id": 114167236084,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head_sha": "d7e331741a221d3b208bb5ea89183400b1079267",
+        "started_at": "2026-10-10T07:58:42Z",
+        "completed_at": "2026-10-10T07:58:55Z"
+      }
+    ],
+    "counts": {
+      "pytest_passed": 3607,
+      "pytest_seconds": 515.96,
+      "page_passed": 12170,
+      "page_total": 12170,
+      "chart_passed": 378,
+      "chart_total": 378,
+      "continuity_passed": 137,
+      "fixtures": {
+        "page": 13,
+        "morning": 21,
+        "issuer": 12
+      }
+    },
+    "native": [
+      {
+        "case": "central",
+        "job_id": 114167279486,
+        "started_at": "2026-10-10T07:58:57Z",
+        "completed_at": "2026-10-10T08:48:28Z",
+        "runtime_seconds": 2929.462053,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11664603116,
+        "artifact_name": "historical-runtime-central-38036275499-1",
+        "artifact_sha256": "571fd8ceb3d8a8c20ad3c7d3ce913aaee445fd0aa89e6f499a8237f11da62e94",
+        "artifact_bytes": 26651
+      },
+      {
+        "case": "stress",
+        "job_id": 114167279507,
+        "started_at": "2026-10-10T07:58:57Z",
+        "completed_at": "2026-10-10T08:48:12Z",
+        "runtime_seconds": 2914.040503,
+        "memory_supervisor_status": "PASS",
+        "artifact_id": 11664584849,
+        "artifact_name": "historical-runtime-stress-38036275499-1",
+        "artifact_sha256": "c15df02df8abfcd8f819cb09cabc61246cc00164761d48bdb3b4f840c5362af1",
+        "artifact_bytes": 26542
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11664603116,
+        "name": "historical-runtime-central-38036275499-1",
+        "size_in_bytes": 26651,
+        "digest": "sha256:571fd8ceb3d8a8c20ad3c7d3ce913aaee445fd0aa89e6f499a8237f11da62e94"
+      },
+      {
+        "id": 11664584849,
+        "name": "historical-runtime-stress-38036275499-1",
+        "size_in_bytes": 26542,
+        "digest": "sha256:c15df02df8abfcd8f819cb09cabc61246cc00164761d48bdb3b4f840c5362af1"
+      },
+      {
+        "id": 11664357436,
+        "name": "historical-runtime-gate-38036275499-1",
+        "size_in_bytes": 336,
+        "digest": "sha256:8063fcece9346e8736aa9f5f34c53ae0028f72f6ed7b8c11b96463404bb51cc4"
+      },
+      {
+        "id": 11664338486,
+        "name": "page-shots",
+        "size_in_bytes": 77323699,
+        "digest": "sha256:1109a03f7bbce1818a45226b121d668688a4bd0ae336e085106a8e0b2169dbe8"
+      }
+    ],
+    "source_review": "/tmp/spicystock-recovery-integration-ops-review.json",
+    "scope": "Official GitHub conclusions and decoded completed job logs; native artifact digests matched upload logs and API metadata. Artifact payloads were not independently downloaded. This is exact-head hosted acceptance, not deployment or actual-source verification."
+  },
+  "public_acceptance": {
+    "started_at": "2026-10-10T08:51:29.986Z",
+    "finished_at": "2026-10-10T08:51:39.498Z",
+    "checks_passed": 54,
+    "native_original_byte_git_matches": 32,
+    "viewports": [
+      390,
+      1280
+    ],
+    "default_publication_and_actual_wall_clock": true,
+    "supplement": "Actual calendar views at 390 light and 1280 dark; empty private-history disclosure visible, source/cash/storage and geometry checked.",
+    "calendar_sentence": "Fri 9 Oct\u2019s plans stand; the market was closed on Sat 10 Oct on the recorded XNYS schedule. The next applicable session is Mon 12 Oct.",
+    "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+    "canonical_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "unknown_cash": true,
+    "empty_private_history": true,
+    "morning_receipt": "Correctly refused as belonging to another publication; no fresh observation claim.",
+    "screenshots_visually_inspected": [
+      "ACTUAL-PUBLIC-calendar-1280.png",
+      "ACTUAL-PUBLIC-calendar-390.png",
+      "ACTUAL-PUBLIC-morning-1280.png",
+      "ACTUAL-PUBLIC-morning-390.png",
+      "ACTUAL-PUBLIC-private-visible-1280.png",
+      "ACTUAL-PUBLIC-private-visible-390.png"
+    ],
+    "errors_or_overflow_found": false,
+    "files": [
+      {
+        "name": "index.html",
+        "bytes": 16918,
+        "sha256": "04364c519cdbb860cbc38fc4cd324a8a020a8423e60f380e702c1cc61fe8bbfd"
+      },
+      {
+        "name": "data.json",
+        "bytes": 12963197,
+        "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+      },
+      {
+        "name": "reader.json",
+        "bytes": 4016951,
+        "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      {
+        "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+        "bytes": 5155365,
+        "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+      },
+      {
+        "name": "app-cash-preview.js",
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+      },
+      {
+        "name": "app-chart.js",
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+      },
+      {
+        "name": "app-findings.js",
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+      },
+      {
+        "name": "app-follow.js",
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+      },
+      {
+        "name": "app-handoff-ui.js",
+        "bytes": 23349,
+        "sha256": "5a7cdbcbe72aaf5b84c222ebe64369c33eba216274cd00db65c84b6e8d40ea12"
+      },
+      {
+        "name": "app-handoff.js",
+        "bytes": 27456,
+        "sha256": "87ba7cd963ca1441b19cbd057e29362df66745dc5fe6d442dc9fc68504d77f49"
+      },
+      {
+        "name": "app-issuer-evidence.js",
+        "bytes": 34250,
+        "sha256": "df6c5aad5a20ff3835a544325352923f3350b610e863c9365e5c6d725a6f2957"
+      },
+      {
+        "name": "app-map.js",
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+      },
+      {
+        "name": "app-method.js",
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+      },
+      {
+        "name": "app-morning.js",
+        "bytes": 23126,
+        "sha256": "4e81c9751980547af2915fbdfefc782550aee86e04095d5d97a6658b53aeacf0"
+      },
+      {
+        "name": "app-observations.js",
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+      },
+      {
+        "name": "app-reader.js",
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+      },
+      {
+        "name": "app-reading.js",
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+      },
+      {
+        "name": "app.css",
+        "bytes": 86201,
+        "sha256": "8ae3c948af2c77fe0eb3105ecc66e6ad376c1daa6aef59439314c9f8ca0b768e"
+      },
+      {
+        "name": "app.js",
+        "bytes": 392190,
+        "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+      },
+      {
+        "name": "design-system/assets/favicon.ico",
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+      },
+      {
+        "name": "design-system/assets/sc-avatar-tile.svg",
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+      },
+      {
+        "name": "design-system/assets/apple-touch-icon.png",
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+      },
+      {
+        "name": "design-system/sc.css",
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+      },
+      {
+        "name": "design-system/sc-theme.js",
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+      },
+      {
+        "name": "design-system/sc-charts.js",
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+      },
+      {
+        "name": "design-system/sc-motion.js",
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+      },
+      {
+        "name": "design-system/assets/sc-mark-color-dark.svg",
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+      },
+      {
+        "name": "design-system/assets/sc-mark-mono-cream.svg",
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+      },
+      {
+        "name": "picks.json",
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+      },
+      {
+        "name": "morning.json",
+        "bytes": 4224,
+        "sha256": "90ada76db3d7ef21672b589055451f72b94a8c2453606c0756371c973a2dbfe8"
+      },
+      {
+        "name": "issuer-evidence.json",
+        "bytes": 1706,
+        "sha256": "397403d50a7917b1ab288171e9fcf242f5301382f3a5a74160e4f37da1cecbf8"
+      },
+      {
+        "name": "issuer-evidence/0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3.json",
+        "bytes": 5601,
+        "sha256": "0848ff98a774b6d636318ee194bd71ba8e1b991eb021a83b31af8734a6b492f3"
+      }
+    ],
+    "source_receipt_sha256": "aa5be0d5a77a89837fa74285f4668a8117e8cb41677d5b095ca4eb7d4d04a7b3"
+  },
+  "separate_controlled_recovery": {
+    "checks_passed": 89,
+    "scope": "CONTROLLED REHEARSAL ONLY: actual verified deployed assets served locally; explicit header/body stalls and renderer/fetch faults; genuine synthetic retained private schema1 in separate fresh browsers. These faults are not claims about public outage, user facts or live trading.",
+    "deadlines": [
+      {
+        "id": "headers",
+        "actual_elapsed_ms": 14958,
+        "real_socket_closed": true
+      },
+      {
+        "id": "body",
+        "actual_elapsed_ms": 14985,
+        "real_socket_closed": true
+      },
+      {
+        "id": "refresh",
+        "actual_elapsed_ms": 14998,
+        "real_socket_closed": true
+      }
+    ],
+    "validated": [
+      "Real headers/body/refresh socket deadlines",
+      "Explicit Retry recovery",
+      "Retained private schema1 has no automatic write or migration",
+      "Unsaved editor node/value/focus/selection and raw private bytes survive failure and retry",
+      "Late responses and render-fault residue cannot replace current state"
+    ],
+    "source_receipt_sha256": "3f0a34c183c67d2f19aa43af7dc5eb1a2ee41ceb326f633b634cdbfddc6a1d28"
+  },
+  "screenshots": [
+    {
+      "name": "ACTUAL-PUBLIC-calendar-1280.png",
+      "sha256": "7f0dc690cfd0ec614ed05a6f36e04927f2ed68267ebd29210f64de964839e870",
+      "bytes": 134834,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-calendar-390.png",
+      "sha256": "85e488cce55671533074edb0ca761b63713c33d5430a30a509b27ba9a20ecb14",
+      "bytes": 73512,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-morning-1280.png",
+      "sha256": "4e6e2b8ced3b979b4d8ffc5047fc3e07c01a18dfa16dc26ba63811b7d918f725",
+      "bytes": 94659,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-morning-390.png",
+      "sha256": "9105af6f1adb3a9c19f0e605cdeb07d37cc056cf11e59440aef02995fda62e36",
+      "bytes": 54592,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-private-visible-1280.png",
+      "sha256": "591964b57d9bad2f2dc85edb045db33317398637be0b80e4c6a53758d3732bfe",
+      "bytes": 157262,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    },
+    {
+      "name": "ACTUAL-PUBLIC-private-visible-390.png",
+      "sha256": "ae1131c93abe3405827525ec5f233c5c97b4450efc6ca9498dfff99fe0bd72be",
+      "bytes": 64704,
+      "scope": "ACTUAL_PUBLIC",
+      "visually_inspected": true
+    }
+  ],
+  "independent_file_recheck": {
+    "matched": 32,
+    "against_commit": "01632f4453601856619eed7d32dbb07a9147465b",
+    "prior_commit": "9edab25c226b4f0398ad88ecf24b4787f25d7e96",
+    "unchanged_paths": [
+      "docs/evidence",
+      "docs/history",
+      "docs/data.json",
+      "docs/reader.json",
+      "docs/picks.json",
+      "docs/design-system"
+    ],
+    "immutable_history_and_evidence_files": 18584
+  },
+  "runner_sha256": {
+    "/tmp/spicystock-public-recovery-acceptance.mjs": "9962e722b198d666634bfb3f94fee9cde7929a333bbd604ec9d46706b7f38eef",
+    "/tmp/spicystock-recovery-calendar-views.mjs": "94df3f7dbeac5700da685ec76d4cb2e7f56dce90e1220c638516a4f9d4146cdb"
+  },
+  "review_receipt_sha256": "22d31c00f5d389a8e93a920b6923e2d20dda596cdfb7f155d7fd10dcb6f708e5",
+  "remaining_gaps": [
+    "Controlled loopback faults are not evidence that the public site experienced an outage.",
+    "Synthetic private legacy data is separate from actual public contexts and is not a user trade or result.",
+    "No market-provider requests, workflow dispatch, broker requests, order copies or actual trading occurred.",
+    "No generalized performance guarantee or investment outcome is inferred from this single run.",
+    "On-time morning quote delivery, comprehensive SEC/earnings coverage and first actual personal trade remain open.",
+    "Broker unspecified.",
+    "Automatic issuer delivery now verified; this actual SEC attempt remains unavailable after one identity request with zero downloaded/captured bytes.",
+    "Two of three UTC-day issuer production starts consumed. Observed HTTP diagnostics are queued in PR135; the actual current receipt does not retain an HTTP status."
+  ],
+  "next_step": "Release reviewed registered research, HTTP diagnostics, whole-share personal guidance and follow-through after each exact head passes required gates; verify actual public results. Use at most the remaining daily issuer start for observed HTTP diagnostics once that code is public.",
+  "automatic_issuer_delivery": {
+    "scope": "One authorized production morning publication and its automatic issuer child; actual hosted delivery is distinct from unavailable source coverage.",
+    "workflow_chain": {
+      "schema_version": 1,
+      "status": "PASS",
+      "repository": "spicyChicken59/SpicyStock",
+      "recorded_at": "2026-10-10T09:00:21.518Z",
+      "runs": {
+        "morning_run": {
+          "id": 38039598040,
+          "event": "workflow_dispatch",
+          "path": ".github/workflows/morning.yml",
+          "head_sha": "01632f4453601856619eed7d32dbb07a9147465b",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-10T08:56:01Z",
+          "updated_at": "2026-10-10T08:57:10Z"
+        },
+        "issuer_run": {
+          "id": 38039664597,
+          "event": "workflow_run",
+          "path": ".github/workflows/issuer-evidence.yml",
+          "head_sha": "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-10T08:57:11Z",
+          "updated_at": "2026-10-10T08:58:24Z"
+        },
+        "publisher_run": {
+          "id": 38039736422,
+          "event": "workflow_run",
+          "path": ".github/workflows/publish-dashboard.yml",
+          "head_sha": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-10T08:58:26Z",
+          "updated_at": "2026-10-10T08:59:16Z"
+        },
+        "pages_run": {
+          "id": 38039747189,
+          "event": "dynamic",
+          "path": "dynamic/pages/pages-build-deployment",
+          "head_sha": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+          "status": "completed",
+          "conclusion": "success",
+          "created_at": "2026-10-10T08:58:38Z",
+          "updated_at": "2026-10-10T08:59:16Z"
+        }
+      },
+      "morning": {
+        "status": "inapplicable",
+        "reason": "wrong_session",
+        "rows": 0,
+        "generated_at": "2026-10-10T08:56:34.636611+00:00",
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "receipt_commit": "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
+        "artifact_id": 11665480923,
+        "artifact_zip_sha256": "e9ef7f158d372820d46b306df611ddb6ba6edf2abf86424fdabea06ac629d6c8"
+      },
+      "automatic_issuer": {
+        "guard_decision": "production_collection",
+        "guard_at": "2026-10-10T08:57:42.9536756Z",
+        "collector_status": "unavailable",
+        "selected_issuers": 2,
+        "source_cache": "not_saved",
+        "publication": "published",
+        "publication_at": "2026-10-10T08:58:22.1411668Z",
+        "commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+        "parent_commits": [
+          "fa480f2a0f1dd1582e681b73398040e8342c4a8d"
+        ],
+        "changed_files": [
+          {
+            "path": "docs/issuer-evidence.json",
+            "status": "modified",
+            "git_blob_sha": "d431b4a098ab1a1bb4f4018a4d3076bf7000477c"
+          },
+          {
+            "path": "docs/issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+            "status": "added",
+            "git_blob_sha": "a8bdafc1c25c22a98ff45b866ee02050c757d26a"
+          },
+          {
+            "path": "docs/issuer-evidence/retention.json",
+            "status": "modified",
+            "git_blob_sha": "dc71f01bca6c648f58b0cd718f099347bc08e86d"
+          }
+        ],
+        "daily_budget": {
+          "checked_at": "2026-10-10T08:58:48.479687+00:00",
+          "production_collection_starts_today_utc": 2,
+          "limit": 3,
+          "method": "Read-only daily_collections helper against complete GitHub Actions run/attempt/job-step metadata."
+        },
+        "artifacts": [
+          {
+            "id": 11664843591,
+            "name": "issuer-captures-38039664597-1",
+            "size_in_bytes": 213,
+            "digest": "sha256:3d8761ce2fd1b20f73af5797b5eb2f1ff41468c2e48afcb3dcefb7dbae7e1af2"
+          },
+          {
+            "id": 11664658719,
+            "name": "issuer-evidence-38039664597-1",
+            "size_in_bytes": 3451,
+            "digest": "sha256:0a4e5a670dc976b0d764834af2ba879d523c979d208476b8912abf6b1177d01f"
+          }
+        ]
+      },
+      "publication_verification": {
+        "publisher_job_id": 114177412997,
+        "verified_at": "2026-10-10T08:59:13.6994243Z",
+        "public_files": 34,
+        "verdict": "every public file matches committed main"
+      },
+      "scope": "Actual automatic workflow delivery and committed-file deployment evidence from official Actions metadata/logs. No additional workflow dispatch or provider request was made by this audit. Issuer artifact digests match upload logs/API metadata; payloads were not independently downloaded here. This does not establish SEC coverage, a trade recommendation, broker readiness or a personal trade."
+    },
+    "actual_public": {
+      "scope": "ACTUAL PUBLIC; default loader and actual wall clock; fresh browser contexts, no seeded private data, fixtures, publication/clock overrides or workflow dispatch.",
+      "sha": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+      "url": "https://spicychicken59.github.io/SpicyStock/",
+      "morningRun": "38039598040",
+      "issuerRun": "38039664597",
+      "startedAt": "2026-10-10T09:00:56.383Z",
+      "checks": [
+        {
+          "name": "390 real clock/default loader",
+          "pass": true
+        },
+        {
+          "name": "390 exact canonical/reader",
+          "pass": true
+        },
+        {
+          "name": "390 unknown cash/empty private",
+          "pass": true
+        },
+        {
+          "name": "390 zero published tickets",
+          "pass": true
+        },
+        {
+          "name": "390 issuer initially lazy",
+          "pass": true
+        },
+        {
+          "name": "390 receipt age is distinguished from source coverage",
+          "pass": true,
+          "detail": "Collected Oct 10, 2026, 3:57:46 AM CT \u00b7 receipt within 24 hours. This is source inspection, not news clearance."
+        },
+        {
+          "name": "390 MG/ZIM preserved",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:MG unverified identity",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:MG source failure remains explicit",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:MG no fetched documents",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:MG known event remains",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:ZIM unverified identity",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:ZIM source failure remains explicit",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:ZIM no fetched documents",
+          "pass": true
+        },
+        {
+          "name": "390 anticipation:ZIM known event remains",
+          "pass": true
+        },
+        {
+          "name": "390 no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "390 no private writes/data mutation",
+          "pass": true
+        },
+        {
+          "name": "390 no browser errors",
+          "pass": true,
+          "detail": []
+        },
+        {
+          "name": "390 only bodyless reads",
+          "pass": true
+        },
+        {
+          "name": "390 no broker/provider/private transmission",
+          "pass": true
+        },
+        {
+          "name": "1280 real clock/default loader",
+          "pass": true
+        },
+        {
+          "name": "1280 exact canonical/reader",
+          "pass": true
+        },
+        {
+          "name": "1280 unknown cash/empty private",
+          "pass": true
+        },
+        {
+          "name": "1280 zero published tickets",
+          "pass": true
+        },
+        {
+          "name": "1280 issuer initially lazy",
+          "pass": true
+        },
+        {
+          "name": "1280 receipt age is distinguished from source coverage",
+          "pass": true,
+          "detail": "Collected Oct 10, 2026, 3:57:46 AM CT \u00b7 receipt within 24 hours. This is source inspection, not news clearance."
+        },
+        {
+          "name": "1280 MG/ZIM preserved",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:MG unverified identity",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:MG source failure remains explicit",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:MG no fetched documents",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:MG known event remains",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:ZIM unverified identity",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:ZIM source failure remains explicit",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:ZIM no fetched documents",
+          "pass": true
+        },
+        {
+          "name": "1280 anticipation:ZIM known event remains",
+          "pass": true
+        },
+        {
+          "name": "1280 no horizontal overflow",
+          "pass": true
+        },
+        {
+          "name": "1280 no private writes/data mutation",
+          "pass": true
+        },
+        {
+          "name": "native bytes index.html",
+          "pass": true
+        },
+        {
+          "name": "native bytes data.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes reader.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes picks.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes morning.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes issuer-evidence.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-cash-preview.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-chart.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-findings.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-follow.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-handoff-ui.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-handoff.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-issuer-evidence.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-map.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-method.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-morning.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-observations.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-reader.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app-reading.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes app.css",
+          "pass": true
+        },
+        {
+          "name": "native bytes app.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/assets/favicon.ico",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/assets/sc-avatar-tile.svg",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/assets/apple-touch-icon.png",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/sc.css",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/sc-theme.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/sc-charts.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/sc-motion.js",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/assets/sc-mark-color-dark.svg",
+          "pass": true
+        },
+        {
+          "name": "native bytes design-system/assets/sc-mark-mono-cream.svg",
+          "pass": true
+        },
+        {
+          "name": "1280 no browser errors",
+          "pass": true,
+          "detail": []
+        },
+        {
+          "name": "1280 only bodyless reads",
+          "pass": true
+        },
+        {
+          "name": "1280 no broker/provider/private transmission",
+          "pass": true
+        }
+      ],
+      "files": [
+        {
+          "name": "index.html",
+          "bytes": 16918,
+          "sha256": "04364c519cdbb860cbc38fc4cd324a8a020a8423e60f380e702c1cc61fe8bbfd"
+        },
+        {
+          "name": "data.json",
+          "bytes": 12963197,
+          "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+        },
+        {
+          "name": "reader.json",
+          "bytes": 4016951,
+          "sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+        },
+        {
+          "name": "picks.json",
+          "bytes": 3921,
+          "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+        },
+        {
+          "name": "morning.json",
+          "bytes": 4284,
+          "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+        },
+        {
+          "name": "issuer-evidence.json",
+          "bytes": 1768,
+          "sha256": "c0d1c97f22767c514385604155bb433a3571e1351dfd28884be846b8fa141731"
+        },
+        {
+          "name": "issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+          "bytes": 5601,
+          "sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510"
+        },
+        {
+          "name": "reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json",
+          "bytes": 5155365,
+          "sha256": "8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4"
+        },
+        {
+          "name": "app-cash-preview.js",
+          "bytes": 3836,
+          "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+        },
+        {
+          "name": "app-chart.js",
+          "bytes": 73555,
+          "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+        },
+        {
+          "name": "app-findings.js",
+          "bytes": 68115,
+          "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+        },
+        {
+          "name": "app-follow.js",
+          "bytes": 32450,
+          "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+        },
+        {
+          "name": "app-handoff-ui.js",
+          "bytes": 23349,
+          "sha256": "5a7cdbcbe72aaf5b84c222ebe64369c33eba216274cd00db65c84b6e8d40ea12"
+        },
+        {
+          "name": "app-handoff.js",
+          "bytes": 27456,
+          "sha256": "87ba7cd963ca1441b19cbd057e29362df66745dc5fe6d442dc9fc68504d77f49"
+        },
+        {
+          "name": "app-issuer-evidence.js",
+          "bytes": 34250,
+          "sha256": "df6c5aad5a20ff3835a544325352923f3350b610e863c9365e5c6d725a6f2957"
+        },
+        {
+          "name": "app-map.js",
+          "bytes": 29522,
+          "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+        },
+        {
+          "name": "app-method.js",
+          "bytes": 44156,
+          "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+        },
+        {
+          "name": "app-morning.js",
+          "bytes": 23126,
+          "sha256": "4e81c9751980547af2915fbdfefc782550aee86e04095d5d97a6658b53aeacf0"
+        },
+        {
+          "name": "app-observations.js",
+          "bytes": 44452,
+          "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+        },
+        {
+          "name": "app-reader.js",
+          "bytes": 9507,
+          "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+        },
+        {
+          "name": "app-reading.js",
+          "bytes": 23705,
+          "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+        },
+        {
+          "name": "app.css",
+          "bytes": 86201,
+          "sha256": "8ae3c948af2c77fe0eb3105ecc66e6ad376c1daa6aef59439314c9f8ca0b768e"
+        },
+        {
+          "name": "app.js",
+          "bytes": 392190,
+          "sha256": "ced0c0a279eaaf3848aff3587e23e12f9f0e09f663394797345ce16a535fd381"
+        },
+        {
+          "name": "design-system/assets/favicon.ico",
+          "bytes": 5057,
+          "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+        },
+        {
+          "name": "design-system/assets/sc-avatar-tile.svg",
+          "bytes": 9274,
+          "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+        },
+        {
+          "name": "design-system/assets/apple-touch-icon.png",
+          "bytes": 11284,
+          "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+        },
+        {
+          "name": "design-system/sc.css",
+          "bytes": 130987,
+          "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+        },
+        {
+          "name": "design-system/sc-theme.js",
+          "bytes": 2077,
+          "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+        },
+        {
+          "name": "design-system/sc-charts.js",
+          "bytes": 27390,
+          "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+        },
+        {
+          "name": "design-system/sc-motion.js",
+          "bytes": 10458,
+          "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+        },
+        {
+          "name": "design-system/assets/sc-mark-color-dark.svg",
+          "bytes": 6701,
+          "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+        },
+        {
+          "name": "design-system/assets/sc-mark-mono-cream.svg",
+          "bytes": 4901,
+          "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+        }
+      ],
+      "pages": [
+        {
+          "width": 390,
+          "wall": "2026-10-10T09:00:58.014Z",
+          "receiptStatus": "Collected Oct 10, 2026, 3:57:46 AM CT \u00b7 receipt within 24 hours. This is source inspection, not news clearance.",
+          "observations": {
+            "state": "loaded",
+            "recordHash": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+            "canonicalHash": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+            "projected": true,
+            "headline": "Morning check is outside its session",
+            "generatedAt": "2026-10-10T08:56:34.636611+00:00",
+            "fresh": true,
+            "pending": false,
+            "restricted": []
+          },
+          "requests": [
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+              "method": "GET",
+              "body": false
+            }
+          ],
+          "errors": []
+        },
+        {
+          "width": 1280,
+          "wall": "2026-10-10T09:01:00.533Z",
+          "receiptStatus": "Collected Oct 10, 2026, 3:57:46 AM CT \u00b7 receipt within 24 hours. This is source inspection, not news clearance.",
+          "observations": {
+            "state": "loaded",
+            "recordHash": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3",
+            "canonicalHash": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+            "projected": true,
+            "headline": "Morning check is outside its session",
+            "generatedAt": "2026-10-10T08:56:34.636611+00:00",
+            "fresh": true,
+            "pending": false,
+            "restricted": []
+          },
+          "requests": [
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/index.html?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/data.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/reader.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/picks.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/morning.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/reader-observations/8f5437b2e295307d1b91d4d96dca5abfb35e790174058cdb660b332c684298a4.json?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-map.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-method.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.css?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/app.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/favicon.ico?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-avatar-tile.svg?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/apple-touch-icon.png?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            },
+            {
+              "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg?automatic_acceptance=3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+              "method": "GET",
+              "body": false
+            }
+          ],
+          "errors": []
+        }
+      ],
+      "sourceState": {
+        "morning": "inapplicable",
+        "reason": "wrong_session",
+        "issuer": "unavailable",
+        "stats": {
+          "request_count": 1,
+          "downloaded_bytes": 0,
+          "capture_bytes": 0,
+          "budget_stop": null
+        }
+      },
+      "limits": [
+        "Saturday inapplicable receipt supplies no on-time quotes.",
+        "Automatic trigger and publication are verified separately from fresh SEC access; this source attempt is unavailable.",
+        "No actual personal trade, cash, fill or profit is inferred."
+      ],
+      "status": "PASS_ACTUAL_PUBLIC",
+      "finishedAt": "2026-10-10T09:01:04.118Z"
+    },
+    "supplemental_source_views": {
+      "checks_passed": 40,
+      "receipt_sha256": "f1d72d217d2effc4a4faf586ab3cc0fbb525bd4177987d2cc02a7308f9871fc2",
+      "purpose": "Scroll nested issuer body into view; initial header/age captures do not establish visual failure-body inspection."
+    },
+    "independent_review": {
+      "status": "NO_BLOCKER",
+      "head": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+      "scope": "Independent read-only review of actual public acceptance, runner source, exact Git bytes, screenshots and strict local companion validation. No additional public requests, workflow dispatches, product edits or private writes performed by reviewer.",
+      "acceptance": {
+        "primary_checks": 72,
+        "primary_native_git_matches": 32,
+        "supplement_runtime_checks": 40,
+        "supplement_native_matrix_repeated": false,
+        "viewports": [
+          390,
+          1280
+        ],
+        "publisher_verified_files": 34,
+        "publisher_only_files": [
+          "historical-findings.json",
+          "historical-validation.json"
+        ]
+      },
+      "review_findings": [
+        "All 72 primary and 40 supplemental assertions pass; all 32 recorded native file sizes/SHA256s independently match Git at the exact head.",
+        "Runner uses actual default public loading and wall clock, fresh private-empty contexts, task-scoped pinned CA trust, and no route, fixture, clock or publication override.",
+        "Observed browser hosts are the public site and Google Fonts; both viewports have zero errors and only bodyless GET/HEAD requests.",
+        "Initial four screenshots establish header/receipt-age context only. Supplemental four screenshots visibly show unavailable HTTP source coverage, unknown index coverage and no excerpts; desktop views preserve both known exclusions.",
+        "Both known excluded research candidates remain without entry tickets. Receipt recency is explicitly distinguished from source coverage.",
+        "Independent socket-denied validation passes morning previous-byte CAS and memory continuity, issuer previous-byte CAS, and strict current publication binding; zero network attempts.",
+        "Retained first harness failure was an incorrect top-caption assumption; corrected assertions inspect the actual failure body and exact document selector. No product change or hidden failing assertion is claimed."
+      ],
+      "limits": [
+        "Saturday inapplicable receipt supplies no on-time quotes.",
+        "Automatic trigger and publication are verified separately from fresh SEC access; this source attempt is unavailable.",
+        "No actual personal trade, cash, fill or profit is inferred."
+      ],
+      "evidence": {
+        "/tmp/spicystock-automatic-issuer-public-38039747189/acceptance.json": "8b929a29f9f1a7984faca33d178c253e829e23b4c06fd5ed7ab0df4fad263c62",
+        "/tmp/spicystock-automatic-issuer-public-38039747189-views/acceptance.json": "f1d72d217d2effc4a4faf586ab3cc0fbb525bd4177987d2cc02a7308f9871fc2",
+        "/tmp/spicystock-automatic-issuer-public-38039747189/first-harness-label-assumption-failure.json": "3f9802d75eeec81ce3569e09dbcfc822a95802b1fa0aefe142382c716b4eaa5e",
+        "/tmp/spicystock-public-automatic-issuer.mjs": "c7c3c011ceaf829cd80740df7e97d2764bec67dd0ecb674a402f9a1bf3daaa3b",
+        "/tmp/spicystock-public-automatic-issuer-views.mjs": "38271ba786bdb06d5d2477ee2da988002e1c81a5c325696d29e2a54b0bb738f2",
+        "/tmp/spicystock-automatic-source-validation.json": "6c88f2de3da311170024b5b381805106c4ed149170362c03907e392b11da6e4c",
+        "/tmp/spicystock-automatic-source-independent-validation.json": "ce97e49c650e587c44b54109e79b502e2e27c6bd1299a228df5f5cdb1c23becc"
+      },
+      "screenshots_inspected": {
+        "/tmp/spicystock-automatic-issuer-public-38039747189/ACTUAL-1280-MG.png": "8aec2630d6d1700866879423638bb8e49ce1b91b7d25df5df8b07a47b56a995c",
+        "/tmp/spicystock-automatic-issuer-public-38039747189/ACTUAL-1280-ZIM.png": "1ea35fb7bab8870f6ec7f232608c2069d6629dea478e7c5a61189571a2871a10",
+        "/tmp/spicystock-automatic-issuer-public-38039747189/ACTUAL-390-MG.png": "f8beba3ff577c95ca6a3314fbe5ee2ccea17f428c0a7671cc6d1e04bf559be39",
+        "/tmp/spicystock-automatic-issuer-public-38039747189/ACTUAL-390-ZIM.png": "a3ce9e65e1d41a85a97cf04daf0d991fbfdbd75fc7e1e9dfe6d52fc606d79a2e",
+        "/tmp/spicystock-automatic-issuer-public-38039747189-views/ACTUAL-1280-MG.png": "535f44d17f53bd21deb21ef2cc78b3c1793eab3ae0f26b6c2cc7b8d90e39d4bb",
+        "/tmp/spicystock-automatic-issuer-public-38039747189-views/ACTUAL-1280-ZIM.png": "e33a8a73d124d3576d4c10652fd0e13cddac0bca1a51306af6a1f921c8392d88",
+        "/tmp/spicystock-automatic-issuer-public-38039747189-views/ACTUAL-390-MG.png": "8dda46f37ccd55cbcc3f0c27a07eaf8f6af40299344d56fc1cece0e89bf2fa6f",
+        "/tmp/spicystock-automatic-issuer-public-38039747189-views/ACTUAL-390-ZIM.png": "5f97b5806c7e0d024b675f6b6b8b5e91410bdef5723f505ba68a0283c9db979b"
+      }
+    },
+    "strict_production_validation": {
+      "status": "PASS_LOCAL_EXACT_PRODUCTION_VALIDATION",
+      "head": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+      "network_attempts": 0,
+      "files": {
+        "data.json": {
+          "bytes": 12963197,
+          "sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d"
+        },
+        "morning.json": {
+          "bytes": 4284,
+          "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+        },
+        "issuer-evidence.json": {
+          "bytes": 1768,
+          "sha256": "c0d1c97f22767c514385604155bb433a3571e1351dfd28884be846b8fa141731"
+        },
+        "issuer-evidence/c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510.json": {
+          "bytes": 5601,
+          "sha256": "c20f9e4d04107380d39d6d12e00436939a5442b11ae2f703a82936eaf68a2510"
+        }
+      },
+      "morning_status": "inapplicable",
+      "issuer_status": "unavailable"
+    },
+    "independent_prior_receipt_cas_and_continuity": {
+      "status": "PASS",
+      "head": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+      "network_attempts": 0,
+      "morning_previous_byte_CAS": "PASS",
+      "morning_continuity_validation": "PASS",
+      "issuer_previous_byte_CAS": "PASS",
+      "issuer_strict_current_publication_validation": "PASS",
+      "morning_status": "inapplicable",
+      "issuer_status": "unavailable"
+    },
+    "unchanged_authoritative_paths": [
+      "docs/data.json",
+      "docs/reader.json",
+      "docs/picks.json",
+      "docs/evidence",
+      "docs/history",
+      "docs/design-system"
+    ],
+    "source_review_sha256": "baa1136f282637df6578401ef25fd3b8329373769b42ae5e94d2f67594186350",
+    "first_harness_attempt": {
+      "status": "failed_caption_assumption",
+      "receipt_sha256": "3f9802d75eeec81ce3569e09dbcfc822a95802b1fa0aefe142382c716b4eaa5e",
+      "correction": "Receipt age caption and source coverage are distinct fields; final controls verify actual identity, index, failure and document fields with correct document selector. No production change."
+    }
+  }
+}
