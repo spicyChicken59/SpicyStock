@@ -5218,3 +5218,82 @@ passed 165/165 and confirmed early-refusal cancellation and the existing
 deferred-read timeout with a stalled response. Initial-load and refresh
 deadlines remain an inherited limitation. These checks establish local
 integration; hosted exact-head gates and actual public acceptance remain open.
+
+## Checkpoint, 10 Oct 2026 — ZIM correction accepted on the public site
+
+PR #115 passed exact-head hosted acceptance at
+`41d250c43225dd6f517e10199cf98b3f46038e0e` and merged as
+`21cd3497cd7ee06c66e4c2b46dcbed4782a7213e`. Production evening run
+`38033614291`, explicitly measured on October 9 with email skipped, published
+`dcb12a0b20f2d41900c4235c30efa76a40285c0b` for the October 12 session.
+[The compact release receipt](release-evidence/2026-10-10-zim/acceptance.json)
+retains these identities, exact canonical/reader/sidecar digests, the 31-file
+public hash inventory, source-receipt digests and primary-source manifest link.
+
+Hosted run `38030547868` passed 3,376 Python tests, 11,204 page checks and 378
+chart checks; both native central and stress jobs passed. Native artifact
+digests are those reported in the official job evidence, not a claim that the
+artifact bodies were independently downloaded. Public acceptance on the live
+site passed 135 checks at 1280 and 390 pixels with no route, data or clock
+overrides and no browser errors. Six screenshots were inspected. While writing
+this checkpoint, all 31 recorded public hashes were independently matched to
+the designated production Git tree, and all 17,415 baseline immutable
+evidence/history blobs were compared byte-for-byte through their Git identities.
+Production provenance passes for 484 setups, with no breaks or missing sources.
+
+The actual current ZIM candidate is present and refused for the pending cash
+acquisition, with dated source links and no executable order. Its original
+two-share model pick remains historical research. There are zero admitted
+tickets and zero new commitment. The $188.37 reserved for unfinished SN model
+plans does not establish Mo's holdings, balance or settled cash. All 12 requested
+reviews completed, but 467 of 479 discovered reaction candidates were not
+selected; this is not full opportunity or event coverage. Of 4,775 intended
+stocks, 4,774 have usable session bars; WBD's stale input remains unknown under
+the recorded tolerance.
+
+The retained morning receipt was generated on October 9 for an older
+publication and is correctly unavailable for this new record. This rerun and
+public review establish neither on-time morning quotes nor a successful trade.
+The public commit also predates the separate status fix: its old banner still
+says October 9 was closed despite the recorded session being open. The cash
+preview, status, SEC evidence, handoff, original-byte reader and reported-result
+changes being integrated separately are not claimed released by this receipt.
+Earlier pending-ZIM statements describe their checkpoint date and are
+superseded by this recorded production acceptance.
+
+## Checkpoint, 10 Oct 2026 — reported completed results ready for hosted review
+
+Issue #124 adds actual average exit price and separately entered entry/exit
+fees to the private handoff. Model commit
+`9fab47657755d3e8ac1ce5a33ca3bb98af252f74` and UI commit
+`4f8a9a579aaeaef97ed0568cdcfb3cce3be897c4` are integrated in this branch.
+Reported gross, costs and net require positive filled quantity fully exited,
+filled plus explicit cancelled quantity equal to submitted quantity, both
+average prices, both actual costs and latest fill/exit timestamps. Submission
+and cancellation timestamps remain optional. Partial exits have no inferred
+cost basis; missing costs are unknown, while an explicit zero is accepted.
+
+BigInt arithmetic preserves six-decimal prices and cent fees; rounding occurs
+only for display. Gain/loss/breakeven uses the exact unrounded result, with a
+visible sub-cent gain or loss instead of a misleading $0.00. Actual reported
+costs remain separate from the draft fee buffer. Corrections remain available
+after entry expiry or events, and cannot revive entry copying. Results do not
+change original plans, model scorecards, cash allocation or goal completion.
+
+Strict v1 records normalize to unknown new fields in memory without any write
+on read. An explicit successful save writes v2 under the existing private key;
+identities and untouched facts retain their meaning. Unknown, mixed or future
+schemas remain untouched. Quota/readback failures retain exact prior/proposed
+recovery; migration cannot exceed the 1 MiB cap or evict another record.
+
+All 31 named model controls pass. Six isolated model mutations fail their named
+rules while unrelated controls pass. The handoff browser suite passes 219
+checks and the handoff/cash/morning compatibility run passes 753; phone and
+desktop screenshots were inspected. Independent review passes 194 additional
+browser assertions against 40 Python Decimal oracle cases, including genuine
+original-v1 producer records, no-write reads, explicit upgrades, recovery and
+revision conflicts. UI net-versus-gross and stale-result mutations fail their
+intended checks, with unrelated wording still passing. README and
+`.env.example` describe the private schema and absence of new credentials.
+These are synthetic local rehearsals. Hosted exact-head gates and actual
+public acceptance remain outstanding; no real entry, exit or profit is claimed.
