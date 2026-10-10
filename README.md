@@ -626,6 +626,9 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   `run.review_selection` reconciles feasibility, research-pool size, selected
   names, accepted/unaccepted/refused results, actual retained attempts and
   unused capacity. Attempts are distinct from requested names and billed cost.
+  Method explains the recorded pre-review fit, opportunity/research selection
+  and feasible names left unreviewed; older or unsupported receipts make no
+  selection claim.
   The private preview precedes combined allocation; selection grants no ticket.
   Final accepted-review, grade/regime, sizing, event and allocation guards
   remain unchanged. Archived records without this policy keep their original

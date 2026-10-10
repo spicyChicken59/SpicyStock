@@ -32,6 +32,7 @@ import { checkWaitExplanations } from './wait_explanation_cases.mjs';
 import { checkFindings } from './findings_cases.mjs';
 import { checkMorning } from './morning_cases.mjs';
 import { checkMorningStatus } from './status_cases.mjs';
+import { checkReviewSelection } from './review_selection_cases.mjs';
 import { checkCashPreview } from './cash_preview_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
@@ -3889,6 +3890,7 @@ async function main() {
       if (runs('actionability') || runs('actionability-core')) await checkActionability({ browser, base, data: full, open, check, eq, shotsDir, coreOnly: !!only && only.includes('actionability-core') });
       if (runs('morning')) await checkMorning({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('status')) await checkMorningStatus({ browser, base, open, check, eq, shotsDir });
+      if (runs('review-selection')) await checkReviewSelection({ browser, base, open, check, eq, shotsDir });
       if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });

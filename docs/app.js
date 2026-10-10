@@ -796,6 +796,29 @@
     }
     return reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade';
   }
+  function reviewSelectionNote(data) {
+    const run = data.run || {}, s = run.review_selection, rules = data.rules || {}, policy = rules.review_selection;
+    if (!s || !policy || s.version !== 1 || policy.version !== s.version ||
+        s.policy !== 'account_feasible_first_research_v1' || policy.policy !== s.policy || s.session !== run.session) return '';
+    const fields = ['discovered', 'feasible', 'research_pool', 'requested', 'max_reads', 'research_max', 'feasible_unselected', 'unused_capacity'];
+    const count = (v) => Number.isSafeInteger(v) && v >= 0;
+    const purposes = ['opportunity', 'research_ranked', 'research_rotating'], groups = s.by_purpose || {};
+    if (!fields.every((k) => count(s[k])) || !purposes.every((k) => groups[k] && count(groups[k].requested)) ||
+        !Array.isArray(s.selected) || s.selected.some((r) => !r || typeof r.ticker !== 'string' || !purposes.includes(r.purpose))) return '';
+    const opportunity = groups.opportunity.requested, research = groups.research_ranked.requested + groups.research_rotating.requested;
+    if (s.max_reads !== (rules.pipeline || {}).max_reads || s.research_max !== policy.research_max ||
+        s.discovered !== (data.bursts || []).length || s.feasible + s.research_pool > s.discovered ||
+        opportunity > s.feasible || research > s.research_pool || research > s.research_max ||
+        opportunity + research !== s.requested || s.requested > s.max_reads ||
+        s.feasible_unselected !== s.feasible - opportunity || s.unused_capacity !== s.max_reads - s.requested ||
+        s.requested !== (run.reads || {}).requested || s.selected.length !== s.requested ||
+        new Set(s.selected.map((r) => r.ticker)).size !== s.requested ||
+        !purposes.every((p) => s.selected.filter((r) => r.purpose === p).length === groups[p].requested)) return '';
+    return 'Before chart review, ' + num(s.feasible) + ' candidate' + (s.feasible === 1 ? '' : 's') +
+      ' fit the current regime and individual model sizing. ' + num(opportunity) + ' opportunity / ' + num(research) +
+      ' research reviews selected (' + num(s.requested) + ' of ' + num(s.max_reads) + ' available reads); ' +
+      num(s.feasible_unselected) + ' feasible candidates left unreviewed. Final review and combined cash allocation still decide tickets.';
+  }
   // the run's coverage rule, quoted from the rules the record archived: a record
   // made before the stale tolerance keeps the sentence it was published under
   function coverageRule(data, a) {
@@ -858,6 +881,8 @@
       line('Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
         plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
     }
+    const selectionNote = reviewSelectionNote(data);
+    if (selectionNote) line(selectionNote);
     if (text((run.reads || {}).sentence)) line(run.reads.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');

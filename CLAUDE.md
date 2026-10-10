@@ -19,6 +19,8 @@ session/ticker rotation); zero feasible names does not consume twelve reads.
 Per-row purposes/blockers and reconciled run counts are provenance-bound and
 replayed with the production planner and archived event registry. This changes
 selection and rules identity, not final trade guards or historical records.
+Method explains the recorded pre-review fit, opportunity/research split and
+feasible names left unreviewed only for a reconciled, supported receipt.
 The existing conservative model-plan reservation policy still applies across
 rules identities. No production spend or improvement in outcomes is yet claimed.
 
