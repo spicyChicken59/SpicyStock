@@ -5,10 +5,12 @@
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {};
-  const VERSION = 1, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
+  const VERSION = 2, KEY = 'spicystock:handoff:v1', MAX_ITEMS = 100, MAX_BYTES = 1048576, MAX_SHARES = 1000000;
   const HEX = /^[a-f0-9]{64}$/, DATE = /^\d{4}-\d{2}-\d{2}$/;
   const REF = ['id', 'context_sha256', 'plan_sha256', 'pick_sha256'];
-  const FIELDS = ['submitted_quantity', 'submitted_at', 'filled_quantity', 'average_price', 'filled_at', 'cancelled_quantity', 'cancelled_at', 'exited_quantity', 'exited_at', 'protected_quantity', 'protection_confirmed_at'];
+  const LEGACY_FIELDS = ['submitted_quantity', 'submitted_at', 'filled_quantity', 'average_price', 'filled_at', 'cancelled_quantity', 'cancelled_at', 'exited_quantity', 'exited_at', 'protected_quantity', 'protection_confirmed_at'];
+  const RESULT_FIELDS = ['average_exit_price', 'entry_fees', 'exit_fees'];
+  const FIELDS = [...LEGACY_FIELDS, ...RESULT_FIELDS];
   const QUANTITIES = ['submitted_quantity', 'filled_quantity', 'cancelled_quantity', 'exited_quantity', 'protected_quantity'];
   const TIMES = ['submitted_at', 'filled_at', 'cancelled_at', 'exited_at', 'protection_confirmed_at'];
   const listeners = [];
@@ -17,10 +19,10 @@
   const fail = error => ({ ok: false, error });
   const object = value => value && typeof value === 'object' && !Array.isArray(value);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-  const emptyReport = () => Object.fromEntries(FIELDS.map(key => [key, null]));
+  const emptyReport = (version = VERSION) => Object.fromEntries((version === 1 ? LEGACY_FIELDS : FIELDS).map(key => [key, null]));
   // Clearing cumulative fields means unknown, never "no order was submitted".
   // Once reporting begins, corrections cannot revive a fresh entry draft.
-  const reported = item => item.report_updated_at !== null || FIELDS.some(key => item.report[key] !== null);
+  const reported = item => item.report_updated_at !== null || Object.values(item.report).some(value => value !== null);
   const keyOf = candidate => candidate.stage + ':' + candidate.ticker;
   const cents = value => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
   const dollars = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
@@ -50,15 +52,24 @@
     if (BigInt(whole) * 1000000n + BigInt(part.padEnd(6, '0')) <= 0n) return undefined;
     return String(BigInt(whole)) + (part.replace(/0+$/, '') ? '.' + part.replace(/0+$/, '') : '');
   }
-  function normalizeReport(fields, at) {
-    if (!exactKeys(fields, FIELDS)) return fail('Enter the complete set of manual report fields; blank means unknown.');
-    const out = emptyReport();
+  function normalizeReport(fields, at, version = VERSION) {
+    if (!exactKeys(fields, version === 1 ? LEGACY_FIELDS : FIELDS)) return fail('Enter the complete set of manual report fields; blank means unknown.');
+    const out = emptyReport(version);
     for (const key of QUANTITIES) {
       out[key] = quantity(fields[key]);
       if (out[key] === undefined) return fail('Quantities must be whole shares between 0 and ' + MAX_SHARES + ', or blank for unknown.');
     }
     out.average_price = average(fields.average_price);
     if (out.average_price === undefined) return fail('Average fill price must be positive, with at most six decimal places, or blank for unknown.');
+    if (version === VERSION) {
+      out.average_exit_price = average(fields.average_exit_price);
+      if (out.average_exit_price === undefined) return fail('Average exit price must be positive, with at most six decimal places, or blank for unknown.');
+      for (const key of ['entry_fees', 'exit_fees']) {
+        const value = fields[key] === null ? null : api.cashPreview.cents(fields[key]);
+        if (value === undefined) return fail('Actual fees must be non-negative dollar amounts with at most two decimals, or blank for unknown.');
+        out[key] = value === null ? null : cashText(value);
+      }
+    }
     for (const key of TIMES) {
       const raw = fields[key];
       out[key] = raw === null || raw === '' ? null : timestamp(raw);
@@ -69,6 +80,7 @@
     if (submitted === null && (filled !== null || cancelled !== null)) return fail('Enter the quantity actually submitted before reporting fills or cancellations.');
     if (submitted !== null && ((filled !== null && filled > submitted) || (cancelled !== null && cancelled > submitted) || (filled !== null && cancelled !== null && filled + cancelled > submitted))) return fail('Filled plus cancelled shares cannot exceed the quantity reported submitted. Correct the cumulative quantities together.');
     if (exited !== null && (filled === null || exited > filled)) return fail('Exited shares cannot exceed reported entry fills. Enter or correct both cumulative quantities together.');
+    if (version === VERSION && out.average_exit_price !== null && !exited) return fail('An average exit price needs a positive reported exit quantity.');
     if ((out.submitted_at && !submitted) || ((out.average_price !== null || out.filled_at) && !filled) || (out.cancelled_at && !cancelled) || (out.exited_at && !exited) || (out.protection_confirmed_at && out.protected_quantity === null)) return fail('Prices and event times need their corresponding reported quantity; zero fills have no fill price or fill time.');
     for (const key of ['filled_at', 'cancelled_at', 'exited_at']) if (out[key] && out.submitted_at && out[key] < out.submitted_at) return fail('A fill, cancellation or exit cannot precede the reported submission. Correct the times together.');
     if (out.cancelled_at && out.filled_at && out.cancelled_at < out.filled_at) return fail('The remainder cancellation cannot precede the latest reported fill.');
@@ -95,13 +107,13 @@
   function calculation(item) {
     return api.cashPreview.calculate({ cash: cashText(item.draft.cash_cents), fees: cashText(item.draft.fee_cents), quantity: String(item.draft.quantity), order: item.plan.order });
   }
-  function validItem(item) {
-    if (!exactKeys(item, ['version', 'id', 'revision', 'created_at', 'updated_at', 'publication', 'plan', 'draft', 'report', 'report_updated_at']) || item.version !== VERSION || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
+  function validItem(item, version = VERSION) {
+    if (!exactKeys(item, ['version', 'id', 'revision', 'created_at', 'updated_at', 'publication', 'plan', 'draft', 'report', 'report_updated_at']) || item.version !== version || !Number.isSafeInteger(item.revision) || item.revision < 1 ||
         !timestamp(item.created_at) || !timestamp(item.updated_at) || Date.parse(item.created_at) > Date.parse(item.updated_at) || !planValid(item.plan)) return false;
     const pub = item.publication, draft = item.draft;
     if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !HEX.test(pub.sha256) || !validDate(pub.session) || !timestamp(pub.published_at) || !/^[a-f0-9]{12}$/.test(pub.rules_version) ||
         item.id !== pub.sha256 + ':' + item.plan.reference.id || !exactKeys(draft, ['quantity', 'cash_cents', 'fee_cents']) || !Number.isInteger(draft.quantity) || draft.quantity < 1 || draft.quantity > MAX_SHARES || !cents(draft.cash_cents) || !cents(draft.fee_cents) || calculation(item).state !== 'calculated') return false;
-    const report = normalizeReport(item.report);
+    const report = normalizeReport(item.report, null, version);
     return report.ok && same(report.report, item.report) && (item.report_updated_at === null ? !reported(item) : !!timestamp(item.report_updated_at) && Date.parse(item.report_updated_at) <= Date.parse(item.updated_at));
   }
   function load() {
@@ -111,8 +123,12 @@
       if (raw === null) { lastError = ''; return { ok: true, items: [], raw }; }
       if (new w.TextEncoder().encode(raw).length > MAX_BYTES) throw new Error('size');
       const store = JSON.parse(raw);
-      if (!exactKeys(store, ['version', 'items']) || store.version !== VERSION || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(validItem) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
-      lastError = ''; return { ok: true, items: store.items, raw };
+      if (!exactKeys(store, ['version', 'items']) || ![1, VERSION].includes(store.version) || !Array.isArray(store.items) || store.items.length > MAX_ITEMS || !store.items.every(item => validItem(item, store.version)) || new Set(store.items.map(item => item.id)).size !== store.items.length) throw new Error('shape');
+      // Reading an old record never writes or invents prices, fees or times.
+      // The original raw bytes remain available for a failed explicit save.
+      const items = store.version === 1 ? store.items.map(item => ({ ...item, version: VERSION,
+        report: { ...item.report, ...Object.fromEntries(RESULT_FIELDS.map(key => [key, null])) } })) : store.items;
+      lastError = ''; return { ok: true, items, raw };
     } catch (error) {
       lastError = 'Private handoff storage is unavailable, unreadable or from another version. It was left untouched; no reported positions were removed.';
       return { ok: false, items: [], raw, error: lastError };
@@ -120,7 +136,7 @@
   }
   function notify() { listeners.forEach(fn => { try { fn(); } catch (error) { /* other listeners still receive the change */ } }); }
   function save(loaded, items) {
-    if (!items.every(validItem)) return fail('The corrected record is inconsistent, including its update clock. Nothing was overwritten.');
+    if (!items.every(item => validItem(item))) return fail('The corrected record is inconsistent, including its update clock. Nothing was overwritten.');
     if (items.length > MAX_ITEMS) return fail('Private storage has reached ' + MAX_ITEMS + ' handoffs. Explicitly remove an old record before preparing another; nothing was evicted.');
     const raw = JSON.stringify({ version: VERSION, items });
     if (new w.TextEncoder().encode(raw).length > MAX_BYTES) return fail('Private handoff storage is full. Nothing was removed or overwritten.');
@@ -204,6 +220,37 @@
       const saved = save(loaded, loaded.items.filter(row => row.id !== id)); return saved.ok ? { ok: true } : saved;
     });
   }
+  function priceMicros(value) {
+    const [whole, part = ''] = value.split('.');
+    return BigInt(whole) * 1000000n + BigInt(part.padEnd(6, '0'));
+  }
+  function displayMicros(value) {
+    const negative = value < 0n, magnitude = negative ? -value : value;
+    const rounded = (magnitude + 5000n) / 10000n;
+    if (value !== 0n && rounded === 0n) return (negative ? '-' : '') + '<$0.01';
+    return (negative ? '-' : '') + dollars(rounded);
+  }
+  function completedResult(report) {
+    const missing = [], reasons = [];
+    const absent = (field, reason) => { missing.push(field); reasons.push(reason); };
+    if (report.filled_quantity === null || report.filled_quantity === 0) absent('filled_quantity', 'Report a positive number of actual entry fills.');
+    if (report.exited_quantity === null) absent('exited_quantity', 'Report how many filled shares were exited.');
+    else if (report.exited_quantity !== report.filled_quantity) reasons.push('The reported position is not fully exited. Partial exits have no calculated result here because their cost basis is not established.');
+    if (report.submitted_quantity === null) absent('submitted_quantity', 'Report the quantity actually submitted.');
+    if (report.cancelled_quantity === null) absent('cancelled_quantity', 'Report cancelled entry shares, including explicit 0 when none were cancelled.');
+    else if (report.filled_quantity !== null && report.submitted_quantity !== null && report.filled_quantity + report.cancelled_quantity !== report.submitted_quantity) reasons.push('Reconcile the remaining submitted entry shares before completing this result.');
+    for (const [field, label] of [['average_price', 'average entry price'], ['average_exit_price', 'average exit price'], ['entry_fees', 'actual entry fees'], ['exit_fees', 'actual exit fees'], ['filled_at', 'latest entry fill time'], ['exited_at', 'latest exit time']]) {
+      if (report[field] === null) absent(field, 'Report the ' + label + (field.endsWith('_fees') ? '; enter 0 only when you have confirmed no fees.' : '.'));
+    }
+    const empty = { state: 'incomplete', reasons, missing, quantity: null, gross_microusd: null, fees_microusd: null, net_microusd: null,
+      gross_display: null, fees_display: null, net_display: null, outcome: null };
+    if (reasons.length) return empty;
+    const gross = (priceMicros(report.average_exit_price) - priceMicros(report.average_price)) * BigInt(report.filled_quantity);
+    // Fees were explicitly reported in cents. Never borrow the draft's buffer.
+    const fees = priceMicros(report.entry_fees) + priceMicros(report.exit_fees), net = gross - fees;
+    return { ...empty, state: 'complete', quantity: report.filled_quantity, gross_microusd: String(gross), fees_microusd: String(fees), net_microusd: String(net),
+      gross_display: displayMicros(gross), fees_display: displayMicros(fees), net_display: displayMicros(net), outcome: net > 0n ? 'gain' : net < 0n ? 'loss' : 'breakeven' };
+  }
   function summary(item) {
     if (!validItem(item)) return null;
     const report = item.report, filled = report.filled_quantity, submitted = report.submitted_quantity, cancelled = report.cancelled_quantity, exited = report.exited_quantity, protectedQty = report.protected_quantity;
@@ -219,7 +266,7 @@
       planned_quantity: item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
       unfilled_quantity: submitted === null || filled === null ? null : submitted - filled,
       uncancelled_quantity: submitted === null || filled === null || cancelled === null ? null : submitted - filled - cancelled,
-      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, calculation: calculation(item) };
+      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, calculation: calculation(item), completed_result: completedResult(report) };
   }
   function readback(item) {
     if (!validItem(item)) return '';
