@@ -11401,7 +11401,7 @@
    "ticket": "ticket",
    "unknown": "not readable from this record"
   },
-  "sentence": "Candidate funnel under a GREEN market: 6 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 4 review got no usable answer from the API. Anticipation: 9 momentum names, 4 quiet, 1 admitted, 1 listed, 1 ticket. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+  "sentence": "Candidate funnel under a GREEN market: 6 reaction candidates discovered, 4 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 2 mechanical grade below the regime's admitted band, 4 review got no usable answer from the API. Anticipation: 9 momentum names, 4 quiet, 1 passing the coil checks, 1 listed, 1 ticket. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
  },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",

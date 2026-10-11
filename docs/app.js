@@ -4581,35 +4581,45 @@
   // The candidate funnel is printed verbatim from the record's own block: the
   // run gave every discovered candidate one terminal stage and wrote the counts,
   // the labels and the sentence (src/funnel.py); the page adds no figure of its own.
+  // The shape check one level in: every field the table, the sentence and the
+  // matrix notes index into, and the row list whose stages name a label. A
+  // block that fails any clause is absent as a whole; the page invents nothing
+  // of it and crashes on nothing of it.
   function funnelBlock(data) {
     const fu = data && data.funnel;
-    const ok = fu && typeof fu === 'object' && fu.reaction && typeof fu.reaction === 'object' && fu.anticipation && typeof fu.anticipation === 'object'
-      && fu.reaction.stages && typeof fu.reaction.stages === 'object' && fu.anticipation.stages && typeof fu.anticipation.stages === 'object'
-      && fu.labels && typeof fu.labels === 'object' && isNum(fu.reaction.discovered) && isNum(fu.anticipation.listed) && typeof fu.sentence === 'string';
+    const plain = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+    const count = (v) => Number.isInteger(v) && v >= 0;
+    const counts = (o) => plain(o) && Object.keys(o).every((k) => count(o[k]));
+    const rows = (r) => Array.isArray(r) && r.every((x) => plain(x) && typeof x.ticker === 'string' && typeof x.stage === 'string');
+    const ok = plain(fu) && plain(fu.reaction) && plain(fu.anticipation) && counts(fu.reaction.stages) && counts(fu.anticipation.stages)
+      && plain(fu.labels) && count(fu.reaction.discovered) && count(fu.anticipation.listed) && rows(fu.reaction.rows)
+      && typeof fu.sentence === 'string' && fu.sentence.trim() !== '';
     return ok ? fu : null;
   }
   function renderFunnel(data) {
     const fu = funnelBlock(data), box = el('section', { 'class': 'ss-funnel', 'data-funnel': fu ? 'present' : 'absent' });
     box.appendChild(el('h3', { 'class': 'sc-eyebrow', text: 'where the candidates stopped' }));
     if (!fu) {
-      box.appendChild(el('p', { 'class': 'sc-hint', 'data-funnel-note': '', text: 'This record does not carry the candidate funnel: where each candidate stopped was not archived by the rules that made it.' }));
+      box.appendChild(el('p', { 'class': 'sc-hint', 'data-funnel-note': '', text: 'This record does not carry a readable candidate funnel: where each candidate stopped was not archived by the rules that made it.' }));
       return box;
     }
     box.appendChild(el('p', { 'class': 'ss-funnel__sentence', 'data-funnel-sentence': '', text: fu.sentence }));
     const stages = Object.keys(fu.reaction.stages).concat(Object.keys(fu.anticipation.stages).filter((k) => !(k in fu.reaction.stages)));
     const rows = stages.filter((k) => (fu.reaction.stages[k] || 0) > 0 || (fu.anticipation.stages[k] || 0) > 0);
     const table = el('table', { 'class': 'sc-table ss-funnel__table', 'data-funnel-table': '' });
-    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Where the discovered reaction candidates and the listed anticipation setups stopped: one terminal stage each, counted by the run.' }));
-    table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'stage' }), el('th', { scope: 'col', text: 'bursts' }), el('th', { scope: 'col', text: 'setting up' })])));
+    table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'The candidate funnel: where the discovered reaction candidates and the listed anticipation setups ended, one terminal stage each, counted by the run; a ticket is the stage a candidate reached, not a stop.' }));
+    table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'stage' }), el('th', { scope: 'col', text: 'bursts' }), el('th', { scope: 'col', text: 'setups' })])));
     const tbody = el('tbody');
-    const cell = (v) => el('td', { 'class': 'ss-funnel__n', text: isNum(v) ? num(v) : '—' });
+    // a count the block carries is printed as it is; a stage that is not one of
+    // this family's is an empty cell, not an unreported one
+    const cell = (v) => el('td', { 'class': 'ss-funnel__n', text: Number.isInteger(v) ? num(v) : '' });
     tbody.appendChild(el('tr', { 'data-funnel-row': 'discovered' }, [el('th', { scope: 'row', text: 'discovered bursts · listed setups' }), cell(fu.reaction.discovered), cell(fu.anticipation.listed)]));
-    if (isNum(fu.reaction.potentially_usable)) tbody.appendChild(el('tr', { 'data-funnel-row': 'potentially_usable' }, [el('th', { scope: 'row', text: 'potentially usable: mechanical grade in the admitted band, no veto' }), cell(fu.reaction.potentially_usable), cell(null)]));
+    if (Number.isInteger(fu.reaction.potentially_usable) && fu.reaction.potentially_usable >= 0) tbody.appendChild(el('tr', { 'data-funnel-row': 'potentially_usable' }, [el('th', { scope: 'row', text: 'potentially usable: mechanical grade in the admitted band, no veto' }), cell(fu.reaction.potentially_usable), cell(null)]));
     rows.forEach((k) => tbody.appendChild(el('tr', { 'data-funnel-row': k }, [
       el('th', { scope: 'row', text: text(fu.labels[k]) || words(k) }),
       cell(k in fu.reaction.stages ? fu.reaction.stages[k] : null), cell(k in fu.anticipation.stages ? fu.anticipation.stages[k] : null)
     ])));
-    if (!rows.length) tbody.appendChild(el('tr', { 'data-funnel-row': 'none' }, [el('th', { scope: 'row', text: 'no candidate reached a gate' }), cell(0), cell(0)]));
+    if (!rows.length) tbody.appendChild(el('tr', { 'data-funnel-row': 'none' }, [el('th', { scope: 'row', text: 'no candidate reached a gate' }), el('td', { 'class': 'ss-funnel__n', colspan: '2', text: 'none counted' })]));
     table.appendChild(tbody);
     box.appendChild(el('div', { 'class': 'sc-table-scroll' }, table));
     return box;
@@ -4619,7 +4629,7 @@
     const bursts = (data.bursts || []).filter((b) => b && b.ticker), trades = data.trades || [], body = clear($('scan-body')), run = data.run || {};
     const nCriteria = bursts.length && bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     $('scan-summary').textContent = 'Everything the scan found · ' + (bursts.length ? plural(bursts.length, 'burst') : 'no burst');
-    $('scan-lede').textContent = 'Every burst against its ' + nCriteria + ' recorded criteria. Read evidence for the observed value and rule; a name opens the full explanation above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
+    $('scan-lede').textContent = (funnelBlock(data) ? 'Where the candidates stopped, counted by the run; then every burst' : 'Every burst') + ' against its ' + nCriteria + ' recorded criteria. Read evidence for the observed value and rule; a name opens the full explanation above.' + (isNum(run.bursts) && run.bursts > bursts.length ? ' ' + bursts.length + ' of the ' + num(run.bursts) + ' bursts found are archived with their checks.' : '');
     const cm = data.closest_miss;
     if (cm && cm.sentence && !trades.length) body.appendChild(el('aside', { 'class': 'sc-callout sc-callout--core', id: 'closest-miss' }, [el('div', { 'class': 'sc-callout__label', text: 'closest miss' }), el('p', { 'class': 'sc-callout__figure', text: cm.sentence })]));
     body.appendChild(renderFunnel(data));
@@ -4632,9 +4642,11 @@
     const nCriteria = bursts[0].quality && bursts[0].quality.checks ? bursts[0].quality.checks.length : Object.keys(CRITERIA_SHORT).length;
     const keys = Object.keys(CRITERIA_SHORT);
     const labels = {}; bursts.forEach((b) => ((b.quality || {}).checks || []).forEach((c) => { if (c && c.key && !labels[c.key]) labels[c.key] = c.label; }));
-    const fu = funnelBlock(data), stageOf = {};
-    ((fu && Array.isArray(fu.reaction.rows)) ? fu.reaction.rows : []).forEach((r) => { if (r && r.ticker) stageOf[r.ticker] = r.stage; });
-    const stopped = (t) => { const st = stageOf[t]; return fu && st && st !== 'ticket' ? ' · stopped at: ' + (text(fu.labels[st]) || words(st)) : ''; };
+    // the stage of each ticker off the block's own rows, in a map with no prototype
+    // so a ticker spelled like an Object property resolves to nothing
+    const fu = funnelBlock(data), stageOf = Object.create(null);
+    (fu ? fu.reaction.rows : []).forEach((r) => { stageOf[r.ticker] = r.stage; });
+    const stopped = (t) => { const st = stageOf[t]; return fu && typeof st === 'string' && st && st !== 'ticket' ? ' · stopped at: ' + (text(fu.labels[st]) || words(st)) : ''; };
     body.appendChild(el('p', { 'class': 'sc-hint', id: 'scan-help', text: 'Jump to a criterion or swipe across. Keyboard: focus the table and use the arrow keys. Open Read evidence for the full measurements and recorded rule; select the stock for its rationale and source notes.' }));
     const scroll = el('div', { 'class': 'sc-table-scroll', 'data-sc-matrix-nav': '', tabindex: '0', role: 'region', 'aria-label': 'Every burst against the ' + nCriteria + ' criteria', 'aria-describedby': 'scan-help' });
     const table = el('table', { 'class': 'sc-table sc-signal-matrix', id: 'scan-table' });

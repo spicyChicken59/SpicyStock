@@ -398,9 +398,11 @@
 .ss-scan .sc-table__sort { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-transform: inherit; letter-spacing: inherit; }
 .ss-scan th[aria-sort] .sc-table__sort::after { content: " ↕"; color: var(--sc-text-3); }
 .ss-funnel { margin: var(--sc-s3) 0 0; }
-.ss-funnel__sentence { margin: var(--sc-s1) 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); }
+.ss-funnel__sentence { margin: var(--sc-s1) 0; font-size: var(--sc-text-sm); color: var(--sc-text-2); overflow-wrap: anywhere; }
 .ss-funnel__table th[scope="row"] { font-weight: 500; text-align: left; }
-.ss-funnel__table th:nth-child(n+2), .ss-funnel__n { width: 1%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* the two count columns take their content's width with a narrow gutter, so a
+   320 px phone keeps about half the table for the stage column */
+.ss-funnel__table th:nth-child(n+2), .ss-funnel__n { width: 1%; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: var(--sc-s1); padding-right: var(--sc-s1); }
 .ss-scan th[aria-sort="descending"] .sc-table__sort::after { content: " ↓"; }
 .ss-scan th[aria-sort="ascending"] .sc-table__sort::after { content: " ↑"; }
 .ss-scan .sc-signal-matrix__name { background: none; border: 0; padding: 0; font: inherit; color: var(--sc-brand); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }

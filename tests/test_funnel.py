@@ -15,6 +15,7 @@ import copy
 import gzip
 import json
 from pathlib import Path
+import re
 import subprocess
 
 import pytest
@@ -135,10 +136,16 @@ def test_the_fixtures_between_them_reach_the_stages_the_record_can_write():
     assert {"anticipation:market", "anticipation:allocation_slot", "anticipation:ticket"} <= reached, reached
 
 
-def test_a_closed_night_carries_the_previous_sessions_funnel_verbatim():
-    closed, full = load(PAGE / "closed.json"), load(PAGE / "full.json")
-    assert closed["run"]["session_state"] == "closed" or closed["bursts"], "the closed fixture carries no night"
-    assert closed["funnel"]["reaction"]["stages"] == full["funnel"]["reaction"]["stages"]
+def test_a_holiday_run_preserves_the_previous_publication_with_its_block():
+    """The closed fixture is the Labor Day run over the 4 September docs, which
+    the known-holiday rule preserves byte for byte: the record it carries is the
+    open night's own, block included, and nothing is re-derived under the
+    holiday. (The pipeline's carried-night branch, which would re-derive a
+    block over the previous night's bursts, is not what a known holiday takes.)"""
+    closed = load(PAGE / "closed.json")
+    assert closed["run"]["session"] == "2026-09-04" and closed["run"]["session_state"] == "open"
+    assert closed["run"]["expected_session"] == closed["run"]["session"]
+    assert closed["funnel"] == funnel.build(closed) and funnel.faults(closed) == []
 
 
 # ------------------------------------------------------ the stage rules ----
@@ -209,6 +216,33 @@ def test_an_accepted_reading_below_the_band_is_a_downgrade_and_above_it_reaches_
             "evidence": {"planning": {"error": "ValueError: no stop candidate"}}}
     assert funnel.reaction_stage(kept, GREEN, {}, []) == "plan_error"
     assert funnel.reaction_stage({**kept, "evidence": {"planning": {"error": None}}}, GREEN, {}, []) == "plan_unavailable"
+    # an empty error string names no error
+    assert funnel.reaction_stage({**kept, "evidence": {"planning": {"error": ""}}}, GREEN, {}, []) == "plan_unavailable"
+
+
+def test_a_listed_setup_without_a_plan_names_the_planners_error_or_the_missing_plan():
+    """``make_watchlist`` writes ``plan: None`` beside the planner's error when
+    a listed name's plan raised; the funnel names that, after the market gate."""
+    assert funnel.anticipation_stage({"ticker": "Y", "plan": None, "evidence": {"planning": {"error": "KeyError: 'Low'"}}}, GREEN, {}) == "plan_error"
+    assert funnel.anticipation_stage({"ticker": "Y", "plan": None}, GREEN, {}) == "plan_unavailable"
+    assert funnel.anticipation_stage({"ticker": "Y", "plan": None, "evidence": {"planning": {"error": ""}}}, GREEN, {}) == "plan_unavailable"
+    assert funnel.anticipation_stage({"ticker": "Y", "plan": None, "evidence": {"planning": {"error": "KeyError: 'Low'"}}}, (), {}) == "market"
+
+
+def test_a_burst_row_without_a_mechanical_grade_is_unknown_never_placed_at_the_grade():
+    for mechanical in (None, 7, ["A"], {"grade": "A"}):
+        row = {"ticker": "X", "grade": "A", "vetoes": [], "claude": accepted_reader("A"), "review_selection": selected(),
+               "plan": planned(admitted=True)}
+        if mechanical is not None:
+            row["grade_mechanical"] = mechanical
+        assert funnel.reaction_stage(row, GREEN, {}, ["X"]) == "unknown", mechanical
+        assert funnel.reaction_stage(row, (), {}, ["X"]) == "market", mechanical
+    block = funnel.build({"rules": {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]}},
+                          "breadth": {"regime": {"verdict": "green"}}, "cash_budget": {}, "trades": [],
+                          "watchlist": {"top": [], "counts": {}},
+                          "bursts": [{"ticker": "X", "grade": "A", "vetoes": []}]})
+    assert block["reaction"]["stages"]["unknown"] == 1 and block["reaction"]["potentially_usable"] == 0
+    assert block["reaction"]["by_mechanical_grade"] == {g: 0 for g in grader.GRADES}
 
 
 @pytest.mark.parametrize("plan_, stage", [
@@ -242,6 +276,11 @@ def test_a_plan_from_before_the_allocation_block_is_placed_by_the_cash_budget_an
     # a cut filed under the other setup kind is not this plan's
     other = {"cut": [{"ticker": "X", "setup_kind": "anticipation", "kind": "slot_cap", "reason": "the cap"}]}
     assert funnel.reaction_stage({**row, "plan": legacy}, GREEN, other, ["X"]) == "ticket"
+    # a cut kind the module does not know is an allocation outcome it cannot read, never a guess
+    strange = {"cut": [{"ticker": "X", "setup_kind": "burst", "kind": "something_new", "reason": "?"}]}
+    assert funnel.reaction_stage({**row, "plan": legacy}, GREEN, strange, []) == "allocation_unknown"
+    # a legacy name in the trade list is a ticket only with an order action on its own plan
+    assert funnel.reaction_stage({**row, "plan": {**legacy, "action": "refused"}}, GREEN, {}, ["X"]) == "geometry"
     assert funnel.reaction_stage({**row, "plan": legacy}, GREEN, {}, []) == "allocation_unknown"
     assert funnel.reaction_stage({**row, "plan": {**legacy, "eligible": False}}, GREEN, {}, []) == "geometry"
     assert funnel.reaction_stage({**row, "plan": {**legacy, "shares": 0}}, GREEN, {}, []) == "sizing"
@@ -265,6 +304,28 @@ def test_a_record_whose_rules_name_no_grades_is_unknown_never_guessed():
     assert block["reaction"]["stages"]["unknown"] == 1 and block["anticipation"]["stages"]["unknown"] == 1
     assert block["anticipation"]["counts"] == {k: None for k in funnel.WATCH_COUNTS}
     assert "Anticipation: 1 listed, 0 tickets." in block["sentence"]
+
+
+def test_a_record_whose_regime_is_not_a_verdict_is_unknown_never_green():
+    """``reader_coverage.admitted`` answers the trade grades for any verdict it
+    does not know; the funnel asks it only for a verdict the record names, so a
+    missing or unreadable regime is unknown and never read as GREEN."""
+    rules = {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]}}
+    row = {"ticker": "X", "grade_mechanical": "A+", "grade": "A+", "vetoes": [], "claude": accepted_reader("A+"),
+           "review_selection": selected(), "plan": planned(admitted=True)}
+    for breadth in ({}, {"regime": {}}, {"regime": {"verdict": None}}, {"regime": {"verdict": "purple"}},
+                    {"regime": {"verdict": 5}}, {"regime": "red"}, None):
+        data = {"rules": rules, "breadth": breadth, "bursts": [row], "cash_budget": {}, "trades": ["X"],
+                "watchlist": {"top": [{"ticker": "Y", "plan": planned(admitted=True)}], "counts": {}}}
+        assert funnel.admitted_grades(data) is None, breadth
+        block = funnel.build(data)
+        assert block["admitted_grades"] is None and block["reaction"]["potentially_usable"] == 0, breadth
+        assert [r["stage"] for r in block["reaction"]["rows"]] == ["unknown"], breadth
+        assert [r["stage"] for r in block["anticipation"]["rows"]] == ["unknown"], breadth
+        assert funnel.faults({**data, "rules": {**rules, "funnel": dict(funnel.RULES)}, "funnel": block}) == []
+    # the same record under a verdict the rules name is the shared rule's answer
+    data["breadth"] = {"regime": {"verdict": "green"}}
+    assert funnel.build(data)["reaction"]["rows"][0]["stage"] == "ticket"
 
 
 def test_potentially_usable_counts_the_names_past_the_grade_and_the_veto_and_nothing_later():
@@ -300,6 +361,17 @@ def test_the_admitted_grades_are_the_regimes_through_the_one_shared_rule():
         assert funnel.admitted_grades(data) == reader_coverage.admitted(verdict, ["A+", "A"], ["A+"]) == expected
 
 
+def stopped_segments(sentence, lead, tail):
+    """The "N label" segments of one stopped-at clause, split only where a
+    count follows the comma: a label may itself carry a comma."""
+    m = re.search(re.escape(lead) + r" (.*?)\. " + re.escape(tail), sentence)
+    return re.split(r", (?=\d+ )", m.group(1)) if m else []
+
+
+def expected_segments(stages):
+    return [f"{n} {funnel.LABELS[k]}" for k, n in stages.items() if n and k != "ticket"]
+
+
 def test_the_sentence_is_counts_and_labels_alone():
     block = funnel.build(load(PAGE / "full.json"))
     s = block["sentence"]
@@ -310,9 +382,44 @@ def test_the_sentence_is_counts_and_labels_alone():
     one = copy.deepcopy(block)
     one["reaction"]["discovered"] = 1
     assert "1 reaction candidate discovered" in funnel.sentence(one)
-    # nothing but the block's own words reaches the sentence: every label it uses is the module's
-    for stage, n in block["reaction"]["stages"].items():
-        assert (funnel.LABELS[stage] in s) == bool(n) or stage == "ticket", stage
+    # nothing but the block's own words reaches the sentence: each stopped-at clause is
+    # exactly the block's nonzero stages, each "N label", in stage order -- read as
+    # segments, because one label is a prefix of another ("known corporate event")
+    assert stopped_segments(s, "Reaction candidates stopped at:", "Anticipation:") == expected_segments(block["reaction"]["stages"])
+    assert stopped_segments(s, "Listed setups stopped at:", "A stage is") == expected_segments(block["anticipation"]["stages"])
+    preview = copy.deepcopy(block)
+    preview["reaction"]["stages"].update(allocation_slot=0, preview_event=1, event=1)
+    preview["anticipation"]["stages"].update(allocation_slot=0, review_unknown=0, unknown=1)
+    s2 = funnel.sentence(preview)
+    assert stopped_segments(s2, "Reaction candidates stopped at:", "Anticipation:") == expected_segments(preview["reaction"]["stages"])
+    assert stopped_segments(s2, "Listed setups stopped at:", "A stage is") == expected_segments(preview["anticipation"]["stages"])
+    # a block with nothing stopped carries no stopped-at clause at all
+    quiet = copy.deepcopy(block)
+    for family in ("reaction", "anticipation"):
+        quiet[family]["stages"] = {k: 0 for k in quiet[family]["stages"]}
+    assert "stopped at:" not in funnel.sentence(quiet)
+
+
+def test_the_sentence_names_the_watchlists_counts_only_when_every_one_is_recorded():
+    block = funnel.build(load(PAGE / "full.json"))
+    c, listed = block["anticipation"]["counts"], block["anticipation"]["listed"]
+    assert f"Anticipation: {c['momentum']} momentum names, {c['quiet']} quiet, {c['admitted']} passing the coil checks, {listed} listed, " in block["sentence"]
+    partial = copy.deepcopy(block)
+    partial["anticipation"]["counts"]["quiet"] = None
+    assert "momentum" not in funnel.sentence(partial) and f"Anticipation: {listed} listed, " in funnel.sentence(partial)
+    flagged = copy.deepcopy(block)
+    flagged["anticipation"]["counts"]["admitted"] = True
+    assert "momentum" not in funnel.sentence(flagged)
+    one = copy.deepcopy(block)
+    one["anticipation"]["counts"].update(momentum=1, quiet=1, admitted=1)
+    one["anticipation"]["stages"] = {k: 0 for k in one["anticipation"]["stages"]}
+    one["anticipation"]["stages"]["ticket"] = 1
+    assert f"Anticipation: 1 momentum name, 1 quiet, 1 passing the coil checks, {listed} listed, 1 ticket." in funnel.sentence(one)
+    # a regime the record does not name is said so, never raised on
+    for regime in (None, "", 5):
+        unnamed = copy.deepcopy(block)
+        unnamed["regime"] = regime
+        assert funnel.sentence(unnamed).startswith("Candidate funnel under a market this record does not name: 6 reaction"), regime
 
 
 # ---------------------------------------------------------- the validator ----
@@ -340,6 +447,17 @@ def test_the_validator_refuses_a_block_the_record_does_not_re_derive():
             b["plan"]["allocation"] = {**b["plan"]["allocation"], "admitted": False, "reason": "slot_cap"}
     moved["funnel"] = funnel.build(moved)
     assert funnel.faults(moved) == []
+
+
+def test_the_validator_names_a_block_it_cannot_re_derive_rather_than_raising(monkeypatch):
+    data = load(PAGE / "full.json")
+
+    def broken(_):
+        raise KeyError("a field the record lacks")
+    monkeypatch.setattr(funnel, "build", broken)
+    assert funnel.faults(data) == ["funnel cannot be re-derived from this record"]
+    with pytest.raises(ValueError, match="cannot be re-derived"):
+        report.validate(data)
 
 
 def test_a_record_under_older_rules_is_not_asked_for_a_block():

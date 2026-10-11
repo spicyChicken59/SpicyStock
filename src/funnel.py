@@ -159,7 +159,10 @@ def reaction_stage(row, admitted, cash_budget, trades):
         return "unknown"
     if not admitted:
         return "market"
-    if row.get("grade_mechanical") not in admitted:
+    mechanical = row.get("grade_mechanical")
+    if not isinstance(mechanical, str):
+        return "unknown"
+    if mechanical not in admitted:
         return "grade"
     if row.get("vetoes"):
         return "veto"
@@ -249,11 +252,17 @@ def _stopped(stages):
     return ", ".join(f"{n} {LABELS[s]}" for s, n in stages.items() if n and s != "ticket")
 
 
+def _plural(n, one, many=None):
+    return f"{n} {one if n == 1 else (many or one + 's')}"
+
+
 def sentence(block):
     """The funnel in words, composed from its counts and labels only."""
     r, a = block["reaction"], block["anticipation"]
-    verdict = (block.get("regime") or "unknown").upper()
-    parts = [f"Candidate funnel under a {verdict} market: {r['discovered']} reaction "
+    regime = block.get("regime")
+    market = (f"under a {regime.upper()} market" if isinstance(regime, str) and regime
+              else "under a market this record does not name")
+    parts = [f"Candidate funnel {market}: {r['discovered']} reaction "
              f"{'candidate' if r['discovered'] == 1 else 'candidates'} discovered, "
              f"{r['potentially_usable']} potentially usable (mechanical grade in the admitted band, no veto), "
              f"{r['stages'].get('ticket', 0)} reaction {'ticket' if r['stages'].get('ticket', 0) == 1 else 'tickets'}."]
@@ -261,10 +270,12 @@ def sentence(block):
     if stopped:
         parts.append(f"Reaction candidates stopped at: {stopped}.")
     c = a["counts"]
-    known = all(isinstance(c.get(k), int) for k in ("momentum", "quiet", "admitted"))
-    lead = (f"Anticipation: {c['momentum']} momentum names, {c['quiet']} quiet, {c['admitted']} admitted, "
-            if known else "Anticipation: ") + f"{a['listed']} listed, {a['stages'].get('ticket', 0)} " \
-           f"{'ticket' if a['stages'].get('ticket', 0) == 1 else 'tickets'}."
+    known = all(type(c.get(k)) is int for k in ("momentum", "quiet", "admitted"))
+    # the watchlist's own counts: names with momentum, quiet ones, and the ones its coil checks admitted
+    lead = (f"Anticipation: {_plural(c['momentum'], 'momentum name')}, {c['quiet']} quiet, "
+            f"{c['admitted']} passing the coil checks, "
+            if known else "Anticipation: ") + f"{a['listed']} listed, " \
+           f"{_plural(a['stages'].get('ticket', 0), 'ticket')}."
     parts.append(lead)
     stopped = _stopped(a["stages"])
     if stopped:
