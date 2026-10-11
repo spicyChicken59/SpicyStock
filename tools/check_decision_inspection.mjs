@@ -118,7 +118,7 @@ async function launch(browser, base, fixture, { width = 1280, theme = 'dark', ca
 async function reveal(page) {
   await page.locator('#morning-open').click();
   await page.locator('[data-stop-research] > summary').click();
-  await page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state));
+  await page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state) && (!SCStock.researchObservations || SCStock.researchObservations.status().settled));
 }
 async function capture(page, name) {
   if (!shotsDir) return;
@@ -166,7 +166,7 @@ async function actualCases(browser, base) {
       const after = await authority(page);
       eq(label + ': inspection cannot mutate source/model/private storage or observations', [after.data, after.model, after.storage, after.morning], [before.data, before.model, before.storage, before.morning]);
       eq(label + ': inspection cannot copy a ticket', await page.evaluate(() => window.__inspectionCopies), 0);
-      check(label + ': only receipt and digest bundle are read on research open', tab.requests.slice(requestStart).every(request => /\/docs\/stop-research(?:\.json|\/[a-f0-9]{64}\.json)$/.test(new URL(request.url).pathname)));
+      check(label + ': only receipt, digest bundle and the dated observation path are read on research open', tab.requests.slice(requestStart).every(request => /\/docs\/(?:stop-research(?:\.json|\/[a-f0-9]{64}\.json)|research-observations\.json)$/.test(new URL(request.url).pathname)));
       check(label + ': no horizontal overflow', await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
       eq(label + ': no uncaught browser errors', tab.errors, []);
     } finally { await tab.context.close(); }

@@ -121,7 +121,7 @@ export async function checkPrivateBackup({ browser, base, open, check, eq, shots
       try {
         eq('donor: opening backup does not migrate exact original v2 bytes', await stored(page), originals[1]);
         eq('donor: backup access performs zero storage writes', await writes(page), 0);
-        await page.locator('[data-stop-research] > summary').click(); await page.waitForFunction(() => SCStock.stopResearch.status().state === 'loaded');
+        await page.locator('[data-stop-research] > summary').click(); await page.waitForFunction(() => SCStock.stopResearch.status().state === 'loaded' && (!SCStock.researchObservations || SCStock.researchObservations.status().settled));
         await page.locator('[data-stop-report="KE"]').click();
         await set(page, { submitted_quantity: '9', filled_quantity: '7', average_price: '31.234567', exited_quantity: '3', entry_fees: '0.11' });
         await page.locator('[data-handoff-save]').click(); await page.waitForFunction(() => SCStock.handoff.list().length === 2);
@@ -218,7 +218,7 @@ export async function checkPrivateBackup({ browser, base, open, check, eq, shots
       if (!mixedRaw) throw Error('Mixed module-produced backup unavailable');
       const tab = await launch(), { page } = tab;
       try {
-        await page.locator('[data-stop-research] > summary').click(); await page.waitForFunction(() => SCStock.stopResearch.status().state === 'loaded');
+        await page.locator('[data-stop-research] > summary').click(); await page.waitForFunction(() => SCStock.stopResearch.status().state === 'loaded' && (!SCStock.researchObservations || SCStock.researchObservations.status().settled));
         await page.locator('[data-stop-report="KE"]').click();
         await set(page, { submitted_quantity: '4', filled_quantity: '3', average_price: '31.987654' }); await field(page, 'average_price').focus();
         await page.evaluate(() => { window.__transientBackupInput = document.querySelector('[data-handoff-field="average_price"]'); });

@@ -36,7 +36,7 @@ async function save(page) {
 async function reveal(page) {
   if (!await page.locator('#morning-desk').evaluate(node => node.open)) await page.locator('#morning-open').click();
   if (!await page.locator('[data-stop-research]').evaluate(node => node.open)) await page.locator('[data-stop-research] > summary').click();
-  await page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state));
+  await page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state) && (!SCStock.researchObservations || SCStock.researchObservations.status().settled));
 }
 async function openReport(page, ticker) { await page.locator('[data-stop-report="' + ticker + '"]').click(); }
 

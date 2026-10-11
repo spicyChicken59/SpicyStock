@@ -12,7 +12,8 @@ const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const ordered = value => Array.isArray(value) ? value.map(ordered) : value && typeof value === 'object'
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])])) : value;
 const json = value => Buffer.from(JSON.stringify(ordered(value)));
-const sourceRequests = requests => requests.filter(request => /\/stop-research(?:\.json|\/)/.test(new URL(request.url).pathname));
+// The dated observation companion rides research open: its one fixed path is part of the research transport.
+const sourceRequests = requests => requests.filter(request => /\/(?:stop-research(?:\.json|\/)|research-observations\.json$)/.test(new URL(request.url).pathname));
 const inspectOnly = '[data-copy], [data-order], [data-handoff-prepare], [data-follow], [data-save]';
 
 async function file(name) {
@@ -23,7 +24,7 @@ async function file(name) {
 export async function checkStopResearch({ browser, base, open, check, eq, shotsDir }) {
   console.log('-- stop-width research: exact publication, unchanged production authority, bounded hypothetical allocation');
   const state = page => page.evaluate(() => SCStock.stopResearch.status());
-  const settled = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state));
+  const settled = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.stopResearch.status().state) && (!SCStock.researchObservations || SCStock.researchObservations.status().settled));
   const words = page => page.locator('[data-stop-body]').textContent();
   const reveal = async page => { await page.locator('[data-stop-research] > summary').click(); await settled(page); };
   const snapshot = page => page.evaluate(async () => {
@@ -54,6 +55,8 @@ export async function checkStopResearch({ browser, base, open, check, eq, shotsD
         await page.route('**/docs/reader.json', route => route.fulfill({ contentType: 'application/json', body: fixture.reader }));
         await page.route('**/stop-canonical-control.json', route => route.fulfill({ contentType: 'application/json', body: fixture.publication }));
         await page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: '{}' }));
+        // No dated observation is published for these controls; its own suite serves one.
+        await page.route('**/research-observations.json', route => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' }));
         await page.route('**/stop-research.json', async route => {
           const current = transport.current;
           if (transport.held === 'receipt') await new Promise(resolve => { transport.release = resolve; });
@@ -152,7 +155,7 @@ export async function checkStopResearch({ browser, base, open, check, eq, shotsD
       check(label + ': both recorded acquisition exclusions remain explicit', /event|acquisition/i.test(await rowText(page, 'MG')) && /event|acquisition/i.test(await rowText(page, 'ZIM')));
       check(label + ': actual fees, gaps, slippage and unverified broker cash remain limitations', /fees/i.test(text) && /gaps/i.test(text) && /slippage/i.test(text) && /broker/i.test(text));
       check(label + ': missing quote, issuer-news and earnings coverage is explicit', /quote/i.test(text) && /news/i.test(text) && /earnings/i.test(text));
-      eq(label + ': only the fixed receipt and exact digest path are fetched', sourceRequests(requests).map(request => new URL(request.url).pathname), ['/docs/stop-research.json', '/docs/' + current.receipt.bundle.path]);
+      eq(label + ': only the fixed receipt, exact digest path and fixed observation path are fetched', sourceRequests(requests).map(request => new URL(request.url).pathname), ['/docs/stop-research.json', '/docs/' + current.receipt.bundle.path, '/docs/research-observations.json']);
       eq(label + ': opening research makes no provider or private-symbol request', requests.slice(requestsBeforeResearch).map(request => request.url), sourceRequests(requests).map(request => request.url));
       check(label + ': transport cannot carry cookies, private input, bodies or symbols', sourceRequests(requests).every(request => request.method === 'GET' && !request.body && !request.headers.cookie && !request.headers.referer && !request.url.includes(PRIVATE) && !request.url.includes('234.56') && !new URL(request.url).search));
       check(label + ': transport explicitly omits credentials/referrer and refuses redirects', (await page.evaluate(() => window.__stopRequests)).every(request => request.credentials === 'omit' && request.referrerPolicy === 'no-referrer' && request.mode === 'same-origin' && request.redirect === 'error' && request.body === null));

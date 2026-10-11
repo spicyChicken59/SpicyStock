@@ -38,6 +38,7 @@ import { checkHandoff } from './handoff_cases.mjs';
 import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkStopResearch } from './stop_research_cases.mjs';
 import { checkResearchOutcomes } from './research_outcomes_cases.mjs';
+import { checkResearchObservations } from './research_observation_cases.mjs';
 import { checkDecisionInspection } from './check_decision_inspection.mjs';
 import { checkIndependentReports } from './independent_report_cases.mjs';
 import { checkPrivateBackup } from './private_backup_cases.mjs';
@@ -105,6 +106,7 @@ async function serve() {
         : url.pathname === '/docs/app-issuer-evidence.js' ? process.env.SCSTOCK_ISSUER_EVIDENCE
         : url.pathname === '/docs/app-stop-research.js' ? process.env.SCSTOCK_STOP_RESEARCH
         : url.pathname === '/docs/app-research-outcomes.js' ? process.env.SCSTOCK_RESEARCH_OUTCOMES
+        : url.pathname === '/docs/app-research-observations.js' ? process.env.SCSTOCK_RESEARCH_OBSERVATIONS
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
@@ -132,7 +134,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
   // system declares a fallback stack) and the optional run-log fetch to the
   // GitHub API are the three requests this page may lose offline; the console
   // reports each as one "Failed to load resource", matched off below.
-  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/stop-research(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-outcomes(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u);
+  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/stop-research(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-outcomes(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-observations\.json$/.test(u);
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const u = r.url();
@@ -3921,6 +3923,7 @@ async function main() {
       if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('stop-research')) await checkStopResearch({ browser, base, open, check, eq, shotsDir });
       if (runs('research-outcomes')) await checkResearchOutcomes({ browser, base, open, check, eq, shotsDir });
+      if (runs('research-observations')) await checkResearchObservations({ browser, base, open, check, eq, shotsDir });
       if (runs('decisioninspection')) await checkDecisionInspection({ browser, base, check, shotsDir });
       if (runs('independentreports')) await checkIndependentReports({ browser, base, open, check, eq, shotsDir });
       if (runs('privatebackup')) await checkPrivateBackup({ browser, base, open, check, eq, shotsDir });

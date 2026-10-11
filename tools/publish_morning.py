@@ -5,6 +5,10 @@ only that run's observation, validates it against the current main record, and
 creates a one-file commit. Ordinary fast-forward pushes provide the compare and
 swap: every rejected push starts again from main and repeats all validations.
 No working-tree reset, rebase, force push, provider call or email is involved.
+
+The same path publishes the dated research observation (``--target research``):
+one file, ``docs/research-observations.json``, validated against the current
+main record AND the research cohort receipt and bundle committed beside it.
 """
 from __future__ import annotations
 
@@ -20,8 +24,15 @@ import tempfile
 from src import sessions
 
 SNAPSHOT_PATH = 'docs/morning.json'
+RESEARCH_SNAPSHOT_PATH = 'docs/research-observations.json'
+COHORT_RECEIPT_PATH = 'docs/stop-research.json'
 RECORD_PATH = 'docs/data.json'
 MAX_SNAPSHOT_BYTES = 1024 * 1024
+# One snapshot file per target; a commit may change that file and nothing else.
+TARGETS = {
+    'morning': {'snapshot': SNAPSHOT_PATH, 'message': b'Publish bound morning observation\n'},
+    'research': {'snapshot': RESEARCH_SNAPSHOT_PATH, 'message': b'Publish bound research observation\n'},
+}
 PUSH_ATTEMPTS = 3
 MAX_FUTURE_SKEW_SECONDS = 5
 SCHEDULES = {
@@ -145,7 +156,74 @@ def publication_check(observation: dict, data_raw: bytes,
     return None
 
 
-def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str) -> str:
+def research_check(observation: dict, data_raw: bytes, receipt_raw: bytes | None, bundle_raw: bytes | None,
+                   previous_raw: bytes | None, now: datetime | None = None) -> str | None:
+    """The research observation's race refusals; malformed or rehearsal input raises.
+
+    Beside the record and the prior observation, the cohort receipt committed
+    on main is part of the compare and swap: an observation collected over a
+    cohort that main has since replaced describes nothing main publishes.
+    """
+    from src.research_observations import validate_observation
+
+    if observation.get('dry_run') is not False:
+        raise ValueError('research_rehearsal_cannot_publish')
+    binding = observation.get('publication', {})
+    if (not isinstance(binding, dict)
+            or binding.get('data_sha256') != hashlib.sha256(data_raw).hexdigest()):
+        return 'source_record_changed'
+    if 'previous_observation_sha256' not in observation:
+        raise ValueError('research_previous_observation_binding_missing')
+    previous_hash = hashlib.sha256(previous_raw).hexdigest() if previous_raw is not None else None
+    if observation['previous_observation_sha256'] != previous_hash:
+        return 'previous_observation_changed'
+    cohort = observation.get('cohort')
+    receipt_hash = hashlib.sha256(receipt_raw).hexdigest() if receipt_raw is not None else None
+    if (cohort.get('receipt_sha256') if isinstance(cohort, dict) else cohort) != receipt_hash:
+        return 'research_cohort_changed'
+    validate_observation(observation, data_raw, receipt_raw, bundle_raw, previous_raw=previous_raw,
+                         require_continuity=True)
+    now = now or datetime.now(timezone.utc)
+    if instant(observation['generated_at']) > now + timedelta(seconds=MAX_FUTURE_SKEW_SECONDS):
+        raise ValueError('research_completion_is_in_future')
+    if previous_raw is not None:
+        previous = read_snapshot(previous_raw)
+        previous_binding = previous.get('publication')
+        if not isinstance(previous_binding, dict):
+            raise ValueError('existing_research_binding_invalid')
+        # The prior observation may have been bound to an older cohort, so only
+        # its clocks are read here; its own validation happened when it landed.
+        if previous_binding.get('data_sha256') == binding['data_sha256']:
+            if (instant(previous['generated_at']) >= instant(observation['generated_at'])
+                    or instant(previous['collection_started_at']) >= instant(observation['collection_started_at'])):
+                return 'newer_or_equal_observation_exists'
+    return None
+
+
+def _tip_blob(root: Path, tip: str, path: str, maximum: int, label: str) -> bytes | None:
+    if not git(root, 'ls-tree', tip, '--', path).stdout:
+        return None
+    if int(git(root, 'cat-file', '-s', f'{tip}:{path}').stdout) > maximum:
+        raise ValueError(f'existing_{label}_too_large')
+    return git(root, 'show', f'{tip}:{path}').stdout
+
+
+def _cohort_on_main(root: Path, tip: str) -> tuple[bytes | None, bytes | None]:
+    from src.stop_research import MAX_BUNDLE_BYTES, MAX_RECEIPT_BYTES, parse_receipt
+    receipt_raw = _tip_blob(root, tip, COHORT_RECEIPT_PATH, MAX_RECEIPT_BYTES, 'cohort_receipt')
+    if receipt_raw is None:
+        return None, None
+    bundle_path = 'docs/' + parse_receipt(receipt_raw)['bundle']['path']
+    bundle_raw = _tip_blob(root, tip, bundle_path, MAX_BUNDLE_BYTES, 'cohort_bundle')
+    if bundle_raw is None:
+        raise ValueError('cohort_bundle_missing_from_main')
+    return receipt_raw, bundle_raw
+
+
+def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str, target: str = 'morning') -> str:
+    if target not in TARGETS:
+        raise ValueError('unknown_publication_target')
+    snapshot_path, message = TARGETS[target]['snapshot'], TARGETS[target]['message']
     if ref != 'refs/heads/main':
         raise ValueError('morning_publication_requires_main')
     observation = read_snapshot(snapshot_raw)
@@ -158,11 +236,12 @@ def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str) -> str:
             '+refs/heads/main:refs/remotes/origin/main')
         tip = git(root, 'rev-parse', 'refs/remotes/origin/main').stdout.decode().strip()
         data_raw = git(root, 'show', f'{tip}:{RECORD_PATH}').stdout
-        prior = git(root, 'ls-tree', tip, '--', SNAPSHOT_PATH).stdout
-        if prior and int(git(root, 'cat-file', '-s', f'{tip}:{SNAPSHOT_PATH}').stdout) > MAX_SNAPSHOT_BYTES:
-            raise ValueError('existing_morning_snapshot_too_large')
-        previous_raw = git(root, 'show', f'{tip}:{SNAPSHOT_PATH}').stdout if prior else None
-        refusal = publication_check(observation, data_raw, previous_raw)
+        previous_raw = _tip_blob(root, tip, snapshot_path, MAX_SNAPSHOT_BYTES, 'morning_snapshot')
+        if target == 'morning':
+            refusal = publication_check(observation, data_raw, previous_raw)
+        else:
+            receipt_raw, bundle_raw = _cohort_on_main(root, tip)
+            refusal = research_check(observation, data_raw, receipt_raw, bundle_raw, previous_raw)
         if refusal:
             return refusal
         blob = git(root, 'hash-object', '-w', '--stdin', input=snapshot_raw).stdout.decode().strip()
@@ -171,12 +250,11 @@ def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str) -> str:
                        GIT_AUTHOR_NAME='spicystock', GIT_AUTHOR_EMAIL='actions@github.com',
                        GIT_COMMITTER_NAME='spicystock', GIT_COMMITTER_EMAIL='actions@github.com')
             git(root, 'read-tree', tip, env=env)
-            git(root, 'update-index', '--add', '--cacheinfo', f'100644,{blob},{SNAPSHOT_PATH}', env=env)
+            git(root, 'update-index', '--add', '--cacheinfo', f'100644,{blob},{snapshot_path}', env=env)
             tree = git(root, 'write-tree', env=env).stdout.decode().strip()
-            commit = git(root, 'commit-tree', tree, '-p', tip,
-                         input=b'Publish bound morning observation\n', env=env).stdout.decode().strip()
+            commit = git(root, 'commit-tree', tree, '-p', tip, input=message, env=env).stdout.decode().strip()
         changed = git(root, 'diff-tree', '--no-commit-id', '--name-only', '-r', commit).stdout.decode().splitlines()
-        if changed != [SNAPSHOT_PATH]:
+        if changed != [snapshot_path]:
             raise RuntimeError('morning_commit_must_change_only_observation')
         if git(root, 'push', 'origin', f'{commit}:refs/heads/main', check=False).returncode == 0:
             return 'published'
@@ -191,6 +269,7 @@ def main() -> int:
     commit = commands.add_parser('publish')
     commit.add_argument('--snapshot', type=Path, required=True)
     commit.add_argument('--root', type=Path, default=Path.cwd())
+    commit.add_argument('--target', choices=sorted(TARGETS), default='morning')
     args = parser.parse_args()
     try:
         if args.command == 'guard':
@@ -201,9 +280,9 @@ def main() -> int:
             with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
                 output.write(f'go={str(go).lower()}\n')
         else:
-            outcome = publish(args.root, snapshot_file(args.snapshot),
+            outcome = publish(args.root, snapshot_file(args.snapshot), target=args.target,
                               ref=os.environ.get('GITHUB_REF', ''), run_id=os.environ.get('GITHUB_RUN_ID', ''))
-            print(f'Morning publication: {outcome}')
+            print(f'{args.target.capitalize()} publication: {outcome}')
         return 0
     except (KeyError, OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
         # Provider/authentication values and arbitrary JSON never enter logs.

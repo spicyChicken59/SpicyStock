@@ -302,6 +302,7 @@
     if (api.handoffUI) api.handoffUI.update();
     if (api.issuerEvidence && typeof api.issuerEvidence.update === 'function') api.issuerEvidence.update(data);
     if (api.stopResearch && typeof api.stopResearch.update === 'function') api.stopResearch.update(data);
+    if (api.researchObservations && typeof api.researchObservations.update === 'function') api.researchObservations.update(data);
     if (api.researchOutcomes && typeof api.researchOutcomes.update === 'function') api.researchOutcomes.update(data);
   }
   function unavailable(host) {
@@ -321,6 +322,7 @@
     host.setAttribute('data-morning-offered', 'false');
     const opener = d.getElementById('morning-open');
     if (opener) opener.title = 'Morning desk · No current publication · Saved private broker reports remain accessible';
+    if (api.researchObservations && typeof api.researchObservations.update === 'function') api.researchObservations.update(null);
     if (api.researchOutcomes && typeof api.researchOutcomes.update === 'function') api.researchOutcomes.update(null);
     refreshCash(host);
     if (api.handoffUI) api.handoffUI.update();
