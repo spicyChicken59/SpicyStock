@@ -121,6 +121,19 @@ def test_stale_crossed_future_and_wrong_session_prints_cannot_read_as_current():
     assert stale["status"] == "partial" and all(r["price_checks"] == {"trade": "unknown", "ask": "unknown"} for r in stale["rows"])
 
 
+def test_one_current_row_beside_a_stale_one_is_partial_not_observed():
+    # Only PSNL's print is a minute old; KE's quote and trade are both recent. The status reads
+    # every row, so one fully recent row cannot carry the whole observation to "observed".
+    def stale_psnl_only(result):
+        result["PSNL"]["latest_trade"]["timestamp"] = NOW - timedelta(seconds=61)
+    out = collect(client=Client(edit=stale_psnl_only))
+    rows = {r["ticker"]: r for r in out["rows"]}
+    assert rows["KE"]["trade"]["status"] == rows["KE"]["quote"]["status"] == "recent"
+    assert rows["PSNL"]["trade"]["status"] == "stale" and rows["PSNL"]["quote"]["status"] == "recent"
+    assert out["status"] == "partial"
+    observations.validate_observation(out, *source())
+
+
 def test_outage_and_missing_credentials_keep_no_price_and_leak_nothing(monkeypatch):
     client = Client(errors=("iex",))
     out = collect(client=client)
@@ -161,6 +174,7 @@ def test_the_request_budget_is_one_snapshot_per_run():
     lambda out: out.update(reason="wrong_session"),
     lambda out: out["source"].update(status="unavailable", entitlement="unavailable", error_kind="provider_error"),
     lambda out: out["source"].update(feed="sip"),
+    lambda out: out["source"].update(requests=0),
     lambda out: out["cohort"].update(bundle_sha256="0" * 64),
     lambda out: out["cohort"].update(bound=False),
     lambda out: out["coverage"].update(halts="checked"),
