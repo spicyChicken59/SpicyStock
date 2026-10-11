@@ -1,0 +1,5176 @@
+{
+ "overrides": {},
+ "policy": "whole_share_feasibility_v1",
+ "readings": [
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 61,
+       "eligible": 59,
+       "no_share": 3,
+       "whole_share": 56
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 1,
+       "whole_share": 91
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 1,
+       "whole_share": 59
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 5,
+       "whole_share": 159
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 63,
+      "eligible": 61,
+      "no_share": 3,
+      "whole_share": 58
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 61,
+       "eligible": 59,
+       "no_share": 59,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 2,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 92,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 60,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 164,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 61,
+       "eligible": 59,
+       "no_share": 16,
+       "whole_share": 43
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 19,
+       "whole_share": 73
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 9,
+       "whole_share": 51
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 22,
+       "whole_share": 142
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 2,
+      "eligible": 2,
+      "no_share": 0,
+      "whole_share": 2
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 400,
+   "identity": "blob:edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
+   "missing_inputs": [],
+   "published_at": "2026-09-11T21:08:04.147459+00:00",
+   "regime": "red",
+   "rules_version": "015229b909b7",
+   "session": "2026-09-11",
+   "session_state": "open",
+   "source": "7380a976:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 62,
+       "eligible": 60,
+       "no_share": 3,
+       "whole_share": 57
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 1,
+       "whole_share": 91
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 1,
+       "whole_share": 59
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 5,
+       "whole_share": 159
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 64,
+      "eligible": 62,
+      "no_share": 3,
+      "whole_share": 59
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 62,
+       "eligible": 60,
+       "no_share": 60,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 2,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 92,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 60,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 164,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 62,
+       "eligible": 60,
+       "no_share": 16,
+       "whole_share": 44
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 96,
+       "eligible": 92,
+       "no_share": 19,
+       "whole_share": 73
+      },
+      "C": {
+       "candidates": 67,
+       "eligible": 60,
+       "no_share": 9,
+       "whole_share": 51
+      },
+      "skip": {
+       "candidates": 174,
+       "eligible": 164,
+       "no_share": 22,
+       "whole_share": 142
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 2,
+      "eligible": 2,
+      "no_share": 0,
+      "whole_share": 2
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 401,
+   "identity": "blob:2c5ec387654d2cea9d85b1230e91b4c7c0efb534",
+   "missing_inputs": [],
+   "published_at": "2026-09-11T22:22:44.126296+00:00",
+   "regime": "red",
+   "rules_version": "2fe10c171341",
+   "session": "2026-09-11",
+   "session_state": "open",
+   "source": "ece47f1e:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 63,
+       "eligible": 58,
+       "no_share": 2,
+       "whole_share": 56
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 145,
+       "eligible": 139,
+       "no_share": 5,
+       "whole_share": 134
+      },
+      "C": {
+       "candidates": 144,
+       "eligible": 138,
+       "no_share": 3,
+       "whole_share": 135
+      },
+      "skip": {
+       "candidates": 204,
+       "eligible": 191,
+       "no_share": 7,
+       "whole_share": 184
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 65,
+      "eligible": 60,
+      "no_share": 2,
+      "whole_share": 58
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 63,
+       "eligible": 58,
+       "no_share": 58,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 2,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 145,
+       "eligible": 139,
+       "no_share": 139,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 144,
+       "eligible": 138,
+       "no_share": 138,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 204,
+       "eligible": 191,
+       "no_share": 191,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 63,
+       "eligible": 58,
+       "no_share": 11,
+       "whole_share": 47
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 145,
+       "eligible": 139,
+       "no_share": 23,
+       "whole_share": 116
+      },
+      "C": {
+       "candidates": 144,
+       "eligible": 138,
+       "no_share": 13,
+       "whole_share": 125
+      },
+      "skip": {
+       "candidates": 204,
+       "eligible": 191,
+       "no_share": 24,
+       "whole_share": 167
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 2,
+      "eligible": 2,
+      "no_share": 0,
+      "whole_share": 2
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 558,
+   "identity": "blob:a89ab122d7e0160df6a63c30957668447ace1103",
+   "missing_inputs": [],
+   "published_at": "2026-09-14T22:24:50.953539+00:00",
+   "regime": "red",
+   "rules_version": "953f37fb787a",
+   "session": "2026-09-14",
+   "session_state": "open",
+   "source": "fbaed5cd:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 40,
+       "eligible": 40,
+       "no_share": 3,
+       "whole_share": 37
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 72,
+       "no_share": 0,
+       "whole_share": 72
+      },
+      "C": {
+       "candidates": 69,
+       "eligible": 62,
+       "no_share": 0,
+       "whole_share": 62
+      },
+      "skip": {
+       "candidates": 155,
+       "eligible": 144,
+       "no_share": 5,
+       "whole_share": 139
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 41,
+      "eligible": 41,
+      "no_share": 3,
+      "whole_share": 38
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 40,
+       "eligible": 40,
+       "no_share": 40,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 1,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 72,
+       "no_share": 72,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 69,
+       "eligible": 62,
+       "no_share": 62,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 155,
+       "eligible": 144,
+       "no_share": 144,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 40,
+       "eligible": 40,
+       "no_share": 7,
+       "whole_share": 33
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 72,
+       "no_share": 6,
+       "whole_share": 66
+      },
+      "C": {
+       "candidates": 69,
+       "eligible": 62,
+       "no_share": 6,
+       "whole_share": 56
+      },
+      "skip": {
+       "candidates": 155,
+       "eligible": 144,
+       "no_share": 25,
+       "whole_share": 119
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 1,
+      "eligible": 1,
+      "no_share": 0,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 342,
+   "identity": "blob:abf693417b8308a68d6e1dfcbfd53ced16b6f8c4",
+   "missing_inputs": [],
+   "published_at": "2026-09-15T22:23:17.742488+00:00",
+   "regime": "red",
+   "rules_version": "e1032aa5ee21",
+   "session": "2026-09-15",
+   "session_state": "open",
+   "source": "442db489:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 21,
+       "eligible": 19,
+       "no_share": 0,
+       "whole_share": 19
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 80,
+       "eligible": 74,
+       "no_share": 0,
+       "whole_share": 74
+      },
+      "C": {
+       "candidates": 45,
+       "eligible": 44,
+       "no_share": 2,
+       "whole_share": 42
+      },
+      "skip": {
+       "candidates": 157,
+       "eligible": 144,
+       "no_share": 5,
+       "whole_share": 139
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 21,
+      "eligible": 19,
+      "no_share": 0,
+      "whole_share": 19
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 21,
+       "eligible": 19,
+       "no_share": 19,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 80,
+       "eligible": 74,
+       "no_share": 74,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 45,
+       "eligible": 44,
+       "no_share": 44,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 157,
+       "eligible": 144,
+       "no_share": 144,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 21,
+       "eligible": 19,
+       "no_share": 2,
+       "whole_share": 17
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 80,
+       "eligible": 74,
+       "no_share": 12,
+       "whole_share": 62
+      },
+      "C": {
+       "candidates": 45,
+       "eligible": 44,
+       "no_share": 8,
+       "whole_share": 36
+      },
+      "skip": {
+       "candidates": 157,
+       "eligible": 144,
+       "no_share": 16,
+       "whole_share": 128
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 303,
+   "identity": "blob:9dfc2d51aef7d0adf723428931c61cc83824fa71",
+   "missing_inputs": [],
+   "published_at": "2026-09-16T22:23:02.757794+00:00",
+   "regime": "red",
+   "rules_version": "1fe2b3171634",
+   "session": "2026-09-16",
+   "session_state": "open",
+   "source": "58080548:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 30,
+       "eligible": 28,
+       "no_share": 2,
+       "whole_share": 26
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 102,
+       "eligible": 94,
+       "no_share": 3,
+       "whole_share": 91
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 80,
+       "no_share": 0,
+       "whole_share": 80
+      },
+      "skip": {
+       "candidates": 199,
+       "eligible": 174,
+       "no_share": 4,
+       "whole_share": 170
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 30,
+      "eligible": 28,
+      "no_share": 2,
+      "whole_share": 26
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 30,
+       "eligible": 28,
+       "no_share": 28,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 102,
+       "eligible": 94,
+       "no_share": 94,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 80,
+       "no_share": 80,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 199,
+       "eligible": 174,
+       "no_share": 174,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 30,
+       "eligible": 28,
+       "no_share": 2,
+       "whole_share": 26
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 102,
+       "eligible": 94,
+       "no_share": 13,
+       "whole_share": 81
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 80,
+       "no_share": 4,
+       "whole_share": 76
+      },
+      "skip": {
+       "candidates": 199,
+       "eligible": 174,
+       "no_share": 17,
+       "whole_share": 157
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 420,
+   "identity": "blob:7e65097a70affd800bace72b2d088c8197053c47",
+   "missing_inputs": [],
+   "published_at": "2026-09-17T22:21:57.200360+00:00",
+   "regime": "red",
+   "rules_version": "7ca2debdce10",
+   "session": "2026-09-17",
+   "session_state": "open",
+   "source": "ebcdea34:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 52,
+       "eligible": 49,
+       "no_share": 2,
+       "whole_share": 47
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 66,
+       "eligible": 64,
+       "no_share": 8,
+       "whole_share": 56
+      },
+      "C": {
+       "candidates": 72,
+       "eligible": 58,
+       "no_share": 2,
+       "whole_share": 56
+      },
+      "skip": {
+       "candidates": 169,
+       "eligible": 149,
+       "no_share": 7,
+       "whole_share": 142
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 53,
+      "eligible": 50,
+      "no_share": 2,
+      "whole_share": 48
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 52,
+       "eligible": 49,
+       "no_share": 49,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 1,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 66,
+       "eligible": 64,
+       "no_share": 64,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 72,
+       "eligible": 58,
+       "no_share": 58,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 169,
+       "eligible": 149,
+       "no_share": 149,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 52,
+       "eligible": 49,
+       "no_share": 6,
+       "whole_share": 43
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 66,
+       "eligible": 64,
+       "no_share": 17,
+       "whole_share": 47
+      },
+      "C": {
+       "candidates": 72,
+       "eligible": 58,
+       "no_share": 9,
+       "whole_share": 49
+      },
+      "skip": {
+       "candidates": 169,
+       "eligible": 149,
+       "no_share": 39,
+       "whole_share": 110
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 1,
+      "eligible": 1,
+      "no_share": 0,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 360,
+   "identity": "blob:bf36144ea45d7c74eee724d2557964e5e8e0bfc5",
+   "missing_inputs": [],
+   "published_at": "2026-09-18T22:22:34.176134+00:00",
+   "regime": "red",
+   "rules_version": "e2cace0f7bc6",
+   "session": "2026-09-18",
+   "session_state": "open",
+   "source": "8387cced:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 2,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 6,
+       "whole_share": 37
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 2,
+       "whole_share": 89
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 5,
+       "whole_share": 38
+      },
+      "skip": {
+       "candidates": 190,
+       "eligible": 172,
+       "no_share": 7,
+       "whole_share": 165
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 46,
+      "eligible": 46,
+      "no_share": 6,
+      "whole_share": 40
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 43,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 3,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 91,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 43,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 190,
+       "eligible": 172,
+       "no_share": 172,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 12,
+       "whole_share": 31
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 14,
+       "whole_share": 77
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 12,
+       "whole_share": 31
+      },
+      "skip": {
+       "candidates": 190,
+       "eligible": 172,
+       "no_share": 34,
+       "whole_share": 138
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 3,
+      "eligible": 3,
+      "no_share": 0,
+      "whole_share": 3
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 381,
+   "identity": "blob:23cb5ab864e9e9de79fe33dabea898b9bef1e375",
+   "missing_inputs": [],
+   "published_at": "2026-09-21T23:54:25.319255+00:00",
+   "regime": "red",
+   "rules_version": "d5d62f525e0f",
+   "session": "2026-09-21",
+   "session_state": "open",
+   "source": "25eb5b26:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 2,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 6,
+       "whole_share": 37
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 2,
+       "whole_share": 89
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 5,
+       "whole_share": 38
+      },
+      "skip": {
+       "candidates": 191,
+       "eligible": 173,
+       "no_share": 7,
+       "whole_share": 166
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 46,
+      "eligible": 46,
+      "no_share": 6,
+      "whole_share": 40
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 43,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 3,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 91,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 43,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 191,
+       "eligible": 173,
+       "no_share": 173,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 43,
+       "no_share": 12,
+       "whole_share": 31
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 99,
+       "eligible": 91,
+       "no_share": 14,
+       "whole_share": 77
+      },
+      "C": {
+       "candidates": 46,
+       "eligible": 43,
+       "no_share": 12,
+       "whole_share": 31
+      },
+      "skip": {
+       "candidates": 191,
+       "eligible": 173,
+       "no_share": 34,
+       "whole_share": 139
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 3,
+      "eligible": 3,
+      "no_share": 0,
+      "whole_share": 3
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 382,
+   "identity": "blob:6c5bd2f713eef2a787d129d6c9ddc6f409387be7",
+   "missing_inputs": [],
+   "published_at": "2026-09-22T00:48:42.004722+00:00",
+   "regime": "red",
+   "rules_version": "d5d62f525e0f",
+   "session": "2026-09-21",
+   "session_state": "open",
+   "source": "49e2724c:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 2,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 45,
+       "eligible": 43,
+       "no_share": 1,
+       "whole_share": 42
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 105,
+       "eligible": 100,
+       "no_share": 2,
+       "whole_share": 98
+      },
+      "C": {
+       "candidates": 78,
+       "eligible": 73,
+       "no_share": 4,
+       "whole_share": 69
+      },
+      "skip": {
+       "candidates": 282,
+       "eligible": 258,
+       "no_share": 16,
+       "whole_share": 242
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 48,
+      "eligible": 46,
+      "no_share": 1,
+      "whole_share": 45
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 45,
+       "eligible": 43,
+       "no_share": 43,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 3,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 105,
+       "eligible": 100,
+       "no_share": 100,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 78,
+       "eligible": 73,
+       "no_share": 73,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 282,
+       "eligible": 258,
+       "no_share": 258,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 45,
+       "eligible": 43,
+       "no_share": 6,
+       "whole_share": 37
+      },
+      "A+": {
+       "candidates": 3,
+       "eligible": 3,
+       "no_share": 0,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 105,
+       "eligible": 100,
+       "no_share": 6,
+       "whole_share": 94
+      },
+      "C": {
+       "candidates": 78,
+       "eligible": 73,
+       "no_share": 8,
+       "whole_share": 65
+      },
+      "skip": {
+       "candidates": 282,
+       "eligible": 258,
+       "no_share": 48,
+       "whole_share": 210
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 3,
+      "eligible": 3,
+      "no_share": 0,
+      "whole_share": 3
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 513,
+   "identity": "blob:d9ac3a89ca2a572128143f287180afad040f5672",
+   "missing_inputs": [],
+   "published_at": "2026-09-23T00:28:52.357015+00:00",
+   "regime": "red",
+   "rules_version": "b2da771252f8",
+   "session": "2026-09-22",
+   "session_state": "open",
+   "source": "e2dee988:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 18,
+       "eligible": 18,
+       "no_share": 0,
+       "whole_share": 18
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 74,
+       "no_share": 4,
+       "whole_share": 70
+      },
+      "C": {
+       "candidates": 35,
+       "eligible": 33,
+       "no_share": 1,
+       "whole_share": 32
+      },
+      "skip": {
+       "candidates": 152,
+       "eligible": 141,
+       "no_share": 7,
+       "whole_share": 134
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 18,
+      "eligible": 18,
+      "no_share": 0,
+      "whole_share": 18
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 18,
+       "eligible": 18,
+       "no_share": 18,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 74,
+       "no_share": 74,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 35,
+       "eligible": 33,
+       "no_share": 33,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 152,
+       "eligible": 141,
+       "no_share": 141,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 18,
+       "eligible": 18,
+       "no_share": 2,
+       "whole_share": 16
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 77,
+       "eligible": 74,
+       "no_share": 16,
+       "whole_share": 58
+      },
+      "C": {
+       "candidates": 35,
+       "eligible": 33,
+       "no_share": 4,
+       "whole_share": 29
+      },
+      "skip": {
+       "candidates": 152,
+       "eligible": 141,
+       "no_share": 38,
+       "whole_share": 103
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 282,
+   "identity": "blob:97c89e46546e42aff4b07a5dade1ef551f4d4e4f",
+   "missing_inputs": [],
+   "published_at": "2026-09-24T00:29:00.615148+00:00",
+   "regime": "red",
+   "rules_version": "f70560c58f76",
+   "session": "2026-09-23",
+   "session_state": "open",
+   "source": "6ff292d7:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 3,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 52,
+       "no_share": 1,
+       "whole_share": 51
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 108,
+       "eligible": 98,
+       "no_share": 4,
+       "whole_share": 94
+      },
+      "C": {
+       "candidates": 65,
+       "eligible": 52,
+       "no_share": 3,
+       "whole_share": 49
+      },
+      "skip": {
+       "candidates": 186,
+       "eligible": 168,
+       "no_share": 12,
+       "whole_share": 156
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 59,
+      "eligible": 53,
+      "no_share": 1,
+      "whole_share": 52
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 52,
+       "no_share": 52,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 1,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 108,
+       "eligible": 98,
+       "no_share": 98,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 65,
+       "eligible": 52,
+       "no_share": 52,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 186,
+       "eligible": 168,
+       "no_share": 168,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 52,
+       "no_share": 10,
+       "whole_share": 42
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 108,
+       "eligible": 98,
+       "no_share": 23,
+       "whole_share": 75
+      },
+      "C": {
+       "candidates": 65,
+       "eligible": 52,
+       "no_share": 10,
+       "whole_share": 42
+      },
+      "skip": {
+       "candidates": 186,
+       "eligible": 168,
+       "no_share": 40,
+       "whole_share": 128
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 1,
+      "eligible": 1,
+      "no_share": 0,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 418,
+   "identity": "blob:332b99ffac36b3b723de58197ce853e1ecd96b20",
+   "missing_inputs": [],
+   "published_at": "2026-09-25T00:32:29.515829+00:00",
+   "regime": "red",
+   "rules_version": "7c02ee92cb05",
+   "session": "2026-09-24",
+   "session_state": "open",
+   "source": "6822dddd:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 4,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 73,
+       "eligible": 73,
+       "no_share": 4,
+       "whole_share": 69
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 124,
+       "eligible": 121,
+       "no_share": 1,
+       "whole_share": 120
+      },
+      "C": {
+       "candidates": 73,
+       "eligible": 69,
+       "no_share": 2,
+       "whole_share": 67
+      },
+      "skip": {
+       "candidates": 183,
+       "eligible": 175,
+       "no_share": 13,
+       "whole_share": 162
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 75,
+      "eligible": 75,
+      "no_share": 4,
+      "whole_share": 71
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 73,
+       "eligible": 73,
+       "no_share": 73,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 2,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 124,
+       "eligible": 121,
+       "no_share": 121,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 73,
+       "eligible": 69,
+       "no_share": 69,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 183,
+       "eligible": 175,
+       "no_share": 175,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 73,
+       "eligible": 73,
+       "no_share": 13,
+       "whole_share": 60
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 124,
+       "eligible": 121,
+       "no_share": 21,
+       "whole_share": 100
+      },
+      "C": {
+       "candidates": 73,
+       "eligible": 69,
+       "no_share": 13,
+       "whole_share": 56
+      },
+      "skip": {
+       "candidates": 183,
+       "eligible": 175,
+       "no_share": 35,
+       "whole_share": 140
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 2,
+      "eligible": 2,
+      "no_share": 0,
+      "whole_share": 2
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 455,
+   "identity": "blob:6fce465edd51badead8ad0c38b111819ee69c884",
+   "missing_inputs": [],
+   "published_at": "2026-09-26T00:36:55.145085+00:00",
+   "regime": "red",
+   "rules_version": "81ed3b38d571",
+   "session": "2026-09-25",
+   "session_state": "open",
+   "source": "8be007f6:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 56,
+       "no_share": 2,
+       "whole_share": 54
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 101,
+       "eligible": 95,
+       "no_share": 0,
+       "whole_share": 95
+      },
+      "C": {
+       "candidates": 77,
+       "eligible": 67,
+       "no_share": 2,
+       "whole_share": 65
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 158,
+       "no_share": 10,
+       "whole_share": 148
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 58,
+      "eligible": 56,
+      "no_share": 2,
+      "whole_share": 54
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 56,
+       "no_share": 56,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 101,
+       "eligible": 95,
+       "no_share": 95,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 77,
+       "eligible": 67,
+       "no_share": 67,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 158,
+       "no_share": 158,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 58,
+       "eligible": 56,
+       "no_share": 7,
+       "whole_share": 49
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 101,
+       "eligible": 95,
+       "no_share": 16,
+       "whole_share": 79
+      },
+      "C": {
+       "candidates": 77,
+       "eligible": 67,
+       "no_share": 14,
+       "whole_share": 53
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 158,
+       "no_share": 35,
+       "whole_share": 123
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 406,
+   "identity": "blob:8d569933ebab8838699faff339bc1a18dde0dfa8",
+   "missing_inputs": [],
+   "published_at": "2026-09-29T01:54:23.545923+00:00",
+   "regime": "red",
+   "rules_version": "3978da99f5c0",
+   "session": "2026-09-28",
+   "session_state": "open",
+   "source": "786ade70:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 68,
+       "eligible": 67,
+       "no_share": 1,
+       "whole_share": 66
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 91,
+       "eligible": 82,
+       "no_share": 4,
+       "whole_share": 78
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 53,
+       "no_share": 2,
+       "whole_share": 51
+      },
+      "skip": {
+       "candidates": 149,
+       "eligible": 135,
+       "no_share": 4,
+       "whole_share": 131
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 69,
+      "eligible": 68,
+      "no_share": 1,
+      "whole_share": 67
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 68,
+       "eligible": 67,
+       "no_share": 67,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 1,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 91,
+       "eligible": 82,
+       "no_share": 82,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 53,
+       "no_share": 53,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 149,
+       "eligible": 135,
+       "no_share": 135,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 68,
+       "eligible": 67,
+       "no_share": 11,
+       "whole_share": 56
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 91,
+       "eligible": 82,
+       "no_share": 14,
+       "whole_share": 68
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 53,
+       "no_share": 9,
+       "whole_share": 44
+      },
+      "skip": {
+       "candidates": 149,
+       "eligible": 135,
+       "no_share": 19,
+       "whole_share": 116
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 1,
+      "eligible": 1,
+      "no_share": 0,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 364,
+   "identity": "blob:39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd",
+   "missing_inputs": [],
+   "published_at": "2026-09-30T01:17:04.438845+00:00",
+   "regime": "red",
+   "rules_version": "009babeb3f65",
+   "session": "2026-09-29",
+   "session_state": "open",
+   "source": "6284cb97:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 16,
+       "eligible": 13,
+       "no_share": 0,
+       "whole_share": 13
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 53,
+       "eligible": 49,
+       "no_share": 1,
+       "whole_share": 48
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 51,
+       "no_share": 2,
+       "whole_share": 49
+      },
+      "skip": {
+       "candidates": 104,
+       "eligible": 95,
+       "no_share": 2,
+       "whole_share": 93
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 16,
+      "eligible": 13,
+      "no_share": 0,
+      "whole_share": 13
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 16,
+       "eligible": 13,
+       "no_share": 13,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 53,
+       "eligible": 49,
+       "no_share": 49,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 51,
+       "no_share": 51,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 104,
+       "eligible": 95,
+       "no_share": 95,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 16,
+       "eligible": 13,
+       "no_share": 0,
+       "whole_share": 13
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 53,
+       "eligible": 49,
+       "no_share": 5,
+       "whole_share": 44
+      },
+      "C": {
+       "candidates": 55,
+       "eligible": 51,
+       "no_share": 8,
+       "whole_share": 43
+      },
+      "skip": {
+       "candidates": 104,
+       "eligible": 95,
+       "no_share": 14,
+       "whole_share": 81
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 228,
+   "identity": "blob:e31cfe5fd388a2b054a8afb16dfbe4f8da8ac93d",
+   "missing_inputs": [],
+   "published_at": "2026-10-01T01:16:51.463947+00:00",
+   "regime": "red",
+   "rules_version": "db2828fd59da",
+   "session": "2026-09-30",
+   "session_state": "open",
+   "source": "a9002369:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 152,
+       "eligible": 147,
+       "no_share": 2,
+       "whole_share": 145
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 156,
+       "eligible": 153,
+       "no_share": 13,
+       "whole_share": 140
+      },
+      "C": {
+       "candidates": 75,
+       "eligible": 70,
+       "no_share": 1,
+       "whole_share": 69
+      },
+      "skip": {
+       "candidates": 247,
+       "eligible": 234,
+       "no_share": 13,
+       "whole_share": 221
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 156,
+      "eligible": 151,
+      "no_share": 2,
+      "whole_share": 149
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 152,
+       "eligible": 147,
+       "no_share": 147,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 4,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 156,
+       "eligible": 153,
+       "no_share": 153,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 75,
+       "eligible": 70,
+       "no_share": 70,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 247,
+       "eligible": 234,
+       "no_share": 234,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 152,
+       "eligible": 147,
+       "no_share": 19,
+       "whole_share": 128
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 1,
+       "whole_share": 3
+      },
+      "B": {
+       "candidates": 156,
+       "eligible": 153,
+       "no_share": 36,
+       "whole_share": 117
+      },
+      "C": {
+       "candidates": 75,
+       "eligible": 70,
+       "no_share": 6,
+       "whole_share": 64
+      },
+      "skip": {
+       "candidates": 247,
+       "eligible": 234,
+       "no_share": 34,
+       "whole_share": 200
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 1,
+      "whole_share": 3
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 634,
+   "identity": "blob:d6095ca5d92ed5a056eab820bb73323fb04f5b67",
+   "missing_inputs": [],
+   "published_at": "2026-10-02T01:40:08.024617+00:00",
+   "regime": "red",
+   "rules_version": "4219629da532",
+   "session": "2026-10-01",
+   "session_state": "open",
+   "source": "a930ca0f:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 5,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 40,
+       "no_share": 1,
+       "whole_share": 39
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 0,
+       "whole_share": 2
+      },
+      "B": {
+       "candidates": 100,
+       "eligible": 94,
+       "no_share": 3,
+       "whole_share": 91
+      },
+      "C": {
+       "candidates": 107,
+       "eligible": 101,
+       "no_share": 2,
+       "whole_share": 99
+      },
+      "skip": {
+       "candidates": 205,
+       "eligible": 198,
+       "no_share": 9,
+       "whole_share": 189
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 45,
+      "eligible": 42,
+      "no_share": 1,
+      "whole_share": 41
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 40,
+       "no_share": 40,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 2,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 100,
+       "eligible": 94,
+       "no_share": 94,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 107,
+       "eligible": 101,
+       "no_share": 101,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 205,
+       "eligible": 198,
+       "no_share": 198,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 40,
+       "no_share": 4,
+       "whole_share": 36
+      },
+      "A+": {
+       "candidates": 2,
+       "eligible": 2,
+       "no_share": 1,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 100,
+       "eligible": 94,
+       "no_share": 14,
+       "whole_share": 80
+      },
+      "C": {
+       "candidates": 107,
+       "eligible": 101,
+       "no_share": 18,
+       "whole_share": 83
+      },
+      "skip": {
+       "candidates": 205,
+       "eligible": 198,
+       "no_share": 32,
+       "whole_share": 166
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 2,
+      "eligible": 2,
+      "no_share": 1,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 457,
+   "identity": "blob:bb2edad5522c137030ec93d286c1aebfedde73de",
+   "missing_inputs": [],
+   "published_at": "2026-10-03T01:10:25.044083+00:00",
+   "regime": "red",
+   "rules_version": "efad1dbdba5a",
+   "session": "2026-10-02",
+   "session_state": "open",
+   "source": "58e0f384:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 4,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 83,
+       "eligible": 80,
+       "no_share": 3,
+       "whole_share": 77
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 149,
+       "eligible": 137,
+       "no_share": 3,
+       "whole_share": 134
+      },
+      "C": {
+       "candidates": 109,
+       "eligible": 103,
+       "no_share": 3,
+       "whole_share": 100
+      },
+      "skip": {
+       "candidates": 262,
+       "eligible": 249,
+       "no_share": 12,
+       "whole_share": 237
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 87,
+      "eligible": 84,
+      "no_share": 3,
+      "whole_share": 81
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 83,
+       "eligible": 80,
+       "no_share": 80,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 4,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 149,
+       "eligible": 137,
+       "no_share": 137,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 109,
+       "eligible": 103,
+       "no_share": 103,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 262,
+       "eligible": 249,
+       "no_share": 249,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 83,
+       "eligible": 80,
+       "no_share": 12,
+       "whole_share": 68
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 149,
+       "eligible": 137,
+       "no_share": 17,
+       "whole_share": 120
+      },
+      "C": {
+       "candidates": 109,
+       "eligible": 103,
+       "no_share": 15,
+       "whole_share": 88
+      },
+      "skip": {
+       "candidates": 262,
+       "eligible": 249,
+       "no_share": 46,
+       "whole_share": 203
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 0,
+      "whole_share": 4
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 607,
+   "identity": "blob:1064e69b27bf3f6fceed1594a1a1b0387eb021bb",
+   "missing_inputs": [],
+   "published_at": "2026-10-06T02:17:03.294319+00:00",
+   "regime": "red",
+   "rules_version": "9d480ae7f6fb",
+   "session": "2026-10-05",
+   "session_state": "open",
+   "source": "178956b4:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 4,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 41,
+       "no_share": 2,
+       "whole_share": 39
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 70,
+       "eligible": 66,
+       "no_share": 2,
+       "whole_share": 64
+      },
+      "C": {
+       "candidates": 60,
+       "eligible": 58,
+       "no_share": 1,
+       "whole_share": 57
+      },
+      "skip": {
+       "candidates": 223,
+       "eligible": 204,
+       "no_share": 14,
+       "whole_share": 190
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 43,
+      "eligible": 41,
+      "no_share": 2,
+      "whole_share": 39
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 41,
+       "no_share": 41,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 70,
+       "eligible": 66,
+       "no_share": 66,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 60,
+       "eligible": 58,
+       "no_share": 58,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 223,
+       "eligible": 204,
+       "no_share": 204,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 43,
+       "eligible": 41,
+       "no_share": 6,
+       "whole_share": 35
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 70,
+       "eligible": 66,
+       "no_share": 16,
+       "whole_share": 50
+      },
+      "C": {
+       "candidates": 60,
+       "eligible": 58,
+       "no_share": 10,
+       "whole_share": 48
+      },
+      "skip": {
+       "candidates": 223,
+       "eligible": 204,
+       "no_share": 40,
+       "whole_share": 164
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 396,
+   "identity": "blob:8eca61e4ef1582feace6e915538b7f8009b1194c",
+   "missing_inputs": [],
+   "published_at": "2026-10-07T01:31:04.894157+00:00",
+   "regime": "red",
+   "rules_version": "7f2ec51c1970",
+   "session": "2026-10-06",
+   "session_state": "open",
+   "source": "b0c6b60e:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 4,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 28,
+       "eligible": 26,
+       "no_share": 2,
+       "whole_share": 24
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 69,
+       "eligible": 66,
+       "no_share": 3,
+       "whole_share": 63
+      },
+      "C": {
+       "candidates": 43,
+       "eligible": 39,
+       "no_share": 2,
+       "whole_share": 37
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 157,
+       "no_share": 8,
+       "whole_share": 149
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 29,
+      "eligible": 27,
+      "no_share": 2,
+      "whole_share": 25
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 28,
+       "eligible": 26,
+       "no_share": 26,
+       "whole_share": 0
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 1,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 69,
+       "eligible": 66,
+       "no_share": 66,
+       "whole_share": 0
+      },
+      "C": {
+       "candidates": 43,
+       "eligible": 39,
+       "no_share": 39,
+       "whole_share": 0
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 157,
+       "no_share": 157,
+       "whole_share": 0
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 0.0,
+      "risk_budget": 0.0,
+      "risk_budget_at_stop_line": 0.0,
+      "stop_line": 0.0
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.0,
+     "verdict": "red"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 28,
+       "eligible": 26,
+       "no_share": 4,
+       "whole_share": 22
+      },
+      "A+": {
+       "candidates": 1,
+       "eligible": 1,
+       "no_share": 0,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 69,
+       "eligible": 66,
+       "no_share": 7,
+       "whole_share": 59
+      },
+      "C": {
+       "candidates": 43,
+       "eligible": 39,
+       "no_share": 9,
+       "whole_share": 30
+      },
+      "skip": {
+       "candidates": 170,
+       "eligible": 157,
+       "no_share": 29,
+       "whole_share": 128
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 1,
+      "eligible": 1,
+      "no_share": 0,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 311,
+   "identity": "blob:b4f6f615f35a1eef22fc73d8ab9ae961c71c9068",
+   "missing_inputs": [],
+   "published_at": "2026-10-08T01:54:31.922070+00:00",
+   "regime": "red",
+   "rules_version": "ec0230c4307e",
+   "session": "2026-10-07",
+   "session_state": "open",
+   "source": "a8f9a36f:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 10000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 2,
+    "listed": 4,
+    "unreadable": 0,
+    "whole_share": 2
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 184,
+       "eligible": 180,
+       "no_share": 1,
+       "whole_share": 179
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 3,
+       "whole_share": 169
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 1,
+       "whole_share": 57
+      },
+      "skip": {
+       "candidates": 304,
+       "eligible": 292,
+       "no_share": 6,
+       "whole_share": 286
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 2500.0,
+      "risk_budget": 50.0,
+      "risk_budget_at_stop_line": 25.0,
+      "stop_line": 625.0
+     },
+     "in_band": {
+      "candidates": 188,
+      "eligible": 184,
+      "no_share": 1,
+      "whole_share": 183
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 184,
+       "eligible": 180,
+       "no_share": 17,
+       "whole_share": 163
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 19,
+       "whole_share": 153
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 4,
+       "whole_share": 54
+      },
+      "skip": {
+       "candidates": 304,
+       "eligible": 292,
+       "no_share": 40,
+       "whole_share": 252
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 0,
+      "whole_share": 4
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 184,
+       "eligible": 180,
+       "no_share": 17,
+       "whole_share": 163
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 0,
+       "whole_share": 4
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 19,
+       "whole_share": 153
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 4,
+       "whole_share": 54
+      },
+      "skip": {
+       "candidates": 304,
+       "eligible": 292,
+       "no_share": 40,
+       "whole_share": 252
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 1250.0,
+      "risk_budget": 25.0,
+      "risk_budget_at_stop_line": 12.5,
+      "stop_line": 312.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 0,
+      "whole_share": 4
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 730,
+   "identity": "blob:7b6bd909b9ef9a8efd459433a4e4db0fd01cb897",
+   "missing_inputs": [],
+   "published_at": "2026-10-09T02:06:55.130264+00:00",
+   "regime": "yellow",
+   "rules_version": "669435d895d7",
+   "session": "2026-10-08",
+   "session_state": "open",
+   "source": "1e1ffe9c:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 1,
+    "listed": 4,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 183,
+       "eligible": 179,
+       "no_share": 73,
+       "whole_share": 106
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 3,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 81,
+       "whole_share": 91
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 23,
+       "whole_share": 35
+      },
+      "skip": {
+       "candidates": 303,
+       "eligible": 291,
+       "no_share": 134,
+       "whole_share": 157
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 500.0,
+      "risk_budget": 10.0,
+      "risk_budget_at_stop_line": 5.0,
+      "stop_line": 125.0
+     },
+     "in_band": {
+      "candidates": 187,
+      "eligible": 183,
+      "no_share": 76,
+      "whole_share": 107
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 183,
+       "eligible": 179,
+       "no_share": 137,
+       "whole_share": 42
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 3,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 129,
+       "whole_share": 43
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 39,
+       "whole_share": 19
+      },
+      "skip": {
+       "candidates": 303,
+       "eligible": 291,
+       "no_share": 218,
+       "whole_share": 73
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 3,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 183,
+       "eligible": 179,
+       "no_share": 137,
+       "whole_share": 42
+      },
+      "A+": {
+       "candidates": 4,
+       "eligible": 4,
+       "no_share": 3,
+       "whole_share": 1
+      },
+      "B": {
+       "candidates": 177,
+       "eligible": 172,
+       "no_share": 129,
+       "whole_share": 43
+      },
+      "C": {
+       "candidates": 61,
+       "eligible": 58,
+       "no_share": 39,
+       "whole_share": 19
+      },
+      "skip": {
+       "candidates": 303,
+       "eligible": 291,
+       "no_share": 218,
+       "whole_share": 73
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 4,
+      "eligible": 4,
+      "no_share": 3,
+      "whole_share": 1
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 728,
+   "identity": "blob:687e44d07e833de860edf0338db8dee09a1b195e",
+   "missing_inputs": [],
+   "published_at": "2026-10-09T12:10:20.678352+00:00",
+   "regime": "yellow",
+   "rules_version": "8e9ea8528b31",
+   "session": "2026-10-08",
+   "session_state": "open",
+   "source": "e67f8cba:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 1,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 1
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 22,
+       "whole_share": 26
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 60,
+       "whole_share": 48
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 42,
+       "whole_share": 42
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 106,
+       "whole_share": 106
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 500.0,
+      "risk_budget": 10.0,
+      "risk_budget_at_stop_line": 5.0,
+      "stop_line": 125.0
+     },
+     "in_band": {
+      "candidates": 53,
+      "eligible": 48,
+      "no_share": 22,
+      "whole_share": 26
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 479,
+   "identity": "blob:353088402c6588916d0c9a87ae0f08c7d401f605",
+   "missing_inputs": [],
+   "published_at": "2026-10-10T01:44:58.778069+00:00",
+   "regime": "yellow",
+   "rules_version": "8e9ea8528b31",
+   "session": "2026-10-09",
+   "session_state": "open",
+   "source": "62bce72d:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 0,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 22,
+       "whole_share": 26
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 60,
+       "whole_share": 48
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 42,
+       "whole_share": 42
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 106,
+       "whole_share": 106
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 500.0,
+      "risk_budget": 10.0,
+      "risk_budget_at_stop_line": 5.0,
+      "stop_line": 125.0
+     },
+     "in_band": {
+      "candidates": 53,
+      "eligible": 48,
+      "no_share": 22,
+      "whole_share": 26
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 479,
+   "identity": "blob:476344ac8c7b47d9d2f674edc93b0722cf09d9ee",
+   "missing_inputs": [],
+   "published_at": "2026-10-10T07:12:55.687883+00:00",
+   "regime": "yellow",
+   "rules_version": "4f69dc967d7a",
+   "session": "2026-10-09",
+   "session_state": "open",
+   "source": "dcb12a0b:docs/data.json"
+  },
+  {
+   "account": {
+    "archived": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    },
+    "source": "archived",
+    "used": {
+     "equity": 2000.0,
+     "max_open_positions": 4,
+     "max_position_pct": 25.0,
+     "risk_pct": 0.5
+    }
+   },
+   "anticipation": {
+    "basis": "recorded plans at the record's own account and regime",
+    "eligible": 0,
+    "listed": 5,
+    "unreadable": 0,
+    "whole_share": 0
+   },
+   "bands": {
+    "green": {
+     "admitted": [
+      "A+",
+      "A"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 22,
+       "whole_share": 26
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 60,
+       "whole_share": 48
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 42,
+       "whole_share": 42
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 106,
+       "whole_share": 106
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 500.0,
+      "risk_budget": 10.0,
+      "risk_budget_at_stop_line": 5.0,
+      "stop_line": 125.0
+     },
+     "in_band": {
+      "candidates": 53,
+      "eligible": 48,
+      "no_share": 22,
+      "whole_share": 26
+     },
+     "multiplier": 1.0,
+     "verdict": "green"
+    },
+    "tonight": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    },
+    "yellow": {
+     "admitted": [
+      "A+"
+     ],
+     "by_mechanical_grade": {
+      "A": {
+       "candidates": 53,
+       "eligible": 48,
+       "no_share": 39,
+       "whole_share": 9
+      },
+      "A+": {
+       "candidates": 0,
+       "eligible": 0,
+       "no_share": 0,
+       "whole_share": 0
+      },
+      "B": {
+       "candidates": 112,
+       "eligible": 108,
+       "no_share": 80,
+       "whole_share": 28
+      },
+      "C": {
+       "candidates": 89,
+       "eligible": 84,
+       "no_share": 61,
+       "whole_share": 23
+      },
+      "skip": {
+       "candidates": 225,
+       "eligible": 212,
+       "no_share": 155,
+       "whole_share": 57
+      }
+     },
+     "ceilings": {
+      "ideal_stop": 250.0,
+      "risk_budget": 5.0,
+      "risk_budget_at_stop_line": 2.5,
+      "stop_line": 62.5
+     },
+     "in_band": {
+      "candidates": 0,
+      "eligible": 0,
+      "no_share": 0,
+      "whole_share": 0
+     },
+     "multiplier": 0.5,
+     "verdict": "yellow"
+    }
+   },
+   "candidates": 479,
+   "identity": "blob:58211b2d32343a2caf811d2d1af906acbef942ca",
+   "missing_inputs": [],
+   "published_at": "2026-10-10T07:30:15.553690+00:00",
+   "regime": "yellow",
+   "rules_version": "c9dc7d6d1d87",
+   "session": "2026-10-09",
+   "session_state": "open",
+   "source": "43dcb8d7:docs/data.json"
+  }
+ ],
+ "ref": "origin/main",
+ "skipped": [
+  {
+   "commit": "a63a6d928d13c8bb493db44dfe795560b3257d91",
+   "reason": "a63a6d92:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "47b0d0a3c33f9fb30d138a9386b8b11a4f46699b",
+   "reason": "47b0d0a3:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "d6b0b954493d753cb3b47193c2a3f660c85001bc",
+   "reason": "d6b0b954:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "38f666e9680e7c25a0f3611f6d221148e010b546",
+   "reason": "38f666e9:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "01c000d12a7cfd218bd0309b3528a5e2ef1225d3",
+   "reason": "01c000d1:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e6bbab7153d3abfb7c31d1ca91edd0888e6b53f4",
+   "reason": "e6bbab71:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "a7474d5b6731c7d833e34035e9244556901c3e2b",
+   "reason": "a7474d5b:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "76783a17561f6864f7e09ced8abf0366d830494d",
+   "reason": "76783a17:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "5e6bbb22107fae02ba1574316035db2c4723c3ad",
+   "reason": "5e6bbb22:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "38d37b4fb23aaca8284abbd5669d074b035f5fa0",
+   "reason": "38d37b4f:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "151b1af36da9e5b4db28c630752fb4a27158e8b8",
+   "reason": "151b1af3:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "91a910b90b552a011f78af4907f4ed5f2a54dbe0",
+   "reason": "91a910b9:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e81f3c72748e83d709156f4341e1b46b16bb6fcf",
+   "reason": "e81f3c72:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e95d6d57d5b2ad0cce963b233dbdc53523fc2958",
+   "reason": "e95d6d57:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "369c69520e7a697f050b35990f8691d8b8665dff",
+   "reason": "369c6952:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "932ec586daad4f9b3c42ab2a09be0eff2ccb3847",
+   "reason": "932ec586:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f0780c725e750be427cf275d497ed5e51781002b",
+   "reason": "f0780c72:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "ace137ad3a0eba63411adf526754d825fec9cfb8",
+   "reason": "ace137ad:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "71856115dd6d3d33704fa2ba8447a1b04f9f78ce",
+   "reason": "71856115:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "665ba95481cf3738920d1f5fe432b5994ccce92b",
+   "reason": "665ba954:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f65984eee8307ac19796b92c6adb2a59a11b6c28",
+   "reason": "f65984ee:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "760eb3896dc32c2a2e8f91e6518cd206b748505b",
+   "reason": "760eb389:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "30acad0cb257f92f063909b7abdd109c792cad94",
+   "reason": "30acad0c:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "53f6c94e594c3261bc6cb7d52d69304b2e7e9d24",
+   "reason": "53f6c94e:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "74f9aff2122deb4e462efbdbcb94c41fe831b55c",
+   "reason": "74f9aff2:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "257089e0da6756a2b3bd26a1e4b6efe4dde29cd1",
+   "reason": "257089e0:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "fdadeea4319bb6b3d4c1813142a034e424fc3278",
+   "reason": "fdadeea4:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "21956d58ab488264638750c9abc7955c2da674f4",
+   "reason": "21956d58:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "0d11e7e1d08c8ce00d109690d00efe57f19eb38c",
+   "reason": "0d11e7e1:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "4bc5245f163a69a8b3c60a34b13a93a1f9bebcdc",
+   "reason": "4bc5245f:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f81e5d662951d088a45a197f271c5f3f75f7fe1d",
+   "reason": "f81e5d66:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "184256d7f42d4a77aee459b17155a98e70180943",
+   "reason": "184256d7:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "1d0422f8404d991b3e7faf527ff6472894b12ddb",
+   "reason": "1d0422f8:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "b0113588f28d53c147edf23ecc32e25ba3132263",
+   "reason": "b0113588:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "eb53e02a37893abe6d013b1056097756ebe68483",
+   "reason": "eb53e02a:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f984f474e2ffd1821a4c19fa8d9eab1ebd9846f1",
+   "reason": "f984f474:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "6fd0c3a086bd0d449a3e080a1397077635917be6",
+   "reason": "6fd0c3a0:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "4f4f1c174b8b99e1fb20d79127129039c7e43790",
+   "reason": "4f4f1c17:docs/data.json: not a real schema-2 publication"
+  }
+ ],
+ "totals": {
+  "accounts": {
+   "$10,000 / 0.5% (archived)": 22,
+   "$2,000 / 0.5% (archived)": 4
+  },
+  "anticipation": {
+   "eligible": 82,
+   "listed": 128,
+   "unreadable": 0,
+   "whole_share": 3
+  },
+  "bands": {
+   "green": {
+    "by_mechanical_grade": {
+     "A": {
+      "candidates": 1626,
+      "eligible": 1558,
+      "no_share": 186,
+      "whole_share": 1372
+     },
+     "A+": {
+      "candidates": 40,
+      "eligible": 40,
+      "no_share": 3,
+      "whole_share": 37
+     },
+     "B": {
+      "candidates": 2753,
+      "eligible": 2612,
+      "no_share": 326,
+      "whole_share": 2286
+     },
+     "C": {
+      "candidates": 1866,
+      "eligible": 1725,
+      "no_share": 194,
+      "whole_share": 1531
+     },
+     "skip": {
+      "candidates": 5228,
+      "eligible": 4866,
+      "no_share": 630,
+      "whole_share": 4236
+     }
+    },
+    "in_band": {
+     "candidates": 1666,
+     "eligible": 1598,
+     "no_share": 189,
+     "whole_share": 1409
+    }
+   },
+   "tonight": {
+    "by_mechanical_grade": {
+     "A": {
+      "candidates": 1626,
+      "eligible": 1558,
+      "no_share": 1326,
+      "whole_share": 232
+     },
+     "A+": {
+      "candidates": 40,
+      "eligible": 40,
+      "no_share": 35,
+      "whole_share": 5
+     },
+     "B": {
+      "candidates": 2753,
+      "eligible": 2612,
+      "no_share": 2332,
+      "whole_share": 280
+     },
+     "C": {
+      "candidates": 1866,
+      "eligible": 1725,
+      "no_share": 1583,
+      "whole_share": 142
+     },
+     "skip": {
+      "candidates": 5228,
+      "eligible": 4866,
+      "no_share": 4370,
+      "whole_share": 496
+     }
+    },
+    "in_band": {
+     "candidates": 8,
+     "eligible": 8,
+     "no_share": 3,
+     "whole_share": 5
+    }
+   },
+   "yellow": {
+    "by_mechanical_grade": {
+     "A": {
+      "candidates": 1626,
+      "eligible": 1558,
+      "no_share": 449,
+      "whole_share": 1109
+     },
+     "A+": {
+      "candidates": 40,
+      "eligible": 40,
+      "no_share": 5,
+      "whole_share": 35
+     },
+     "B": {
+      "candidates": 2753,
+      "eligible": 2612,
+      "no_share": 716,
+      "whole_share": 1896
+     },
+     "C": {
+      "candidates": 1866,
+      "eligible": 1725,
+      "no_share": 432,
+      "whole_share": 1293
+     },
+     "skip": {
+      "candidates": 5228,
+      "eligible": 4866,
+      "no_share": 1366,
+      "whole_share": 3500
+     }
+    },
+    "in_band": {
+     "candidates": 40,
+     "eligible": 40,
+     "no_share": 5,
+     "whole_share": 35
+    }
+   }
+  },
+  "candidates": 11513,
+  "missing_inputs": 0,
+  "publications": 26,
+  "regimes": {
+   "red": 21,
+   "yellow": 5
+  },
+  "sessions": 21
+ },
+ "version": 1
+}

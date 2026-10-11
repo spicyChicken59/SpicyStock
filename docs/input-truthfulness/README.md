@@ -1,5 +1,15 @@
 # Input truthfulness milestone
 
+[11 October 2026: whole-share feasibility over every retained publication](2026-10-11-whole-share-feasibility.md)
+sizes all 11,513 archived reaction candidates again through `plan.burst_plan`
+at the account each record archived and at Mo's $2,000 / 0.5% reference, under
+each record's own regime, YELLOW and GREEN: under GREEN 96% of the in-band
+names pass the stop rule at any account, 88% size to a whole share at $10,000
+and 53% at $2,000; under YELLOW at $2,000, 5 of 40, because a half-size risk
+budget halved again by the stop rule buys one share only under $62.50. A
+reading over the sizing arithmetic, labelled counterfactual where the account
+or the regime is not the record's; not a ticket and not an edge claim.
+
 8 October 2026: the first live night under the tolerance (session 7 October)
 was degraded anyway, on `behind_more`: of sixteen stale frames fifteen ended on
 the previous session and one on the session before that. Thin names skip days,

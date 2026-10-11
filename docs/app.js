@@ -1030,6 +1030,10 @@
     const selectionNote = reviewSelectionNote(data);
     if (selectionNote) line(selectionNote);
     if (text((run.reads || {}).sentence)) line(run.reads.sentence);
+    // what the reads cost, in the record's own sentence: calls, replies and
+    // the API's token classes; the page prices nothing, because the record
+    // archives no price
+    if (text((run.reader_usage || {}).sentence)) line(run.reader_usage.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // what the record says about WHEN its plans apply, and what its calendar

@@ -801,6 +801,11 @@ def test_the_tolerance_moves_the_status_and_no_decision(wide, claude, fake_resen
             data.pop(key)
         for key in ('status', 'problems', 'input_tolerance', 'elapsed_seconds', 'published_at', 'fetch_seconds'):
             data['run'].pop(key)
+        # what the reads cost is accounting, not a decision: the second run of the
+        # double reads the cached prefix the first run wrote, as the API would
+        data['run'].pop('reader_usage')
+        for b in data['bursts']:
+            b.pop('reader_usage', None)
         data['cover'].pop('dek')
         # observations are keyed by signal identity, which carries the rules digest
         data['observations']['signals'] = sorted(data['observations']['signals'].values(), key=json.dumps)

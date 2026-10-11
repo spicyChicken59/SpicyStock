@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3974 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4001 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -6699,3 +6699,120 @@ on these numbers; a stage that guesses what an unreached gate would have done.
 
 **Not claimable:** a live night under the rule (the first evening after the
 merge writes the first archived block); any trading edge.
+
+## Checkpoint, 11 Oct 2026 — PR #155 accepted on the public site; what the reads cost, and what the account can buy (#109)
+
+**PR #155, accepted.** Merged as `2c077c99` on `main` with a merge commit over
+`a7600c50`; the final head `907b593a` passed all seven checks (pytest, 3974
+collected; page 14501/14501; the historical-runtime central and stress cases,
+21 m 02 s and 21 m 31 s; the gate; both gitleaks runs). Publisher 38176782458
+waited for the changed files and printed *Verified: every one of the 41 public
+files matches committed main* at 21:33:16 UTC; Pages 38176797847 deployed
+(38176781943 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 38176782428 and Tests 38176782434 (21:32–21:51) are green.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `2c077c99`, pushed as **PR #156**. Two deliverables of #109's
+acceptance line remain after the funnel: "measured review cost/coverage" and
+"whole-share $2,000 simulations". `docs/data.json`, `docs/picks.json`, the
+compact reader, every receipt, the history, the evidence objects, the quality
+ledger, the workflows and the vendored design system are untouched; no run,
+mail, dispatch, provider call or credential.
+
+**What the record did not say.** Every retained publication archives
+`run.reads` (the shortfall by cause) and `run.model`, and the pipeline LOGGED
+what the reads cost -- `Claude usage: {...}` -- without archiving it: the
+7 October night's cache_write 3,336 / cache_read 36,696 / uncached 48,562
+survive in this file alone, and no retained record carries a token count or a
+call count a reader could re-derive. The grader's own accounting was also
+short: it billed a reply only after the reply checks had run, so a reply the
+parser could not read as a score -- which the API charged for all the same --
+was never added, and the attempts' response evidence from #88 carried text
+digests and stop reasons but no bill.
+
+**The block.** `run.reader_usage` (version 1, archived as
+`pipeline.reader_usage_version`, so `rules_version` moves): the model the run
+asked, the names asked, the calls sent, the replies received, the four token
+classes a reply reports (`cache_write`, `cache_read`, `uncached`, `output`),
+their input sum and one sentence. `reader_coverage.usage_block()` composes it
+from `grader.grade_all`'s accounting: `cache_usage()` reads the four classes;
+`grade_candidate()` counts a call when the request is sent and a reply when
+one arrives, bills every reply on arrival -- a reply reader authority or the
+discovery contract then refuses, or one that cannot be read, cost what an
+accepted one did -- and keeps each attempt's bill in `provenance.billing`,
+aligned with `attempts` and None where no reply arrived. The pipeline writes
+each selected name's bills to the row as `bursts[].reader_usage` (calls,
+replies, tokens, the bills), OUTSIDE `claude`, because a bill is not part of
+the judgement's identity: the same night read twice bills a cache write and
+then a cache read, and `test_identity_repeats_for_identical_evidence_and_
+changes_with_inputs` holds `evidence.id` equal across two such runs, which it
+could not with the bill inside the sealed reader result. `usage_faults()`
+holds the block one level in: the shape whole, the model the run's, the input
+sum its classes', replies no more than calls and calls no more than names
+times `grader.ATTEMPTS`, no tokens without a reply, the names the night's
+reads, replies at least the accepted readings, and on an open night the
+bursts' own -- each selected name's block held to its attempts (one bill per
+attempt, None exactly where no reply arrived, well-formed, summed) and the run
+block their sum -- and the sentence its own. No price: a price is the
+provider's list, not a fact the run observes; the Method view, the mail's
+*inputs and reads* block and the quality ledger carry the sentence verbatim,
+and a record made under older rules is asked for no block. The version sits in
+`pipeline.RULES` beside the reads' own rule and outside the provenance
+verifier's replay set: the first placement, in `grader.RULES`, turned every
+retained publication and every committed fixture PARTIAL ("archived rules need
+a compatible verifier implementation") in 42 tests, which is what that set is
+for and not what a cost block is.
+
+**The reading.** `tools/whole_share_feasibility.py` sizes every reaction
+candidate a publication archived again through `plan.burst_plan` (via
+`entry_limit_study.current_plan`, the cascade the run writes tickets with) at
+the account the record archived -- or one given on the command line and
+labelled a counterfactual -- under three regimes, the record's own, YELLOW and
+GREEN, each with the grade band it admits (the record's archived
+`trade_grades`/`yellow_grades` through `reader_coverage.admitted`, the one
+rule) and the multiplier it applies; per band it counts the mechanical A-band
+names without a veto (the funnel's potentially usable), how many pass the stop
+rule and how many size to a whole share, by mechanical grade beside the band,
+and prints the limit under which one share fits a stop-constrained ticket
+(`one_share_ceilings()`, held to `plan.size` at the boundary). Anticipation
+setups are read off their recorded plans only. Over the 26 retained
+publications (21 sessions, 11 September to 9 October; 21 RED, 5 YELLOW;
+11,513 candidates, none set aside), at the archived accounts (22 at $10,000,
+4 at $2,000): tonight 8 in band / 8 past the stop rule / 5 a whole share;
+YELLOW 40 / 40 / 35; GREEN 1,666 / 1,598 / 1,409. At Mo's $2,000 / 0.5% for
+every night: 8 / 8 / 2; 40 / 40 / 5; 1,666 / 1,598 / 846. **The stop rule is
+not the bottleneck; the price is**: 96% of the in-band names pass the stop
+rule at any account, 88% of those size to a share at $10,000 and 53% at
+$2,000, and under YELLOW at $2,000 -- the only regime a ticket has ever been
+published under -- 5 of 40, because a half-size $5 risk budget, halved again
+by the stop-risk rule every stop-constrained ticket triggers, buys one share
+only under $62.50 (GREEN: $125.00; at $10,000: $312.50 and $625.00). The
+price ceiling cuts every grade alike. Anticipation, as recorded: 128 listed,
+82 eligible, 3 with a whole share (MG, SN; ZIM, each superseded). Report:
+`docs/input-truthfulness/2026-10-11-whole-share-feasibility.md`, the two
+history tables beside it. Nothing here is a ticket, a fill or an edge.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1, on the final tree): 4001 tests collected, 3966 passed and 34 environment-gated skips in 14 m 16 s, the one failure the suite-count line, which read 4003 because the browser mutants' `inputs` suite had its scratch record under `tests/fixtures/page/` while the suite collected (alone, 4001 and `tests/test_docs.py` 37/37); 13 page fixtures regenerated and current,
+and every cascaded generator regenerated and current (issuer-evidence,
+stop-research, research-outcomes, research-observations, cash-preview; morning
+pinned, unchanged); continuity 137; the chart check 378/378; the `inputs`
+suite 232/232 with its six new checks (the cost sentence verbatim and nothing priced on the thin fixture at 1280, 390 and 320 in both themes; no cost line for a record from before the rule or a half-written block); the full smoke with `--shots` 14517/14517 in its two lanes; gitleaks 8.24.3 over
+the branch's commits and the new files: no leaks. Screenshots of Method at 1280
+and 390, both themes, were looked at: the cost sentence sits under the reads'
+own, in the record's words, with no figure the page added. CI on the pushed head is recorded on PR #156.
+
+**Mutation passes.** Python, each mutant in the mutation worktree at the milestone commit and judged by the whole test files naming the rule (`test_reader_coverage`, `test_grader`, `test_report`; `test_whole_share_feasibility`), no `-k` filter: twenty mutants, all dead -- the output class dropped from the bill, a retry's reply left unbilled, a call counted only when a reply arrived, the row block written inside `claude`, an empty night without a block, the bursts' own re-derivation skipped, the one-bill-per-attempt and the None-iff-no-reply alignment checks dropped, the input sum including output, the older-rules gate dropped, replies over calls allowed, the sentence and the model unchecked; the reading counting an ineligible plan as a share, YELLOW admitting the trade grades, the ceiling without the stop-risk halving, the account override ignored, the veto ignored, tonight sized at full size, anticipation counting ineligible plans. **The control died on the first pass**, in `test_a_graded_row_records_the_model_and_that_the_chart_was_seen`: the provenance-shape assertion excludes `input`, `attempts` and `attempted_model` and did not yet exclude `billing`, a test defect the earlier grader-side rerun had already reported (1 failed, 273 passed) and I had read as a pass off the wrapper's exit code -- the control is what caught it. Fixed in the commit after; the control then survives (282 passed) and the first mutant still dies. Browser, through routed copies of `app.js` judged by `--only inputs`: the cost line dropped (6 checks), the page pricing the tokens itself (3, the nothing-priced check), a half-written block printed (the undefined check); the control (a comment) passes 232/232. One harness defect of mine: the priced mutant's replacement text held `$'`, which `String.replace` reads as the text after the match, so the first run spliced the file and the page never rendered -- a kill for the wrong reason; the harness replaces through a function now and the mutant dies on the named check.
+
+**Keep / fix / defer / omit.** Keep: counts, never a price; the bill beside the
+reader result and outside its identity; the reading reads and never decides.
+Fix if it bites: the row block adds about 200 bytes per selected name to the
+record and the compact reader; the cost history starts with the first
+publication under the rule (the attempts retained since 23 September carry no
+bill, and the 7 October log line is the only earlier token count). Defer: a
+dated price list the reading can apply (`--prices`), when dollars are wanted;
+a GREEN night, which no publication has shown. Omit: any rule, threshold or
+account change on these numbers; a budget that stops reads.
+
+**Not claimable:** a live night under the rule (the first evening after the
+merge writes the first archived bill); any trading edge.

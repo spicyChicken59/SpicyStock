@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "2e7749e42e0f"
+  "rules_version": "e889639f2a03"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -252,6 +252,21 @@
    "refused_admissible": [],
    "verdict": "complete",
    "sentence": null
+  },
+  "reader_usage": {
+   "version": 1,
+   "model": "claude-sonnet-4-6",
+   "candidates": 2,
+   "calls": 2,
+   "responses": 2,
+   "tokens": {
+    "cache_write": 2390,
+    "cache_read": 2390,
+    "uncached": 2218,
+    "output": 180
+   },
+   "input_tokens": 6998,
+   "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 2,390 written to the cache, 2,390 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price."
   },
   "review_selection": {
    "version": 1,
@@ -839,7 +854,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "d5347f1934ba70b96f0b64896b100c52c1042f15b5cab6e3c8f94ef86984f15c"
+   "context_sha256": "1cd91de831d38ef63906890ce4d1c54b32acc6fa311d82d2836b53b2366a62b6"
   },
   "sanitised": {
    "replaced": 0,
@@ -1367,6 +1382,7 @@
    ],
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
+   "reader_usage_version": 1,
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -2237,8 +2253,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "8f4895821607d1683a3c8c0dfd89fddce04115150a87c8fcbe5db2eff8247e30",
-     "context_sha256": "d5347f1934ba70b96f0b64896b100c52c1042f15b5cab6e3c8f94ef86984f15c",
+     "id": "7924ef19fc8ce427db22426e0e246613634b9629146473f0f0a2a0bd9e5272c9",
+     "context_sha256": "1cd91de831d38ef63906890ce4d1c54b32acc6fa311d82d2836b53b2366a62b6",
      "plan_sha256": "e79d51473f34793b1c75b9cb9c50078e637d032f4bd9c5a553b9f2833bef161c",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     }
@@ -2289,6 +2305,24 @@
     ],
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
+   },
+   "reader_usage": {
+    "calls": 1,
+    "responses": 1,
+    "tokens": {
+     "cache_write": 2390,
+     "cache_read": 0,
+     "uncached": 1109,
+     "output": 90
+    },
+    "attempts": [
+     {
+      "cache_write": 2390,
+      "cache_read": 0,
+      "uncached": 1109,
+      "output": 90
+     }
+    ]
    },
    "reader_coverage": "accepted",
    "rank": 1,
@@ -2352,8 +2386,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "2e7749e42e0f",
-    "context_sha256": "d5347f1934ba70b96f0b64896b100c52c1042f15b5cab6e3c8f94ef86984f15c",
+    "rules_version": "e889639f2a03",
+    "context_sha256": "1cd91de831d38ef63906890ce4d1c54b32acc6fa311d82d2836b53b2366a62b6",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2366,7 +2400,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "8f4895821607d1683a3c8c0dfd89fddce04115150a87c8fcbe5db2eff8247e30"
+    "id": "7924ef19fc8ce427db22426e0e246613634b9629146473f0f0a2a0bd9e5272c9"
    },
    "series": [
     {
@@ -3833,8 +3867,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "4ed41cf1634bb1f94fbcd36b5de76ce2aa359141731fe14cedc16b6e5e25454e",
-     "context_sha256": "d5347f1934ba70b96f0b64896b100c52c1042f15b5cab6e3c8f94ef86984f15c",
+     "id": "2b454408332eec5d20ca0335006955086722aaa312aae68ce1c9ecc4ad6aee2b",
+     "context_sha256": "1cd91de831d38ef63906890ce4d1c54b32acc6fa311d82d2836b53b2366a62b6",
      "plan_sha256": "2ecb2f276c315298d9f12105bfcd537a9374cfca34726570d09dd8cdbb296de9",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     }
@@ -3885,6 +3919,24 @@
     ],
     "attempted_model": "claude-sonnet-4-6",
     "discovery_version": 1
+   },
+   "reader_usage": {
+    "calls": 1,
+    "responses": 1,
+    "tokens": {
+     "cache_write": 0,
+     "cache_read": 2390,
+     "uncached": 1109,
+     "output": 90
+    },
+    "attempts": [
+     {
+      "cache_write": 0,
+      "cache_read": 2390,
+      "uncached": 1109,
+      "output": 90
+     }
+    ]
    },
    "reader_coverage": "accepted",
    "rank": 2,
@@ -3948,8 +4000,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "2e7749e42e0f",
-    "context_sha256": "d5347f1934ba70b96f0b64896b100c52c1042f15b5cab6e3c8f94ef86984f15c",
+    "rules_version": "e889639f2a03",
+    "context_sha256": "1cd91de831d38ef63906890ce4d1c54b32acc6fa311d82d2836b53b2366a62b6",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -3962,7 +4014,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "4ed41cf1634bb1f94fbcd36b5de76ce2aa359141731fe14cedc16b6e5e25454e"
+    "id": "2b454408332eec5d20ca0335006955086722aaa312aae68ce1c9ecc4ad6aee2b"
    },
    "series": [
     {
@@ -5281,8 +5333,8 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "11673632aa304ad90933f0b10a854121be115bcd3b55a3760ee24b8977a8c4b7",
-    "context_sha256": "c84fe1864ca1adf9e5112ccc68a2f0547b3db124d182c88016ebfef6ed0f9ccf",
+    "id": "f2dbb087f3c6720c917555d50b24ff18f5b885eaddc99105ca2636727b83ae0b",
+    "context_sha256": "f9763ef0c5debcb19ac1c711f1807b813545fbec6a62e3aac61856a8f81947b6",
     "plan_sha256": "19413666de2f2d4426207bb55de0cac352ba03bb715ce28378951725391dabef",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
    }
@@ -5343,7 +5395,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "2e7749e42e0f"
+  "replay_rules_version": "e889639f2a03"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5651,74 +5703,74 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:2e7749e42e0f": {
+   "burst:AAPL:2026-09-10:e889639f2a03": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:2e7749e42e0f": {
+   "burst:AMD:2026-09-10:e889639f2a03": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:2e7749e42e0f": {
+   "burst:NVDA:2026-09-10:e889639f2a03": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:2e7749e42e0f": {
+   "burst:TSLA:2026-09-10:e889639f2a03": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:2e7749e42e0f": {
+   "burst:PLUG:2026-09-10:e889639f2a03": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:2e7749e42e0f": {
+   "burst:DLLR:2026-09-10:e889639f2a03": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:2e7749e42e0f": {
+   "anticipation:COIL:2026-09-10:e889639f2a03": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:2e7749e42e0f": {
+   "burst:NVDA:2026-09-11:e889639f2a03": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:2e7749e42e0f": {
+   "burst:COIL:2026-09-11:e889639f2a03": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:2e7749e42e0f": {
+   "anticipation:VRT:2026-09-11:e889639f2a03": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "2e7749e42e0f",
+    "rules_version": "e889639f2a03",
     "coverage": "observed"
    }
   },
@@ -5876,7 +5928,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

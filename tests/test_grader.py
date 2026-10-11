@@ -253,7 +253,13 @@ def test_the_same_metrics_produce_the_same_request_twice(claude):
     first = grade_candidate("AAA", block, None, SYSTEM)
     second = grade_candidate("AAA", dict(reversed(list(block.items()))), None, SYSTEM)
     assert claude.calls[0] == claude.calls[1]
+    # the one thing that may differ is what the API billed: the first call
+    # wrote the cached prefix and the second read it, which is the cache working
+    bills = [bill for out in (first, second) for bill in out["provenance"].pop("billing")]
     assert first == second
+    prefix = len(SYSTEM) // 4
+    assert bills == [{"cache_write": prefix, "cache_read": 0, "uncached": 1109, "output": 90},
+                     {"cache_write": 0, "cache_read": prefix, "uncached": 1109, "output": 90}]
 
 
 # ------------------------------------------------------------- the cache ----
@@ -268,7 +274,7 @@ def test_cache_usage_reads_what_the_reply_reports_and_survives_one_that_does_not
     class Reply:
         usage = Usage()
 
-    assert cache_usage(Reply()) == {"cache_write": 1590, "cache_read": 0, "uncached": 1109}
+    assert cache_usage(Reply()) == {"cache_write": 1590, "cache_read": 0, "uncached": 1109, "output": 0}
 
     class Hit(Reply):
         usage = type("U", (), {"cache_creation_input_tokens": 0,
@@ -283,7 +289,7 @@ def test_cache_usage_reads_what_the_reply_reports_and_survives_one_that_does_not
                       "cache_read_input_tokens": "1590",
                       "cache_creation_input_tokens": True,
                       "input_tokens": None})()})()):
-        assert cache_usage(reply) == {"cache_write": 0, "cache_read": 0, "uncached": 0}, reply
+        assert cache_usage(reply) == {"cache_write": 0, "cache_read": 0, "uncached": 0, "output": 0}, reply
 
 
 def test_a_run_totals_the_cache_across_every_call(claude):
@@ -296,10 +302,41 @@ def test_a_run_totals_the_cache_across_every_call(claude):
 
     prefix = len(SYSTEM) // 4
     assert usage == {
+        "calls": n, "responses": n,       # one call, one reply, per candidate
         "cache_write": prefix,            # once, on the first call
         "cache_read": prefix * (n - 1),   # every call after
         "uncached": 1109 * n,             # metrics and chart, per candidate
+        "output": 90 * n,                 # the reply, per candidate
     }, usage
+
+
+def test_usage_counts_every_call_and_bills_every_reply_that_arrived(claude):
+    """A reply the parser refuses was billed all the same, and the retry it
+    earns is a second call: the run's cost is what the API charged, not what
+    the reply checks kept. Each attempt's evidence carries its own bill."""
+    prose = "I'd rate this setup around 7 out of 10 -- the base is tight."
+    claude.replies(prose, json.dumps(REPLY))
+    usage: dict = {}
+    out = grade_candidate("AAA", metrics(), None, SYSTEM, usage=usage)
+    assert out["provenance"]["source"] == SOURCE_CLAUDE
+    prefix = len(SYSTEM) // 4
+    assert usage == {"calls": 2, "responses": 2, "cache_write": prefix, "cache_read": prefix,
+                     "uncached": 2 * 1109, "output": 2 * 90}, usage
+    assert out["provenance"]["billing"] == [
+        {"cache_write": prefix, "cache_read": 0, "uncached": 1109, "output": 90},
+        {"cache_write": 0, "cache_read": prefix, "uncached": 1109, "output": 90}]
+    assert all("usage" not in a["response"] for a in out["provenance"]["attempts"])
+
+
+def test_a_call_that_raised_before_a_reply_is_a_call_and_no_reply(claude):
+    claude.replies(RuntimeError("upstream connect error"), json.dumps(REPLY))
+    usage: dict = {}
+    out = grade_candidate("AAA", metrics(), None, SYSTEM, usage=usage)
+    assert out["provenance"]["source"] == SOURCE_CLAUDE
+    assert (usage["calls"], usage["responses"], usage["uncached"], usage["output"]) == (2, 1, 1109, 90)
+    attempts = out["provenance"]["attempts"]
+    assert "response" not in attempts[0] and attempts[0]["outcome"] == "rejected"
+    assert out["provenance"]["billing"][0] is None and out["provenance"]["billing"][1]["output"] == 90
 
 
 def test_a_request_that_stops_asking_for_caching_reports_none(claude, monkeypatch):
@@ -613,7 +650,7 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     chart = render_chart("AAA", ohlcv("burst"), str(tmp_path))
     result = grade_candidate("AAA", metrics(), chart, SYSTEM)
     prov = result["provenance"]
-    assert {k: v for k, v in prov.items() if k not in ("input", "attempts", "attempted_model")} == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
+    assert {k: v for k, v in prov.items() if k not in ("input", "attempts", "billing", "attempted_model")} == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
                     "chart_seen": True, "error": None,
                     "request_text_sha256": hashlib.sha256(json.dumps(
                         {"system": SYSTEM, "user": user_text(metrics())}, sort_keys=True).encode()).hexdigest()}
@@ -624,6 +661,9 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     assert prov["attempts"] == [{"request_sha256": digest(claude.calls[0]), "correction": False, "outcome": "model",
         "response": {"text": raw, "text_sha256": hashlib.sha256(raw.encode()).hexdigest(),
                      "bytes": len(raw.encode()), "retention": "complete", "stop_reason": "end_turn", "message_id": None}}]
+    # the bill sits beside the attempt, not in it: what the cache charged is not the judgement's identity
+    assert prov["billing"] == [{"cache_write": billed_usage(claude.calls[0], claude.calls[:1]).cache_creation_input_tokens,
+                                "cache_read": 0, "uncached": 1109, "output": 90}]
     assert prov["attempted_model"] == prov["model"]
     blocks = claude.calls[0]["messages"][0]["content"]
     images = [b for b in blocks if b["type"] == "image"]
@@ -642,7 +682,7 @@ def test_a_grade_made_without_the_chart_says_so_and_attaches_nothing(claude):
 def test_a_row_carries_exactly_the_published_keys(claude):
     result = grade_candidate("AAA", metrics(), None, SYSTEM)
     assert set(result) == {"grade", "score", "reason", "key_risk", "entry_note", "findings", "provenance"}
-    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256", "input", "attempts", "attempted_model"}
+    assert set(result["provenance"]) == {"source", "model", "chart_seen", "error", "request_text_sha256", "input", "attempts", "billing", "attempted_model"}
 
 
 # ------------------------------------------------------------- the budget ----

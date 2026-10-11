@@ -172,8 +172,8 @@ def four_reads(tmp_path, monkeypatch, script, admitted):
         [(t, "A+", []) for t in frames], "four admissible A+ bursts, or the case tests something else"
     calls = scripted(monkeypatch, script)
     rep = pipeline.RunReport()
-    reads = pipeline.read_charts_and_grade(rows, frames, rep, tmp_path, pipeline.grader_prompt(), False,
-                                           admitted=admitted)
+    reads, _ = pipeline.read_charts_and_grade(rows, frames, rep, tmp_path, pipeline.grader_prompt(), False,
+                                              admitted=admitted)
     return reads, [p["kind"] for p in rep.problems], calls, {r["ticker"]: r for r in rows}
 
 
@@ -305,3 +305,128 @@ def test_validate_refuses_forged_reads(market, claude, fake_resend, tmp_path):
         forge(forged)
         with pytest.raises(ValueError, match=re.escape(message)):
             report.validate(forged)
+
+
+# ------------------------------------------------- what the reads cost ----
+def _prefix(call):
+    """What the double bills for the cached rulebook: the cache_control blocks."""
+    return sum(len(str(b.get("text", ""))) // 4 for b in call["system"] if isinstance(b, dict) and b.get("cache_control"))
+
+
+def test_the_night_archives_what_its_reads_cost_in_the_api_s_own_units(market, claude, fake_resend, tmp_path):
+    rep, data, _ = evening(tmp_path, market)
+    assert rep.published, rep.failure
+    prefix = _prefix(claude.calls[0])
+    cost = data["run"]["reader_usage"]
+    assert cost == {"version": 1, "model": data["run"]["model"], "candidates": 1, "calls": 1, "responses": 1,
+                    "tokens": {"cache_write": prefix, "cache_read": 0, "uncached": 1109, "output": 90},
+                    "input_tokens": prefix + 1109, "sentence": reader_coverage.usage_sentence(cost)}
+    assert cost["sentence"] == (f"Chart reader cost: 1 call for 1 name, 1 reply; {prefix + 1109:,} input tokens "
+                                f"(1,109 uncached, {prefix:,} written to the cache, 0 read from it) and 90 output "
+                                f"tokens, under {data['run']['model']}. Token counts as the API reported them; the "
+                                "record carries no price.")
+    assert data["rules"]["pipeline"]["reader_usage_version"] == 1
+    # the bill sits beside the name's reader result, one per attempt, and the run's block is their sum
+    assert data["bursts"][0]["reader_usage"] == {"calls": 1, "responses": 1, "tokens": cost["tokens"], "attempts": [cost["tokens"]]}
+    assert "usage" not in data["bursts"][0]["claude"]["attempts"][0]["response"]
+    assert reader_coverage.usage_faults(data) == []
+    report.validate(data)
+
+
+def test_a_credit_outage_is_one_call_and_no_reply_for_four_names(tmp_path, monkeypatch):
+    frames = {t: a_plus_frame() for t in ("AAA", "BBB", "CCC", "DDD")}
+    rows, _, _ = pipeline.scan_frames(frames, universe.build(None, explicit=list(frames)), pipeline.RunReport())
+    scripted(monkeypatch, {t: RuntimeError(CREDIT) for t in frames})
+    reads, cost = pipeline.read_charts_and_grade(rows, frames, pipeline.RunReport(), tmp_path, pipeline.grader_prompt(),
+                                                 False, admitted=())
+    assert (reads["requested"], reads["done"]) == (4, 0)
+    assert {k: cost[k] for k in ("candidates", "calls", "responses", "input_tokens")} == \
+        {"candidates": 4, "calls": 1, "responses": 0, "input_tokens": 0}
+    assert cost["tokens"] == {k: 0 for k in reader_coverage.TOKEN_CLASSES}
+    assert cost["sentence"].startswith("Chart reader cost: 1 call for 4 names, 0 replies; 0 input tokens")
+    assert reader_coverage._attempt_usage(rows) == {"calls": 1, "responses": 0, "tokens": cost["tokens"]}
+
+
+def test_a_refused_reply_is_billed_like_an_accepted_one(tmp_path, monkeypatch):
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=())
+    again = reader_coverage._attempt_usage(list(rows.values()))
+    assert again["calls"] == again["responses"] == 4 == len(calls)
+    assert again["tokens"]["uncached"] == 4 * 1000 and again["tokens"]["output"] == 4 * 90
+    assert rows["BBB"]["claude"]["source"] == "fallback" and rows["BBB"]["reader_usage"]["attempts"][0]["output"] == 90
+
+
+def test_usage_sentence_counts_in_words():
+    none = reader_coverage.usage_block([], {}, model="m")
+    assert none["sentence"] == "Chart reader cost: no calls." and none["candidates"] == none["calls"] == 0
+    two = reader_coverage.usage_block([{}, {}], {"calls": 3, "responses": 2, "cache_write": 10, "cache_read": 20,
+                                                "uncached": 2000, "output": 180}, model="m")
+    assert two["input_tokens"] == 2030
+    assert two["sentence"] == ("Chart reader cost: 3 calls for 2 names, 2 replies; 2,030 input tokens (2,000 uncached, "
+                               "10 written to the cache, 20 read from it) and 180 output tokens, under m. Token counts "
+                               "as the API reported them; the record carries no price.")
+
+
+def test_validate_refuses_forged_usage(market, claude, fake_resend, tmp_path):
+    rep, data, _ = evening(tmp_path, market)
+    report.validate(data)
+
+    def resign(u):
+        u["input_tokens"] = sum(u["tokens"][k] for k in reader_coverage.INPUT_CLASSES)
+        u["sentence"] = reader_coverage.usage_sentence(u)
+
+    def bill_one_more_output(r):
+        u = r["run"]["reader_usage"]
+        u["tokens"]["output"] += 1
+        resign(u)
+
+    def fewer_replies_than_readings(r):
+        u = r["run"]["reader_usage"]
+        u.update(calls=0, responses=0, tokens={k: 0 for k in reader_coverage.TOKEN_CLASSES})
+        resign(u)
+
+    # each forge names the one check it is for: a forge another check also
+    # refuses would pass with its own check deleted
+    cases = {
+        "the model": (lambda r: r["run"]["reader_usage"].update(model="claude-other"), "run.reader_usage model is not the run's"),
+        "the sum": (lambda r: r["run"]["reader_usage"].update(input_tokens=1), "run.reader_usage input tokens are not the sum of their classes"),
+        "replies over calls": (lambda r: r["run"]["reader_usage"].update(responses=2), "run.reader_usage calls and replies do not reconcile"),
+        "tokens with no reply": (lambda r: r["run"]["reader_usage"].update(responses=0), "run.reader_usage bills tokens to no reply"),
+        "the names": (lambda r: r["run"]["reader_usage"].update(candidates=2), "run.reader_usage names are not the night's reads"),
+        "fewer replies than readings": (fewer_replies_than_readings, "run.reader_usage has fewer replies than accepted readings"),
+        "the bursts' own bill": (bill_one_more_output, "run.reader_usage is not the bursts' own"),
+        "the sentence": (lambda r: r["run"]["reader_usage"].update(sentence="Free."), "run.reader_usage sentence is not its own"),
+        "a field": (lambda r: r["run"]["reader_usage"].update(price_usd=0.01), "run.reader_usage carries fields this rule does not write"),
+        "a count": (lambda r: r["run"]["reader_usage"].update(calls="1"), "run.reader_usage counts are malformed"),
+        "the version": (lambda r: r["run"]["reader_usage"].update(version=2), "run.reader_usage is missing or of an unknown version"),
+        "the block": (lambda r: r["run"].pop("reader_usage"), "run.reader_usage is missing or of an unknown version"),
+        "a reply without its bill": (lambda r: r["bursts"][0]["reader_usage"]["attempts"].__setitem__(0, None),
+                                     "run.reader_usage cannot be re-derived: a name bills a reply that did not arrive, or none for one that did"),
+        "a name without its cost block": (lambda r: r["bursts"][0].pop("reader_usage"),
+                                          "run.reader_usage cannot be re-derived: a selected name has no readable cost block"),
+        "a bill the name does not sum": (lambda r: r["bursts"][0]["reader_usage"]["attempts"][0].update(output=91),
+                                         "run.reader_usage cannot be re-derived: a name's cost does not sum its bills"),
+        "a second bill for one attempt": (lambda r: r["bursts"][0]["reader_usage"]["attempts"].append(None),
+                                          "run.reader_usage cannot be re-derived: a name's bills are not one per attempt"),
+    }
+    for name, (forge, message) in cases.items():
+        forged = json.loads(json.dumps(data))
+        forge(forged)
+        assert reader_coverage.usage_faults(forged) == [message], name
+        with pytest.raises(ValueError, match=re.escape(message)):
+            report.validate(forged)
+    # a record made under rules that do not write the block is not asked for it
+    older = json.loads(json.dumps(data))
+    older["run"].pop("reader_usage")
+    older["rules"]["pipeline"].pop("reader_usage_version")
+    assert reader_coverage.usage_faults(older) == []
+
+
+def test_a_night_with_nothing_to_read_archives_an_empty_cost_block(market, claude, fake_resend, tmp_path):
+    quiet = [t for t in market if t not in ("AAA", "COIL")]
+    rep, data, _ = evening(tmp_path, quiet)
+    assert rep.published, rep.failure
+    assert data["run"]["reads"]["verdict"] == "not_asked" and claude.calls == []
+    assert data["run"]["reader_usage"] == reader_coverage.usage_block([], {}, model=data["run"]["model"])
+    assert data["run"]["reader_usage"]["sentence"] == "Chart reader cost: no calls."
+    assert all("reader_usage" not in b for b in data["bursts"])
+    report.validate(data)
