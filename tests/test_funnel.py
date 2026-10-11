@@ -174,6 +174,10 @@ def test_an_unreviewed_candidate_is_placed_by_the_selections_recorded_blockers(b
 def test_a_record_without_a_selection_block_says_the_reasons_were_not_archived():
     row = {"ticker": "X", "grade_mechanical": "A", "grade": "A", "vetoes": [], "claude": None}
     assert funnel.reaction_stage(row, GREEN, {}, []) == "review_unselected"
+    # the grader's own "not graded" row is a name it was handed and never read: unselected, not a transport failure
+    row["claude"] = {"source": grader.SOURCE_NOT_GRADED, "grade": None, "error": None}
+    assert reader_coverage.state(row) == reader_coverage.NOT_SELECTED
+    assert funnel.reaction_stage(row, GREEN, {}, []) == "review_unselected"
 
 
 def test_a_reviewed_candidate_without_an_accepted_reading_is_placed_by_the_readers_cause():

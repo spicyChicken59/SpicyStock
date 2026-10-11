@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3907 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3969 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -6505,3 +6505,126 @@ Monday 12 October, when the morning workflow's two attempts run, and only if the
 Alpaca pair the morning collector already reads is present and the cohort on main
 is still the one the publication binds. Read its receipt's status, reason, rows and
 request count, and the page's sections, and record them here.
+
+## Checkpoint, 11 Oct 2026 — PR #154 accepted on the public site, and the candidate funnel (#109)
+
+**PR #154, accepted.** Merged as `a7600c50` on `main` with a merge commit over
+`7bc5d2c2`; the final head `a0d26372` passed pytest (18:30–18:49 UTC), page
+(18:30–18:46), the historical-runtime gate (decision
+`observed_docs_only_push_no_runtime_change`: the push `2b5946be`→`a0d26372`
+changed `CLAUDE.md` alone, so the gate's own rule skipped the native matrix on
+that head) and both gitleaks runs; the native central and stress cases passed on
+Tests run 38161496122 at `7d12bc2e`, whose tree differs from the final head in
+`CLAUDE.md` and `tests/test_research_observations.py` only, neither a source
+the native cases read. Publisher 38165726718 waited for the five changed files
+and printed *Verified: every one of the 41 public files matches committed main*;
+Pages 38165745839 deployed (38165726883 cancelled as superseded, as every merge
+does); the merge commit's own Secret scan passed. The first live research
+observation can exist Monday 12 October at 13:20 or 13:28 UTC and is still not
+claimable.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `a7600c50`. The owner's loop continues on #109, milestone 3's first
+deliverable: "persist and show separate denominators" and "explain where each
+potentially usable candidate was lost". `docs/data.json`, `docs/picks.json`, the
+compact reader, every receipt, the history, the evidence objects, the quality
+ledger and the vendored design system are untouched; no run, mail, dispatch,
+provider call or credential.
+
+**What was built.** `src/funnel.py` gives every discovered reaction candidate
+and every listed anticipation setup exactly one terminal stage, in the order the
+run applies its gates: the regime (RED stops everything at `market`), the
+mechanical grade against the regime's admitted band (`reader_coverage.admitted`,
+the one shared rule), the quality veto; then for a name the review budget never
+reached, the review selection's own recorded blockers (`preview_event`,
+`preview_geometry`, `preview_sizing`, `preview_no_order`, `preview_unavailable`,
+`review_budget`); for a reviewed name the reader's state by its cause
+(`review_refused`, `review_format`, `review_account`, `review_credit`,
+`review_transport`, `review_downgraded`); then the constructed plan's own
+combined allocation (`event`, `geometry`, `sizing`, `allocation_slot`,
+`allocation_cash`, `allocation_occupied`, `ticket`). The stage counts sum to the
+discovered count by construction; `potentially_usable` counts the names past
+the first three gates; `by_mechanical_grade` is beside it. `report.build()`
+composes the block last, off the cleaned record, beside `closest_miss`;
+`report.validate()` refuses a block the record does not re-derive (whole-block
+equality against `build()`, so a forged count, a dropped row, a changed label
+or a rewritten sentence is one fault); `funnel.version` joins the archived
+rules, so `rules_version` moves and a record made under older rules is asked
+for no block. Legacy records are read for what they recorded -- a plan from
+before the combined allocation is placed by the cash budget's cut, the trade
+list or the record's own old anticipation-ticket definition, and a field a
+record lacks is `unknown`, never guessed. The labels travel in the block, so the
+page and the mail print the record's words: the scan disclosure prints the
+table and the sentence, each matrix row says where its name stopped, and the
+mail prints the same sentence under *where the candidates stopped*.
+`tools/candidate_funnel.py` reads the funnel of any publication, of commits, or
+of a ref's whole retained history, skipping the first build's records by name.
+
+**Over every retained publication**
+(`docs/input-truthfulness/2026-10-11-candidate-funnel.md`): 26 publications
+over 21 sessions, 11 September to 9 October, 21 RED and 5 YELLOW, GREEN never
+published. Of 11,513 discovered reaction candidates, 8,618 stopped at the
+market gate and 2,887 at the YELLOW band's A+ gate; 8 were potentially usable
+(the four mechanical A+ in each of the two 8 October publications), 2 refused
+by reader authority and 6 lowered below the band; 0 reaction tickets. Of 128
+listed anticipation setups, 105 stopped at the market, 6 at a known event, 13 at
+the stop rule, 1 at a whole share, and 3 were the tickets the record published
+and later superseded (MG, SN; ZIM). Entry geometry, sizing and allocation have
+refused no reaction candidate yet, because none has reached them.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 3932 passed and 34 environment-gated skips of 3967 collected when the
+full suite ran, its one failure the suite-count line this checkpoint moves to
+3969 (`tests/test_docs.py` 37/37 after; 3969 collected on this tree); 13 page fixtures current and the six cascaded
+generators current (issuer-evidence, stop-research, research-outcomes,
+research-observations and cash-preview regenerated through their own producers
+after the page fixtures changed; morning pinned, unchanged); the `funnel` suite
+115/115 at 1280 dark, 390 light and 390 dark, with the older-rules, half-written,
+no-labels, no-sentence and no-discovered records; continuity 137; the chart check 378/378; the full smoke with `--shots` recorded on
+the pull request;
+gitleaks 8.24.3 (fetched into a temporary directory for this pass; it is not
+installed in this sandbox) over the branch's commits and over the new files: no
+leaks. Screenshots at
+1280 and 390, both themes, were looked at: the table's stage column was a
+third of a phone's width under wide numeric columns, so the numeric columns
+are sized to their content now.
+
+**Mutation passes.** Python, each mutant in the mutation worktree at the funnel
+commit and judged by `tests/test_funnel.py` and `tests/test_report.py` in full:
+thirteen mutants -- the veto read before the grade, the market gate dropped for
+reactions and for anticipation, an unknown blocker read as the budget, a
+withheld plan read as geometry whatever its event, the usable count ignoring the
+veto, the validator never comparing, the sentence dropping the listed setups'
+stops, a legacy anticipation ticket read off the trade list, a refused reader
+read as a downgrade, the validator skipping the block, the builder skipping it.
+Twelve die in the test naming the rule (the veto-before-grade order dies in the
+test over the retained 9 October publication, whose 185 vetoed names all sit
+below the band), and one is equivalent: the preview's `known_event` and
+`plan_withheld` blockers are written by an if/elif in
+`review_selection.blockers()`, so no record carries both and their order cannot
+matter. `usable_ignores_veto` SURVIVED the first pass -- no fixture has a vetoed
+name inside the band, the second shape this file names -- and a synthetic record
+holds it now, so it dies. The control (a docstring) stays green. Browser, through
+routed copies of `app.js` (`SCSTOCK_APP`) judged by `--only funnel`: nine
+mutants -- the page adding one to the discovered count, zero-count stages
+printed, the record's labels ignored, the sentence composed by the page, the
+matrix's stop dropped, tickets saying they stopped, the absent note dropped, the
+anticipation column read off the reaction column, a half-written block accepted.
+Eight die at once and **the half-written block SURVIVED**: the suite's one
+half-written case lacked `anticipation` and was refused by an earlier clause
+before the shape checks the mutant removed could matter, the first shape this
+file names. Three more shapes (no labels, no sentence, no discovered count) are
+read without waiting out a locator now, so a page that fails to render the
+section is a named failure and not a timeout, and the mutant dies on three of
+them. The control (the sr-only caption's punctuation) stays green.
+
+**Keep / fix / defer / omit.** Keep: the funnel reads and never decides; a stage
+is the record's accounting of its own gates. Fix if it bites: the block carries
+one row per candidate (`reaction.rows`), about 15 KB on a 500-candidate night,
+in the record and the compact reader alike. Defer: the funnel's own history
+grows with each publication made under the rule; the reading tool is the way to
+see it across nights until a page view earns its place. Omit: any rule change
+on these numbers; a stage that guesses what an unreached gate would have done.
+
+**Not claimable:** a live night under the rule (the first evening after the
+merge writes the first archived block); any trading edge.

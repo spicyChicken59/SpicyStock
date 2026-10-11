@@ -165,7 +165,10 @@ def reaction_stage(row, admitted, cash_budget, trades):
         return "veto"
     selection = row.get("review_selection")
     reader = row.get("claude")
-    selected = selection.get("selected") if isinstance(selection, dict) else isinstance(reader, dict)
+    # a record from before the selection block names a selected name by its reader
+    # block; the grader's own "not graded" row is a name it was handed and never read
+    selected = (selection.get("selected") if isinstance(selection, dict)
+                else isinstance(reader, dict) and reader.get("source") != grader.SOURCE_NOT_GRADED)
     if selected is not True:
         if not isinstance(selection, dict):
             return "review_unselected"
