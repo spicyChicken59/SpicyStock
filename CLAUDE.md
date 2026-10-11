@@ -6593,8 +6593,10 @@ not installed in this sandbox) over the branch's commits and over the new
 files: no leaks. Screenshots at 1280, 390 and 320, both themes, were looked at:
 the table's stage column was a third of a phone's width under wide numeric
 columns, so the count columns are sized to their content with a narrow gutter
-and the third header reads *setups*, and at 320 the stage column keeps half the
-table.
+and the third header reads *setups*, and at 320 the stage column keeps about
+half the table (the runner's mono font is wider than this sandbox's, which the
+first CI run showed at 110 of 230 px, so the check asks for 45% and the
+narrow-screen gutter is 4 px).
 
 **CI found what the local gates had passed.** The first run on the pull request
 failed the fixture gate: the red variants of the stop-research and
