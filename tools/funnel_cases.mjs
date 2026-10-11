@@ -75,7 +75,8 @@ export async function checkFunnel({ browser, base, open, check, eq, shotsDir }) 
       const reactionSum = stageRows.reduce((n, r) => n + (cellNumber(r.reaction) || 0), 0);
       eq(`${where}: the printed reaction stages sum to the discovered count`, reactionSum, fu.reaction.discovered);
       // the table's own accessibility: a caption, column headers, a row header per stage
-      check(`${where}: the table carries its caption`, (await page.locator('#scan-body [data-funnel-table] caption').textContent()).startsWith('The candidate funnel: where the discovered reaction candidates and the listed anticipation setups ended, one terminal stage each'));
+      const caption = page.locator('#scan-body [data-funnel-table] caption');
+      check(`${where}: the table carries its caption`, ((await caption.count()) ? await caption.textContent() : '').startsWith('The candidate funnel: where the discovered reaction candidates and the listed anticipation setups ended, one terminal stage each'));
       eq(`${where}: the column headers`, await page.locator('#scan-body [data-funnel-table] thead th').allTextContents(), ['stage', 'bursts', 'setups']);
       eq(`${where}: every body row is headed by its stage`, await page.locator('#scan-body [data-funnel-table] tbody th[scope="row"]').count(), rows.length);
       // every stock in the matrix says where it stopped, except the tickets
@@ -90,6 +91,16 @@ export async function checkFunnel({ browser, base, open, check, eq, shotsDir }) 
         if (row.stage === 'ticket') check(`${where}: ${ticker} the ticket carries no stop`, !note.includes('stopped at:'), note);
         else check(`${where}: ${ticker} says where it stopped`, note.includes('stopped at: ' + fu.labels[row.stage]), note);
       }
+      // a record rendered again over an OPEN scan rebuilds the matrix inside the
+      // same render: one funnel section, the record's sentence, still ahead of it
+      await page.evaluate((now) => SCStock.render(SCStock.data, new Date(now)), NOW);
+      await page.waitForFunction((n) => document.querySelectorAll('#scan-table tbody tr').length === n, full.bursts.length);
+      eq(`${where}: a re-render over the open scan keeps one funnel section`, await page.locator('#scan-body [data-funnel]').count(), 1);
+      eq(`${where}: and its sentence`, await page.locator('#scan-body [data-funnel-sentence]').textContent(), fu.sentence);
+      check(`${where}: and the funnel still precedes the matrix built in the same render`, await page.evaluate(() => {
+        const f = document.querySelector('#scan-body [data-funnel]'), m = document.querySelector('#scan [data-sc-matrix-nav]');
+        return !!f && !!m && !!(f.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }));
       check(`${where}: nothing scrolls sideways`, await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
       // the table itself fits its scroll box, and the stage column keeps a readable share of it
       const fit = await page.locator('#scan-body [data-funnel] .sc-table-scroll').evaluate((box) => {
@@ -168,6 +179,12 @@ export async function checkFunnel({ browser, base, open, check, eq, shotsDir }) 
       await page.waitForFunction((n) => document.querySelectorAll('#scan-table tbody tr').length === n, record.bursts.length);
       const note = await page.locator('#scan-table tbody tr[data-ticker="constructor"] .ss-grade-note').textContent();
       check('proto-ticker: the name without a row claims no stage', !note.includes('stopped at:'), note);
+      // the deep link builds the matrix inside the first render, the one order
+      // in which a funnel appended last would land under it
+      check('proto-ticker: the funnel precedes the matrix when both are built in one render', await page.evaluate(() => {
+        const f = document.querySelector('#scan-body [data-funnel]'), m = document.querySelector('#scan [data-sc-matrix-nav]');
+        return !!f && !!m && !!(f.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }));
       eq('proto-ticker: no page errors', errors.slice(), []);
     } finally { await context.close(); }
   }
