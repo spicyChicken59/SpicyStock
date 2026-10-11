@@ -229,10 +229,13 @@ export async function checkResearchObservations({ browser, base, open, check, eq
       ['crossed quote called recent', changed(v => { v.rows[0].quote.ask = v.rows[0].quote.bid - 0.01; })],
       ['failed source with prices', changed(v => { v.source.status = 'unavailable'; v.source.entitlement = 'unavailable'; v.source.error_kind = 'provider_error'; })],
       ['second request', changed(v => { v.source.requests = 2; })],
+      ['observed prices with no request counted', changed(v => { v.source.requests = 0; })],
       ['consolidated feed claim', changed(v => { v.source.scope = 'consolidated'; })],
       ['forged status', changed(v => { v.status = 'partial'; })],
       ['forged reason', changed(v => { v.reason = 'wrong_session'; })],
-      ['future collection', changed(v => { v.generated_at = '2099-10-12T13:20:01+00:00'; v.expires_at = '2099-10-12T13:25:01+00:00'; })],
+      // Every clock moves together: a consistent receipt that is simply from the
+      // page's future, so only the future rule can refuse it (not the duration bound).
+      ['future collection', changed(v => { v.collection_started_at = '2099-10-12T13:20:00+00:00'; v.generated_at = '2099-10-12T13:20:01+00:00'; v.expires_at = '2099-10-12T13:25:01+00:00'; v.source.checked_at = '2099-10-12T13:20:00.500000+00:00'; v.rows.forEach(row => { row.quote.timestamp = '2099-10-12T13:20:00+00:00'; row.trade.timestamp = '2099-10-12T13:19:59+00:00'; }); })],
       ['rehearsal over a real record', changed(v => { v.dry_run = true; })],
       ['wider request budget', changed(v => { v.policy.max_requests_per_run = 2; })],
       ['halts claimed checked', changed(v => { v.coverage.halts = 'checked'; })],
@@ -247,6 +250,18 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     }
     eq('boundary cases produce no page exceptions', [...boundary.errors], []);
   } finally { await boundary.context.close(); }
+
+  const canonicalBoundary = await setup(current, observed, { canonical: true });
+  try {
+    const { page, transport } = canonicalBoundary;
+    await reveal(page);
+    eq('canonical control first loads the genuine observation', (await state(page)).status, 'observed');
+    const value = structuredClone(observed.value); value.publication.reader_sha256 = '0'.repeat(64);
+    transport.current = { value }; await page.evaluate(() => SCStock.researchObservations.reload()); await settled(page);
+    eq('canonical load: a reader digest the cohort does not carry is refused', (await state(page)).state, 'unavailable');
+    eq('canonical load: no observation section survives the refusal', await page.locator('[data-research-observation]').count(), 0);
+    eq('canonical boundary produces no page exceptions', [...canonicalBoundary.errors], []);
+  } finally { await canonicalBoundary.context.close(); }
 
   const red = await cohort('red'), noRows = await observation('no-rows');
   const redTab = await setup(red, noRows, { hash: '#/explore', width: 390, theme: 'light' });
