@@ -233,9 +233,12 @@ export async function checkResearchObservations({ browser, base, open, check, eq
       ['consolidated feed claim', changed(v => { v.source.scope = 'consolidated'; })],
       ['forged status', changed(v => { v.status = 'partial'; })],
       ['forged reason', changed(v => { v.reason = 'wrong_session'; })],
-      // Every clock moves together: a consistent receipt that is simply from the
-      // page's future, so only the future rule can refuse it (not the duration bound).
-      ['future collection', changed(v => { v.collection_started_at = '2099-10-12T13:20:00+00:00'; v.generated_at = '2099-10-12T13:20:01+00:00'; v.expires_at = '2099-10-12T13:25:01+00:00'; v.source.checked_at = '2099-10-12T13:20:00.500000+00:00'; v.rows.forEach(row => { row.quote.timestamp = '2099-10-12T13:20:00+00:00'; row.trade.timestamp = '2099-10-12T13:19:59+00:00'; }); })],
+      // Prints dated 2099 on applicable session 2026-10-12 are stale by session,
+      // whatever the clock: the freshness replay is the rule this one exercises.
+      ['future prints called recent', changed(v => { v.collection_started_at = '2099-10-12T13:20:00+00:00'; v.generated_at = '2099-10-12T13:20:01+00:00'; v.expires_at = '2099-10-12T13:25:01+00:00'; v.source.checked_at = '2099-10-12T13:20:00.500000+00:00'; v.rows.forEach(row => { row.quote.timestamp = '2099-10-12T13:20:00+00:00'; row.trade.timestamp = '2099-10-12T13:19:59+00:00'; }); })],
+      // An inapplicable receipt has no row and no request, so nothing but the
+      // page's own clock can refuse one that is simply from the future.
+      ['future collection', (() => { const value = structuredClone(variants['before-window'].value); value.collection_started_at = '2099-10-12T12:30:00+00:00'; value.generated_at = '2099-10-12T12:30:00+00:00'; value.expires_at = '2099-10-12T12:35:00+00:00'; return { value }; })()],
       ['rehearsal over a real record', changed(v => { v.dry_run = true; })],
       ['wider request budget', changed(v => { v.policy.max_requests_per_run = 2; })],
       ['halts claimed checked', changed(v => { v.coverage.halts = 'checked'; })],
