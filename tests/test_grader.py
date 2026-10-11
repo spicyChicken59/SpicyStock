@@ -650,7 +650,7 @@ def test_a_graded_row_records_the_model_and_that_the_chart_was_seen(claude, ohlc
     chart = render_chart("AAA", ohlcv("burst"), str(tmp_path))
     result = grade_candidate("AAA", metrics(), chart, SYSTEM)
     prov = result["provenance"]
-    assert {k: v for k, v in prov.items() if k not in ("input", "attempts", "attempted_model")} == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
+    assert {k: v for k, v in prov.items() if k not in ("input", "attempts", "billing", "attempted_model")} == {"source": SOURCE_CLAUDE, "model": claude.calls[0]["model"],
                     "chart_seen": True, "error": None,
                     "request_text_sha256": hashlib.sha256(json.dumps(
                         {"system": SYSTEM, "user": user_text(metrics())}, sort_keys=True).encode()).hexdigest()}
