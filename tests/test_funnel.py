@@ -161,6 +161,7 @@ def test_the_grade_then_the_veto_are_read_off_the_mechanical_fields():
 @pytest.mark.parametrize("blockers, stage", [
     (["known_event"], "preview_event"), (["plan_withheld"], "preview_geometry"),
     (["plan_withheld", "no_whole_share"], "preview_geometry"), (["no_whole_share"], "preview_sizing"),
+    (["known_event", "no_whole_share"], "preview_event"),
     (["no_order"], "preview_no_order"), (["preview_unavailable"], "preview_unavailable"),
     ([], "review_budget"), (["something_new"], "review_unknown"),
 ])
@@ -260,6 +261,32 @@ def test_a_record_whose_rules_name_no_grades_is_unknown_never_guessed():
     assert block["reaction"]["stages"]["unknown"] == 1 and block["anticipation"]["stages"]["unknown"] == 1
     assert block["anticipation"]["counts"] == {k: None for k in funnel.WATCH_COUNTS}
     assert "Anticipation: 1 listed, 0 tickets." in block["sentence"]
+
+
+def test_potentially_usable_counts_the_names_past_the_grade_and_the_veto_and_nothing_later():
+    """A vetoed name in the band is not usable; a name past both gates is,
+    whatever the review or the plan then did to it."""
+    rules = {"pipeline": {"trade_grades": ["A+", "A"], "yellow_grades": ["A+"]}, "funnel": dict(funnel.RULES)}
+    data = {"rules": rules, "breadth": {"regime": {"verdict": "green"}}, "cash_budget": {}, "trades": [],
+            "watchlist": {"top": [], "counts": {"momentum": 1, "quiet": 1, "admitted": 0, "top": 0, "also_quiet": 0}},
+            "bursts": [
+                {"ticker": "VET", "grade_mechanical": "A", "grade": "A", "vetoes": ["up_days"], "claude": None,
+                 "review_selection": unselected("grade_not_admitted", "quality_veto")},
+                {"ticker": "LOW", "grade_mechanical": "B", "grade": "B", "vetoes": [], "claude": None,
+                 "review_selection": unselected("grade_not_admitted")},
+                {"ticker": "DWN", "grade_mechanical": "A+", "grade": "C", "vetoes": [], "claude": accepted_reader("C"),
+                 "review_selection": selected()},
+                {"ticker": "BUD", "grade_mechanical": "A", "grade": "A", "vetoes": [], "claude": None,
+                 "review_selection": unselected()},
+            ]}
+    block = funnel.build(data)
+    assert block["reaction"]["potentially_usable"] == 2
+    assert [r["stage"] for r in block["reaction"]["rows"]] == ["veto", "grade", "review_downgraded", "review_budget"]
+    assert block["reaction"]["stages"]["veto"] == 1 and block["reaction"]["stages"]["grade"] == 1
+    # the veto is read after the grade: a vetoed name below the band is a grade stop
+    data["bursts"][0]["grade_mechanical"] = data["bursts"][0]["grade"] = "B"
+    assert funnel.build(data)["reaction"]["rows"][0]["stage"] == "grade"
+    assert funnel.faults({**data, "funnel": funnel.build(data)}) == []
 
 
 def test_the_admitted_grades_are_the_regimes_through_the_one_shared_rule():

@@ -31,8 +31,9 @@ async function openScan(page, expectRows) {
 async function capture(page, shotsDir, name) {
   if (!shotsDir) return;
   await mkdir(shotsDir, { recursive: true });
-  const box = await page.locator('#scan-body [data-funnel]').boundingBox();
-  if (box) await page.screenshot({ path: path.join(shotsDir, `funnel-${name}.png`), clip: { x: Math.max(0, box.x - 8), y: Math.max(0, box.y - 8), width: Math.min(box.width + 16, 1280), height: Math.min(box.height + 16, 900) } });
+  // the element's own capture: it scrolls the section into view and takes the
+  // whole of it, so a phone's table is in the picture and not under the fold
+  await page.locator('#scan-body [data-funnel]').screenshot({ path: path.join(shotsDir, `funnel-${name}.png`) });
 }
 
 export async function checkFunnel({ browser, base, open, check, eq, shotsDir }) {
@@ -103,14 +104,25 @@ export async function checkFunnel({ browser, base, open, check, eq, shotsDir }) 
   for (const [name, mutate] of [
     ['older-rules', (d) => { delete d.funnel; delete d.rules.funnel; }],
     ['half-written', (d) => { d.funnel = { version: 1, reaction: { discovered: 6 } }; }],
+    // the shapes the drawing indexes into, each missing on its own: a block with
+    // its stages but no labels, no sentence, no discovered count
+    ['no-labels', (d) => { delete d.funnel.labels; }],
+    ['no-sentence', (d) => { delete d.funnel.sentence; }],
+    ['no-discovered', (d) => { delete d.funnel.reaction.discovered; }],
   ]) {
     const record = JSON.parse(JSON.stringify(full)); mutate(record);
     const body = JSON.stringify(record);
     const { page, context, errors } = await open(browser, base, `/funnel-${name}.json`, NOW, 1280, { reducedMotion: 'reduce', lens: 'all',
       beforeLoad: (p) => p.route(`**/funnel-${name}.json`, (route) => route.fulfill({ contentType: 'application/json', body })) });
     try {
-      eq(`${name}: the funnel is absent`, await page.locator('#scan-body [data-funnel]').getAttribute('data-funnel'), 'absent');
-      check(`${name}: the note says it was not archived`, (await page.locator('#scan-body [data-funnel-note]').textContent()).includes('not archived'));
+      // read without waiting out a locator: a page that failed to render the
+      // section at all is a named failure here, not a timeout
+      const marker = page.locator('#scan-body [data-funnel]');
+      eq(`${name}: the funnel is absent`, (await marker.count()) ? await marker.getAttribute('data-funnel') : 'no section rendered', 'absent');
+      const note = page.locator('#scan-body [data-funnel-note]');
+      check(`${name}: the note says it was not archived`, (await note.count()) ? (await note.textContent()).includes('not archived') : false);
+      const rendered = await page.evaluate(() => document.documentElement.getAttribute('data-ss-rendered'));
+      check(`${name}: the rest of the page rendered`, !['error', 'failed', null].includes(rendered), rendered);
       eq(`${name}: no table and no sentence are invented`, await page.locator('#scan-body [data-funnel-table], #scan-body [data-funnel-sentence]').count(), 0);
       await openScan(page, full.bursts.length);
       check(`${name}: no matrix row claims a stage`, (await page.locator('#scan-table tbody tr .ss-grade-note').allTextContents()).every((t) => !t.includes('stopped at:')));

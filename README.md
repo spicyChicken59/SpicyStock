@@ -1280,6 +1280,7 @@ node tools/page_smoke.mjs --only reading      # recorded meanings, help and revi
 node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
 node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and exact recorded-chart navigation
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
+node tools/page_smoke.mjs --only funnel       # the scan disclosure's candidate funnel, printed from the record's own block
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
