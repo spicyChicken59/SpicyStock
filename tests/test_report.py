@@ -863,15 +863,20 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     data = _copy(stale_night)
     data['run'].pop('reads')
     _refuses(data, 'run.reads is missing')
-    # a record made under the rules before them is not asked for any of the three
     data = _copy(stale_night)
-    for key in ('input_tolerance', 'stale_followup', 'reads'):
+    data['run'].pop('reader_usage')
+    _refuses(data, 'run.reader_usage is missing')
+    # a record made under the rules before them is not asked for any of the four
+    data = _copy(stale_night)
+    for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage'):
         data['run'].pop(key)
-    for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction'):
+    for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction',
+                'reader_usage_version'):
         data['rules']['pipeline'].pop(key)
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
     assert reader_coverage.reads_faults(data) == []
+    assert reader_coverage.usage_faults(data) == []
     # a record made under the tolerance's first version (a fraction but no session
     # bound, 7 Oct 2026's publication) is not asked for the second version's blocks
     data = _copy(stale_night)

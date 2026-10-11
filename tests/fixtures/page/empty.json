@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "2e7749e42e0f"
+  "rules_version": "e889639f2a03"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -252,6 +252,21 @@
    "refused_admissible": [],
    "verdict": "not_asked",
    "sentence": null
+  },
+  "reader_usage": {
+   "version": 1,
+   "model": "claude-sonnet-4-6",
+   "candidates": 0,
+   "calls": 0,
+   "responses": 0,
+   "tokens": {
+    "cache_write": 0,
+    "cache_read": 0,
+    "uncached": 0,
+    "output": 0
+   },
+   "input_tokens": 0,
+   "sentence": "Chart reader cost: no calls."
   },
   "review_selection": {
    "version": 1,
@@ -830,7 +845,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "96b8a6b4eddec2344ec528aab2b8d93978e83cce9d3587ddc149e864ab6fb607"
+   "context_sha256": "1093d9ab1f5d2e2ca9a95cfcb45fd9c5b1282d4a8f104f51c4c5f80d7c85e08d"
   },
   "sanitised": {
    "replaced": 0,
@@ -1353,6 +1368,7 @@
    ],
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
+   "reader_usage_version": 1,
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1938,7 +1954,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "2e7749e42e0f"
+  "replay_rules_version": "e889639f2a03"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2154,7 +2170,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

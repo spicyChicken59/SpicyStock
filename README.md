@@ -802,7 +802,24 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   reads, when none is accepted, or when the refused name would otherwise have
   been planned. A reply that never arrived
   or could not be read always degrades it, and an empty credit balance stops the
-  calls the way a refused key does. `run.reads` counts the shortfall by cause.
+  calls the way a refused key does. `run.reads` counts the shortfall by cause, and
+  `run.reader_usage` says what the reads cost in the API's own units -- the calls
+  sent, the replies received and the four token classes a reply reports (uncached
+  input, written to the cache, read from it, output), under the model the run
+  asked -- with no price, because a price is the provider's list and not a fact
+  the run observes. Every reply that arrived is billed, a reply the checks then
+  refuse or cannot read included, and each attempt's own bill is kept beside the
+  attempt, so `report.validate()` re-derives the block's totals from the bursts'
+  own evidence and refuses a block that is not theirs; a record made before the
+  rule is asked for no block. The Method view and the mail print its sentence
+  verbatim. `tools/whole_share_feasibility.py` is the reading beside it: every
+  reaction candidate a publication archived sized again through `plan.burst_plan`
+  at the account the record archived (or one given on the command line, labelled
+  a counterfactual) under the record's own regime, YELLOW and GREEN, counting the
+  mechanical A-band names without a veto, how many pass the stop rule and how many
+  size to a whole share, with the limit under which one share fits a
+  stop-constrained ticket at each multiplier; it changes nothing and a YELLOW or
+  GREEN column on a RED night is a counterfactual, never a ticket.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1589,6 +1606,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
+                whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```

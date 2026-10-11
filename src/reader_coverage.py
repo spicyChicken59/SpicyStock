@@ -164,6 +164,144 @@ def reads_sentence(r):
     return " ".join(parts)
 
 
+# ------------------------------------------------ what the reads cost ----
+# run.reader_usage says what the night's reads cost in the API's own units:
+# the calls sent, the replies received and the four token classes a reply
+# reports. The run archives counts, never a price: a price is the provider's
+# list, which changes under the record, and a reading can apply one later.
+# The block records a cost and decides nothing, so its version sits in
+# pipeline.RULES beside run.reads' own rule and outside the provenance
+# verifier's replay set: a record made before it still replays in full.
+USAGE_VERSION = 1
+#: the token classes a reply reports, in the order the block carries them
+TOKEN_CLASSES = ("cache_write", "cache_read", "uncached", "output")
+INPUT_CLASSES = ("cache_write", "cache_read", "uncached")
+
+
+def usage_block(rows, usage, *, model):
+    """run.reader_usage from the grader's own accounting over the selected
+    rows: ``usage`` is the dict ``grader.grade_all`` accumulated (calls,
+    responses and the token classes), ``model`` the model the run asked."""
+    usage = usage or {}
+    tokens = {k: int(usage.get(k, 0)) for k in TOKEN_CLASSES}
+    out = {"version": USAGE_VERSION, "model": model, "candidates": len(rows),
+           "calls": int(usage.get("calls", 0)), "responses": int(usage.get("responses", 0)),
+           "tokens": tokens, "input_tokens": sum(tokens[k] for k in INPUT_CLASSES)}
+    out["sentence"] = usage_sentence(out)
+    return out
+
+
+def usage_sentence(u):
+    """The night's reader cost in words, composed from counts and the model
+    name alone; no price, because the record archives none."""
+    if u["candidates"] == 0 and u["calls"] == 0:
+        return "Chart reader cost: no calls."
+    t = u["tokens"]
+    return (f"Chart reader cost: {_names(u['calls'], 'call', 'calls')} for "
+            f"{_names(u['candidates'], 'name', 'names')}, {_names(u['responses'], 'reply', 'replies')}; "
+            f"{u['input_tokens']:,} input tokens ({t['uncached']:,} uncached, {t['cache_write']:,} written to the "
+            f"cache, {t['cache_read']:,} read from it) and {t['output']:,} output tokens, under {u['model']}. "
+            "Token counts as the API reported them; the record carries no price.")
+
+
+def _bill(usage):
+    return isinstance(usage, dict) and set(usage) == set(TOKEN_CLASSES) \
+        and not any(type(v) is not int or v < 0 for v in usage.values())
+
+
+def row_usage(attempts, billing):
+    """One selected name's cost, beside its reader result and outside it: one
+    call per attempt, one reply per attempt that carries a response, the bill
+    of each (None where no reply arrived) and their sum."""
+    bills = [b if _bill(b) else None for b in (billing or [])]
+    tokens = {k: sum(b[k] for b in bills if b) for k in TOKEN_CLASSES}
+    return {"calls": len(attempts or []), "responses": sum(1 for b in bills if b), "tokens": tokens, "attempts": bills}
+
+
+def _row_faults(row):
+    """Why a selected name's cost block is not its attempts' own, or None."""
+    u, attempts = row.get("reader_usage"), (row.get("claude") or {}).get("attempts")
+    if not isinstance(u, dict) or not isinstance(attempts, list) or set(u) != {"calls", "responses", "tokens", "attempts"}:
+        return "a selected name has no readable cost block"
+    bills = u["attempts"]
+    if not isinstance(bills, list) or len(bills) != len(attempts) or u["calls"] != len(attempts):
+        return "a name's bills are not one per attempt"
+    for a, bill in zip(attempts, bills):
+        if (bill is None) != ("response" not in (a if isinstance(a, dict) else {})):
+            return "a name bills a reply that did not arrive, or none for one that did"
+        if bill is not None and not _bill(bill):
+            return "a name's bill is malformed"
+    if u["responses"] != sum(1 for b in bills if b) or not isinstance(u["tokens"], dict) \
+            or u["tokens"] != {k: sum(b[k] for b in bills if b) for k in TOKEN_CLASSES}:
+        return "a name's cost does not sum its bills"
+    return None
+
+
+def _attempt_usage(bursts):
+    """The night's cost re-derived from the selected names' own cost blocks,
+    each held to its attempts first; the first fault names why it cannot be."""
+    calls = responses = 0
+    tokens = {k: 0 for k in TOKEN_CLASSES}
+    for b in bursts:
+        why = _row_faults(b)
+        if why:
+            return why
+        u = b["reader_usage"]
+        calls += u["calls"]
+        responses += u["responses"]
+        for k in TOKEN_CLASSES:
+            tokens[k] += u["tokens"][k]
+    return {"calls": calls, "responses": responses, "tokens": tokens}
+
+
+def usage_faults(data):
+    """run.reader_usage held to the record it sits in, one level in: present
+    under rules that write it, its shape whole, its counts reconciled with
+    run.reads and with each other, the bursts' own on an open night, and its
+    sentence its own."""
+    rules = ((data.get("rules") or {}).get("pipeline") or {}) if isinstance(data.get("rules"), dict) else {}
+    if not isinstance(rules, dict) or "reader_usage_version" not in rules:
+        return []
+    run = data.get("run") if isinstance(data.get("run"), dict) else {}
+    u = run.get("reader_usage")
+    try:
+        if not isinstance(u, dict) or u.get("version") != USAGE_VERSION:
+            return ["run.reader_usage is missing or of an unknown version"]
+        if set(u) != {"version", "model", "candidates", "calls", "responses", "tokens", "input_tokens", "sentence"}:
+            return ["run.reader_usage carries fields this rule does not write"]
+        if not isinstance(u["model"], str) or not u["model"].strip() or u["model"] != run.get("model"):
+            return ["run.reader_usage model is not the run's"]
+        counts = (u["candidates"], u["calls"], u["responses"], u["input_tokens"])
+        t = u["tokens"]
+        if any(type(v) is not int or v < 0 for v in counts) or not isinstance(t, dict) or set(t) != set(TOKEN_CLASSES) \
+                or any(type(v) is not int or v < 0 for v in t.values()):
+            return ["run.reader_usage counts are malformed"]
+        if u["input_tokens"] != sum(t[k] for k in INPUT_CLASSES):
+            return ["run.reader_usage input tokens are not the sum of their classes"]
+        if u["responses"] > u["calls"] or u["calls"] > u["candidates"] * grader.ATTEMPTS:
+            return ["run.reader_usage calls and replies do not reconcile"]
+        if u["responses"] == 0 and any(t.values()):
+            return ["run.reader_usage bills tokens to no reply"]
+        reads = run.get("reads")
+        if isinstance(reads, dict):
+            if u["candidates"] != reads.get("requested"):
+                return ["run.reader_usage names are not the night's reads"]
+            if type(reads.get("done")) is int and u["responses"] < reads["done"]:
+                return ["run.reader_usage has fewer replies than accepted readings"]
+        if run.get("session_state") == "open" and isinstance(data.get("bursts"), list):
+            selected = [b for b in data["bursts"] if isinstance(b, dict) and isinstance(b.get("claude"), dict)]
+            again = _attempt_usage(selected)
+            if isinstance(again, str):
+                return ["run.reader_usage cannot be re-derived: " + again]
+            if any(again[k] != u[k] for k in ("calls", "responses", "tokens")):
+                return ["run.reader_usage is not the bursts' own"]
+        if u["sentence"] != usage_sentence(u):
+            return ["run.reader_usage sentence is not its own"]
+    except (KeyError, TypeError, AttributeError):
+        return ["run.reader_usage is malformed"]
+    return []
+
+
 def reads_faults(data):
     """run.reads held to the record it sits in, one level in: present under
     rules that write it, its counts reconciled, its verdict re-derived, its

@@ -432,12 +432,13 @@ def _not_graded() -> dict:
 
 
 def cache_usage(resp) -> dict:
-    """What the prompt cache did on one reply, as three token counts.
+    """What one reply was billed, as the four token counts the API reports:
+    the three input classes the prompt cache tells apart, and the output.
 
-    The saving is invisible from inside the run -- the reply is identical
-    either way -- so this is the only evidence the cache is working. Absent
-    or malformed usage counts as zeroes: an accounting field is not worth
-    losing a paid-for score over.
+    The cache's saving is invisible from inside the run -- the reply is
+    identical either way -- so this is the only evidence the cache is
+    working. Absent or malformed usage counts as zeroes: an accounting field
+    is not worth losing a paid-for score over.
     """
     usage = getattr(resp, "usage", None)
 
@@ -447,7 +448,8 @@ def cache_usage(resp) -> dict:
 
     return {"cache_write": _n("cache_creation_input_tokens"),
             "cache_read": _n("cache_read_input_tokens"),
-            "uncached": _n("input_tokens")}
+            "uncached": _n("input_tokens"),
+            "output": _n("output_tokens")}
 
 
 # ----------------------------------------------------------- grading one ----
@@ -459,7 +461,12 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
     `of` feed the fallback); `chart_path` a PNG or None. Returns grade, score,
     reason, key_risk, entry_note and `provenance` -- who produced the number,
     under which model, and whether the chart was in front of it. `usage`, if
-    given, accumulates cache_usage() across calls.
+    given, accumulates cache_usage() across every reply that arrived -- a
+    reply the reply checks then refuse was billed all the same -- and counts
+    the `calls` sent and the `responses` received; `provenance.billing` keeps
+    each attempt's own bill beside `attempts` (None where no reply arrived),
+    apart from the evidence of the exchange, because what the cache charged
+    is not part of the judgement's identity.
     """
     content: list[dict] = []
     chart_seen = bool(chart_path) and Path(chart_path).exists()
@@ -476,6 +483,7 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
                       "system_sha256": hashlib.sha256(system_prompt.encode()).hexdigest(),
                       "chart_sha256": hashlib.sha256(base64.b64decode(content[0]["source"]["data"])).hexdigest() if chart_seen else None}
     attempts_evidence = []
+    billing_evidence: list[dict | None] = []
     text_hash = hashlib.sha256(json.dumps({"system": system_prompt, "user": content[-1]["text"]},
                                           sort_keys=True).encode()).hexdigest()
     last_error: Exception | None = None
@@ -483,25 +491,27 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
         attempt_evidence = {"request_sha256": digest(kwargs), "correction": attempt > 1 and any(
             block.get("text") == RETRY_CORRECTION for block in kwargs["messages"][0]["content"]), "outcome": None}
         attempts_evidence.append(attempt_evidence)
+        billing_evidence.append(None)
         try:
-            resp = _client().messages.create(**kwargs)
+            client = _client()
+            if usage is not None:
+                usage["calls"] = usage.get("calls", 0) + 1
+            resp = client.messages.create(**kwargs)
             attempt_evidence["response"] = _response_evidence(resp)
+            # billed on arrival: a reply the checks below refuse, or one that
+            # cannot be read as a score, cost the same as one accepted
+            billing_evidence[-1] = cache_usage(resp)
+            if usage is not None:
+                usage["responses"] = usage.get("responses", 0) + 1
+                for key, value in billing_evidence[-1].items():
+                    usage[key] = usage.get(key, 0) + value
             parsed = _validated(_extract_json(_reply_text(resp)))
             conflicts = discovery.conflicting_fields(discovery.for_metrics(metrics), parsed)
             if conflicts:
-                # Account for the real response, but never spend an extra call
-                # trying to make an invalid discovery judgement acceptable.
-                if usage is not None:
-                    for key, value in cache_usage(resp).items():
-                        usage[key] = usage.get(key, 0) + value
+                # never spend an extra call trying to make an invalid
+                # discovery judgement acceptable
                 raise DiscoveryConflict("inapplicable discovery rule in " + ", ".join(conflicts))
-            try:
-                reader_authority.validate(parsed, metrics, chart_seen=chart_seen)
-            except reader_authority.ReaderAuthorityError:
-                if usage is not None:
-                    for key, value in cache_usage(resp).items():
-                        usage[key] = usage.get(key, 0) + value
-                raise
+            reader_authority.validate(parsed, metrics, chart_seen=chart_seen)
         except Exception as e:  # noqa: BLE001 -- narrowed by the retry and provenance below
             attempt_evidence.update(outcome="rejected", error=_error_text(e))
             last_error = e
@@ -515,16 +525,14 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
                 kwargs = request_kwargs(
                     system_prompt, [*content, {"type": "text", "text": RETRY_CORRECTION}])
             continue
-        if usage is not None:
-            for key, value in cache_usage(resp).items():
-                usage[key] = usage.get(key, 0) + value
         parsed["provenance"] = {
             "source": SOURCE_CLAUDE,
             "model": kwargs["model"],
             "chart_seen": chart_seen,
             "error": None,
             "request_text_sha256": text_hash,
-            "input": input_evidence, "attempts": attempts_evidence, "attempted_model": kwargs["model"],
+            "input": input_evidence, "attempts": attempts_evidence, "billing": billing_evidence,
+            "attempted_model": kwargs["model"],
         }
         attempt_evidence["outcome"] = "model"
         return parsed
@@ -533,7 +541,8 @@ def grade_candidate(ticker: str, metrics: dict, chart_path: str | None, system_p
               ticker, len(attempts_evidence), _error_text(last_error))
     fallback = _fallback(metrics, _error_text(last_error))
     fallback["provenance"]["request_text_sha256"] = text_hash
-    fallback["provenance"].update(input=input_evidence, attempts=attempts_evidence, attempted_model=kwargs["model"])
+    fallback["provenance"].update(input=input_evidence, attempts=attempts_evidence, billing=billing_evidence,
+                                  attempted_model=kwargs["model"])
     return fallback
 
 

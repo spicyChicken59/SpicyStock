@@ -88,6 +88,7 @@ RULES = {
     "pipeline.yellow_grades": list(YELLOW_GRADES),
     "pipeline.reader_policy": reader_coverage.POLICY,
     "pipeline.reader_refusal_fraction": READER_REFUSAL_FRACTION,
+    "pipeline.reader_usage_version": reader_coverage.USAGE_VERSION,
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
     "pipeline.observation_days": OBSERVATION_DAYS,
@@ -441,8 +442,10 @@ def admitted_grades(verdict: str) -> tuple[str, ...]:
 
 def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], rep: RunReport,
                           charts_dir: Path, system_prompt: str, dry_run: bool, admitted=None,
-                          selected_tickers=None) -> dict:
+                          selected_tickers=None) -> tuple[dict, dict]:
     """Read the prepared selection; clamp replies to the mechanical grade.
+    Returns the night's reads (``run.reads``) and what they cost
+    (``run.reader_usage``), both from the grader's own accounting.
 
     Standalone grader callers may omit selection and supply their own input
     population. The evening run always supplies its versioned selection.
@@ -515,6 +518,9 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         b["claude"]["input"] = prov.get("input")
         b["claude"]["attempts"] = prov.get("attempts", [])
         b["claude"]["attempted_model"] = prov.get("attempted_model")
+        # what this name's reads cost, beside the reader result and outside it:
+        # a bill is not part of the judgement's identity
+        b["reader_usage"] = reader_coverage.row_usage(b["claude"]["attempts"], prov.get("billing", []))
         b["claude"]["discovery_version"] = discovery.VERSION
         b["reader_coverage"] = reader_coverage.state(b, selected=True)
         provenance.seal_reader(b)
@@ -529,9 +535,10 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
                     f"reading: {causes}" + (f"; would otherwise have been planned: {', '.join(planned)}" if planned else ""))
     elif reads["verdict"] == "tolerated":
         log.info("Reader refusals within the night's tolerance: %s", causes)
+    cost = reader_coverage.usage_block([b for b in bursts if b["ticker"] in selected], usage, model=grader.MODEL)
     if usage:
         log.info("Claude usage: %s", usage)
-    return reads
+    return reads, cost
 
 
 # ------------------------------------------------------------------ plans ---
@@ -839,11 +846,12 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         rep.stage = "grade"
         charts_dir = docs / CHARTS_DIR_NAME
         reads = reader_coverage.reads([], admitted_grades=(), refusal_fraction=READER_REFUSAL_FRACTION)
+        reader_usage = reader_coverage.usage_block([], {}, model=grader.MODEL)
         if bursts:
             system_prompt = grader_prompt()
-            reads = read_charts_and_grade(bursts, fresh, rep, charts_dir, system_prompt, dry_run,
-                                          admitted=admitted_grades(regime.get("verdict", "green")),
-                                          selected_tickers=selected)
+            reads, reader_usage = read_charts_and_grade(bursts, fresh, rep, charts_dir, system_prompt, dry_run,
+                                                        admitted=admitted_grades(regime.get("verdict", "green")),
+                                                        selected_tickers=selected)
         selection_receipt = review_selection.receipt(bursts, decisions, selected, session, max_reads=MAX_READS)
         rank(bursts)
         trades, beyond_cap, budget = make_plans(bursts, fresh, account, regime, held, session)
@@ -874,7 +882,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                             "timeframe": "1Day", "expected_session": expected.isoformat(),
                             "evaluated_session": session.isoformat()},
             "coverage": coverage, "input_tolerance": tolerance, "stale_followup": followed,
-            "bursts": len(bursts), "graded": graded, "reads": reads, "review_selection": selection_receipt,
+            "bursts": len(bursts), "graded": graded, "reads": reads, "reader_usage": reader_usage,
+            "review_selection": selection_receipt,
             "email": "skipped", "published_at": generated,
             "run_id": os.environ.get("GITHUB_RUN_ID_FOR_RECORD") or None,
             "elapsed_seconds": elapsed, "fetch_seconds": round(fetch_seconds, 1),

@@ -3743,6 +3743,12 @@ async function checkStaleTolerance(browser, base) {
       check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
       check(tag + ': Method keeps the reader refusal rule under bounded selection', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && reads.sentence === null, method);
+      // what the reads cost, printed as the record wrote it: calls, replies and the API's
+      // token classes under the model asked, no price; the page adds no figure of its own
+      const cost = thin.run.reader_usage;
+      check(tag + ': the fixture archives what its reads cost', cost && cost.version === 1 && cost.candidates === reads.requested &&
+        cost.calls === 2 && cost.responses === 2 && cost.sentence.startsWith('Chart reader cost: 2 calls for 2 names, 2 replies; '), cost);
+      check(tag + ': Method prints the reader cost sentence verbatim and nothing priced', method.includes(cost.sentence) && !/\$\s*\d/.test(method.slice(method.indexOf('Chart reader cost'))), method.slice(method.indexOf('Chart reader cost'), method.indexOf('Chart reader cost') + 300));
       const strip = await said(page, '#run-strip');
       check(tag + ': the strip says incomplete, tolerated', strip.includes('incomplete, tolerated'), strip);
       check(tag + ': the strip counts the completed research reads without inventing refusals',
@@ -3787,7 +3793,9 @@ async function checkStaleTolerance(browser, base) {
     'a record from before the tolerance': (d) => {
       delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
       delete d.rules.pipeline.stale_tolerance_fraction; delete d.rules.pipeline.reader_refusal_fraction;
+      delete d.run.reader_usage; delete d.rules.pipeline.reader_usage_version;
     },
+    'a half-written reader cost': (d) => { d.run.reader_usage = { version: 1, calls: 2 }; },
   };
   for (const [name, change] of Object.entries(variants)) {
     const d = JSON.parse(JSON.stringify(thin));
@@ -3820,10 +3828,13 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('past 50% of the night'), method);
       } else if (name === 'a late match') {
         check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
+      } else if (name === 'a half-written reader cost') {
+        check('thin ' + name + ': Method prints no cost it cannot quote', !method.includes('Chart reader cost'), method.slice(0, 600));
       } else {
         check('thin ' + name + ': the dek makes no tolerance claim', !dek.includes('tolerance'), dek);
         check('thin ' + name + ': the coverage line is the composed warning', coverage.startsWith('Incomplete input coverage:') && !coverage.includes('stale tolerance'), coverage.slice(0, 200));
         check('thin ' + name + ': Method keeps the rule it was published under', method.includes('any missing stocks or capacity cuts degrade it.') && !method.includes('Stale tolerance:') && !method.includes('Chart reader: a reply refused'), method);
+        check('thin ' + name + ': Method prints no reader cost a record did not archive', !method.includes('Chart reader cost'), method.slice(0, 600));
         check('thin ' + name + ': the strip keeps its old note', !(await said(page, '#run-strip')).includes('tolerated'));
       }
       const body = await page.locator('body').innerText();

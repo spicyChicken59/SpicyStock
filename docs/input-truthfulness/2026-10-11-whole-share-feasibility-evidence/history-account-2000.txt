@@ -1,0 +1,68 @@
+| session | regime | account | sized | tonight: in band / stop ok / 1+ share | yellow (A+) | green (A+/A) | one-share ceiling at the stop line, yellow / green | anticipation listed / 1+ share |
+|---|---|---|---:|---|---|---|---|---|
+| 2026-09-11 | red | $2,000 / 0.5% (counterfactual) | 400 | 0 / 0 / 0 | 2 / 2 / 0 | 63 / 61 / 28 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-11 | red | $2,000 / 0.5% (counterfactual) | 401 | 0 / 0 / 0 | 2 / 2 / 0 | 64 / 62 / 29 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-14 | red | $2,000 / 0.5% (counterfactual) | 558 | 0 / 0 / 0 | 2 / 2 / 0 | 65 / 60 / 26 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-15 | red | $2,000 / 0.5% (counterfactual) | 342 | 0 / 0 / 0 | 1 / 1 / 0 | 41 / 41 / 19 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-16 | red | $2,000 / 0.5% (counterfactual) | 303 | 0 / 0 / 0 | 0 / 0 / 0 | 21 / 19 / 10 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-17 | red | $2,000 / 0.5% (counterfactual) | 420 | 0 / 0 / 0 | 0 / 0 / 0 | 30 / 28 / 15 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-18 | red | $2,000 / 0.5% (counterfactual) | 360 | 0 / 0 / 0 | 1 / 1 / 0 | 53 / 50 / 18 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-21 | red | $2,000 / 0.5% (counterfactual) | 381 | 0 / 0 / 0 | 3 / 3 / 1 | 46 / 46 / 20 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-21 | red | $2,000 / 0.5% (counterfactual) | 382 | 0 / 0 / 0 | 3 / 3 / 1 | 46 / 46 / 20 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-22 | red | $2,000 / 0.5% (counterfactual) | 513 | 0 / 0 / 0 | 3 / 3 / 0 | 48 / 46 / 28 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-23 | red | $2,000 / 0.5% (counterfactual) | 282 | 0 / 0 / 0 | 0 / 0 / 0 | 18 / 18 / 11 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-24 | red | $2,000 / 0.5% (counterfactual) | 418 | 0 / 0 / 0 | 1 / 1 / 0 | 59 / 53 / 30 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-25 | red | $2,000 / 0.5% (counterfactual) | 455 | 0 / 0 / 0 | 2 / 2 / 0 | 75 / 75 / 37 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-28 | red | $2,000 / 0.5% (counterfactual) | 406 | 0 / 0 / 0 | 0 / 0 / 0 | 58 / 56 / 33 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-29 | red | $2,000 / 0.5% (counterfactual) | 364 | 0 / 0 / 0 | 1 / 1 / 0 | 69 / 68 / 41 | $62.50 / $125.00 | 5 / 0 |
+| 2026-09-30 | red | $2,000 / 0.5% (counterfactual) | 228 | 0 / 0 / 0 | 0 / 0 / 0 | 16 / 13 / 5 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-01 | red | $2,000 / 0.5% (counterfactual) | 634 | 0 / 0 / 0 | 4 / 4 / 1 | 156 / 151 / 77 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-02 | red | $2,000 / 0.5% (counterfactual) | 457 | 0 / 0 / 0 | 2 / 2 / 0 | 45 / 42 / 26 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-05 | red | $2,000 / 0.5% (counterfactual) | 607 | 0 / 0 / 0 | 4 / 4 / 0 | 87 / 84 / 46 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-06 | red | $2,000 / 0.5% (counterfactual) | 396 | 0 / 0 / 0 | 0 / 0 / 0 | 43 / 41 / 20 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-07 | red | $2,000 / 0.5% (counterfactual) | 311 | 0 / 0 / 0 | 1 / 1 / 0 | 29 / 27 / 14 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-08 | yellow | $2,000 / 0.5% (counterfactual) | 730 | 4 / 4 / 1 | 4 / 4 / 1 | 188 / 184 / 108 | $62.50 / $125.00 | 4 / 2 |
+| 2026-10-08 | yellow | $2,000 / 0.5% (counterfactual) | 728 | 4 / 4 / 1 | 4 / 4 / 1 | 187 / 183 / 107 | $62.50 / $125.00 | 4 / 0 |
+| 2026-10-09 | yellow | $2,000 / 0.5% (counterfactual) | 479 | 0 / 0 / 0 | 0 / 0 / 0 | 53 / 48 / 26 | $62.50 / $125.00 | 5 / 1 |
+| 2026-10-09 | yellow | $2,000 / 0.5% (counterfactual) | 479 | 0 / 0 / 0 | 0 / 0 / 0 | 53 / 48 / 26 | $62.50 / $125.00 | 5 / 0 |
+| 2026-10-09 | yellow | $2,000 / 0.5% (counterfactual) | 479 | 0 / 0 / 0 | 0 / 0 / 0 | 53 / 48 / 26 | $62.50 / $125.00 | 5 / 0 |
+
+26 publications over 21 sessions; regimes {'red': 21, 'yellow': 5}; 11513 candidates sized, 0 with unusable inputs; accounts {'$2,000 / 0.5% (counterfactual)': 26}. tonight: 8 in band, 8 past the stop rule, 2 sizing to a whole share; yellow: 40 in band, 40 past the stop rule, 5 sizing to a whole share; green: 1666 in band, 1598 past the stop rule, 846 sizing to a whole share. Anticipation: 128 listed, 82 eligible, 3 with a whole share, as recorded.
+skipped a63a6d92: a63a6d92:docs/data.json: not a real schema-2 publication
+skipped 47b0d0a3: 47b0d0a3:docs/data.json: not a real schema-2 publication
+skipped d6b0b954: d6b0b954:docs/data.json: not a real schema-2 publication
+skipped 38f666e9: 38f666e9:docs/data.json: not a real schema-2 publication
+skipped 01c000d1: 01c000d1:docs/data.json: not a real schema-2 publication
+skipped e6bbab71: e6bbab71:docs/data.json: not a real schema-2 publication
+skipped a7474d5b: a7474d5b:docs/data.json: not a real schema-2 publication
+skipped 76783a17: 76783a17:docs/data.json: not a real schema-2 publication
+skipped 5e6bbb22: 5e6bbb22:docs/data.json: not a real schema-2 publication
+skipped 38d37b4f: 38d37b4f:docs/data.json: not a real schema-2 publication
+skipped 151b1af3: 151b1af3:docs/data.json: not a real schema-2 publication
+skipped 91a910b9: 91a910b9:docs/data.json: not a real schema-2 publication
+skipped e81f3c72: e81f3c72:docs/data.json: not a real schema-2 publication
+skipped e95d6d57: e95d6d57:docs/data.json: not a real schema-2 publication
+skipped 369c6952: 369c6952:docs/data.json: not a real schema-2 publication
+skipped 932ec586: 932ec586:docs/data.json: not a real schema-2 publication
+skipped f0780c72: f0780c72:docs/data.json: not a real schema-2 publication
+skipped ace137ad: ace137ad:docs/data.json: not a real schema-2 publication
+skipped 71856115: 71856115:docs/data.json: not a real schema-2 publication
+skipped 665ba954: 665ba954:docs/data.json: not a real schema-2 publication
+skipped f65984ee: f65984ee:docs/data.json: not a real schema-2 publication
+skipped 760eb389: 760eb389:docs/data.json: not a real schema-2 publication
+skipped 30acad0c: 30acad0c:docs/data.json: not a real schema-2 publication
+skipped 53f6c94e: 53f6c94e:docs/data.json: not a real schema-2 publication
+skipped 74f9aff2: 74f9aff2:docs/data.json: not a real schema-2 publication
+skipped 257089e0: 257089e0:docs/data.json: not a real schema-2 publication
+skipped fdadeea4: fdadeea4:docs/data.json: not a real schema-2 publication
+skipped 21956d58: 21956d58:docs/data.json: not a real schema-2 publication
+skipped 0d11e7e1: 0d11e7e1:docs/data.json: not a real schema-2 publication
+skipped 4bc5245f: 4bc5245f:docs/data.json: not a real schema-2 publication
+skipped f81e5d66: f81e5d66:docs/data.json: not a real schema-2 publication
+skipped 184256d7: 184256d7:docs/data.json: not a real schema-2 publication
+skipped 1d0422f8: 1d0422f8:docs/data.json: not a real schema-2 publication
+skipped b0113588: b0113588:docs/data.json: not a real schema-2 publication
+skipped eb53e02a: eb53e02a:docs/data.json: not a real schema-2 publication
+skipped f984f474: f984f474:docs/data.json: not a real schema-2 publication
+skipped 6fd0c3a0: 6fd0c3a0:docs/data.json: not a real schema-2 publication
+skipped 4f4f1c17: 4f4f1c17:docs/data.json: not a real schema-2 publication

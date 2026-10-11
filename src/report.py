@@ -126,7 +126,9 @@ CONTRACT: dict[str, str] = {
            "unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded "
            "acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance "
            "degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's "
-           "stale stocks again from this run's fetch and never turns a late bar into a signal.",
+           "stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is "
+           "what the night's chart reads cost in the API's own units -- calls sent, replies received, the four "
+           "token classes -- under the model the run asked; it carries no price.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -674,6 +676,7 @@ def validate(data: dict) -> None:
     faults.extend(inputs.tolerance_faults(run, rules_pipeline, plan_tickers))
     faults.extend(followup.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
+    faults.extend(reader_coverage.usage_faults(data))
     from src import funnel
     faults.extend(funnel.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
@@ -1014,9 +1017,10 @@ def _problems_block(problems: Any) -> str:
 
 def _inputs_block(run: dict) -> str:
     """The stale stocks tonight's run tolerated, by name, what the previous publication's
-    stale stocks turned out to be, and the chart reader's shortfall by cause:
-    muted, beside the problems, so a night that is not degraded still says
-    what it did not read."""
+    stale stocks turned out to be, the chart reader's shortfall by cause and
+    what its reads cost in calls and tokens: muted, beside the problems, so a
+    night that is not degraded still says what it did not read and what it paid
+    for in the API's own units."""
     tol = run.get("input_tolerance") if isinstance(run.get("input_tolerance"), dict) else {}
     lines = []
     names, stale = tol.get("names"), tol.get("stale")
@@ -1028,6 +1032,9 @@ def _inputs_block(run: dict) -> str:
     reads = _text(_get(run, "reads", "sentence"))
     if reads:
         lines.append(reads)
+    cost = _text(_get(run, "reader_usage", "sentence"))
+    if cost:
+        lines.append(cost)
     if not lines:
         return ""
     body = "".join(f'<p style="{_S_MUTED}">{esc(s)}</p>' for s in lines)
