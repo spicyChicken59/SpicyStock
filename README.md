@@ -897,9 +897,12 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   three gates, the labels the page and the mail print travel in the block, and
   `report.validate()` refuses a block the record does not re-derive. A record made
   under older rules is read for what it recorded -- a field it lacks is `unknown`,
-  never guessed -- and is asked for no block. The scan disclosure prints the table
-  and the sentence, each matrix row says where its name stopped, and the mail
-  prints the same sentence. `tools/candidate_funnel.py` reads the funnel of any
+  never guessed, as is a regime that is not a verdict the rules name and a row
+  without a mechanical grade -- and is asked for no block. The scan disclosure
+  prints the table and the sentence, each matrix row says where its name stopped,
+  and the mail prints the same sentence; the page prints a block only when every
+  field it indexes into has its shape (integer counts, a non-blank sentence,
+  string rows) and says the funnel was not archived otherwise. `tools/candidate_funnel.py` reads the funnel of any
   publication, or of every retained one on a ref, and changes nothing.
 
 Exit codes are the workflow's contract: **0** clean, **1** failed before
