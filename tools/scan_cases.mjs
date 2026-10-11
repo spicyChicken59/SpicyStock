@@ -29,11 +29,12 @@ export async function checkDeferredScan({ browser, base, data, open, check, eq, 
       eq(`${width}: hydration leaves publication unchanged`, await page.evaluate(() => JSON.stringify(SCStock.data)), original);
       await page.waitForFunction(() => !!document.querySelector('#scan [data-sc-matrix-controls] button'));
       eq(`${width}: one matrix navigator is attached`, await page.locator('#scan [data-sc-matrix-controls]').count(), 1);
-      const region = page.locator('#scan .sc-table-scroll');
+      // The matrix region, not the scan disclosure's other tables (the funnel table shares the scroll wrapper).
+      const region = page.locator('#scan [data-sc-matrix-nav]');
       await region.evaluate(node => { node.scrollLeft = 0; });
       await region.focus();
       await page.keyboard.press('ArrowRight');
-      await page.waitForFunction(() => document.querySelector('#scan .sc-table-scroll').scrollLeft > 0);
+      await page.waitForFunction(() => document.querySelector('#scan [data-sc-matrix-nav]').scrollLeft > 0);
       check(`${width}: hydrated matrix scrolls with keyboard`, await region.evaluate(node => node.scrollLeft > 0));
       await region.evaluate(node => { node.scrollLeft = 0; });
       await page.locator('#scan [data-sc-matrix-column]').last().click();

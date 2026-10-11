@@ -6581,7 +6581,10 @@ research-observations and cash-preview regenerated through their own producers
 after the page fixtures changed; morning pinned, unchanged); the `funnel` suite
 115/115 at 1280 dark, 390 light and 390 dark, with the older-rules, half-written,
 no-labels, no-sentence and no-discovered records; continuity 137; the chart check 378/378; the full smoke with `--shots` recorded on
-the pull request;
+the pull request (its first run here stopped in the deferred-scan suite: the
+matrix scroller's locator, `#scan .sc-table-scroll`, matched the funnel's own
+table once it shared the disclosure, so it names the matrix region
+`[data-sc-matrix-nav]` now and the suite is 80/80 again);
 gitleaks 8.24.3 (fetched into a temporary directory for this pass; it is not
 installed in this sandbox) over the branch's commits and over the new files: no
 leaks. Screenshots at
