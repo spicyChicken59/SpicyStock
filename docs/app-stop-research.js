@@ -30,7 +30,7 @@
   const stamp = x => Number.isFinite(instant(x)) ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(x)) + ' CT' : 'Unavailable';
   const money = x => finite(x) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(x) : 'Unavailable';
   const fingerprint = () => api.observations ? api.observations.facts() : {};
-  let mounted = null, record = null, identity = '', receipt = null, bundle = null;
+  let mounted = null, record = null, identity = '', receipt = null, receiptSha = null, bundle = null;
   let state = 'deferred', issue = '', epoch = 0, controller = null, pending = null;
 
   function node(tag, attrs, value) {
@@ -231,6 +231,10 @@
     facts(host, [['research-principal', 'Additional research principal', money(reserves.research_principal_usd)], ['research-risk', 'Research price-to-stop risk', money(reserves.research_risk_usd)],
       ['slots-used', 'Model slots used', reserves.slots_used + ' of ' + reserves.max_slots], ['remaining-principal', 'Remaining model principal', money(reserves.remaining_model_principal_usd)]]);
     paragraph(host, 'Model figures only.', 'Principal excludes actual fees. Planned price-to-stop risk is not a maximum loss; gaps and slippage can increase losses. These reservations do not read or reserve your broker settled cash.');
+    // A separate dated IEX observation of the allocation-fit rows, when one is
+    // published for exactly this cohort; its module owns the words it prints.
+    const observationHosts = new Map(), observationSummary = node('p', { class: 'sc-hint', role: 'status', 'data-research-observations-summary': '' });
+    host.append(observationSummary);
     if (!bundle.rows.length) paragraph(host, 'Zero-row cohort.', 'This exact publication had no top anticipation rows. The empty comparison remains part of the registered observation period.');
     for (const row of bundle.rows) {
       const article = node('article', { class: 'ss-stop-research__row', 'data-stop-row': row.ticker });
@@ -256,6 +260,10 @@
         row.research.blockers.forEach(key => list.append(node('li', {}, BLOCKER_WORDS[key]))); article.append(list);
       }
       paragraph(article, row.event.blocked ? 'Known event exclusion.' : 'Limited event coverage.', row.event.blocked ? row.event.event_ids.join(', ') + (row.event.status === 'review_required' ? ' · source review is overdue; exclusion remains.' : ' · retained in both policies.') : 'No match in the archived manual registry is not issuer-news or earnings clearance.');
+      if (row.research.allocation_fit) {
+        const observationHost = node('div', { 'data-research-observation-host': row.ticker });
+        observationHosts.set(row.ticker, observationHost); article.append(observationHost);
+      }
       const hashes = fingerprint(), request = { kind: 'anticipation', ticker: row.ticker,
         publication: { ...receipt.publication }, recordHash: hashes.recordHash, projected: hashes.projected,
         evidence: { id: row.evidence.id, plan_sha256: row.evidence.plan_sha256, source_sha256: row.evidence.source_sha256 } };
@@ -279,7 +287,10 @@
       article.append(report, reportStatus);
       host.append(article);
     }
-    paragraph(host, 'Still unverified:', 'Current broker quotes, spread, trading status, issuer news and earnings. This comparison supplies no new live check, executable order, confirmed fill, return or established strategy edge.');
+    paragraph(host, 'Still unverified:', 'Current broker quotes, spread, trading status, issuer news and earnings. This comparison supplies no new live check, executable order, confirmed fill, return or established strategy edge. A dated IEX observation, when published for this cohort, is a past single-venue snapshot and changes none of that.');
+    if (api.researchObservations && typeof api.researchObservations.attach === 'function') {
+      api.researchObservations.attach({ record, receipt, receiptSha, bundle, hosts: observationHosts, summary: observationSummary });
+    } else observationSummary.textContent = 'Dated IEX observations are unavailable in this page.';
     const source = node('details', { class: 'sc-disclosure' }); source.append(node('summary', {}, 'Publication and experiment references'));
     const detail = node('div', { class: 'sc-disclosure__body' });
     paragraph(detail, 'Policy:', policy.id); paragraph(detail, 'Rules:', receipt.publication.rules_version);
@@ -318,20 +329,21 @@
       const base = new URL('stop-research.json', w.location.href);
       require(['http:', 'https:'].includes(base.protocol) && base.origin === w.location.origin && !base.search && !base.hash, 'Research must use this public origin.');
       const options = { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', mode: 'same-origin', redirect: 'error', signal: active.signal };
-      const nextReceipt = validateReceipt(JSON.parse(decode(await read(await w.fetch(base.href, options), RECEIPT_BYTES))));
+      const receiptBytes = await read(await w.fetch(base.href, options), RECEIPT_BYTES);
+      const nextReceipt = validateReceipt(JSON.parse(decode(receiptBytes))), nextReceiptSha = await sha(receiptBytes);
       require(token === epoch && target === record && !active.signal.aborted, 'The publication changed during research loading.');
       const bytes = await read(await w.fetch(new URL(nextReceipt.bundle.path, base).href, options), BUNDLE_BYTES, nextReceipt.bundle.bytes);
       require(await sha(bytes) === nextReceipt.bundle.sha256, 'Research digest differs from its receipt.');
       const nextBundle = await validateBundle(JSON.parse(decode(bytes)), nextReceipt);
       binding(nextReceipt.publication);
-      return { receipt: nextReceipt, bundle: nextBundle };
+      return { receipt: nextReceipt, receiptSha: nextReceiptSha, bundle: nextBundle };
     });
     pending = Promise.race([reading, deadline]).then(result => {
       if (token !== epoch || target !== record || active.signal.aborted) return false;
-      receipt = result.receipt; bundle = result.bundle; state = 'loaded'; issue = ''; paint(); return true;
+      receipt = result.receipt; receiptSha = result.receiptSha; bundle = result.bundle; state = 'loaded'; issue = ''; paint(); return true;
     }).catch(error => {
       if (token !== epoch || target !== record) return false;
-      receipt = null; bundle = null; state = 'unavailable';
+      receipt = null; receiptSha = null; bundle = null; state = 'unavailable';
       issue = timedOut ? 'Published research timed out after 15 seconds. Retry when ready.' : error && error.message || 'Published research is unavailable.';
       paint(); return false;
     }).finally(() => { w.clearTimeout(timer); if (token === epoch) { controller = null; pending = null; } });
@@ -349,6 +361,7 @@
     paintStatus();
     const host = mounted.querySelector('[data-stop-body]'); host.replaceChildren();
     if (bundle) renderComparison(host);
+    else if (api.researchObservations && typeof api.researchObservations.attach === 'function') api.researchObservations.attach(null);
   }
   function mount() {
     if (mounted) return mounted;
@@ -368,7 +381,7 @@
     const hashes = fingerprint(), key = [hashes.recordHash, hashes.canonicalHash, hashes.projected].join('|');
     if (record !== data || key !== identity) {
       epoch++; if (controller) controller.abort(); controller = null; pending = null;
-      record = data || null; identity = key; receipt = null; bundle = null; state = 'deferred'; issue = '';
+      record = data || null; identity = key; receipt = null; receiptSha = null; bundle = null; state = 'deferred'; issue = '';
       paint(); if (mounted && mounted.open && record && hashes.recordHash) load();
     } else paintStatus();
   }

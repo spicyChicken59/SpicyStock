@@ -333,3 +333,140 @@ def test_real_collector_receipt_passes_publication_validator_without_provider_ca
     receipt['publication']['run_id'] = 'foreign-publication'
     with pytest.raises(ValueError, match='binding'):
         publisher.publication_check(receipt, raw, None, now=after_cutoff)
+
+
+# ------------------------------------------------- the research target -----
+STOP_FIXTURES = Path(__file__).resolve().parent / 'fixtures/stop-research'
+RESEARCH_FIXTURES = Path(__file__).resolve().parent / 'fixtures/research-observations'
+
+
+def research_observation(raw, receipt_raw, *, previous=None, started='2026-01-02T13:20:00+00:00',
+                         generated='2026-01-02T13:20:01+00:00', **changes):
+    cohort = {'receipt_sha256': hashlib.sha256(receipt_raw).hexdigest()} if receipt_raw is not None else None
+    return {'dry_run': False, 'publication': {'data_sha256': hashlib.sha256(raw).hexdigest()},
+            'previous_observation_sha256': hashlib.sha256(previous).hexdigest() if previous else None,
+            'collection_started_at': started, 'generated_at': generated, 'cohort': cohort,
+            'observation_run_id': '42', 'status': 'observed', **changes}
+
+
+@pytest.fixture
+def research_schema(monkeypatch):
+    from src import research_observations
+    monkeypatch.setattr(research_observations, 'validate_observation', lambda *args, **kwargs: None)
+
+
+@pytest.fixture
+def research_repository(repository):
+    root, remote, raw = repository
+    receipt_raw = (STOP_FIXTURES / 'current-receipt.json').read_bytes()
+    bundle_raw = (STOP_FIXTURES / 'current-bundle.json').read_bytes()
+    (root / 'docs/stop-research').mkdir()
+    (root / 'docs/stop-research.json').write_bytes(receipt_raw)
+    (root / 'docs' / json.loads(receipt_raw)['bundle']['path']).write_bytes(bundle_raw)
+    (root / 'docs/morning.json').write_bytes(b'{"morning":"untouched"}\n')
+    git(root, 'add', 'docs')
+    git(root, 'commit', '-m', 'cohort beside the record')
+    git(root, 'push', 'origin', 'main')
+    return root, remote, raw, receipt_raw
+
+
+def test_research_target_commits_only_its_own_file_beside_the_cohort(research_repository, research_schema):
+    root, remote, raw, receipt_raw = research_repository
+    prior = git(remote, 'rev-parse', 'main').strip()
+    receipt = research_observation(raw, receipt_raw)
+    assert publisher.publish(root, encode(receipt), ref='refs/heads/main', run_id='42', target='research') == 'published'
+    assert git(remote, 'show', 'main:docs/research-observations.json') == encode(receipt)
+    assert git(remote, 'show', 'main:docs/morning.json') == b'{"morning":"untouched"}\n'
+    assert git(remote, 'show', 'main:docs/stop-research.json') == receipt_raw
+    assert git(remote, 'rev-parse', 'main^').strip() == prior
+    assert git(remote, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'main') == b'docs/research-observations.json\n'
+    assert git(remote, 'log', '-1', '--format=%s', 'main').strip() == b'Publish bound research observation'
+
+
+def test_research_target_refuses_when_main_replaced_the_cohort(tmp_path, research_repository, research_schema, monkeypatch):
+    root, remote, raw, receipt_raw = research_repository
+    other = competing_checkout(tmp_path, remote)
+    red_receipt = (STOP_FIXTURES / 'red-receipt.json').read_bytes()
+    red_bundle = (STOP_FIXTURES / 'red-bundle.json').read_bytes()
+
+    def advance():
+        (other / 'docs/stop-research.json').write_bytes(red_receipt)
+        (other / 'docs' / json.loads(red_receipt)['bundle']['path']).write_bytes(red_bundle)
+        git(other, 'add', 'docs')
+        git(other, 'commit', '-m', 'replaced cohort')
+        git(other, 'push', 'origin', 'main')
+
+    pushes = race_once(monkeypatch, advance)
+    assert publisher.publish(root, encode(research_observation(raw, receipt_raw)), ref='refs/heads/main',
+                             run_id='42', target='research') == 'research_cohort_changed'
+    assert len(pushes) == 1
+    assert git(remote, 'ls-tree', 'main', '--', 'docs/research-observations.json') == b''
+
+
+def test_research_check_races_and_ordering(research_schema):
+    raw, receipt_raw, bundle_raw = b'{}', b'{"receipt":1}', b'{"bundle":1}'
+    now = datetime(2026, 10, 12, 14, tzinfo=timezone.utc)
+    check = lambda value, previous=None: publisher.research_check(value, raw, receipt_raw, bundle_raw, previous, now)
+    assert check(research_observation(raw, receipt_raw)) is None
+    assert check(research_observation(b'other', receipt_raw)) == 'source_record_changed'
+    assert check(research_observation(raw, b'other receipt')) == 'research_cohort_changed'
+    assert check(research_observation(raw, None)) == 'research_cohort_changed'
+    assert publisher.research_check(research_observation(raw, None), raw, None, None, None, now) is None
+    previous = encode(research_observation(raw, receipt_raw))
+    assert check(research_observation(raw, receipt_raw)) is None  # a prior the observation never saw
+    assert check(research_observation(raw, receipt_raw), previous) == 'previous_observation_changed'
+    assert check(research_observation(raw, receipt_raw, previous=previous, started='2026-01-02T13:20:00+00:00',
+                                      generated='2026-01-02T13:20:02+00:00'), previous) == 'newer_or_equal_observation_exists'
+    assert check(research_observation(raw, receipt_raw, previous=previous, started='2026-01-02T13:21:00+00:00',
+                                      generated='2026-01-02T13:21:02+00:00'), previous) is None
+    with pytest.raises(ValueError, match='future'):
+        check(research_observation(raw, receipt_raw, generated='2099-10-12T13:20:01+00:00'))
+    with pytest.raises(ValueError, match='rehearsal'):
+        check(research_observation(raw, receipt_raw, dry_run=True))
+    with pytest.raises(ValueError, match='unknown_publication_target'):
+        publisher.publish(Path('.'), encode(research_observation(raw, receipt_raw)), ref='refs/heads/main', run_id='42', target='evening')
+
+
+def test_research_validator_failure_prevents_any_commit(research_repository, monkeypatch):
+    from src import research_observations
+    root, remote, raw, receipt_raw = research_repository
+    before = git(remote, 'rev-parse', 'main')
+    seen = []
+
+    def reject(value, data_raw, cohort_receipt=None, cohort_bundle=None, **kwargs):
+        seen.append((data_raw, cohort_receipt, cohort_bundle is not None, kwargs.get('require_continuity')))
+        raise ValueError('bound cohort evidence differs')
+
+    monkeypatch.setattr(research_observations, 'validate_observation', reject)
+    with pytest.raises(ValueError, match='evidence differs'):
+        publisher.publish(root, encode(research_observation(raw, receipt_raw)), ref='refs/heads/main', run_id='42', target='research')
+    assert git(remote, 'rev-parse', 'main') == before
+    assert seen == [(raw, receipt_raw, True, True)]
+
+
+def test_real_research_collector_receipt_passes_the_publisher_without_provider_calls(monkeypatch):
+    from src import research_observations
+    root = Path(__file__).resolve().parent.parent
+    raw = (root / 'docs/data.json').read_bytes()
+    receipt_raw, bundle_raw = research_observations.read_cohort(root / 'docs')
+    data = json.loads(raw)
+    after_cutoff = datetime.fromisoformat(data['run']['timing']['cutoff_at']) + timedelta(seconds=1)
+    monkeypatch.setattr(morning, '_fetch', lambda *args, **kwargs: pytest.fail('An inapplicable receipt must not request a provider'))
+    receipt = research_observations.collect(raw, receipt_raw, bundle_raw, clock=lambda: after_cutoff, observation_run_id='42')
+    assert receipt['status'] == 'inapplicable' and receipt['source']['requests'] == 0
+    assert publisher.research_check(receipt, raw, receipt_raw, bundle_raw, None, now=after_cutoff) is None
+    receipt['publication']['run_id'] = 'foreign-publication'
+    with pytest.raises(ValueError, match='binding'):
+        publisher.research_check(receipt, raw, receipt_raw, bundle_raw, None, now=after_cutoff)
+
+
+def test_dashboard_publication_fetches_optional_research_observation_once_committed(tmp_path):
+    from tools import publish_dashboard
+    from tests.test_publish_dashboard import write_reader_records
+    docs = tmp_path / 'docs'
+    docs.mkdir()
+    (docs / 'index.html').write_text('<html></html>')
+    write_reader_records(docs)
+    assert 'research-observations.json' not in publish_dashboard.public_files(tmp_path)
+    (docs / 'research-observations.json').write_bytes(b'{"dated":"research observation"}\n')
+    assert 'research-observations.json' in publish_dashboard.public_files(tmp_path)

@@ -304,6 +304,37 @@ def test_morning_persistence_is_main_only_never_rehearsal_and_uses_current_run_a
     assert not any('secrets.' in str(step.get('env', {})) for step in job['steps'])
 
 
+def test_research_observation_rides_the_same_guard_credentials_and_artifact_path():
+    """One more read-only collector in the same job: the same guard, the same
+    Alpaca pair and nothing else, its own artifact, and a refusal that cannot
+    fail the morning observation beside it."""
+    wf = load('morning.yml')
+    current = steps(wf, 'collect')
+    step = current['Collect a bound research observation']
+    assert step['if'] == "steps.guard.outputs.go == 'true'" and step['continue-on-error'] is True
+    assert step['env']['SCAN_SEND_EMAIL'] == 'false'
+    assert {k for k, value in step['env'].items() if 'secrets.' in value} == {'ALPACA_API_KEY', 'ALPACA_SECRET_KEY'}
+    assert 'python -m src.research_observations --docs docs --output "$RUNNER_TEMP/research-observations.json"' in step['run']
+    assert 'git ' not in step['run']
+    assert wf['jobs']['collect']['outputs']['research_ready'] == '${{ steps.research.outputs.ready }}'
+    artifact = current['Retain only this research observation']
+    assert artifact['if'] == "steps.research.outputs.ready == 'true'"
+    assert artifact['with'] == {'name': 'research-observations-${{ github.run_id }}-${{ github.run_attempt }}',
+                                'path': '${{ runner.temp }}/research-observations.json',
+                                'if-no-files-found': 'error', 'retention-days': 14}
+    persist = steps(wf, 'persist')
+    download = persist["Download only this run's research observation"]
+    publish = persist['Publish only against the unchanged record and research cohort']
+    assert download['if'] == publish['if'] == "needs.collect.outputs.research_ready == 'true'"
+    assert download['with'] == {'name': 'research-observations-${{ github.run_id }}-${{ github.run_attempt }}',
+                                'path': '${{ runner.temp }}/research-observation'}
+    assert publish['run'] == ('python -m tools.publish_morning publish --target research '
+                              '--snapshot "$RUNNER_TEMP/research-observation/research-observations.json"')
+    # the morning publication step runs first and unconditionally within the job
+    names = [s.get('name') or s.get('uses') for s in wf['jobs']['persist']['steps']]
+    assert names.index('Publish only against the unchanged source record') < names.index(publish['name'])
+
+
 def test_source_probe_is_opt_in_rehearsal_only_and_separately_retained():
     wf = load('morning.yml')
     current = steps(wf, 'collect')
@@ -381,7 +412,8 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tools/make_fixture.py --check', 'python tests/fixtures/morning/generate.py --check',
         'python tests/fixtures/issuer-evidence/generate.py --check',
         'python tests/fixtures/stop-research/generate.py --check',
-        'python tests/fixtures/research-outcomes/generate.py --check']
+        'python tests/fixtures/research-outcomes/generate.py --check',
+        'python tests/fixtures/research-observations/generate.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/handoff_model_cases.mjs" in page
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page

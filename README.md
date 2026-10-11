@@ -1081,6 +1081,34 @@ User-reported trades/results remain separate. Promotion or performance claims
 require a later explicit strategy review using the retained comparison and
 subsequent observations.
 
+### Dated research observations
+
+`morning.yml` also collects a small, read-only `docs/research-observations.json`
+for the current registered cohort's allocation-fit rows (`src/research_observations.py`).
+It binds the exact canonical publication, the exact `stop-research.json` receipt
+and bundle beside it, and each row's original evidence identity, then makes at
+most one IEX snapshot request per run through the morning transport, under the
+same guards: a wrong session, an ended or not-yet-open collection window, a
+stale or future publication, a missing cohort or a cohort bound to another
+publication is an inapplicable receipt with zero provider requests, and a
+cohort with no allocation fit is recorded as one. Quotes and prints keep their
+provider timestamps and the 60-second freshness rule; the receipt expires after
+300 seconds. Delayed volume is not requested, and halts, issuer news and earnings
+are not checked by this companion, which says so beside every row.
+
+The research panel prints the dated bid and ask with sizes, the spread, the last
+print, and where each sits against the published trigger, limit and stop, as a
+position and never a signal: no ready label, no quantity, no personal sizing,
+no order copy and no entry permission. Research rows remain hypothetical model
+research, not tickets. An observation collected over another cohort, an older
+publication, a forged level, price state or request count is refused in the
+browser, and the cohort stays readable without it. Persistence is a second
+one-file commit on main (`publish_morning.py --target research`), revalidated
+against the record and the committed cohort; a cohort main has since replaced
+refuses the push. No new subscription, credential or environment variable is
+involved; Saturday tests cannot prove Monday delivery, and Actions timing stays
+a best-effort dated snapshot.
+
 ### Research follow-through
 
 The Morning desk's optional **Research follow-through** view follows every frozen
@@ -1507,11 +1535,12 @@ src/            history.py (public recovery and coverage)
                 review_selection.py (feasible-first chart review and bounded spare research)
                 stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
                 research_outcomes.py (frozen cohort follow-through from dated retained observations)
+                research_observations.py (dated IEX observation of the bound research cohort's allocation-fit rows; one request a run, never a ticket)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
-docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-outcomes.js · design-system/
+docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
                 stop-research.json · stop-research/ (registered comparison and immutable cohorts)

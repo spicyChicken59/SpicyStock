@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 3850 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 3907 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -6379,3 +6379,129 @@ is nothing of it to finish. Public acceptance is the publication gate's: this
 sandbox's proxy refuses github.io, so the served page is read on GitHub's
 runner (`publish_dashboard.py`, every public file against committed main), not
 here. No run, mail, provider call or record change.
+
+## Checkpoint, 11 Oct 2026 — dated IEX observations for the research cohort (#151)
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted from
+`main` at `7bc5d2c2` (the merge of #153), pushed as **PR #154**. `docs/data.json`,
+`docs/picks.json`, the compact reader, the retained morning, issuer, stop-research
+and journal receipts, the history, the evidence objects, the quality ledger and the
+vendored design system are untouched; no run, mail, dispatch, provider call,
+credential, subscription, broker connection or hosting change. Saturday tests
+cannot prove Monday delivery, and nothing here claims they do.
+
+**What was missing**, reproduced offline before anything was built: the morning
+collector (`src/morning.py`) reads admitted orders only, so at an eligible
+synthetic Monday clock over the retained 9 Oct publication it supplied no quote
+for KE or PSNL, the two allocation-fit rows of the registered stop-width cohort
+(`249b60c0…`), and the research panel could say nothing about where either traded
+before the window it was registered for.
+
+**What was built.** `src/research_observations.py` is a separate, dated
+observation bound to the exact publication, the compact reader and the current
+cohort: `collect()` selects only the bundle's `allocation_fit` rows of a bound,
+recorded cohort, makes at most one IEX snapshot request
+(`MAX_REQUESTS = 1`, `FEED = "iex"`, the morning transport's `_fetch`,
+`trade_observation`, `quote_observation` and `price_state` reused, so the ages,
+the future skew and the crossed-quote refusal are the morning policy's own and
+archived in `POLICY`), and writes bid, ask, spread, last trade and each price's
+position against the row's own trigger, limit and stop. Every zero-call case is a
+named reason before the request: `wrong_session`, `entry_window_ended`,
+`before_collection_window`, `stale_publication`, `future_publication`,
+`cohort_missing`, `cohort_not_current`; no fit rows is `no_research_rows`; a
+refused or failed snapshot is `provider_unavailable` with the error kind and never
+its text; missing credentials spend nothing. `COVERAGE` says what is not checked
+(halts, delayed volume, issuer news, earnings; corporate action from the archived
+cohort registry only) and `LIMITS` that this is a dated best-effort single-venue
+snapshot. `_validate()` re-derives the whole receipt before it is accepted: the
+publication binding, the cohort block field by field, the clocks (started at or
+before generated, a five-minute expiry, the 180-second collection bound), the rows
+against the cohort's own fit rows, the request count against the error kind, every
+freshness and price-state replay, the status against its measurements, the
+64 KiB bound. `run()` refuses an output path under the publication files, re-reads
+the data, cohort and prior receipt after collection and refuses to replace the
+prior when any moved, and writes atomically. `tools/publish_morning.py` gains
+`--target research`: a one-file commit of `docs/research-observations.json` beside
+the cohort, compare-and-swap on the record's canonical bytes, the prior
+observation and the cohort on main (`research_cohort_changed` when main's
+`stop-research.json` no longer hashes to the receipt the observation binds), a
+rehearsal or a future completion refused. `morning.yml` collects it after the
+morning observation with `continue-on-error`, uploads it under its own run and
+attempt and persists it only against the unchanged record and cohort; the
+publication gate's `OPTIONAL_RECORD_FILES` names it so Pages is verified serving
+it when it exists. `docs/app-research-observations.js` attaches to the research
+panel only after it has hashed the loaded reader, the receipt bytes and the
+bundle (`attach({record, receipt, receiptSha, bundle, hosts, summary})`), replays
+the validator's checks in the browser (`validate()`), and renders one dated
+section per fit row under the row's levels: bid and ask, spread, the quote and
+trade times in Chicago, and each price's state in words ("below the published
+trigger", "between the published trigger and limit (a position, not a signal)");
+an inapplicable or unavailable receipt is one sentence with its reason; a
+publication or cohort change clears every rendered section. No ready label, no
+size, no order copy, no private draft, no new ticket authority: the research
+rows' own "no SpicyStock entry" refusals and the morning desk's admitted-only
+quotes are unchanged.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 3905 tests collected, 3871 passed and 34 environment-gated skips in
+15 m 33 s; fixtures current through their generators: 13 page, 21 morning,
+30 issuer, 22 stop-research, 40 research-outcomes and the 12 research-observation
+variants (observed, partial, outage, no-credentials, before-window, expired,
+wrong-session, no-rows, outside, missing-cohort, stale-cohort, followup), each the
+collector's own output over the genuine producer cohorts; continuity 137; chart
+check 378/378; the `research-observations` suite 226/226 at 1280 dark, 390 light
+and 390 dark over the canonical publication, the stop-research suite 332/332, the
+independent-report, private-backup and journal-report suites 520/520; the full
+smoke with `--shots` 14198/14198 in 19 m 15 s. CI at `7d12bc2e`: the page job 14198/14198 in
+13 m 58 s, pytest in 15 m 45 s, both gitleaks runs and the gate green, the two
+native jobs still running when this was written; the seven checks on the final
+head are recorded on PR #154. The two added tests moved the collection to 3907. Screenshots at 1280 dark and 390 light and dark over the observed,
+partial and red cohorts were looked at: the sections sit under each fit row's
+levels, the Chicago times carry their offset, the phone keeps one column and
+nothing scrolls sideways.
+
+**Mutation passes**, each mutant in its own copy, the tree never written, judged
+by the test files naming the rule (the two that the fixture-equality test would
+catch first were re-judged with it deselected, so each dies in its own test). Browser, through routed copies of the module:
+the receipt-digest check, the freshness replay, the price-state replay, a
+below-trigger print read as within the band, the request-count check, the
+publication binding and a future receipt accepted all die; the control (an
+unasserted note) stays green. Three survived the first pass and each was a hole,
+closed with the case it showed was missing: a future receipt was refused by the
+duration bound and then by the session freshness before the clock rule could be
+reached (the case is built from the before-window variant moved to 2099 with
+consistent clocks now); zero requests beside observed prices was caught by the
+budget bound, not the count (a zero-request case with prices now); and the
+dropped publication binding was covered by `binding()` on a projected load (a
+canonical load with a mismatched reader digest now). Python, in a worktree copy:
+selecting every row with levels, dropping the morning guards, two requests a run,
+skipping the price-check replay, the cohort equality, the publisher's cohort
+compare, the run's cohort-change check and the unbound-cohort reason all die in the test
+naming them; `ignore_cohort_binding` is equivalent (`_reason()` names an unbound
+cohort before `research_rows()` is asked); and **two survived, each a hole**.
+`observed_when_any_recent` lived on the second shape this file names: every
+fixture and case had both rows recent or both not, so `any` and `all` agreed; one
+case stales PSNL's print alone now, holds KE recent on both prints and the status
+to `partial`. `skip_request_count_check` lived because the one request-count
+forgery set two requests, which the budget bound refuses before the count rule is
+reached (the first shape); an observed receipt claiming zero requests beside its
+prices is a forgery now. Both die; the control (the CLI refusal's wording)
+stays green. One harness defect of mine: the worktree the Python mutants run in
+was pinned to the branch's start, so a later patch of the working diff failed to
+apply; it is reset to the pushed head before each pass now.
+
+**Keep / fix / defer / omit.** Keep: the observation reads and never decides; its
+rows are the cohort's own fit rows and nothing it says widens a refusal. Fix if it
+bites: the research publisher does not re-validate the prior observation it
+compares against (the morning target does not either); the shared error labels
+(`existing_morning_snapshot_too_large`, `morning_publication_requires_main`,
+`morning_observation_run_mismatch`) are spelled for the morning target and
+reused. Defer: sub-minute cadence and hosting (#108); SEC mapping HTTP 403 and
+broader event coverage; a halt or delayed-volume read for research rows. Omit: a
+ready label, personal sizing, an order path, any stop-policy change.
+
+**Not claimable:** a live observation. The first can exist at 13:20 or 13:28 UTC on
+Monday 12 October, when the morning workflow's two attempts run, and only if the
+Alpaca pair the morning collector already reads is present and the cohort on main
+is still the one the publication binds. Read its receipt's status, reason, rows and
+request count, and the page's sections, and record them here.
