@@ -6573,53 +6573,119 @@ and later superseded (MG, SN; ZIM). Entry geometry, sizing and allocation have
 refused no reaction candidate yet, because none has reached them.
 
 **Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
-1.56.1): 3932 passed and 34 environment-gated skips of 3967 collected when the
-full suite ran, its one failure the suite-count line this checkpoint moves to
-3969 (`tests/test_docs.py` 37/37 after; 3969 collected on this tree); 13 page fixtures current and the six cascaded
-generators current (issuer-evidence, stop-research, research-outcomes,
+1.56.1, on the final tree): 3974 collected, 3939 passed and 34 environment-gated
+skips in 15 m 50 s, the one failure the suite-count line this checkpoint moves to
+3974 (`tests/test_docs.py` 37/37 after); 13 page fixtures current and the six
+cascaded generators current (issuer-evidence, stop-research, research-outcomes,
 research-observations and cash-preview regenerated through their own producers
-after the page fixtures changed; morning pinned, unchanged); the `funnel` suite
-115/115 at 1280 dark, 390 light and 390 dark, with the older-rules, half-written,
-no-labels, no-sentence and no-discovered records; continuity 137; the chart check 378/378; the full smoke with `--shots` recorded on
-the pull request (its first run here stopped in the deferred-scan suite: the
-matrix scroller's locator, `#scan .sc-table-scroll`, matched the funnel's own
-table once it shared the disclosure, so it names the matrix region
-`[data-sc-matrix-nav]` now and the suite is 80/80 again);
-gitleaks 8.24.3 (fetched into a temporary directory for this pass; it is not
-installed in this sandbox) over the branch's commits and over the new files: no
-leaks. Screenshots at
-1280 and 390, both themes, were looked at: the table's stage column was a
-third of a phone's width under wide numeric columns, so the numeric columns
-are sized to their content now.
+each time the record moved -- the funnel rule, then the sentence's wording --
+morning pinned, unchanged); the `funnel` suite 303/303 at 1280 dark, 390 light,
+390 dark and 320 dark over the full record, the red and empty nights, a routed
+record whose counts are not the page's own at 1280 and 320, a ticker spelled
+like an Object property behind the scan deep link, and nineteen shapes the
+block check refuses one at a time; the deferred-scan suite 80/80; continuity
+137; the chart check 378/378; the full smoke with `--shots` 14501/14501 in its two lanes (its
+first run here stopped in the deferred-scan suite: the matrix scroller's
+locator, `#scan .sc-table-scroll`, matched the funnel's own table once it
+shared the disclosure, so it names the matrix region `[data-sc-matrix-nav]`
+now); gitleaks 8.24.3 (fetched into a temporary directory for this pass; it is
+not installed in this sandbox) over the branch's commits and over the new
+files: no leaks. Screenshots at 1280, 390 and 320, both themes, were looked at:
+the table's stage column was a third of a phone's width under wide numeric
+columns, so the count columns are sized to their content with a narrow gutter
+and the third header reads *setups*, and at 320 the stage column keeps half the
+table.
 
-**Mutation passes.** Python, each mutant in the mutation worktree at the funnel
-commit and judged by `tests/test_funnel.py` and `tests/test_report.py` in full:
-thirteen mutants -- the veto read before the grade, the market gate dropped for
-reactions and for anticipation, an unknown blocker read as the budget, a
-withheld plan read as geometry whatever its event, the usable count ignoring the
-veto, the validator never comparing, the sentence dropping the listed setups'
-stops, a legacy anticipation ticket read off the trade list, a refused reader
-read as a downgrade, the validator skipping the block, the builder skipping it.
-Twelve die in the test naming the rule (the veto-before-grade order dies in the
-test over the retained 9 October publication, whose 185 vetoed names all sit
-below the band), and one is equivalent: the preview's `known_event` and
-`plan_withheld` blockers are written by an if/elif in
-`review_selection.blockers()`, so no record carries both and their order cannot
-matter. `usable_ignores_veto` SURVIVED the first pass -- no fixture has a vetoed
-name inside the band, the second shape this file names -- and a synthetic record
-holds it now, so it dies. The control (a docstring) stays green. Browser, through
-routed copies of `app.js` (`SCSTOCK_APP`) judged by `--only funnel`: nine
-mutants -- the page adding one to the discovered count, zero-count stages
-printed, the record's labels ignored, the sentence composed by the page, the
-matrix's stop dropped, tickets saying they stopped, the absent note dropped, the
-anticipation column read off the reaction column, a half-written block accepted.
-Eight die at once and **the half-written block SURVIVED**: the suite's one
-half-written case lacked `anticipation` and was refused by an earlier clause
-before the shape checks the mutant removed could matter, the first shape this
-file names. Three more shapes (no labels, no sentence, no discovered count) are
-read without waiting out a locator now, so a page that fails to render the
-section is a named failure and not a timeout, and the mutant dies on three of
-them. The control (the sr-only caption's punctuation) stays green.
+**CI found what the local gates had passed.** The first run on the pull request
+failed the fixture gate: the red variants of the stop-research and
+research-outcomes generators, and two research-observation cases, carried
+`geometry` where the anticipation rule, moved to read the market gate first
+after they were regenerated, writes `market`. Every cascaded generator's
+`--check` had passed here, before that later change. The rule that follows:
+after any change that moves the record, regenerate every cascaded generator and
+run their `--check` last, not the page fixtures' alone.
+
+**Two reviews by execution over the first pushed tip, every upheld finding
+reproduced before it was touched.** The Python reviewer returned nine. The
+verdict guard in `admitted_grades()` had no test that would go red, and its
+consequence was the opposite of the docstring: `reader_coverage.admitted()`
+answers the trade grades for a verdict it does not know, so a record with a
+missing or unreadable regime would have been read as GREEN; a missing or
+unreadable verdict is `unknown` now, held by a test over seven shapes of
+breadth block. The closed-night test was the second shape this file names: the
+closed fixture IS the 4 September record the holiday no-op preserved, so its
+comparison with the full night could not fail for the reason it claimed; it
+asserts what the fixture is now. A listed setup without a plan (`plan: None`,
+which `make_watchlist` writes beside the planner's error) had no test, and a
+burst row without a mechanical grade was placed at `grade` rather than
+`unknown` (no retained publication lacks the field; it is `unknown` now). Seven
+more rules survived deletion under the suite -- the re-derivation guard in
+`faults()`, the legacy cut's default, an empty error string read as an error,
+a legacy trade-list ticket without an order action, the watchlist counts' `all`,
+a non-string regime raising inside `sentence()`, and the sentence's plural -- and
+each is pinned now; the sentence says "1 momentum name", names the watchlist's
+own admission as "passing the coil checks" rather than a second "admitted", and
+says "under a market this record does not name" rather than raise. The sentence
+test's label loop was substring-fragile (`known corporate event` is a prefix of
+the preview label), so it reads each stopped-at clause as "N label" segments.
+The page reviewer returned seven. The high: a non-string `rows[].stage` took
+the whole page down through the scan deep link (`words()` calls `.replace` on
+it) and emptied the matrix on every other path, and a ticker spelled
+`constructor` with no row resolved to `Object.prototype.constructor` -- the
+pre-review page, run under the new suite, fails "the page rendered through the
+scan deep link" and never hydrates the matrix. `funnelBlock()` now checks every
+field the drawing indexes into (plain objects, non-negative integer counts, a
+non-blank sentence, rows of string ticker and stage) and refuses the block
+whole; the stage map has no prototype; `stopped()` reads a string stage only.
+The mediums and lows, all fixed: the mutate loop exercised one clause of the
+shape check (it walks nineteen now); the empty-stage row printed two literal
+zeros and `num()` rounded a fraction (it prints "none counted" and integers
+only); a stage outside a family printed "—", the page's word for unreported
+(an empty cell now); the sentence had no `overflow-wrap`; the lede introduced
+the matrix over a table it did not mention (it introduces both); the 320 px
+column widths above. Recorded, not changed: the `typeof` guard in `stopped()`
+is redundant behind the rows clause, kept as a second line; the provenance
+watch gate's `no_order` beside the funnel's `allocation_slot` for a slot-capped
+coil is the coarser, pre-existing reason and not a funnel defect.
+
+**Mutation passes.** Before the review, Python, each mutant in the mutation
+worktree at the funnel commit and judged by `tests/test_funnel.py` and
+`tests/test_report.py` in full: thirteen mutants -- the veto read before the
+grade, the market gate dropped for reactions and for anticipation, an unknown
+blocker read as the budget, a withheld plan read as geometry whatever its event,
+the usable count ignoring the veto, the validator never comparing, the sentence
+dropping the listed setups' stops, a legacy anticipation ticket read off the
+trade list, a refused reader read as a downgrade, the validator skipping the
+block, the builder skipping it. Twelve die in the test naming the rule (the
+veto-before-grade order dies in the test over the retained 9 October
+publication, whose 185 vetoed names all sit below the band), and one is
+equivalent: the preview's `known_event` and `plan_withheld` blockers are written
+by an if/elif in `review_selection.blockers()`, so no record carries both and
+their order cannot matter. `usable_ignores_veto` SURVIVED the first pass -- no
+fixture has a vetoed name inside the band, the second shape this file names --
+and a synthetic record holds it now, so it dies. After the review, ten more over
+its rules (the verdict guard, the missing grade, the unplanned setup, the cut's
+default, the empty error, the legacy order action, `all` to `any`, the unguarded
+`upper()`, the re-derivation branch, the plural): all ten die, each in the test
+naming it (the plural first in the fixture tests, whose two nights count one
+momentum name, and in its own test with those deselected); the control (a
+docstring) stays green both times. Browser, through routed copies of `app.js`
+(`SCSTOCK_APP`) judged by `--only funnel`: before the review nine mutants, eight
+dead at once and **the half-written block SURVIVED** (the suite's one case was
+refused by an earlier clause, the first shape this file names; three more shapes
+closed it). After the review sixteen: the rows clause, the prototype-free map
+with the guard, the integer-count, plain-object, non-blank-sentence and listed
+clauses, discovered and listed read off the page's own lists, the empty-stage
+row printing zero, a dash for a stage outside the family, the lede without the
+funnel, the caption, the row headers' scope, and the funnel appended after the
+matrix. Thirteen died at once. `caption_dropped` died by a locator timeout
+rather than a named check, so the caption is read count-guarded and it dies on
+four. `funnel_after_matrix` SURVIVED twice: a page loaded with the scan closed,
+and one opened by the deep link, both append the matrix after the funnel
+whatever the order of the two calls, so the check reads a re-render over an
+OPEN scan now, where the matrix is built inside the same render, and it dies.
+`typeof_guard_dropped` survives and is equivalent behind the rows clause, as
+recorded above. The control (the caption's last words) stays green.
 
 **Keep / fix / defer / omit.** Keep: the funnel reads and never decides; a stage
 is the record's accounting of its own gates. Fix if it bites: the block carries
