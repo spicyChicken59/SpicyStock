@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "e87cdf5b1bbe"
+  "rules_version": "2e7749e42e0f"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -830,7 +830,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "61fe9e204b8ef1631cab8b77513e208fa890ab4943abaeceeae38f5180edb220"
+   "context_sha256": "96b8a6b4eddec2344ec528aab2b8d93978e83cce9d3587ddc149e864ab6fb607"
   },
   "sanitised": {
    "replaced": 0,
@@ -1330,6 +1330,10 @@
    "rotation": "sha256(policy|measured_session|ticker),ticker",
    "research_pool": "infeasible mechanical pipeline.trade_grades",
    "feasibility": "private per-candidate plan before reader and combined allocation"
+  },
+  "funnel": {
+   "version": 1,
+   "policy": "candidate_funnel_v1"
   },
   "pipeline": {
    "max_reads": 12,
@@ -1934,7 +1938,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "e87cdf5b1bbe"
+  "replay_rules_version": "2e7749e42e0f"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2008,6 +2012,143 @@
   "history_max": 20
  },
  "closest_miss": null,
+ "funnel": {
+  "version": 1,
+  "policy": "candidate_funnel_v1",
+  "regime": "green",
+  "admitted_grades": [
+   "A+",
+   "A"
+  ],
+  "reaction": {
+   "discovered": 0,
+   "potentially_usable": 0,
+   "by_mechanical_grade": {
+    "A+": 0,
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "skip": 0
+   },
+   "stages": {
+    "market": 0,
+    "grade": 0,
+    "veto": 0,
+    "preview_event": 0,
+    "preview_geometry": 0,
+    "preview_sizing": 0,
+    "preview_no_order": 0,
+    "preview_unavailable": 0,
+    "review_budget": 0,
+    "review_unselected": 0,
+    "review_refused": 0,
+    "review_format": 0,
+    "review_account": 0,
+    "review_credit": 0,
+    "review_transport": 0,
+    "review_downgraded": 0,
+    "review_unknown": 0,
+    "plan_error": 0,
+    "plan_unavailable": 0,
+    "event": 0,
+    "geometry": 0,
+    "sizing": 0,
+    "allocation_slot": 0,
+    "allocation_cash": 0,
+    "allocation_occupied": 0,
+    "allocation_unknown": 0,
+    "ticket": 0,
+    "unknown": 0
+   },
+   "rows": []
+  },
+  "anticipation": {
+   "listed": 0,
+   "counts": {
+    "momentum": 0,
+    "quiet": 0,
+    "admitted": 0,
+    "top": 0,
+    "also_quiet": 0
+   },
+   "stages": {
+    "market": 0,
+    "plan_error": 0,
+    "plan_unavailable": 0,
+    "event": 0,
+    "geometry": 0,
+    "sizing": 0,
+    "allocation_slot": 0,
+    "allocation_cash": 0,
+    "allocation_occupied": 0,
+    "allocation_unknown": 0,
+    "ticket": 0,
+    "unknown": 0
+   },
+   "rows": []
+  },
+  "groups": {
+   "market": "market",
+   "grade": "grade",
+   "veto": "veto",
+   "preview_event": "preview",
+   "preview_geometry": "preview",
+   "preview_sizing": "preview",
+   "preview_no_order": "preview",
+   "preview_unavailable": "preview",
+   "review_budget": "review",
+   "review_unselected": "review",
+   "review_refused": "review",
+   "review_format": "review",
+   "review_account": "review",
+   "review_credit": "review",
+   "review_transport": "review",
+   "review_downgraded": "review",
+   "review_unknown": "review",
+   "plan_error": "plan",
+   "plan_unavailable": "plan",
+   "event": "event",
+   "geometry": "geometry",
+   "sizing": "sizing",
+   "allocation_slot": "allocation",
+   "allocation_cash": "allocation",
+   "allocation_occupied": "allocation",
+   "allocation_unknown": "allocation",
+   "ticket": "ticket",
+   "unknown": "unknown"
+  },
+  "labels": {
+   "market": "market gate: the regime admits no new longs",
+   "grade": "mechanical grade below the regime's admitted band",
+   "veto": "quality veto",
+   "preview_event": "known corporate event, in the pre-review preview",
+   "preview_geometry": "stop rule at the limit, in the pre-review preview",
+   "preview_sizing": "no whole share, in the pre-review preview",
+   "preview_no_order": "no order action, in the pre-review preview",
+   "preview_unavailable": "pre-review preview unavailable",
+   "review_budget": "feasible, beyond the night's review budget",
+   "review_unselected": "not selected for review; the selection's reasons were not archived",
+   "review_refused": "review refused by reader authority or the discovery contract",
+   "review_format": "review reply could not be read as a score",
+   "review_account": "review stopped: the API refused the account",
+   "review_credit": "review stopped: the API credit balance was too low",
+   "review_transport": "review got no usable answer from the API",
+   "review_downgraded": "review lowered the grade below the admitted band",
+   "review_unknown": "review state not readable from this record",
+   "plan_error": "planner error",
+   "plan_unavailable": "plan not recorded",
+   "event": "known corporate event",
+   "geometry": "ticket withheld: stop rule at the limit",
+   "sizing": "no whole share fits the risk budget",
+   "allocation_slot": "slot cap",
+   "allocation_cash": "model cash cap",
+   "allocation_occupied": "symbol already held by an open model plan, or duplicated",
+   "allocation_unknown": "allocation outcome not recorded",
+   "ticket": "ticket",
+   "unknown": "not readable from this record"
+  },
+  "sentence": "Candidate funnel under a GREEN market: 0 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Anticipation: 0 momentum names, 0 quiet, 0 admitted, 0 listed, 0 tickets. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+ },
  "_contract": {
   "schema_version": "2. The page refuses any other number rather than guessing at an older shape.",
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
@@ -2026,6 +2167,7 @@
   "open_plans": "Every published plan still inside its window, replayed to this session as a model: status word, the instruction sentence, and for an uncertain fill the reason. SpicyStock does not know what you hold: a plan you never took is a row to ignore.",
   "scorecard": "All retained published plans in the stated window, including pending and missing evidence. Disjoint outcome counts reconcile to plans; rates use resolved plans alone, with an explicit denominator and minimum sample. Public model results, independent of personal selections.",
   "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows it when trades is empty. Null when every burst is a trade or there were none.",
+  "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one terminal stage each, in the order the run applies its gates, so the stage counts sum to the discovered count. Derived from the fields above and re-derived by the validator; the labels the page and the mail print travel with it. A stage is the record's own accounting of its gates, never a judgement of the setup and never an entry.",
   "observations": "Public coverage of every published saveable signal, independent of local saves. Each signal keeps its own identity and 21-calendar-day window. Symbols carry the latest real bar plus up to 20 dated observations from already-fetched frames; missing bars stay missing, and missing frames retain earlier actual observations. This is research coverage, never a quote feed or personal trading history.",
   "_contract": "This paragraph per key. If a key is here and not above, or above and not here, the file is refused."
  },
