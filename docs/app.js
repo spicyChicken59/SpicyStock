@@ -4600,10 +4600,10 @@
     const rows = stages.filter((k) => (fu.reaction.stages[k] || 0) > 0 || (fu.anticipation.stages[k] || 0) > 0);
     const table = el('table', { 'class': 'sc-table ss-funnel__table', 'data-funnel-table': '' });
     table.appendChild(el('caption', { 'class': 'sc-sr-only', text: 'Where the discovered reaction candidates and the listed anticipation setups stopped: one terminal stage each, counted by the run.' }));
-    table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'stage' }), el('th', { scope: 'col', text: 'reaction' }), el('th', { scope: 'col', text: 'anticipation' })])));
+    table.appendChild(el('thead', null, el('tr', null, [el('th', { scope: 'col', text: 'stage' }), el('th', { scope: 'col', text: 'bursts' }), el('th', { scope: 'col', text: 'setting up' })])));
     const tbody = el('tbody');
     const cell = (v) => el('td', { 'class': 'ss-funnel__n', text: isNum(v) ? num(v) : '—' });
-    tbody.appendChild(el('tr', { 'data-funnel-row': 'discovered' }, [el('th', { scope: 'row', text: 'discovered · listed' }), cell(fu.reaction.discovered), cell(fu.anticipation.listed)]));
+    tbody.appendChild(el('tr', { 'data-funnel-row': 'discovered' }, [el('th', { scope: 'row', text: 'discovered bursts · listed setups' }), cell(fu.reaction.discovered), cell(fu.anticipation.listed)]));
     if (isNum(fu.reaction.potentially_usable)) tbody.appendChild(el('tr', { 'data-funnel-row': 'potentially_usable' }, [el('th', { scope: 'row', text: 'potentially usable: mechanical grade in the admitted band, no veto' }), cell(fu.reaction.potentially_usable), cell(null)]));
     rows.forEach((k) => tbody.appendChild(el('tr', { 'data-funnel-row': k }, [
       el('th', { scope: 'row', text: text(fu.labels[k]) || words(k) }),
