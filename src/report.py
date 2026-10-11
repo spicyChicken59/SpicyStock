@@ -156,6 +156,11 @@ CONTRACT: dict[str, str] = {
                  "denominator and minimum sample. Public model results, independent of personal selections.",
     "closest_miss": "On any night, the highest-scored burst not in trades and why it missed; the page shows "
                     "it when trades is empty. Null when every burst is a trade or there were none.",
+    "funnel": "Where every discovered reaction candidate and every listed anticipation setup stopped: one "
+              "terminal stage each, in the order the run applies its gates, so the stage counts sum to the "
+              "discovered count. Derived from the fields above and re-derived by the validator; the labels "
+              "the page and the mail print travel with it. A stage is the record's own accounting of its "
+              "gates, never a judgement of the setup and never an entry.",
     "observations": "Public coverage of every published saveable signal, independent of local saves. "
                     "Each signal keeps its own identity and 21-calendar-day window. Symbols carry the "
                     "latest real bar plus up to 20 dated observations from already-fetched frames; "
@@ -669,6 +674,8 @@ def validate(data: dict) -> None:
     faults.extend(inputs.tolerance_faults(run, rules_pipeline, plan_tickers))
     faults.extend(followup.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
+    from src import funnel
+    faults.extend(funnel.faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -777,6 +784,8 @@ def build(run: dict, account: dict, rules: dict, breadth: dict, bursts: list[dic
     }
     data.update(body)
     data["closest_miss"] = miss
+    from src import funnel   # lazy: it sits under the pipeline's modules, which import this one
+    data["funnel"] = funnel.build(data)
     data["_contract"] = dict(CONTRACT)
     validate(data)
     return data
@@ -1025,6 +1034,15 @@ def _inputs_block(run: dict) -> str:
     return f'<div><p style="{_S_MUTED}">// inputs and reads</p>{body}</div>'
 
 
+def _funnel_block(data: dict) -> str:
+    """Where the night's candidates stopped, in the record's own sentence: the
+    same words the page prints, composed from counts and labels alone."""
+    sentence = _text(_get(data, "funnel", "sentence"))
+    if not sentence:
+        return ""
+    return f'<div><p style="{_S_MUTED}">// where the candidates stopped</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
+
+
 def _breadth_line(breadth: Any) -> str:
     verdict = _get(breadth, "regime", "verdict")
     if verdict not in REGIMES:
@@ -1115,6 +1133,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))
     out.append(_inputs_block(run))
+    out.append(_funnel_block(data))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')
     foot = [f"model {model}" if (model := _text(run.get("model"))) else None,

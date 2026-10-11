@@ -44,6 +44,7 @@ import { checkIndependentReports } from './independent_report_cases.mjs';
 import { checkPrivateBackup } from './private_backup_cases.mjs';
 import { checkJournalReports } from './journal_report_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
+import { checkFunnel } from './funnel_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -71,7 +72,7 @@ const TRADE_GRADES = ['A+', 'A'];   // the grades the run gives an order (pipeli
 const args = process.argv.slice(2);
 const shotsDir = args.includes('--shots') ? args[args.indexOf('--shots') + 1] : null;
 // --only <name[,name]> runs just those suites (variant names, or lens/compare/
-// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough/findings). It is for
+// evidence/map/reach/mobile/modes/following/through/session/refresh/volume/mapscale/ticket/states/walkthrough/findings/funnel). It is for
 // judging a mutant in a minute; CI and the milestone gate run everything.
 const only = args.includes('--only') ? String(args[args.indexOf('--only') + 1] || '').split(',').filter(Boolean) : null;
 const runs = (name) => !only || only.includes(name);
@@ -3966,6 +3967,7 @@ async function main() {
       if (runs('historical')) await checkHistoricalJourneys({ browser, base, open, check, shotsDir });
       if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
       if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
+      if (runs('funnel')) await checkFunnel({ browser, base, open, check, eq, shotsDir });
     };
     // both lanes finish before the browser closes; the first to throw is the error
     const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);

@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk, review_selection
+from src import watchlist, allocation, event_risk, review_selection, funnel
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -656,7 +656,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,

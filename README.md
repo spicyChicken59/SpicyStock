@@ -881,6 +881,29 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   page loads -- the HTML, both records, each script and stylesheet, the
   vendored design system -- and fails unless the public bytes are the
   commit's; the list is read off `docs/index.html`, not kept beside it.
+- **Where every candidate stopped.** `report.build()` composes `funnel` last, off the
+  cleaned record (`src/funnel.py`): every discovered reaction candidate and every
+  listed anticipation setup is given exactly one terminal stage, in the order the
+  run applies its gates -- the regime (RED stops everything at `market`), the
+  mechanical grade against the regime's admitted band, the quality veto, then for
+  a name the review budget never reached the selection's own recorded blockers
+  (`preview_event`, `preview_geometry`, `preview_sizing`, `preview_no_order`,
+  `review_budget`), for a reviewed name the reader's state (`review_refused`,
+  `review_format`, `review_account`, `review_credit`, `review_transport`,
+  `review_downgraded`), then the constructed plan's own combined allocation
+  (`event`, `geometry`, `sizing`, `allocation_slot`, `allocation_cash`,
+  `allocation_occupied`, `ticket`). The stage counts sum to the discovered count
+  by construction, `potentially_usable` counts the names that passed the first
+  three gates, the labels the page and the mail print travel in the block, and
+  `report.validate()` refuses a block the record does not re-derive. A record made
+  under older rules is read for what it recorded -- a field it lacks is `unknown`,
+  never guessed, as is a regime that is not a verdict the rules name and a row
+  without a mechanical grade -- and is asked for no block. The scan disclosure
+  prints the table and the sentence, each matrix row says where its name stopped,
+  and the mail prints the same sentence; the page prints a block only when every
+  field it indexes into has its shape (integer counts, a non-blank sentence,
+  string rows) and says the funnel was not archived otherwise. `tools/candidate_funnel.py` reads the funnel of any
+  publication, or of every retained one on a ref, and changes nothing.
 
 Exit codes are the workflow's contract: **0** clean, **1** failed before
 publishing (the failure notice is mailed instead, when the failure came
@@ -1260,6 +1283,7 @@ node tools/page_smoke.mjs --only reading      # recorded meanings, help and revi
 node tools/page_smoke.mjs --only status       # both ticket families and workflow/publication distinction
 node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and exact recorded-chart navigation
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
+node tools/page_smoke.mjs --only funnel       # the scan disclosure's candidate funnel, printed from the record's own block
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
@@ -1382,6 +1406,12 @@ once with no record at all.
 `docs/data.json` (schema 2) is one object: `run`, `cover`, `breadth`,
 `bursts[]`, `trades[]`, `beyond_cap[]`, `cash_budget`, `watchlist`,
 `open_plans[]`, `scorecard`, `nights[]`, `account`, `rules`, `closest_miss`,
+`funnel` (where every discovered reaction candidate and every listed anticipation
+setup stopped: one terminal stage each, in the order the run applies its gates,
+so the stage counts sum to the discovered count; `src/funnel.py` derives it from
+the fields beside it, the validator re-derives it, and its labels travel with it
+so the page and the mail print the record's own words -- a stage is the record's
+accounting of its gates, never a judgement of the setup or an entry),
 `observations` (every saveable published signal's own identity and 21-day
 window, plus up to 20 real dated observations per symbol from frames already
 fetched; missing frames retain dated real observations),
@@ -1533,6 +1563,7 @@ src/            history.py (public recovery and coverage)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 review_selection.py (feasible-first chart review and bounded spare research)
+                funnel.py (one terminal stage per discovered candidate, read off the record's own fields and re-derived by the validator; the candidate funnel)
                 stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
                 research_outcomes.py (frozen cohort follow-through from dated retained observations)
                 research_observations.py (dated IEX observation of the bound research cohort's allocation-fit rows; one request a run, never a ticket)
@@ -1557,6 +1588,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 backtest_timeline.py (offline: the owner's private backtest record read into one row per night per gate -- the night's breadth and its tickets' outcomes by scorecard bucket, uncertainty kind and settled R -- every field copied by type from a fixed list; a private key, or a ticker the record names as a whole word in any case in a key or string that is not one of the tool's own words, is a refusal, as are a night or gate whose counts do not reconcile, a malformed file and an --output over the private file)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
+                candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
