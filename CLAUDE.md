@@ -6712,7 +6712,7 @@ files matches committed main* at 21:33:16 UTC; Pages 38176797847 deployed
 own Secret scan 38176782428 and Tests 38176782434 (21:32–21:51) are green.
 
 **Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
-from `main` at `2c077c99`, pushed as the pull request this checkpoint names below. Two deliverables of #109's
+from `main` at `2c077c99`, pushed as **PR #156**. Two deliverables of #109's
 acceptance line remain after the funnel: "measured review cost/coverage" and
 "whole-share $2,000 simulations". `docs/data.json`, `docs/picks.json`, the
 compact reader, every receipt, the history, the evidence objects, the quality
@@ -6800,7 +6800,7 @@ pinned, unchanged); continuity 137; the chart check 378/378; the `inputs`
 suite 232/232 with its six new checks (the cost sentence verbatim and nothing priced on the thin fixture at 1280, 390 and 320 in both themes; no cost line for a record from before the rule or a half-written block); the full smoke with `--shots` 14517/14517 in its two lanes; gitleaks 8.24.3 over
 the branch's commits and the new files: no leaks. Screenshots of Method at 1280
 and 390, both themes, were looked at: the cost sentence sits under the reads'
-own, in the record's words, with no figure the page added. CI on the pushed head is recorded on the pull request.
+own, in the record's words, with no figure the page added. CI on the pushed head is recorded on PR #156.
 
 **Mutation passes.** Python, each mutant in the mutation worktree at the milestone commit and judged by the whole test files naming the rule (`test_reader_coverage`, `test_grader`, `test_report`; `test_whole_share_feasibility`), no `-k` filter: twenty mutants, all dead -- the output class dropped from the bill, a retry's reply left unbilled, a call counted only when a reply arrived, the row block written inside `claude`, an empty night without a block, the bursts' own re-derivation skipped, the one-bill-per-attempt and the None-iff-no-reply alignment checks dropped, the input sum including output, the older-rules gate dropped, replies over calls allowed, the sentence and the model unchecked; the reading counting an ineligible plan as a share, YELLOW admitting the trade grades, the ceiling without the stop-risk halving, the account override ignored, the veto ignored, tonight sized at full size, anticipation counting ineligible plans. **The control died on the first pass**, in `test_a_graded_row_records_the_model_and_that_the_chart_was_seen`: the provenance-shape assertion excludes `input`, `attempts` and `attempted_model` and did not yet exclude `billing`, a test defect the earlier grader-side rerun had already reported (1 failed, 273 passed) and I had read as a pass off the wrapper's exit code -- the control is what caught it. Fixed in the commit after; the control then survives (282 passed) and the first mutant still dies. Browser, through routed copies of `app.js` judged by `--only inputs`: the cost line dropped (6 checks), the page pricing the tokens itself (3, the nothing-priced check), a half-written block printed (the undefined check); the control (a comment) passes 232/232. One harness defect of mine: the priced mutant's replacement text held `$'`, which `String.replace` reads as the text after the match, so the first run spliced the file and the page never rendered -- a kill for the wrong reason; the harness replaces through a function now and the mutant dies on the named check.
 
