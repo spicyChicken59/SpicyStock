@@ -367,7 +367,7 @@ def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]
         "latency_minutes": None if not latencies else {"min": min(latencies), "median": round(statistics.median(latencies), 1), "max": max(latencies)},
         "streak": _streaks(rows),
         "publications": len(pubs), "revisions": sum(max(0, r["revisions"] - 1) for r in rows),
-        "resessions": [r["session"] for r in rows if r["revisions"] > 1],
+        "republished_sessions": [r["session"] for r in rows if r["revisions"] > 1],
         "statuses": statuses, "elapsed_seconds": total("elapsed_seconds"), "fetch_seconds": total("fetch_seconds"),
         "reads": {"requested": sum(p["reader"]["requested"] or 0 for p in pubs if p["reader"]["requested"] is not None),
                   "done": sum(p["reader"]["done"] or 0 for p in pubs if p["reader"]["done"] is not None),
@@ -398,33 +398,51 @@ def _tally(values) -> dict:
 
 # ----------------------------------------------------------------- build ----
 
+#: what a reading of one commit may fail with; the commit is then set aside by name, never guessed at
+UNREADABLE = (ServiceError, KeyError, TypeError, ValueError, AttributeError)
+
+
+def _placed(commit: str, path: str, exc: BaseException) -> str:
+    """The reason a commit was set aside, led by the commit and the path it was read at."""
+    text = str(exc)
+    return text if text.startswith(commit[:8]) else f"{commit[:8]}:{path}: {text}"
+
+
 def read_publications(commits: list[str]) -> tuple[list[dict], list[dict]]:
     """Every named commit's record as a reading, or named under ``skipped`` with
-    the reason (the first build's records and the fixtures a ref's history carries)."""
+    the reason (the first build's records and the fixtures a ref's history
+    carries; a commit that removed the file; a record the reading cannot place)."""
     readings, skipped = [], []
     for commit in commits:
         data, blob = read_at(commit, RECORD_PATH)
         if blob is None:
-            skipped.append({"commit": commit, "reason": f"no {RECORD_PATH}"})
+            skipped.append({"commit": commit, "reason": f"{commit[:8]}: no {RECORD_PATH} at this commit"})
             continue
         try:
             readings.append(publication_reading(data, commit=commit, blob=blob, landed_at=committed_at(commit)))
-        except ServiceError as exc:
-            skipped.append({"commit": commit, "reason": str(exc)})
+        except UNREADABLE as exc:
+            skipped.append({"commit": commit, "reason": _placed(commit, RECORD_PATH, exc)})
     return readings, skipped
 
 
-def read_companions(by_kind: dict[str, list[str]]) -> dict[str, list[dict]]:
+def read_companions(by_kind: dict[str, list[str]]) -> tuple[dict[str, list[dict]], list[dict]]:
+    """Every named companion commit's receipt as a reading, by kind, and the
+    commits set aside with the reason (the file removed, a receipt unreadable)."""
     out: dict[str, list[dict]] = {}
+    skipped = []
     for kind, path in COMPANIONS.items():
         items = []
         for commit in by_kind.get(kind, []):
             data, blob = read_at(commit, path)
             if blob is None:
-                raise ServiceError(f"{commit[:8]} carries no {path}")
-            items.append(companion_reading(kind, data, commit=commit, blob=blob, landed_at=committed_at(commit)))
+                skipped.append({"commit": commit, "reason": f"{commit[:8]}: no {path} at this commit"})
+                continue
+            try:
+                items.append(companion_reading(kind, data, commit=commit, blob=blob, landed_at=committed_at(commit)))
+            except UNREADABLE as exc:
+                skipped.append({"commit": commit, "reason": _placed(commit, path, exc)})
         out[kind] = sorted(items, key=lambda i: (i["generated_at"], i["commit"]))
-    return out
+    return out, skipped
 
 
 def assemble(*, ref: str | None, through: str, publication_commits: list[str], skipped: list[dict],
@@ -435,7 +453,9 @@ def assemble(*, ref: str | None, through: str, publication_commits: list[str], s
     if refused:
         raise ServiceError("a named publication commit does not carry a real publication: " + refused[0]["reason"])
     pubs.sort(key=lambda p: (p["session"], p["published_at"], p["commit"]))
-    companions = read_companions(companion_commits)
+    companions, set_aside = read_companions(companion_commits)
+    if any(row not in skipped for row in set_aside):
+        raise ServiceError("a named companion commit was set aside and the reading does not say so: " + set_aside[0]["reason"])
     rows = session_rows(pubs, companions, clock)
     return {
         "version": VERSION, "policy": POLICY,
@@ -460,7 +480,9 @@ def walk(through: str, limit: int) -> tuple[list[str], list[dict], dict[str, lis
     if len(commits) >= limit:
         raise ServiceError(f"the history through {through[:8]} has at least {limit} publication commits; raise --limit")
     pubs, skipped = read_publications(commits)
-    return [p["commit"] for p in pubs], skipped, {kind: file_commits(through, path, limit) for kind, path in COMPANIONS.items()}
+    companions = {kind: file_commits(through, path, limit) for kind, path in COMPANIONS.items()}
+    skipped += read_companions(companions)[1]
+    return [p["commit"] for p in pubs], skipped, companions
 
 
 def build(*, ref: str = "origin/main", through: str | None = None, limit: int = HISTORY_LIMIT) -> dict:
@@ -537,7 +559,7 @@ def markdown(result: dict) -> str:
               f"- first publications before the next open: {s['before_next_open']} of {s['published_sessions']}; after the retry slot: {s['after_retry_slot']}",
               f"- latency after completion, minutes: min {lat.get('min')}, median {lat.get('median')}, max {lat.get('max')}",
               f"- streak of due sessions published before the next open: current {s['streak']['current']}, longest {s['streak']['longest']}",
-              f"- publications {s['publications']}, re-published sessions {len(s['resessions'])} ({', '.join(s['resessions']) or 'none'}), "
+              f"- publications {s['publications']}, re-published sessions {len(s['republished_sessions'])} ({', '.join(s['republished_sessions']) or 'none'}), "
               f"statuses {json.dumps(s['statuses'], sort_keys=True)}",
               f"- runner time archived: elapsed {s['elapsed_seconds']} s, fetch {s['fetch_seconds']} s over {s['publications']} publications",
               f"- reader: {s['reads']['done']} of {s['reads']['requested']} reads done over {s['reads']['publications_with_block']} publications with a reads block; "
@@ -556,7 +578,7 @@ def markdown(result: dict) -> str:
             lines.append(f"| {kind} | {_hm(i['landed_at'])} | {_hm(i['generated_at'])} | {i['status']} | {i.get('reason') or '—'} | "
                          f"{i['applicable_session']} | {_yn(i['before_applicable_open'])} | {'—' if i['rows'] is None else i['rows']} | {i['bound_run_id'] or '—'} |")
     if result["skipped"]:
-        reasons = _tally(row["reason"].split(": ", 1)[-1] for row in result["skipped"])
+        reasons = _tally(row["reason"].split(": ", 1)[-1] for row in result["skipped"])   # the reason without its commit prefix
         lines += ["", "## Commits read and set aside", ""]
         lines += [f"- {n} × {reason}" for reason, n in reasons.items()]
     return "\n".join(lines) + "\n"
@@ -615,7 +637,7 @@ def main(argv: list[str] | None = None) -> int:
     s = result["summary"]
     print(f"{s['published_sessions']} of {s['due_sessions']} due sessions published ({s['expected_sessions']} expected through "
           f"{result['source']['through'][:8]}); {s['before_next_open']} before the next open; latency median {(s['latency_minutes'] or {}).get('median')} min; "
-          f"streak current {s['streak']['current']} / longest {s['streak']['longest']}; re-published sessions {len(s['resessions'])}; "
+          f"streak current {s['streak']['current']} / longest {s['streak']['longest']}; re-published sessions {len(s['republished_sessions'])}; "
           f"tickets {s['signal']['reaction_tickets']}/{s['signal']['anticipation_tickets']} (signal, not service).")
     for row in result["skipped"]:
         print(f"skipped {row['commit'][:8]}: {row['reason']}")

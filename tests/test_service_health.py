@@ -213,7 +213,7 @@ def test_streaks_and_the_summary_are_hand_computed(week):
     assert (s["before_next_open"], s["after_retry_slot"]) == (2, 3)
     # latencies of the first publications: 5th 20:15->02:17 = 362, 7th 20:15->14:00 = 1065, 8th 20:15->02:06 = 351
     assert s["latency_minutes"] == {"min": 351.0, "median": 362.0, "max": 1065.0}
-    assert (s["publications"], s["revisions"], s["resessions"], s["statuses"]) == (4, 1, ["2026-10-05"], {"ok": 3, "degraded": 1})
+    assert (s["publications"], s["revisions"], s["republished_sessions"], s["statuses"]) == (4, 1, ["2026-10-05"], {"ok": 3, "degraded": 1})
     assert s["elapsed_seconds"] == round(112.7 * 4, 1) and s["fetch_seconds"] == round(59.2 * 4, 1)
     assert s["reads"] == {"requested": 8, "done": 8, "publications_with_block": 4}
     assert s["reader_usage"] == {"publications_with_block": 4, "calls": 8, "responses": 8, "input_tokens": 6998 * 4, "output_tokens": 720}
@@ -288,6 +288,37 @@ def test_a_history_is_walked_from_its_tip_and_the_set_asides_are_named(repo):
         sh.build(ref="main", limit=2)
 
 
+def test_a_removed_companion_and_an_unplaceable_record_are_set_aside_by_name(repo):
+    r = repo["repo"]
+    git(r, "rm", "-q", "docs/morning.json")
+    git(r, "commit", "-q", "-m", "remove the receipt", date_="2026-10-10T02:00:00+00:00")
+    removed = git(r, "rev-parse", "HEAD")
+    broken = commit(r, "docs/data.json", {**record("2026-10-09", "2026-10-10T07:30:00+00:00"), "run": {"session": "2026-10-09"}},
+                    "run 2026-10-09", "2026-10-10T07:32:00+00:00")
+    result = sh.build(ref="main")
+    assert result["source"]["companion_commits"]["morning"] == [removed, repo["morning"]]
+    assert [i["commit"] for i in result["companions"]["morning"]] == [repo["morning"]]
+    assert result["source"]["publication_commits"] == [repo["third"], repo["second"], repo["first"]]     # the broken one is not read
+    reasons = {row["commit"]: row["reason"] for row in result["skipped"]}
+    assert reasons[removed] == f"{removed[:8]}: no docs/morning.json at this commit"
+    assert reasons[broken].startswith(f"{broken[:8]}:docs/data.json: not an instant")
+    assert reasons[repo["fixture"]].endswith("not a real schema-2 publication")
+    assert result["summary"]["published_sessions"] == 2        # the set-asides change no count
+    # a committed reading that names the removed companion commit but does not say it was set aside is refused,
+    # on a shallow checkout too, where the walk cannot be repeated
+    monkeypatch_shallow = sh.shallow
+    sh.shallow = lambda: True
+    try:
+        forgotten = deepcopy(result)
+        forgotten["skipped"] = [row for row in forgotten["skipped"] if row["commit"] != removed]
+        with pytest.raises(sh.ServiceError, match="does not say so"):
+            sh.rebuild(forgotten)
+        again, walked = sh.rebuild(result)
+        assert walked == "not_walked_in_shallow_clone" and again == result
+    finally:
+        sh.shallow = monkeypatch_shallow
+
+
 def test_the_written_files_are_held_by_check_and_a_drift_is_named(repo, tmp_path):
     out = tmp_path / "out"
     assert sh.main(["--ref", "main", "--output-dir", str(out)]) == 0
@@ -354,7 +385,8 @@ def test_the_committed_reading_reads_the_records_it_names(committed):
     run = data["run"]
     assert (run["session"], run["run_id"], run["status"], run["published_at"]) == \
         (newest["session"], newest["run_id"], newest["status"], sh.parse_instant(run["published_at"]).isoformat())
-    assert run["calendar"]["measured"]["completion_at"] == "2026-10-09T16:15:00-04:00" and newest["timing"]["completion_at"] == "2026-10-09T20:15:00+00:00"
+    assert sh.parse_instant(run["calendar"]["measured"]["completion_at"]).isoformat() == newest["timing"]["completion_at"]
+    assert newest["timing"]["completion_basis"] == "archived"
     assert newest["inputs"]["ready_stocks"] == run["coverage"]["acceptance"]["ready_stocks"]
     assert newest["reader"]["done"] == run["reads"]["done"]
     # every expected XNYS session between the first and the newest is a row, and the sum of rows' publications is the publications
@@ -372,7 +404,7 @@ def test_the_report_quotes_the_reading(committed):
         assert quoted in text, quoted
     assert committed["source"]["through"][:8] in text
     prose = " ".join(text.split())
-    for session in s["resessions"]:       # named as a date or in words ("11 September")
+    for session in s["republished_sessions"]:       # named as a date or in words ("11 September")
         day = date.fromisoformat(session)
         assert session in prose or f"{day.day} {day.strftime('%B')}" in prose, session
     numbers = {float(n) for n in re.findall(r"\b\d+\.\d\b", text)}
