@@ -295,12 +295,14 @@ def test_a_removed_companion_and_an_unplaceable_record_are_set_aside_by_name(rep
     removed = git(r, "rev-parse", "HEAD")
     broken = commit(r, "docs/data.json", {**record("2026-10-09", "2026-10-10T07:30:00+00:00"), "run": {"session": "2026-10-09"}},
                     "run 2026-10-09", "2026-10-10T07:32:00+00:00")
+    unbound = commit(r, "docs/morning.json", {"status": "observed", "rows": []}, "a receipt without its binding", "2026-10-10T08:00:00+00:00")
     result = sh.build(ref="main")
-    assert result["source"]["companion_commits"]["morning"] == [removed, repo["morning"]]
+    assert result["source"]["companion_commits"]["morning"] == [unbound, removed, repo["morning"]]
     assert [i["commit"] for i in result["companions"]["morning"]] == [repo["morning"]]
     assert result["source"]["publication_commits"] == [repo["third"], repo["second"], repo["first"]]     # the broken one is not read
     reasons = {row["commit"]: row["reason"] for row in result["skipped"]}
     assert reasons[removed] == f"{removed[:8]}: no docs/morning.json at this commit"
+    assert reasons[unbound] == f"{unbound[:8]}:docs/morning.json: not a bound receipt"
     assert reasons[broken].startswith(f"{broken[:8]}:docs/data.json: not an instant")
     assert reasons[repo["fixture"]].endswith("not a real schema-2 publication")
     assert result["summary"]["published_sessions"] == 2        # the set-asides change no count
