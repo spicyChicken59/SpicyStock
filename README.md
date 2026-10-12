@@ -845,6 +845,23 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   `docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.
+  `tools/recovery_rehearsal.py` rehearses what #111 asks the service to survive:
+  it drives `pipeline.run_evening()` through the suite's own doubles over one
+  synthetic market, one pinned night after another, injecting one failure a
+  night -- the bars endpoint refusing every batch, every frame served two
+  sessions stale, the reader's account out of credit, the reader's transport
+  dead, the mail provider refusing the digest -- and before and after each night
+  executes the evening workflow's own guard (the Python body of `evening.yml`'s
+  guard step, as written, under a frozen clock) at the primary slot, the retry
+  slot, the next session's open and for a delayed event. It records the exit
+  code, what was published and for which session, whether the previous
+  publication's files survived byte for byte, how many times each boundary was
+  asked against the fetch's and the grader's own retry bounds, what was mailed
+  and what the guard decided, and writes
+  `docs/input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.{json,md}`;
+  `--check` runs the whole rehearsal again and holds both files. It decides
+  nothing and calls no provider: every failure is injected, so it shows what the
+  code does under a failure it was told to have, not how a real provider fails.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1634,6 +1651,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and research numbers copied off their files with digests, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
+                recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
