@@ -77,6 +77,11 @@ def test_the_sign_a_population_establishes_follows_the_criteria():
     assert er.sign_of(enough, {"ci95": [-0.1, 0.9]}) == "unresolved"     # straddles zero
     assert er.sign_of(enough, {"ci95": [-0.1, 0.0]}) == "unresolved"     # touching zero is not below it
     assert er.MIN_SETTLED == record.SCORECARD_MIN_PLANS
+    # a pasted summary carries a count and a sum, no rows: readable at most, never a sign
+    pasted = er.pasted_row("backtest", "direct", "p", er.MIN_SETTLED, 12.5, "pasted")
+    assert (pasted["settled"], pasted["mean_r"], pasted["ci95"], pasted["sign"]) == (er.MIN_SETTLED, 0.625, None, "unresolved")
+    assert er.pasted_row("backtest", "direct", "p", er.MIN_SETTLED - 1, 12.5, "pasted")["sign"] == "unreadable"
+    assert er.pasted_row("journal", "direct", "p", 0, 0.0, "pasted")["mean_r"] is None
 
 
 def test_the_periods_are_split_by_hand():
@@ -220,10 +225,11 @@ def test_the_copied_blocks_are_the_files_own(committed):
     assert committed["research"]["cohort_counts"] == cohort["counts"]
 
 
-def test_the_ledger_verdicts_follow_from_their_sources(committed):
+def test_the_ledger_verdicts_follow_from_their_sources(committed, built):
     assert [c["id"] for c in committed["ledger"]] == ["yellow_admits_a", "trade_red_nights", "anticipation_stop_5pct",
                                                       "ticket_without_accepted_review", "account_or_risk_increase"]
-    for change in committed["ledger"]:
+    # the live build's ledger is held to the same rules, so a changed tool fails here and not only on the file comparison
+    for change in committed["ledger"] + built["ledger"]:
         agree = bool(change["period_signs"]) and all(s == "positive" for s in change["period_signs"])
         verdict, because = er.verdict_of(change["sources"], agree)
         assert (change["verdict"], change["because"]) == (verdict, because), change["id"]
