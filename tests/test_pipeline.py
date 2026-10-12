@@ -82,6 +82,12 @@ def test_a_clean_night_publishes_a_trade_with_its_ticket_and_records_the_pick(ma
     assert run["input_tolerance"]["verdict"] == "complete" and run["input_tolerance"]["names"] == []
     assert run["stale_followup"]["reason"] == "no_previous_record" and run["stale_followup"]["sentence"] is None
     assert run["published_at"] == data["generated"]
+    # where the publication fell against the service's schedule, as the run wrote it: 6:30 PM ET on
+    # Thursday 10 Sep, between the slots, before Friday's open; and the archived slots beside it
+    from src import delivery
+    assert run["delivery"] == delivery.block(date.fromisoformat(SESSION), run["published_at"])
+    assert (run["delivery"]["slot"], run["delivery"]["latency_minutes"], run["delivery"]["before_next_open"]) == ("after_primary", 135.0, True)
+    assert data["rules"]["pipeline"]["delivery_version"] == delivery.VERSION and data["rules"]["pipeline"]["delivery_primary_et"] == "18:16"
 
     assert data["trades"] == ["AAA"] and data["beyond_cap"] == []
     burst = data["bursts"][0]

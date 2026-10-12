@@ -866,17 +866,22 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     data = _copy(stale_night)
     data['run'].pop('reader_usage')
     _refuses(data, 'run.reader_usage is missing')
-    # a record made under the rules before them is not asked for any of the four
     data = _copy(stale_night)
-    for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage'):
+    data['run'].pop('delivery')
+    _refuses(data, 'run.delivery is missing')
+    # a record made under the rules before them is not asked for any of the five
+    from src import delivery
+    data = _copy(stale_night)
+    for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage', 'delivery'):
         data['run'].pop(key)
     for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction',
-                'reader_usage_version'):
+                'reader_usage_version', 'delivery_version', 'delivery_primary_et', 'delivery_retry_et', 'delivery_recovery_until'):
         data['rules']['pipeline'].pop(key)
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
     assert reader_coverage.reads_faults(data) == []
     assert reader_coverage.usage_faults(data) == []
+    assert delivery.faults(data['run'], data['rules']['pipeline']) == []
     # a record made under the tolerance's first version (a fraction but no session
     # bound, 7 Oct 2026's publication) is not asked for the second version's blocks
     data = _copy(stale_night)
@@ -885,6 +890,43 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
         data['run'][block]['version'] = 1
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
+
+
+def test_validate_holds_the_delivery_block_to_the_runs_own_session_and_instant(stale_night):
+    """The block the run wrote re-derives from the run's session, its publication
+    instant and the slots the record archived; a forged field, a dropped field
+    or a block from another night is refused by name, and a block archived
+    under another slot is held to THAT slot."""
+    from datetime import date, time
+    from src import delivery
+    run = stale_night['run']
+    assert run['delivery'] == delivery.block(date.fromisoformat(run['session']), run['published_at'])
+    assert run['delivery']['slot'] == 'after_primary' and run['delivery']['before_next_open'] is True   # 6:30 PM ET
+    assert stale_night['rules']['pipeline']['delivery_primary_et'] == '18:16'
+    for forge, message in (
+        (lambda b: b.update(latency_minutes=1.0), 'does not re-derive.*latency_minutes'),
+        (lambda b: b.update(slot='before_primary'), 'does not re-derive.*slot'),
+        (lambda b: b.update(sentence='Published whenever.'), 'does not re-derive.*sentence'),
+        (lambda b: b.update(published_at='2026-09-10T23:30:00+00:00'), 'does not re-derive.*published_at'),
+        (lambda b: b.pop('next_open_at'), 'malformed'),
+        (lambda b: b['policy'].update(retry_et='21:16'), 'does not re-derive.*policy'),
+        (lambda b: b['policy'].update(recovery_until='sometime'), 'recovery policy is not the archived one'),
+    ):
+        data = _copy(stale_night)
+        forge(data['run']['delivery'])
+        _refuses(data, message)
+    # the block is held to the archived slot, not to the one the code carries now
+    data = _copy(stale_night)
+    data['rules']['pipeline']['delivery_primary_et'] = '19:16'
+    _refuses(data, 'does not re-derive')
+    data['run']['delivery'] = delivery.block(date.fromisoformat(run['session']), run['published_at'], primary_et=time(19, 16))
+    assert delivery.faults(data['run'], data['rules']['pipeline']) == []
+    # the mail prints the sentence it wrote, under its own label, and nothing when the record has none
+    html = report.digest_html(stale_night)
+    assert '// delivery' in html and report.esc(run['delivery']['sentence']) in html   # the apostrophes are escaped, as every sentence's are
+    without = _copy(stale_night)
+    without['run'].pop('delivery')
+    assert '// delivery' not in report.digest_html(without)
 
 
 @pytest.fixture

@@ -96,7 +96,7 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
     try {
       // An unchanged market/reader control must pass even on the reviewed source.
       const fullPending=await nextText(p);
-      check(label+' full genuine record does not skip pending Monday',fullPending.includes('2026-09-28')&&!fullPending.includes('2026-09-29'),fullPending);
+      check(label+' full genuine record does not skip pending Monday',fullPending.includes('The 2026-09-28 session')&&!fullPending.includes('The 2026-09-29 session'),fullPending);
       const initial=await blockers(p);
       check(label+' independent RED and rejected review retained',initial.includes('Market permission: RED')&&initial.includes('outside the permitted criterion'));
       check(label+' known early-gate skip is recorded',initial.includes('Planning skipped')&&initial.includes('market gate')&&!initial.includes('Planning failed'),initial);
@@ -107,8 +107,9 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
         ['completion-boundary','2026-09-28T20:15:00Z',['2026-09-28','awaiting its evening evaluation']],
         ['after-buffer','2026-09-28T20:15:01Z',['2026-09-28','awaiting its evening evaluation']],
         ['pre-primary','2026-09-28T21:00:00Z',['2026-09-28','awaiting its evening evaluation']],
-        ['delayed','2026-09-29T01:00:00Z',['2026-09-28','delayed, missing or failed']],
-        ['missing-next-morning','2026-09-29T13:15:00Z',['2026-09-28','delayed, missing or failed']],
+        ['delayed','2026-09-29T01:00:00Z',['2026-09-28','awaiting its evening evaluation','until 2026-09-29 opens (9:30 AM ET)']],
+        ['missing-next-morning','2026-09-29T13:15:00Z',['2026-09-28','awaiting its evening evaluation','until 2026-09-29 opens (9:30 AM ET)']],
+        ['missing-after-next-open','2026-09-29T13:30:00Z',['2026-09-28','delayed, missing or failed']],
         ['multiple-missing','2026-09-29T21:00:00Z',['2026-09-29','delayed, missing or failed']],
         ['weekend','2026-09-27T16:00:00Z',['next market session','2026-09-28']],
         ['outside-calendar','2026-12-25T21:00:00Z',['calendar','cannot establish']],
@@ -117,8 +118,10 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
         await render(p,retained,now);
         const t=await nextText(p);
         check(label+' '+name+' evaluation explanation',need.every(s=>t.includes(s)),t);
+        if(['completion-boundary','after-buffer','pre-primary','delayed','missing-next-morning','missing-after-next-open'].includes(name))
+          check(label+' '+name+' does not jump to Tuesday as the session awaited',!t.includes('The 2026-09-29 session')&&!t.includes('scheduled evening slots'),t);
         if(['completion-boundary','after-buffer','pre-primary','delayed','missing-next-morning'].includes(name))
-          check(label+' '+name+' does not jump to Tuesday',!t.includes('2026-09-29'),t);
+          check(label+' '+name+' names the window the calendar gives a record from before the block',t.includes('until 2026-09-29 opens (9:30 AM ET), after which it will not be published'),t);
         await noOrders(p,label+' '+name);
         if(['pre-primary','delayed'].includes(name)) {
           await p.locator('#decision-gates details').evaluate(e=>e.open=true);
@@ -205,7 +208,7 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
         ['2026-09-28T20:00:01Z','focus','market-data buffer'],
         ['2026-09-28T20:15:00Z','visibilitychange','awaiting its evening evaluation'],
         ['2026-09-28T21:00:00Z','pageshow','awaiting its evening evaluation'],
-        ['2026-09-29T01:00:00Z','tick','delayed, missing or failed']
+        ['2026-09-29T01:00:00Z','tick','until 2026-09-29 opens (9:30 AM ET)']
       ]) {
         await q.clock.setSystemTime(new Date(now));
         if(event==='tick') await q.clock.runFor(30000);
@@ -217,7 +220,7 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
       // A same-bytes refresh must not reset the page either.
       await q.evaluate(()=>SCStock.checkUpdates());
       await q.waitForFunction(()=>document.querySelector('#refresh-said').dataset.outcome==='unchanged');
-      check(label+' unchanged refresh keeps evaluation',(await nextText(q)).includes('delayed, missing or failed'));
+      check(label+' unchanged refresh keeps evaluation',(await nextText(q)).includes('until 2026-09-29 opens (9:30 AM ET)'));
       check(label+' unchanged refresh keeps chart and focus',await q.evaluate(()=>__held.chart===document.querySelector('#chart')&&__held.focus===document.activeElement));
       // Arrival uses two real retained records, not an invented future run.
       served=prior;

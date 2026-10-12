@@ -244,11 +244,19 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    the page keeps them apart, because freshness is not permission.
    **Publication** is the one thing the page computes: from the record's
    session and the browser's clock in ET it says *fresh*, *tonight's run
-   pending*, *STALE · 1 session behind* or *STALE · N sessions behind*
-   (the versioned XNYS schedule expected sessions), *market closed* or *degraded*, with one fixed sentence per
-   problem kind. A stale page says *Do not place these orders*, points at
-   the run log, and withholds every ticket from the action area, the plan
-   and the order sheet, keeping the setups.
+   pending*, *run pending · past both slots*, *STALE · 1 session behind* or
+   *STALE · N sessions behind* (the versioned XNYS schedule expected
+   sessions), *market closed* or *degraded*, with one fixed sentence per
+   problem kind. Pending against stale is the service's own recovery
+   window, read off the record: the evening guard admits a delayed or retried
+   run for a missed session until the next session opens, so until that open
+   the page says pending -- naming which of the two scheduled slots the clock
+   has passed, in the words the record archived (`run.delivery`,
+   `src/delivery.py`) -- and after it the page says stale and that the
+   session will not be published. No fixed hour on the page decides it. A
+   pending page past both slots and a stale page both say *Do not place these
+   orders*, point at the run log, and withhold every ticket from the action
+   area, the plan and the order sheet, keeping the setups.
    **Action timing** is the run's own (`run.timing`, `src/timing.py`): the
    session the published plans are FOR and the instants its entry window is
    scheduled between, offset and all, so the page compares rather than
@@ -661,7 +669,15 @@ the offset at that occurrence, skips holidays and refuses a delayed run once
 the next session opens. Both scheduled slots skip an already published real
 ok/degraded record for that session; a failed or rehearsal record cannot
 suppress recovery, and a newer publication cannot be replaced by a late job.
-Manual dispatch keeps its explicit session and rehearsal controls. The run:
+Manual dispatch keeps its explicit session and rehearsal controls. Every
+publication archives where it fell against that schedule (`run.delivery`,
+`src/delivery.py`): its latency after the measured session's completion, the
+two slots as instants in the exchange's zone, which of them it followed,
+whether it landed before the next session's open, and the policy words -- the
+slot times and that a missed session may be recovered until the next session
+opens -- that the page and the service-health reading print rather than
+re-derive; `report.validate()` holds the block to the slots the record
+archived, and a record from before the block is asked for none. The run:
 
 - **universe** — Nasdaq's security-name and industry classifier approximates
   common stock; it is not exact TC2000 membership. Blank-check exclusions use
@@ -1343,6 +1359,7 @@ node tools/page_smoke.mjs --only status       # both ticket families and workflo
 node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and exact recorded-chart navigation
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 node tools/page_smoke.mjs --only funnel       # the scan disclosure's candidate funnel, printed from the record's own block
+node tools/page_smoke.mjs --only service      # pending against stale off the record's calendar and archived slots, every phase at every width
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
@@ -1629,6 +1646,7 @@ src/            history.py (public recovery and coverage)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
+                delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
                 grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)

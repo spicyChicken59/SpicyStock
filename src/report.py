@@ -28,7 +28,7 @@ from typing import Any
 
 import resend
 
-from src import timing, inputs, sessions
+from src import timing, inputs, sessions, delivery
 
 log = logging.getLogger(__name__)
 
@@ -675,6 +675,7 @@ def validate(data: dict) -> None:
                     if run.get("session_state") == "open" and isinstance(plans, list) else None)
     faults.extend(inputs.tolerance_faults(run, rules_pipeline, plan_tickers))
     faults.extend(followup.faults(run, rules_pipeline))
+    faults.extend(delivery.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
     faults.extend(reader_coverage.usage_faults(data))
     from src import funnel
@@ -1041,6 +1042,16 @@ def _inputs_block(run: dict) -> str:
     return f'<div><p style="{_S_MUTED}">// inputs and reads</p>{body}</div>'
 
 
+def _delivery_block(run: dict) -> str:
+    """Where this publication fell against the service's own schedule, in the
+    record's own sentence (src/delivery.py): the same words the page prints
+    under the published run, and no verdict on them."""
+    sentence = _text(_get(run, "delivery", "sentence"))
+    if not sentence:
+        return ""
+    return f'<div><p style="{_S_MUTED}">// delivery</p><p style="{_S_MUTED}">{esc(sentence)}</p></div>'
+
+
 def _funnel_block(data: dict) -> str:
     """Where the night's candidates stopped, in the record's own sentence: the
     same words the page prints, composed from counts and labels alone."""
@@ -1140,6 +1151,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))
     out.append(_inputs_block(run))
+    out.append(_delivery_block(run))
     out.append(_funnel_block(data))
     out.append(f'<p style="margin:16px 0 0">Full plan, charts and the order sheet: '
                f'<a href="{esc(PAGE_URL)}" style="{_S_LINK}">{esc(PAGE_URL)}</a></p>')

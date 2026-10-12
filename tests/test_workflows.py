@@ -69,6 +69,27 @@ def test_the_evening_crons_are_the_two_pairs_and_the_guard_names_them():
     wf = load("evening.yml")
     crons = [c["cron"] for c in triggers(wf)["schedule"]]
     assert crons == ["16 22 * * 1-5", "16 23 * * 1-5", "16 0 * * 2-6", "16 1 * * 2-6"]
+
+
+def test_the_evening_crons_are_the_records_archived_slots_read_in_the_exchange_zone():
+    """One schedule, two spellings: the workflow carries a cron PAIR per slot (one
+    per UTC offset) and the record archives the slot as wall clock in the
+    exchange's zone (src/delivery.py). Each cron is held to the slot it spells
+    on a date its offset applies: 22:16 UTC is 6:16 PM EDT, 23:16 UTC is 6:16 PM
+    EST, and the retry pair is the same an hour and a day boundary later."""
+    from datetime import date, timezone
+    from src import delivery
+    crons = [c["cron"] for c in triggers(load("evening.yml"))["schedule"]]
+    edt, est = date(2026, 10, 9), date(2026, 11, 2)
+    expected = []
+    for day in (edt, est):
+        primary, retry = delivery.slots(day)
+        expected.append(f"{primary.astimezone(timezone.utc).minute} {primary.astimezone(timezone.utc).hour} * * 1-5")
+    for day in (edt, est):
+        primary, retry = delivery.slots(day)
+        expected.append(f"{retry.astimezone(timezone.utc).minute} {retry.astimezone(timezone.utc).hour} * * 2-6")
+    assert crons == expected, (crons, expected)
+    assert (delivery.RULES["pipeline.delivery_primary_et"], delivery.RULES["pipeline.delivery_retry_et"]) == ("18:16", "20:16")
     guard = scheduled_guard()['run']
     for cron in crons:
         assert cron in guard, cron

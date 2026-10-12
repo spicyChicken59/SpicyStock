@@ -45,6 +45,7 @@ import { checkPrivateBackup } from './private_backup_cases.mjs';
 import { checkJournalReports } from './journal_report_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkFunnel } from './funnel_cases.mjs';
+import { checkServiceState } from './service_state_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -63,7 +64,8 @@ const SEQUELS = ['next', 'revised'];
 // The instant every fixture was generated for: Thursday 10 Sep 2026, 6:31 PM ET.
 const FRESH_NOW = '2026-09-10T22:31:00Z';
 const PENDING_NOW = '2026-09-11T20:30:00Z';   // Friday 4:30 PM ET, before the run
-const STALE1_NOW = '2026-09-12T14:00:00Z';    // Saturday: Friday's run never came
+const WEEKEND_NOW = '2026-09-12T14:00:00Z';   // Saturday: Friday's run never came, and Monday's open -- the guard's recovery window -- is ahead
+const STALE1_NOW = '2026-09-14T14:00:00Z';    // Monday 10 AM ET: Friday's run never came and its recovery window ended at the open
 const STALE2_NOW = '2026-09-16T14:00:00Z';    // Wednesday: four sessions behind
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
@@ -1170,7 +1172,9 @@ async function checkStates(browser, base, data) {
   const trade = data.trades[0];
   for (const [name, now, chipRe, state] of [
     ['pending', PENDING_NOW, /pending/, 'pending'],
-    ['pending-after-retry', '2026-09-12T00:30:00Z', /pending/, 'pending'],   // Friday 8:30 PM ET: the retry has just fired
+    ['pending-after-retry', '2026-09-12T00:30:00Z', /pending · past both slots/, 'pending'],   // Friday 8:30 PM ET: the retry has just fired
+    ['pending-weekend', WEEKEND_NOW, /pending · past both slots/, 'pending'],
+    ['pending-late-night', '2026-09-12T02:00:00Z', /pending · past both slots/, 'pending'],   // Friday 10 PM ET: the hour the page used to call stale, inside the guard's recovery window
     ['stale1', STALE1_NOW, /STALE · 1 session behind/, 'stale1'],
     ['stale2', STALE2_NOW, /STALE · \d+ sessions behind/, 'stale2']]) {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', now, 1280, { hash: `#/explore/bursts/${trade}` });
@@ -1179,7 +1183,7 @@ async function checkStates(browser, base, data) {
     eq(`${name} state`, await page.getAttribute('html', 'data-ss-rendered'), state);
     check(`${name} next says do not place`, (await text(page, '#next-h3')).startsWith('Do not place these orders'), 'next');
     eq(`${name} cover action falls back to the model plans`, await text(page, '#cover-action'), 'Open model plans');
-    if (state !== 'pending') check(`${name} status line links the run log`, (await page.locator('#status-line a[href*="actions/workflows/evening.yml"]').count()) === 1, 'link');
+    if (state !== 'pending' || name !== 'pending') check(`${name} status line links the run log`, (await page.locator('#status-line a[href*="actions/workflows/evening.yml"]').count()) === 1, 'link');
     // the trade's ticket is withheld from the reader's hand, with the setup kept
     eq(`${name} the trade's action area withholds the order`, await page.locator('#detail .ss-action').getAttribute('data-ticket'), 'blocked');
     eq(`${name} no order block`, await count(page, '#detail pre[data-order]'), 0);
@@ -1187,7 +1191,7 @@ async function checkStates(browser, base, data) {
     // the reason is the one shared answer's, which names the state it is in
     // (docs/app.js stateWords()); asserted by that word rather than by a fixed
     // sentence, so the check is about the rule and not about its wording
-    const stateWord = { pending: 'waiting for tonight\u2019s run', failed: 'without a verdict' }[state] || 'stale';
+    const stateWord = { pending: 'waiting for the evening run', failed: 'without a verdict' }[state] || 'stale';
     check(`${name} the plan says why, in the state's own word`,
       (await text(page, '#disc-plan')).includes(stateWord), (await text(page, '#disc-plan')).slice(0, 140));
     eq(`${name} and offers no copy control`, await count(page, '#disc-plan [data-copy]'), 0);
@@ -3979,6 +3983,7 @@ async function main() {
       if (runs('wait-explanations')) await checkWaitExplanations({ browser, base, open, check, eq, shotsDir });
       if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('funnel')) await checkFunnel({ browser, base, open, check, eq, shotsDir });
+      if (runs('service')) await checkServiceState({ browser, base, open, check, eq, shotsDir });
     };
     // both lanes finish before the browser closes; the first to throw is the error
     const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);

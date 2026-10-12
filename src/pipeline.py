@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk, review_selection, funnel
+from src import watchlist, allocation, event_risk, review_selection, funnel, delivery
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -89,6 +89,7 @@ RULES = {
     "pipeline.reader_policy": reader_coverage.POLICY,
     "pipeline.reader_refusal_fraction": READER_REFUSAL_FRACTION,
     "pipeline.reader_usage_version": reader_coverage.USAGE_VERSION,
+    **delivery.RULES,   # the evening workflow's slots and recovery window, as the record archives them
     "pipeline.series_bars": SERIES_BARS,
     "pipeline.series_top": SERIES_TOP,
     "pipeline.observation_days": OBSERVATION_DAYS,
@@ -890,6 +891,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "rules_version": RULES_VERSION_NOTE, "type": "evening",
             "timing": plan_timing(session, expected, closed),
             "calendar": sessions.publication(session),
+            # where this publication fell against the service's own schedule (src/delivery.py)
+            "delivery": delivery.block(session, generated),
         }
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
         rules_block = build_rules(uni)

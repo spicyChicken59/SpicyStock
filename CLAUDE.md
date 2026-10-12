@@ -174,7 +174,11 @@ modules, its example ticket and five-session replay re-derived by
 
 **A record carries two facts about time and the page keeps them apart**,
 because freshness is not permission. `status()` is publication: is this the
-newest record and did the run finish. `run.timing` (`src/timing.py`, written
+newest record and did the run finish -- and when the newest expected session
+has no record yet, pending against stale is the service's own recovery window
+read off the record (the next session's open on `run.calendar`; the slot the
+ET clock has passed in the words `run.delivery` archived, `src/delivery.py`),
+never a fixed hour on the page. `run.timing` (`src/timing.py`, written
 by `pipeline.plan_timing()`) is ACTION TIMING: the session the published
 plans are FOR -- `plan.next_sessions(session, 1)[0]`, the same call
 `dated_schedule()` makes for its day 1, so the two cannot disagree -- and
@@ -334,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4067 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4103 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7185,3 +7189,142 @@ the guard on these numbers; a rehearsal that calls a provider.
 October), the first archived `run.reader_usage` block (the next evening's
 publication), the ten consecutive sessions with morning checks, and any
 trading edge.
+
+## Checkpoint, 12 Oct 2026 — PR #160 accepted on the public site; the service state read off the record, and the recovery window the page names (#111)
+
+**PR #160, accepted.** Merged as `c174818e` on `main` with a merge commit over
+`670a7fd8`. The fixed code head `94484095` passed all seven checks on Tests run
+38199735910 (pytest 03:26–03:37 UTC; page 03:26–03:42; the historical-runtime
+gate; the central case 03:27–03:58 and stress 03:27–04:16; both gitleaks runs);
+the final head `911a58d7` (CLAUDE.md alone over it) passed pytest, page, the
+gate's docs-only decision and both gitleaks runs on run 38200988502. Publisher
+38203153703 printed *Verified: every one of the 41 public files matches
+committed main* at 04:17:24 UTC; Pages 38203168312 deployed (38203153082
+cancelled as superseded, as every merge does); the merge commit's own Secret
+scan 38203153715 passed and its Tests run 38203153660 (04:17–04:34) are green.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `c174818e`, pushed as **PR #161**. #111's third deliverable
+("show a readable service state and recovery guidance on the site") and the
+"visible outage/staleness behavior" its acceptance line names. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; no run, mail, dispatch, provider call or credential.
+
+**What the page did before, read rather than argued.** `status()` decided
+pending against stale with `PENDING_UNTIL_HOUR = 21`, a 9 PM ET constant whose
+comment named the retry cron, while the service-health reading had just
+established that 14 of 21 first publications landed after the retry slot and
+the latest 362 minutes after completion (10:17 PM ET): on most nights between
+9 PM and the publication the page read *STALE · 1 session behind ... check the
+run log* over a run that was merely late, and on a Saturday morning after a
+missed Friday it said the same with no word of what the service would still do.
+The evening guard's own rule, rehearsed in PR #160, is that a delayed or
+retried run may publish a missed session until the next session opens and
+never after; the page knew nothing of it.
+
+**What was built.** `src/delivery.py` writes `run.delivery` (version 1): the
+measured session's completion, the publication instant copied verbatim, the
+latency in minutes (rounded once to a tenth), the evening workflow's two slots
+as instants in the exchange's zone (`EVENING_PRIMARY_ET` 18:16,
+`EVENING_RETRY_ET` 20:16, the one rule `tools/service_health.py` now imports
+and `tests/test_workflows.py` holds the four crons to on both sides of the
+November change), which of them the publication followed (`before_primary`,
+`after_primary`, `after_retry`, the slot itself inclusive), the next session
+and its open and whether the publication came before it, the policy words
+(`primary_et`, `retry_et`, `timezone`, `recovery_until: next_session_open`)
+and one sentence of facts with no verdict in it. `pipeline.RULES` archives the
+version, both slot times and the recovery policy (`pipeline.delivery_*`), so
+`rules_version` moves and `report.validate()` holds a block to the slots ITS
+record archived (`delivery.faults()`: present under rules that write it,
+every field re-derived from the run's own session and instant, a differing
+field named, an unknown archived version named rather than guessed, absent
+without a fault for every record from before). The mail prints the sentence
+under *// delivery*; the service-health reading holds an archived block to its
+own re-derivation and records `delivery_basis`, its committed reading
+regenerated pinned to the same commit with that field alone added.
+
+**The page.** `deliveryOf()` reads the block whole or not at all (every field
+the drawing indexes into, the policy's HH:MM words, its timezone against the
+clock the page compares in, a recovery policy the page has a sentence for).
+`status()` no longer carries an hour: one session behind, the expected
+session's NEXT open on the record's own calendar is the boundary -- before it
+the session is pending however late the clock is, naming which slot the ET
+clock has passed in the record's words (*tonight's run pending* with the first
+slot ahead or the retry slot ahead; *run pending · past both slots* with the
+window's end named and the run log linked), and after it the session is stale
+and *will not be published now*. A record from before the block names no slot
+and still reads the window off its calendar. `evaluationExplanation()` names
+the window for every pending record and the passed slots when the record
+archived them; `reclock()` repaints when the sentence changes, not only the
+chip. The Method view prints the delivery sentence and the archived schedule
+with the page's one sentence per recovery policy (`RECOVERY_WORDS`, held equal
+to `delivery.RECOVERY_POLICIES` by `tests/test_docs.py`, which also holds the
+page to no fixed pending hour); the run strip's published stat carries the
+latency the record wrote.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 4103 tests collected; the full suite on the final head 4069 passed and 34 environment-gated skips in 19 m 46 s (run in the mutation worktree at the same commit, beside the smoke);
+13 page fixtures regenerated and current, and every cascaded generator
+regenerated and current (issuer-evidence 30, stop-research 22,
+research-outcomes 40, research-observations 12, cash-preview 6; morning
+pinned, 21 current); `tools/recovery_rehearsal.py --check` current after its
+evidence was regenerated (each night's publication identity carries the rules
+digest, which moved); `tools/service_health.py --check` current with the
+history walked again; continuity 137; the chart check 378/378; the new
+`service` suite 278/278 at 1280 dark, 390 light and 320 dark over the `full`
+night, a routed copy from before the block, a half-written one, one archived
+under 7:16 / 9:16 PM slots, and sixteen shapes the block check refuses one at a
+time; the `states` suite 209/209 with its stale clock moved to Monday after the
+open and three pending clocks at the hours the page used to call stale; the
+`wait-explanations` suite 775/775 with its Monday-night and Tuesday-morning
+cases inside the window; the full smoke with `--shots` 14873/14873 in 20 m 10 s. Screenshots
+at 1280, 390 and 320, both themes, were looked at: the Method block's delivery
+and schedule lines, the Saturday pending notice with its run-log link, the
+Monday stale notice naming the window's end. gitleaks 8.24.3 over the branch's
+commits with the repository's config: no leaks.
+
+**Mutation passes.** Python, each mutant in the mutation worktree at the
+milestone commit and judged by the whole test files naming the rule (no `-k`;
+the pipeline mutants by the clean-night tests, the validator's and the mail's
+by `tests/test_report.py` in full): sixteen -- the slot boundary made
+exclusive, the next open made inclusive, the slots built in UTC, the
+re-derivation skipped, the archived slot ignored for the code's own, the
+version unchecked, the recovery policy unchecked, the slot words swapped, the
+latency rounded to whole minutes, the archived slot misspelt, the sentence
+dropped from the block's fields, the block dropped from the run, the validator
+not asking, the mail block dropped, the service reading on its own hour, and
+the archived block unheld there. All sixteen die, each in the test naming its
+rule; the two controls (a docstring, a comment) survive. Browser, through
+routed copies of `app.js`, the tree never written: sixteen over two passes.
+Eleven died at once -- at the open still pending, the retry slot never passed,
+the policy's timezone unchecked, a legacy record naming a slot, the stale
+sentence without the window, the pending word back to "tonight", the Method
+line for a legacy record, the strip's latency dropped, the explanation without
+the window and the explanation naming a slot for a legacy record -- and one,
+the half-written policy accepted, died by a throw that ended the suite (the
+status probe reports a throw as a named failure now, and it dies on ten
+checks). **Four SURVIVED the first pass, two holes of the second shape this
+file names:** `fixed_hour_back` and `states_boundary_hour` (the old 9 PM rule
+reinstated) lived because no pending clock in either suite sat at or after
+9 PM ET -- the very hours the old page called stale -- so Friday 9:00 PM,
+Friday 11:30 PM and Sunday 10:00 PM ET are pending cases now, and the states
+suite has Friday 10 PM; `slot_in_sentence_hardcoded` and
+`method_schedule_hardcoded` (the page spelling 6:16 and 8:16 itself) lived
+because every record carried those slots, so a routed record archived under
+7:16 / 9:16 PM holds every slot word on the page to the record. All four die
+(42, 3, 1 and 1 checks); the control (a comment) survives both passes.
+
+**Keep / fix / defer / omit.** Keep: the block says where a publication fell
+and the page says what the service will still do; neither decides. Fix if it
+bites: the slot phase on the page is an ET wall-clock comparison through
+`etParts()`, so a record archived under another timezone names no slot (the
+block is refused whole, by design); a session whose next open is outside the
+±45-day browser schedule reads stale without the window's end named. Defer:
+#111's ten-session acceptance, which needs morning checks not yet observed.
+Omit: any change to the crons or the guard; a countdown.
+
+**Not claimable:** Monday's morning observation (13:20 or 13:28 UTC on 12
+October), the first archived `run.reader_usage`, `run.funnel` and `run.delivery`
+blocks (the next evening's publication), the ten consecutive sessions with
+morning checks, and any trading edge.
