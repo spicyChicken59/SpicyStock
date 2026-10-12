@@ -6816,3 +6816,105 @@ account change on these numbers; a budget that stops reads.
 
 **Not claimable:** a live night under the rule (the first evening after the
 merge writes the first archived bill); any trading edge.
+
+## Checkpoint, 12 Oct 2026 — PR #156 accepted on the public site; the evidence review that closes #109
+
+**PR #156, accepted.** Merged as `ed23218f` on `main` with a merge commit over
+`2c077c99`; the code push `b25e28b1` passed all seven checks on Tests run
+38181859353 (pytest 22:48–23:07 UTC; page 22:48–23:04; the historical-runtime
+central case 22:49–23:15 and stress 22:49–23:37; the gate; both gitleaks runs),
+and the final head `68871eea` (docs only over it) passed pytest, page, the gate
+(decision `observed_docs_only_push_no_runtime_change`) and both gitleaks runs on
+run 38181878051. Publisher 38185195704 waited for `app.js` and printed *Verified:
+every one of the 41 public files matches committed main* at 23:42:08 UTC; Pages
+38185210035 deployed (38185195406 cancelled as superseded, as every merge
+does); the merge commit's own Secret scan 38185195805 and Tests 38185195670 ran
+on `main`. The first evening after the merge writes the first archived
+`run.reader_usage` block; it is still not claimable.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `ed23218f`, pushed as **PR #157**. #109's acceptance line has
+one deliverable left after the funnel (#155) and the cost block and feasibility
+reading (#156): "an explicit evidence review before promoting strategy
+changes" -- and one named case, the retained HAE failure, to test and keep
+rejected. `docs/data.json`, `docs/picks.json`, the compact reader, every
+receipt, the history, the evidence objects, the quality ledger, the workflows
+and the vendored design system are untouched; nothing under `src/` changed; no
+run, mail, dispatch, provider call or credential. The PR closes #109.
+
+**The review.** `tools/evidence_review.py` reads committed evidence and
+nothing else, and `--check` holds the two files it writes
+(`docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`;
+the dated report is `2026-10-12-evidence-review.md` beside them). It re-derives
+the frozen signal-outcome study's strata from the study's own rows and refuses a
+file whose summary is not its rows' (`crosscheck()`); splits the admitted
+stratum by phase, calendar month, halves of its exploratory nights and
+mechanical grade, each with the study's own night bootstrap at the spec's reps
+and seed (`periods()`); walks each stratum's cumulative-R path in the study's
+own order and reports its deepest fall (`drawdown()`: the admitted stratum ends
+at -55.56R with a 62.31R fall from 11 September to 2 October, the night-means
+path 5.05R; a stream no slot cap held, so a path of R paid, not an equity
+curve); copies the backtest as the findings file parsed it, the funnel's and
+the feasibility reading's totals and the registered cohort and its journal, each
+with its file's digest; and reads a fixed ledger of five floated changes under
+criteria it states and archives (`CRITERIA`): a rate at
+`record.SCORECARD_MIN_PLANS` settled or more, a **sign** only from a 95%
+night-bootstrap interval clear of zero (a pasted summary carries counts and sums
+and cannot establish one), `supported` only when every direct source is positive
+and every evaluation period agrees, an *adjacent* population (another regime,
+mixed regimes, the reader not run) shown and never counted. Verdicts today:
+trading RED nights **not_supported** (the study's RED nights establish a
+negative sign at 267 and at 1,741 settled; the backtest's 25-ticket RED
+counterfactual has no interval); admitting A under YELLOW, the 5% anticipation
+stop, a ticket without an accepted review, and a larger risk or account all
+**insufficient**, each for the reason the file prints. The first eight
+exploratory nights straddle zero ([-0.400, +0.041]) and the last seven are
+negative; the reader-accepted population is the study's own definition (an
+accepted reply AND a final grade in the band), 0 settled -- the first render
+counted every answered reply, 22 settled at -0.227, most of them downgrades
+out of the band, a mislabelling the committed file no longer carries. Nothing
+is promoted and no change earns `supported`.
+
+**The retained HAE reply.** `tests/fixtures/grading/reader-hae/` freezes HAE's
+8 October row from both publications (`1e1ffe9c` at $10,000, B/6.5;
+`e67f8cba` at $2,000, C/5.5) with the publications' digests, the replies'
+SHA-256, byte counts and message ids, the archived account and regime, and the
+error the grader recorded. Both replies cite `burst.gap_pct`,
+`burst.bar_range_pct` and their kin: measurements the model read, none a path
+under `checks.<letter>` of the reader-evidence contract. `tests/test_reader_hae_
+retained.py` parses the retained text through the grader's own parser, shows the
+discovery tripwire did not fire, holds `reader_authority.validate()` to
+"evidence outside criterion authority", replays the text into the recorded
+fallback through the scripted transport (one call, no retry, one bill, the chart
+not claimed) and keeps `pipeline.make_plans()` to no ticket under synthetic
+YELLOW and GREEN regimes with the gate reason `reader_coverage`. Its one labelled
+control copies the same two findings' citations from the row's own reader
+evidence (`checks.RE.values.bar_range_pct`, `checks.VOL.values.volume_vs_avg50`)
+and shows them admissible, and refused again without a chart for that reason:
+the refusal is the paths, never a corrected grade for HAE.
+
+**Measured** (this sandbox, Python 3.11.15, on the final tree): 4026 collected, 3992 passed and 34 environment-gated skips in 17 m 53 s at `b96ed95f` (the test-only commit `5ece64a7` landed after that run began; its file passes 13/13 alone and the collection count is unchanged);
+the two new files 25 passed; `tests/test_docs.py` 37/37 with the suite count at
+4026; `python tools/evidence_review.py --check` current; no record or rule
+moved, so the 13 page fixtures and every cascaded generator are untouched;
+gitleaks 8.24.3 over the branch's commits with the repository's config: no
+leaks. No browser change: the chart check and the page smoke are CI's, recorded
+on the PR. One defect of mine, found by the first `--check` inside pytest: the
+output directory was a relative path, so a test running from `tmp_path` compared
+against files that did not exist; it is absolute now, as the findings builder's.
+
+**Mutation pass.** Twenty mutants in the mutation worktree at the milestone commit, each judged by the whole test files naming the rule (no `-k`): over the authority contract, the grader and the planner as the HAE regression holds them -- the path rule admitting two-segment citations (4 failures), an authority refusal retried (12), the planner ignoring the reader (24), visual findings needing no chart (3) -- and over the review -- the sign touching zero, the drawdown path starting nowhere, the halves floored, adjacent sources counted, the cross-check never refusing, the floor at ten, the reader-accepted population widened to every answered reply, the cohort binding unchecked, months read as years, a pasted sum establishing a sign, disagreeing periods still supported, the study digest unbound, the night-means path dropped, the rendered sentence changed. All dead. Two controls survive: the HAE fixture README's wording and the tool's module docstring. A first "control" changed a sentence the renderer prints and died on the file comparison: not a control, counted above as a mutant. And the pasted-sum mutant first died only on the committed-file comparison -- the byte-equality kill the findings pass warned about -- so the rule has its own test now (`pasted_row` drives the sign, and the live build's ledger is held to the same rules as the committed one) and the mutant dies in it with the file comparison deselected.
+
+**Keep / fix / defer / omit.** Keep: the review reads and never decides; its
+criteria are archived in its output so a reader can disagree with them in
+writing; the HAE control is synthetic and labelled. Fix if it bites: the ledger
+is a fixed list in the tool, so a new floated change is a code change; the
+halves split nights by count, not by calendar. Defer: re-run the review as
+publications and the journal mature (the first journal row can resolve five
+sessions after 12 October; a changed verdict is a changed file, which `--check`
+shows); a GREEN night, which nothing here speaks to. Omit: any rule, threshold
+or account change on these numbers; a budget or a dollar price in the review.
+
+**Not claimable:** a live night; any trading edge. The first live research
+observation can still exist Monday 12 October at 13:20 or 13:28 UTC, and the
+evening after the #156 merge writes the first archived cost block.
