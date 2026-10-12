@@ -437,8 +437,15 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 900);
   eq('Play stops at the last night and says Play again', [await stepOf(p), await playWord(p), await p.evaluate(() => window.SCStock.findingsHandle.playing())], [N, 'Play', false]);
   await p.locator('#historical-evidence [data-find-night]').last().click(); await settle(p);
-  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
-  eq('Play from the last night starts over', await stepOf(p), 1);
+  // Read the restart inside the click's own task: a loaded runner can otherwise
+  // reach the read after the first 250 ms tick has already stepped to night 2.
+  const restarted = await p.locator('#historical-evidence [data-find="play"]').evaluate((play, sel) => {
+    play.click();
+    return Number(document.querySelector(sel).getAttribute('data-step'));
+  }, ROOTSEL);
+  eq('Play from the last night starts over', restarted, 1);
+  await p.waitForFunction((sel) => Number(document.querySelector(sel).getAttribute('data-step')) >= 2, ROOTSEL);
+  check('restarted playback advances', (await stepOf(p)) >= 2);
   // scrolling the replay off the screen stops it: the stepping is for a reader who is watching
   await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
   await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);

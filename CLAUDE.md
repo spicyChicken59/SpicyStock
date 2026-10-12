@@ -334,7 +334,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4026 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4049 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -6918,3 +6918,148 @@ or account change on these numbers; a budget or a dollar price in the review.
 **Not claimable:** a live night; any trading edge. The first live research
 observation can still exist Monday 12 October at 13:20 or 13:28 UTC, and the
 evening after the #156 merge writes the first archived cost block.
+
+## Checkpoint, 12 Oct 2026 — PR #157 accepted on the public site; the service read off the retained publications (#111)
+
+**PR #157, accepted.** Merged as `c759a1e6` on `main` with a merge commit over
+`ed23218f`, closing #109. The code head `5ece64a7` passed all seven checks on
+Tests run 38187082296 (pytest, page, the historical-runtime central case
+00:12–01:00 UTC and stress 00:12–00:40, the gate, both gitleaks runs); the final
+head `6a402d68` (CLAUDE.md alone over it) passed pytest, page, the gate's
+docs-only decision and both gitleaks runs on run 38187958520. Publisher
+38190278545 printed *Verified: every one of the 41 public files matches
+committed main* at 01:01:56 UTC; Pages 38190292804 deployed (38190278294
+cancelled as superseded, as every merge does); the merge commit's own Secret
+scan 38190278557 and Tests 38190278502 (pytest 01:02–01:18, page 01:01–01:17)
+are green. **One red on `main` that was not #156's or #157's, read rather than
+assumed:** the Tests run on the #156 merge commit (38185195670) failed its page
+job 14516/14517 on `Play from the last night starts over -- got 2, want 1` in
+the findings suite, while the same head's pull-request run and the #157 runs
+over the same page passed it. The check clicked Play and read the step 120 ms
+later under a 250 ms test interval, so a loaded runner reached the read after
+the first tick, the shape the walkthrough suite's restart check already had
+fixed (PR #123/#125): it reads the step inside the click's own task now and
+then waits for the advance. Pytest was green on that commit, and both jobs are
+green on `c759a1e6`.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `c759a1e6`, pushed as **PR #158**. #111's first deliverable
+("track publication and morning-refresh success, latency, intended/measured
+sessions, provider coverage, ... reader acceptance and allocated ticket count";
+"keep service health separate from signal quality"). `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; nothing under `src/` changed; no run, mail, dispatch, provider call
+or credential.
+
+**What was built.** `tools/service_health.py` is a reading of the service and
+not of the signal: it walks the commits that put a publication on `main`
+(`git log -- docs/data.json` through one pinned commit, whose committer time is
+the reading's clock) and the commits that put a morning, issuer or research
+receipt beside it, reads each real schema-2 record (the first build's 38
+commits are set aside by name and counted), and writes per publication its
+session, status, problems, `published_at`, run id, mail state, elapsed and
+fetch seconds, the inputs' coverage and tolerance verdict, the reader's reads
+and cost block, and its timing: latency after the session's completion (the
+scheduled close plus `sessions.COMPLETION_BUFFER_MINUTES`; the archived
+`calendar.measured.completion_at` is held equal to the calendar's and a
+record without one is re-derived and says so), minutes after the evening cron's
+nominal primary slot and whether after the retry slot (6:16 and 8:16 PM ET,
+`datetime.combine` in the exchange's zone so the 1 November change is the tz
+database's answer and no UTC hour is written), whether before the next
+session's open, and how long the commit took after the record's own clock.
+`session_rows()` gives one row per expected XNYS session from the first
+retained publication's to the newest one's or to the newest session the clock
+has reached, whichever is later, so a night the run missed is a row and not a
+gap: due (completion at or before the clock), published, pending, overdue
+(unpublished with its next open passed), revisions, the FIRST publication's
+delivery facts as the service column, its regime and ticket counts as the
+signal column that makes no service verdict, and the companion receipts bound
+to the session its plans are for. `summary()` counts them, the streak of due
+sessions published before the next open (longest and current), the latency's
+min/median/max, the re-published sessions, the reads done of requested, the
+cost blocks, and whether the newest publication is for the newest due session
+(`fresh`). `--check` holds the two files under
+`docs/input-truthfulness/2026-10-12-service-health-evidence/`: it re-reads the
+commits the JSON names, fetching exactly those into a shallow checkout as the
+findings suite fetches its own, and where the checkout carries the history
+walks it again and requires the same commits read and set aside. The dated
+report is `2026-10-12-service-health.md`.
+
+**What the history establishes** (11 September to 9 October, pinned at
+`c759a1e6`, clock 01:01 UTC on 12 October): 21 expected sessions, 21 published,
+21 of 21 first publications before the next open, the streak 21 and 21; 26
+publications, four sessions published more than once (11 and 21 September, 8
+and 9 October, the last three times); latency after completion min 53.1,
+median 261.9, max 362.1 minutes, and **14 of 21 first publications after the
+retry slot** -- from 14 to 18 September the scheduled runs landed 6–9 minutes
+after the primary slot, from 22 September every one landed 133–241 minutes
+after it, a position of the publication and not an attribution to a cron
+(the record does not know which slot fired); the commit landed 2–5 minutes
+after each record's own clock. Statuses 19 degraded and 7 ok; inputs ready
+4,753–4,776 of 4,775–4,796 where the ledger exists; the reader answered 265 of
+302 requested reads; cost blocks archived 0 (the rule is #156's and the first
+publication under it is the next evening's). The signal, kept apart: 21 RED and
+5 YELLOW publications, 0 reaction tickets, 3 anticipation tickets, each
+superseded. Companions: two morning receipts, both `inapplicable`
+(`entry_window_ended` at 17:10 UTC on 9 October; `wrong_session` on the
+Saturday for 12 October, before its open), three issuer receipts for 12
+October, all `unavailable`, no research observation yet -- so **the acceptance
+line's morning checks stand at zero observed**; the first scheduled attempts
+are 13:20 and 13:28 UTC on Monday 12 October.
+
+**Measured** (this sandbox, Python 3.11.15, on the final tree): 4049 tests collected; the full suite on the code head `a21de55a` 4014 passed, 34 environment-gated skips and one failure, the suite-count line, which the docs-only commit after it moves to 4049 (`tests/test_docs.py` 37/37 with it), 17 m 40 s; an earlier full run was voided by my own hand -- the committed reading was regenerated with a renamed summary key while the suite ran, so two tests read a file their already-imported module did not write, the hazard this file's standing rule names -- and is not counted;
+`tests/test_service_health.py` 22 passed; `tests/test_docs.py` 37/37 with the
+suite count at 4048; `python tools/service_health.py --check` current with the
+history walked again; no record or rule moved, so the 13 page fixtures and
+every cascaded generator are untouched; gitleaks 8.24.3 over the branch's
+commits with the repository's config: no leaks. No page change beyond the
+findings check, so the chart check and the page smoke are CI's, recorded on
+the PR. The tests drive the arithmetic on hand-sized records -- the slots on
+9 October and 2 November, the frame across Thanksgiving and the 27 November
+early close, a publication's latency and slots at pinned instants and at the
+boundaries (at the retry slot, at the next open, at the completion instant, at
+the applicable open), a five-session week with a session published twice, one
+never, one after the next open and one not yet due, a clock on a later session
+and on a weekend -- a synthetic git history walked from its tip and from an
+earlier commit, written and held by `--check` with a drifted number, a
+rewritten markdown, a dropped commit and an emptied set-aside list each named,
+a shallow rebuild that fetches the named commits and does not walk, and the
+committed reading held to the commits it names and to the records read again
+off them.
+
+**Mutation pass.** Eighteen mutants over the tool in the mutation worktree at
+the milestone commit, each judged by the whole test file (no `-k`): the slots
+built in UTC instead of the exchange's zone, before-next-open inclusive,
+after-retry exclusive, due strict, overdue ignoring the publication, the
+service column reading the latest publication rather than the first, the streak
+counting a late publication, the session range stopping at the last
+publication, the rebuild ignoring the set-asides, `--check` ignoring the
+markdown, the latency reversed, fresh needing no due session, output tokens
+read from the uncached class, the walk's limit unchecked, a companion at its
+open read as before it, the archived completion not held, receipts joined on
+the measured session, revisions counted from zero. All eighteen die, each in
+the test naming its rule; the control (a docstring word) survives. A second
+pass over the set-aside commit, four mutants: a removed companion raising
+instead of being set aside, the reason without its commit and path and the
+shallow rebuild's set-aside guard dropped all die; **an unreadable receipt
+raising instead of being set aside SURVIVED**, the second shape this file
+names: the synthetic history had a removed receipt and no malformed one. It
+has one now (a receipt without its binding), the mutant dies in the test that
+names it at the pushed head, and the control (a comment) survives both passes.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and the records and
+decides nothing; the signal column never makes a service verdict. Fix if it
+bites: the walk is bounded by `--limit` (128; the history is 68 commits now,
+38 of them the first build's, set aside on every walk); the record does not
+know which cron slot fired or when GitHub started the runner, so "after the
+retry slot" is where the publication fell and the Actions log, by `run.run_id`,
+is where the cause is. Defer: #111's site surface (a readable service state
+and recovery guidance), its failure/recovery rehearsal and the ten-session
+acceptance, which needs morning checks that have not yet been observed. Omit:
+any change to the crons on these numbers; a status that reads the signal.
+
+**Not claimable:** Monday's morning observation (13:20 or 13:28 UTC on 12
+October), the first archived `run.reader_usage` block (the next evening's
+publication), the ten consecutive sessions with morning checks, and any
+trading edge.
