@@ -1,5 +1,16 @@
 # Input truthfulness milestone
 
+[12 October 2026: the service, read off the retained publications](2026-10-12-service-health.md)
+starts #111's accounting: `tools/service_health.py` walks the commits that put
+each publication and companion receipt on `main` and reads, per expected XNYS
+session, whether and when a publication landed against the session's
+completion and the evening cron's slots, whether before the next open, the
+revisions, inputs, reads and cost, with the regime and tickets kept apart. From
+11 September to 9 October: 21 of 21 sessions published, all before the next
+open, latency median 261.9 minutes, 14 of 21 after the retry slot, four
+sessions published more than once, zero cost blocks and zero applicable morning
+checks yet. `--check` holds its two files.
+
 [12 October 2026: the evidence review before any strategy change is promoted](2026-10-12-evidence-review.md)
 closes #109's last acceptance line: `tools/evidence_review.py` re-derives the
 frozen signal-outcome study from its rows, splits its admitted stratum by

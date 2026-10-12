@@ -834,6 +834,17 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   `docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`
   and `--check` holds both; no change is promoted by it, and today none earns
   `supported`.
+  `tools/service_health.py` reads the service rather than the signal: it walks
+  the commits that put a publication on `main` and the commits that put a
+  morning, issuer or research receipt beside it, and prints, per expected XNYS
+  session, whether a publication landed, when (its latency after the session's
+  completion and after the evening cron's 6:16 PM ET slot, read in the
+  exchange's zone), whether before the next open, how many times, what the
+  inputs covered, what the reader did and what it cost, with the regime and the
+  ticket counts in a column that makes no service verdict. It writes
+  `docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.{json,md}`
+  pinned to one commit whose time is its clock; `--check` re-reads the commits
+  the file names (fetching them into a shallow checkout) and holds both files.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1622,6 +1633,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and research numbers copied off their files with digests, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
+                service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
