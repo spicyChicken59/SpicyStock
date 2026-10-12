@@ -46,6 +46,7 @@ import { checkJournalReports } from './journal_report_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkFunnel } from './funnel_cases.mjs';
 import { checkServiceState } from './service_state_cases.mjs';
+import { checkSourceRecovery } from './source_recovery_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -3984,6 +3985,7 @@ async function main() {
       if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('funnel')) await checkFunnel({ browser, base, open, check, eq, shotsDir });
       if (runs('service')) await checkServiceState({ browser, base, open, check, eq, shotsDir });
+      if (runs('recovery')) await checkSourceRecovery({ browser, base, open, check, eq, shotsDir });
     };
     // both lanes finish before the browser closes; the first to throw is the error
     const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);
