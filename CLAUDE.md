@@ -7063,3 +7063,125 @@ any change to the crons on these numbers; a status that reads the signal.
 October), the first archived `run.reader_usage` block (the next evening's
 publication), the ten consecutive sessions with morning checks, and any
 trading edge.
+
+## Checkpoint, 12 Oct 2026 — PR #158 accepted on the public site; the service's failures rehearsed, and its recovery (#111)
+
+**PR #158, accepted.** Merged as `670a7fd8` on `main` with a merge commit over
+`c759a1e6`. The code head `a21de55a` passed page, the historical-runtime gate,
+both native cases (central 01:41–02:29 UTC, stress 01:41–02:30) and both
+gitleaks runs on Tests run 38192799644, its pytest failing the suite-count line
+alone (4048 passed); the final head `e701de33` (two CLAUDE.md-only commits over
+it) passed pytest, page, the gate's docs-only decision and both gitleaks runs on
+run 38194448238. Publisher 38196807225 printed *Verified: every one of the 41
+public files matches committed main* at 02:42:16 UTC; Pages 38196820286 deployed
+(38196806890 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 38196807276 and Tests 38196807248 (02:42–02:56) are green.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `670a7fd8`, pushed as **PR #160**. #111's fourth deliverable
+("rehearse provider, reader and publication failures; recover idempotently
+without duplicate work, stale overwrite or unbounded calls") and the
+"completed failure/recovery rehearsal" its acceptance line names.
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; nothing under `src/` changed; no run,
+mail, dispatch, provider call or credential.
+
+**What was built.** `tools/recovery_rehearsal.py` drives `pipeline.run_evening()`
+-- the real evening, every stage -- through the doubles the suite and the
+fixture generator use (`tests/fakes.py`), over one synthetic market (the
+suite's own night plus a second A+ burst, so the reader has two names to be
+bounded over; eleven quiet names, a coil, the benchmark; inputs rounded as the
+fixture generator rounds them), nine pinned nights from Friday 4 to Tuesday 15
+September 2026, injecting one failure a night: the bars endpoint refusing every
+batch, every frame served two sessions stale, the reader's account out of
+credit (the provider's own 6 October wording), the reader's transport dead, the
+mail provider refusing the digest, and Labor Day among them. Before and after
+each night it executes the evening workflow's own guard -- the Python body of
+`evening.yml`'s guard step, read off the workflow and run as written with the
+clock frozen -- at the primary slot, the retry slot, the next session's open and
+for a delayed event. Each night records the pipeline's exit code, status, stage
+and failure, what was published and for which session, the cost and reads
+blocks, the funnel's ticket counts, whether the previous publication's files
+survived byte for byte (`previous.outcome`: `none`, `preserved`, `replaced`; a
+night that published nothing and changed a file is refused, never recorded),
+how many times each boundary was asked against the fetch's own bound (batches ×
+2, one retry then dropped) and the grader's (names × `ATTEMPTS`), what was
+mailed, and the guard's decisions in its own words. `--check` runs the whole
+rehearsal again and holds both files; two runs here are byte-identical, the
+clock fields the record carries nulled in the identity it keeps.
+
+**What the rehearsal establishes.** Nine nights: six published, two failed
+before publishing with the previous publication preserved, one skipped by the
+calendar. Of 22 guard decisions, the ten admitted were the slot before each
+night with a session and the retry slot after each failure; **zero** were
+admitted after a publication -- a degraded publication and one whose mail
+failed are publications, and the retry slot after each was refused as already
+published. A delayed event for the 4 September slot over the 8 September
+publication was refused ("A newer session than 2026-09-04 is already
+published"); recovery at the next open was refused as expired, twice. The bars
+endpoint was asked twice on the outage night and once on every other; reader
+calls stayed within names × 2 every night, the empty balance stopping them
+after one (the second name a fallback row without a call), the dead transport
+costing exactly four. The retry slot after the outage was admitted, published
+the missed session once, and the same slot asked again and a delayed primary
+event for the same evening were both refused. What it does not establish: how a
+real provider fails, when a runner starts (the service reading records 14 of 21
+first publications after the retry slot), whether GitHub accepts the commit or
+Pages serves it; the persist step, the publication gate and the morning
+collectors are not driven.
+
+**Measured** (this sandbox, Python 3.11.15, on the final tree): the full suite on the code head `faa94bba` 4030 passed with 34
+environment-gated skips and two failures in 17 m 25 s -- the two
+warning-capturing publication tests, silenced because the tool's command-line
+path had set the root logger to ERROR and the new CLI test runs before them;
+CI's pytest on that head found the same two (4064 passed); reproduced on the
+three tests alone, fixed by saving and restoring the caller's level around the
+command and pinned by a test that reads the level inside the run and after it;
+on the fixed tree `94484095` 4033 passed with 34 environment-gated skips in
+17 m 36 s;
+`tests/test_recovery_rehearsal.py` 18 passed in 10 s; `tests/test_docs.py` and
+`tests/test_workflows.py` 87 passed with the suite count at 4067;
+`python tools/recovery_rehearsal.py --check` current; no record or rule moved,
+so the 13 page fixtures and every cascaded generator are untouched; gitleaks
+8.24.3 over the commit and the new files with the repository's config: no
+leaks. No page change, so the chart check and the page smoke are CI's,
+recorded on the PR.
+
+**Mutation pass.** Nineteen mutants over the tool in the mutation worktree, each judged by
+the whole `tests/test_recovery_rehearsal.py` with the committed-files byte
+comparison deselected, so each dies in the test naming its rule (the byte
+comparison IS the rule's test for one, the identity keeping the clock fields,
+and it was judged with it). At the code head `faa94bba`, sixteen: a changed
+file on a night that published nothing recorded as preserved; the outcome
+ignoring whether the night published; the bars bound without the retry; the
+guard's clock not frozen; the guard asked as a manual dispatch; the next-open
+expiry check dropped; the reader bound strict; a newer-session refusal counted
+as already published; every after-slot counted as admitted; the bars failure
+and the stale frames left in place between nights (the latter killed broadly,
+because the reset is the only registration); the outage injecting a transport
+failure instead; the credit text without the provider's marker (four calls
+instead of one); the identity keeping the clock fields; `check()` ignoring the
+markdown; `--check` exiting zero on a problem. All sixteen die; two controls (a
+docstring, the quiet level) survive. At the fix `94484095`, three more: the
+logger restore dropped (dies in the test the fix added), the stale frames kept
+across nights by carrying the benchmark's staleness forward (the sharper form,
+dying in the night-after test alone, with the summary and the CLI run behind
+it), and the identity's clock fields again; two controls (the docstring, the
+restore's comment) survive.
+
+**Keep / fix / defer / omit.** Keep: the rehearsal injects and records, and
+decides nothing; a night that published nothing and changed a file is refused,
+not reported. Fix if it bites: the market is fixed and every night's bursts
+recur, so the ticket counts are the allocator's accounting over recurring
+names and not a market fact; the outage night sleeps the fetch's own
+`RETRY_WAIT_SECONDS`. Defer: #111's site surface (a readable service state and
+recovery guidance) and the ten-session acceptance, which needs morning checks
+not yet observed; a rehearsal of the workflow's persist step and the publication
+gate, which need a runner. Omit: any change to the crons, the retry bounds or
+the guard on these numbers; a rehearsal that calls a provider.
+
+**Not claimable:** Monday's morning observation (13:20 or 13:28 UTC on 12
+October), the first archived `run.reader_usage` block (the next evening's
+publication), the ten consecutive sessions with morning checks, and any
+trading edge.
