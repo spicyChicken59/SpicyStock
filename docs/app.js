@@ -147,7 +147,14 @@
   // the order deadline is the desk's own clock, not a strategy number.
   const BONDE_MEDIAN_NIGHT = 239;
   const ORDERS_BY = '9:28 AM';
-  const PENDING_UNTIL_HOUR = 21;   // ET; evening.yml's retry fires at 8:16 PM and a full-market run takes minutes
+  // No fixed hour decides "pending" against "stale" here: the boundary is the
+  // service's own recovery window, read off the record's calendar (the next
+  // session's open) and its archived schedule policy (src/delivery.py). One
+  // sentence per recovery policy key; tests/test_docs.py holds the two lists equal.
+  const RECOVERY_WORDS = {
+    next_session_open: 'A delayed or retried run may still publish a missed session until the next session opens; after that open the service does not publish it.'
+  };
+  const SLOTS = ['before_primary', 'after_primary', 'after_retry'];
   const ET = 'America/New_York';
   const REPO = 'spicyChicken59/SpicyStock';
   const RUNS_API = 'https://api.github.com/repos/' + REPO + '/actions/workflows/evening.yml/runs?per_page=1';
@@ -339,6 +346,49 @@
   }
   SCStock.calendarOf = calendarOf;
 
+  // ---------------------------------------------------------------- delivery
+  // Where the publication fell against the service's own schedule, as the run
+  // wrote it (`run.delivery`, src/delivery.py): read whole or not at all, so a
+  // half-written block names no slot and no latency.
+  function deliveryOf(data) {
+    const b = data && data.run && data.run.delivery;
+    const out = { present: false, known: false, sentence: null, slot: null, latency: null, beforeNextOpen: null, policy: null, faults: [] };
+    if (b === null || b === undefined) return out;
+    out.present = true;
+    if (typeof b !== 'object' || Array.isArray(b)) { out.faults.push('run.delivery is neither absent nor an object'); return out; }
+    const p = b.policy;
+    if (!p || typeof p !== 'object' || Array.isArray(p)) out.faults.push('run.delivery.policy is not an object');
+    else {
+      if (!clockET(p.primary_et) || !clockET(p.retry_et)) out.faults.push('run.delivery.policy needs primary_et and retry_et as HH:MM');
+      if (p.timezone !== ET) out.faults.push('run.delivery.policy.timezone is not the clock this page compares in');
+      if (!RECOVERY_WORDS[p.recovery_until]) out.faults.push('run.delivery.policy.recovery_until is not a policy this page knows');
+    }
+    ['completion_at', 'published_at', 'primary_slot_at', 'retry_slot_at', 'next_open_at'].forEach((k) => {
+      if (!instant(b[k])) out.faults.push('run.delivery.' + k + ' is not an ISO-8601 instant with an offset');
+    });
+    if (!isNum(b.latency_minutes)) out.faults.push('run.delivery.latency_minutes is not a number');
+    if (typeof b.before_next_open !== 'boolean') out.faults.push('run.delivery.before_next_open is not a boolean');
+    if (SLOTS.indexOf(b.slot) < 0) out.faults.push('run.delivery.slot is not one of ' + SLOTS.join(', '));
+    if (!text(b.sentence)) out.faults.push('run.delivery.sentence is empty');
+    if (out.faults.length) return out;
+    out.known = true; out.sentence = b.sentence; out.slot = b.slot; out.latency = b.latency_minutes; out.beforeNextOpen = b.before_next_open;
+    out.policy = { primaryEt: p.primary_et, retryEt: p.retry_et, recoveryUntil: p.recovery_until };
+    return out;
+  }
+  SCStock.deliveryOf = deliveryOf;
+  SCStock.RECOVERY_WORDS = RECOVERY_WORDS;
+  // which of the service's slots the ET clock has passed on the night the
+  // expected session's run is due: compared as ET wall clock through etParts(),
+  // as every DATE comparison on this page is, against the policy's HH:MM words
+  function slotPhase(dv, et, expected) {
+    if (!dv.known) return null;
+    const mins = (hhmm) => { const m = /^(\d\d):(\d\d)$/.exec(String(hhmm)); return (+m[1]) * 60 + (+m[2]); };
+    const now = et.hour * 60 + et.minute;
+    if (et.date < expected || (et.date === expected && now < mins(dv.policy.primaryEt))) return 'before_primary';
+    if (et.date === expected && now < mins(dv.policy.retryEt)) return 'after_primary';
+    return 'after_retry';
+  }
+
   // ---------------------------------------------------------------- status
   function status(data, now) {
     const run = (data && data.run) || {};
@@ -356,7 +406,6 @@
       sentence: 'The measured session is later than the calendar’s most recent completed session at this clock. Research only.' };
     const behind = recordFor && expected ? cal.rows.filter((r) => r.session > recordFor && r.session <= expected).length : 99;
     const today = cal.rows.find((r) => r.session === et.date);
-    const pending = today && instant(today.completion_at) <= at && et.hour < PENDING_UNTIL_HOUR;
     const base = { expected: expected, behind: behind, session: session };
     if (!recordFor || run.status === 'failed') {
       return Object.assign(base, { state: 'failed', chip: 'no verdict', tone: 'danger', sentence: 'The run did not finish; nothing below is a verdict. Check the run log.' });
@@ -365,13 +414,40 @@
       return Object.assign(base, { state: 'stale2', chip: 'STALE · ' + behind + ' sessions behind', tone: 'danger', keepCase: true,
         sentence: 'The run has not published for ' + behind + ' sessions. Something is broken — check the run log; nothing below is a current plan.' });
     }
-    if (behind === 1 && pending) {
-      return Object.assign(base, { state: 'pending', chip: 'tonight’s run pending', tone: 'info',
-        sentence: 'Tonight’s run has not published yet. What is below is ' + sessionWords + '’s plan — do not treat it as a new signal.' });
-    }
     if (behind === 1) {
+      // The service's own recovery window decides pending against stale: the
+      // evening guard admits a delayed or retried run for a missed session until
+      // the NEXT session opens (evening.yml; rehearsed in tools/recovery_rehearsal.py),
+      // so until that instant the session is pending, however late the clock
+      // is, and after it the session will not be published. The instant is the
+      // record's own calendar's; the slot words are its archived policy's.
+      const idx = cal.rows.findIndex((r) => r.session === expected);
+      const nextRow = idx >= 0 ? cal.rows[idx + 1] : null;
+      const nextOpen = nextRow ? instant(nextRow.opens_at) : null;
+      if (nextOpen && at < nextOpen) {
+        const dv = deliveryOf(data), slot = slotPhase(dv, et, expected);
+        const plans = 'What is below is ' + sessionWords + '’s plan — do not treat it as a new signal.';
+        const until = 'until ' + dateWords(nextRow.session) + ' opens (' + timeET(nextRow.opens_at) + ')';
+        let chip = 'tonight’s run pending', sentence;
+        if (slot === 'before_primary') {
+          sentence = 'Tonight’s run has not published yet; its first scheduled slot is ' + clockET(dv.policy.primaryEt) + '. ' + plans;
+        } else if (slot === 'after_primary') {
+          sentence = 'Tonight’s run has not published yet. Its ' + clockET(dv.policy.primaryEt) + ' slot has passed without a publication; the retry slot is ' + clockET(dv.policy.retryEt) + '. ' + plans;
+        } else if (slot === 'after_retry') {
+          chip = 'run pending · past both slots';
+          sentence = 'No publication yet for ' + dateWords(expected) + '. Both scheduled slots (' + clockET(dv.policy.primaryEt) + ', ' + clockET(dv.policy.retryEt) +
+            ') have passed; a delayed run can still publish it ' + until + ', after which it will not — check the run log. ' + plans;
+        } else {
+          sentence = 'The run for ' + dateWords(expected) + ' has not published yet; a delayed run can still publish it ' + until +
+            '. This record does not carry the service’s schedule, so no slot is named. ' + plans;
+        }
+        return Object.assign(base, { state: 'pending', chip: chip, tone: 'info', slot: slot, sentence: sentence,
+          recoverUntil: nextRow.opens_at, nextSession: nextRow.session });
+      }
       return Object.assign(base, { state: 'stale1', chip: 'STALE · 1 session behind', tone: 'warn', keepCase: true,
-        sentence: 'No run published for ' + dateWords(expected) + '. The calendar expected a session; check the run log. Do not place these orders.' });
+        sentence: 'No run published for ' + dateWords(expected) +
+          (nextRow ? ', and the service’s recovery window for it ended when ' + dateWords(nextRow.session) + ' opened (' + timeET(nextRow.opens_at) + '): it will not be published now' : '') +
+          '. The calendar expected a session; check the run log. Do not place these orders.' });
     }
     if (!today && behind === 0 && run.status !== 'degraded') {
       return Object.assign(base, { state: 'closed', chip: 'market closed', tone: 'neutral',
@@ -726,7 +802,14 @@
     if (pub.state === 'unknown' || !cal) return lead + 'Archived calendar evidence is insufficient at this clock; we cannot establish the next evaluation session.' + tail;
     if (!published || published > at) return lead + 'Publication timing evidence is insufficient at this clock; we cannot establish the next evaluation.' + tail;
     const loaded = 'Loaded publication: ' + run.session + (pub.state === 'degraded' ? ' (degraded).' : '.');
-    if (pub.state === 'pending') return lead + loaded + ' The ' + pub.expected + ' session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record.' + tail;
+    if (pub.state === 'pending') {
+      // the recovery window is the calendar's and every pending record has it; the
+      // slot clause is the record's archived policy's, and a record without one names no slot
+      const late = pub.slot === 'after_retry';
+      return lead + loaded + ' The ' + pub.expected + ' session has completed its market-data buffer and is awaiting its evening evaluation in the loaded record.' +
+        (late ? ' Both scheduled evening slots have passed without its publication.' : '') +
+        (pub.recoverUntil ? ' A delayed run can still publish it until ' + pub.nextSession + ' opens (' + timeET(pub.recoverUntil) + '), after which it will not be published' + (late ? '; check the run log.' : '.') : '') + tail;
+    }
     if (pub.state === 'stale1' || pub.state === 'stale2') return lead + loaded + ' No publication for the completed ' + pub.expected + ' session is loaded. It may be delayed, missing or failed; check the run log. We cannot establish the next evaluation time.' + tail;
     const next = cal.rows.find(r => r.session > run.session);
     if (!next) return lead + loaded + ' The next market session is outside this archived calendar; we cannot establish the next evaluation session.' + tail;
@@ -827,7 +910,8 @@
     strip.appendChild(stat('bursts', num(run.bursts), 'Bonde’s median night is ' + BONDE_MEDIAN_NIGHT));
     strip.appendChild(stat('graded', num(g.a) + ' A · ' + num(g.a_plus) + ' A+', num(g.b) + ' B · ' + num(g.c) + ' C · ' + num(g.skip) + ' skip'));
     strip.appendChild(stat('claude', num(reads.done) + ' of ' + num(reads.requested) + ' read', readsNote(reads)));
-    strip.appendChild(stat('published', timeET(run.published_at), 'email ' + (run.email || '—')));
+    const dv = deliveryOf(data);
+    strip.appendChild(stat('published', timeET(run.published_at), (dv.known ? num(dv.latency) + ' min after completion · ' : '') + 'email ' + (run.email || '—')));
   }
   // the chart reader's shortfall by cause, in the record's own counts; a record
   // made before the reads carried causes keeps the note it was published under
@@ -1036,6 +1120,15 @@
     if (text((run.reader_usage || {}).sentence)) line(run.reader_usage.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
+    // where THIS publication fell against the service's schedule, and what that
+    // schedule is, both as the run archived them; the page adds no hour of its own
+    const dv = deliveryOf(data);
+    if (dv.known) {
+      line('Delivery: ' + dv.sentence);
+      line('Service schedule, as this record archived it: evening runs are scheduled at ' + clockET(dv.policy.primaryEt) + ' with a retry at ' + clockET(dv.policy.retryEt) +
+        '. ' + RECOVERY_WORDS[dv.policy.recoveryUntil] + ' The page reads its pending and stale states from that window on the recorded calendar, not from a fixed hour.');
+    } else if (dv.present) line('Delivery: this record carries a delivery block in a shape this page cannot read, so nothing is said of when it landed.');
+    else line('Delivery: this record predates the delivery block; when it landed against the service’s schedule is not recorded.');
     // what the record says about WHEN its plans apply, and what its calendar
     // could not read. Printed here rather than argued: the run wrote it.
     const calendar = run.calendar;
@@ -4161,7 +4254,7 @@
     });
     return sources;
   }
-  const stateWords = (s) => s.state === 'pending' ? 'waiting for tonight’s run' : s.state === 'failed' ? 'without a verdict' : s.state === 'unknown' ? 'without calendar evidence' : 'stale';
+  const stateWords = (s) => s.state === 'pending' ? 'waiting for the evening run' : s.state === 'failed' ? 'without a verdict' : s.state === 'unknown' ? 'without calendar evidence' : 'stale';
   function openDisclosure(id) {
     const det = $(id); if (!det) return;
     det.open = true; scrollTo(det);
@@ -5050,7 +5143,7 @@
     if (!loaded || !current || !current.run || clockPinned) return false;
     const next = availability(current, new Date());
     const same = av && next.phase === av.phase && next.pub.state === av.pub.state &&
-      next.pub.chip === av.pub.chip && next.offered === av.offered;
+      next.pub.chip === av.pub.chip && next.pub.sentence === av.pub.sentence && next.offered === av.offered;
     clockAt = next.at;
     av = next; st = av.pub; SCStock.state = st; SCStock.avail = av;
     // Market close can change this explanation without changing availability.

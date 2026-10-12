@@ -93,6 +93,25 @@ def test_the_readme_names_the_crons_and_the_bonde_median():
     assert "const BONDE_MEDIAN_NIGHT = 239;" in page
 
 
+def test_the_page_reads_pending_against_stale_off_the_record_and_keeps_one_sentence_per_recovery_policy():
+    """No fixed hour on the page decides pending against stale: the boundary is
+    the record's calendar (the next session's open) and the slot words are its
+    archived policy's (src/delivery.py). The page keeps one sentence per
+    recovery-policy key, as it does per timing limit, and the two lists are
+    held equal here; the README says the same in words."""
+    from src import delivery
+    page = (ROOT / "docs" / "app.js").read_text()
+    assert "PENDING_UNTIL_HOUR" not in page
+    block = re.search(r"const RECOVERY_WORDS = \{\n(.*?)\n  \};", page, re.S).group(1)
+    keys = re.findall(r"^\s*(\w+): '", block, re.M)
+    assert tuple(keys) == delivery.RECOVERY_POLICIES
+    assert "`run.delivery`" in README and "until the next session opens" in README
+    for slot in (delivery.EVENING_PRIMARY_ET, delivery.EVENING_RETRY_ET):
+        assert f"{slot.hour - 12}:{slot.minute:02d} PM ET" in README
+    assert "run pending · past both slots" in README and "delivery.py (" in README
+    assert "run.delivery" in ENV and "until the next session opens" in ENV
+
+
 def test_the_readme_lists_the_fixture_variants_the_generator_makes():
     listed = re.search(r"\(`(.*?)`\)", README.split("one per state the page can be in")[1]).group(1)
     assert tuple(listed.split("`, `")) == make_fixture.VARIANTS

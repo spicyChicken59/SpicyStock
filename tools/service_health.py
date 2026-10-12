@@ -38,7 +38,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src import funnel, sessions  # noqa: E402
+from src import delivery, funnel, sessions  # noqa: E402
 
 VERSION = 1
 POLICY = "service_health_v1"
@@ -50,8 +50,9 @@ COMPANIONS = {"morning": "docs/morning.json",
 HISTORY_LIMIT = 128
 #: the evening cron's nominal instants in the exchange's zone: ``16 22 * * 1-5`` on EDT
 #: and ``16 23`` on EST are one wall-clock time, 6:16 PM ET; the retry pair is 8:16 PM
-EVENING_PRIMARY = time(18, 16)
-EVENING_RETRY = time(20, 16)
+# the one slot rule: the record archives it (src/delivery.py) and this reading reads it
+EVENING_PRIMARY = delivery.EVENING_PRIMARY_ET
+EVENING_RETRY = delivery.EVENING_RETRY_ET
 #: the morning workflow's two best-effort attempts, in the desk's zone
 MORNING_SLOTS = ("08:20", "08:28")
 DESK_TZ = ZoneInfo("America/Chicago")
@@ -162,8 +163,7 @@ def slots(session: date) -> dict:
     """The evening cron's nominal instants for a session: the primary pair's
     6:16 PM and the retry pair's 8:16 PM in the exchange's zone, so the DST
     change is the tz database's answer and no UTC hour is written here."""
-    primary = datetime.combine(session, EVENING_PRIMARY, tzinfo=sessions.MARKET_TZ)
-    retry = datetime.combine(session, EVENING_RETRY, tzinfo=sessions.MARKET_TZ)
+    primary, retry = delivery.slots(session, EVENING_PRIMARY, EVENING_RETRY)
     return {"primary_at": primary.astimezone(timezone.utc).isoformat(), "retry_at": retry.astimezone(timezone.utc).isoformat()}
 
 
@@ -212,6 +212,13 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
     archived = _dict((_dict(run.get("calendar")) or {}).get("measured")) or {}
     if archived.get("completion_at") is not None and parse_instant(archived["completion_at"]) != completion:
         raise ServiceError(f"{where}: the archived completion {archived['completion_at']} is not the calendar's {fr['completion_at']}")
+    archived_delivery = _dict(run.get("delivery"))
+    if archived_delivery is not None:
+        rules = _dict((_dict(data.get("rules")) or {}).get("pipeline")) or {}
+        if delivery.faults(run, rules):
+            raise ServiceError(f"{where}: run.delivery does not re-derive from the archived slots: {delivery.faults(run, rules)[0]}")
+        if parse_instant(archived_delivery["published_at"]) != published:
+            raise ServiceError(f"{where}: run.delivery names another publication instant")
     coverage = _dict(run.get("coverage"))
     acceptance = _dict((coverage or {}).get("acceptance"))
     tolerance = _dict(run.get("input_tolerance"))
@@ -228,6 +235,7 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
         "elapsed_seconds": run.get("elapsed_seconds"), "fetch_seconds": run.get("fetch_seconds"),
         "timing": {
             "completion_at": fr["completion_at"], "completion_basis": "archived" if archived else "re-derived",
+            "delivery_basis": "archived" if archived_delivery is not None else "re-derived",
             "latency_minutes": minutes_between(published, completion),
             "primary_slot_at": fr["primary_at"], "after_primary_minutes": minutes_between(published, parse_instant(fr["primary_at"])),
             "retry_slot_at": fr["retry_at"], "after_retry_slot": published >= parse_instant(fr["retry_at"]),

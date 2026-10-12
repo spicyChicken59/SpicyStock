@@ -11,7 +11,7 @@ shallow checkout exactly as the findings suite fetches its own."""
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date
+from datetime import date, time
 import json
 import os
 from pathlib import Path
@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 REPORT = ROOT / "docs/input-truthfulness/2026-10-12-service-health.md"
 
 
-def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, status="ok", regime="yellow", **run_extra):
+def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, status="ok", regime="yellow", rules_pipeline=None, **run_extra):
     """A minimal real schema-2 record: what the reading indexes into and nothing more."""
     run = {"session": session, "session_state": "open", "status": status, "published_at": published_at,
            "run_id": "38034610157", "dry_run": False, "email": "skipped", "elapsed_seconds": 112.7, "fetch_seconds": 59.2,
@@ -40,7 +40,7 @@ def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, st
     run.update(run_extra)
     return {"schema_version": 2, "app": {"name": "SpicyStock", "version": "2.0", "rules_version": "c9dc7d6d1d87"},
             "run": run, "breadth": {"regime": {"verdict": regime}}, "bursts": [], "watchlist": {"top": [], "counts": {}},
-            "trades": [], "cash_budget": {}}
+            "trades": [], "cash_budget": {}, **({"rules": {"pipeline": rules_pipeline}} if rules_pipeline is not None else {})}
 
 
 def reading(session, published_at, landed_at=None, **kw):
@@ -109,6 +109,27 @@ def test_a_publication_reading_copies_the_records_own_blocks_and_keeps_the_signa
     old = reading("2026-09-14", "2026-09-14T22:24:50+00:00", coverage=None, input_tolerance=None, reads=None, reader_usage=None)
     assert old["inputs"] == {k: None for k in old["inputs"]}
     assert old["reader"] == {"requested": None, "done": None, "verdict": None, "usage": None}
+
+
+def test_the_slot_rule_is_the_records_own_and_an_archived_block_is_held_to_it():
+    from src import delivery
+    assert sh.EVENING_PRIMARY is delivery.EVENING_PRIMARY_ET and sh.EVENING_RETRY is delivery.EVENING_RETRY_ET
+    rules = {k.split(".", 1)[1]: v for k, v in delivery.RULES.items()}
+    r = reading("2026-10-09", "2026-10-10T07:30:00+00:00")
+    assert r["timing"]["delivery_basis"] == "re-derived"
+    block = delivery.block(date(2026, 10, 9), "2026-10-10T07:30:00+00:00")
+    archived = reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=block, rules_pipeline=rules)
+    assert archived["timing"]["delivery_basis"] == "archived"
+    assert archived["timing"]["latency_minutes"] == block["latency_minutes"] == 675.0
+    forged = dict(block, slot="before_primary")
+    with pytest.raises(sh.ServiceError, match="does not re-derive"):
+        reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=forged, rules_pipeline=rules)
+    # a block archived under another slot re-derives under the rules IT archived
+    other = delivery.block(date(2026, 10, 9), "2026-10-10T07:30:00+00:00", primary_et=time(19, 16))
+    assert reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=other,
+                   rules_pipeline=dict(rules, delivery_primary_et="19:16"))["timing"]["delivery_basis"] == "archived"
+    with pytest.raises(sh.ServiceError, match="does not re-derive"):
+        reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=other, rules_pipeline=rules)
 
 
 def test_an_archived_completion_is_held_to_the_calendar():

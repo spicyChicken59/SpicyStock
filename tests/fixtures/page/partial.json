@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "e889639f2a03"
+  "rules_version": "784177584fbe"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -860,9 +860,30 @@
     ]
    }
   },
+  "delivery": {
+   "version": 1,
+   "session": "2026-09-10",
+   "completion_at": "2026-09-10T16:15:00-04:00",
+   "published_at": "2026-09-10T22:30:00+00:00",
+   "latency_minutes": 135.0,
+   "primary_slot_at": "2026-09-10T18:16:00-04:00",
+   "retry_slot_at": "2026-09-10T20:16:00-04:00",
+   "after_primary_minutes": 14.0,
+   "slot": "after_primary",
+   "next_session": "2026-09-11",
+   "next_open_at": "2026-09-11T09:30:00-04:00",
+   "before_next_open": true,
+   "policy": {
+    "timezone": "America/New_York",
+    "primary_et": "18:16",
+    "retry_et": "20:16",
+    "recovery_until": "next_session_open"
+   },
+   "sentence": "Published 6:30 PM ET on Thu 10 Sep, 135 minutes after the measured session's completion (4:15 PM ET); after the primary slot (6:16 PM ET) and before the retry slot (8:16 PM ET); before the next session's open (Fri 11 Sep, 9:30 AM ET)."
+  },
   "evidence": {
    "version": 1,
-   "context_sha256": "c9df572c4180c8cf89e389f24a30334687fafb159e4aa761cb99a43f601c65ae"
+   "context_sha256": "fdf65b42603b34fa0c5dba048eafd5ceff1895ae2cf929375873e5dbcac37d40"
   },
   "sanitised": {
    "replaced": 0,
@@ -1386,6 +1407,10 @@
    "reader_policy": "accepted_required_v1",
    "reader_refusal_fraction": 0.25,
    "reader_usage_version": 1,
+   "delivery_version": 1,
+   "delivery_primary_et": "18:16",
+   "delivery_retry_et": "20:16",
+   "delivery_recovery_until": "next_session_open",
    "series_bars": 120,
    "series_top": 24,
    "observation_days": 21
@@ -1950,7 +1975,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "e889639f2a03"
+  "replay_rules_version": "784177584fbe"
  },
  "observations": {
   "as_of": "2026-09-10",
