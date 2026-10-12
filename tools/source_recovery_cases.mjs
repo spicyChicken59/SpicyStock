@@ -14,7 +14,7 @@ const RECEIPTS = path.resolve('tests/fixtures/source-recovery');
 // 8:20 Chicago on Friday 11 Sep 2026, the thin night's recovery slot
 const FRESH = '2026-09-11T13:20:00Z';
 const clone = (d) => JSON.parse(JSON.stringify(d));
-const PREFIX = 'Source recovery: ';
+const PREFIX = 'Recovery: ';
 
 function served(body, status = 200) {
   return (p) => p.route('**/source-recovery.json', (route) => status === 200

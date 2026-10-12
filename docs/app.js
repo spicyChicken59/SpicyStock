@@ -1101,7 +1101,7 @@
   function loadRecovery(li, data) {
     const settle = (state, sentence) => {
       if (!w.document || !li.isConnected || current !== data) return;
-      li.textContent = 'Source recovery: ' + sentence;
+      li.textContent = 'Recovery: ' + sentence;
       li.setAttribute('data-source-recovery', state);
     };
     if (recovery.data !== data || !recovery.digest) {
@@ -1184,7 +1184,7 @@
     // once before the next open (docs/source-recovery.json, src/source_recovery.py):
     // printed in the receipt's own sentence once its binding to THIS record's
     // bytes has been checked, and otherwise one sentence saying what is absent
-    const recoveryLine = line('Source recovery: reading the bound receipt…');
+    const recoveryLine = line('Recovery: reading the bound receipt…');
     recoveryLine.setAttribute('data-source-recovery', 'loading');
     loadRecovery(recoveryLine, data);
     // what the record says about WHEN its plans apply, and what its calendar
