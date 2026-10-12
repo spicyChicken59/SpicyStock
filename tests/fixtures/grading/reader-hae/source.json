@@ -1,0 +1,66 @@
+{
+  "publications": [
+    {
+      "account": {
+        "equity": 10000.0,
+        "max_open_positions": 4,
+        "max_position_pct": 25.0,
+        "risk_pct": 0.5
+      },
+      "data_blob": "7b6bd909b9ef9a8efd459433a4e4db0fd01cb897",
+      "data_bytes": 14789950,
+      "data_sha256": "f5d94ffc5cf10566c6debe7b0cb9bd946165d026c90d757fc494908e6f60cb5b",
+      "file": "burst-HAE-1e1ffe9c.json",
+      "final_grade": "A+",
+      "label": "first",
+      "mechanical_grade": "A+",
+      "path": "docs/data.json",
+      "publication_commit": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+      "published_at": "2026-10-09T02:06:55.130264+00:00",
+      "recorded_error": "src.ReaderAuthorityError: evidence outside criterion authority",
+      "regime": {
+        "size_multiplier": 0.5,
+        "verdict": "yellow"
+      },
+      "reply_bytes": 1760,
+      "reply_message_id": "msg_011CfqrA9fuu591qEqCvquQE",
+      "reply_text_sha256": "d251893420d72344f6fcddd757da4d782d6d7fe6339019a2bf1d7db76d3f8845",
+      "row_sha256": "c03893fe9301198e1eb64cb327d62c32a3b7412b69ccfe7fc0407737b642d48f",
+      "rules_version": "669435d895d7",
+      "run_id": "37872972790",
+      "run_status": "degraded"
+    },
+    {
+      "account": {
+        "equity": 2000.0,
+        "max_open_positions": 4,
+        "max_position_pct": 25.0,
+        "risk_pct": 0.5
+      },
+      "data_blob": "687e44d07e833de860edf0338db8dee09a1b195e",
+      "data_bytes": 14918679,
+      "data_sha256": "36e3ac12a53d78d7f9adccfb302793aa8fad2e2fb00548ed1d2124538350b1bd",
+      "file": "burst-HAE-e67f8cba.json",
+      "final_grade": "A+",
+      "label": "corrected",
+      "mechanical_grade": "A+",
+      "path": "docs/data.json",
+      "publication_commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
+      "published_at": "2026-10-09T12:10:20.678352+00:00",
+      "recorded_error": "src.ReaderAuthorityError: evidence outside criterion authority",
+      "regime": {
+        "size_multiplier": 0.5,
+        "verdict": "yellow"
+      },
+      "reply_bytes": 1702,
+      "reply_message_id": "msg_011CfreAXec2gMRdBcUNv9Mr",
+      "reply_text_sha256": "b60d912198715e08101c827e5bd42f1c202435d2ff92cdb049bd00c925d73c02",
+      "row_sha256": "dde63d39be40af6d310781147ed473693b9e96c1550b12c10b04fe2225ed009f",
+      "rules_version": "8e9ea8528b31",
+      "run_id": "37928234562",
+      "run_status": "degraded"
+    }
+  ],
+  "session": "2026-10-08",
+  "ticker": "HAE"
+}
