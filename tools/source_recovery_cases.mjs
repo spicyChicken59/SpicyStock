@@ -61,6 +61,24 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
     } finally { await context.close(); }
   }
 
+  // ---- the receipt is asked for only when the Method view is shown: the default
+  // route, Explore and Record fetch nothing, so no other suite sees a request for it
+  {
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin.json', FRESH, 1280,
+      { reducedMotion: 'reduce', lens: 'all', beforeLoad: served(JSON.stringify(recovered)) });
+    try {
+      const fetched = () => page.evaluate(() => performance.getEntriesByType('resource').filter(e => /source-recovery\.json/.test(e.name)).length);
+      eq('default route: the receipt is not fetched', await fetched(), 0);
+      eq('default route: the Method line waits', await page.getAttribute('#run-meta li[data-source-recovery]', 'data-source-recovery'), 'loading');
+      await page.evaluate(() => { location.hash = '#/record'; }); await page.waitForTimeout(250);
+      eq('Record view: still not fetched', await fetched(), 0);
+      await page.evaluate(() => { location.hash = '#/method'; }); await page.waitForTimeout(250);
+      const got = await recoveryLine(page);
+      eq('Method shown: fetched once and settled', [await fetched(), got.state], [1, 'recovered']);
+      eq('deferred-fetch page errors', [...errors], []);
+    } finally { await context.close(); }
+  }
+
   // ---- an inapplicable receipt prints its one sentence; a missing file and
   // every unbound shape print what is absent and never the receipt's words
   const unbound = (mutate, why) => { const r = clone(recovered); mutate(r); return [r, why]; };
