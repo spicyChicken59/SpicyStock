@@ -1,5 +1,18 @@
 # Input truthfulness milestone
 
+[12 October 2026: the service's failures, rehearsed, and its recovery](2026-10-12-recovery-rehearsal.md)
+is #111's failure/recovery rehearsal: `tools/recovery_rehearsal.py` drives the
+real evening through the suite's doubles over nine pinned nights, injecting one
+failure a night (the bars endpoint, every frame stale, the reader's credit, the
+reader's transport, the mail), and asks the evening workflow's own guard before
+and after each night. Six nights published, two failed before publishing with the
+previous publication's bytes preserved, one was Labor Day; the guard admitted no
+slot after a publication and the retry slot after each failure, refused a
+delayed event for an older session over a newer publication, and refused
+recovery at the next open; reader calls stayed within names times attempts, the
+empty balance stopping them after one. `--check` runs it again and holds both
+files. Everything is injected: it is not a live provider, a runner or GitHub.
+
 [12 October 2026: the service, read off the retained publications](2026-10-12-service-health.md)
 starts #111's accounting: `tools/service_health.py` walks the commits that put
 each publication and companion receipt on `main` and reads, per expected XNYS

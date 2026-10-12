@@ -1,0 +1,1005 @@
+{
+ "nights": [
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "Trade next session. 2 A-quality bursts. \u00b7 2026-09-04"
+    ],
+    "mails": 1,
+    "reader_calls": 2
+   },
+   "clock": "2026-09-04T22:30:00+00:00",
+   "files_changed": 19,
+   "guard": [
+    {
+     "at": "2026-09-04T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-04; nominal slot 2026-09-04T22:16:00+00:00",
+     "session": "2026-09-04",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-05T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-04 is already published",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "nothing injected",
+   "name": "clean",
+   "previous": {
+    "outcome": "none",
+    "publication": null
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "Trade next session. 2 A-quality bursts.",
+    "email": "delivered",
+    "problems": [],
+    "published_at": "2026-09-04T22:30:00+00:00",
+    "reaction_tickets": 2,
+    "reader_usage": {
+     "calls": 2,
+     "candidates": 2,
+     "input_tokens": 6998,
+     "model": "claude-sonnet-4-6",
+     "responses": 2,
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 2,390 written to the cache, 2,390 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 2390,
+      "cache_write": 2390,
+      "output": 180,
+      "uncached": 2218
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 0,
+      "format": 0,
+      "refused": 0,
+      "transport": 0
+     },
+     "done": 2,
+     "requested": 2,
+     "verdict": "complete"
+    },
+    "regime": "green",
+    "session": "2026-09-04",
+    "status": "ok",
+    "trades": [
+     "AAA",
+     "AAB"
+    ]
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "43b7015a84239cfd8ada90fe52420cc500e144866e1ecf961e05978775522ff0",
+    "picks_json": "81450148edc0d5ed84f8648d1f42ad8744280cae632667a7b57c5aab24f78d7b"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 0,
+    "failed": false,
+    "failure": null,
+    "problems": [],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "ok"
+   },
+   "session": "2026-09-04",
+   "words": "a clean night: every boundary answers"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 0,
+    "mail_subjects": [],
+    "mails": 0,
+    "reader_calls": 0
+   },
+   "clock": "2026-09-07T22:30:00+00:00",
+   "files_changed": 0,
+   "guard": [
+    {
+     "at": "2026-09-07T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": false,
+     "reason": "2026-09-07 is not an exchange session",
+     "session": null,
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-08T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-07 is not an exchange session",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "nothing injected",
+   "name": "holiday",
+   "previous": {
+    "outcome": "preserved",
+    "publication": {
+     "data_json_without_clock_fields": "43b7015a84239cfd8ada90fe52420cc500e144866e1ecf961e05978775522ff0",
+     "picks_json": "81450148edc0d5ed84f8648d1f42ad8744280cae632667a7b57c5aab24f78d7b"
+    }
+   },
+   "publication": null,
+   "publication_identity": null,
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": null,
+    "requested": null,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "no_session",
+    "exit_code": 0,
+    "failed": false,
+    "failure": null,
+    "problems": [],
+    "published": false,
+    "skipped": "no_session",
+    "stage": "preflight",
+    "status": "no_session"
+   },
+   "session": null,
+   "words": "Labor Day: the calendar says no session, so nothing is fetched, asked, written or mailed"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 2,
+    "mail_subjects": [
+     "FAILED \u2014 no plan for 2026-09-08"
+    ],
+    "mails": 1,
+    "reader_calls": 0
+   },
+   "clock": "2026-09-08T22:30:00+00:00",
+   "files_changed": 0,
+   "guard": [
+    {
+     "at": "2026-09-08T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-08; nominal slot 2026-09-08T22:16:00+00:00",
+     "session": "2026-09-08",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-09T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": true,
+     "reason": "Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00",
+     "session": "2026-09-08",
+     "when": "after: the retry slot"
+    },
+    {
+     "at": "2026-09-09T13:30:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-08 recovery expired at the next session open",
+     "session": null,
+     "when": "after: the next session's open, with nothing recovered"
+    }
+   ],
+   "injected": "the Alpaca double raises ConnectionError('no route to host') on every bars request",
+   "name": "provider_outage",
+   "previous": {
+    "outcome": "preserved",
+    "publication": {
+     "data_json_without_clock_fields": "43b7015a84239cfd8ada90fe52420cc500e144866e1ecf961e05978775522ff0",
+     "picks_json": "81450148edc0d5ed84f8648d1f42ad8744280cae632667a7b57c5aab24f78d7b"
+    }
+   },
+   "publication": null,
+   "publication_identity": null,
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": null,
+    "requested": null,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 1,
+    "failed": true,
+    "failure": "RuntimeError: insufficient usable coverage: 0 of 14 intended stocks; no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)",
+    "problems": [],
+    "published": false,
+    "skipped": null,
+    "stage": "session",
+    "status": "failed"
+   },
+   "session": "2026-09-08",
+   "words": "the bars endpoint refuses every batch"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "Nothing qualifies. Keep cash. \u00b7 2026-09-08"
+    ],
+    "mails": 1,
+    "reader_calls": 2
+   },
+   "clock": "2026-09-09T00:30:00+00:00",
+   "files_changed": 15,
+   "guard": [
+    {
+     "at": "2026-09-09T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": true,
+     "reason": "Scheduled session 2026-09-08; nominal slot 2026-09-09T00:16:00+00:00",
+     "session": "2026-09-08",
+     "when": "before: the retry slot"
+    },
+    {
+     "at": "2026-09-09T01:00:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-08 is already published",
+     "session": null,
+     "when": "after: the retry slot again"
+    },
+    {
+     "at": "2026-09-09T00:40:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": false,
+     "reason": "2026-09-08 is already published",
+     "session": null,
+     "when": "after: a delayed primary event for the same evening"
+    },
+    {
+     "at": "2026-09-05T06:00:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "A newer session than 2026-09-04 is already published",
+     "session": null,
+     "when": "after: a delayed retry event for the 4 September slot (a synthetic clock, to show the rule)"
+    }
+   ],
+   "injected": "nothing injected",
+   "name": "provider_recovered_at_retry",
+   "previous": {
+    "outcome": "replaced",
+    "publication": {
+     "data_json_without_clock_fields": "43b7015a84239cfd8ada90fe52420cc500e144866e1ecf961e05978775522ff0",
+     "picks_json": "81450148edc0d5ed84f8648d1f42ad8744280cae632667a7b57c5aab24f78d7b"
+    }
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "Nothing qualifies. Keep cash.",
+    "email": "delivered",
+    "problems": [],
+    "published_at": "2026-09-09T00:30:00+00:00",
+    "reaction_tickets": 0,
+    "reader_usage": {
+     "calls": 2,
+     "candidates": 2,
+     "input_tokens": 6998,
+     "model": "claude-sonnet-4-6",
+     "responses": 2,
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 4780,
+      "cache_write": 0,
+      "output": 180,
+      "uncached": 2218
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 0,
+      "format": 0,
+      "refused": 0,
+      "transport": 0
+     },
+     "done": 2,
+     "requested": 2,
+     "verdict": "complete"
+    },
+    "regime": "green",
+    "session": "2026-09-08",
+    "status": "ok",
+    "trades": []
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "7b0d626b897098290527b3aa4b3dca8226e8c757b54aca19e8a99ee62e3bed70",
+    "picks_json": "b37835d26943f9ded603a796d62a82f270564274a5c9a93c402885645e1aab55"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 0,
+    "failed": false,
+    "failure": null,
+    "problems": [],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "ok"
+   },
+   "session": "2026-09-08",
+   "words": "the retry slot, 8:30 PM ET the same evening: the provider answers again"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "No new burst tickets. Reader review incomplete. \u00b7 2026-09-09"
+    ],
+    "mails": 1,
+    "reader_calls": 1
+   },
+   "clock": "2026-09-09T22:30:00+00:00",
+   "files_changed": 15,
+   "guard": [
+    {
+     "at": "2026-09-09T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-09; nominal slot 2026-09-09T22:16:00+00:00",
+     "session": "2026-09-09",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-10T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-09 is already published",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "the Anthropic double raises the provider's empty-balance error on every call",
+   "name": "reader_credit",
+   "previous": {
+    "outcome": "replaced",
+    "publication": {
+     "data_json_without_clock_fields": "7b0d626b897098290527b3aa4b3dca8226e8c757b54aca19e8a99ee62e3bed70",
+     "picks_json": "b37835d26943f9ded603a796d62a82f270564274a5c9a93c402885645e1aab55"
+    }
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "No new burst tickets. Reader review incomplete.",
+    "email": "delivered",
+    "problems": [
+     "claude_unavailable"
+    ],
+    "published_at": "2026-09-09T22:30:00+00:00",
+    "reaction_tickets": 0,
+    "reader_usage": {
+     "calls": 1,
+     "candidates": 2,
+     "input_tokens": 0,
+     "model": "claude-sonnet-4-6",
+     "responses": 0,
+     "sentence": "Chart reader cost: 1 call for 2 names, 0 replies; 0 input tokens (0 uncached, 0 written to the cache, 0 read from it) and 0 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "output": 0,
+      "uncached": 0
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 2,
+      "format": 0,
+      "refused": 0,
+      "transport": 0
+     },
+     "done": 0,
+     "requested": 2,
+     "verdict": "unavailable"
+    },
+    "regime": "green",
+    "session": "2026-09-09",
+    "status": "degraded",
+    "trades": []
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "69f970000bbd9d54528f6bb855f767384073450ac5c2058a0f58431adb8cd776",
+    "picks_json": "baa729e388f7363e91ea0199b159f042d0265908c0871460dc7bec4ad400f0a0"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 2,
+    "failed": false,
+    "failure": null,
+    "problems": [
+     "claude_unavailable"
+    ],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "degraded"
+   },
+   "session": "2026-09-09",
+   "words": "the reader's account has no credit left"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "No new burst tickets. Reader review incomplete. \u00b7 2026-09-10"
+    ],
+    "mails": 1,
+    "reader_calls": 4
+   },
+   "clock": "2026-09-10T22:30:00+00:00",
+   "files_changed": 15,
+   "guard": [
+    {
+     "at": "2026-09-10T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-10; nominal slot 2026-09-10T22:16:00+00:00",
+     "session": "2026-09-10",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-11T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-10 is already published",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "the Anthropic double raises RuntimeError('upstream connect error or disconnect/reset before headers') on every call",
+   "name": "reader_transport",
+   "previous": {
+    "outcome": "replaced",
+    "publication": {
+     "data_json_without_clock_fields": "69f970000bbd9d54528f6bb855f767384073450ac5c2058a0f58431adb8cd776",
+     "picks_json": "baa729e388f7363e91ea0199b159f042d0265908c0871460dc7bec4ad400f0a0"
+    }
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "No new burst tickets. Reader review incomplete.",
+    "email": "delivered",
+    "problems": [
+     "claude_unavailable"
+    ],
+    "published_at": "2026-09-10T22:30:00+00:00",
+    "reaction_tickets": 0,
+    "reader_usage": {
+     "calls": 4,
+     "candidates": 2,
+     "input_tokens": 0,
+     "model": "claude-sonnet-4-6",
+     "responses": 0,
+     "sentence": "Chart reader cost: 4 calls for 2 names, 0 replies; 0 input tokens (0 uncached, 0 written to the cache, 0 read from it) and 0 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 0,
+      "cache_write": 0,
+      "output": 0,
+      "uncached": 0
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 0,
+      "format": 0,
+      "refused": 0,
+      "transport": 2
+     },
+     "done": 0,
+     "requested": 2,
+     "verdict": "unavailable"
+    },
+    "regime": "green",
+    "session": "2026-09-10",
+    "status": "degraded",
+    "trades": []
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "3129fb3878db57b46081394f2997a18c099086179ce7b574246f695470aa2164",
+    "picks_json": "fa4f5a74133946f7d76f9bca27f4711915a6890b1ed83219e29e7710c8eb4074"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 2,
+    "failed": false,
+    "failure": null,
+    "problems": [
+     "claude_unavailable"
+    ],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "degraded"
+   },
+   "session": "2026-09-10",
+   "words": "the reader's transport fails on every call"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [],
+    "mails": 0,
+    "reader_calls": 2
+   },
+   "clock": "2026-09-11T22:30:00+00:00",
+   "files_changed": 15,
+   "guard": [
+    {
+     "at": "2026-09-11T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-11; nominal slot 2026-09-11T22:16:00+00:00",
+     "session": "2026-09-11",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-12T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-11 is already published",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "the Resend double raises RuntimeError('Resend refused the request') on every send",
+   "name": "email_failed",
+   "previous": {
+    "outcome": "replaced",
+    "publication": {
+     "data_json_without_clock_fields": "3129fb3878db57b46081394f2997a18c099086179ce7b574246f695470aa2164",
+     "picks_json": "fa4f5a74133946f7d76f9bca27f4711915a6890b1ed83219e29e7710c8eb4074"
+    }
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "Trade next session. 2 A-quality bursts.",
+    "email": "failed",
+    "problems": [
+     "email_failed"
+    ],
+    "published_at": "2026-09-11T22:30:00+00:00",
+    "reaction_tickets": 2,
+    "reader_usage": {
+     "calls": 2,
+     "candidates": 2,
+     "input_tokens": 6998,
+     "model": "claude-sonnet-4-6",
+     "responses": 2,
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 4780,
+      "cache_write": 0,
+      "output": 180,
+      "uncached": 2218
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 0,
+      "format": 0,
+      "refused": 0,
+      "transport": 0
+     },
+     "done": 2,
+     "requested": 2,
+     "verdict": "complete"
+    },
+    "regime": "green",
+    "session": "2026-09-11",
+    "status": "degraded",
+    "trades": [
+     "AAA",
+     "AAB"
+    ]
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "9f8eb2a60014b788fb5d3f020032b0e475712f125b885b0f25fd7cca93d56607",
+    "picks_json": "537d7519bb282ff120d35da4587f007a4c123515a4a47ec9be90c4a796caca25"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 3,
+    "failed": true,
+    "failure": "RuntimeError: Resend refused the request",
+    "problems": [
+     "email_failed"
+    ],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "degraded"
+   },
+   "session": "2026-09-11",
+   "words": "the record publishes and the mail provider refuses the digest"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "FAILED \u2014 no plan for 2026-09-14"
+    ],
+    "mails": 1,
+    "reader_calls": 0
+   },
+   "clock": "2026-09-14T22:30:00+00:00",
+   "files_changed": 0,
+   "guard": [
+    {
+     "at": "2026-09-14T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-14; nominal slot 2026-09-14T22:16:00+00:00",
+     "session": "2026-09-14",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-15T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": true,
+     "reason": "Scheduled session 2026-09-14; nominal slot 2026-09-15T00:16:00+00:00",
+     "session": "2026-09-14",
+     "when": "after: the retry slot"
+    },
+    {
+     "at": "2026-09-15T13:30:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-14 recovery expired at the next session open",
+     "session": null,
+     "when": "after: the next session's open, with nothing recovered"
+    }
+   ],
+   "injected": "every registered frame, the benchmark's included, is served two sessions stale",
+   "name": "stale_feed",
+   "previous": {
+    "outcome": "preserved",
+    "publication": {
+     "data_json_without_clock_fields": "9f8eb2a60014b788fb5d3f020032b0e475712f125b885b0f25fd7cca93d56607",
+     "picks_json": "537d7519bb282ff120d35da4587f007a4c123515a4a47ec9be90c4a796caca25"
+    }
+   },
+   "publication": null,
+   "publication_identity": null,
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": null,
+    "requested": null,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 1,
+    "failed": true,
+    "failure": "RuntimeError: insufficient usable coverage: 0 of 14 intended stocks; no new publication (no-bars, stale frames, gaps and unfetched names are not non-matches)",
+    "problems": [],
+    "published": false,
+    "skipped": null,
+    "stage": "session",
+    "status": "failed"
+   },
+   "session": "2026-09-14",
+   "words": "every frame the provider serves ends two sessions back"
+  },
+  {
+   "bars_requests_bound": {
+    "attempts_per_batch": 2,
+    "maximum": 2,
+    "symbols": 15,
+    "within": true
+   },
+   "calls": {
+    "bars_requests": 1,
+    "mail_subjects": [
+     "Trade next session. 2 A-quality bursts. \u00b7 2026-09-15"
+    ],
+    "mails": 1,
+    "reader_calls": 2
+   },
+   "clock": "2026-09-15T22:30:00+00:00",
+   "files_changed": 15,
+   "guard": [
+    {
+     "at": "2026-09-15T22:20:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "go": true,
+     "reason": "Scheduled session 2026-09-15; nominal slot 2026-09-15T22:16:00+00:00",
+     "session": "2026-09-15",
+     "when": "before: the primary slot"
+    },
+    {
+     "at": "2026-09-16T00:20:00+00:00",
+     "cron": "16 0 * * 2-6",
+     "go": false,
+     "reason": "2026-09-15 is already published",
+     "session": null,
+     "when": "after: the retry slot"
+    }
+   ],
+   "injected": "nothing injected",
+   "name": "next_session_after_a_missed_night",
+   "previous": {
+    "outcome": "replaced",
+    "publication": {
+     "data_json_without_clock_fields": "9f8eb2a60014b788fb5d3f020032b0e475712f125b885b0f25fd7cca93d56607",
+     "picks_json": "537d7519bb282ff120d35da4587f007a4c123515a4a47ec9be90c4a796caca25"
+    }
+   },
+   "publication": {
+    "anticipation_tickets": 1,
+    "cover": "Trade next session. 2 A-quality bursts.",
+    "email": "delivered",
+    "problems": [],
+    "published_at": "2026-09-15T22:30:00+00:00",
+    "reaction_tickets": 2,
+    "reader_usage": {
+     "calls": 2,
+     "candidates": 2,
+     "input_tokens": 6998,
+     "model": "claude-sonnet-4-6",
+     "responses": 2,
+     "sentence": "Chart reader cost: 2 calls for 2 names, 2 replies; 6,998 input tokens (2,218 uncached, 0 written to the cache, 4,780 read from it) and 180 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.",
+     "tokens": {
+      "cache_read": 4780,
+      "cache_write": 0,
+      "output": 180,
+      "uncached": 2218
+     },
+     "version": 1
+    },
+    "reads": {
+     "causes": {
+      "account": 0,
+      "credit": 0,
+      "format": 0,
+      "refused": 0,
+      "transport": 0
+     },
+     "done": 2,
+     "requested": 2,
+     "verdict": "complete"
+    },
+    "regime": "green",
+    "session": "2026-09-15",
+    "status": "ok",
+    "trades": [
+     "AAA",
+     "AAB"
+    ]
+   },
+   "publication_identity": {
+    "data_json_without_clock_fields": "90d2f615dc4e07e33060aa66bd1e402d45d44e83798fddedc3a2f0843d74abe6",
+    "picks_json": "4d62ca7096259c77d09cb6d30d98833a0cb2b2b85df36f31ed4300422d79bb39"
+   },
+   "reader_calls_bound": {
+    "attempts": 2,
+    "maximum": 4,
+    "requested": 2,
+    "within": true
+   },
+   "run": {
+    "calendar_outcome": "ready",
+    "exit_code": 0,
+    "failed": false,
+    "failure": null,
+    "problems": [],
+    "published": true,
+    "skipped": null,
+    "stage": "email",
+    "status": "ok"
+   },
+   "session": "2026-09-15",
+   "words": "the night after a missed one: every boundary answers again"
+  }
+ ],
+ "policy": "recovery_rehearsal_v1",
+ "source": {
+  "attempts": 2,
+  "doubles": "tests/fakes.py",
+  "guard_sha256": "608e5c0a7569e0a0cd87311af81d0651aa4b23a6ca4ea7c6dcb7dd66fb839efa",
+  "market": {
+   "benchmark": "SPY",
+   "names": [
+    "AAA",
+    "AAB",
+    "BAA",
+    "BBB",
+    "BCC",
+    "BDD",
+    "BEE",
+    "BFF",
+    "BGG",
+    "BHH",
+    "BII",
+    "BJJ",
+    "BKK",
+    "COIL"
+   ],
+   "reader_names": [
+    "AAA",
+    "AAB"
+   ]
+  },
+  "pipeline": "src/pipeline.py:run_evening",
+  "seed": 20261012,
+  "workflow": ".github/workflows/evening.yml"
+ },
+ "summary": {
+  "bars_requests": {
+   "clean": 1,
+   "email_failed": 1,
+   "holiday": 0,
+   "next_session_after_a_missed_night": 1,
+   "provider_outage": 2,
+   "provider_recovered_at_retry": 1,
+   "reader_credit": 1,
+   "reader_transport": 1,
+   "stale_feed": 1
+  },
+  "bars_requests_within_bound_every_night": true,
+  "exit_codes": {
+   "clean": 0,
+   "email_failed": 3,
+   "holiday": 0,
+   "next_session_after_a_missed_night": 0,
+   "provider_outage": 1,
+   "provider_recovered_at_retry": 0,
+   "reader_credit": 2,
+   "reader_transport": 2,
+   "stale_feed": 1
+  },
+  "failed_before_publishing": 2,
+  "guard": {
+   "already_published": 7,
+   "expired": 2,
+   "newer_published": 1,
+   "not_a_session": 2,
+   "other": 0,
+   "permitted": 10
+  },
+  "mails": {
+   "clean": 1,
+   "email_failed": 0,
+   "holiday": 0,
+   "next_session_after_a_missed_night": 1,
+   "provider_outage": 1,
+   "provider_recovered_at_retry": 1,
+   "reader_credit": 1,
+   "reader_transport": 1,
+   "stale_feed": 1
+  },
+  "nights": 9,
+  "previous_outcomes": {
+   "clean": "none",
+   "email_failed": "replaced",
+   "holiday": "preserved",
+   "next_session_after_a_missed_night": "replaced",
+   "provider_outage": "preserved",
+   "provider_recovered_at_retry": "replaced",
+   "reader_credit": "replaced",
+   "reader_transport": "replaced",
+   "stale_feed": "preserved"
+  },
+  "previous_preserved_on_every_night_that_published_nothing": true,
+  "published": 6,
+  "reader_calls": {
+   "clean": 2,
+   "email_failed": 2,
+   "holiday": 0,
+   "next_session_after_a_missed_night": 2,
+   "provider_outage": 0,
+   "provider_recovered_at_retry": 2,
+   "reader_credit": 1,
+   "reader_transport": 4,
+   "stale_feed": 0
+  },
+  "reader_calls_within_bound_every_night": true,
+  "sessions_published": [
+   "2026-09-04",
+   "2026-09-08",
+   "2026-09-09",
+   "2026-09-10",
+   "2026-09-11",
+   "2026-09-15"
+  ],
+  "skipped": 1,
+  "slots_admitted_after_a_failure": 2,
+  "slots_admitted_after_a_publication": 0
+ },
+ "version": 1
+}
