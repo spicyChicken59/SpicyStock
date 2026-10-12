@@ -18,7 +18,10 @@ const CLOCKS = {
   atPrimary: ['2026-09-11T22:16:00Z', 'Fri 6:16 PM ET, the primary slot itself'],
   betweenSlots: ['2026-09-11T23:00:00Z', 'Fri 7:00 PM ET, between the slots'],
   atRetry: ['2026-09-12T00:16:00Z', 'Fri 8:16 PM ET, the retry slot itself'],
+  nine: ['2026-09-12T01:00:00Z', 'Fri 9:00 PM ET, the hour the page used to call stale'],
+  lateNight: ['2026-09-12T03:30:00Z', 'Fri 11:30 PM ET, still inside the window'],
   saturday: ['2026-09-12T14:00:00Z', 'Sat 10:00 AM ET, past both slots, the next open ahead'],
+  sundayLate: ['2026-09-14T02:00:00Z', 'Sun 10:00 PM ET, the window still running'],
   sunday: ['2026-09-13T23:00:00Z', 'Sun 7:00 PM ET, the window still running'],
   lastSecond: ['2026-09-14T13:29:59Z', 'Mon 9:29:59 AM ET, the last second of the recovery window'],
   nextOpen: ['2026-09-14T13:30:00Z', 'Mon 9:30 AM ET, the next open: the window has ended'],
@@ -32,8 +35,10 @@ function routed(name, record) {
   return { url: `/service-${name}.json`, beforeLoad: (p) => p.route(`**/service-${name}.json`, (route) => route.fulfill({ contentType: 'application/json', body })) };
 }
 const statusAt = (page, data, at) => page.evaluate(([d, a]) => {
-  const s = window.SCStock.status(d, new Date(a));
-  return { state: s.state, chip: s.chip, slot: s.slot === undefined ? null : s.slot, sentence: s.sentence, recoverUntil: s.recoverUntil || null, nextSession: s.nextSession || null };
+  try {
+    const s = window.SCStock.status(d, new Date(a));
+    return { state: s.state, chip: s.chip, slot: s.slot === undefined ? null : s.slot, sentence: s.sentence, recoverUntil: s.recoverUntil || null, nextSession: s.nextSession || null };
+  } catch (e) { return { state: 'threw: ' + e.message, chip: null, slot: null, sentence: '', recoverUntil: null, nextSession: null }; }
 }, [data, at]);
 const renderAt = async (page, data, at) => { await page.evaluate(([d, a]) => { window.SCStock.render(d, new Date(a)); }, [data, at]); await page.waitForTimeout(300); };
 const noOverflow = (page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
@@ -71,7 +76,10 @@ export async function checkServiceState({ browser, base, open, check, eq, shotsD
         atPrimary: ['pending', 'after_primary', 'tonight’s run pending', 'Its 6:16 PM ET slot has passed without a publication; the retry slot is 8:16 PM ET'],
         betweenSlots: ['pending', 'after_primary', 'tonight’s run pending', 'the retry slot is 8:16 PM ET'],
         atRetry: ['pending', 'after_retry', 'run pending · past both slots', 'Both scheduled slots (6:16 PM ET, 8:16 PM ET) have passed; a delayed run can still publish it until Mon 14 Sep opens (9:30 AM ET), after which it will not — check the run log.'],
+        nine: ['pending', 'after_retry', 'run pending · past both slots', 'a delayed run can still publish it until Mon 14 Sep opens (9:30 AM ET)'],
+        lateNight: ['pending', 'after_retry', 'run pending · past both slots', 'Both scheduled slots (6:16 PM ET, 8:16 PM ET) have passed'],
         saturday: ['pending', 'after_retry', 'run pending · past both slots', 'No publication yet for Fri 11 Sep.'],
+        sundayLate: ['pending', 'after_retry', 'run pending · past both slots', 'until Mon 14 Sep opens (9:30 AM ET)'],
         sunday: ['pending', 'after_retry', 'run pending · past both slots', 'until Mon 14 Sep opens (9:30 AM ET)'],
         lastSecond: ['pending', 'after_retry', 'run pending · past both slots', 'a delayed run can still publish it'],
         nextOpen: ['stale1', null, 'STALE · 1 session behind', 'No run published for Fri 11 Sep, and the service’s recovery window for it ended when Mon 14 Sep opened (9:30 AM ET): it will not be published now. The calendar expected a session; check the run log. Do not place these orders.'],
@@ -117,6 +125,7 @@ export async function checkServiceState({ browser, base, open, check, eq, shotsD
     try {
       const got = await statusAt(page, record, CLOCKS.saturday[0]);
       eq(`${name}: Saturday is still pending, off the calendar's next open`, [got.state, got.slot, got.chip, got.recoverUntil], ['pending', null, 'tonight’s run pending', '2026-09-14T09:30:00-04:00']);
+      eq(`${name}: Friday 9 PM ET is pending too, the hour the page used to call stale`, (await statusAt(page, record, CLOCKS.nine[0])).state, 'pending');
       check(`${name}: the sentence names the window and no slot`, got.sentence.includes('until Mon 14 Sep opens (9:30 AM ET)') && got.sentence.includes(sentenceWords) && !got.sentence.includes('6:16'), got.sentence);
       eq(`${name}: Monday's open ends it`, (await statusAt(page, record, CLOCKS.nextOpen[0])).state, 'stale1');
       const meta = await page.locator('#run-meta').innerText();
@@ -127,6 +136,32 @@ export async function checkServiceState({ browser, base, open, check, eq, shotsD
       const body = await page.locator('body').innerText();
       check(`${name}: nothing prints undefined or NaN`, !/\bundefined\b|\bNaN\b/.test(body), (body.match(/.{0,40}(undefined|NaN).{0,40}/) || [''])[0]);
       eq(`${name}: page errors`, [...errors], []);
+    } finally { await context.close(); }
+  }
+
+  // ---- a record archived under other slots (7:16 PM and 9:16 PM ET): the words on
+  // the page are the record's, so a page that carried the hour itself is caught
+  {
+    const other = clone(full);
+    other.run.delivery.policy.primary_et = '19:16'; other.run.delivery.policy.retry_et = '21:16';
+    other.run.delivery.sentence = 'Published 6:30 PM ET on Thu 10 Sep, under other archived slots (a routed control).';
+    const r = routed('other', other);
+    const { page, context, errors } = await open(browser, base, r.url, FRESH, 1280, { reducedMotion: 'reduce', lens: 'all', hash: '#/method', beforeLoad: r.beforeLoad });
+    try {
+      const meta = await page.locator('#run-meta').innerText();
+      check('other slots: Method names the record’s own slots', meta.includes('evening runs are scheduled at 7:16 PM ET with a retry at 9:16 PM ET') && !meta.includes('6:16 PM ET with a retry'), meta.slice(meta.indexOf('Service schedule'), meta.indexOf('Service schedule') + 120));
+      check('other slots: Method prints the record’s delivery sentence', meta.includes('Delivery: ' + other.run.delivery.sentence), meta);
+      for (const [key, slot, words] of [
+        ['betweenSlots', 'before_primary', 'its first scheduled slot is 7:16 PM ET'],     // Fri 7:00 PM ET is before a 7:16 PM slot
+        ['atRetry', 'after_primary', 'Its 7:16 PM ET slot has passed without a publication; the retry slot is 9:16 PM ET'],   // 8:16 PM ET
+        ['nine', 'after_primary', 'the retry slot is 9:16 PM ET'],
+        ['lateNight', 'after_retry', 'Both scheduled slots (7:16 PM ET, 9:16 PM ET) have passed'],
+      ]) {
+        const got = await statusAt(page, other, CLOCKS[key][0]);
+        eq(`other slots: ${CLOCKS[key][1]} -> ${slot} under the record’s slots`, [got.state, got.slot], ['pending', slot]);
+        check(`  and the sentence quotes them: ${words.slice(0, 40)}`, got.sentence.includes(words) && !got.sentence.includes('6:16') && !got.sentence.includes('8:16'), got.sentence);
+      }
+      eq('other slots: page errors', [...errors], []);
     } finally { await context.close(); }
   }
 

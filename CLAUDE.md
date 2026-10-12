@@ -174,7 +174,11 @@ modules, its example ticket and five-session replay re-derived by
 
 **A record carries two facts about time and the page keeps them apart**,
 because freshness is not permission. `status()` is publication: is this the
-newest record and did the run finish. `run.timing` (`src/timing.py`, written
+newest record and did the run finish -- and when the newest expected session
+has no record yet, pending against stale is the service's own recovery window
+read off the record (the next session's open on `run.calendar`; the slot the
+ET clock has passed in the words `run.delivery` archived, `src/delivery.py`),
+never a fixed hour on the page. `run.timing` (`src/timing.py`, written
 by `pipeline.plan_timing()`) is ACTION TIMING: the session the published
 plans are FOR -- `plan.next_sessions(session, 1)[0]`, the same call
 `dated_schedule()` makes for its day 1, so the two cannot disagree -- and

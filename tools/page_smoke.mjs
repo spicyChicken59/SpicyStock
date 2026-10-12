@@ -1174,6 +1174,7 @@ async function checkStates(browser, base, data) {
     ['pending', PENDING_NOW, /pending/, 'pending'],
     ['pending-after-retry', '2026-09-12T00:30:00Z', /pending · past both slots/, 'pending'],   // Friday 8:30 PM ET: the retry has just fired
     ['pending-weekend', WEEKEND_NOW, /pending · past both slots/, 'pending'],
+    ['pending-late-night', '2026-09-12T02:00:00Z', /pending · past both slots/, 'pending'],   // Friday 10 PM ET: the hour the page used to call stale, inside the guard's recovery window
     ['stale1', STALE1_NOW, /STALE · 1 session behind/, 'stale1'],
     ['stale2', STALE2_NOW, /STALE · \d+ sessions behind/, 'stale2']]) {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', now, 1280, { hash: `#/explore/bursts/${trade}` });
