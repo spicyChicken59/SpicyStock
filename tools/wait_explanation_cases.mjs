@@ -96,7 +96,7 @@ export async function checkWaitExplanations({browser, base, open, check, eq, sho
     try {
       // An unchanged market/reader control must pass even on the reviewed source.
       const fullPending=await nextText(p);
-      check(label+' full genuine record does not skip pending Monday',fullPending.includes('2026-09-28')&&!fullPending.includes('2026-09-29'),fullPending);
+      check(label+' full genuine record does not skip pending Monday',fullPending.includes('The 2026-09-28 session')&&!fullPending.includes('The 2026-09-29 session'),fullPending);
       const initial=await blockers(p);
       check(label+' independent RED and rejected review retained',initial.includes('Market permission: RED')&&initial.includes('outside the permitted criterion'));
       check(label+' known early-gate skip is recorded',initial.includes('Planning skipped')&&initial.includes('market gate')&&!initial.includes('Planning failed'),initial);
