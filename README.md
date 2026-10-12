@@ -1207,6 +1207,41 @@ refuses the push. No new subscription, credential or environment variable is
 involved; Saturday tests cannot prove Monday delivery, and Actions timing stays
 a best-effort dated snapshot.
 
+### Same-session source recovery
+
+`morning.yml` also asks the provider once more for the stocks the night's own
+record says it could not read (`src/source_recovery.py`, writing
+`docs/source-recovery.json`). The receipt binds the exact canonical publication
+and its compact reader and freezes the record's own basis -- universe identity,
+feed, split adjustment, lookback, measured session and rules digest; a record
+whose basis differs is `basis_differs`, and nothing is fetched. The names come
+from the record first (`run.input_tolerance.names`, the stale frames the
+tolerance named in full) and from the publication's quality-ledger entry second
+(its complete exception membership for `stale`, `no_bars`, `dropped`,
+`unfetched_budget`, `unfetched_failure`, `gapped` and `unreadable`, each held to
+the ledger's own coverage counts), and never from a guess: a deficit the record
+counted but named nowhere is `deficit_not_named`, and the request stays unspent.
+At most `MAX_NAMES` (100, one provider batch) are asked for in `MAX_BATCHES` (1)
+request of at most `MAX_BATCH_ATTEMPTS` (2) attempts, through the same Alpaca
+pair the morning collector reads, within `MAX_COLLECTION_SECONDS` (300) and only
+before the next session opens (`recovery_until: next_session_open`); more named
+deficits than the budget is `deficit_over_budget` whole, never a prefix, and a
+publication whose one request was already spent is `already_attempted`. The
+benchmark is never requested. Each row says what came back for its stock --
+`recovered` (a bar for the measured session that passes the session rules),
+`arrived_not_ready` (a bar that is gapped or unreadable), `still_stale` (an
+ending that did not move), `still_missing` or `not_returned` -- with the bar's
+volume and whether it was the provider's flat placeholder. The original
+publication's coverage facts are copied beside the recovered count and never
+combined into one figure: the record stays exactly as published, with its
+measurements, grades, plans and tickets, and the receipt establishes neither
+why a bar was absent nor when it arrived at the provider. Persistence is a
+one-file commit on main (`publish_morning.py --target recovery`), revalidated
+against the record, the ledger entry on main and the prior receipt; a spent
+receipt is never replaced. The Method view prints the receipt's one sentence
+after hashing the loaded publication's bytes against the receipt's binding, and
+nothing else on the page reads it.
+
 ### Research follow-through
 
 The Morning desk's optional **Research follow-through** view follows every frozen
@@ -1360,6 +1395,7 @@ node tools/page_smoke.mjs --only decisioninspection # anticipation reasons and e
 node tools/page_smoke.mjs --only findings     # the Record view's replay over the committed findings
 node tools/page_smoke.mjs --only funnel       # the scan disclosure's candidate funnel, printed from the record's own block
 node tools/page_smoke.mjs --only service      # pending against stale off the record's calendar and archived slots, every phase at every width
+node tools/page_smoke.mjs --only recovery     # the Method view's source-recovery line, bound to the loaded publication's bytes
 python tools/make_fixture.py --check        # the fixtures are what the pipeline writes
 ```
 
@@ -1643,6 +1679,7 @@ src/            history.py (public recovery and coverage)
                 stop_research.py (registered source-bound anticipation comparison and immutable cohorts)
                 research_outcomes.py (frozen cohort follow-through from dated retained observations)
                 research_observations.py (dated IEX observation of the bound research cohort's allocation-fit rows; one request a run, never a ticket)
+                source_recovery.py (one bounded re-request of the publication's named missing or stale stocks under its own frozen basis; the record unchanged, never a signal)
                 scans.py · discovery.py · quality.py · breadth.py · watchlist.py · plan.py
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)

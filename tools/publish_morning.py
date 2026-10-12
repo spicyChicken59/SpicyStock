@@ -6,6 +6,10 @@ creates a one-file commit. Ordinary fast-forward pushes provide the compare and
 swap: every rejected push starts again from main and repeats all validations.
 No working-tree reset, rebase, force push, provider call or email is involved.
 
+The same path publishes the bound source recovery (``--target recovery``): one
+file, ``docs/source-recovery.json``, validated against the current main record,
+the quality ledger's entry for it and the prior receipt.
+
 The same path publishes the dated research observation (``--target research``):
 one file, ``docs/research-observations.json``, validated against the current
 main record AND the research cohort receipt and bundle committed beside it.
@@ -25,6 +29,7 @@ from src import sessions
 
 SNAPSHOT_PATH = 'docs/morning.json'
 RESEARCH_SNAPSHOT_PATH = 'docs/research-observations.json'
+RECOVERY_SNAPSHOT_PATH = 'docs/source-recovery.json'
 COHORT_RECEIPT_PATH = 'docs/stop-research.json'
 RECORD_PATH = 'docs/data.json'
 MAX_SNAPSHOT_BYTES = 1024 * 1024
@@ -32,6 +37,7 @@ MAX_SNAPSHOT_BYTES = 1024 * 1024
 TARGETS = {
     'morning': {'snapshot': SNAPSHOT_PATH, 'message': b'Publish bound morning observation\n'},
     'research': {'snapshot': RESEARCH_SNAPSHOT_PATH, 'message': b'Publish bound research observation\n'},
+    'recovery': {'snapshot': RECOVERY_SNAPSHOT_PATH, 'message': b'Publish bound source recovery\n'},
 }
 PUSH_ATTEMPTS = 3
 MAX_FUTURE_SKEW_SECONDS = 5
@@ -200,6 +206,66 @@ def research_check(observation: dict, data_raw: bytes, receipt_raw: bytes | None
     return None
 
 
+def recovery_check(observation: dict, data_raw: bytes, ledger_raw: bytes | None, previous_raw: bytes | None,
+                   now: datetime | None = None) -> str | None:
+    """The source recovery's race refusals; malformed or rehearsal input raises.
+
+    The compare and swap covers the record, the prior receipt AND the quality
+    ledger's entry for the record on main: a receipt whose deficits were named
+    off an entry main no longer carries (or carries differently) describes
+    nothing main publishes. A receipt that spent the publication's one bounded
+    request is never replaced; an inapplicable one may be, by a newer one.
+    """
+    from src.source_recovery import attempted, validate_receipt
+
+    if observation.get('dry_run') is not False:
+        raise ValueError('recovery_rehearsal_cannot_publish')
+    binding = observation.get('publication', {})
+    if (not isinstance(binding, dict)
+            or binding.get('data_sha256') != hashlib.sha256(data_raw).hexdigest()):
+        return 'source_record_changed'
+    if 'previous_observation_sha256' not in observation:
+        raise ValueError('recovery_previous_observation_binding_missing')
+    previous_hash = hashlib.sha256(previous_raw).hexdigest() if previous_raw is not None else None
+    if observation['previous_observation_sha256'] != previous_hash:
+        return 'previous_observation_changed'
+    deficits = observation.get('deficits')
+    ledger = deficits.get('ledger') if isinstance(deficits, dict) else None
+    ledger_hash = hashlib.sha256(ledger_raw).hexdigest() if ledger_raw is not None else None
+    if (ledger.get('sha256') if isinstance(ledger, dict) else ledger) != ledger_hash:
+        return 'ledger_entry_changed'
+    validate_receipt(observation, data_raw, ledger_raw, previous_raw=previous_raw, require_continuity=True)
+    now = now or datetime.now(timezone.utc)
+    if instant(observation['generated_at']) > now + timedelta(seconds=MAX_FUTURE_SKEW_SECONDS):
+        raise ValueError('recovery_completion_is_in_future')
+    if previous_raw is not None:
+        previous = read_snapshot(previous_raw)
+        previous_binding = previous.get('publication')
+        if not isinstance(previous_binding, dict):
+            raise ValueError('existing_recovery_binding_invalid')
+        if previous_binding.get('data_sha256') == binding['data_sha256']:
+            if attempted(previous, binding['data_sha256']):
+                return 'recovery_already_published'
+            if (instant(previous['generated_at']) >= instant(observation['generated_at'])
+                    or instant(previous['collection_started_at']) >= instant(observation['collection_started_at'])):
+                return 'newer_or_equal_observation_exists'
+    return None
+
+
+def _ledger_on_main(root: Path, tip: str, observation: dict) -> bytes | None:
+    """The quality ledger's entry for the receipt's publication as main carries
+    it; None when main has none (or the receipt names no readable publication,
+    which recovery_check then refuses as a changed record)."""
+    from src import quality_ledger
+    from src.source_recovery import HEX
+    binding = observation.get('publication')
+    digest = binding.get('data_sha256') if isinstance(binding, dict) else None
+    if not isinstance(digest, str) or not HEX.fullmatch(digest):
+        return None
+    return _tip_blob(root, tip, f'docs/{quality_ledger.DIRECTORY}/{digest}.json.gz',
+                     quality_ledger.MAX_ENTRY_BYTES, 'quality_ledger_entry')
+
+
 def _tip_blob(root: Path, tip: str, path: str, maximum: int, label: str) -> bytes | None:
     if not git(root, 'ls-tree', tip, '--', path).stdout:
         return None
@@ -239,6 +305,8 @@ def publish(root: Path, snapshot_raw: bytes, *, ref: str, run_id: str, target: s
         previous_raw = _tip_blob(root, tip, snapshot_path, MAX_SNAPSHOT_BYTES, 'morning_snapshot')
         if target == 'morning':
             refusal = publication_check(observation, data_raw, previous_raw)
+        elif target == 'recovery':
+            refusal = recovery_check(observation, data_raw, _ledger_on_main(root, tip, observation), previous_raw)
         else:
             receipt_raw, bundle_raw = _cohort_on_main(root, tip)
             refusal = research_check(observation, data_raw, receipt_raw, bundle_raw, previous_raw)

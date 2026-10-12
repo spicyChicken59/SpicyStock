@@ -41,10 +41,12 @@ jobs:
       (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == true))
       && (inputs.probe_sources != true || inputs.dry_run == true)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # three bounded collectors, each under its own deadline (180, 180 and 300 s)
+    timeout-minutes: 15
     outputs:
       observation_ready: ${{ steps.collect.outputs.ready }}
       research_ready: ${{ steps.research.outputs.ready }}
+      recovery_ready: ${{ steps.recovery.outputs.ready }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -104,6 +106,31 @@ jobs:
           path: ${{ runner.temp }}/research-observations.json
           if-no-files-found: error
           retention-days: 14
+      # The publication's own named missing or stale stocks get one bounded
+      # re-request before the next open through the scan's own bars transport
+      # (src/source_recovery.py). Its refusal is honest output here and never
+      # fails the observations beside it; nothing of the publication is touched.
+      - name: Collect a bound source recovery
+        id: recovery
+        if: steps.guard.outputs.go == 'true'
+        continue-on-error: true
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          SCAN_SEND_EMAIL: "false"
+          GITHUB_RUN_ID_FOR_RECORD: ${{ github.run_id }}
+          DRY_RUN_FLAG: ${{ inputs.dry_run == true && '--dry-run' || '' }}
+        run: |
+          python -m src.source_recovery --docs docs --output "$RUNNER_TEMP/source-recovery.json" $DRY_RUN_FLAG
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Retain only this source recovery
+        if: steps.recovery.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-recovery.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Rehearse actual source transports
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sources == true
         env:
@@ -159,3 +186,14 @@ jobs:
       - name: Publish only against the unchanged record and research cohort
         if: needs.collect.outputs.research_ready == 'true'
         run: python -m tools.publish_morning publish --target research --snapshot "$RUNNER_TEMP/research-observation/research-observations.json"
+      # The source recovery is a third one-file commit, revalidated against
+      # main's record, the quality ledger's entry for it and the prior receipt.
+      - name: Download only this run's source recovery
+        if: needs.collect.outputs.recovery_ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: source-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-recovery
+      - name: Publish only against the unchanged record, ledger entry and prior recovery
+        if: needs.collect.outputs.recovery_ready == 'true'
+        run: python -m tools.publish_morning publish --target recovery --snapshot "$RUNNER_TEMP/source-recovery/source-recovery.json"

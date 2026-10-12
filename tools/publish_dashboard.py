@@ -43,7 +43,7 @@ from src import reader
 # verified, and the gate printed "Verified" over a served site that could have
 # lacked it.
 RECORD_FILES = ("data.json", "reader.json", "picks.json", "historical-validation.json", "historical-findings.json")
-OPTIONAL_RECORD_FILES = ("morning.json", "research-observations.json")
+OPTIONAL_RECORD_FILES = ("morning.json", "research-observations.json", "source-recovery.json")
 WAIT_SECONDS = 480
 
 

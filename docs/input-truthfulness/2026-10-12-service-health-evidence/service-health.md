@@ -50,6 +50,7 @@ Read from `origin/main` through commit `c759a1e6` (clock 2026-10-12 01:01Z), 26 
 | issuer_evidence | 2026-10-10 08:58Z | 2026-10-10 08:57Z | unavailable | — | 2026-10-12 | yes | — | 38034610157 |
 | issuer_evidence | 2026-10-10 09:19Z | 2026-10-10 09:18Z | unavailable | — | 2026-10-12 | yes | — | 38034610157 |
 | research_observations | — | — | none retained | — | — | — | — | — |
+| source_recovery | — | — | none retained | — | — | — | — | — |
 
 ## Commits read and set aside
 

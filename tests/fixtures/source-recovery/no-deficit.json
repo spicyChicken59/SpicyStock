@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-09-11T13:20:00+00:00",
+  "generated_at": "2026-09-11T13:20:00+00:00",
+  "observation_run_id": "synthetic-no-deficit",
+  "previous_observation_sha256": null,
+  "dry_run": true,
+  "publication": {
+    "data_sha256": "0924c337b71b0112b6387fa319e9c23cb81d59a3a05d6cb3a914355f2c7a4a29",
+    "context_sha256": "2861282f141a79bdc5f3d3d02e7ad1ef6dc3a0344a28d5def8442fa17aa109bf",
+    "run_id": null,
+    "rules_version": "784177584fbe",
+    "measured_session": "2026-09-10",
+    "applicable_session": "2026-09-11",
+    "published_at": "2026-09-10T22:30:00+00:00",
+    "reader_projection_version": 1,
+    "reader_sha256": "c042cb7b2c6ad0491f140648e1597a386f1a15f6f0b5b5d18692eac00591b5ef"
+  },
+  "frozen": {
+    "session": "2026-09-10",
+    "expected_session": "2026-09-10",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Day",
+    "lookback_days": 260,
+    "stale_names_max": 100,
+    "universe_identity": "f97bc6805de5df88",
+    "universe_snapshot_sha256": null,
+    "universe_size": 31,
+    "intended_identity": "12ecde3aab5494ac",
+    "coverage_sha256": "2757256c90a7680b6b80f340bec5e555bf9c954e379dff9bba747ecd075479a9",
+    "rules_version": "784177584fbe"
+  },
+  "window": {
+    "next_session": "2026-09-11",
+    "next_open_at": "2026-09-11T09:30:00-04:00",
+    "before_next_open": true
+  },
+  "original": {
+    "acceptance_status": "ok",
+    "intended_stocks": 31,
+    "ready_stocks": 31,
+    "fraction": 1.0,
+    "complete_intended": true,
+    "capacity_excluded": 0,
+    "stale": 0,
+    "stale_stocks": 0,
+    "tolerance_verdict": "complete",
+    "tolerance_reasons": [],
+    "gaps": {
+      "stale": 0,
+      "no_bars": 0,
+      "dropped": 0,
+      "unfetched_budget": 0,
+      "unfetched_failure": 0,
+      "gapped": 0,
+      "unreadable": 0
+    },
+    "run_status": "ok",
+    "problem_kinds": [],
+    "gate_read_run_status": false
+  },
+  "deficits": {
+    "categories": {
+      "stale": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "no_bars": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "dropped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unfetched_budget": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unfetched_failure": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "gapped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unreadable": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      }
+    },
+    "named_stocks": 0,
+    "unnamed_frames": 0,
+    "ledger": null
+  },
+  "policy": {
+    "version": 1,
+    "max_batches": 1,
+    "max_batch_attempts": 2,
+    "max_names": 100,
+    "max_collection_seconds": 300,
+    "max_future_skew_seconds": 5,
+    "recovery_until": "next_session_open",
+    "categories": [
+      "stale",
+      "no_bars",
+      "dropped",
+      "unfetched_budget",
+      "unfetched_failure",
+      "gapped",
+      "unreadable"
+    ],
+    "selection": "named_missing_or_stale_stocks_of_the_bound_publication",
+    "benchmark_requested": false,
+    "basis": "the publication's own feed, adjustment, session and lookback"
+  },
+  "status": "inapplicable",
+  "reason": "no_coverage_deficit",
+  "requested": [],
+  "source": {
+    "provider": "Alpaca",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Day",
+    "status": "not_requested",
+    "error_kind": null,
+    "checked_at": null,
+    "batch_attempts": 0,
+    "symbols_requested": 0,
+    "window": null
+  },
+  "rows": [],
+  "recovered": {
+    "requested": 0,
+    "arrived": 0,
+    "session_ready": 0,
+    "arrived_not_ready": 0,
+    "still_stale": 0,
+    "still_missing": 0,
+    "not_returned": 0,
+    "zero_volume": 0,
+    "flat": 0
+  },
+  "coverage": {
+    "scan": "not_run",
+    "grades": "unchanged",
+    "plans": "unchanged",
+    "tickets": "unchanged",
+    "scorecard": "unchanged",
+    "cause_of_absence": "not_established"
+  },
+  "limits": [
+    "original_publication_immutable",
+    "no_combined_coverage_figure",
+    "not_a_fixed_cohort_improvement",
+    "ready_names_not_refetched",
+    "arrival_time_unknown",
+    "wire_requests_by_arithmetic_only",
+    "one_bounded_attempt_per_publication",
+    "second_slot_may_spend_once_more_after_a_refused_persist",
+    "rides_the_morning_collectors_success",
+    "prior_session_followup_is_separate"
+  ],
+  "sentence": "No source recovery for the 2026-09-10 publication at 9:20 AM ET on Fri 11 Sep: every intended stock's session bar arrived; nothing was fetched."
+}

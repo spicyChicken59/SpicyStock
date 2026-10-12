@@ -93,7 +93,8 @@
     "status": "inapplicable"
    }
   ],
-  "research_observations": []
+  "research_observations": [],
+  "source_recovery": []
  },
  "policy": "service_health_v1",
  "publications": [
@@ -1501,7 +1502,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 2,
    "service": {
@@ -1567,7 +1569,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -1633,7 +1636,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -1699,7 +1703,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -1767,7 +1772,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -1835,7 +1841,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -1904,7 +1911,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 2,
    "service": {
@@ -1972,7 +1980,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2041,7 +2050,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2110,7 +2120,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2179,7 +2190,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2248,7 +2260,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2317,7 +2330,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2386,7 +2400,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2455,7 +2470,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2523,7 +2539,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2592,7 +2609,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2661,7 +2679,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2730,7 +2749,8 @@
    "receipts": {
     "issuer_evidence": [],
     "morning": [],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 1,
    "service": {
@@ -2808,7 +2828,8 @@
       "status": "inapplicable"
      }
     ],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 2,
    "service": {
@@ -2912,7 +2933,8 @@
       "status": "inapplicable"
      }
     ],
-    "research_observations": []
+    "research_observations": [],
+    "source_recovery": []
    },
    "revisions": 3,
    "service": {
@@ -3128,12 +3150,14 @@
     "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
     "2fa9773f046299de78c95d1b513c05880a3eefdb"
    ],
-   "research_observations": []
+   "research_observations": [],
+   "source_recovery": []
   },
   "companion_paths": {
    "issuer_evidence": "docs/issuer-evidence.json",
    "morning": "docs/morning.json",
-   "research_observations": "docs/research-observations.json"
+   "research_observations": "docs/research-observations.json",
+   "source_recovery": "docs/source-recovery.json"
   },
   "limit": 128,
   "publication_commits": [
@@ -3195,6 +3219,12 @@
     }
    },
    "research_observations": {
+    "applicable_sessions": [],
+    "before_applicable_open": 0,
+    "receipts": 0,
+    "statuses": {}
+   },
+   "source_recovery": {
     "applicable_sessions": [],
     "before_applicable_open": 0,
     "receipts": 0,

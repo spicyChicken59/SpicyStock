@@ -46,7 +46,8 @@ RECORD_PATH = "docs/data.json"
 #: the companion receipts whose commits are read beside the publications
 COMPANIONS = {"morning": "docs/morning.json",
               "issuer_evidence": "docs/issuer-evidence.json",
-              "research_observations": "docs/research-observations.json"}
+              "research_observations": "docs/research-observations.json",
+              "source_recovery": "docs/source-recovery.json"}
 HISTORY_LIMIT = 128
 #: the evening cron's nominal instants in the exchange's zone: ``16 22 * * 1-5`` on EDT
 #: and ``16 23`` on EST are one wall-clock time, 6:16 PM ET; the retry pair is 8:16 PM
@@ -65,8 +66,10 @@ COMPANION_FIELDS = {
     "morning": ("status", "reason", "entry_phase", "generated_at", "collection_started_at", "observation_run_id", "dry_run"),
     "issuer_evidence": ("status", "generated_at", "collection_started_at", "collection_run_id", "dry_run"),
     "research_observations": ("status", "reason", "generated_at", "collection_started_at", "requests", "dry_run"),
+    "source_recovery": ("status", "reason", "generated_at", "collection_started_at", "observation_run_id", "dry_run"),
 }
-COMPANION_RUN_ID = {"morning": "observation_run_id", "issuer_evidence": "collection_run_id", "research_observations": "observation_run_id"}
+COMPANION_RUN_ID = {"morning": "observation_run_id", "issuer_evidence": "collection_run_id", "research_observations": "observation_run_id",
+                    "source_recovery": "observation_run_id"}
 #: the words the service columns use; the signal column is the record's regime and its tickets
 SERVICE_WORDS = {
     "published": "a real publication for this session reached main",
@@ -286,6 +289,12 @@ def companion_reading(kind: str, data, *, commit: str, blob: str, landed_at: str
     for field in COMPANION_FIELDS[kind]:
         if field != "generated_at":
             out[field] = data.get(field)
+    if kind == "source_recovery":
+        # the recovery's own two counts, copied: what it asked for and what now carries the session's bar
+        tally = data.get("recovered") if isinstance(data.get("recovered"), dict) else {}
+        source = data.get("source") if isinstance(data.get("source"), dict) else {}
+        out["session_ready"] = tally.get("session_ready")
+        out["batch_attempts"] = source.get("batch_attempts")
     return out
 
 

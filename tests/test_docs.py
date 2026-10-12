@@ -374,6 +374,22 @@ def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_module
     assert bound in method and "every session" in method
 
 
+def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():
+    """The recovery's budget is four constants; the prose that tells a reader
+    what one receipt may cost quotes them, and the names bound is one batch."""
+    from src import market_data, source_recovery
+    text = re.sub(r"\s+", " ", README)
+    assert f"`MAX_NAMES` ({source_recovery.MAX_NAMES}, one provider batch)" in text
+    assert f"`MAX_BATCHES` ({source_recovery.MAX_BATCHES}) request" in text
+    assert f"`MAX_BATCH_ATTEMPTS` ({source_recovery.MAX_BATCH_ATTEMPTS}) attempts" in text
+    assert f"`MAX_COLLECTION_SECONDS` ({source_recovery.MAX_COLLECTION_SECONDS})" in text
+    assert f"`recovery_until: {source_recovery.RECOVERY_UNTIL}`" in text
+    assert source_recovery.MAX_NAMES == market_data.DEFAULT_BATCH_SIZE * source_recovery.MAX_BATCHES
+    env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
+    assert (f"({source_recovery.MAX_NAMES} names, {source_recovery.MAX_BATCH_ATTEMPTS} attempts, "
+            f"{source_recovery.MAX_COLLECTION_SECONDS} seconds)") in env
+
+
 def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
     """The budget's reason for a withheld plan opens with "ticket withheld",
     so a line that introduces it with "No ticket" says it twice. Both

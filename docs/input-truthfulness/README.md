@@ -1,5 +1,17 @@
 # Input truthfulness milestone
 
+[12 October 2026: the publication's own missing stocks, asked for once more](2026-10-12-source-recovery.md)
+is #111's bounded same-session source-recovery study: `src/source_recovery.py`
+asks the provider once more, the next morning and before the next open, for the
+stocks the night's record named as stale or missing (the record's tolerance
+names first, the quality ledger's complete exception membership second, never a
+guess), in one request of at most two attempts over at most one batch of 100
+names under the record's own frozen basis, and writes a dated receipt beside the
+publication with the original and the recovered coverage kept apart. The record
+is unchanged by it. The 9 October session's three publications (22 stale, then
+one, under one universe identity) are the arrival evidence; the first live
+receipt is NOT RUN.
+
 [12 October 2026: the service's failures, rehearsed, and its recovery](2026-10-12-recovery-rehearsal.md)
 is #111's failure/recovery rehearsal: `tools/recovery_rehearsal.py` drives the
 real evening through the suite's doubles over nine pinned nights, injecting one
