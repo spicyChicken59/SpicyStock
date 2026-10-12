@@ -5,6 +5,7 @@ that fresh run, and `check()` is held to refuse drift."""
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -238,3 +239,17 @@ def test_the_command_line_writes_and_checks(result, tmp_path, monkeypatch, capsy
     monkeypatch.setattr(rr, "rehearse", lambda: (_ for _ in ()).throw(rr.RehearsalError("as written")))
     assert rr.main(["--output-dir", str(tmp_path)]) == 2
     assert "refused: as written" in capsys.readouterr().err
+
+
+def test_the_command_line_quiets_the_pipeline_only_while_it_runs(result, tmp_path, monkeypatch):
+    """main() lowers the root logger to ERROR for its own run and puts the
+    caller's level back: a test calling it must not silence the warnings later
+    tests capture (the publication-unavailable warnings, for two)."""
+    root = logging.getLogger()
+    monkeypatch.setattr(root, "level", logging.WARNING)
+    seen = []
+    monkeypatch.setattr(rr, "rehearse", lambda: seen.append(root.level) or result)
+    assert rr.main(["--output-dir", str(tmp_path)]) == 0
+    assert seen == [logging.ERROR] and root.level == logging.WARNING
+    monkeypatch.setattr(rr, "rehearse", lambda: (_ for _ in ()).throw(rr.RehearsalError("as written")))
+    assert rr.main(["--output-dir", str(tmp_path)]) == 2 and root.level == logging.WARNING

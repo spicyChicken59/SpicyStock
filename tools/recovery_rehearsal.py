@@ -518,7 +518,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, default=OUT_DIR)
     parser.add_argument("--check", action="store_true", help="run the rehearsal again and hold the committed files to it")
     args = parser.parse_args(argv)
-    logging.getLogger().setLevel(logging.ERROR)   # the pipeline narrates every injected failure; the files carry the facts
+    root = logging.getLogger()
+    previous_level = root.level
+    # the pipeline narrates every injected failure; the files carry the facts.
+    # Quiet only for this command, and put back whatever level the caller had:
+    # a test that calls main() must not leave later tests' warnings unheard.
+    root.setLevel(logging.ERROR)
     try:
         if args.check:
             problems = check(args.output_dir)
@@ -531,6 +536,8 @@ def main(argv: list[str] | None = None) -> int:
     except RehearsalError as exc:
         print(f"refused: {exc}", file=sys.stderr)
         return 2
+    finally:
+        root.setLevel(previous_level)
     write(result, args.output_dir)
     s = result["summary"]
     print(f"{s['nights']} nights: {s['published']} published, {s['failed_before_publishing']} failed before publishing, "
