@@ -1,0 +1,1020 @@
+{
+ "backtest": {
+  "account": {
+   "equity": 10000.0,
+   "max_open_positions": 4,
+   "max_position_pct": 25.0,
+   "risk_pct": 0.5
+  },
+  "evaluated": {
+   "count": 158,
+   "from": "2026-02-10",
+   "seconds": 3813.5,
+   "through": "2026-09-25"
+  },
+  "gates": {
+   "no_regime_gate": {
+    "breakeven": 2,
+    "by_grade": {
+     "A": {
+      "losses": 13,
+      "mean_r": 0.444,
+      "plans": 55,
+      "settled": 23,
+      "sum_r": 10.22,
+      "wins": 8
+     },
+     "A+": {
+      "losses": 27,
+      "mean_r": 0.156,
+      "plans": 98,
+      "settled": 46,
+      "sum_r": 7.18,
+      "wins": 19
+     }
+    },
+    "by_regime": {
+     "red": {
+      "losses": 18,
+      "mean_r": 0.046,
+      "plans": 58,
+      "settled": 25,
+      "sum_r": 1.14,
+      "wins": 7
+     },
+     "yellow": {
+      "losses": 22,
+      "mean_r": 0.37,
+      "plans": 95,
+      "settled": 44,
+      "sum_r": 16.26,
+      "wins": 20
+     }
+    },
+    "label": "COUNTERFACTUAL — regime gate removed (not a policy)",
+    "losses": 40,
+    "mean_r": 0.252,
+    "mean_r_pasted": 0.25,
+    "median_r": -0.11,
+    "settled": 69,
+    "spy_avg_pct": 0.31,
+    "sum_r": 17.4,
+    "tickets": 153,
+    "win_rate": 0.39,
+    "wins": 27
+   },
+   "production": {
+    "breakeven": 1,
+    "by_grade": {
+     "A+": {
+      "losses": 27,
+      "mean_r": 0.085,
+      "plans": 99,
+      "settled": 44,
+      "sum_r": 3.72,
+      "wins": 16
+     }
+    },
+    "by_regime": {
+     "yellow": {
+      "losses": 27,
+      "mean_r": 0.085,
+      "plans": 99,
+      "settled": 44,
+      "sum_r": 3.72,
+      "wins": 16
+     }
+    },
+    "label": "PRODUCTION POLICY",
+    "losses": 27,
+    "mean_r": 0.085,
+    "mean_r_pasted": 0.08,
+    "median_r": -0.09,
+    "settled": 44,
+    "spy_avg_pct": 0.37,
+    "sum_r": 3.72,
+    "tickets": 99,
+    "win_rate": 0.36,
+    "wins": 16
+   }
+  },
+  "means": "mean_r is sum_r over settled at three places; mean_r_pasted is the summary's own two-place figure",
+  "reader": "NOT RUN"
+ },
+ "criteria": {
+  "min_settled": 20,
+  "scope": {
+   "adjacent": "the source speaks to a neighbouring population (another regime, no reader, mixed regimes) and is shown, never counted",
+   "direct": "the source's population is the one the change would trade"
+  },
+  "sign": {
+   "negative": "the 95% night-bootstrap interval of the mean of night means lies below zero",
+   "positive": "the 95% night-bootstrap interval of the mean of night means lies above zero",
+   "unreadable": "fewer than 20 settled tickets: a count, never a rate",
+   "unresolved": "enough settled tickets but no night-bootstrap interval, or one that straddles zero"
+  },
+  "verdict": {
+   "insufficient": "no direct source establishes a sign",
+   "mixed": "direct sources establish both signs",
+   "not_supported": "a direct source establishes a negative sign and none establishes a positive one",
+   "supported": "every direct source establishes a positive sign and every evaluation period of the change agrees"
+  },
+  "version": "evidence-review-v1"
+ },
+ "evidence_through": {
+  "backtest_through": "2026-09-25",
+  "funnel_sessions": 21,
+  "research_applicable_session": "2026-10-12",
+  "study_frozen_through": "2026-10-01",
+  "study_newest_session": "2026-10-05"
+ },
+ "feasibility": {
+  "account_2000": {
+   "accounts": {
+    "$2,000 / 0.5% (counterfactual)": 26
+   },
+   "anticipation": {
+    "eligible": 82,
+    "listed": 128,
+    "unreadable": 0,
+    "whole_share": 3
+   },
+   "bands": {
+    "green": {
+     "in_band": 1666,
+     "past_stop_rule": 1598,
+     "whole_share": 846
+    },
+    "tonight": {
+     "in_band": 8,
+     "past_stop_rule": 8,
+     "whole_share": 2
+    },
+    "yellow": {
+     "in_band": 40,
+     "past_stop_rule": 40,
+     "whole_share": 5
+    }
+   },
+   "candidates": 11513
+  },
+  "archived": {
+   "accounts": {
+    "$10,000 / 0.5% (archived)": 22,
+    "$2,000 / 0.5% (archived)": 4
+   },
+   "anticipation": {
+    "eligible": 82,
+    "listed": 128,
+    "unreadable": 0,
+    "whole_share": 3
+   },
+   "bands": {
+    "green": {
+     "in_band": 1666,
+     "past_stop_rule": 1598,
+     "whole_share": 1409
+    },
+    "tonight": {
+     "in_band": 8,
+     "past_stop_rule": 8,
+     "whole_share": 5
+    },
+    "yellow": {
+     "in_band": 40,
+     "past_stop_rule": 40,
+     "whole_share": 35
+    }
+   },
+   "candidates": 11513
+  }
+ },
+ "funnel": {
+  "anticipation": {
+   "event": 6,
+   "geometry": 13,
+   "market": 105,
+   "sizing": 1,
+   "ticket": 3
+  },
+  "discovered": 11513,
+  "listed": 128,
+  "potentially_usable": 8,
+  "publications": 26,
+  "reaction": {
+   "grade": 2887,
+   "market": 8618,
+   "review_downgraded": 6,
+   "review_refused": 2,
+   "ticket": 0
+  },
+  "regimes": {
+   "red": 21,
+   "yellow": 5
+  },
+  "sessions": 21
+ },
+ "ledger": [
+  {
+   "because": [
+    "no direct source"
+   ],
+   "id": "yellow_admits_a",
+   "notes": [
+    "the funnel: 2887 reaction candidates stopped at the YELLOW band's A+ gate over 5 YELLOW publications, none of them reviewed; what the reader would have done with them is NOT RUN",
+    "no retained publication has carried a YELLOW night with a reviewed A name, so no direct evidence exists"
+   ],
+   "period_signs": [],
+   "sources": [
+    {
+     "basis": "every night the study holds was RED, so its tickets are ones the market gate refused; the reader was not consulted, so the mechanical grade is the ceiling",
+     "ci95": [
+      -0.433,
+      -0.047
+     ],
+     "mean_r": -0.183,
+     "population": "admitted · exploratory · mechanical A on RED nights",
+     "scope": "adjacent",
+     "settled": 261,
+     "sign": "negative",
+     "source": "study",
+     "sum_r": -47.76
+    },
+    {
+     "basis": "owner-pasted summary over 158 sessions; grade not split by regime; reader not run; no rows, so no interval",
+     "ci95": null,
+     "mean_r": 0.444,
+     "population": "no regime gate · mechanical A · YELLOW and RED nights mixed",
+     "scope": "adjacent",
+     "settled": 23,
+     "sign": "unresolved",
+     "source": "backtest",
+     "sum_r": 10.22
+    }
+   ],
+   "title": "Admit mechanical A under YELLOW beside A+",
+   "verdict": "insufficient",
+   "would": "widen pipeline.YELLOW_GRADES; a YELLOW night would plan reviewed A names at half size"
+  },
+  {
+   "because": [
+    "study · admitted · exploratory · every night RED: negative (267 settled)",
+    "study · every stratum · exploratory · every night RED: negative (1741 settled)",
+    "backtest · no regime gate · RED nights: unresolved (25 settled)"
+   ],
+   "id": "trade_red_nights",
+   "notes": [
+    "the backtest's RED-night counterfactual is a positive sum over 25 settled tickets with no interval; the study's RED nights are a negative interval over 267; the two populations differ in period (Feb-Sep against Sep-Oct) and universe"
+   ],
+   "period_signs": [
+    "unresolved",
+    "negative"
+   ],
+   "sources": [
+    {
+     "basis": "every night the study holds was RED, so its tickets are ones the market gate refused; the reader was not consulted",
+     "ci95": [
+      -0.431,
+      -0.049
+     ],
+     "mean_r": -0.189,
+     "population": "admitted · exploratory · every night RED",
+     "scope": "direct",
+     "settled": 267,
+     "sign": "negative",
+     "source": "study",
+     "sum_r": -50.56
+    },
+    {
+     "basis": "every night the study holds was RED, so its tickets are ones the market gate refused",
+     "ci95": [
+      -0.415,
+      -0.22
+     ],
+     "mean_r": -0.335,
+     "population": "every stratum · exploratory · every night RED",
+     "scope": "direct",
+     "settled": 1741,
+     "sign": "negative",
+     "source": "study",
+     "sum_r": -583.47
+    },
+    {
+     "basis": "owner-pasted summary; reader not run; no rows, so no interval",
+     "ci95": null,
+     "mean_r": 0.046,
+     "population": "no regime gate · RED nights",
+     "scope": "direct",
+     "settled": 25,
+     "sign": "unresolved",
+     "source": "backtest",
+     "sum_r": 1.14
+    }
+   ],
+   "title": "Trade on RED nights (remove or relax the market gate)",
+   "verdict": "not_supported",
+   "would": "breadth's RED verdict would stop refusing new longs"
+  },
+  {
+   "because": [
+    "research_journal · registered cohort · 2 eligible rows: unreadable (0 settled)"
+   ],
+   "id": "anticipation_stop_5pct",
+   "notes": [
+    "journal status counts: {\"basis_conflict\": 0, \"excluded\": 3, \"missing\": 0, \"not_filled\": 0, \"open\": 0, \"origin_unavailable\": 0, \"pending\": 2, \"resolved\": 0, \"uncertain\": 0, \"unreadable\": 0, \"unsupported\": 0}",
+    "a registered experiment is evidence only once its rows resolve; today it is a design, not a result"
+   ],
+   "period_signs": [],
+   "sources": [
+    {
+     "basis": "frozen prospective journal; resolved rows carry the only R; nothing has resolved yet",
+     "ci95": null,
+     "mean_r": null,
+     "population": "registered cohort · 2 eligible rows",
+     "scope": "direct",
+     "settled": 0,
+     "sign": "unreadable",
+     "source": "research_journal",
+     "sum_r": 0.0
+    }
+   ],
+   "title": "Widen the anticipation stop cap from 4% to 5%",
+   "verdict": "insufficient",
+   "would": "the registered research version anticipation_stop_width_4_to_5_v1, prospective from 12 October to 6 November"
+  },
+  {
+   "because": [
+    "backtest · production policy · YELLOW A+ · reader not run: unresolved (44 settled)",
+    "study · reader-accepted A/A+ (the live policy's own admissions): unreadable (0 settled)"
+   ],
+   "id": "ticket_without_accepted_review",
+   "notes": [
+    "the backtest's production policy: 44 settled, win rate 0.36, mean 0.085R, median -0.09R, SPY 0.37% over the same windows",
+    "the retained HAE reply (8 October) is the case this change would admit: a mechanical A+ whose reply cited paths outside the authority contract and was refused; tests/fixtures/grading/reader-hae/ holds it rejected"
+   ],
+   "period_signs": [],
+   "sources": [
+    {
+     "basis": "owner-pasted summary over 158 sessions: the mechanical policy's own first readable rate, no interval",
+     "ci95": null,
+     "mean_r": 0.085,
+     "population": "production policy · YELLOW A+ · reader not run",
+     "scope": "direct",
+     "settled": 44,
+     "sign": "unresolved",
+     "source": "backtest",
+     "sum_r": 3.72
+    },
+    {
+     "basis": "the only rows the reader admitted",
+     "ci95": null,
+     "mean_r": null,
+     "population": "reader-accepted A/A+ (the live policy's own admissions)",
+     "scope": "direct",
+     "settled": 0,
+     "sign": "unreadable",
+     "source": "study",
+     "sum_r": null
+    },
+    {
+     "basis": "every night the study holds was RED, so its tickets are ones the market gate refused",
+     "ci95": [
+      -0.792,
+      -0.138
+     ],
+     "mean_r": -0.467,
+     "population": "admitted · exploratory · mechanical A+ on RED nights",
+     "scope": "adjacent",
+     "settled": 6,
+     "sign": "unreadable",
+     "source": "study",
+     "sum_r": -2.8
+    }
+   ],
+   "title": "Write an A+ ticket on the checklist alone when the reader refuses or fails",
+   "verdict": "insufficient",
+   "would": "drop the accepted-review requirement in pipeline._make_plans for A+ names"
+  },
+  {
+   "because": [
+    "no direct source"
+   ],
+   "id": "account_or_risk_increase",
+   "notes": [
+    "the feasibility reading: under YELLOW at $2,000, 5 of 40 in-band names size to a whole share; at the archived accounts 35 of 40",
+    "no outcome evidence exists at either size: the price ceiling decides which names can be bought, not whether they win",
+    "a larger risk fraction multiplies the R of the same tickets; it changes nothing about their sign"
+   ],
+   "period_signs": [],
+   "sources": [],
+   "title": "Raise the base risk or the account so more names size to a whole share",
+   "verdict": "insufficient",
+   "would": "a sizing change, not a strategy change: the same tickets at more shares"
+  }
+ ],
+ "limits": [
+  "Every study night was RED: its tickets are ones the market gate refused, walked on daily bars with the reader not consulted.",
+  "The backtest's universe is the archive's later membership, its fills daily-bar, its reader not run, and it was pasted as a summary: no interval can be drawn from it.",
+  "GREEN has never been published or observed in 158 backtest sessions; nothing here speaks to a GREEN night.",
+  "The registered research cohort has no resolved row yet; its first can exist five sessions after 12 October.",
+  "A verdict here reads evidence sufficiency under the criteria above; it is not a recommendation, and no change is promoted by this file."
+ ],
+ "periods": {
+  "all_strata_by_phase": {
+   "confirmatory": {
+    "from": "2026-10-02",
+    "label": "every stratum · confirmatory",
+    "night_bootstrap": null,
+    "nights": 2,
+    "rows": 1064,
+    "settled": {
+     "breakeven": 0,
+     "losses": 62,
+     "mean_r": -1.0,
+     "median_r": -1.0,
+     "n": 62,
+     "sum_r": -62.0,
+     "wins": 0
+    },
+    "settled_nights": 1,
+    "sign": "unresolved",
+    "through": "2026-10-05"
+   },
+   "exploratory": {
+    "from": "2026-09-11",
+    "label": "every stratum · exploratory",
+    "night_bootstrap": {
+     "ci95": [
+      -0.415,
+      -0.22
+     ],
+     "mean_of_night_means": -0.316,
+     "nights": 15,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 15,
+    "rows": 6064,
+    "settled": {
+     "breakeven": 28,
+     "losses": 1405,
+     "mean_r": -0.335,
+     "median_r": -0.66,
+     "n": 1741,
+     "sum_r": -583.47,
+     "wins": 308
+    },
+    "settled_nights": 15,
+    "sign": "negative",
+    "through": "2026-10-01"
+   }
+  },
+  "by_half": {
+   "first": {
+    "from": "2026-09-11",
+    "label": "admitted · exploratory · first half of its nights",
+    "night_bootstrap": {
+     "ci95": [
+      -0.4,
+      0.041
+     ],
+     "mean_of_night_means": -0.19,
+     "nights": 8,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 8,
+    "rows": 367,
+    "settled": {
+     "breakeven": 3,
+     "losses": 84,
+     "mean_r": -0.139,
+     "median_r": -0.43,
+     "n": 115,
+     "sum_r": -15.94,
+     "wins": 28
+    },
+    "settled_nights": 8,
+    "sign": "unresolved",
+    "through": "2026-09-22"
+   },
+   "second": {
+    "from": "2026-09-23",
+    "label": "admitted · exploratory · second half of its nights",
+    "night_bootstrap": {
+     "ci95": [
+      -0.6,
+      -0.009
+     ],
+     "mean_of_night_means": -0.291,
+     "nights": 7,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 7,
+    "rows": 451,
+    "settled": {
+     "breakeven": 6,
+     "losses": 124,
+     "mean_r": -0.228,
+     "median_r": -0.38,
+     "n": 152,
+     "sum_r": -34.62,
+     "wins": 22
+    },
+    "settled_nights": 7,
+    "sign": "negative",
+    "through": "2026-10-01"
+   }
+  },
+  "by_mechanical_grade": {
+   "A": {
+    "from": "2026-09-11",
+    "label": "admitted · exploratory · mechanical A",
+    "night_bootstrap": {
+     "ci95": [
+      -0.433,
+      -0.047
+     ],
+     "mean_of_night_means": -0.237,
+     "nights": 15,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 15,
+    "rows": 798,
+    "settled": {
+     "breakeven": 8,
+     "losses": 203,
+     "mean_r": -0.183,
+     "median_r": -0.4,
+     "n": 261,
+     "sum_r": -47.76,
+     "wins": 50
+    },
+    "settled_nights": 15,
+    "sign": "negative",
+    "through": "2026-10-01"
+   },
+   "A+": {
+    "from": "2026-09-11",
+    "label": "admitted · exploratory · mechanical A+",
+    "night_bootstrap": {
+     "ci95": [
+      -0.792,
+      -0.138
+     ],
+     "mean_of_night_means": -0.467,
+     "nights": 6,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 10,
+    "rows": 20,
+    "settled": {
+     "breakeven": 1,
+     "losses": 5,
+     "mean_r": -0.467,
+     "median_r": -0.39,
+     "n": 6,
+     "sum_r": -2.8,
+     "wins": 0
+    },
+    "settled_nights": 6,
+    "sign": "unreadable",
+    "through": "2026-10-01"
+   }
+  },
+  "by_month": {
+   "2026-09": {
+    "from": "2026-09-11",
+    "label": "admitted · exploratory · 2026-09",
+    "night_bootstrap": {
+     "ci95": [
+      -0.436,
+      -0.035
+     ],
+     "mean_of_night_means": -0.228,
+     "nights": 14,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 14,
+    "rows": 662,
+    "settled": {
+     "breakeven": 6,
+     "losses": 161,
+     "mean_r": -0.149,
+     "median_r": -0.44,
+     "n": 217,
+     "sum_r": -32.35,
+     "wins": 50
+    },
+    "settled_nights": 14,
+    "sign": "negative",
+    "through": "2026-09-30"
+   },
+   "2026-10": {
+    "from": "2026-10-01",
+    "label": "admitted · exploratory · 2026-10",
+    "night_bootstrap": null,
+    "nights": 1,
+    "rows": 156,
+    "settled": {
+     "breakeven": 3,
+     "losses": 47,
+     "mean_r": -0.364,
+     "median_r": -0.24,
+     "n": 50,
+     "sum_r": -18.21,
+     "wins": 0
+    },
+    "settled_nights": 1,
+    "sign": "unresolved",
+    "through": "2026-10-01"
+   }
+  },
+  "by_phase": {
+   "confirmatory": {
+    "from": "2026-10-02",
+    "label": "admitted · confirmatory",
+    "night_bootstrap": null,
+    "nights": 2,
+    "rows": 132,
+    "settled": {
+     "breakeven": 0,
+     "losses": 5,
+     "mean_r": -1.0,
+     "median_r": -1.0,
+     "n": 5,
+     "sum_r": -5.0,
+     "wins": 0
+    },
+    "settled_nights": 1,
+    "sign": "unreadable",
+    "through": "2026-10-05"
+   },
+   "exploratory": {
+    "from": "2026-09-11",
+    "label": "admitted · exploratory",
+    "night_bootstrap": {
+     "ci95": [
+      -0.431,
+      -0.049
+     ],
+     "mean_of_night_means": -0.237,
+     "nights": 15,
+     "reps": 2000,
+     "seed": 20261002
+    },
+    "nights": 15,
+    "rows": 818,
+    "settled": {
+     "breakeven": 9,
+     "losses": 208,
+     "mean_r": -0.189,
+     "median_r": -0.4,
+     "n": 267,
+     "sum_r": -50.56,
+     "wins": 50
+    },
+    "settled_nights": 15,
+    "sign": "negative",
+    "through": "2026-10-01"
+   }
+  }
+ },
+ "research": {
+  "applicable": {
+   "from": "2026-10-12",
+   "through": "2026-11-06"
+  },
+  "applicable_session": "2026-10-12",
+  "cohort_counts": {
+   "allocation_fit": 2,
+   "by_blocker": {
+    "baseline_symbol_reserved": 0,
+    "duplicate": 0,
+    "equity": 0,
+    "invalid_inputs": 0,
+    "known_event": 2,
+    "market_gate": 0,
+    "no_whole_share": 1,
+    "occupied_model_symbol": 1,
+    "outside_band": 2,
+    "slot_cap": 0,
+    "watchlist_ineligible": 0
+   },
+   "considered": 5,
+   "in_band": 3,
+   "mechanical_fit": 2,
+   "top_count": 5
+  },
+  "journal": {
+   "by_status": {
+    "basis_conflict": 0,
+    "excluded": 3,
+    "missing": 0,
+    "not_filled": 0,
+    "open": 0,
+    "origin_unavailable": 0,
+    "pending": 2,
+    "resolved": 0,
+    "uncertain": 0,
+    "unreadable": 0,
+    "unsupported": 0
+   },
+   "eligible": 2,
+   "generated_at": "2026-10-10T08:50:21.159749+00:00",
+   "policy": "anticipation_stop_width_follow_through_v1",
+   "rows": 5
+  },
+  "measured_session": "2026-10-09",
+  "policy": "anticipation_stop_width_4_to_5_v1",
+  "status": "recorded",
+  "stop_pct": {
+   "baseline": 4.0,
+   "research": 5.0
+  }
+ },
+ "sources": {
+  "feasibility": {
+   "account_2000": {
+    "kind": "tool_output",
+    "path": "docs/input-truthfulness/2026-10-11-whole-share-feasibility-evidence/history-account-2000.json",
+    "sha256": "b27b2eba91237b561773fd69f728ba74b7444f53af41a4c9ce888632541be825"
+   },
+   "archived": {
+    "kind": "tool_output",
+    "path": "docs/input-truthfulness/2026-10-11-whole-share-feasibility-evidence/history-archived.json",
+    "sha256": "d62945a8f8bb8ab7ba3032b6a7ddf77ea39a5abd1ea22f968f344a75471a570b"
+   }
+  },
+  "findings": {
+   "kind": "builder_output",
+   "path": "docs/historical-findings.json",
+   "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+  },
+  "funnel": {
+   "kind": "tool_output",
+   "path": "docs/input-truthfulness/2026-10-11-candidate-funnel-evidence/history.json",
+   "sha256": "bfda0714e7f4ab0a802fa6dd9e5637691aaa5fcc993ac4986d9e91c502324a4e"
+  },
+  "research": {
+   "cohort": {
+    "kind": "companion",
+    "path": "docs/stop-research.json",
+    "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+   },
+   "journal": {
+    "kind": "companion",
+    "path": "docs/research-outcomes.json",
+    "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+   }
+  },
+  "study": {
+   "kind": "tool_output",
+   "path": "docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz",
+   "sha256": "7e4639c4c53e567a5dfc204b0df7d1c1f9334454595e366084d7dd45023e9d5f",
+   "spec": {
+    "path": "docs/input-truthfulness/2026-10-06-signal-outcomes-spec-extended.json",
+    "sha256": "688d552fc9dd333116abf0dd5b1aa1b7504f5d389a781e542f19d6bdd044f528"
+   },
+   "uncompressed_sha256": "7255bac73198163e867293fade2fae5e771b9f38dadc76f4f6727d94478c7e3f"
+  }
+ },
+ "study": {
+  "costs_per_side_bps": {
+   "B": {
+    "0": {
+     "mean_r": -0.416,
+     "n": 461,
+     "sum_r": -191.83
+    },
+    "20": {
+     "mean_r": -0.606,
+     "n": 461,
+     "sum_r": -279.31
+    },
+    "5": {
+     "mean_r": -0.464,
+     "n": 461,
+     "sum_r": -213.87
+    }
+   },
+   "C": {
+    "0": {
+     "mean_r": -0.363,
+     "n": 312,
+     "sum_r": -113.37
+    },
+    "20": {
+     "mean_r": -0.541,
+     "n": 312,
+     "sum_r": -168.87
+    },
+    "5": {
+     "mean_r": -0.408,
+     "n": 312,
+     "sum_r": -127.36
+    }
+   },
+   "admitted": {
+    "0": {
+     "mean_r": -0.204,
+     "n": 272,
+     "sum_r": -55.56
+    },
+    "20": {
+     "mean_r": -0.362,
+     "n": 272,
+     "sum_r": -98.42
+    },
+    "5": {
+     "mean_r": -0.244,
+     "n": 272,
+     "sum_r": -66.38
+    }
+   },
+   "skip": {
+    "0": {
+     "mean_r": -0.416,
+     "n": 119,
+     "sum_r": -49.52
+    },
+    "20": {
+     "mean_r": -0.606,
+     "n": 119,
+     "sum_r": -72.17
+    },
+    "5": {
+     "mean_r": -0.464,
+     "n": 119,
+     "sum_r": -55.24
+    }
+   },
+   "vetoed": {
+    "0": {
+     "mean_r": -0.368,
+     "n": 639,
+     "sum_r": -235.19
+    },
+    "20": {
+     "mean_r": -0.538,
+     "n": 639,
+     "sum_r": -344.1
+    },
+    "5": {
+     "mean_r": -0.411,
+     "n": 639,
+     "sum_r": -262.65
+    }
+   }
+  },
+  "crosscheck": {
+   "B": {
+    "breakeven": 5,
+    "losses": 382,
+    "mean_r": -0.416,
+    "median_r": -0.74,
+    "n": 461,
+    "sum_r": -191.83,
+    "wins": 74
+   },
+   "C": {
+    "breakeven": 5,
+    "losses": 255,
+    "mean_r": -0.363,
+    "median_r": -0.87,
+    "n": 312,
+    "sum_r": -113.37,
+    "wins": 52
+   },
+   "admitted": {
+    "breakeven": 9,
+    "losses": 213,
+    "mean_r": -0.204,
+    "median_r": -0.41,
+    "n": 272,
+    "sum_r": -55.56,
+    "wins": 50
+   },
+   "admitted · confirmatory": {
+    "breakeven": 0,
+    "losses": 5,
+    "mean_r": -1.0,
+    "median_r": -1.0,
+    "n": 5,
+    "sum_r": -5.0,
+    "wins": 0
+   },
+   "admitted · exploratory": {
+    "breakeven": 9,
+    "losses": 208,
+    "mean_r": -0.189,
+    "median_r": -0.4,
+    "n": 267,
+    "sum_r": -50.56,
+    "wins": 50
+   },
+   "skip": {
+    "breakeven": 0,
+    "losses": 101,
+    "mean_r": -0.416,
+    "median_r": -1.0,
+    "n": 119,
+    "sum_r": -49.52,
+    "wins": 18
+   },
+   "vetoed": {
+    "breakeven": 9,
+    "losses": 516,
+    "mean_r": -0.368,
+    "median_r": -0.67,
+    "n": 639,
+    "sum_r": -235.19,
+    "wins": 114
+   }
+  },
+  "drawdown": {
+   "B": {
+    "drawdown_from": "2026-09-11",
+    "drawdown_to": "2026-10-02",
+    "final_r": -191.83,
+    "max_drawdown_r": 191.83,
+    "night_means": {
+     "final_r": -6.24,
+     "max_drawdown_r": 6.24,
+     "nights": 16
+    },
+    "settled": 461
+   },
+   "C": {
+    "drawdown_from": "2026-09-11",
+    "drawdown_to": "2026-10-02",
+    "final_r": -113.37,
+    "max_drawdown_r": 113.37,
+    "night_means": {
+     "final_r": -6.06,
+     "max_drawdown_r": 6.06,
+     "nights": 16
+    },
+    "settled": 312
+   },
+   "admitted": {
+    "drawdown_from": "2026-09-11",
+    "drawdown_to": "2026-10-02",
+    "final_r": -55.56,
+    "max_drawdown_r": 62.31,
+    "night_means": {
+     "final_r": -4.56,
+     "max_drawdown_r": 5.05,
+     "nights": 16
+    },
+    "settled": 272
+   },
+   "all": {
+    "drawdown_from": "2026-09-11",
+    "drawdown_to": "2026-10-02",
+    "final_r": -645.47,
+    "max_drawdown_r": 652.22,
+    "night_means": {
+     "final_r": -5.74,
+     "max_drawdown_r": 5.74,
+     "nights": 16
+    },
+    "settled": 1803
+   },
+   "skip": {
+    "drawdown_from": "2026-09-16",
+    "drawdown_to": "2026-10-02",
+    "final_r": -49.52,
+    "max_drawdown_r": 54.38,
+    "night_means": {
+     "final_r": -5.42,
+     "max_drawdown_r": 6.19,
+     "nights": 14
+    },
+    "settled": 119
+   },
+   "vetoed": {
+    "drawdown_from": "2026-09-15",
+    "drawdown_to": "2026-10-02",
+    "final_r": -235.19,
+    "max_drawdown_r": 236.61,
+    "night_means": {
+     "final_r": -6.23,
+     "max_drawdown_r": 6.23,
+     "nights": 16
+    },
+    "settled": 639
+   }
+  },
+  "night_regimes": [
+   "red"
+  ],
+  "publications": 19,
+  "rows": 7128
+ },
+ "version": "evidence-review-v1"
+}

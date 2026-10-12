@@ -1,5 +1,17 @@
 # Input truthfulness milestone
 
+[12 October 2026: the evidence review before any strategy change is promoted](2026-10-12-evidence-review.md)
+closes #109's last acceptance line: `tools/evidence_review.py` re-derives the
+frozen signal-outcome study from its rows, splits its admitted stratum by
+phase, month, halves and mechanical grade, walks each stratum's cumulative-R
+drawdown, copies the backtest, funnel, feasibility and registered-research
+numbers off their files with digests, and reads a ledger of five floated
+strategy changes under stated criteria: trading RED nights is not supported
+(the study's RED nights establish a negative sign at 267 and 1,741 settled),
+and the other four are insufficient. No change is promoted; `--check` holds
+the two files. The retained HAE reply of 8 October is frozen under
+`tests/fixtures/grading/reader-hae/` and held rejected for its citation paths.
+
 [11 October 2026: whole-share feasibility over every retained publication](2026-10-11-whole-share-feasibility.md)
 sizes all 11,513 archived reaction candidates again through `plan.burst_plan`
 at the account each record archived and at Mo's $2,000 / 0.5% reference, under

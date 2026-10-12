@@ -820,6 +820,20 @@ Manual dispatch keeps its explicit session and rehearsal controls. The run:
   size to a whole share, with the limit under which one share fits a
   stop-constrained ticket at each multiplier; it changes nothing and a YELLOW or
   GREEN column on a RED night is a counterfactual, never a ticket.
+  `tools/evidence_review.py` is the explicit evidence review #109 asks for before
+  any strategy change is promoted: it re-derives the frozen signal-outcome study
+  from its own rows (refusing a file whose summary is not its rows'), splits the
+  admitted stratum by phase, calendar month, halves of its nights and mechanical
+  grade, walks each stratum's cumulative-R path for its deepest drawdown, copies
+  the backtest, funnel, feasibility and registered-research numbers off their
+  files with each file's digest, and evaluates a fixed ledger of the strategy
+  changes this repository has floated against criteria it states and archives
+  (a rate at `record.SCORECARD_MIN_PLANS` settled or more; a sign only from a
+  night-bootstrap interval clear of zero; `supported` only when every direct
+  source is positive and every evaluation period agrees). It writes
+  `docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`
+  and `--check` holds both; no change is promoted by it, and today none earns
+  `supported`.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1607,6 +1621,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
+                evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and research numbers copied off their files with digests, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
