@@ -480,3 +480,13 @@ owned by a concurrent builder; local #163 preparations stay unpublished.
 The next bounded UI milestone refreshes newly published research quotes through
 the visible reload controls. Actual delivery reliability and the first personal
 trade remain open under #108, #110 and #111.
+
+
+PR #170 remains unreleased after its first hosted browser run found six
+compact-layout failures at tablet widths. A reproduced CSS correction keeps
+the first-screen stock finder and all guidance within the existing height
+limit, with 307 local reading/finder checks passing. Its
+[repair evidence](release-evidence/2026-10-13-stock-finder/compact-repair.json)
+preserves the original failed checks separately. Fresh review, hosted gates
+and actual public verification are still required. The following milestone
+will pair research quote reload with the repository-owner workflow handoff.

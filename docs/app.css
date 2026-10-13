@@ -1048,7 +1048,7 @@
 .ss-orientation { grid-template-columns: minmax(0, 1.7fr) minmax(230px, 1fr) auto; align-items: center; }
 .ss-orientation .ss-stock-finder { min-height: 44px; justify-self: start; }
 @media (max-width: 1000px) {
-  .ss-orientation { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--sc-s1); }
+  .ss-orientation { grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--sc-s1); }
   .ss-orientation > p:first-child { grid-column: 1 / -1; }
   .ss-orientation .ss-stock-finder { align-self: center; }
 }

@@ -72,7 +72,7 @@ export async function checkStockFinder({ browser, base, open, check, eq, shotsDi
   });
 
   // Actual opening geometry, including either side of the responsive boundary.
-  for (const width of [320, 390, 960, 1000, 1001, 1280]) {
+  for (const width of [320, 390, 721, 768, 820, 960, 1000, 1001, 1280]) {
     const { page, context, errors } = await launch(width);
     try {
       await settled(page);

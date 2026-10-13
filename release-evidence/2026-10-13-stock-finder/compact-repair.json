@@ -1,0 +1,5095 @@
+{
+  "schema": "spicystock-stock-finder-compact-repair-v1",
+  "recorded_at": "2026-10-13T23:11:41.205519+00:00",
+  "scope": "Local CSS correction and expanded geometry coverage for existing PR170. Not a hosted pass or release.",
+  "base_head": "0e2a681a46aa76f0c11da19d1af2c508d7522ad5",
+  "base_tree": "c2a1d40e368d4a6a364b8fcd7a57fe61dc14975e",
+  "hosted_failure": {
+    "run_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38480748216",
+    "job_id": 115582440825,
+    "test_merge_sha": "994a50839b5ede5508fc80d2eb4f353e5e624927",
+    "passed": 15426,
+    "total": 15432,
+    "failures": "orientation remains compact at820/768/721, dark and light",
+    "chart_checks_passed": 378,
+    "node": "22.23.3",
+    "playwright": "1.56.1",
+    "log": {
+      "path": "/tmp/pr170-page-failed-115582440825.log",
+      "bytes": 82666,
+      "sha256": "325ba9770da6d038ea0462df08ef3eeeeba36b37adab0eb6249d47c495deaf17"
+    },
+    "screenshots": "Artifact11857391281 metadata/upload digest retained by CI monitor; binary payload not downloaded."
+  },
+  "behavior": "Within existing max1000px two-row guidance layout remove inherited8px row gap, preserving all text, font sizes,44px button target and existing height assertion. Measured94px becomes86px at all six failures.",
+  "local_runtime": {
+    "node": "v24.19.0",
+    "playwright": "1.56.1",
+    "browser": "Chromium141",
+    "data": "unchanged pipeline-authored full page fixture with pinned synthetic clock"
+  },
+  "before": {
+    "result": {
+      "checks": 141,
+      "failures": 6,
+      "results": [
+        {
+          "name": "first-screen purpose is visible without opening help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "first-screen first action is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "snapshot and account boundaries are visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candidate inclusion is distinct from a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the report supplies its own measured session",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "ordinary close rule uses 80%, separate from A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume observed value says prior 50-session average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume criterion excludes the burst from its average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "A+ 90% and partial 70% remain separately inspectable",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "complete recorded threshold remains accessible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "recorded values are never a native-title-only explanation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help buttons are never nested in other interactive buttons",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "interactive help has region semantics",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "hover help remains under the pointer",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "market help explains that a favourable filter cannot supply a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape dismisses hover help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "keyboard focus opens the same definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "focus help does not open a modal",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading aid keeps genuine evidence Focus",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading aid preserves exact normal chart geometry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help link uses the hash router",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the relevant Method definition opens",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method returns to the same stock route",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method restores page and detail reading position",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "return does not reopen stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help is readable inside Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape closes help without closing Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Compare help reaches its on-site definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "return restores the comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "saved destination explains browser-only research",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "saved confirmation is not stock approval or execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reload keeps the selected stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reload keeps the saved setup",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "populated public model has a HOLD example",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "HOLD is framed as a model, not ownership",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "outcome help defines HOLD and STOPPED without personal execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "route changes dismiss stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "map scale meaning is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Map opens the selected stock detail",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Cards returns with the same stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading journey has no browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failing base shows observed giveback with denominator",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failing base shows tightness and its reference period",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "criterion rationale is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "passing linearity shows BOTH observations and the OR rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored pass is not inferred from the first measurement",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "green criterion cannot create a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "absent risk narrative does not promise no risk",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "waiting reason supplies a next review action",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "a negative prior day can pass with an explicit comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the actual passing-prior-session candle is down and filled",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "that filled prior candle is rendered",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the same negative prior-session criterion is a stored pass",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candle caption explains close/open rather than headline gain",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "uppercase missing is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "missing measurement is not zero",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored partial is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "partial still shows its actual 75% observation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record uses its own 7-session rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record keeps separate 14-session A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "unknown rule is printed without invented translation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "A-quality with red market still refuses entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "recorded ticket with an expired window is no entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 627.875,
+              "height": 888,
+              "width": 756
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 756
+            },
+            "header": {
+              "top": 631.875,
+              "height": 167.390625,
+              "width": 409
+            },
+            "identity": {
+              "top": 631.875,
+              "height": 75.390625,
+              "width": 409
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "820/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 627.875,
+              "height": 888,
+              "width": 756
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 756
+            },
+            "header": {
+              "top": 631.875,
+              "height": 167.390625,
+              "width": 409
+            },
+            "identity": {
+              "top": 631.875,
+              "height": 75.390625,
+              "width": 409
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "820/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 667.859375,
+              "height": 888,
+              "width": 704
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 704
+            },
+            "header": {
+              "top": 671.859375,
+              "height": 188.1875,
+              "width": 357
+            },
+            "identity": {
+              "top": 671.859375,
+              "height": 96.1875,
+              "width": 357
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "768/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 667.859375,
+              "height": 888,
+              "width": 704
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 704
+            },
+            "header": {
+              "top": 671.859375,
+              "height": 188.1875,
+              "width": 357
+            },
+            "identity": {
+              "top": 671.859375,
+              "height": 96.1875,
+              "width": 357
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "768/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 709.34375,
+              "height": 888,
+              "width": 657
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 657
+            },
+            "header": {
+              "top": 713.34375,
+              "height": 188.1875,
+              "width": 310
+            },
+            "identity": {
+              "top": 713.34375,
+              "height": 96.1875,
+              "width": 310
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "721/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: orientation remains compact",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": {
+            "viewport": 1000,
+            "workspace": {
+              "top": 709.34375,
+              "height": 888,
+              "width": 657
+            },
+            "purpose": {
+              "top": 172.5,
+              "height": 94,
+              "width": 657
+            },
+            "header": {
+              "top": 713.34375,
+              "height": 188.1875,
+              "width": 310
+            },
+            "identity": {
+              "top": 713.34375,
+              "height": 96.1875,
+              "width": 310
+            },
+            "overflow": false
+          }
+        },
+        {
+          "name": "721/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        }
+      ]
+    },
+    "metrics": [
+      {
+        "width": 1440,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 509.484375,
+          "height": 888,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 509.484375,
+          "height": 888,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "viewport": 800,
+        "workspace": {
+          "top": 509.484375,
+          "height": 688,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1280,
+        "theme": "light",
+        "viewport": 800,
+        "workspace": {
+          "top": 509.484375,
+          "height": 688,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 960,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 608.5625,
+          "height": 888,
+          "width": 896
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 73,
+          "width": 896
+        },
+        "header": {
+          "top": 612.5625,
+          "height": 143.46875,
+          "width": 549
+        },
+        "identity": {
+          "top": 612.5625,
+          "height": 78.46875,
+          "width": 549
+        },
+        "overflow": false
+      },
+      {
+        "width": 960,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 608.5625,
+          "height": 888,
+          "width": 896
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 73,
+          "width": 896
+        },
+        "header": {
+          "top": 612.5625,
+          "height": 143.46875,
+          "width": 549
+        },
+        "identity": {
+          "top": 612.5625,
+          "height": 78.46875,
+          "width": 549
+        },
+        "overflow": false
+      },
+      {
+        "width": 820,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 627.875,
+          "height": 888,
+          "width": 756
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 756
+        },
+        "header": {
+          "top": 631.875,
+          "height": 167.390625,
+          "width": 409
+        },
+        "identity": {
+          "top": 631.875,
+          "height": 75.390625,
+          "width": 409
+        },
+        "overflow": false
+      },
+      {
+        "width": 820,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 627.875,
+          "height": 888,
+          "width": 756
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 756
+        },
+        "header": {
+          "top": 631.875,
+          "height": 167.390625,
+          "width": 409
+        },
+        "identity": {
+          "top": 631.875,
+          "height": 75.390625,
+          "width": 409
+        },
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 667.859375,
+          "height": 888,
+          "width": 704
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 704
+        },
+        "header": {
+          "top": 671.859375,
+          "height": 188.1875,
+          "width": 357
+        },
+        "identity": {
+          "top": 671.859375,
+          "height": 96.1875,
+          "width": 357
+        },
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 667.859375,
+          "height": 888,
+          "width": 704
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 704
+        },
+        "header": {
+          "top": 671.859375,
+          "height": 188.1875,
+          "width": 357
+        },
+        "identity": {
+          "top": 671.859375,
+          "height": 96.1875,
+          "width": 357
+        },
+        "overflow": false
+      },
+      {
+        "width": 721,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 709.34375,
+          "height": 888,
+          "width": 657
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 657
+        },
+        "header": {
+          "top": 713.34375,
+          "height": 188.1875,
+          "width": 310
+        },
+        "identity": {
+          "top": 713.34375,
+          "height": 96.1875,
+          "width": 310
+        },
+        "overflow": false
+      },
+      {
+        "width": 721,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 709.34375,
+          "height": 888,
+          "width": 657
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 94,
+          "width": 657
+        },
+        "header": {
+          "top": 713.34375,
+          "height": 188.1875,
+          "width": 310
+        },
+        "identity": {
+          "top": 713.34375,
+          "height": 96.1875,
+          "width": 310
+        },
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 820.140625,
+          "height": 3842.734375,
+          "width": 350
+        },
+        "purpose": {
+          "top": 195,
+          "height": 117,
+          "width": 350
+        },
+        "header": {
+          "top": 1315.21875,
+          "height": 221.1875,
+          "width": 350
+        },
+        "identity": {
+          "top": 1315.21875,
+          "height": 96.1875,
+          "width": 350
+        },
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 820.140625,
+          "height": 3842.734375,
+          "width": 350
+        },
+        "purpose": {
+          "top": 195,
+          "height": 117,
+          "width": 350
+        },
+        "header": {
+          "top": 1315.21875,
+          "height": 221.1875,
+          "width": 350
+        },
+        "identity": {
+          "top": 1315.21875,
+          "height": 96.1875,
+          "width": 350
+        },
+        "overflow": false
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 1037.21875,
+          "height": 4352.609375,
+          "width": 280
+        },
+        "purpose": {
+          "top": 309.59375,
+          "height": 136.5,
+          "width": 280
+        },
+        "header": {
+          "top": 1532.296875,
+          "height": 248.1875,
+          "width": 280
+        },
+        "identity": {
+          "top": 1532.296875,
+          "height": 96.1875,
+          "width": 280
+        },
+        "overflow": false
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 1037.21875,
+          "height": 4352.609375,
+          "width": 280
+        },
+        "purpose": {
+          "top": 309.59375,
+          "height": 136.5,
+          "width": 280
+        },
+        "header": {
+          "top": 1532.296875,
+          "height": 248.1875,
+          "width": 280
+        },
+        "identity": {
+          "top": 1532.296875,
+          "height": 96.1875,
+          "width": 280
+        },
+        "overflow": false
+      }
+    ],
+    "log": {
+      "path": "/tmp/pr170-compact-before.log",
+      "bytes": 553,
+      "sha256": "0ba7a016150e56df42d8fc101eb14e69582491c7f64562d4545aeb4c03805090"
+    }
+  },
+  "after": {
+    "result": {
+      "checks": 307,
+      "failures": 0,
+      "results": [
+        {
+          "name": "stock finder fixture supplies distinct burst and setup choices",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "first-screen purpose is visible without opening help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "first-screen first action is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "snapshot and account boundaries are visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candidate inclusion is distinct from a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the report supplies its own measured session",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "ordinary close rule uses 80%, separate from A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume observed value says prior 50-session average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume criterion excludes the burst from its average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "A+ 90% and partial 70% remain separately inspectable",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "complete recorded threshold remains accessible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "recorded values are never a native-title-only explanation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help buttons are never nested in other interactive buttons",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "320: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "interactive help has region semantics",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "hover help remains under the pointer",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "market help explains that a favourable filter cannot supply a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape dismisses hover help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "keyboard focus opens the same definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "focus help does not open a modal",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "reading aid keeps genuine evidence Focus",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "reading aid preserves exact normal chart geometry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "390: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "help link uses the hash router",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the relevant Method definition opens",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method returns to the same stock route",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method restores page and detail reading position",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "return does not reopen stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "721: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "help is readable inside Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape closes help without closing Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Compare help reaches its on-site definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "return restores the comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "768: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "saved destination explains browser-only research",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "saved confirmation is not stock approval or execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "820: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "reload keeps the selected stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reload keeps the saved setup",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "populated public model has a HOLD example",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "HOLD is framed as a model, not ownership",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "outcome help defines HOLD and STOPPED without personal execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "route changes dismiss stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "map scale meaning is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1000: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "Map opens the selected stock detail",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1000: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1000: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "Cards returns with the same stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading journey has no browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1001: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1001: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failing base shows observed giveback with denominator",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failing base shows tightness and its reference period",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "criterion rationale is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "passing linearity shows BOTH observations and the OR rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored pass is not inferred from the first measurement",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "green criterion cannot create a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "absent risk narrative does not promise no risk",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "waiting reason supplies a next review action",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "a negative prior day can pass with an explicit comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the actual passing-prior-session candle is down and filled",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "that filled prior candle is rendered",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the same negative prior-session criterion is a stored pass",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candle caption explains close/open rather than headline gain",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280: opening finder is enabled after the publication renders",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: finder names its existing accessible dialog",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: finder is within the first viewport with a 44px target",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: opening guidance and finder do not overlap or clip",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: opening guidance retains readable text size",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: dialog lists every recorded burst and setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: blank-search Escape returns focus to opening finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280: finder layout produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "uppercase missing is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "missing measurement is not zero",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored partial is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "partial still shows its actual 75% observation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record uses its own 7-session rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record keeps separate 14-session A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "unknown rule is printed without invented translation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "synthetic collision visibly places the company-name result before exact ticker",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "exact chooser query announces the ticker Enter will open",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "Enter opens the exact ticker instead of the earlier company-name match",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "exact choice uses the selected ticker route",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "synthetic name-only chooser control produces no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "A-quality with red market still refuses entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "incompatible page query hides cards before reselecting the same stock",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "first Escape clears a nonempty native search field",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "first Escape with text leaves the chooser open",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "cancelling preserves page query and original stock route",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "cancelling returns focus to finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "recorded ticket with an expired window is no entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "unmatched Enter keeps the chooser open without choosing another stock",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "unmatched chooser query lists no false result",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "unmatched chooser query explicitly explains absence",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "reselecting a remembered ticker clears an incompatible page query",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "reselecting a remembered ticker restores its recorded card and detail",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "chooser does not alter recorded tickets or private account facts",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "chooser query and cancellation controls produce no browser errors",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1440/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "second tab removes the real saved fixture setup",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "background unfollow preserves runtime and stored Following lens",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "background unfollow leaves selected detail but removes its Following card",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "cancelling a hidden choice does not widen Following",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "explicit choice recovers the remembered stock hidden by background unfollow",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "explicit hidden choice explains the temporary lens widening",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "explicit hidden choice leaves the saved Following preference intact",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "cross-tab chooser recovery preserves private account and ticket facts",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "cross-tab chooser recovery produces no page exceptions",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1440/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "an older shell without optional finder still loads the stock reader",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "older-shell control actually excludes only the new finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1440/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "older shell retains its existing chooser control",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1440/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "optional finder absence produces no uncaught page exceptions",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: finder remains disabled before a usable publication",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: an unready click cannot open the chooser",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: successful load or Retry enables the finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: recovered publication retains the complete producer fixture payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: fixture remains practice without a claimed public receipt",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: pending refresh retains usable stock finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: pending refresh still lists the loaded fixture stocks",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: failed refresh retains enabled finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: failed refresh preserves original record payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: failed refresh keeps the same loaded record object",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: failed refresh preserves selected stock, query and account facts",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: lifecycle uses one startup, optional retry and one refresh",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "hold: lifecycle causes no uncaught page exceptions",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: finder remains disabled before a usable publication",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: an unready click cannot open the chooser",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: successful load or Retry enables the finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: recovered publication retains the complete producer fixture payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: fixture remains practice without a claimed public receipt",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: pending refresh retains usable stock finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "1280/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failure: pending refresh still lists the loaded fixture stocks",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: failed refresh retains enabled finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: failed refresh preserves original record payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: failed refresh keeps the same loaded record object",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: failed refresh preserves selected stock, query and account facts",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: lifecycle uses one startup, optional retry and one refresh",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "failure: lifecycle causes no uncaught page exceptions",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: finder remains disabled before a usable publication",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: an unready click cannot open the chooser",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "render-failure: successful load or Retry enables the finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: recovered publication retains the complete producer fixture payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: fixture remains practice without a claimed public receipt",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: pending refresh retains usable stock finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: pending refresh still lists the loaded fixture stocks",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: failed refresh retains enabled finder",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: failed refresh preserves original record payload",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: failed refresh keeps the same loaded record object",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: failed refresh preserves selected stock, query and account facts",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "stock finder is present and enabled before an explicit open action",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: lifecycle uses one startup, optional retry and one refresh",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "render-failure: lifecycle causes no uncaught page exceptions",
+          "status": "PASS",
+          "lane": "B"
+        },
+        {
+          "name": "960/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        }
+      ]
+    },
+    "metrics": [
+      {
+        "width": 1440,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 509.484375,
+          "height": 888,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 509.484375,
+          "height": 888,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "viewport": 800,
+        "workspace": {
+          "top": 509.484375,
+          "height": 688,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 1280,
+        "theme": "light",
+        "viewport": 800,
+        "workspace": {
+          "top": 509.484375,
+          "height": 688,
+          "width": 1216
+        },
+        "purpose": {
+          "top": 99.5,
+          "height": 44,
+          "width": 1216
+        },
+        "header": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 869
+        },
+        "identity": {
+          "top": 513.484375,
+          "height": 104.984375,
+          "width": 358.703125
+        },
+        "overflow": false
+      },
+      {
+        "width": 960,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 600.5625,
+          "height": 888,
+          "width": 896
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 65,
+          "width": 896
+        },
+        "header": {
+          "top": 604.5625,
+          "height": 143.46875,
+          "width": 549
+        },
+        "identity": {
+          "top": 604.5625,
+          "height": 78.46875,
+          "width": 549
+        },
+        "overflow": false
+      },
+      {
+        "width": 960,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 600.5625,
+          "height": 888,
+          "width": 896
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 65,
+          "width": 896
+        },
+        "header": {
+          "top": 604.5625,
+          "height": 143.46875,
+          "width": 549
+        },
+        "identity": {
+          "top": 604.5625,
+          "height": 78.46875,
+          "width": 549
+        },
+        "overflow": false
+      },
+      {
+        "width": 820,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 619.875,
+          "height": 888,
+          "width": 756
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 756
+        },
+        "header": {
+          "top": 623.875,
+          "height": 167.390625,
+          "width": 409
+        },
+        "identity": {
+          "top": 623.875,
+          "height": 75.390625,
+          "width": 409
+        },
+        "overflow": false
+      },
+      {
+        "width": 820,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 619.875,
+          "height": 888,
+          "width": 756
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 756
+        },
+        "header": {
+          "top": 623.875,
+          "height": 167.390625,
+          "width": 409
+        },
+        "identity": {
+          "top": 623.875,
+          "height": 75.390625,
+          "width": 409
+        },
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 659.859375,
+          "height": 888,
+          "width": 704
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 704
+        },
+        "header": {
+          "top": 663.859375,
+          "height": 188.1875,
+          "width": 357
+        },
+        "identity": {
+          "top": 663.859375,
+          "height": 96.1875,
+          "width": 357
+        },
+        "overflow": false
+      },
+      {
+        "width": 768,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 659.859375,
+          "height": 888,
+          "width": 704
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 704
+        },
+        "header": {
+          "top": 663.859375,
+          "height": 188.1875,
+          "width": 357
+        },
+        "identity": {
+          "top": 663.859375,
+          "height": 96.1875,
+          "width": 357
+        },
+        "overflow": false
+      },
+      {
+        "width": 721,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 701.34375,
+          "height": 888,
+          "width": 657
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 657
+        },
+        "header": {
+          "top": 705.34375,
+          "height": 188.1875,
+          "width": 310
+        },
+        "identity": {
+          "top": 705.34375,
+          "height": 96.1875,
+          "width": 310
+        },
+        "overflow": false
+      },
+      {
+        "width": 721,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 701.34375,
+          "height": 888,
+          "width": 657
+        },
+        "purpose": {
+          "top": 172.5,
+          "height": 86,
+          "width": 657
+        },
+        "header": {
+          "top": 705.34375,
+          "height": 188.1875,
+          "width": 310
+        },
+        "identity": {
+          "top": 705.34375,
+          "height": 96.1875,
+          "width": 310
+        },
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 820.140625,
+          "height": 3842.734375,
+          "width": 350
+        },
+        "purpose": {
+          "top": 195,
+          "height": 117,
+          "width": 350
+        },
+        "header": {
+          "top": 1315.21875,
+          "height": 221.1875,
+          "width": 350
+        },
+        "identity": {
+          "top": 1315.21875,
+          "height": 96.1875,
+          "width": 350
+        },
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 820.140625,
+          "height": 3842.734375,
+          "width": 350
+        },
+        "purpose": {
+          "top": 195,
+          "height": 117,
+          "width": 350
+        },
+        "header": {
+          "top": 1315.21875,
+          "height": 221.1875,
+          "width": 350
+        },
+        "identity": {
+          "top": 1315.21875,
+          "height": 96.1875,
+          "width": 350
+        },
+        "overflow": false
+      },
+      {
+        "width": 320,
+        "theme": "dark",
+        "viewport": 1000,
+        "workspace": {
+          "top": 1037.21875,
+          "height": 4352.609375,
+          "width": 280
+        },
+        "purpose": {
+          "top": 309.59375,
+          "height": 136.5,
+          "width": 280
+        },
+        "header": {
+          "top": 1532.296875,
+          "height": 248.1875,
+          "width": 280
+        },
+        "identity": {
+          "top": 1532.296875,
+          "height": 96.1875,
+          "width": 280
+        },
+        "overflow": false
+      },
+      {
+        "width": 320,
+        "theme": "light",
+        "viewport": 1000,
+        "workspace": {
+          "top": 1037.21875,
+          "height": 4352.609375,
+          "width": 280
+        },
+        "purpose": {
+          "top": 309.59375,
+          "height": 136.5,
+          "width": 280
+        },
+        "header": {
+          "top": 1532.296875,
+          "height": 248.1875,
+          "width": 280
+        },
+        "identity": {
+          "top": 1532.296875,
+          "height": 96.1875,
+          "width": 280
+        },
+        "overflow": false
+      }
+    ],
+    "log": {
+      "path": "/tmp/pr170-compact-after.log",
+      "bytes": 205,
+      "sha256": "8a04b54f35e672c04acba74ccdedc8d21bb1b1b2180bd1a313076b8dc704de5f"
+    }
+  },
+  "specificity": {
+    "target_control": "Original CSS without the repair fails the unchanged existing reading rule in exactly six cases; before evidence retained above.",
+    "unrelated_control": "Changed only unrelated .ss-chart-reading margin-top8px to9px; all141 reading checks pass. Original final CSS restored byte-exactly afterward.",
+    "result": {
+      "checks": 141,
+      "failures": 0,
+      "results": [
+        {
+          "name": "first-screen purpose is visible without opening help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "first-screen first action is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "snapshot and account boundaries are visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candidate inclusion is distinct from a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the report supplies its own measured session",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "ordinary close rule uses 80%, separate from A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume observed value says prior 50-session average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "volume criterion excludes the burst from its average",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "A+ 90% and partial 70% remain separately inspectable",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "complete recorded threshold remains accessible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "recorded values are never a native-title-only explanation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help buttons are never nested in other interactive buttons",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "interactive help has region semantics",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "hover help remains under the pointer",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "market help explains that a favourable filter cannot supply a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape dismisses hover help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "keyboard focus opens the same definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "focus help does not open a modal",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading aid keeps genuine evidence Focus",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading aid preserves exact normal chart geometry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help link uses the hash router",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the relevant Method definition opens",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method returns to the same stock route",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Method restores page and detail reading position",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "return does not reopen stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "help is readable inside Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Escape closes help without closing Compare",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Compare help reaches its on-site definition",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "return restores the comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "saved destination explains browser-only research",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "saved confirmation is not stock approval or execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reload keeps the selected stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reload keeps the saved setup",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "populated public model has a HOLD example",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "HOLD is framed as a model, not ownership",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "outcome help defines HOLD and STOPPED without personal execution",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "route changes dismiss stale help",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "map scale meaning is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Map opens the selected stock detail",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "Cards returns with the same stock",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "reading journey has no browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failing base shows observed giveback with denominator",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "failing base shows tightness and its reference period",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "criterion rationale is visible",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "passing linearity shows BOTH observations and the OR rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored pass is not inferred from the first measurement",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "green criterion cannot create a ticket",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "absent risk narrative does not promise no risk",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "waiting reason supplies a next review action",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "a negative prior day can pass with an explicit comparison",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the actual passing-prior-session candle is down and filled",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "that filled prior candle is rendered",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "the same negative prior-session criterion is a stored pass",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "candle caption explains close/open rather than headline gain",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "two_days explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "linearity explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend has no invented chart anchor",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "young_trend explains the unavailable evidence",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "uppercase missing is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "missing measurement is not zero",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "stored partial is not failure",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "partial still shows its actual 75% observation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record uses its own 7-session rule",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "another record keeps separate 14-session A+",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "unknown rule is printed without invented translation",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "A-quality with red market still refuses entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "recorded ticket with an expired window is no entry",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1440/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "1280/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "960/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "820/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "768/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: controls leave readable identity width",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "721/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: help stays in viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "explicit close returns focus to the trigger",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged text keeps horizontal bounds",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: enlarged help stays within viewport",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "390/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/dark: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: no horizontal overflow",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: orientation remains compact",
+          "status": "PASS",
+          "lane": "A"
+        },
+        {
+          "name": "320/light: browser errors",
+          "status": "PASS",
+          "lane": "A"
+        }
+      ]
+    },
+    "log": {
+      "path": "/tmp/pr170-compact-unrelated.log",
+      "bytes": 139,
+      "sha256": "0d8479292da73da241b6e419af43ac71a2fdecf456813f82a15d0281d2dba67a"
+    }
+  },
+  "independent_diagnosis": {
+    "receipt": {
+      "path": "/tmp/pr170-width-independent/review.json",
+      "bytes": 39261,
+      "sha256": "ec97e2f0cc2bd4d343bea1353ad9e678641e3815b08a9c483b4d83aedcdac48a"
+    },
+    "summary": "Eight exact-base cases reproduce failure and verify proposed repair through DOM-only CSS injection; no source edits. Target, Enter, text and overflow preserved. Three captures inspected.",
+    "evidence": {
+      "schema": "spicystock-pr170-width-diagnosis-v1",
+      "recorded_at": "2026-10-13T23:10:58.472882+00:00",
+      "head": "0e2a681a46aa76f0c11da19d1af2c508d7522ad5",
+      "tree": "c2a1d40e368d4a6a364b8fcd7a57fe61dc14975e",
+      "status": "REPRODUCED_BASELINE_AND_VERIFIED_BROWSER_ONLY_PROPOSAL",
+      "scope": "Independent read-only reproduction on exactPR170head0e2. Local producer fixture/pinned fixture clock. Proposed repair only injected into DOM; no repository/source/test edits.",
+      "source_pins": {
+        "css": "c7e8fe2b6620abc811d838c4acf8a7a6778f4704e9f4bcac7cca830169788861",
+        "index": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+        "app": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f"
+      },
+      "finding": {
+        "existing_CI_failure": "Six reading orientation compactness failures at820/768/721px in dark and light.",
+        "current_assertion": "tools/reading_cases.mjs checkReading requires purpose.height <90px at widths721+ and <180px below721; unchanged in this review.",
+        "cause": "The new max-width1000px layout places the first paragraph across row1 and the boundary plus44px button in row2. Inherited8px row gap makes42+8+44=94px.",
+        "smallest_repair": "@media (max-width: 1000px) { .ss-orientation { row-gap: 0; } }",
+        "measured": "Removing only that row gap produces42+0+44=86px for all six reported cases. Phone390 stays117px and desktop1280 stays44px.",
+        "accessibility": "All8 cases preserve44px button height, readable identical text, no horizontal overflow, and Enter opens the chooser. No target/font/assertion reduction."
+      },
+      "executed_cases": [
+        {
+          "width": 820,
+          "theme": "dark",
+          "page_errors": [],
+          "before": {
+            "viewport": 820,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 756,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 756,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 234,
+              "bottom": 255,
+              "width": 652.796875,
+              "height": 21,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "652.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 820,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 756,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 756,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 226,
+              "bottom": 247,
+              "width": 652.796875,
+              "height": 21,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "652.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 820,
+          "theme": "light",
+          "page_errors": [],
+          "before": {
+            "viewport": 820,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 756,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 756,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 234,
+              "bottom": 255,
+              "width": 652.796875,
+              "height": 21,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "652.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 820,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 756,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 756,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 226,
+              "bottom": 247,
+              "width": 652.796875,
+              "height": 21,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "652.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 768,
+          "theme": "dark",
+          "page_errors": [],
+          "before": {
+            "viewport": 768,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 704,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 704,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 223.5,
+              "bottom": 265.5,
+              "width": 600.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "600.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 768,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 704,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 704,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 215.5,
+              "bottom": 257.5,
+              "width": 600.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "600.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 768,
+          "theme": "light",
+          "page_errors": [],
+          "before": {
+            "viewport": 768,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 704,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 704,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 223.5,
+              "bottom": 265.5,
+              "width": 600.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "600.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 768,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 704,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 704,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 215.5,
+              "bottom": 257.5,
+              "width": 600.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "600.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 721,
+          "theme": "dark",
+          "page_errors": [],
+          "before": {
+            "viewport": 721,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 657,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 657,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 223.5,
+              "bottom": 265.5,
+              "width": 553.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "553.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 721,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 657,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 657,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 215.5,
+              "bottom": 257.5,
+              "width": 553.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "553.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 721,
+          "theme": "light",
+          "page_errors": [],
+          "before": {
+            "viewport": 721,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 266.5,
+              "width": 657,
+              "height": 94,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 657,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 223.5,
+              "bottom": 265.5,
+              "width": 553.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 222.5,
+              "bottom": 266.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "553.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": false
+          },
+          "after": {
+            "viewport": 721,
+            "purpose": {
+              "top": 172.5,
+              "bottom": 258.5,
+              "width": 657,
+              "height": 86,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 172.5,
+              "bottom": 214.5,
+              "width": 657,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 215.5,
+              "bottom": 257.5,
+              "width": 553.796875,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 214.5,
+              "bottom": 258.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "553.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 390,
+          "theme": "dark",
+          "page_errors": [],
+          "before": {
+            "viewport": 390,
+            "purpose": {
+              "top": 224,
+              "bottom": 341,
+              "width": 350,
+              "height": 117,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 224,
+              "bottom": 282.5,
+              "width": 350,
+              "height": 58.5,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 282.5,
+              "bottom": 341,
+              "width": 246.796875,
+              "height": 58.5,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 289.75,
+              "bottom": 333.75,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "246.797px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 180,
+            "compact": true
+          },
+          "after": {
+            "viewport": 390,
+            "purpose": {
+              "top": 224,
+              "bottom": 341,
+              "width": 350,
+              "height": 117,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 224,
+              "bottom": 282.5,
+              "width": 350,
+              "height": 58.5,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 282.5,
+              "bottom": 341,
+              "width": 246.796875,
+              "height": 58.5,
+              "lineHeight": "19.5px",
+              "fontSize": "13px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 289.75,
+              "bottom": 333.75,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "0px",
+            "columns": "246.797px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        },
+        {
+          "width": 1280,
+          "theme": "dark",
+          "page_errors": [],
+          "before": {
+            "viewport": 1280,
+            "purpose": {
+              "top": 99.5,
+              "bottom": 143.5,
+              "width": 1216,
+              "height": 44,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 100.5,
+              "bottom": 142.5,
+              "width": 675.453125,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 100.5,
+              "bottom": 142.5,
+              "width": 397.34375,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 99.5,
+              "bottom": 143.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "675.453px 397.344px 95.2031px",
+            "overflow": false,
+            "expectedMaxExclusive": 90,
+            "compact": true
+          },
+          "after": {
+            "viewport": 1280,
+            "purpose": {
+              "top": 99.5,
+              "bottom": 143.5,
+              "width": 1216,
+              "height": 44,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "grid",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait.\n\nRecorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings.\n\nFind a stock"
+            },
+            "first": {
+              "top": 100.5,
+              "bottom": 142.5,
+              "width": 675.453125,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Review short-term momentum setups. First check market/data, then choose a stock: inspect evidence \u2192 conditional plan or wait."
+            },
+            "boundary": {
+              "top": 100.5,
+              "bottom": 142.5,
+              "width": 397.34375,
+              "height": 42,
+              "lineHeight": "21px",
+              "fontSize": "14px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "block",
+              "visibility": "visible",
+              "text": "Recorded snapshot, not live prices. SpicyStock places no trades and does not know your holdings."
+            },
+            "button": {
+              "top": 99.5,
+              "bottom": 143.5,
+              "width": 95.203125,
+              "height": 44,
+              "lineHeight": "12px",
+              "fontSize": "12px",
+              "fontFamily": "\"Instrument Sans\", system-ui, -apple-system, sans-serif",
+              "display": "flex",
+              "visibility": "visible",
+              "text": "Find a stock"
+            },
+            "gap": "8px",
+            "columns": "675.453px 397.344px 95.2031px",
+            "overflow": false,
+            "compact": true,
+            "targetPreserved": true,
+            "textPreserved": true,
+            "keyboardOpensChooser": true
+          }
+        }
+      ],
+      "inspected_screenshots": [
+        {
+          "path": "/tmp/pr170-width-independent/before-721-dark.png",
+          "bytes": 111847,
+          "sha256": "d27479ee5fc8831b60cbf604455bb55eb80fbdad167994c0f986c3ffd519e1e7",
+          "notes": "Before/after tablet rendering inspected: unchanged readable copy, full44px target, no overlap or clipping; only extra inter-row spacing removed."
+        },
+        {
+          "path": "/tmp/pr170-width-independent/after-721-dark.png",
+          "bytes": 112402,
+          "sha256": "ceea1678ee722da1b7ba40ddddf742b6e63f7c82e07b659b799a87ebbeea3584",
+          "notes": "Before/after tablet rendering inspected: unchanged readable copy, full44px target, no overlap or clipping; only extra inter-row spacing removed."
+        },
+        {
+          "path": "/tmp/pr170-width-independent/after-820-light.png",
+          "bytes": 122848,
+          "sha256": "c3dbac34a6c98b0fff3983b010241aeb749c3bf9c5c82ef7bb8dc6b00b25661e",
+          "notes": "Before/after tablet rendering inspected: unchanged readable copy, full44px target, no overlap or clipping; only extra inter-row spacing removed."
+        }
+      ],
+      "artifacts": [
+        {
+          "path": "/tmp/pr170-width-independent/runner.mjs",
+          "bytes": 5313,
+          "sha256": "43c0bf413ea1b83d459b83964ad2ebf4a8234ff5c55f670bbbe228556101e5db"
+        },
+        {
+          "path": "/tmp/pr170-width-independent/result.json",
+          "bytes": 36387,
+          "sha256": "7871fbc924af776ac508afd9692284723a227109de2b1c7ece4c02916bb70bc3"
+        },
+        {
+          "path": "/tmp/pr170-width-independent/run.log",
+          "bytes": 671,
+          "sha256": "6e774baf543de4c99a177377756d1c2ac8f22ea6d2b898c5d69e472b11a036aa"
+        }
+      ],
+      "limits": [
+        "Proposed CSS injected only into DOM for diagnosis; no repository edit or committed fix reviewed here. Root owns source repair and required full-gate rerun.",
+        "Pinned local producer fixture and fixture clock; not actual public acceptance.",
+        "All16 captures retained;3 named captures visually inspected."
+      ],
+      "clean_after": true,
+      "no_processes_remaining": true
+    }
+  },
+  "source_identities": [
+    {
+      "path": "docs/app.css",
+      "base_sha256": "c7e8fe2b6620abc811d838c4acf8a7a6778f4704e9f4bcac7cca830169788861",
+      "current_sha256": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586",
+      "unchanged": false
+    },
+    {
+      "path": "tools/stock_finder_cases.mjs",
+      "base_sha256": "71ec812164c3f0059dbbafdb86348e6f89c47f0da0f6fafce41f37aef1c3767f",
+      "current_sha256": "1bc33659e56fa54c8f57e7cd8d4bfa7bc68509d799b8ef32d0ef0b7760184091",
+      "unchanged": false
+    },
+    {
+      "path": "tools/reading_cases.mjs",
+      "base_sha256": "c742cc8649a0116dfcdfaeb9ce42050d21391135daf3696845fdce701df4e179",
+      "current_sha256": "c742cc8649a0116dfcdfaeb9ce42050d21391135daf3696845fdce701df4e179",
+      "unchanged": true
+    },
+    {
+      "path": "docs/app.js",
+      "base_sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "current_sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "unchanged": true
+    },
+    {
+      "path": "docs/index.html",
+      "base_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "current_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "unchanged": true
+    },
+    {
+      "path": ".env.example",
+      "base_sha256": "44d8c6d427ac39ddbdc3374ad3de56c563a5764f8bc28606f73222693e464b00",
+      "current_sha256": "44d8c6d427ac39ddbdc3374ad3de56c563a5764f8bc28606f73222693e464b00",
+      "unchanged": true
+    },
+    {
+      "path": "docs/design-system/provenance.json",
+      "base_sha256": "adadd2be64f8ee4480acfdccc91d524c6650ae41e4fd77552af800fe4ff0cec9",
+      "current_sha256": "adadd2be64f8ee4480acfdccc91d524c6650ae41e4fd77552af800fe4ff0cec9",
+      "unchanged": true
+    }
+  ],
+  "root_visual_review": [
+    {
+      "path": "/tmp/pr170-compact-before/reading-first-721-dark.png",
+      "bytes": 129848,
+      "sha256": "eccb61ec7aac5e76e4f338d47132cc75f5e3a5f2ddf02e2ef9d33e0801277386"
+    },
+    {
+      "path": "/tmp/pr170-compact-after/reading-first-721-dark.png",
+      "bytes": 131567,
+      "sha256": "d7b8b96d3324b6eeab4e079678bf22fdd16fdef110647f975c2792bc062cc2e2"
+    },
+    {
+      "path": "/tmp/pr170-compact-after/reading-first-820-light.png",
+      "bytes": 140537,
+      "sha256": "4ada9394e29ebb417048477cea0f8e2ffeb23f6b83b014f32baac1b69e1ec574"
+    }
+  ],
+  "limits": [
+    "Independent exact-commit review and hosted checks remain required on the corrected head.",
+    "No publication data, market source, account rule, provider architecture or workflow change.",
+    "No live-data/provider/broker action; actual public acceptance remains pending."
+  ],
+  "docs_tests": {
+    "passed": 40,
+    "runtime": "Python3.12.14",
+    "note": "Existing websockets.legacy deprecation warning; docs/configuration assertions unchanged."
+  }
+}

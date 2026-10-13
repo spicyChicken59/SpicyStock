@@ -8206,3 +8206,33 @@ this release. The owner manual-morning workflow handoff is a subsequent option;
 manual startup latency, timely quotes, broader issuer access, broker facts and
 an actual personal trade remain unestablished. No workflow dispatch or new
 provider access is part of either UI change.
+
+
+## Repair preparation, 13 Oct 2026 — compact stock finder at tablet widths
+
+PR #170's original head `0e2a681a` failed its hosted page job in Tests
+`38480748216`: 15426 of 15432 page checks passed. The six failures were the
+existing compact-orientation requirement at 820, 768 and 721 pixels in dark
+and light themes; 378 chart checks passed. This is a real layout regression,
+not an accepted flaky check. Local execution reproduces all six failures:
+the guidance is 94px tall against the existing strict 90px limit.
+
+The existing two-row layout below 1001px now removes its inherited 8px row gap.
+The six failing cases render at 86px, with all words, font sizes and the 44px
+Find a stock target preserved. The finder geometry suite now includes those
+three intermediate widths. No existing assertion was loosened. Local reading
+and finder checks pass 307 of 307. The original CSS fails the unchanged reading
+rule in six cases; an unrelated chart-reading margin mutation passes all 141
+reading checks and was restored before recording final source hashes.
+Independent exact-base browser diagnosis confirms the same repair in eight
+cases; root and independent reviewers inspected the before/after captures.
+`release-evidence/2026-10-13-stock-finder/compact-repair.json` retains the failed
+CI identity, local results, measured geometry and source identities.
+
+README's finder description remains accurate; `.env.example` needs no change.
+Source and fixture bytes unrelated to the CSS and added viewport coverage are
+unchanged. The previous exact-head evidence belongs to the original head; the
+corrected head needs fresh independent review and normal hosted gates before
+merge, deployment and actual public acceptance. Research quote reload plus its
+owner-workflow handoff are prepared separately for a subsequent coherent
+milestone and must reconcile this correction after #170 releases.
