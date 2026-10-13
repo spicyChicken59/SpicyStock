@@ -8,7 +8,10 @@ scheduled slots, and whether before the next session's open -- the instant
 past which the workflow's own guard refuses to publish a missed session at
 all. The page used to answer the last question with a hard-coded hour; it
 reads this block and the calendar now, and the service-health reading reads
-the same slot rule, so the three cannot disagree.
+the same slot rule, so the three cannot disagree about the rule. The instant
+differs on purpose: this block is written before the commit exists and reads
+the run's own ``published_at``, while the service-health reading measures the
+same rule against the commit that landed the record on ``main``, minutes later.
 
 Facts, not verdicts: this block says where a publication fell. Whether that
 is "late" is the reader's word, and the page's state words carry it.

@@ -35,7 +35,8 @@ revisions, inputs, reads and cost, with the regime and tickets kept apart. From
 11 September to 9 October: 21 of 21 sessions published, all landed before the
 next open, latency median 266.7 minutes by the landing commit's time (261.9 by
 the records' own clocks; corrected on 13 October, when every delivery fact
-moved to the landing and an unreadable file became a named set-aside), 14 of
+moved to the landing, the order to the history's own, fresh to what `main`
+carries, and an unreadable file became a named set-aside), 14 of
 21 after the retry slot, four sessions published more than once, zero cost
 blocks and zero applicable morning checks yet. `--check` holds its two files.
 

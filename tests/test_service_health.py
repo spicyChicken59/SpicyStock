@@ -43,9 +43,19 @@ def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, st
             "trades": [], "cash_budget": {}, **({"rules": {"pipeline": rules_pipeline}} if rules_pipeline is not None else {})}
 
 
-def reading(session, published_at, landed_at=None, **kw):
-    return sh.publication_reading(record(session, published_at, **kw), commit="c" * 40, blob="b" * 40,
+def reading(session, published_at, landed_at=None, *, sha="c" * 40, **kw):
+    return sh.publication_reading(record(session, published_at, **kw), commit=sha, blob="b" * 40,
                                   landed_at=landed_at or published_at)
+
+
+def in_history(*items):
+    """Readings placed in the history in the order given, as the walk places them (oldest first)."""
+    for n, item in enumerate(items):
+        item["sequence"] = n
+    return list(items)
+
+
+EMPTY = {"morning": [], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
 
 
 # ---------------------------------------------------------------- clocks ----
@@ -110,7 +120,7 @@ def test_a_record_generated_before_the_open_and_landed_after_it_was_not_delivere
     edge = reading("2026-10-09", "2026-10-10T00:15:00+00:00", landed_at="2026-10-10T00:18:00+00:00")["timing"]
     assert (edge["after_retry_slot"], edge["after_primary_minutes"]) == (True, 122.0)
     # the session row, the streak and the summary count the landing, the record's clock beside it
-    straddle = reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:40:00+00:00")
+    straddle = in_history(reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:40:00+00:00"))[0]
     receipt_straddle = sh.companion_reading("morning", receipt(generated="2026-10-12T13:29:00+00:00"), commit="d" * 40, blob="e" * 40,
                                             landed_at="2026-10-12T13:31:00+00:00")
     companions = {"morning": [receipt_straddle], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
@@ -118,7 +128,7 @@ def test_a_record_generated_before_the_open_and_landed_after_it_was_not_delivere
     rows = sh.session_rows([straddle], companions, clock)
     assert (rows[0]["service"]["before_next_open"], rows[0]["service"]["generated_before_next_open"]) == (False, True)
     assert sh._streaks(rows) == {"longest": 0, "current": 0}
-    s = sh.summary(rows, [straddle], companions, clock)
+    s = sh.summary(rows, [straddle], companions, clock, sh.main_carries([straddle], [], straddle["commit"]))
     assert (s["before_next_open"], s["generated_before_next_open"]) == (0, 1)
     assert (s["latency_minutes"], s["generated_latency_minutes"]) == ({"min": 3925.0, "median": 3925.0, "max": 3925.0},
                                                                       {"min": 3910.0, "median": 3910.0, "max": 3910.0})
@@ -144,18 +154,20 @@ def test_the_slot_rule_is_the_records_own_and_an_archived_block_is_held_to_it():
     assert sh.EVENING_PRIMARY is delivery.EVENING_PRIMARY_ET and sh.EVENING_RETRY is delivery.EVENING_RETRY_ET
     rules = {k.split(".", 1)[1]: v for k, v in delivery.RULES.items()}
     r = reading("2026-10-09", "2026-10-10T07:30:00+00:00")
-    assert r["timing"]["delivery_basis"] == "re-derived"
+    assert r["timing"]["record_delivery_block"] == "absent"
     block = delivery.block(date(2026, 10, 9), "2026-10-10T07:30:00+00:00")
-    archived = reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=block, rules_pipeline=rules)
-    assert archived["timing"]["delivery_basis"] == "archived"
-    assert archived["timing"]["latency_minutes"] == block["latency_minutes"] == 675.0
+    # the record's block is the run's own clock; the reading's latency is the landing's, twenty minutes later
+    archived = reading("2026-10-09", "2026-10-10T07:30:00+00:00", landed_at="2026-10-10T07:50:00+00:00", delivery=block, rules_pipeline=rules)
+    assert archived["timing"]["record_delivery_block"] == "held"
+    assert archived["timing"]["generated_latency_minutes"] == block["latency_minutes"] == 675.0
+    assert archived["timing"]["latency_minutes"] == 695.0
     forged = dict(block, slot="before_primary")
     with pytest.raises(sh.ServiceError, match="does not re-derive"):
         reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=forged, rules_pipeline=rules)
     # a block archived under another slot re-derives under the rules IT archived
     other = delivery.block(date(2026, 10, 9), "2026-10-10T07:30:00+00:00", primary_et=time(19, 16))
     assert reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=other,
-                   rules_pipeline=dict(rules, delivery_primary_et="19:16"))["timing"]["delivery_basis"] == "archived"
+                   rules_pipeline=dict(rules, delivery_primary_et="19:16"))["timing"]["record_delivery_block"] == "held"
     with pytest.raises(sh.ServiceError, match="does not re-derive"):
         reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=other, rules_pipeline=rules)
 
@@ -181,6 +193,19 @@ def test_a_record_the_reading_cannot_place_is_refused(mutate, match):
     mutate(data)
     with pytest.raises(sh.ServiceError, match=match):
         sh.publication_reading(data, commit="c" * 40, blob="b" * 40, landed_at="2026-10-10T07:32:24+00:00")
+
+
+def test_a_count_the_summary_adds_is_a_count_or_the_record_is_refused():
+    for value in ("12", True, -1, 2.0):
+        with pytest.raises(sh.ServiceError, match="run.reads.requested is not a count"):
+            reading("2026-10-09", "2026-10-10T07:30:00+00:00", reads={"requested": value, "done": 2, "verdict": "complete"})
+    usage = record()["run"]["reader_usage"]
+    with pytest.raises(sh.ServiceError, match="run.reader_usage.tokens.output is not a count"):
+        reading("2026-10-09", "2026-10-10T07:30:00+00:00", reader_usage=dict(usage, tokens=dict(usage["tokens"], output="180")))
+    with pytest.raises(sh.ServiceError, match="run.reader_usage.calls is not a count"):
+        reading("2026-10-09", "2026-10-10T07:30:00+00:00", reader_usage=dict(usage, calls=None if False else "2"))
+    # an absent block stays None, never a guess
+    assert reading("2026-10-09", "2026-10-10T07:30:00+00:00", reads={"verdict": "complete"})["reader"]["requested"] is None
 
 
 # ------------------------------------------------------------ companions ----
@@ -229,9 +254,10 @@ def week():
     """Five expected sessions, 5-9 October: the 5th published twice, the 6th
     never, the 7th once after the next open, the 8th once in time, the 9th
     not yet complete at the clock."""
-    pubs = [reading("2026-10-05", "2026-10-06T02:17:00+00:00"), reading("2026-10-05", "2026-10-06T03:00:00+00:00", status="degraded"),
-            reading("2026-10-07", "2026-10-08T14:00:00+00:00"),       # after the 8 October open at 13:30Z
-            reading("2026-10-08", "2026-10-09T02:06:00+00:00")]
+    pubs = in_history(reading("2026-10-05", "2026-10-06T02:17:00+00:00", sha="1" * 40),
+                      reading("2026-10-05", "2026-10-06T03:00:00+00:00", sha="2" * 40, status="degraded"),
+                      reading("2026-10-07", "2026-10-08T14:00:00+00:00", sha="3" * 40),       # after the 8 October open at 13:30Z
+                      reading("2026-10-08", "2026-10-09T02:06:00+00:00", sha="4" * 40))
     morning = [sh.companion_reading("morning", receipt(applicable="2026-10-09", generated="2026-10-09T13:20:00+00:00"),
                                     commit="d" * 40, blob="e" * 40, landed_at="2026-10-09T13:21:00+00:00")]
     return pubs, {"morning": morning, "issuer_evidence": [], "research_observations": [], "source_recovery": []}
@@ -269,7 +295,7 @@ def test_streaks_and_the_summary_are_hand_computed(week):
     rows = sh.session_rows(pubs, companions, clock)
     # 5th in time, 6th missing, 7th late, 8th in time, 9th missing: longest 1, current 0
     assert sh._streaks(rows) == {"longest": 1, "current": 0}
-    s = sh.summary(rows, pubs, companions, clock)
+    s = sh.summary(rows, pubs, companions, clock, sh.main_carries(pubs, [], "4" * 40))
     assert (s["expected_sessions"], s["due_sessions"], s["published_sessions"]) == (6, 5, 3)
     assert s["missing_sessions"] == ["2026-10-06", "2026-10-09"] and s["pending_sessions"] == [] and s["not_yet_due"] == ["2026-10-12"]
     assert (s["before_next_open"], s["generated_before_next_open"], s["after_retry_slot"]) == (2, 2, 3)
@@ -281,38 +307,61 @@ def test_streaks_and_the_summary_are_hand_computed(week):
     assert s["reads"] == {"requested": 8, "done": 8, "publications_with_block": 4}
     assert s["reader_usage"] == {"publications_with_block": 4, "calls": 8, "responses": 8, "input_tokens": 6998 * 4, "output_tokens": 720}
     assert s["signal"] == {"regimes": {"yellow": 4}, "reaction_tickets": 0, "anticipation_tickets": 0}
-    assert s["fresh"] == {"newest_due_session": "2026-10-09", "newest_published_session": "2026-10-08", "fresh": False}
+    carries = {"commit": "4" * 40, "readable": True, "session": "2026-10-08", "reason": None}
+    assert s["fresh"] == {"newest_due_session": "2026-10-09", "newest_published_session": "2026-10-08", "main_carries": carries, "fresh": False}
     assert s["companions"]["morning"] == {"receipts": 1, "statuses": {"observed": 1}, "before_applicable_open": 1,
                                           "generated_before_applicable_open": 1, "applicable_sessions": ["2026-10-09"]}
     fresh = sh.summary(sh.session_rows(pubs, companions, sh.parse_instant("2026-10-09T19:00:00+00:00")), pubs, companions,
-                       sh.parse_instant("2026-10-09T19:00:00+00:00"))
-    assert fresh["fresh"] == {"newest_due_session": "2026-10-08", "newest_published_session": "2026-10-08", "fresh": True}
+                       sh.parse_instant("2026-10-09T19:00:00+00:00"), sh.main_carries(pubs, [], "4" * 40))
+    assert fresh["fresh"] == {"newest_due_session": "2026-10-08", "newest_published_session": "2026-10-08", "main_carries": carries, "fresh": True}
     assert fresh["not_yet_due"] == ["2026-10-09"] and fresh["streak"] == {"longest": 1, "current": 1}
 
 
-def test_a_sessions_first_delivery_is_the_first_to_land_and_its_latest_the_last():
-    # a dispatched run generated at 02:10Z lands at 03:30Z, after a later run generated at 03:00Z landed at 03:02Z;
-    # main carried the ok record first and carries the degraded one now
-    late_land = reading("2026-10-08", "2026-10-09T02:10:00+00:00", landed_at="2026-10-09T03:30:00+00:00", status="degraded")
-    first_land = reading("2026-10-08", "2026-10-09T03:00:00+00:00", landed_at="2026-10-09T03:02:00+00:00")
-    late_land["commit"], first_land["commit"] = "a" * 40, "f" * 40
-    companions = {"morning": [], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
+def test_a_sessions_first_delivery_is_the_first_in_the_historys_order_and_its_latest_the_last():
+    # a dispatched run generated at 02:10Z whose commit followed, on main, one generated later (03:00Z);
+    # main carried the ok record first and the degraded one after it
+    first = reading("2026-10-08", "2026-10-09T03:00:00+00:00", landed_at="2026-10-09T03:02:00+00:00", sha="f" * 40)
+    second = reading("2026-10-08", "2026-10-09T02:10:00+00:00", landed_at="2026-10-09T03:30:00+00:00", sha="a" * 40, status="degraded")
+    in_history(first, second)
     clock = sh.parse_instant("2026-10-09T12:00:00+00:00")
-    for order in ([late_land, first_land], [first_land, late_land]):
-        row = sh.session_rows(order, companions, clock)[0]
+    for order in ([second, first], [first, second]):
+        row = sh.session_rows(order, EMPTY, clock)[0]
         assert row["publications"] == ["f" * 40, "a" * 40]
         assert (row["service"]["status"], row["service"]["landed_at"], row["service"]["latency_minutes"]) == ("ok", "2026-10-09T03:02:00+00:00", 407.0)
         assert (row["latest"]["status"], row["latest"]["landed_at"]) == ("degraded", "2026-10-09T03:30:00+00:00")
-    # one second apart on main, the commit time decides however the records' own clocks fall
-    tie = reading("2026-10-08", "2026-10-09T01:00:00+00:00", landed_at="2026-10-09T03:02:01+00:00")
-    tie["commit"] = "0" * 40
-    assert sh.session_rows([tie, first_land], companions, clock)[0]["publications"] == ["f" * 40, "0" * 40]
-    # companions bound to one session are listed in the order they landed
+    # the history's order and never a clock: a child whose committer time ties its parent's, or runs behind it
+    for child_landed in ("2026-10-09T03:02:00+00:00", "2026-10-09T02:00:00+00:00"):
+        child = reading("2026-10-08", "2026-10-09T01:00:00+00:00", landed_at=child_landed, sha="0" * 40, status="degraded")
+        in_history(first, child)
+        row = sh.session_rows([child, first], EMPTY, clock)[0]
+        assert row["publications"] == ["f" * 40, "0" * 40] and row["latest"]["commit"] == "0" * 40
+    # companions bound to one session are listed in the history's order too
     a = sh.companion_reading("issuer_evidence", receipt(applicable="2026-10-09", generated="2026-10-09T07:00:00+00:00"), commit="1" * 40, blob="e" * 40,
                              landed_at="2026-10-09T09:00:00+00:00")
     b = sh.companion_reading("issuer_evidence", receipt(applicable="2026-10-09", generated="2026-10-09T08:00:00+00:00"), commit="2" * 40, blob="e" * 40,
                              landed_at="2026-10-09T08:01:00+00:00")
+    in_history(b, a)
     assert [i["commit"] for i in sorted([a, b], key=sh.landing_order)] == ["2" * 40, "1" * 40]
+
+
+def test_fresh_is_what_main_carries_not_the_newest_that_could_be_read():
+    clock = sh.parse_instant("2026-10-10T12:00:00+00:00")
+    eighth, ninth, again = in_history(reading("2026-10-08", "2026-10-09T02:06:00+00:00", sha="1" * 40),
+                                      reading("2026-10-09", "2026-10-10T02:06:00+00:00", sha="2" * 40),
+                                      reading("2026-10-08", "2026-10-10T03:00:00+00:00", sha="3" * 40))
+    rows = sh.session_rows([eighth, ninth, again], EMPTY, clock)
+    # main carries the 8th re-published after the 9th: the 9th is published and due, and still not what main serves
+    s = sh.summary(rows, [eighth, ninth, again], EMPTY, clock, sh.main_carries([eighth, ninth, again], [], "3" * 40))
+    assert (s["fresh"]["newest_published_session"], s["fresh"]["main_carries"]["session"], s["fresh"]["fresh"]) == ("2026-10-09", "2026-10-08", False)
+    # main carries a record the reading set aside: not fresh, and named with its reason
+    skipped = [{"commit": "9" * 40, "reason": "99999999:docs/data.json: not JSON: Expecting value: line 1 column 1 (char 0)"}]
+    carries = sh.main_carries([eighth, ninth], skipped, "9" * 40)
+    assert carries == {"commit": "9" * 40, "readable": False, "session": None, "reason": skipped[0]["reason"]}
+    assert sh.summary(sh.session_rows([eighth, ninth], EMPTY, clock), [eighth, ninth], EMPTY, clock, carries)["fresh"]["fresh"] is False
+    assert sh.summary(sh.session_rows([eighth, ninth], EMPTY, clock), [eighth, ninth], EMPTY, clock,
+                      sh.main_carries([eighth, ninth], [], "2" * 40))["fresh"]["fresh"] is True
+    with pytest.raises(sh.ServiceError, match="neither read nor set aside"):
+        sh.main_carries([eighth, ninth], [], "8" * 40)
 
 
 def test_an_empty_history_is_refused():
@@ -431,6 +480,7 @@ def test_a_file_that_is_not_json_is_set_aside_by_name_and_the_walk_goes_on(repo,
     assert result["source"]["companion_commits"]["morning"] == [bad_receipt, repo["morning"]]
     assert [i["commit"] for i in result["companions"]["morning"]] == [repo["morning"]]
     assert (result["summary"]["published_sessions"], result["summary"]["fresh"]["newest_published_session"]) == (3, "2026-10-12")
+    assert result["source"]["record_head"] == fourth and result["summary"]["fresh"]["main_carries"]["readable"] is True
     # written, held by --check, and the markdown tallies the reason without its commit
     out = tmp_path / "out"
     sh.write(result, out)
@@ -452,6 +502,49 @@ def test_a_walk_reads_publications_and_receipts_in_the_order_they_landed(repo):
     assert row["publications"] == [repo["third"], late, later] and row["latest"]["commit"] == later
     assert [i["commit"] for i in result["companions"]["issuer_evidence"]] == [one, two]
     assert [i["commit"] for i in row["receipts"]["issuer_evidence"]] == [one, two]
+
+
+def test_a_record_main_carries_that_cannot_be_read_is_not_fresh(repo, tmp_path, monkeypatch):
+    r = repo["repo"]
+    tip = raw(r, "docs/data.json", '{"schema_version": 2, "run": {', "a truncated record", "2026-10-10T02:00:00+00:00")
+    result = sh.build(ref="main")
+    carries = result["summary"]["fresh"]["main_carries"]
+    assert result["source"]["record_head"] == tip and (carries["commit"], carries["readable"], carries["session"]) == (tip, False, None)
+    assert carries["reason"].startswith(f"{tip[:8]}:docs/data.json: not JSON: ")
+    assert result["summary"]["fresh"]["fresh"] is False and result["summary"]["fresh"]["newest_published_session"] == "2026-10-09"
+    out = tmp_path / "out"
+    sh.write(result, out)
+    assert sh.check(out) == []
+    assert f"main carries `{tip[:8]}` (not readable: not JSON: " in (out / sh.OUTPUT_MD.name).read_text()
+    # a shallow checkout takes the committed head as named and reaches the same verdict
+    monkeypatch.setattr(sh, "shallow", lambda: True)
+    monkeypatch.setattr(sh, "fetch_missing", lambda commits: [])
+    again, walked = sh.rebuild(result)
+    assert walked == "not_walked_in_shallow_clone" and again == result
+    forged = deepcopy(result)
+    forged["source"]["record_head"] = repo["third"]
+    monkeypatch.setattr(sh, "shallow", lambda: False)
+    with pytest.raises(sh.ServiceError, match="not the history's"):
+        sh.rebuild(forged)
+
+
+def test_a_git_store_that_cannot_produce_a_named_object_is_a_refusal_not_a_missing_session(repo):
+    r = repo["repo"]
+    blob = git(r, "rev-parse", f"{repo['second']}:docs/data.json")
+    (r / ".git" / "objects" / blob[:2] / blob[2:]).unlink()
+    with pytest.raises(sh.ServiceError, match="git could not produce cat-file"):
+        sh.build(ref="main")
+
+
+def test_the_walk_follows_the_history_when_a_commit_is_dated_before_its_parent(repo):
+    r = repo["repo"]
+    # the child's committer time runs an hour behind its parent's: main carries the child all the same
+    child = commit(r, "docs/data.json", record("2026-10-09", "2026-10-10T00:30:00+00:00", status="degraded"), "run 2026-10-09", "2026-10-10T00:49:14+00:00")
+    result = sh.build(ref="main")
+    assert result["source"]["publication_commits"][:2] == [child, repo["third"]]
+    row = next(x for x in result["sessions"] if x["session"] == "2026-10-09")
+    assert row["publications"] == [repo["third"], child] and row["latest"]["commit"] == child
+    assert result["summary"]["fresh"]["main_carries"]["commit"] == child
 
 
 def test_any_lookup_a_record_fails_sets_the_commit_aside(repo, monkeypatch):
@@ -485,6 +578,11 @@ def test_the_written_files_are_held_by_check_and_a_drift_is_named(repo, tmp_path
     forged = deepcopy(written)
     forged["source"]["publication_commits"] = forged["source"]["publication_commits"][1:]
     (out / sh.OUTPUT_JSON.name).write_text(json.dumps(forged, indent=1, sort_keys=True) + "\n")
+    with pytest.raises(sh.ServiceError, match="not the history's"):
+        sh.check(out)
+    other_head = deepcopy(written)
+    other_head["source"]["record_head"] = repo["second"]
+    (out / sh.OUTPUT_JSON.name).write_text(json.dumps(other_head, indent=1, sort_keys=True) + "\n")
     with pytest.raises(sh.ServiceError, match="not the history's"):
         sh.check(out)
     unset_aside = deepcopy(written)
@@ -575,6 +673,20 @@ def test_the_report_quotes_the_reading(committed):
     for session in s["republished_sessions"]:       # named as a date or in words ("11 September")
         day = date.fromisoformat(session)
         assert session in prose or f"{day.day} {day.strftime('%B')}" in prose, session
+    # each count in its own phrase, so a number the prose carries elsewhere cannot stand in for it
+    for phrase in (f"**{s['after_retry_slot']} of {s['published_sessions']}**", f"**{s['publications']} publications**",
+                   f"{s['expected_sessions']} expected sessions, {s['published_sessions']} published, "
+                   f"{s['before_next_open']} of {s['published_sessions']} first publications landed before the next session's open"):
+        assert phrase in prose, phrase
+    generated_after_retry = sum(1 for p in committed["publications"] if p["commit"] in {r["publications"][0] for r in committed["sessions"] if r["published"]}
+                                and datetime.fromisoformat(p["published_at"]) >= datetime.fromisoformat(p["timing"]["retry_slot_at"]))
+    assert f"as {generated_after_retry} were generated after it" in prose
+    # the slot ranges the prose quotes are the file's own minimum and maximum
+    def span(lo, hi):
+        values = [r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"] and lo <= r["session"] <= hi]
+        return f"{min(values)} to {max(values)}"
+    assert f"landed {span('2026-09-14', '2026-09-18')} minutes after the primary slot" in prose
+    assert f"retry slot, {span('2026-09-22', '2026-10-09')} minutes after the primary one" in prose
     numbers = {float(n) for n in re.findall(r"\b\d+\.\d\b", text)}
     assert {s["latency_minutes"]["min"], s["latency_minutes"]["median"], s["latency_minutes"]["max"]} <= numbers
     assert {s["generated_latency_minutes"]["min"], s["generated_latency_minutes"]["max"]} <= numbers

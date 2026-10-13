@@ -862,11 +862,15 @@ archived, and a record from before the block is asked for none. The run:
   exchange's zone), whether before the next open, how many times, what the
   inputs covered, what the reader did and what it cost, with the regime and the
   ticket counts in a column that makes no service verdict. "Landed" is the
-  commit's committer time on `main`; the record's own `published_at` is when
-  the run generated it and is printed beside every landed fact, never read as
-  one; a session's first delivery is the first commit to land, and a commit
-  whose file it cannot place -- one that is not JSON among them -- is set aside
-  by name and never stops the walk. It writes
+  committer time of the commit that put the record on `main` (the push follows
+  it by seconds); the record's own `published_at` is when the run generated it
+  and is printed beside every landed fact, never read as one. A session's
+  publications are in the history's own order, never a clock's, so its first
+  delivery is the first commit on `main`; fresh is what `main` carries -- its
+  newest record commit, read or set aside -- for the newest due session. A
+  commit whose file it cannot place -- one that is not JSON among them -- is set
+  aside by name and never stops the walk; a git store that cannot produce a
+  named object is a refusal. It writes
   `docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.

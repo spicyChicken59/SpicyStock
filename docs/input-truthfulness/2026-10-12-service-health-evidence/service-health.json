@@ -17,6 +17,7 @@
     "landed_at": "2026-10-10T07:36:12+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 0,
     "status": "unavailable"
    },
    {
@@ -35,6 +36,7 @@
     "landed_at": "2026-10-10T08:58:21+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 1,
     "status": "unavailable"
    },
    {
@@ -53,6 +55,7 @@
     "landed_at": "2026-10-10T09:19:16+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 2,
     "status": "unavailable"
    }
   ],
@@ -75,6 +78,7 @@
     "observation_run_id": "37964299335",
     "reason": "entry_window_ended",
     "rows": 0,
+    "sequence": 0,
     "status": "inapplicable"
    },
    {
@@ -95,6 +99,7 @@
     "observation_run_id": "38039598040",
     "reason": "wrong_session",
     "rows": 0,
+    "sequence": 1,
     "status": "inapplicable"
    }
   ],
@@ -130,6 +135,7 @@
    },
    "rules_version": "015229b909b7",
    "run_id": "34647793285",
+   "sequence": 0,
    "session": "2026-09-11",
    "session_state": "open",
    "signal": {
@@ -146,13 +152,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-11T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 53.1,
     "landed_minutes": 2.7,
     "latency_minutes": 55.8,
     "next_open_at": "2026-09-14T13:30:00+00:00",
     "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-12T00:16:00+00:00"
    }
   },
@@ -183,6 +189,7 @@
    },
    "rules_version": "2fe10c171341",
    "run_id": "34653694658",
+   "sequence": 1,
    "session": "2026-09-11",
    "session_state": "open",
    "signal": {
@@ -199,13 +206,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-11T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 127.7,
     "landed_minutes": 2.8,
     "latency_minutes": 130.6,
     "next_open_at": "2026-09-14T13:30:00+00:00",
     "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-12T00:16:00+00:00"
    }
   },
@@ -236,6 +243,7 @@
    },
    "rules_version": "953f37fb787a",
    "run_id": "34903940252",
+   "sequence": 2,
    "session": "2026-09-14",
    "session_state": "open",
    "signal": {
@@ -252,13 +260,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-14T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 129.8,
     "landed_minutes": 2.8,
     "latency_minutes": 132.7,
     "next_open_at": "2026-09-15T13:30:00+00:00",
     "primary_slot_at": "2026-09-14T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-15T00:16:00+00:00"
    }
   },
@@ -289,6 +297,7 @@
    },
    "rules_version": "e1032aa5ee21",
    "run_id": "35030668710",
+   "sequence": 3,
    "session": "2026-09-15",
    "session_state": "open",
    "signal": {
@@ -305,13 +314,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-15T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 128.3,
     "landed_minutes": 3.0,
     "latency_minutes": 131.3,
     "next_open_at": "2026-09-16T13:30:00+00:00",
     "primary_slot_at": "2026-09-15T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-16T00:16:00+00:00"
    }
   },
@@ -344,6 +353,7 @@
    },
    "rules_version": "1fe2b3171634",
    "run_id": "35157356943",
+   "sequence": 4,
    "session": "2026-09-16",
    "session_state": "open",
    "signal": {
@@ -360,13 +370,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-16T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 128.0,
     "landed_minutes": 3.5,
     "latency_minutes": 131.5,
     "next_open_at": "2026-09-17T13:30:00+00:00",
     "primary_slot_at": "2026-09-16T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-17T00:16:00+00:00"
    }
   },
@@ -399,6 +409,7 @@
    },
    "rules_version": "7ca2debdce10",
    "run_id": "35281605621",
+   "sequence": 5,
    "session": "2026-09-17",
    "session_state": "open",
    "signal": {
@@ -415,13 +426,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-17T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 127.0,
     "landed_minutes": 3.6,
     "latency_minutes": 130.6,
     "next_open_at": "2026-09-18T13:30:00+00:00",
     "primary_slot_at": "2026-09-17T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-18T00:16:00+00:00"
    }
   },
@@ -454,6 +465,7 @@
    },
    "rules_version": "e2cace0f7bc6",
    "run_id": "35401227388",
+   "sequence": 6,
    "session": "2026-09-18",
    "session_state": "open",
    "signal": {
@@ -470,13 +482,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-18T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 127.6,
     "landed_minutes": 3.5,
     "latency_minutes": 131.1,
     "next_open_at": "2026-09-21T13:30:00+00:00",
     "primary_slot_at": "2026-09-18T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-19T00:16:00+00:00"
    }
   },
@@ -509,6 +521,7 @@
    },
    "rules_version": "d5d62f525e0f",
    "run_id": "35669619745",
+   "sequence": 7,
    "session": "2026-09-21",
    "session_state": "open",
    "signal": {
@@ -525,13 +538,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-21T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 219.4,
     "landed_minutes": 3.8,
     "latency_minutes": 223.2,
     "next_open_at": "2026-09-22T13:30:00+00:00",
     "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-22T00:16:00+00:00"
    }
   },
@@ -564,6 +577,7 @@
    },
    "rules_version": "d5d62f525e0f",
    "run_id": "35673429253",
+   "sequence": 8,
    "session": "2026-09-21",
    "session_state": "open",
    "signal": {
@@ -580,13 +594,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-21T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 273.7,
     "landed_minutes": 3.7,
     "latency_minutes": 277.4,
     "next_open_at": "2026-09-22T13:30:00+00:00",
     "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-22T00:16:00+00:00"
    }
   },
@@ -620,6 +634,7 @@
    },
    "rules_version": "b2da771252f8",
    "run_id": "35802203679",
+   "sequence": 9,
    "session": "2026-09-22",
    "session_state": "open",
    "signal": {
@@ -636,13 +651,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-22T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 253.9,
     "landed_minutes": 4.8,
     "latency_minutes": 258.7,
     "next_open_at": "2026-09-23T13:30:00+00:00",
     "primary_slot_at": "2026-09-22T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-23T00:16:00+00:00"
    }
   },
@@ -676,6 +691,7 @@
    },
    "rules_version": "f70560c58f76",
    "run_id": "35938584554",
+   "sequence": 10,
    "session": "2026-09-23",
    "session_state": "open",
    "signal": {
@@ -692,13 +708,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-23T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 254.0,
     "landed_minutes": 4.2,
     "latency_minutes": 258.2,
     "next_open_at": "2026-09-24T13:30:00+00:00",
     "primary_slot_at": "2026-09-23T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-24T00:16:00+00:00"
    }
   },
@@ -732,6 +748,7 @@
    },
    "rules_version": "7c02ee92cb05",
    "run_id": "36077970591",
+   "sequence": 11,
    "session": "2026-09-24",
    "session_state": "open",
    "signal": {
@@ -748,13 +765,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-24T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 257.5,
     "landed_minutes": 4.5,
     "latency_minutes": 262.0,
     "next_open_at": "2026-09-25T13:30:00+00:00",
     "primary_slot_at": "2026-09-24T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-25T00:16:00+00:00"
    }
   },
@@ -788,6 +805,7 @@
    },
    "rules_version": "81ed3b38d571",
    "run_id": "36205470985",
+   "sequence": 12,
    "session": "2026-09-25",
    "session_state": "open",
    "signal": {
@@ -804,13 +822,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-25T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 261.9,
     "landed_minutes": 4.8,
     "latency_minutes": 266.7,
     "next_open_at": "2026-09-28T13:30:00+00:00",
     "primary_slot_at": "2026-09-25T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-26T00:16:00+00:00"
    }
   },
@@ -844,6 +862,7 @@
    },
    "rules_version": "3978da99f5c0",
    "run_id": "36510040469",
+   "sequence": 13,
    "session": "2026-09-28",
    "session_state": "open",
    "signal": {
@@ -860,13 +879,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-28T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 339.4,
     "landed_minutes": 4.5,
     "latency_minutes": 343.9,
     "next_open_at": "2026-09-29T13:30:00+00:00",
     "primary_slot_at": "2026-09-28T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-29T00:16:00+00:00"
    }
   },
@@ -900,6 +919,7 @@
    },
    "rules_version": "009babeb3f65",
    "run_id": "36654325015",
+   "sequence": 14,
    "session": "2026-09-29",
    "session_state": "open",
    "signal": {
@@ -916,13 +936,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-29T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 302.1,
     "landed_minutes": 4.3,
     "latency_minutes": 306.4,
     "next_open_at": "2026-09-30T13:30:00+00:00",
     "primary_slot_at": "2026-09-29T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-30T00:16:00+00:00"
    }
   },
@@ -956,6 +976,7 @@
    },
    "rules_version": "db2828fd59da",
    "run_id": "36800284304",
+   "sequence": 15,
    "session": "2026-09-30",
    "session_state": "open",
    "signal": {
@@ -972,13 +993,13 @@
     "before_next_open": true,
     "completion_at": "2026-09-30T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 301.9,
     "landed_minutes": 4.5,
     "latency_minutes": 306.4,
     "next_open_at": "2026-10-01T13:30:00+00:00",
     "primary_slot_at": "2026-09-30T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-01T00:16:00+00:00"
    }
   },
@@ -1011,6 +1032,7 @@
    },
    "rules_version": "4219629da532",
    "run_id": "36951987679",
+   "sequence": 16,
    "session": "2026-10-01",
    "session_state": "open",
    "signal": {
@@ -1027,13 +1049,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-01T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 325.1,
     "landed_minutes": 4.8,
     "latency_minutes": 329.9,
     "next_open_at": "2026-10-02T13:30:00+00:00",
     "primary_slot_at": "2026-10-01T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-02T00:16:00+00:00"
    }
   },
@@ -1067,6 +1089,7 @@
    },
    "rules_version": "efad1dbdba5a",
    "run_id": "37085032782",
+   "sequence": 17,
    "session": "2026-10-02",
    "session_state": "open",
    "signal": {
@@ -1083,13 +1106,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-02T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 295.4,
     "landed_minutes": 4.7,
     "latency_minutes": 300.1,
     "next_open_at": "2026-10-05T13:30:00+00:00",
     "primary_slot_at": "2026-10-02T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-03T00:16:00+00:00"
    }
   },
@@ -1123,6 +1146,7 @@
    },
    "rules_version": "9d480ae7f6fb",
    "run_id": "37403330047",
+   "sequence": 18,
    "session": "2026-10-05",
    "session_state": "open",
    "signal": {
@@ -1139,13 +1163,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-05T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 362.1,
     "landed_minutes": 4.9,
     "latency_minutes": 367.0,
     "next_open_at": "2026-10-06T13:30:00+00:00",
     "primary_slot_at": "2026-10-05T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-06T00:16:00+00:00"
    }
   },
@@ -1179,6 +1203,7 @@
    },
    "rules_version": "7f2ec51c1970",
    "run_id": "37557449315",
+   "sequence": 19,
    "session": "2026-10-06",
    "session_state": "open",
    "signal": {
@@ -1195,13 +1220,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-06T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 316.1,
     "landed_minutes": 3.8,
     "latency_minutes": 319.9,
     "next_open_at": "2026-10-07T13:30:00+00:00",
     "primary_slot_at": "2026-10-06T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-07T00:16:00+00:00"
    }
   },
@@ -1234,6 +1259,7 @@
    },
    "rules_version": "ec0230c4307e",
    "run_id": "37715183976",
+   "sequence": 20,
    "session": "2026-10-07",
    "session_state": "open",
    "signal": {
@@ -1250,13 +1276,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-07T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 339.5,
     "landed_minutes": 5.5,
     "latency_minutes": 345.0,
     "next_open_at": "2026-10-08T13:30:00+00:00",
     "primary_slot_at": "2026-10-07T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-08T00:16:00+00:00"
    }
   },
@@ -1289,6 +1315,7 @@
    },
    "rules_version": "669435d895d7",
    "run_id": "37872972790",
+   "sequence": 21,
    "session": "2026-10-08",
    "session_state": "open",
    "signal": {
@@ -1305,13 +1332,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-08T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 351.9,
     "landed_minutes": 5.2,
     "latency_minutes": 357.1,
     "next_open_at": "2026-10-09T13:30:00+00:00",
     "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-09T00:16:00+00:00"
    }
   },
@@ -1344,6 +1371,7 @@
    },
    "rules_version": "8e9ea8528b31",
    "run_id": "37928234562",
+   "sequence": 22,
    "session": "2026-10-08",
    "session_state": "open",
    "signal": {
@@ -1360,13 +1388,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-08T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 955.3,
     "landed_minutes": 5.1,
     "latency_minutes": 960.4,
     "next_open_at": "2026-10-09T13:30:00+00:00",
     "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-09T00:16:00+00:00"
    }
   },
@@ -1397,6 +1425,7 @@
    },
    "rules_version": "8e9ea8528b31",
    "run_id": "38014333381",
+   "sequence": 23,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1413,13 +1442,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 330.0,
     "landed_minutes": 4.3,
     "latency_minutes": 334.2,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   },
@@ -1450,6 +1479,7 @@
    },
    "rules_version": "4f69dc967d7a",
    "run_id": "38033614291",
+   "sequence": 24,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1466,13 +1496,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 657.9,
     "landed_minutes": 4.5,
     "latency_minutes": 662.4,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   },
@@ -1503,6 +1533,7 @@
    },
    "rules_version": "c9dc7d6d1d87",
    "run_id": "38034610157",
+   "sequence": 25,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1519,13 +1550,13 @@
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
     "generated_before_next_open": true,
     "generated_latency_minutes": 675.3,
     "landed_minutes": 2.4,
     "latency_minutes": 677.6,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   }
@@ -1581,6 +1612,7 @@
      "version": null
     },
     "landed_at": "2026-09-11T21:10:48+00:00",
+    "landed_minutes": 2.7,
     "latency_minutes": 55.8,
     "problems": [],
     "published_at": "2026-09-11T21:08:04.147459+00:00",
@@ -1652,6 +1684,7 @@
      "version": null
     },
     "landed_at": "2026-09-14T22:27:41+00:00",
+    "landed_minutes": 2.8,
     "latency_minutes": 132.7,
     "problems": [],
     "published_at": "2026-09-14T22:24:50.953539+00:00",
@@ -1723,6 +1756,7 @@
      "version": null
     },
     "landed_at": "2026-09-15T22:26:18+00:00",
+    "landed_minutes": 3.0,
     "latency_minutes": 131.3,
     "problems": [],
     "published_at": "2026-09-15T22:23:17.742488+00:00",
@@ -1794,6 +1828,7 @@
      "version": 1
     },
     "landed_at": "2026-09-16T22:26:30+00:00",
+    "landed_minutes": 3.5,
     "latency_minutes": 131.5,
     "problems": [
      "coverage_thin"
@@ -1867,6 +1902,7 @@
      "version": 1
     },
     "landed_at": "2026-09-17T22:25:36+00:00",
+    "landed_minutes": 3.6,
     "latency_minutes": 130.6,
     "problems": [
      "coverage_thin"
@@ -1940,6 +1976,7 @@
      "version": 1
     },
     "landed_at": "2026-09-18T22:26:07+00:00",
+    "landed_minutes": 3.5,
     "latency_minutes": 131.1,
     "problems": [
      "coverage_thin"
@@ -2014,6 +2051,7 @@
      "version": 1
     },
     "landed_at": "2026-09-21T23:58:13+00:00",
+    "landed_minutes": 3.8,
     "latency_minutes": 223.2,
     "problems": [
      "coverage_thin"
@@ -2087,6 +2125,7 @@
      "version": 1
     },
     "landed_at": "2026-09-23T00:33:41+00:00",
+    "landed_minutes": 4.8,
     "latency_minutes": 258.7,
     "problems": [
      "coverage_thin",
@@ -2161,6 +2200,7 @@
      "version": 1
     },
     "landed_at": "2026-09-24T00:33:15+00:00",
+    "landed_minutes": 4.2,
     "latency_minutes": 258.2,
     "problems": [
      "coverage_thin",
@@ -2235,6 +2275,7 @@
      "version": 1
     },
     "landed_at": "2026-09-25T00:37:01+00:00",
+    "landed_minutes": 4.5,
     "latency_minutes": 262.0,
     "problems": [
      "coverage_thin",
@@ -2309,6 +2350,7 @@
      "version": 1
     },
     "landed_at": "2026-09-26T00:41:44+00:00",
+    "landed_minutes": 4.8,
     "latency_minutes": 266.7,
     "problems": [
      "coverage_thin",
@@ -2383,6 +2425,7 @@
      "version": 1
     },
     "landed_at": "2026-09-29T01:58:52+00:00",
+    "landed_minutes": 4.5,
     "latency_minutes": 343.9,
     "problems": [
      "coverage_thin",
@@ -2457,6 +2500,7 @@
      "version": 1
     },
     "landed_at": "2026-09-30T01:21:22+00:00",
+    "landed_minutes": 4.3,
     "latency_minutes": 306.4,
     "problems": [
      "coverage_thin",
@@ -2531,6 +2575,7 @@
      "version": 1
     },
     "landed_at": "2026-10-01T01:21:22+00:00",
+    "landed_minutes": 4.5,
     "latency_minutes": 306.4,
     "problems": [
      "coverage_thin",
@@ -2605,6 +2650,7 @@
      "version": 1
     },
     "landed_at": "2026-10-02T01:44:57+00:00",
+    "landed_minutes": 4.8,
     "latency_minutes": 329.9,
     "problems": [
      "coverage_thin"
@@ -2678,6 +2724,7 @@
      "version": 1
     },
     "landed_at": "2026-10-03T01:15:05+00:00",
+    "landed_minutes": 4.7,
     "latency_minutes": 300.1,
     "problems": [
      "coverage_thin",
@@ -2752,6 +2799,7 @@
      "version": 1
     },
     "landed_at": "2026-10-06T02:22:00+00:00",
+    "landed_minutes": 4.9,
     "latency_minutes": 367.0,
     "problems": [
      "coverage_thin",
@@ -2826,6 +2874,7 @@
      "version": 1
     },
     "landed_at": "2026-10-07T01:34:51+00:00",
+    "landed_minutes": 3.8,
     "latency_minutes": 319.9,
     "problems": [
      "coverage_thin",
@@ -2900,6 +2949,7 @@
      "version": 1
     },
     "landed_at": "2026-10-08T02:00:02+00:00",
+    "landed_minutes": 5.5,
     "latency_minutes": 345.0,
     "problems": [
      "coverage_thin"
@@ -2984,6 +3034,7 @@
      "version": 1
     },
     "landed_at": "2026-10-09T02:12:06+00:00",
+    "landed_minutes": 5.2,
     "latency_minutes": 357.1,
     "problems": [
      "claude_partial"
@@ -3097,6 +3148,7 @@
      "version": 1
     },
     "landed_at": "2026-10-10T01:49:14+00:00",
+    "landed_minutes": 4.3,
     "latency_minutes": 334.2,
     "problems": [],
     "published_at": "2026-10-10T01:44:58.778069+00:00",
@@ -3334,6 +3386,7 @@
    "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
    "7380a97605c7f16eb902421486c491a95b957cd7"
   ],
+  "record_head": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
   "record_path": "docs/data.json",
   "ref": "origin/main",
   "through": "c759a1e671227717cae8d0bf1d50a4121d167396"
@@ -3387,6 +3440,12 @@
   "fetch_seconds": 1335.2,
   "fresh": {
    "fresh": true,
+   "main_carries": {
+    "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+    "readable": true,
+    "reason": null,
+    "session": "2026-10-09"
+   },
    "newest_due_session": "2026-10-09",
    "newest_published_session": "2026-10-09"
   },
