@@ -109,6 +109,20 @@ def test_a_record_generated_before_the_open_and_landed_after_it_was_not_delivere
     # the retry slot is the landing's too: generated a minute before 8:16 PM ET, landed two minutes after it
     edge = reading("2026-10-09", "2026-10-10T00:15:00+00:00", landed_at="2026-10-10T00:18:00+00:00")["timing"]
     assert (edge["after_retry_slot"], edge["after_primary_minutes"]) == (True, 122.0)
+    # the session row, the streak and the summary count the landing, the record's clock beside it
+    straddle = reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:40:00+00:00")
+    receipt_straddle = sh.companion_reading("morning", receipt(generated="2026-10-12T13:29:00+00:00"), commit="d" * 40, blob="e" * 40,
+                                            landed_at="2026-10-12T13:31:00+00:00")
+    companions = {"morning": [receipt_straddle], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
+    clock = sh.parse_instant("2026-10-12T14:00:00+00:00")
+    rows = sh.session_rows([straddle], companions, clock)
+    assert (rows[0]["service"]["before_next_open"], rows[0]["service"]["generated_before_next_open"]) == (False, True)
+    assert sh._streaks(rows) == {"longest": 0, "current": 0}
+    s = sh.summary(rows, [straddle], companions, clock)
+    assert (s["before_next_open"], s["generated_before_next_open"]) == (0, 1)
+    assert (s["latency_minutes"], s["generated_latency_minutes"]) == ({"min": 3925.0, "median": 3925.0, "max": 3925.0},
+                                                                      {"min": 3910.0, "median": 3910.0, "max": 3910.0})
+    assert (s["companions"]["morning"]["before_applicable_open"], s["companions"]["morning"]["generated_before_applicable_open"]) == (0, 1)
 
 
 def test_a_publication_reading_copies_the_records_own_blocks_and_keeps_the_signal_apart():
@@ -422,6 +436,22 @@ def test_a_file_that_is_not_json_is_set_aside_by_name_and_the_walk_goes_on(repo,
     sh.write(result, out)
     assert sh.check(out) == []
     assert "not JSON: Expecting property name enclosed in double quotes" in (out / sh.OUTPUT_MD.name).read_text()
+
+
+def test_a_walk_reads_publications_and_receipts_in_the_order_they_landed(repo):
+    r = repo["repo"]
+    # the 9th re-published: a run generated at 02:30Z whose commit reached main at 05:00Z, after one generated
+    # later (03:00Z) that landed at 03:04Z; and two receipts for the 12th landing in the other order to their clocks
+    late = commit(r, "docs/data.json", record("2026-10-09", "2026-10-10T03:00:00+00:00"), "run 2026-10-09", "2026-10-10T03:04:00+00:00")
+    later = commit(r, "docs/data.json", record("2026-10-09", "2026-10-10T02:30:00+00:00", status="degraded"), "run 2026-10-09", "2026-10-10T05:00:00+00:00")
+    one = commit(r, "docs/issuer-evidence.json", receipt(generated="2026-10-10T07:00:00+00:00", status="unavailable"), "issuer", "2026-10-10T07:01:00+00:00")
+    two = commit(r, "docs/issuer-evidence.json", receipt(generated="2026-10-10T06:00:00+00:00", status="unavailable"), "issuer", "2026-10-10T08:00:00+00:00")
+    result = sh.build(ref="main")
+    assert [p["commit"] for p in result["publications"] if p["session"] == "2026-10-09"] == [repo["third"], late, later]
+    row = next(x for x in result["sessions"] if x["session"] == "2026-10-09")
+    assert row["publications"] == [repo["third"], late, later] and row["latest"]["commit"] == later
+    assert [i["commit"] for i in result["companions"]["issuer_evidence"]] == [one, two]
+    assert [i["commit"] for i in row["receipts"]["issuer_evidence"]] == [one, two]
 
 
 def test_any_lookup_a_record_fails_sets_the_commit_aside(repo, monkeypatch):
