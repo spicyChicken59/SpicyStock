@@ -7777,7 +7777,8 @@ session landed at 03:05 UTC, 410.5 minutes after completion and 3.3 after its
 record's clock; one cost block archived (2 calls, 14,734 input and 1,357 output
 tokens); the 13 October session not yet due.
 
-**Measured** (this sandbox, Python 3.11.15): <PYTEST>; `tools/service_health.py
+**Measured** (this sandbox, Python 3.11.15): 4269 tests collected, 4235 passed
+and 34 environment-gated skips in 19 m 22 s at `7f85e911`; `tools/service_health.py
 --check` current with the history walked again; `tests/test_service_health.py`
 35 passed (13 new). No record, rule or page file moved, so the fixtures and the
 page smoke are CI's, recorded on the PR. gitleaks 8.24.3 over the branch's
