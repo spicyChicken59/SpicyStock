@@ -7678,3 +7678,102 @@ GitHub starts it before that open, and only with the Alpaca pair present. Read
 its status, reason, rows, call count and the page's line, and record them here.
 Also still not claimable: a live morning or research observation, the ten
 consecutive sessions with morning checks, and any trading edge.
+
+## Checkpoint, 13 Oct 2026 — PR #165 accepted; the service read by the commit that landed it (#111)
+
+**PR #165, accepted.** Merged as `279ec5a3` on `main` with a merge commit over
+`289ab4a1` (the merge of #162). The code tip `aed055c7` passed all seven checks
+on Tests run 38417767071 (pytest 14:56–15:22 UTC; page 14:56–15:11; the gate;
+the native stress case 14:57–15:25 and central 14:57–15:47) and Secret scans
+38417767097 and 38417758819; the final head `849fd510` (CLAUDE.md alone over
+it) passed pytest, page and the gate's docs-only decision on run 38425035651
+and both gitleaks runs. Publisher 38428819520 printed *Verified: every one of
+the 41 public files matches committed main* at 16:15:21 UTC; Pages 38428851261
+deployed (38428818848 cancelled as superseded, as every merge does); the merge
+commit's own Secret scans 38428819611 and 38428944632 passed; its Tests run
+38428819598 was still running at 16:26 UTC and is recorded on the next PR. The
+source-recovery workflow (id 383411937) is registered and active; its first
+slot is 07:37 UTC on 14 October. **No 13 October morning run had been created
+by 16:26 UTC** (the 12 October ones were created at 21:44 and 21:47 UTC), so
+the morning checks still stand at zero observed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `279ec5a3`. The service-health findings the 12 October
+reconciliation recorded and left open while PR #158's builder was working.
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; nothing under `src/` changed; no run,
+mail, dispatch, provider call or credential.
+
+**Reproduced first** (`scratchpad/landing/repro.py`, synthetic histories
+through the tool as it stood): a record generated at 13:25 UTC and landed at
+13:40, after a 13:30 open, read `before_next_open: true`; a session whose
+later-generated run landed first named the other as its first delivery, while
+`main` had carried the first to land; and one commit whose `docs/data.json` was
+not JSON stopped the whole walk (`read_at()` ran outside the `try` that sets a
+commit aside). Over the committed reading, the commit-landing latency was
+55.8/266.7/367.0 minutes against the 53.1/261.9/362.1 it reported.
+
+**Changed** (`tools/service_health.py`, version 2, `service_health_v2`). Every
+delivery fact is the commit's landing -- its committer time on `main`, the
+first instant the record was there to serve: latency after completion, the
+minutes after the primary slot, after the retry slot, before the next open, the
+streak and the summary. The record's own `published_at` is kept beside it as
+`generated_latency_minutes` and `generated_before_next_open`, and the
+companions' `before_applicable_open` is the landing's with
+`generated_before_applicable_open` beside it. `landing_order()` is the one
+order: a session's publications and a kind's receipts are in the order they
+landed, the first to land the service column and the last the one `main`
+carries. A file that is not JSON (`read_at()` names it `<commit>:<path>: not
+JSON: ...`) or a record a reader indexes past (`UNREADABLE` takes `LookupError`)
+is set aside by name with its reason, as the first build's records are. The
+pinned reading was regenerated at the same commit, `c759a1e6`: no before-open
+verdict, first delivery, revision count or set-aside moved; the latency is the
+landing's, 55.8/266.7/367.0, with the generated 53.1/261.9/362.1 beside it, and
+each commit landed 2.4 to 5.5 minutes after its record's clock. The dated
+report carries the correction; README and the index say what "landed" means.
+
+**Through the current tip** (`279ec5a3`, 16:13 UTC, measured here and not
+committed; the dated reading stays pinned): 22 of 22 due sessions published,
+all landed before the next open, latency 55.8/283.4/410.5 landed against
+53.1/278.6/407.2 generated, 15 of 22 after the retry slot, the 12 October
+session landed at 03:05 UTC, 410.5 minutes after completion and 3.3 after its
+record's clock; one cost block archived (2 calls, 14,734 input and 1,357 output
+tokens); the 13 October session not yet due.
+
+**Measured** (this sandbox, Python 3.11.15): <PYTEST>; `tools/service_health.py
+--check` current with the history walked again; `tests/test_service_health.py`
+30 passed. No record, rule or page file moved, so the fixtures and the page
+smoke are CI's, recorded on the PR. <GITLEAKS>
+
+**Mutation pass.** Twenty-one mutants over the correction in the mutation
+worktree at `074f5697`, each judged by the whole `tests/test_service_health.py`
+with the committed-files byte comparison deselected (the markdown mutant's rule
+IS that comparison, and it was judged with it): latency, the primary slot, the
+retry slot and before-the-open read off the record's clock; the generated
+latency and before-the-open read off the landing; the companions' two
+before-the-open flags swapped; the session rows, the assembled publications and
+the companions sorted by their own clocks; the order dropping the landing; the
+summary's generated counts and spread and the companions' generated count read
+off the landing; the record's and the receipt's read outside the `try`;
+`UNREADABLE` back to `KeyError`; the old not-JSON words; the service column's
+landing read off the record; the markdown's generation-to-landing column
+reversed. All twenty-one die, each in the test naming its rule; the control (a
+docstring) survives. Before the pass, three rules were seen to have no case that
+could tell them apart -- every fixture landed each record at its own clock --
+so a straddling publication and receipt and a history whose second run and
+second receipt land in the other order to their clocks were added first; the
+three mutants they hold die there.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and the records and
+decides nothing; the record's clock is printed beside the landing and never
+read as it. Fix if it bites: the committer time is the commit's own clock on
+the runner that made it, the push follows it by seconds and Pages serves it
+later still (the publication gate's log says when); a rebase before a push
+rewrites it to the rebase's instant, which is closer to the landing, not
+further. Defer: #111's ten-session acceptance, which needs morning checks not
+yet observed; a newer dated reading once the morning and recovery receipts
+exist. Omit: any change to the crons or the guard on these numbers.
+
+**Not claimable:** a live morning, research or recovery observation; the ten
+consecutive sessions with morning checks; any trading edge.
