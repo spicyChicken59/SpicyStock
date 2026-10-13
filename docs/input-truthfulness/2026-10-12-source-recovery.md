@@ -29,7 +29,11 @@ benchmark is counted beside the stocks and never requested.
 provider batch, `market_data.DEFAULT_BATCH_SIZE`, which is also the stale
 tolerance's `STALE_NAMES_MAX`, so every tolerated night fits in one request --
 within `MAX_COLLECTION_SECONDS = 300`, through `market_data.download_bars` with
-the record's own feed, adjustment and lookback, and only while the next session
+the record's own feed, adjustment and lookback, the call itself under a
+main-thread timer `FETCH_RESERVE_SECONDS = 10` short of that bound (the SDK
+retries a 429 or 504 on its own, so no per-request timeout bounds it; a call
+the timer stops is kept as `timeout` with its attempts counted, so a slow
+answer still binds the next slot), and only while the next session
 has not opened (`recovery_until: next_session_open`, the window the evening
 guard and the page already use). More named deficits than the budget is
 `deficit_over_budget` whole, never a prefix. A publication whose one request was

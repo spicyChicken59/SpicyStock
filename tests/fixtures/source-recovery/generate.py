@@ -84,7 +84,7 @@ def ledger_for(raw, exceptions):
     return buffer.getvalue()
 
 
-def double(symbol, *, stale_sessions=0, hole=None, placeholder=False, raise_on_bars=None, history=True):
+def double(symbol, *, stale_sessions=0, hole=None, placeholder=False, nan_close=False, raise_on_bars=None, history=True):
     fake = FakeAlpaca()
     if history:
         df = make_ohlcv("flat", seed=SEED, days=260)
@@ -95,6 +95,9 @@ def double(symbol, *, stale_sessions=0, hole=None, placeholder=False, raise_on_b
             for column in ("Open", "High", "Low", "Close"):
                 df.loc[last, column] = close
             df.loc[last, "Volume"] = 0
+        if nan_close:
+            # a session bar that arrived without a close: present, and unreadable
+            df.loc[df.index[-1], "Close"] = float("nan")
         fake.add_history(symbol, df, stale_sessions=stale_sessions)
         if hole is not None:
             fake.hole_on(symbol, hole)
@@ -118,6 +121,7 @@ def build():
         collect("still-missing", raw, ledger, fake=double("WBD", history=False))
         collect("arrived-not-ready", raw, ledger, fake=double("WBD", hole=datetime(2026, 10, 8).date()))
         collect("placeholder", raw, ledger, fake=double("WBD", placeholder=True))
+        collect("unreadable", raw, ledger, fake=double("WBD", nan_close=True))
         collect("outage", raw, ledger, fake=double("WBD", raise_on_bars=RuntimeError("transport failed")))
         collect("refused", raw, ledger, fake=double("WBD", raise_on_bars=Refused("rejected")))
         with mock.patch.dict(os.environ, {"ALPACA_API_KEY": "", "ALPACA_SECRET_KEY": ""}):

@@ -129,6 +129,7 @@
     "max_batch_attempts": 2,
     "max_names": 100,
     "max_collection_seconds": 300,
+    "fetch_reserve_seconds": 10,
     "max_future_skew_seconds": 5,
     "recovery_until": "next_session_open",
     "categories": [

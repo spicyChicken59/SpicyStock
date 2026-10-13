@@ -1242,7 +1242,12 @@ frame alone is `benchmark_only`, and the request stays unspent either way.
 At most `MAX_NAMES` (100, one provider batch) are asked for in `MAX_BATCHES` (1)
 request of at most `MAX_BATCH_ATTEMPTS` (2) attempts, through the same Alpaca
 pair the morning collector reads, within `MAX_COLLECTION_SECONDS` (300) and only
-before the next session opens (`recovery_until: next_session_open`); more named
+before the next session opens (`recovery_until: next_session_open`). The provider
+call runs under a main-thread timer set `FETCH_RESERVE_SECONDS` (10) short of
+that bound, because the SDK retries a 429 or 504 on its own; a call the timer
+stops is kept as `provider_unavailable` with error kind `timeout` and its
+attempts counted, so a slow answer still binds the next slot, and where the
+timer cannot be installed nothing is asked. More named
 deficits than the budget is `deficit_over_budget` whole, never a prefix, and a
 publication whose one request was already spent is `already_attempted`. The
 benchmark is never requested. Each row says what came back for its stock --

@@ -383,6 +383,7 @@ def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_th
     assert f"`MAX_BATCHES` ({source_recovery.MAX_BATCHES}) request" in text
     assert f"`MAX_BATCH_ATTEMPTS` ({source_recovery.MAX_BATCH_ATTEMPTS}) attempts" in text
     assert f"`MAX_COLLECTION_SECONDS` ({source_recovery.MAX_COLLECTION_SECONDS})" in text
+    assert f"`FETCH_RESERVE_SECONDS` ({source_recovery.FETCH_RESERVE_SECONDS}) short of that bound" in text
     assert f"`recovery_until: {source_recovery.RECOVERY_UNTIL}`" in text
     assert source_recovery.MAX_NAMES == market_data.DEFAULT_BATCH_SIZE * source_recovery.MAX_BATCHES
     env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())

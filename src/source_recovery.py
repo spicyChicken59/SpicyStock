@@ -17,6 +17,7 @@ reading, before that evening, from a request of its own.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import date, datetime, timedelta, timezone
 import gzip
@@ -25,7 +26,9 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import tempfile
+import threading
 
 from src import delivery, followup, input_diagnostics, market_data, morning, provenance, quality_ledger, sessions, universe
 
@@ -40,9 +43,14 @@ MAX_BATCH_ATTEMPTS = 2
 #: the names one batch carries, so a record's full stale list (STALE_NAMES_MAX)
 #: always fits; a larger named deficit is refused whole, never a prefix
 MAX_NAMES = MAX_BATCHES * market_data.DEFAULT_BATCH_SIZE
-#: two attempts over three SDK pages of 100 names x 260 bars, each under the
-#: connect and read timeouts, plus the retry wait, is 213 seconds (plumbing)
+#: the whole collection's wall-clock bound (plumbing): the provider call runs
+#: under a main-thread timer set to what is left of it less the reserve below,
+#: because the SDK retries a 429 or 504 itself and no per-request timeout
+#: bounds a paginated download; a call the timer stops is a receipt with
+#: error kind ``timeout`` and its attempts counted, never a lost one
 MAX_COLLECTION_SECONDS = 300
+#: kept back from the provider call for the rows, the receipt and its clock (plumbing)
+FETCH_RESERVE_SECONDS = 10
 MAX_FUTURE_SKEW_SECONDS = morning.POLICY["max_future_skew_seconds"]
 #: the evening guard's own rule, the one word the record archives for it
 RECOVERY_UNTIL = delivery.RECOVERY_NEXT_OPEN
@@ -54,6 +62,7 @@ CATEGORIES = ("stale", "no_bars", "dropped", "unfetched_budget", "unfetched_fail
 RULES = {
     "version": VERSION, "max_batches": MAX_BATCHES, "max_batch_attempts": MAX_BATCH_ATTEMPTS,
     "max_names": MAX_NAMES, "max_collection_seconds": MAX_COLLECTION_SECONDS,
+    "fetch_reserve_seconds": FETCH_RESERVE_SECONDS,
     "max_future_skew_seconds": MAX_FUTURE_SKEW_SECONDS, "recovery_until": RECOVERY_UNTIL,
     "categories": list(CATEGORIES), "selection": "named_missing_or_stale_stocks_of_the_bound_publication",
     "benchmark_requested": False, "basis": "the publication's own feed, adjustment, session and lookback",
@@ -329,6 +338,51 @@ def _window(requested, frozen, stats, started):
     return basis["window"]
 
 
+class _CollectionDeadline(BaseException):
+    """Raised by the timer inside the provider call. A BaseException, so the
+    transport's per-batch ``except Exception`` retry cannot catch it and ask
+    again after the bound has passed."""
+
+
+class _Counted:
+    """The client, with every bars request counted as it is sent, so a call the
+    timer stops still says how many attempts it spent."""
+
+    def __init__(self, client):
+        self._client, self.calls = client, 0
+
+    def get_stock_bars(self, request):
+        self.calls += 1
+        return self._client.get_stock_bars(request)
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
+
+def _timer_ready(seconds):
+    """The hard bound must be installable before anything is asked: production
+    runs on the Actions main thread, and an unbounded call is never offered."""
+    _require(threading.current_thread() is threading.main_thread() and hasattr(signal, "setitimer")
+             and not signal.getitimer(signal.ITIMER_REAL)[0], "bounded transport requires an available main-thread timer")
+    _require(seconds > 0, "collection budget spent before the provider call")
+
+
+@contextmanager
+def _deadline(seconds):
+    previous = signal.getsignal(signal.SIGALRM)
+
+    def expired(*_):
+        raise _CollectionDeadline()
+
+    signal.signal(signal.SIGALRM, expired)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
 def _error_kind(exc):
     """The scan transport's own refusal classes first (it wraps the provider's
     status in a sentence), then the morning transport's status reading."""
@@ -346,16 +400,23 @@ def _fetch(client, requested, frozen, started, clock):
     feed = DataFeed(frozen["feed"])
     session = date.fromisoformat(frozen["session"])
     frames, stats, error_kind = {}, None, None
+    remaining = MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS - (clock() - started).total_seconds()
+    _timer_ready(remaining)
+    counted = _Counted(client)
     try:
-        frames, stats = market_data.download_bars(client, requested, session, lookback_days=frozen["lookback_days"],
-                                                  feed=feed, batch_size=MAX_NAMES, now=started)
+        with _deadline(remaining):
+            frames, stats = market_data.download_bars(counted, requested, session, lookback_days=frozen["lookback_days"],
+                                                      feed=feed, batch_size=MAX_NAMES, now=started)
+    except _CollectionDeadline:
+        # stopped mid-call: nothing it returned is kept, and every attempt it sent is counted
+        frames, stats, error_kind = {}, None, "timeout"
     except Exception as exc:  # noqa: BLE001 -- classified, never quoted
         stats = getattr(exc, "download_stats", None)
         frames = getattr(exc, "frames", None) or {}
         error_kind = _error_kind(exc)
     if stats is None:
         stats = market_data.DownloadStats(session=session, feed=feed.value)
-        stats.batch_attempts = 1
+        stats.batch_attempts = counted.calls if error_kind == "timeout" else max(counted.calls, 1)
     if error_kind is None and (stats.dropped_symbols or stats.refused or stats.unrequested):
         error_kind = "provider_error"
     ready = market_data.apply_session_rules(dict(frames), session, stats) if frames else {}
@@ -440,18 +501,26 @@ def sentence_of(out):
     rows, t, original = out["rows"], out["recovered"], out["original"]
     source = out["source"]
     opened = "before" if out["window"]["before_next_open"] else "after"
-    head = (f"Source recovery for the {session} publication: its {_n(t['requested'], 'stock', 'stocks')} without a "
-            f"usable {session} bar, named in full, {'was' if t['requested'] == 1 else 'were'} asked for again at "
+    unnamed = out["deficits"]["unnamed_frames"]
+    asked = (f"its {_n(t['requested'], 'stock', 'stocks')} without a usable {session} bar, named in full," if not unnamed else
+             f"the {_n(t['requested'], 'stock', 'stocks')} it names of those without a usable {session} bar "
+             f"({_n(unnamed, 'more counted frame is', 'more counted frames are')} named nowhere)")
+    head = (f"Source recovery for the {session} publication: {asked} {'was' if t['requested'] == 1 else 'were'} asked for again at "
             f"{_when(started)}, {opened} the {out['window']['next_session']} open, in "
             f"{_n(source['batch_attempts'], 'request', 'requests')}")
     if source["status"] == "unavailable":
-        cause = "no credentials were present" if source["error_kind"] == "missing_credentials" else f"the provider request failed ({source['error_kind']})"
+        cause = ("no credentials were present" if source["error_kind"] == "missing_credentials" else
+                 f"the provider did not answer within the {MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS}-second bound"
+                 if source["error_kind"] == "timeout" else f"the provider request failed ({source['error_kind']})")
         body = f"; nothing was returned: {cause}"
     else:
         parts = [f"{t['session_ready']} now {_verb(t['session_ready'], 'carries', 'carry')} a {session} bar that passes the session rules"
                  + (f" ({t['zero_volume']} with zero volume)" if t["zero_volume"] else "")]
-        if t["arrived_not_ready"]:
-            parts.append(f"{t['arrived_not_ready']} {_verb(t['arrived_not_ready'], 'carries', 'carry')} it but not the session before{_names(rows, 'arrived_not_ready')}")
+        for fault, words in (("gapped", "it but not the session before"), ("unreadable", "it, but it or the bar before it is unreadable")):
+            faulted = [r for r in rows if r["outcome"] == "arrived_not_ready" and r["ready_fault"] == fault]
+            if faulted:
+                names = ", ".join(r["ticker"] for r in faulted[:3]) + (f" and {len(faulted) - 3} more" if len(faulted) > 3 else "")
+                parts.append(f"{len(faulted)} {_verb(len(faulted), 'carries', 'carry')} {words} ({names})")
         if t["still_stale"]:
             parts.append(f"{t['still_stale']} still {_verb(t['still_stale'], 'ends', 'end')} before it{_names(rows, 'still_stale')}")
         if t["still_missing"]:
@@ -571,7 +640,7 @@ def _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity):
         if source["error_kind"] == "missing_credentials":
             _require(source["batch_attempts"] == 0 and source["window"] is None, "credentials absent yet a request counted")
         else:
-            _require(source["batch_attempts"] >= 1, "a request without an attempt")
+            _require(source["batch_attempts"] >= (0 if source["error_kind"] == "timeout" else 1), "a request without an attempt")
             stats = market_data.DownloadStats(session=date.fromisoformat(frozen["session"]), feed=frozen["feed"])
             stats.batch_attempts = source["batch_attempts"]
             _require(source["window"] == _window(requested, frozen, stats, started), "request window differs")

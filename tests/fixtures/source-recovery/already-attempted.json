@@ -3,7 +3,7 @@
   "collection_started_at": "2026-10-12T13:20:00+00:00",
   "generated_at": "2026-10-12T13:20:00+00:00",
   "observation_run_id": "synthetic-already-attempted",
-  "previous_observation_sha256": "1dbf7e55eec9405b0540163bae8dde7d69f8edab8260b8e83f4b000208ac3815",
+  "previous_observation_sha256": "c2aaa6093ba4f1d45c446f50d6a72eeef125e45087d27907703fb73e8236dcb7",
   "dry_run": false,
   "publication": {
     "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
@@ -135,6 +135,7 @@
     "max_batch_attempts": 2,
     "max_names": 100,
     "max_collection_seconds": 300,
+    "fetch_reserve_seconds": 10,
     "max_future_skew_seconds": 5,
     "recovery_until": "next_session_open",
     "categories": [

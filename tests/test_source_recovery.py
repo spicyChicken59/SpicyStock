@@ -1,7 +1,7 @@
 """A publication's own named missing or stale stocks, asked for again once before
 the next open: bound to the publication, bounded in requests, never a ticket."""
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 import gzip
 import hashlib
 import importlib.util
@@ -101,6 +101,7 @@ def test_the_fixtures_are_the_collectors_own_output():
     ("deficit-not-named", "inapplicable", "deficit_not_named", None, 0, None),
     ("ledger-mismatch", "inapplicable", "membership_mismatch", None, 0, None),
     ("ledger-named-stale", "recovered", None, "recovered", 1, None),
+    ("unreadable", "nothing_recovered", None, "arrived_not_ready", 1, None),
 ])
 def test_every_outcome_and_every_zero_call_reason_is_named(name, status, reason, outcome, attempts, error):
     out = fixture(name)
@@ -124,6 +125,84 @@ def test_the_still_stale_row_keeps_the_ending_the_provider_served_and_the_placeh
     gapped = fixture("arrived-not-ready")["rows"][0]
     assert gapped["ready_fault"] == "gapped" and gapped["ending"] == "2026-10-09"
     assert "1 carries it but not the session before (WBD)" in fixture("arrived-not-ready")["sentence"]
+    unreadable = fixture("unreadable")
+    assert unreadable["rows"][0]["ready_fault"] == "unreadable" and unreadable["rows"][0]["ending"] == "2026-10-09"
+    assert "1 carries it, but it or the bar before it is unreadable (WBD)" in unreadable["sentence"]
+    assert "not the session before" not in unreadable["sentence"]
+
+
+def test_each_outcome_is_read_off_what_came_back_in_a_fresh_collection(capture):
+    """The same outcomes collected again here, not read off the committed
+    files, so a rule the collector stops applying cannot hide behind them."""
+    raw, ledger = capture
+    cases = [
+        (generate.double("WBD"), "recovered", "2026-10-09", None, 1, 0),
+        (generate.double("WBD", stale_sessions=4), "still_stale", "2026-10-05", None, 0, 0),
+        (generate.double("WBD", hole=date(2026, 10, 8)), "arrived_not_ready", "2026-10-09", "gapped", 0, 0),
+        (generate.double("WBD", nan_close=True), "arrived_not_ready", "2026-10-09", "unreadable", 0, 0),
+        (generate.double("WBD", placeholder=True), "recovered", "2026-10-09", None, 1, 1),
+        (generate.double("WBD", history=False), "still_missing", None, None, 0, 0),
+    ]
+    for fake, outcome, ending, fault, ready, zero in cases:
+        out = collect(raw, ledger, fake=fake)
+        row = out["rows"][0]
+        assert (row["outcome"], row["ending"], row["ready_fault"]) == (outcome, ending, fault), (outcome, row)
+        assert (out["recovered"]["session_ready"], out["recovered"]["zero_volume"]) == (ready, zero), (outcome, out["recovered"])
+        assert (row["volume"] is None) == (outcome not in recovery.ARRIVED)
+    # a ledger population that does not re-derive the record's own is refused, collected again
+    withheld = generate.unnamed(generate.page("thin"))
+    empty = {k: [] for k in ("no_bars", "dropped", "unfetched_budget", "unfetched_failure", "refused", "gapped", "unreadable")}
+    fake = generate.double("QAA")
+    out = collect(withheld, generate.ledger_for(withheld, {"stale": ["QAB"], **empty}), fake=fake, clock=lambda: THIN_NOW, dry_run=True)
+    assert (out["reason"], out["requested"], fake.bar_requests) == ("membership_mismatch", [], [])
+    fake = generate.double("QAA")
+    out = collect(withheld, generate.ledger_for(withheld, {"stale": ["QAA"], **empty}), fake=fake, clock=lambda: THIN_NOW, dry_run=True)
+    assert (out["reason"], out["requested"], len(fake.bar_requests)) == (None, ["QAA"], 1)
+
+
+class _Slow:
+    """A client whose every bars request takes longer than the bound allows."""
+
+    def __init__(self, inner, seconds):
+        self.inner, self.seconds, self.calls = inner, seconds, 0
+
+    def get_stock_bars(self, request):
+        import time
+        self.calls += 1
+        time.sleep(self.seconds)
+        return self.inner.get_stock_bars(request)
+
+
+def test_a_provider_call_past_the_bound_is_stopped_and_kept_as_a_timeout_with_its_attempt_counted(capture, monkeypatch):
+    import signal
+    raw, ledger = capture
+    monkeypatch.setattr(recovery, "MAX_COLLECTION_SECONDS", recovery.FETCH_RESERVE_SECONDS + 1)   # a one-second call budget
+    before = signal.getsignal(signal.SIGALRM)
+    slow = _Slow(FakeDataClient(generate.double("WBD")), 3)
+    out = recovery.collect(raw, ledger, client=slow, clock=lambda: NOW, observation_run_id="t")
+    # stopped inside the first request: the transport's own retry never saw it, so nothing was asked twice
+    assert slow.calls == 1
+    assert (out["status"], out["source"]["error_kind"], out["source"]["batch_attempts"]) == ("provider_unavailable", "timeout", 1)
+    assert [r["outcome"] for r in out["rows"]] == ["not_returned"]
+    assert "the provider did not answer within the 1-second bound" in out["sentence"]
+    assert recovery.attempted(out, out["publication"]["data_sha256"])          # the spent request still binds the next slot
+    assert signal.getitimer(signal.ITIMER_REAL)[0] == 0 and signal.getsignal(signal.SIGALRM) == before
+
+
+def test_no_request_is_made_where_the_bound_cannot_be_installed(capture):
+    import threading
+    raw, ledger = capture
+    fake, caught = generate.double("WBD"), []
+
+    def off_main():
+        try:
+            collect(raw, ledger, fake=fake)
+        except ValueError as exc:
+            caught.append(str(exc))
+    worker = threading.Thread(target=off_main)
+    worker.start()
+    worker.join()
+    assert caught == ["source recovery: bounded transport requires an available main-thread timer"] and fake.bar_requests == []
 
 
 def test_the_sentence_says_what_was_asked_and_what_came_back_and_adds_no_coverage_figure():
@@ -238,8 +317,7 @@ def test_the_benchmark_is_left_out_of_a_request_by_either_path_and_alone_is_its_
     from tests.test_pipeline import evening, a_plus_frame, coil, base_frames, CLAUDE_A_PLUS
     from tests.synthetic import make_ohlcv
 
-    def night(name, *, stale_stock):
-        fake_alpaca.reset() if hasattr(fake_alpaca, "reset") else None
+    def night(name, *, stale_stock, missing=()):
         fake_anthropic.set_payload(dict(CLAUDE_A_PLUS))
         fake_alpaca.add_history("AAA", a_plus_frame())
         fake_alpaca.add_history("COIL", coil())
@@ -248,7 +326,7 @@ def test_the_benchmark_is_left_out_of_a_request_by_either_path_and_alone_is_its_
         fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260), stale_sessions=1)
         home = tmp_path / name
         (home / "docs").mkdir(parents=True)
-        rep, data, docs = evening(home, ["AAA", "COIL"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+        rep, data, docs = evening(home, ["AAA", "COIL"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)] + list(missing))
         assert data is not None, rep.problems
         return (docs / "data.json").read_bytes(), data
 
@@ -283,6 +361,15 @@ def test_the_benchmark_is_left_out_of_a_request_by_either_path_and_alone_is_its_
     assert (out["reason"], out["requested"], out["status"], fake.bar_requests) == ("benchmark_only", [], "inapplicable", [])
     assert out["deficits"]["categories"]["stale"]["names"] == [] and out["deficits"]["categories"]["stale"]["benchmark_in_population"] is True
     assert "the benchmark's, which is never requested; nothing was fetched." in out["sentence"]
+    # a stock the provider never answered for, counted and named nowhere without a ledger, beside a named stale one:
+    # the named one is asked for and the sentence says how many counted frames it could not name
+    raw, data = night("partly-named", stale_stock="BAA", missing=("NOBAR",))
+    assert data["run"]["coverage"]["no_bars"] == 1 and data["run"]["input_tolerance"]["names"] == ["BAA", "SPY"]
+    out = collect(raw, None, fake=generate.double("BAA"), clock=clock, dry_run=True)
+    assert out["requested"] == ["BAA"] and out["deficits"]["unnamed_frames"] == 1
+    assert out["deficits"]["categories"]["no_bars"]["named"] is False
+    assert "the 1 stock it names of those without a usable 2026-09-10 bar (1 more counted frame is named nowhere) was asked" in out["sentence"]
+    assert "named in full" not in out["sentence"]
 
 
 def test_a_named_deficit_over_the_budget_is_refused_whole_and_never_as_a_prefix():
