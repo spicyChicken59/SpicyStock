@@ -148,6 +148,10 @@ def test_a_run_without_a_cron_name_reads_each_table_while_it_was_in_force():
     # moved to 07:00 at 10:00: the run is the 06:00 slot's, and the 07:00 cron names nothing before 10:00
     moved = versions + [version("2026-10-12T10:00:00+00:00", ["0 7 * * 1"])]
     assert sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), moved)["slot"] == "2026-10-12T06:00:00+00:00"
+    # a cron dropped before its instant never fired: noon is replaced at 11:00 by 06:00, and a run created at
+    # 12:30 is yesterday noon's, the last instant a table named while it was in force -- not today's noon
+    replaced = [version("2026-09-01T00:00:00+00:00", ["0 12 * * *"]), version("2026-10-12T11:00:00+00:00", ["0 6 * * *"])]
+    assert sr.attribute(run(1, SCAN, "2026-10-12T12:30:00Z"), replaced)["slot"] == "2026-10-11T12:00:00+00:00"
     # a table in force since before the run, with nothing named after its own start, refuses
     with pytest.raises(sr.ScheduleError, match="no cron in its name"):
         sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), [version("2026-10-12T07:00:00+00:00", ["0 6 * * 1"])])
@@ -205,9 +209,9 @@ def test_every_threshold_reads_seconds_never_the_rounded_minutes():
     # 15 minutes 2 seconds is not prompt
     slow = run(2, EVENING, "2026-09-01T22:31:02Z", "Evening cron 16 22 * * 1-5")
     assert sr.build(snap([slow, late], {EVENING: versions}, fetched="2026-09-03T00:00:00+00:00"))["change"]["last_prompt_before"] is None
-    # the spread rounds once: the median of 60:00 and 60:06 is 60:03, 60.05 minutes, and reads 60.0 or 60.1 by
-    # the seconds, never the mean of two rounded values
-    assert sr._spread([3600.0, 3606.0]) == {"n": 2, "min": 60.0, "median": round(3603.0 / 60, 1), "max": 60.1}
+    # the spread rounds once: 59:56 and 60:14 have a median of 60:05, 60.1 minutes; the median of their
+    # rounded minutes, 59.9 and 60.2, would read 60.0
+    assert sr._spread([3596.0, 3614.0]) == {"n": 2, "min": 59.9, "median": 60.1, "max": 60.2}
 
 
 def test_a_workflow_whose_cron_never_fired_is_read_and_named():
