@@ -23,18 +23,22 @@ needs no network and no history.
 
 A run's slot is the cron its own run name records (the evening, morning and
 source-recovery workflows write ``... cron <expression>``), at the latest
-instant that cron names at or before the run was created; a run whose name
-records no cron takes the nearest preceding instant of its workflow's table in
-force then, and says so. Either way the attribution assumes a delay shorter
-than the cron's own period, a day for the daily ones. An expected slot is
-every instant a cron in force named, from the workflow's first attributed slot
-to the snapshot; one with no run is ``no_run`` once a day has passed without
-one, and ``not_started`` before that.
+instant that cron names at or before the run was created; that assumes a delay
+shorter than the cron's own period, a day for the daily ones. A run whose name
+records no cron takes the latest instant any cron named, at or before its
+creation, by the table in force at that instant -- the assignment ``expected()``
+makes -- and says so; that assumes a delay shorter than the gap to the table's
+next instant, an hour for some tables. A run placed at a slot another run has
+too is listed under ``shared``, so a misplacement shows. An expected slot is
+every instant a cron in force named, from the workflow's first table to the
+snapshot; one with no run is ``no_run`` once a day has passed without one, and
+``not_started`` before that. Every threshold compares the delay in seconds; the
+minutes are rounded once, for display.
 """
 from __future__ import annotations
 
 import argparse
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
@@ -43,6 +47,7 @@ import re
 import statistics
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,6 +59,9 @@ API = "https://api.github.com"
 PER_PAGE = 100
 #: the most pages a fetch reads; a history longer than this is a refusal, never a truncation
 MAX_PAGES = 20
+#: the most runs GitHub lists for a filtered listing (``event=``, ``branch=``); past it the
+#: listing must be split by ``created=`` windows, which this version does not do, so it refuses
+API_RESULT_CAP = 1000
 FETCH_TIMEOUT_SECONDS = 30
 OUT_DIR = ROOT / "docs/input-truthfulness/2026-10-13-schedule-reliability-evidence"
 SNAPSHOT = OUT_DIR / "runs.json"
@@ -72,8 +80,10 @@ DELAY_MARKS = (15, 60, 240, 360)
 #: created later than ``LATE_MINUTES`` after its slot, and the last prompt run before it
 PROMPT_MINUTES = 15
 LATE_MINUTES = 60
-#: a run name's cron: five fields after ``cron``, ended by the name or by ``, `` (older names add ``, the EDT slot``)
-NAME_CRON = re.compile(r"\bcron (\S+ \S+ \S+ \S+ \S+?)(?:, |\s*$)")
+#: a run name's cron: the five fields after the word ``cron``, however spaced (``github.event.schedule``
+#: is the cron as the file spells it); older names add ``, the EDT slot`` after it
+NAME_WORD = re.compile(r"\bcron\b")
+NAME_CRON = re.compile(r"\bcron\s+(\S+\s+\S+\s+\S+\s+\S+\s+\S+)")
 FILE_CRON = re.compile(r'^\s*-\s*cron:\s*["\']([^"\']+)["\']', re.M)
 
 
@@ -124,11 +134,6 @@ def _cron_day(instant: datetime) -> int:
     return (instant.weekday() + 1) % 7      # Python: Monday 0; cron: Sunday 0
 
 
-def fires_at(cron: dict, instant: datetime) -> bool:
-    return (instant.minute == cron["minute"] and instant.hour == cron["hour"] and instant.second == 0
-            and (cron["days"] is None or _cron_day(instant) in cron["days"]))
-
-
 def latest_at_or_before(cron: dict, instant: datetime) -> datetime:
     """The latest instant the cron names at or before ``instant`` (UTC)."""
     at = instant.astimezone(timezone.utc).replace(hour=cron["hour"], minute=cron["minute"], second=0, microsecond=0)
@@ -172,8 +177,13 @@ def iso(at: datetime) -> str:
     return at.astimezone(timezone.utc).isoformat()
 
 
+def seconds(later: datetime, earlier: datetime) -> float:
+    return (later - earlier).total_seconds()
+
+
 def minutes(later: datetime, earlier: datetime) -> float:
-    return round((later - earlier).total_seconds() / 60, 1)
+    """For display: rounded once; every threshold reads :func:`seconds`."""
+    return round(seconds(later, earlier) / 60, 1)
 
 
 # ------------------------------------------------------------- snapshot ----
@@ -218,10 +228,15 @@ def _get(url: str) -> dict:
     token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=FETCH_TIMEOUT_SECONDS) as response:
-        if response.status != 200:
-            raise ScheduleError(f"{url}: HTTP {response.status}")
-        return json.loads(response.read())
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=FETCH_TIMEOUT_SECONDS) as response:
+            if response.status != 200:
+                raise ScheduleError(f"{url}: HTTP {response.status}")
+            return json.loads(response.read())
+    except urllib.error.HTTPError as exc:
+        raise ScheduleError(f"{url}: HTTP {exc.code}") from exc
+    except (urllib.error.URLError, OSError, ValueError) as exc:
+        raise ScheduleError(f"{url}: {exc}") from exc
 
 
 def _listing(get, repository: str, query: str, keep) -> tuple[list[dict], int]:
@@ -234,6 +249,9 @@ def _listing(get, repository: str, query: str, keep) -> tuple[list[dict], int]:
         if not isinstance(body, dict) or not isinstance(body.get("workflow_runs"), list) or not isinstance(body.get("total_count"), int):
             raise ScheduleError(f"{query} page {page}: not a workflow-runs page")
         total = body["total_count"] if total is None else total
+        if total > API_RESULT_CAP:
+            raise ScheduleError(f"{query}: the API counted {total} runs and lists at most {API_RESULT_CAP} of a "
+                                "filtered listing; split it by created= windows")
         runs += [keep(r) for r in body["workflow_runs"]]
         if len(runs) >= total or not body["workflow_runs"]:
             break
@@ -258,6 +276,11 @@ def fetch(*, repository: str = REPOSITORY, ref: str = "origin/main", get=_get, n
     runs, total = _listing(get, repository, "event=schedule", lambda r: {k: r.get(k) for k in RUN_FIELDS})
     pushes, push_total = _listing(get, repository, "event=push&branch=main", _push)
     head = _git("rev-parse", "--verify", f"{ref}^{{commit}}").strip()
+    history = set(_git("rev-list", head).split())
+    outside = sorted({r.get("head_sha") for r in runs + pushes} - history, key=str)
+    if outside:
+        raise ScheduleError(f"{len(outside)} commits the runs ran on are not in {ref}'s history "
+                            f"(first {str(outside[0])[:12]}); fetch it, or name a ref that carries them")
     paths = sorted({r["path"] for r in runs if isinstance(r.get("path"), str)} | scheduled_at(head))
     snapshot = {"version": VERSION, "repository": repository, "fetched_at": iso(fetched_at),
                 "source": f"GET {API}/repos/{repository}/actions/runs?event=schedule and ?event=push&branch=main "
@@ -328,33 +351,54 @@ def digest(snapshot: dict) -> str:
 
 # --------------------------------------------------------------- reading ----
 
-def in_force(versions: list[dict], at: datetime) -> dict | None:
-    """The table version in force at an instant: the last that took effect at or before it."""
-    current = None
-    for v in versions:
-        if parse_instant(v["effective_at"]) <= at:
-            current = v
-    return current
+def name_cron(title: str) -> dict | None:
+    """The cron a run name records, or None for a name without the word ``cron``;
+    a name that has the word and no cron the reading can place is a refusal."""
+    if not NAME_WORD.search(title):
+        return None
+    named = NAME_CRON.search(title)
+    if not named:
+        raise ScheduleError(f"a run name that says cron and names none: {title!r}")
+    fields = named.group(1).split()
+    fields[-1] = fields[-1].rstrip(",")
+    return parse_cron(" ".join(fields))
+
+
+def nearest_slot(versions: list[dict], created: datetime) -> tuple[dict, datetime]:
+    """The latest instant any cron named at or before ``created``, each cron read
+    only while its table was in force -- the slots ``expected()`` names."""
+    best = None
+    for n, v in enumerate(versions):
+        start = parse_instant(v["effective_at"])
+        if start > created:
+            break
+        until = parse_instant(versions[n + 1]["effective_at"]) if n + 1 < len(versions) else None
+        bound = created if until is None or until > created else until - timedelta(microseconds=1)
+        for text in v["crons"]:
+            cron = parse_cron(text)
+            at = latest_at_or_before(cron, bound)
+            if at >= start and (best is None or at > best[1]):
+                best = (cron, at)
+    if best is None:
+        raise ScheduleError(f"no cron of any table in force named an instant at or before {iso(created)}")
+    return best
 
 
 def attribute(run: dict, versions: list[dict]) -> dict:
     """The slot a run was for: its run name's cron when recorded, else the nearest
-    preceding instant of its workflow's table in force when it was created."""
+    preceding instant any table in force named."""
     created = parse_instant(run["created_at"])
-    named = NAME_CRON.search(run["display_title"])
-    if named:
-        cron = parse_cron(named.group(1))
-        basis = "run_name"
+    cron = name_cron(run["display_title"])
+    if cron is not None:
+        slot, basis = latest_at_or_before(cron, created), "run_name"
     else:
-        version = in_force(versions, created)
-        crons = [parse_cron(c) for c in (version or {}).get("crons", [])]
-        if not crons:
-            raise ScheduleError(f"run {run['id']}: no cron in its name and none in force at {run['created_at']}")
-        cron = max(crons, key=lambda c: latest_at_or_before(c, created))
+        try:
+            cron, slot = nearest_slot(versions, created)
+        except ScheduleError as exc:
+            raise ScheduleError(f"run {run['id']}: no cron in its name and {exc}") from exc
         basis = "nearest_slot"
-    slot = latest_at_or_before(cron, created)
     return {"id": run["id"], "cron": cron["text"], "slot": iso(slot), "basis": basis,
-            "created_at": iso(created), "delay_minutes": minutes(created, slot),
+            "created_at": iso(created), "delay_seconds": seconds(created, slot), "delay_minutes": minutes(created, slot),
             "conclusion": run["conclusion"], "status": run["status"], "head_sha": run["head_sha"], "attempt": run["run_attempt"]}
 
 
@@ -369,8 +413,12 @@ def expected(versions: list[dict], start: datetime, end: datetime) -> list[tuple
     return sorted(out, key=lambda pair: (pair[1], pair[0]))
 
 
-def _spread(values: list[float]) -> dict | None:
-    return None if not values else {"n": len(values), "min": min(values), "median": round(statistics.median(values), 1), "max": max(values)}
+def _spread(secs: list[float]) -> dict | None:
+    """Min / median / max of delays given in seconds, each rounded once to a tenth of a minute."""
+    if not secs:
+        return None
+    return {"n": len(secs), "min": round(min(secs) / 60, 1), "median": round(statistics.median(secs) / 60, 1),
+            "max": round(max(secs) / 60, 1)}
 
 
 def _week(at: datetime) -> str:
@@ -391,16 +439,19 @@ def workflow_reading(path: str, runs: list[dict], versions: list[dict], fetched:
     expected_keys = {(t, iso(a)) for t, a in due}
     weeks: dict[str, list[float]] = {}
     by_cron: dict[str, list[float]] = {}
+    by_slot: dict[tuple, list[int]] = {}
     for a in mine:
-        weeks.setdefault(_week(parse_instant(a["slot"])), []).append(a["delay_minutes"])
-        by_cron.setdefault(a["cron"], []).append(a["delay_minutes"])
-    delays = [a["delay_minutes"] for a in mine]
+        weeks.setdefault(_week(parse_instant(a["slot"])), []).append(a["delay_seconds"])
+        by_cron.setdefault(a["cron"], []).append(a["delay_seconds"])
+        by_slot.setdefault((a["slot"], a["cron"]), []).append(a["id"])
+    delays = [a["delay_seconds"] for a in mine]
     return {
         "path": path, "runs": mine, "expected": len(due),
         "no_run": no_run, "not_started": not_started,
         "unexpected": [{"id": a["id"], "cron": a["cron"], "slot": a["slot"]} for a in mine if (a["cron"], a["slot"]) not in expected_keys],
+        "shared": [{"cron": c, "slot": s, "ids": ids} for (s, c), ids in sorted(by_slot.items()) if len(ids) > 1],
         "delay_minutes": _spread(delays),
-        "beyond": {str(m): sum(1 for d in delays if d > m) for m in DELAY_MARKS},
+        "beyond": {str(m): sum(1 for d in delays if d > m * 60) for m in DELAY_MARKS},
         "weeks": [{"week": w, **_spread(v)} for w, v in sorted(weeks.items())],
         "by_cron": {c: _spread(v) for c, v in sorted(by_cron.items())},
     }
@@ -413,15 +464,15 @@ def change(workflows: dict) -> dict | None:
     never an attribution of why."""
     runs = sorted(({"path": p, **a} for p, w in workflows.items() for a in w["runs"]),
                   key=lambda a: (a["slot"], a["created_at"], a["id"]))
-    first = next((a for a in runs if a["delay_minutes"] > LATE_MINUTES), None)
+    first = next((a for a in runs if a["delay_seconds"] > LATE_MINUTES * 60), None)
     if first is None:
         return None
-    before = [a for a in runs if a["slot"] < first["slot"] and a["delay_minutes"] <= PROMPT_MINUTES]
-    since = [a["delay_minutes"] for a in runs if a["slot"] >= first["slot"]]
+    before = [a for a in runs if a["slot"] < first["slot"] and a["delay_seconds"] <= PROMPT_MINUTES * 60]
+    since = [a["delay_seconds"] for a in runs if a["slot"] >= first["slot"]]
     pick = lambda a: None if a is None else {k: a[k] for k in ("path", "cron", "slot", "created_at", "delay_minutes")}
     return {"first_late": pick(first), "last_prompt_before": pick(before[-1] if before else None),
-            "since": {"delay_minutes": _spread(since), "prompt": sum(1 for d in since if d <= PROMPT_MINUTES),
-                      "beyond": {str(m): sum(1 for d in since if d > m) for m in DELAY_MARKS}}}
+            "since": {"delay_minutes": _spread(since), "prompt": sum(1 for d in since if d <= PROMPT_MINUTES * 60),
+                      "beyond": {str(m): sum(1 for d in since if d > m * 60) for m in DELAY_MARKS}}}
 
 
 def contrast(pushes: list[dict], since: str | None) -> dict:
@@ -430,11 +481,11 @@ def contrast(pushes: list[dict], since: str | None) -> dict:
     it was pushed counts the gap), over every push run and over those from the
     change on."""
     def gap(r):
-        return minutes(parse_instant(r["created_at"]), parse_instant(r["committed_at"]))
+        return seconds(parse_instant(r["created_at"]), parse_instant(r["committed_at"]))
     after = [gap(r) for r in pushes if since is not None and parse_instant(r["created_at"]) >= parse_instant(since)]
     return {"event": "push", "branch": "main", "all": _spread([gap(r) for r in pushes]),
             "since_change": _spread(after) if since is not None else None,
-            "within_prompt_since_change": None if since is None else sum(1 for d in after if d <= PROMPT_MINUTES)}
+            "within_prompt_since_change": None if since is None else sum(1 for d in after if d <= PROMPT_MINUTES * 60)}
 
 
 def build(snapshot: dict) -> dict:
@@ -450,8 +501,10 @@ def build(snapshot: dict) -> dict:
                      "push_runs": len(snapshot["push_runs"])},
         "rules": {"unseen_after_hours": UNSEEN_AFTER_HOURS, "delay_marks_minutes": list(DELAY_MARKS),
                   "prompt_minutes": PROMPT_MINUTES, "late_minutes": LATE_MINUTES,
-                  "attribution": "the run name's cron at its latest instant at or before the run was created, else the "
-                                 "nearest preceding instant of the workflow's table in force; a delay shorter than the cron's period assumed"},
+                  "attribution": "the run name's cron at its latest instant at or before the run was created (a delay "
+                                 "shorter than the cron's period assumed), else the latest instant any cron named at or "
+                                 "before it while its table was in force (a delay shorter than the gap to the table's next "
+                                 "instant assumed); runs sharing a slot are listed"},
         "change": moved,
         "contrast": contrast(snapshot["push_runs"], None if moved is None else moved["first_late"]["slot"]),
         "workflows": workflows,
@@ -496,7 +549,8 @@ def markdown(result: dict) -> str:
     for path, w in result["workflows"].items():
         lines += [f"## {path}", "",
                   f"- runs {len(w['runs'])}; expected slots {w['expected']}; with no run {len(w['no_run'])}; "
-                  f"not started yet {len(w['not_started'])}; runs for a slot no table named {len(w['unexpected'])}",
+                  f"not started yet {len(w['not_started'])}; runs for a slot no table named {len(w['unexpected'])}; "
+                  f"slots placed with more than one run {len(w['shared'])}",
                   f"- delay, minutes: {_s(w['delay_minutes'])}; beyond " +
                   ", ".join(f"{m} min {w['beyond'][str(m)]}" for m in DELAY_MARKS), ""]
         if w["by_cron"]:

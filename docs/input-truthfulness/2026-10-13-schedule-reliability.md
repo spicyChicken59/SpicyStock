@@ -13,7 +13,7 @@ The evidence is under
 [`2026-10-13-schedule-reliability-evidence/`](2026-10-13-schedule-reliability-evidence/):
 
 - `runs.json`: the snapshot. It holds the 128 scheduled runs the API listed at
-  18:14 UTC on 13 October, and the 360 runs a push to `main` triggered (the
+  18:34 UTC on 13 October, and the 360 runs a push to `main` triggered (the
   contrast). Both keep only the fields the reading uses. Beside them are each
   scheduled workflow's cron tables, version by version, as `main` carried them
   at `3a972ad7`.
@@ -24,15 +24,20 @@ history. The tests hold the snapshot's tables to the workflow files git carries.
 
 ## How a run is placed
 
-Every scheduled run since the second build names its cron in its run name.
-The evening, morning and source-recovery workflows write
-`... cron <expression>`. The run is placed at the latest instant that cron
-names at or before the run was created. A run whose name records no cron is
-placed at the nearest preceding instant of its workflow's table in force at
-that moment, and the reading says so: those are the first build's 14 runs and
-the six weekly secret scans. Either way the placement assumes a delay shorter
-than the cron's own period. That holds for every run here: the longest is
-504.9 minutes against a period of a day.
+The evening, morning and source-recovery workflows name the cron in the run
+name (`... cron <expression>`). Every evening and morning run from 7 September
+on does. Such a run is placed at the latest instant that cron names at or
+before the run was created. That assumes a delay shorter than the cron's own
+period, a day here, and the longest delay is 504.9 minutes.
+
+A run whose name records no cron is placed at the latest instant any cron
+named at or before its creation, each cron read only while its table was in
+force, and the reading says so. Those are 20 runs: the first build's 14
+evening and morning runs from 1 to 4 September, and the six weekly secret
+scans. That placement assumes a delay shorter than the gap to the table's next
+instant. The first build's evening and morning tables fired an hour apart, and
+their 14 runs were 5.3 to 15.0 minutes late; the scan's next instant is a week
+away. A slot that more than one run is placed at would be listed; there is none.
 
 An expected slot is every instant a table in force named, from that workflow's
 first table to the snapshot. A slot with no run is `no_run` once a day has
@@ -40,8 +45,8 @@ passed, and `not_started` before that.
 
 ## What the history shows
 
-**Before 21 September GitHub created every scheduled run within 17 minutes of
-its slot.** That covers 57 runs over the evening, morning and weekly-scan
+**Before the evening slot of 21 September GitHub created every scheduled run
+within 17 minutes of its slot.** That covers 57 runs over the evening, morning and weekly-scan
 workflows, with weekly medians of 4.2 to 15.1 minutes. The last prompt run was
 the weekly secret scan at 06:00 UTC on Monday 21 September, created 4.3 minutes
 after its slot.
@@ -55,8 +60,8 @@ workflow went without a run.
 
 The delay has grown each week since:
 
-- The evening workflow's weekly medians were 208.3, 257.4 and 285.2 minutes,
-  then 336.8 minutes in the four runs of the week of 12 October.
+- The evening workflow's weekly medians were 208.4, 257.4 and 285.2 minutes,
+  then 336.8 minutes in the 4 runs of the week of 12 October.
 - The Monday secret scan was 378.3, 418.0 and 470.0 minutes late on 28
   September, 5 October and 12 October.
 
@@ -65,17 +70,19 @@ UTC), and every one of them is late, so this is not one slow hour of the day.
 
 **The morning is where it bites.** The morning workflow's four new crons, 8:20
 and 8:28 Chicago in each season, first fired on Monday 12 October. GitHub
-created those four runs 463.3 to 504.9 minutes after their slots. The 13:20 UTC
-run was created at 21:44 UTC, more than eight hours after the 8:30 Chicago open
-it was meant to precede. Every guard said `entry_window_ended` and
-collected nothing, correctly. At the snapshot, the 4 slots of 13 October had
-not been created at all, almost five hours after the first of them.
+created those four runs 463.3 to 504.9 minutes after their slots. The two that
+fall in this season's window, 13:20 and 13:28 UTC, were 504.9 and 499.1 minutes
+late. The 13:20 UTC run was created at 21:44 UTC, more than eight hours after
+the 8:30 Chicago open it was meant to precede. Those two guards said
+`entry_window_ended` and the winter pair said `inactive_schedule`. All four
+were right, and none collected. At the snapshot, the 4 slots of 13 October had
+not been created at all, more than five hours after the first of them.
 
 **The contrast: the delay is the scheduler's alone.** Over the same weeks, the
 144 runs a push to `main` triggered were each created within seconds of the
-pushed commit's own timestamp: none more than 0.3 minutes, median 0.1. That
-timestamp is an upper bound on the push, since a commit can be made before it
-is pushed. The listing has no reference instant for a manual dispatch, so the
+pushed commit's own timestamp: none more than 0.3 minutes, median 0.1. A
+commit's timestamp is no later than its push, so each gap is an upper bound on
+that event's delay. The listing has no reference instant for a manual dispatch, so the
 reading does not measure dispatch delay.
 
 What the listing does not say: why the scheduler's delay changed on 21
@@ -93,19 +100,21 @@ not read.
   October and recorded in CLAUDE.md; the committed reading stops at 9 October.
   The evening's first run is created hours late, but the window to the next
   open is about 15 hours. The 12 October session landed 410.5 minutes after
-  completion. The retry slots are not a retry in practice. On 12 October their
-  runs were created at 06:43 and 07:45 UTC, after the primary's publication had
-  landed at 03:05.
+  completion. The retry slots are not a retry in practice. For the 12 October
+  session their runs were created at 06:43 and 07:45 UTC on 13 October, after
+  the primary's publication had landed at 03:05.
 - **No scheduled morning check can be relied upon at these delays.** A morning
-  observation has to land in the 8:20 to 8:30 Chicago window, and every run in
-  that window has been created 463 to 505 minutes late. #111's
-  acceptance line asks for ten consecutive sessions with morning checks; under
-  the scheduler as it now behaves, that line cannot be met by the morning crons.
+  observation has to land in the 8:20 to 8:30 Chicago window, and the two runs
+  for that window were created 504.9 and 499.1 minutes late. #111's acceptance
+  line asks for ten consecutive sessions with morning checks. It has not been
+  met by the morning crons, and at these delays it would not be.
 - **The source-recovery receipts are at risk too.** They must land before the
-  next open, and their first slot is 07:37 UTC on 14 October. At the evening
-  workflow's delays that is before the open. At the morning workflow's it is
-  after, and the receipt would be the honest inapplicable one. The next reading
-  will show which.
+  next open, 13:30 UTC, and their first slot is 07:37 UTC on 14 October. At the
+  median delay since the change, 276.5 minutes, a run would be created at 12:13
+  UTC, before the open. At the evening's two latest delays, 387.9 and 389.8
+  minutes, it would be created after the open, and the receipt would be the
+  honest inapplicable one. This is not a forecast. The next reading will show
+  which.
 
 ## Options for the morning, for Mo
 

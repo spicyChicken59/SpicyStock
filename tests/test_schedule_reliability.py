@@ -9,6 +9,7 @@ snapshot, and the snapshot's cron tables to the workflow files git carries.
 from __future__ import annotations
 
 import copy
+import math
 from datetime import datetime, timedelta, timezone
 import json
 import os
@@ -107,10 +108,17 @@ def test_a_run_names_its_cron_however_the_workflow_spelled_the_name():
                         ("Evening cron 16 22 * * 1-5, the EDT slot", "16 22 * * 1-5"),
                         ("Morning cron 30 13 * * 1-5, the EST slot", "30 13 * * 1-5"),
                         ("Source recovery cron 37 7 * * *", "37 7 * * *"),
+                        ("Source recovery cron 37  7 * * *", "37 7 * * *"),     # the event's spelling of the file
+                        ("Evening cron 16 22 * * 1-5 (EDT)", "16 22 * * 1-5"),
                         ("X cron 1 2 * * 1,3,5", "1 2 * * 1,3,5")):
-        assert sr.NAME_CRON.search(title).group(1) == cron, title
-    for title in ("Secret scan", "Evening scan (6:16 PM ET)", "Morning observation (best effort)", "Evening dispatch"):
-        assert sr.NAME_CRON.search(title) is None, title
+        assert sr.name_cron(title)["text"] == cron, title
+    for title in ("Secret scan", "Evening scan (6:16 PM ET)", "Morning observation (best effort)", "Evening dispatch",
+                  "Microcrons"):
+        assert sr.name_cron(title) is None, title
+    # a name that says cron and names none the reading can place is refused, never read as no cron
+    for title in ("Evening cron", "Evening cron 16 22 * *", "Evening cron 16 22 1 * 1-5"):
+        with pytest.raises(sr.ScheduleError):
+            sr.name_cron(title)
 
 
 # ------------------------------------------------------------ attribution ----
@@ -125,21 +133,24 @@ def test_a_run_is_attributed_to_the_cron_its_name_records_not_the_nearest_slot()
     assert (b["slot"], b["delay_minutes"], b["basis"]) == ("2026-10-13T01:16:00+00:00", 105.6, "nearest_slot")
 
 
-def test_a_run_without_a_cron_name_reads_the_table_in_force_when_it_was_created():
+def test_a_run_without_a_cron_name_reads_each_table_while_it_was_in_force():
     versions = [version("2026-09-01T23:16:19+00:00", ["0 6 * * 1"])]
     a = sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), versions)
-    assert (a["slot"], a["delay_minutes"], a["basis"]) == ("2026-10-12T06:00:00+00:00", 470.0, "nearest_slot")
-    with pytest.raises(sr.ScheduleError, match="none in force"):
+    assert (a["slot"], a["delay_minutes"], a["delay_seconds"], a["basis"]) == \
+        ("2026-10-12T06:00:00+00:00", 470.0, 28202.0, "nearest_slot")
+    with pytest.raises(sr.ScheduleError, match="no cron in its name"):
         sr.attribute(run(1, SCAN, "2026-08-31T13:50:02Z"), versions)    # before the table took effect
-    with pytest.raises(sr.ScheduleError, match="none in force"):
-        sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), versions + [version("2026-10-01T00:00:00+00:00", [])])
-
-
-def test_the_table_in_force_is_the_last_to_take_effect_at_or_before():
-    versions = [version("2026-09-01T00:00:00+00:00", ["30 12 * * 1-5"]), version("2026-09-11T11:45:04+00:00", [])]
-    assert sr.in_force(versions, at("2026-08-31T23:59:59")) is None
-    assert sr.in_force(versions, at("2026-09-11T11:45:04"))["crons"] == []
-    assert sr.in_force(versions, at("2026-09-11T11:45:03"))["crons"] == ["30 12 * * 1-5"]
+    # the table emptied at 10:00, after the 06:00 slot and before the run was created: the slot is still 06:00,
+    # the one expected() names, not a refusal
+    emptied = versions + [version("2026-10-12T10:00:00+00:00", [])]
+    assert sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), emptied)["slot"] == "2026-10-12T06:00:00+00:00"
+    assert sr.expected(emptied, at("2026-10-12T00:00:00"), at("2026-10-13T00:00:00")) == [("0 6 * * 1", at("2026-10-12T06:00:00"))]
+    # moved to 07:00 at 10:00: the run is the 06:00 slot's, and the 07:00 cron names nothing before 10:00
+    moved = versions + [version("2026-10-12T10:00:00+00:00", ["0 7 * * 1"])]
+    assert sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), moved)["slot"] == "2026-10-12T06:00:00+00:00"
+    # a table in force since before the run, with nothing named after its own start, refuses
+    with pytest.raises(sr.ScheduleError, match="no cron in its name"):
+        sr.attribute(run(1, SCAN, "2026-10-12T13:50:02Z"), [version("2026-10-12T07:00:00+00:00", ["0 6 * * 1"])])
 
 
 # --------------------------------------------------------------- expected ----
@@ -172,6 +183,31 @@ def test_a_slot_with_no_run_is_named_after_a_day_and_unstarted_before():
     # exactly a day after the slot is a day
     assert sr.workflow_reading(MORNING, runs[:1], versions, at("2026-10-14T13:20:00"))["no_run"] == \
         [{"cron": "20 13 * * 1-5", "slot": "2026-10-13T13:20:00+00:00"}]
+
+
+def test_two_runs_placed_at_one_slot_are_listed_so_a_misplacement_shows():
+    # the first build's hourly pair: a 22:16 run 64 minutes late, named without its cron, lands on 23:16
+    versions = [version("2026-09-01T00:00:00+00:00", ["16 22 * * 1-5", "16 23 * * 1-5"])]
+    runs = [run(1, EVENING, "2026-09-02T23:20:00Z", "Evening scan"), run(2, EVENING, "2026-09-02T23:25:00Z", "Evening scan")]
+    w = sr.workflow_reading(EVENING, runs, versions, at("2026-09-03T00:00:00"))
+    assert w["shared"] == [{"cron": "16 23 * * 1-5", "slot": "2026-09-02T23:16:00+00:00", "ids": [1, 2]}]
+    assert sr.workflow_reading(EVENING, runs[:1], versions, at("2026-09-03T00:00:00"))["shared"] == []
+
+
+def test_every_threshold_reads_seconds_never_the_rounded_minutes():
+    versions = [version("2026-09-01T00:00:00+00:00", ["16 22 * * 1-5"])]
+    # 60 minutes 2 seconds late displays as 60.0 and is still later than an hour
+    late = run(1, EVENING, "2026-09-02T23:16:02Z", "Evening cron 16 22 * * 1-5")
+    w = sr.workflow_reading(EVENING, [late], versions, at("2026-09-03T00:00:00"))
+    assert w["runs"][0]["delay_minutes"] == 60.0 and w["beyond"]["60"] == 1
+    result = sr.build(snap([late], {EVENING: versions}, fetched="2026-09-03T00:00:00+00:00"))
+    assert result["change"]["first_late"]["delay_minutes"] == 60.0
+    # 15 minutes 2 seconds is not prompt
+    slow = run(2, EVENING, "2026-09-01T22:31:02Z", "Evening cron 16 22 * * 1-5")
+    assert sr.build(snap([slow, late], {EVENING: versions}, fetched="2026-09-03T00:00:00+00:00"))["change"]["last_prompt_before"] is None
+    # the spread rounds once: the median of 60:00 and 60:06 is 60:03, 60.05 minutes, and reads 60.0 or 60.1 by
+    # the seconds, never the mean of two rounded values
+    assert sr._spread([3600.0, 3606.0]) == {"n": 2, "min": 60.0, "median": round(3603.0 / 60, 1), "max": 60.1}
 
 
 def test_a_workflow_whose_cron_never_fired_is_read_and_named():
@@ -303,7 +339,8 @@ def test_fetch_pages_both_listings_keeps_only_the_named_fields_and_reads_the_tab
             return _page(scheduled[:2] if page == 1 else scheduled[2:], 3)
         return _page(pushed if page == 1 else [], 1)
 
-    monkeypatch.setattr(sr, "_git", lambda *a: "d" * 40 + "\n")
+    history = {"a" * 40, "e" * 40, "d" * 40}
+    monkeypatch.setattr(sr, "_git", lambda *a: "\n".join(sorted(history)) + "\n" if a[0] == "rev-list" else "d" * 40 + "\n")
     monkeypatch.setattr(sr, "scheduled_at", lambda commit: {".github/workflows/source-recovery.yml"})
     monkeypatch.setattr(sr, "table_versions", lambda path, ref: [version("2026-09-01T00:00:00+00:00",
                         {SCAN: ["0 6 * * 1"], EVENING: EVENING_CRONS}.get(path, ["37 7 * * *"]))])
@@ -317,6 +354,10 @@ def test_fetch_pages_both_listings_keeps_only_the_named_fields_and_reads_the_tab
     assert sorted(s["tables"]) == [EVENING, SCAN, ".github/workflows/source-recovery.yml"]
     assert (s["fetched_at"], s["ref_commit"], s["total_count"], s["push_total_count"]) == \
         ("2026-10-13T18:13:00+00:00", "d" * 40, 3, 1)
+    # a ref whose history lacks a commit a run ran on is refused: its tables would miss versions
+    history.discard("e" * 40)
+    with pytest.raises(sr.ScheduleError, match="1 commits the runs ran on are not in"):
+        sr.fetch(repository="o/r", get=get, now=at("2026-10-13T18:13:00"))
 
 
 @pytest.mark.parametrize("body,why", [
@@ -324,11 +365,29 @@ def test_fetch_pages_both_listings_keeps_only_the_named_fields_and_reads_the_tab
     (lambda page: {"workflow_runs": []}, "not a workflow-runs page"),
     (lambda page: [], "not a workflow-runs page"),
     (lambda page: _page([_api_run(page, SCAN, "2026-10-12T13:50:02Z", "Secret scan")], 99), "more than 2 pages"),
+    (lambda page: _page([_api_run(page, SCAN, "2026-10-12T13:50:02Z", "Secret scan")], 1001), "lists at most 1000"),
 ])
 def test_a_listing_that_does_not_add_up_is_a_refusal_never_a_truncation(monkeypatch, body, why):
     monkeypatch.setattr(sr, "MAX_PAGES", 2)
     with pytest.raises(sr.ScheduleError, match=why):
         sr._listing(lambda url: body(int(url.rsplit("page=", 1)[1])), "o/r", "event=schedule", dict)
+
+
+def test_an_http_failure_is_a_refusal_never_a_traceback(monkeypatch):
+    import urllib.error
+
+    def refuse(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 403, "rate limited", {}, None)
+
+    def unreachable(request, timeout):
+        raise urllib.error.URLError("no route")
+
+    monkeypatch.setattr(sr.urllib.request, "urlopen", refuse)
+    with pytest.raises(sr.ScheduleError, match="HTTP 403"):
+        sr._get("https://api.github.com/x")
+    monkeypatch.setattr(sr.urllib.request, "urlopen", unreachable)
+    with pytest.raises(sr.ScheduleError, match="no route"):
+        sr._get("https://api.github.com/x")
 
 
 def _commit(repo: Path, when: str, message: str) -> str:
@@ -454,22 +513,75 @@ def test_the_committed_tables_are_the_workflow_files_git_carries(committed):
         if not shallow:      # with the history here, no version is missing either
             assert sr.table_versions(path, committed["ref_commit"]) == versions, path
     assert sr.scheduled_at(committed["ref_commit"]) <= set(committed["tables"])
+    if not shallow:          # and every run ran on a commit the ref carries
+        history = set(sr._git("rev-list", committed["ref_commit"]).split())
+        assert {r["head_sha"] for r in committed["runs"] + committed["push_runs"]} <= history
+
+
+def _hm(instant: str) -> str:
+    return instant[11:16]
 
 
 def test_the_dated_report_quotes_the_reading():
     reading = json.loads(sr.OUTPUT_JSON.read_text(encoding="utf-8"))
+    snapshot = json.loads(sr.SNAPSHOT.read_text(encoding="utf-8"))
     report = (ROOT / "docs/input-truthfulness/2026-10-13-schedule-reliability.md").read_text(encoding="utf-8")
     prose = " ".join(report.split())
     c, k, w = reading["change"], reading["contrast"], reading["workflows"]
     since = c["since"]
+    runs = [a for v in w.values() for a in v["runs"]]
+    before = [a for a in runs if a["slot"] < c["first_late"]["slot"]]
+    assert f"128 scheduled runs the API listed at {snapshot['fetched_at'][11:16]} UTC" in prose
+    assert reading["snapshot"]["runs"] == 128 and f"the {reading['snapshot']['push_runs']} runs a push to `main`" in prose
+    # before the change
+    assert f"within {math.ceil(max(a['delay_seconds'] for a in before) / 60)} minutes of its slot.** That covers {len(before)} runs" in prose
+    clean = [wk["median"] for v in w.values() for wk in v["weeks"]
+             if all(a["slot"] < c["first_late"]["slot"] for a in v["runs"] if sr._week(sr.parse_instant(a["slot"])) == wk["week"])]
+    assert f"weekly medians of {min(clean)} to {max(clean)} minutes" in prose
+    assert f"created {c['last_prompt_before']['delay_minutes']} minutes after its slot" in prose
+    # the change and since
+    assert f"That run was created {c['first_late']['delay_minutes']} minutes after its slot" in prose
     assert f"{since['delay_minutes']['n']} scheduled runs from that slot on" in prose
-    assert f"{since['delay_minutes']['min']} to {since['delay_minutes']['max']} minutes after their slots" in prose
-    assert f"median {since['delay_minutes']['median']}" in prose
-    assert f"{since['beyond']['360']} of them more than six hours" in prose
-    assert f"{k['since_change']['n']} runs a push to `main` triggered" in prose
-    assert f"none more than {k['since_change']['max']} minutes" in prose
-    assert f"{c['first_late']['delay_minutes']} minutes" in prose
-    morning = w[MORNING]
-    assert f"{len(morning['not_started'])} slots of 13 October" in prose
-    assert f"{morning['by_cron']['20 13 * * 1-5']['max']} minutes" in prose
-    assert f"{reading['snapshot']['runs']} scheduled runs" in prose
+    assert f"{since['delay_minutes']['min']} to {since['delay_minutes']['max']} minutes after their slots, median {since['delay_minutes']['median']}" in prose
+    assert f"{since['beyond']['240']} were more than four hours late, and {since['beyond']['360']} of them more than six hours" in prose
+    assert f"{since['delay_minutes']['n'] - since['beyond']['360']} of {since['delay_minutes']['n']} scheduled runs were created within 360 minutes" in prose
+    # the weekly growth
+    evening = [wk["median"] for wk in w[EVENING]["weeks"] if wk["week"] >= sr._week(sr.parse_instant(c["first_late"]["slot"]))]
+    assert f"weekly medians were {evening[0]}, {evening[1]} and {evening[2]} minutes, then {evening[3]} minutes in the {w[EVENING]['weeks'][-1]['n']} runs" in prose
+    scan = [wk["median"] for wk in w[SCAN]["weeks"] if wk["median"] > 60]
+    assert f"Monday secret scan was {scan[0]}, {scan[1]} and {scan[2]} minutes late" in prose
+    # the morning
+    october = [a for a in w[MORNING]["runs"] if a["slot"].startswith("2026-10-12")]
+    assert f"created those four runs {min(a['delay_minutes'] for a in october)} to {max(a['delay_minutes'] for a in october)} minutes after their slots" in prose
+    window = {a["cron"]: a["delay_minutes"] for a in october if a["cron"] in ("20 13 * * 1-5", "28 13 * * 1-5")}
+    assert f"were {window['20 13 * * 1-5']} and {window['28 13 * * 1-5']} minutes late" in prose
+    assert f"were created {window['20 13 * * 1-5']} and {window['28 13 * * 1-5']} minutes late" in prose
+    assert f"the {len(w[MORNING]['not_started'])} slots of 13 October had not been created" in prose
+    # the contrast
+    assert f"{k['since_change']['n']} runs a push to `main` triggered were each created within seconds" in prose
+    assert f"none more than {k['since_change']['max']} minutes, median {k['since_change']['median']}" in prose
+    # the retries for the 12 October session
+    retries = [a for a in w[EVENING]["runs"] if a["slot"].startswith("2026-10-13") and a["cron"] in ("16 0 * * 2-6", "16 1 * * 2-6")]
+    assert f"created at {_hm(retries[0]['created_at'])} and {_hm(retries[1]['created_at'])} UTC on 13 October" in prose
+    # the source-recovery arithmetic: 07:37 plus the median, and plus the evening's two latest
+    at_median = at("2026-10-14T07:37:00") + timedelta(seconds=round(since["delay_minutes"]["median"] * 60))
+    assert f"{since['delay_minutes']['median']} minutes, a run would be created at {at_median:%H:%M} UTC" in prose
+    latest = sorted(w[EVENING]["runs"], key=lambda a: a["slot"])[-2:]
+    assert f"evening's two latest delays, {latest[0]['delay_minutes']} and {latest[1]['delay_minutes']} minutes" in prose
+    # the first build's nearest-slot runs
+    first_build = [a for p, v in w.items() if p != SCAN for a in v["runs"] if a["basis"] == "nearest_slot"]
+    assert f"Those are {sum(a['basis'] == 'nearest_slot' for a in runs)} runs: the first build's {len(first_build)}" in prose
+    assert f"their {len(first_build)} runs were {min(a['delay_minutes'] for a in first_build)} to {max(a['delay_minutes'] for a in first_build)} minutes late" in prose
+
+
+def test_the_evidence_index_quotes_the_reading():
+    reading = json.loads(sr.OUTPUT_JSON.read_text(encoding="utf-8"))
+    index = " ".join((ROOT / "docs/input-truthfulness/README.md").read_text(encoding="utf-8").split())
+    entry = index.split("(2026-10-13-schedule-reliability.md)")[1].split("[12 October 2026")[0]
+    c, k, w = reading["change"], reading["contrast"], reading["workflows"]
+    since = c["since"]["delay_minutes"]
+    october = [a["delay_minutes"] for a in w[MORNING]["runs"] if a["slot"].startswith("2026-10-12")]
+    assert f"all {since['n']} runs were created {since['min']} to {since['max']} minutes late" in entry
+    assert f"were {round(min(october))} to {round(max(october))} minutes late" in entry
+    assert f"within {k['since_change']['max']} minutes of their commits" in entry
+    assert "within 17 minutes of its slot" in entry and "the 13 October ones had not been created" in entry

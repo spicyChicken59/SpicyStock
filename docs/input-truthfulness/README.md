@@ -3,8 +3,8 @@
 [13 October 2026: when GitHub starts the scheduled runs](2026-10-13-schedule-reliability.md)
 reads #111's late mornings at their source: `tools/schedule_reliability.py`
 snapshots the public Actions listing and places every scheduled run at its cron
-slot. Before 21 September every scheduled run was created within 17 minutes of
-its slot. From the evening primary at 22:16 UTC on 21 September, all 71 runs
+slot. Before the evening slot of 21 September every scheduled run was created
+within 17 minutes of its slot. From the evening primary at 22:16 UTC on 21 September, all 71 runs
 were created 130.6 to 504.9 minutes late, and the weekly medians have grown
 since. The four morning runs of 12 October were 463 to 505 minutes late, and at
 the snapshot the 13 October ones had not been created. Push runs on `main` were
