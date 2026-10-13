@@ -35,7 +35,8 @@ guard and the page already use). More named deficits than the budget is
 `deficit_over_budget` whole, never a prefix. A publication whose one request was
 spent is `already_attempted`; an inapplicable receipt (`future_publication`,
 `stale_publication`, `recovery_window_ended`, `basis_differs`,
-`membership_mismatch`, `no_coverage_deficit`, `deficit_not_named`,
+`membership_mismatch`, `no_coverage_deficit`, `benchmark_only` (the only
+counted frame is the benchmark's, which is never requested), `deficit_not_named`,
 `deficit_over_budget`) spends nothing and may be replaced by a later one. The
 morning workflow's second slot (13:28 UTC) therefore spends at most once more
 after a first slot whose persist was refused, which `LIMITS` says in so many

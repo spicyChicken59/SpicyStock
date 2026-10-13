@@ -66,7 +66,8 @@ COVERAGE = {"scan": "not_run", "grades": "unchanged", "plans": "unchanged", "tic
             "scorecard": "unchanged", "cause_of_absence": "not_established"}
 STATUSES = ("recovered", "partial", "nothing_recovered", "provider_unavailable", "inapplicable")
 REASONS = (None, "future_publication", "stale_publication", "recovery_window_ended", "basis_differs",
-           "membership_mismatch", "no_coverage_deficit", "deficit_not_named", "deficit_over_budget", "already_attempted")
+           "membership_mismatch", "no_coverage_deficit", "benchmark_only", "deficit_not_named", "deficit_over_budget",
+           "already_attempted")
 REASON_WORDS = {
     "future_publication": "the publication is dated after this check's clock",
     "stale_publication": "a later session has completed since the publication's",
@@ -74,6 +75,7 @@ REASON_WORDS = {
     "basis_differs": "the publication's own input basis cannot be frozen",
     "membership_mismatch": "a named population does not match the publication's own count and identity",
     "no_coverage_deficit": "every intended stock's session bar arrived",
+    "benchmark_only": "the only frame the publication counted as missing is the benchmark's, which is never requested",
     "deficit_not_named": "the publication records a coverage deficit but names none of its stocks",
     "deficit_over_budget": "the named deficit exceeds the one-batch request budget",
     "already_attempted": "this publication's one bounded recovery was already made",
@@ -304,7 +306,8 @@ def _reason(data, binding, frozen, window, started, defs, previous):
     if not any(b["count"] for b in defs["categories"].values()):
         return "no_coverage_deficit"
     if defs["named_stocks"] == 0:
-        return "deficit_not_named"
+        # every counted frame named, and every name the benchmark's: nothing to ask for
+        return "deficit_not_named" if defs["unnamed_frames"] else "benchmark_only"
     if defs["named_stocks"] > MAX_NAMES:
         return "deficit_over_budget"
     if attempted(previous, binding["data_sha256"]):

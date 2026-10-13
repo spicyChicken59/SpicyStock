@@ -230,6 +230,61 @@ def test_the_benchmark_is_never_requested_and_the_stale_bound_is_the_records_own
     assert recovery.MAX_NAMES == recovery.MAX_BATCHES * market_data.DEFAULT_BATCH_SIZE
 
 
+def test_the_benchmark_is_left_out_of_a_request_by_either_path_and_alone_is_its_own_reason(tmp_path, mocked_boundaries, fake_alpaca, fake_anthropic, seed):
+    """The run counts a stale benchmark among its stale frames and names the
+    stocks without it; a ledger membership carries it. Neither path requests
+    it, and a night whose only stale frame is the benchmark's asks nothing."""
+    from src import universe
+    from tests.test_pipeline import evening, a_plus_frame, coil, base_frames, CLAUDE_A_PLUS
+    from tests.synthetic import make_ohlcv
+
+    def night(name, *, stale_stock):
+        fake_alpaca.reset() if hasattr(fake_alpaca, "reset") else None
+        fake_anthropic.set_payload(dict(CLAUDE_A_PLUS))
+        fake_alpaca.add_history("AAA", a_plus_frame())
+        fake_alpaca.add_history("COIL", coil())
+        for symbol, df in base_frames(11, seed).items():
+            fake_alpaca.add_history(symbol, df, stale_sessions=1 if symbol == stale_stock else 0)
+        fake_alpaca.add_history("SPY", make_ohlcv("base", seed=[seed, 999], days=260), stale_sessions=1)
+        home = tmp_path / name
+        (home / "docs").mkdir(parents=True)
+        rep, data, docs = evening(home, ["AAA", "COIL"] + [f"B{chr(65 + i)}{chr(65 + i)}" for i in range(11)])
+        assert data is not None, rep.problems
+        return (docs / "data.json").read_bytes(), data
+
+    raw, data = night("with-a-stock", stale_stock="BAA")
+    run = data["run"]
+    # the tolerance names every stale frame, the benchmark's among them, and counts the stocks without it
+    assert run["input_tolerance"]["names"] == ["BAA", "SPY"] and run["input_tolerance"]["benchmark"] == "SPY"
+    assert run["input_tolerance"]["stale_stocks"] == 1
+    assert run["coverage"]["stale"] == 2 and run["coverage"]["reasons"]["stale"] == universe.population(["BAA", "SPY"])
+    clock = lambda: THIN_NOW                      # 13:20Z on the next session, 11 September, before its open
+    # the record path: the tolerance names the stock alone and the benchmark is noted as in the population
+    fake = generate.double("BAA")
+    out = collect(raw, None, fake=fake, clock=clock, dry_run=True)
+    assert out["requested"] == ["BAA"] and out["status"] == "recovered"
+    assert out["deficits"]["categories"]["stale"] == {"count": 2, "identity": universe.population(["BAA", "SPY"])["identity"],
+                                                      "named": True, "source": "record", "names": ["BAA"], "benchmark_in_population": True}
+    assert list(fake.bar_requests[0].symbol_or_symbols) == ["BAA"]
+    # the ledger path: the membership carries the benchmark and the request still leaves it out
+    stripped = generate.unnamed(raw)
+    ledger = generate.ledger_for(stripped, {"stale": ["BAA", "SPY"]})
+    fake = generate.double("BAA")
+    out = collect(stripped, ledger, fake=fake, clock=clock, dry_run=True)
+    assert out["requested"] == ["BAA"] and out["deficits"]["categories"]["stale"]["source"] == "ledger"
+    assert out["deficits"]["categories"]["stale"]["benchmark_in_population"] is True and out["deficits"]["ledger"]["used"] is True
+    assert list(fake.bar_requests[0].symbol_or_symbols) == ["BAA"] and out["source"]["symbols_requested"] == 1
+    # the benchmark alone: counted, named, nothing to ask for, and said in those words
+    raw, data = night("benchmark-alone", stale_stock=None)
+    assert data["run"]["coverage"]["stale"] == 1 and data["run"]["input_tolerance"]["names"] == ["SPY"]
+    assert data["run"]["input_tolerance"]["stale_stocks"] == 0
+    fake = generate.double("SPY")
+    out = collect(raw, None, fake=fake, clock=clock, dry_run=True)
+    assert (out["reason"], out["requested"], out["status"], fake.bar_requests) == ("benchmark_only", [], "inapplicable", [])
+    assert out["deficits"]["categories"]["stale"]["names"] == [] and out["deficits"]["categories"]["stale"]["benchmark_in_population"] is True
+    assert "the benchmark's, which is never requested; nothing was fetched." in out["sentence"]
+
+
 def test_a_named_deficit_over_the_budget_is_refused_whole_and_never_as_a_prefix():
     thin = json.loads((ROOT / "tests/fixtures/page/thin.json").read_bytes())
     run = thin["run"]

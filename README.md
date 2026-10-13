@@ -1220,7 +1220,8 @@ tolerance named in full) and from the publication's quality-ledger entry second
 (its complete exception membership for `stale`, `no_bars`, `dropped`,
 `unfetched_budget`, `unfetched_failure`, `gapped` and `unreadable`, each held to
 the ledger's own coverage counts), and never from a guess: a deficit the record
-counted but named nowhere is `deficit_not_named`, and the request stays unspent.
+counted but named nowhere is `deficit_not_named`, a count that is the benchmark's
+frame alone is `benchmark_only`, and the request stays unspent either way.
 At most `MAX_NAMES` (100, one provider batch) are asked for in `MAX_BATCHES` (1)
 request of at most `MAX_BATCH_ATTEMPTS` (2) attempts, through the same Alpaca
 pair the morning collector reads, within `MAX_COLLECTION_SECONDS` (300) and only
