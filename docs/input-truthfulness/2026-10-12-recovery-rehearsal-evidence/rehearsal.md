@@ -7,13 +7,13 @@ Policy `recovery_rehearsal_v1` (version 1). `pipeline.run_evening()` through the
 | night | session | clock (UTC) | injected | exit | status | published | previous publication | bars requests (bound) | minute requests (bound) | reader calls (bound) | mails |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | clean | 2026-09-04 | 2026-09-04T22:30 | nothing injected | 0 | ok | yes, 2026-09-04 (ok, mail delivered) | none | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 1 |
-| holiday | — | 2026-09-07T22:30 | nothing injected | 0 | no_session | no | preserved | 0 (≤ 2) | 0 (≤ 0) | 0 (≤ 0) | 0 |
-| provider_outage | 2026-09-08 | 2026-09-08T22:30 | the Alpaca double raises ConnectionError('no route to host') on every bars request | 1 | failed | no | preserved | 2 (≤ 2) | 0 (≤ 0) | 0 (≤ 0) | 1 |
+| holiday | — | 2026-09-07T22:30 | nothing injected | 0 | no_session | no | preserved | 0 (≤ 2) | 0 (≤ 8) | 0 (≤ 0) | 0 |
+| provider_outage | 2026-09-08 | 2026-09-08T22:30 | the Alpaca double raises ConnectionError('no route to host') on every bars request | 1 | failed | no | preserved | 2 (≤ 2) | 0 (≤ 8) | 0 (≤ 0) | 1 |
 | provider_recovered_at_retry | 2026-09-08 | 2026-09-09T00:30 | nothing injected | 0 | ok | yes, 2026-09-08 (ok, mail delivered) | replaced | 1 (≤ 2) | 1 (≤ 2) | 2 (≤ 4) | 1 |
 | reader_credit | 2026-09-09 | 2026-09-09T22:30 | the Anthropic double raises the provider's empty-balance error on every call | 2 | degraded | yes, 2026-09-09 (degraded, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 1 (≤ 4) | 1 |
 | reader_transport | 2026-09-10 | 2026-09-10T22:30 | the Anthropic double raises RuntimeError('upstream connect error or disconnect/reset before headers') on every call | 2 | degraded | yes, 2026-09-10 (degraded, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 4 (≤ 4) | 1 |
 | email_failed | 2026-09-11 | 2026-09-11T22:30 | the Resend double raises RuntimeError('Resend refused the request') on every send | 3 | degraded | yes, 2026-09-11 (degraded, mail failed) | replaced | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 0 |
-| stale_feed | 2026-09-14 | 2026-09-14T22:30 | every registered frame, the benchmark's included, is served two sessions stale | 1 | failed | no | preserved | 1 (≤ 2) | 0 (≤ 0) | 0 (≤ 0) | 1 |
+| stale_feed | 2026-09-14 | 2026-09-14T22:30 | every registered frame, the benchmark's included, is served two sessions stale | 1 | failed | no | preserved | 1 (≤ 2) | 0 (≤ 8) | 0 (≤ 0) | 1 |
 | next_session_after_a_missed_night | 2026-09-15 | 2026-09-15T22:30 | nothing injected | 0 | ok | yes, 2026-09-15 (ok, mail delivered) | replaced | 1 (≤ 2) | 0 (≤ 0) | 2 (≤ 4) | 1 |
 
 ## What each night did
