@@ -338,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4269 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4320 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7819,3 +7819,173 @@ exist. Omit: any change to the crons or the guard on these numbers.
 
 **Not claimable:** a live morning, research or recovery observation; the ten
 consecutive sessions with morning checks; any trading edge.
+
+## Checkpoint, 13 Oct 2026 — PR #166 accepted; when GitHub starts the scheduled runs (#111)
+
+**PR #166, accepted.** Merged as `3a972ad7` on `main` with a merge commit over
+`279ec5a3`. The head `ee644c63` passed all seven checks on Tests run
+38436632272 (pytest 17:11–17:27 UTC, page 17:11–17:27, the gate, the native
+central case 17:11–17:59 and stress 17:11–18:01) and Secret scans 38436632305
+and 38436575840. Publisher 38443506496 printed *Verified: every one of the 41
+public files matches committed main* at 18:02:45 UTC; Pages 38443553543
+deployed (38443505085 cancelled as superseded, as every merge does). The merge
+commit's own Secret scan 38443506687 passed, and so did its
+Tests run 38443506807 (page 18:02–18:19 UTC, pytest 18:02–18:22; the native
+cases skipped by the gate, as a merge's are).
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `3a972ad7`. #111 cannot reach its ten sessions with morning
+checks while no morning check runs. This milestone measures why. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows and the vendored design system are
+untouched; nothing under `src/` changed; no run, mail, dispatch, provider call
+or credential.
+
+**What was built.** `tools/schedule_reliability.py` reads when GitHub created
+each scheduled run against the cron slot it was for: the scheduler's own delay,
+before any step of ours runs. `--fetch` is its only network path. It pages the
+public Actions listing of scheduled runs, and of the runs a push to `main`
+triggered as a contrast, refusing a listing that does not add up rather than
+truncating it. It keeps only the fields the reading uses, beside every
+scheduled workflow's cron tables as `main`'s first-parent history carried them,
+version by version, each with the commit that made it take effect
+(`table_versions()`, `scheduled_at()`, so a cron that never fired is still
+read). A run is placed at the slot its run name's cron names (`name_cron()`: the
+five fields after the word, however spaced; a name that says cron and names
+none is refused), or, for a name without one, at the latest instant any cron
+named while its table was in force (`nearest_slot()`, the slots `expected()`
+names). Every threshold compares seconds; minutes are rounded once, for
+display. A slot two runs were placed at is listed (`shared`).
+The reading writes, per workflow, cron and UTC week, the minutes from slot to
+creation; every expected slot with no run (`no_run` after a day, `not_started`
+before); runs for a slot no table named; the first run more than an hour late
+across all workflows in slot order and the last prompt one before it
+(`change()`); and the push runs' minutes after their commits (`contrast()`).
+`--fetch` refuses an HTTP failure, a filtered listing over the API's 1000-run
+cap, and a ref whose history lacks a commit a run ran on. `--check` holds the
+reading to the committed snapshot with no network.
+
+**What the listing shows** (128 scheduled runs, 360 push runs, fetched 18:34
+UTC on 13 October): before the evening slot of 21 September every scheduled run was created
+within 17 minutes of its slot (57 runs, weekly medians 4.2 to 15.1). The last
+prompt one was the Monday secret scan at 06:00 UTC on 21 September, 4.3
+minutes. From the evening primary at 22:16 UTC that day (152.2 minutes), all 71
+scheduled runs were created 130.6 to 504.9 minutes after their slots, median
+276.5; 13 were more than six hours late; no expected slot went without a run.
+The weekly medians have grown since: the evening's were 208.4, 257.4, 285.2 and
+336.8 minutes, and the Monday scan's were 378.3, 418.0 and 470.0. The four
+morning runs of 12 October were 463.3 to 504.9 minutes late; the two in that
+season's window (13:20 and 13:28 UTC) were 504.9 and 499.1, their guards
+saying `entry_window_ended` and the winter pair's `inactive_schedule`. The
+four 13 October slots had not been created at the snapshot, more than five
+hours after the first. The 144 push runs over the same weeks were created within 0.3 minutes of
+their commits. The listing says nothing of why, and nothing of runner pickup
+(a first attempt's `run_started_at` is its `created_at`).
+
+**What it means, and the options** (`docs/input-truthfulness/2026-10-13-schedule-reliability.md`):
+the evening still lands before the next open (its window is about 15 hours).
+No scheduled morning check can be relied upon at these delays. The
+source-recovery receipts, first slot 07:37 UTC on 14 October, would be created
+before the open at the median delay since the change and after it at the
+evening's two latest; no forecast is made. Four options are written down and none is adopted:
+
+1. leave the crons, with no scheduled morning checks;
+2. dispatch the morning run from outside GitHub's scheduler: Mo's own tap on
+   *Run workflow* from the GitHub app, a claude.ai routine, or an external cron
+   with a narrowly scoped token;
+3. schedule hours early and wait inside the job, bounded by a hosted job's 360
+   minutes, which none of the four morning runs met;
+4. the small host of #108.
+
+The recommendation is option 2, starting with Mo's own tap, and re-reading the
+listing before relying on any automated trigger. It is Mo's decision: each
+option changes something outside the repository, holds a credential or spends
+runner time.
+
+**The review, worked.** A reviewer by execution over the first pushed tip
+(`f543958a`) re-derived every headline number from `runs.json` with its own
+script, and every one matched. It returned 17 findings, each reproduced here
+before it was touched.
+
+The report said more than the evidence:
+- "every guard said `entry_window_ended`" (the winter pair said
+  `inactive_schedule`);
+- "every run in that window" counted runs outside it;
+- the retry runs were dated the 12th, not the 13th they were created;
+- the push bound was stated backwards;
+- "before 21 September" counted a run on the 21st;
+- which runs name their cron was misstated;
+- one sentence was a forecast;
+- the nearest-slot bound was the cron's period, not the gap to the table's
+  next instant.
+
+The code:
+- matched a run name's cron more strictly than the file's, and fell back
+  silently on a miss;
+- read nearest-slot placement against the table at creation, so a table
+  changed after the slot refused the reading;
+- compared thresholds on rounded minutes;
+- let an HTTP error out as a traceback;
+- had no answer for the API's 1000-run cap;
+- took a ref older than the runs without a word;
+- carried dead code.
+
+One test passed on an incidental fact (the morning's maximum is the overall
+maximum), and most of the report's numbers had no test. All seventeen are
+fixed. Fourteen numbers substituted in the report and the index each fail
+their test now, and an identity substitution passes.
+
+**Measured** (this sandbox, Python 3.11.15): 4320 tests collected; the full
+suite at `0dfb9fb3` 4285 passed and 34 environment-gated skips in 19 m 10 s, the
+one failure the suite-count line this commit moves to 4320 (at `f543958a`,
+before the review, 4282 passed and 34 skips in 18 m 33 s); `tests/test_schedule_reliability.py`
+51 passed; `tests/test_docs.py` 40/40 with the suite count at 4320;
+`python tools/schedule_reliability.py --check` current; no record, rule or page
+file moved, so the fixtures and the page smoke are CI's, recorded on the PR.
+gitleaks 8.24.3 over the branch's commits: no leaks.
+
+**Mutation pass.** Thirty-one mutants over the tool in the mutation worktree,
+each judged by the whole `tests/test_schedule_reliability.py` with the
+committed-reading comparison deselected:
+- placement: the cron instant excluded, the firing window's start excluded,
+  7 not Sunday, the run name ignored, the nearest slot taken as the earliest;
+- the tables: the table in force taken strictly, a version's first instant
+  excluded, later versions ignored, a version per commit, every parent rather
+  than the first, the scheduled files dropped;
+- the slots and counts: the day boundary strict, the unexpected runs dropped,
+  the boundary counts inclusive, weeks from Sunday, delays in whole minutes;
+- the change and the contrast: an hour late counted as late, fifteen minutes
+  not prompt, the first prompt run rather than the last, creation order for
+  slot order, the contrast unfiltered, the push time read off the run;
+- the listing and the snapshot: the count unchecked, the page bound
+  truncating, repeated ids admitted, future runs admitted, versions out of
+  order admitted;
+- the output: the change dropped from the markdown, `--check` ignoring the
+  markdown, `--check` exiting zero.
+
+Thirty died. **Three survived the first pass**, each the second shape this file
+names (a test passing on an incidental fact of its fixture). No delay sat
+exactly on a count boundary; no prompt run exactly at fifteen minutes was the
+last before the change; and slot order and creation order never disagreed.
+Each has its case now, and all three die. The synthetic history carries a
+merge, so the first-parent rule has a case that can fail.
+
+A second pass after the review ran 43 mutants over the fixed tool, adding the
+new rules: the five-field and comma rules, the silent miss, the table in force
+at the slot, the shared slots, the thresholds on rounded minutes, the HTTP and
+network refusals, the cap and the history check. Forty-one died at once. Two
+more were the same shape. No case had a cron dropped from its table before
+its instant, and no median told the median of the seconds from the median of
+the rounded minutes. Both have their cases and die. The control (a docstring
+word) survives every pass.
+
+**Keep / fix / defer / omit.** Keep: the reading reads and never decides; a new
+reading is a new dated snapshot, never an edit of this one. Fix if it bites:
+the push contrast's reference is the commit's own timestamp, an upper bound on
+the push. Defer: the morning delivery decision, which is Mo's; a reading of
+dispatched runs once any exist. Omit: any change to the crons, the guards or
+the workflows on these numbers here.
+
+**Not claimable:** a live morning, research or recovery observation; the ten
+consecutive sessions with morning checks; any cause for the scheduler's delay;
+any trading edge.
