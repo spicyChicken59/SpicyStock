@@ -1,0 +1,26 @@
+{
+  "publication": "tests/fixtures/cash-preview/publication-multiple.json",
+  "records": {
+    "COIL": {
+      "draft_cash": "$336.16",
+      "draft_risk": "$6.66 before fees, gaps and slippage",
+      "outcome": "gain",
+      "amounts": {
+        "Reported gross result": "$5.10",
+        "Reported actual costs": "$0.02 (entry $0.00 + exit $0.02)",
+        "Reported net result": "$5.08"
+      }
+    },
+    "AAPL": {
+      "draft_cash": "$64.22",
+      "draft_risk": "$2.52 before fees, gaps and slippage",
+      "outcome": "loss",
+      "amounts": {
+        "Reported gross result": "-$2.55",
+        "Reported actual costs": "$0.01 (entry $0.00 + exit $0.01)",
+        "Reported net result": "-$2.56",
+        "Average exit below the published stop": "$0.85 a share · $0.85 on 1 reported share past the stop (a gap or slippage)"
+      }
+    }
+  }
+}

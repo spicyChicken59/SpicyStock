@@ -369,6 +369,17 @@
     return { ...empty, state: 'complete', quantity: report.filled_quantity, gross_microusd: String(gross), fees_microusd: String(fees), net_microusd: String(net),
       gross_display: displayMicros(gross), fees_display: displayMicros(fees), net_display: displayMicros(net), outcome: net > 0n ? 'gain' : net < 0n ? 'loss' : 'breakeven' };
   }
+  // A complete result whose average exit is under the frozen protective stop
+  // lost more than the stop allowed: a gap or slippage past it. Reported
+  // averages only; a gap on part of a position can hide inside an average.
+  function beyondStop(item, result) {
+    if (independent(item) || !result || result.state !== 'complete') return null;
+    const stop = BigInt(api.cashPreview.cents(String(item.plan.order.then.stop_price))) * 10000n, exit = priceMicros(item.report.average_exit_price);
+    if (exit >= stop) return null;
+    const perShare = stop - exit, total = perShare * BigInt(result.quantity);
+    return { stop_microusd: String(stop), per_share_microusd: String(perShare), total_microusd: String(total), quantity: result.quantity,
+      per_share_display: displayMicros(perShare), total_display: displayMicros(total) };
+  }
   function exitReview(item) {
     const report = item.report, hasReport = reported(item);
     const held = report.filled_quantity === null || report.exited_quantity === null ? null : report.filled_quantity - report.exited_quantity;
@@ -403,11 +414,12 @@
     const protection = held === null || protectedQty === null ? 'unknown' : protectedQty === held ? 'matched' : protectedQty < held ? 'under' : 'over';
     if (protection === 'under') warnings.push('Broker-confirmed protective quantity is below reported remaining holdings. Reconcile protection at your broker.');
     if (protection === 'over') warnings.push('Broker-confirmed protective quantity exceeds reported remaining holdings. Reconcile the sell quantity at your broker.');
+    const completed = completedResult(report);
     return { state: !reported(item) ? 'draft' : filled === null ? 'reported_unknown_fill' : filled === 0 ? 'reported_no_fill' : held === 0 ? 'reported_closed' : submitted !== null && filled < submitted ? 'reported_partial_fill' : 'reported_filled',
       planned_quantity: independent(item) ? null : item.draft.quantity, submitted_quantity: submitted, filled_quantity: filled, exited_quantity: exited, reported_held_quantity: held,
       unfilled_quantity: submitted === null || filled === null ? null : submitted - filled,
       uncancelled_quantity: submitted === null || filled === null || cancelled === null ? null : submitted - filled - cancelled,
-      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completedResult(report) };
+      cancelled_quantity: cancelled, protected_quantity: protectedQty, protection, warnings, exit_review: exitReview(item), calculation: calculation(item), completed_result: completed, beyond_stop: beyondStop(item, completed) };
   }
   function readback(item) {
     if (!validItem(item) || independent(item)) return '';

@@ -35,6 +35,7 @@ import { checkMorningStatus } from './status_cases.mjs';
 import { checkReviewSelection } from './review_selection_cases.mjs';
 import { checkCashPreview } from './cash_preview_cases.mjs';
 import { checkHandoff } from './handoff_cases.mjs';
+import { checkFirstTrade } from './first_trade_cases.mjs';
 import { checkIssuerEvidence } from './issuer_evidence_cases.mjs';
 import { checkStopResearch } from './stop_research_cases.mjs';
 import { checkResearchOutcomes } from './research_outcomes_cases.mjs';
@@ -3943,6 +3944,7 @@ async function main() {
       if (runs('review-selection')) await checkReviewSelection({ browser, base, open, check, eq, shotsDir });
       if (runs('cashpreview')) await checkCashPreview({ browser, base, open, check, eq, shotsDir });
       if (runs('handoff')) await checkHandoff({ browser, base, open, check, eq, shotsDir });
+      if (runs('firsttrade')) await checkFirstTrade({ browser, base, open, check, eq, shotsDir });
       if (runs('issuer')) await checkIssuerEvidence({ browser, base, open, check, eq, shotsDir });
       if (runs('stop-research')) await checkStopResearch({ browser, base, open, check, eq, shotsDir });
       if (runs('research-outcomes')) await checkResearchOutcomes({ browser, base, open, check, eq, shotsDir });
