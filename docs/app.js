@@ -1067,12 +1067,11 @@
   // ---------------------------------------------------------- source recovery
   // The bytes of the record on screen, hashed once per load, so a companion
   // receipt can be held to the publication it names and never to a look-alike.
-  const recovery = { data: null, digest: null, receipt: null, line: null, asked: false };
+  const recovery = { data: null, digest: null, receipt: null, line: null, lineData: null, askedLine: null };
   const RECOVERY_STATUSES = ['recovered', 'partial', 'nothing_recovered', 'provider_unavailable', 'inapplicable'];
   function bindRecoveryDigest(data, bytes, projection) {
     recovery.data = data;
     recovery.receipt = null;
-    recovery.asked = false;
     recovery.digest = (w.crypto && w.crypto.subtle && bytes
       ? w.crypto.subtle.digest('SHA-256', typeof bytes === 'string' ? new TextEncoder().encode(bytes) : bytes)
         .then(buf => Array.from(new Uint8Array(buf), n => n.toString(16).padStart(2, '0')).join(''))
@@ -1187,7 +1186,7 @@
     // bytes has been checked, and otherwise one sentence saying what is absent
     const recoveryLine = line('Recovery: reading the bound receipt…');
     recoveryLine.setAttribute('data-source-recovery', 'loading');
-    recovery.line = recoveryLine;
+    recovery.line = recoveryLine; recovery.lineData = data;
     // what the record says about WHEN its plans apply, and what its calendar
     // could not read. Printed here rather than argued: the run wrote it.
     const calendar = run.calendar;
@@ -2013,12 +2012,14 @@
     if (state.view === 'record') loadHistoricalEvidence();
     if (state.view === 'method') askRecovery();
   }
-  // the receipt is asked for once per record, the first time the Method view
-  // is shown over it: a page that never opens Method never fetches it
+  // each Method line is settled once, the first time the Method view is shown
+  // over it: a page that never opens Method never fetches the receipt, and a
+  // line drawn again over the same served bytes reads the one already fetched
   function askRecovery() {
-    if (recovery.asked || !recovery.line || !recovery.line.isConnected) return;
-    recovery.asked = true;
-    loadRecovery(recovery.line, recovery.data);
+    const li = recovery.line;
+    if (!li || !li.isConnected || recovery.askedLine === li) return;
+    recovery.askedLine = li;
+    loadRecovery(li, recovery.lineData);
   }
 
   // ---------------------------------------------------------------- Explore: the stages

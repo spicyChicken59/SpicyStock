@@ -23,7 +23,8 @@ function served(body, status = 200) {
 }
 const recoveryLine = async (page) => {
   const li = page.locator('#run-meta li[data-source-recovery]');
-  await page.waitForFunction(() => { const n = document.querySelector('#run-meta li[data-source-recovery]'); return n && n.getAttribute('data-source-recovery') !== 'loading'; }, null, { timeout: 15000 });
+  // a line that never settles is reported as 'loading' and fails its own check, never a thrown timeout
+  await page.waitForFunction(() => { const n = document.querySelector('#run-meta li[data-source-recovery]'); return n && n.getAttribute('data-source-recovery') !== 'loading'; }, null, { timeout: 15000 }).catch(() => {});
   return { text: await li.innerText(), state: await li.getAttribute('data-source-recovery'), count: await li.count() };
 };
 
@@ -119,6 +120,32 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
     eq('no deficit: the receipt binds and says why nothing was fetched', [got.state, got.text], ['inapplicable', PREFIX + noDeficit.sentence]);
     const read = await page.evaluate(([receipt]) => { const r = window.SCStock.recoveryOf(receipt, window.SCStock.data, null); return [r.known, r.why]; }, [noDeficit]);
     eq('recoveryOf refuses a receipt it cannot hold to the record\'s bytes', read, [false, 'another publication’s bytes']);
+    // a projected load carries the compact reader's digest beside the canonical one; both are held
+    const projected = await page.evaluate(([receipt]) => {
+      const bound = { canonical: receipt.publication.data_sha256, reader: receipt.publication.reader_sha256 };
+      const ok = window.SCStock.recoveryOf(receipt, window.SCStock.data, bound);
+      const other = window.SCStock.recoveryOf(receipt, window.SCStock.data, { canonical: bound.canonical, reader: 'f'.repeat(64) });
+      return [[ok.known, ok.why], [other.known, other.why]];
+    }, [noDeficit]);
+    eq('a projected load binds by both digests', projected, [[true, null], [false, 'another publication’s bytes']]);
     eq('page errors', [...errors], []);
   } finally { await context.close(); }
+
+  // ---- the same record drawn again (the public SCStock.render) settles its new
+  // Method line from the receipt already fetched: one request, never a line left loading
+  {
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin.json', FRESH, 1280,
+      { reducedMotion: 'reduce', lens: 'all', hash: '#/method', beforeLoad: served(JSON.stringify(recovered)) });
+    try {
+      const fetched = () => page.evaluate(() => performance.getEntriesByType('resource').filter(e => /source-recovery\.json/.test(e.name)).length);
+      eq('redraw: settled before', (await recoveryLine(page)).state, 'recovered');
+      await page.evaluate(() => { window.SCStock.render(window.SCStock.data, new Date(window.SCStock.now)); });
+      await page.evaluate(() => { location.hash = '#/record'; }); await page.waitForTimeout(150);
+      await page.evaluate(() => { location.hash = '#/method'; }); await page.waitForTimeout(250);
+      const got = await recoveryLine(page);
+      eq('redraw: the new line settles from the fetched receipt', [got.count, got.state, got.text], [1, 'recovered', PREFIX + recovered.sentence]);
+      eq('redraw: and nothing was fetched again', await fetched(), 1);
+      eq('redraw: page errors', [...errors], []);
+    } finally { await context.close(); }
+  }
 }
