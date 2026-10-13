@@ -7596,8 +7596,9 @@ defect: a redraw of the Method view left its new line loading; each drawn line
 is asked once now.
 
 **The second review by execution** (five dimensions over `dd3314a9`, each
-finding reproduced by a finder and by two skeptics, and again here before it
-was touched) returned 21. The high one: the recovery rode the morning workflow
+finding reproduced by a finder and checked by two skeptics) returned 22: 17
+upheld by both, 5 split one each way, and all 22 reproduced again here before
+they were touched. The high one: the recovery rode the morning workflow
 as its third collector, about ten minutes before the open on time, and the 12
 October crons started 8 h 24 m late; it has its own workflow now. The
 mediums: a call answered after the open was published as before it (the open
@@ -7625,19 +7626,40 @@ sentences in the report. The publisher also refuses a repeated inapplicable
 receipt for the same publication and reason now, so the daily schedule commits
 at most one receipt per publication and reason.
 
-**Measured so far** (this sandbox, Python 3.11.15, Node 22, Chromium through
-Playwright 1.56.1, at `500fc060`): the recovery, publisher, workflow, docs and
-service-health files 261 passed; the twenty source-recovery variants current;
-the `recovery` suite 124/124, its failure-state and refresh cases red on the
-page from before the fix; ten page mutants (the projection's digest ignored,
-the reader digest unchecked, a rehearsal admitted anywhere, the context and
-publication-time clauses dropped, the HTTP cache allowed, no re-read on an
-unchanged update, every failure read as absent, a parse error read as absent,
-a re-read away from Method) all dead with a control green; gitleaks 8.24.3 over
-the branch's commits: no leaks; actionlint over the three changed workflows:
-clean. The full suite, every fixture check, continuity, the chart check, the
-full smoke with `--shots` and the Python mutation pass were running when this
-was pushed; their results are recorded on PR #165 and here before the merge.
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through
+Playwright 1.56.1, at `aed055c7`): 4258 tests collected, 4224 passed and 34
+environment-gated skips in 23 m 32 s; 13 page fixtures current and every
+cascaded generator current (morning 21, issuer-evidence 30, stop-research 22,
+research-outcomes 40, research-observations 24, cash-preview 6, source
+recovery 20); `tools/service_health.py --check` current with the history walked
+again; continuity 137; the chart check 378/378; the `recovery` suite 124/124,
+its failure-state and refresh cases red on the page from before the fix; the
+full smoke with `--shots` 15131/15131; gitleaks 8.24.3 over the branch's
+commits: no leaks; actionlint over the three changed workflows: clean.
+Screenshots of the Method line at 1280 dark, 390 light and 320 dark were looked
+at: one column on the phone, under the service schedule, "in 1 call to the bars
+endpoint". The continuity check first exited 1 here because this worktree had
+no `jsdom` installed; with the existing install linked it passes.
+
+**Mutation passes.** Page, through routed copies of `app.js` judged by `--only
+recovery`: ten mutants -- the projection's digest ignored, the reader digest
+unchecked, a rehearsal admitted anywhere, the context and publication-time
+clauses dropped, the HTTP cache allowed, no re-read on an unchanged update,
+every failure read as absent, a parse error read as absent, a re-read away from
+Method -- all dead, a control green. Python, each mutant in the mutation
+worktree at `500fc060` and judged by the whole test files naming the rule (the
+committed-fixture equality deselected, so each dies in the test that names its
+rule): twenty-four -- an unrelated prior refused and one of this publication
+accepted unread, the timer armed outside its `try` and raising when disarmed,
+the open not capping the call, an answer after the open kept and validated, a
+request window without a call written and unchecked, the zero-call sentence
+dropped, the open's words never used, the tallies, the original facts and the
+window compared by Python's `==`, a flat flag of `0` admitted, zero volume
+counted beside the session-ready clause, the size bound on compact bytes, and
+five of the checks the review found untested (the inapplicable source, the
+duration bound, the symbols requested, the row category, a missing row's
+ending), with the publisher committing an unchanged receipt and raising on an
+unrelated prior -- all dead, two controls green.
 
 **Keep / fix / defer / omit.** Keep: the receipt reads and never decides; the
 record is unchanged by it; `original` and `recovered` are never one figure.
