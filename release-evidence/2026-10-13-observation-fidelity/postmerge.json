@@ -1,0 +1,352 @@
+{
+  "schema": "spicystock-postmerge-release-checks-v1",
+  "observed_at": "2026-10-13T08:44:00.003133+00:00",
+  "pr": "https://github.com/spicyChicken59/SpicyStock/pull/162",
+  "reviewed_head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+  "merge_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+  "merge_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+  "reviewed_tree_equal": true,
+  "current_main": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+  "runs": {
+    "publisher": {
+      "id": 38369500620,
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500620",
+      "event": "push",
+      "run_attempt": 1
+    },
+    "pages": {
+      "id": 38369524784,
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369524784",
+      "event": "dynamic",
+      "run_attempt": 1
+    },
+    "pages-superseded": {
+      "id": 38369500155,
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500155",
+      "event": "dynamic",
+      "run_attempt": 1
+    },
+    "tests": {
+      "id": 38369500607,
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607",
+      "event": "push",
+      "run_attempt": 1
+    },
+    "scan": {
+      "id": 38369500773,
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500773",
+      "event": "push",
+      "run_attempt": 1
+    }
+  },
+  "publisher_and_pages_ready": true,
+  "main_tests_complete": true,
+  "public_verification": {
+    "status": "publisher verified 41 public files",
+    "publisher_run": 38369500620,
+    "publisher_job": 115202667751,
+    "verified_files": 41,
+    "checked_commit": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+    "exact_log_evidence": "2026-10-13T08:30:14.7757175Z Verified: every one of the 41 public files matches committed main.",
+    "browser_acceptance": "separate root/agent task; not claimed here"
+  },
+  "raw_artifacts": [
+    {
+      "path": "/tmp/pr162-postmerge-monitor/final-main.json",
+      "sha256": "545d8d0640307fd1798d017d304cfa0ed8e8c041c124211a5d1996e20111589e",
+      "bytes": 387
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/final-pages-jobs.json",
+      "sha256": "cfc05bfad2d37963cfcb59495df5f5802488103a6e883ced1240b8f52b761d7b",
+      "bytes": 6152
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/final-publisher-jobs.json",
+      "sha256": "01aad4622a08dbafe3826956637607a68ff90c59db3ea5702a88a534e6628da8",
+      "bytes": 2979
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-jobs-pages-superseded.json",
+      "sha256": "13f13931bad876046c79db1710007020bc76ca426bab42d5fa6c50b094befc30",
+      "bytes": 4599
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-jobs-pages.json",
+      "sha256": "5fa1c4f7c81d631bb850411e8980b8db799b9cc9b2b07a178e362ca0c5ffd4f6",
+      "bytes": 5867
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-jobs-publisher.json",
+      "sha256": "cf4cd831e3e6fb632dad32e96af212c62bcb9978a6dfd47008667bdd2919b3b2",
+      "bytes": 2608
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-jobs-scan.json",
+      "sha256": "f3a69215e8075379e11e5650058df859aa2a93e9c54901e5076fad0ac9f55482",
+      "bytes": 2405
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-jobs-tests.json",
+      "sha256": "411428e3e684cdf3e8c07b3cc78cd342d018a6efd803f872dcf0309c18cf6279",
+      "bytes": 9056
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-main.json",
+      "sha256": "545d8d0640307fd1798d017d304cfa0ed8e8c041c124211a5d1996e20111589e",
+      "bytes": 387
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-merge.json",
+      "sha256": "66bfad8fb00e126c2d6e2937ea364a3e3dc8edffcd749b7d3c265986e5db81de",
+      "bytes": 2977
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-pages-superseded.json",
+      "sha256": "01da084d284fcf3c572e75cd0e52eccc61b7c2da661b3da2547fe416181a2d88",
+      "bytes": 14211
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-pages.json",
+      "sha256": "810709d4d8d5598502ab8e6d5ad9fc413e6a3a962baeee1c4a707446f8b8d711",
+      "bytes": 14360
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-publisher.json",
+      "sha256": "dba6811bad02c1f3e6406075d8bea57287801b3c8c4209a3a888c27a3cc5b5db",
+      "bytes": 14253
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-scan.json",
+      "sha256": "15d411e1a5e5f5a7a862b19ad0a4b6143f4710509a65b9435a952aeaec621e21",
+      "bytes": 14234
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/initial-tests.json",
+      "sha256": "3b518dbb39fc76d893c0c882216e0d24f1df9f0ceda5266007e61b55f75bf079",
+      "bytes": 14219
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/job-115202666317-decoded-log.json",
+      "sha256": "24454a315459e5b0646c25d894417dffd91535e29afe2a39ecbea69f9ab2e277",
+      "bytes": 81658
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/job-115202666520-decoded-log.json",
+      "sha256": "2649488daa34679d22da2a1a3d146458d00c19cb187f6ea35dfe8713be905a2f",
+      "bytes": 54463
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/job-115202666553-decoded-log.json",
+      "sha256": "9c5ac85e679967b7731a43cda2371f948cd2c8fd623f6af674c318f195e13e55",
+      "bytes": 29151
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/job-115202667751-decoded-log.json",
+      "sha256": "eb40e04c0c0c2cf15850e8a8dfdcd9aa4a69260eebe8c1ca89a109bd10ee8752",
+      "bytes": 16153
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/job-115202954911-decoded-log.json",
+      "sha256": "54fc8b1353fad7e1768c719ce9ea9f414012fd288a02ac3dc77abda6e952fe42",
+      "bytes": 4282
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-pages.json",
+      "sha256": "7cbe7a450d91d8acc4ec89f1458a11c0531e00dd293496213075e4b16c0dfa29",
+      "bytes": 14866
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-publisher.json",
+      "sha256": "15424596b3243d1ec65732f914e9b22641f1b25f3e7ef7f6663bb7d63837527d",
+      "bytes": 14759
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-tests.json",
+      "sha256": "542271c108d147b8f2203fdfc73db54baed94bb2899edc7227a611319cd51a1c",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083315-tests.json",
+      "sha256": "832bc8176ab7f575e8ddf88cd466fbf878982c729f82659868147f740cb17564",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083427-tests.json",
+      "sha256": "aae5cc62db94fd684c53ea9049d144eda4e71578ae5b1acf5a615fb03365011a",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083543-tests.json",
+      "sha256": "f02e1d15f69bda9114fd0f158a3f9577483fde59c2929b43b298f31c591a41b0",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083655-tests.json",
+      "sha256": "6608e24344e930b23f834cce46f81740979ecc387def6f7d8e364c655db4783a",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083811-tests.json",
+      "sha256": "09878e7dd5e91434c28391c19436644ab639fd8fa0b9844a7b28024dedd5e744",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013083926-tests.json",
+      "sha256": "1098d1b6e1a8b2b79cd1170cf35bb9dd1fb0924b26e81ed83120293400f30158",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013084040-tests.json",
+      "sha256": "eb7ac811a964b5e9eeab43c279410b1bdebd06fb5f12047eb96dbbb973aa9219",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013084155-tests.json",
+      "sha256": "405b0088f3bed8ff1000b59b1e743030d536a716864fa81788605b24f0cc0197",
+      "bytes": 14722
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/poll-20261013084325-tests.json",
+      "sha256": "468df78a41808b0b80d69962eaf4464905e1eb167cc5be0013db0dc3356a087c",
+      "bytes": 14725
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/terminal-main.json",
+      "sha256": "545d8d0640307fd1798d017d304cfa0ed8e8c041c124211a5d1996e20111589e",
+      "bytes": 387
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/terminal-openprs.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "bytes": 3
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/terminal-pr.json",
+      "sha256": "cb8e57b344d72255765bf350def1236f4a1ad5af0061a2cb928e55d0f0318a9f",
+      "bytes": 24644
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/terminal-tests-artifacts.json",
+      "sha256": "109546f79f17ef5749ebae34f9924ad067b5bc20f864e4d2939f6a32479bc42d",
+      "bytes": 898
+    },
+    {
+      "path": "/tmp/pr162-postmerge-monitor/terminal-tests-jobs.json",
+      "sha256": "8d6f8fa1b24507aff3803e1d137b8fa7b3d2b0200e39913fa026dd18e5e5b7e2",
+      "bytes": 9929
+    }
+  ],
+  "limits": [
+    "No workflow rerun, cancellation, dispatch or repository mutation by this monitor.",
+    "Main push native jobs are not applicable; exact PR-head native results remain in separate accepted premerge evidence.",
+    "Page screenshot artifact metadata retained, but artifact payloads not downloaded or visually inspected by this monitor; actual public acceptance is separate."
+  ],
+  "pages_deployment": {
+    "run": 38369524784,
+    "deploy_job": 115202954911,
+    "pages_build_version": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+    "deployment_id": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+    "conclusion": "success",
+    "superseded_run": 38369500155,
+    "superseded_conclusion": "cancelled"
+  },
+  "main_secret_scan": {
+    "job_id": 115202666553,
+    "conclusion": "success",
+    "commits_scanned": 0,
+    "no_leaks_found": true,
+    "scope": "Merge push scan reports zero commits. Premerge exact-head PR scan covered two commits, and push scan covered one; those proofs are retained separately."
+  },
+  "main_pytest": {
+    "job_id": 115202666520,
+    "passed": 4143,
+    "seconds": 604.97,
+    "conclusion": "success",
+    "producer_fixture_sets_current": true,
+    "clean_tree_check": "success"
+  },
+  "main_page": {
+    "job_id": 115202666317,
+    "conclusion": "success",
+    "counts": {
+      "page": {
+        "passed": 15007,
+        "total": 15007
+      },
+      "chart": {
+        "passed": 378,
+        "total": 378
+      },
+      "continuity": {
+        "passed": 137,
+        "scope": "offline DOM/store only"
+      },
+      "handoff_model": {
+        "passed": 76
+      }
+    }
+  },
+  "main_test_jobs": [
+    {
+      "id": 115202666317,
+      "name": "page",
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607/job/115202666317",
+      "started_at": "2026-10-13T08:28:36Z",
+      "completed_at": "2026-10-13T08:42:04Z"
+    },
+    {
+      "id": 115202666520,
+      "name": "pytest",
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607/job/115202666520",
+      "started_at": "2026-10-13T08:28:36Z",
+      "completed_at": "2026-10-13T08:40:56Z"
+    },
+    {
+      "id": 115202667588,
+      "name": "historical-runtime-gate",
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607/job/115202667588",
+      "started_at": "2026-10-13T08:28:34Z",
+      "completed_at": "2026-10-13T08:28:34Z"
+    },
+    {
+      "id": 115202668628,
+      "name": "historical-runtime (${{ matrix.case }})",
+      "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "status": "completed",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607/job/115202668628",
+      "started_at": "2026-10-13T08:28:34Z",
+      "completed_at": "2026-10-13T08:28:34Z"
+    }
+  ],
+  "state": "Publisher, Pages and all applicable main push checks passed for the reviewed merge tree.",
+  "concurrency": {
+    "main_unchanged": true,
+    "open_prs": []
+  }
+}

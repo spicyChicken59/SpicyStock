@@ -8131,3 +8131,78 @@ for them (the 12 October record carries two, SN and ZIM); read its
 `run.intraday`, the rows' `minute_evidence` and the objects under
 `docs/intraday/`, and record them here. Also not claimable: a live
 morning, research or recovery observation; any trading edge.
+
+
+## Continuation, 13 Oct 2026 — #162 verified; the intended stock within reach (#164)
+
+PR #162 was merged normally as `289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147`
+over reviewed head `1381d0da553af7fdfde4a77eab2c4f2cc20107da`; its merge
+tree equals reviewed tree `930321fc0195f2a121f679e4ebe85a7e42e2b94d`.
+All seven premerge checks passed: 4143 Python tests, 15007 page checks, 378
+chart checks, 137 continuity checks, 76 handoff-model checks, current producer
+fixtures, clean tree and both secret scans. Native central/stress benchmarks
+and memory supervisors passed; upload/API artifact digests matched, while
+binary artifact payloads were not downloaded. Its publisher `38369500620`
+matched 41 core files and Pages `38369524784` deployed the merge.
+
+Actual public verification at 08:31:26–08:32:20 UTC passed 129 checks, matched
+46 files and inspected all 16 desktop/mobile captures, with no unexpected
+browser errors or private-storage changes. The quote receipt remained 404;
+positive at-collection labels had local fixture coverage and deployed-byte
+identity, but no actual current quote row on which to display them. The
+scoped proof is `release-evidence/2026-10-13-observation-fidelity/acceptance.json`.
+Its snapshot predates the completed main Tests run; the later passing outcome
+is retained separately in `release-evidence/2026-10-13-observation-fidelity/postmerge.json`.
+No timely quote, personal fill or return is inferred.
+
+Main subsequently advanced through PRs #165–#168 to `7e40716e`. The 22:26 UTC
+HTTP-only audit matched 41 core files plus 11 dated artifacts to that commit;
+both optional research and recovery receipts were still 404. Its canonical
+October 12 publication for October 13 has zero tickets and no new minute-bar
+result. The reconciliation evidence is
+`release-evidence/2026-10-13-evening-reconciliation/acceptance.json`; its later
+`main-checks-final.json` records completed main Tests: 4416 Python, 15144 page,
+378 chart, 137 continuity and 76 handoff checks, with all seven producer fixture
+generators current. This HTTP audit is not a new public browser acceptance.
+
+Issue #164 now gives the opening guidance a 44px **Find a stock** control and
+prioritizes an exact ticker over company-name matches on Enter. Choosing a
+stock or using a validated research Inspect action clears an incompatible
+query and temporarily reveals a hidden candidate, preserving the saved lens.
+Desktop review reproduced a second obstacle: the detail pane could retain its
+lower scroll position or remain below the document viewport. Explicit choices
+now begin at the stock and chart. An independent sweep then reproduced a Method
+help return restoring that old lower position; explicit choices clear that
+return target while ordinary Method Return keeps its reading position.
+Validation and history refusal precede the research inspection changes.
+
+Final local source checks pass 669 browser assertions (139 finder, 149 existing
+mobile/lens/reach, 257 inspection including 102 new scroll/Method controls,
+124 source recovery), 137 DOM/store continuity and 24 recovery/minute-bar
+interaction checks. Independent review passes 131 controls, including actual
+archived LW/CNI ambiguity, QUAD/GTE, real cross-tab unfollow, desktop/phone and
+reduced/smooth motion; eight independent captures were inspected. Six targeted
+scroll/restoration mutations fail, and an unrelated timeout control passes all
+102. Pre-fix and intermediate failures are distinguished in
+`release-evidence/2026-10-13-stock-finder/prepared.json`. Producer code and
+fixtures retain their base bytes; this local verifier did not rerun generators.
+Hosted fixture checks remain required. README describes the explicit navigation
+exception; `.env.example` needs no configuration change. The design-system pin,
+strategy, market data, provider architecture and account facts are unchanged.
+Exact-head review, hosted checks, merge and actual public acceptance are still
+pending for this stock-finder change.
+
+Concurrent PR #169 owns the service-policy work. Our earlier local #163
+preparations remain unpublished and must not replace it. Independent read-only
+review of `4082d51c` reproduced an unversioned-delivery validation gap and an
+index denominator mismatch; passing CI alone does not clear those findings.
+Recheck its current head and reviewed evidence before any merge decision.
+
+The next independent deliverable repairs visible reload controls that currently
+leave same-cohort research quotes unavailable after a new receipt is published.
+A local producer-fixture reproduction confirms that the existing internal
+research reload API fetches them correctly. Implementation is isolated pending
+this release. The owner manual-morning workflow handoff is a subsequent option;
+manual startup latency, timely quotes, broader issuer access, broker facts and
+an actual personal trade remain unestablished. No workflow dispatch or new
+provider access is part of either UI change.

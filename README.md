@@ -295,8 +295,13 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    withheld*, *beyond the slot cap*, *beyond the configured equity*, *no
    whole share*, *no new longs*, *vetoed*, *no ticket*, *watch* — a search
    that finds a ticker in either stage and says when it switched, and on a
-   phone a rail of cards with a *Choose stock* dialog. That dialog reaches
-   every stock in the record, which is what it is for, so it says which of
+   phone a rail of cards with a *Choose stock* dialog. **Find a stock** opens
+   that same dialog from the first screen once a publication is loaded; a
+   failed refresh keeps it available for the retained record. Enter selects an
+   exact ticker before a company-name match. An explicit choice clears an
+   incompatible search and reveals a stock outside the current lens without
+   changing the saved lens. The dialog reaches every stock in the record, so
+   it says which of
    them the lens in front of the reader holds and which it hides: two
    counted groups, the hidden ones marked and listed second, and one line
    saying that choosing one of those widens the lens for that stock without
@@ -309,8 +314,13 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    full details scroll alongside it, including the normal-size chart and every
    disclosure. Wheel scrolling stays in its pane. Arrow/Home/End move card focus;
    Enter selects. A different stock starts at its identity; selecting the same
-   stock or repainting it keeps the reader's detail position. Selection, search,
-   Previous/Next and Back reveal the selected card only when needed, without
+   stock through ordinary navigation or repainting it keeps the reader's detail
+   position. Explicit dialog choices and validated research **Inspect** actions
+   start at the selected stock's identity and chart, including when it was
+   already selected or Method had remembered a lower reading position.
+   Invalid research identity, evidence or browser navigation leaves the prior
+   reading state intact. Selection, search, Previous/Next and Back reveal the
+   selected card only when needed, without
    snapping back during browse-only focus movement. The surrounding page remains
    scrollable, Map stays full width, and phones retain the horizontal rail,
    chooser and stacked details. Scroll positions are not persisted. When the

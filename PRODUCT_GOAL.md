@@ -450,3 +450,33 @@ results and verdicts are unchanged. Local replay, mutation and independent
 checks pass; hosted checks and actual release verification remain pending.
 The isolated next deliverables are truthful service-arrival reporting (#163)
 and a reliable first-screen stock finder (#164). Neither is claimed released.
+
+
+## Verified release and current navigation milestone — 13 October 2026
+
+[PR #162](https://github.com/spicyChicken59/SpicyStock/pull/162) is merged and
+publicly verified. Its [release receipt](release-evidence/2026-10-13-observation-fidelity/acceptance.json)
+records seven passing checks at the reviewed head, 129 actual public checks,
+46 matching files and 16 inspected phone/desktop captures. The research quote
+receipt was still unavailable; no timely quote or actual personal trade is
+inferred. The later main test outcome is retained in the adjacent postmerge
+receipt. These results supersede the pending #162 descriptions above.
+
+Subsequent releases #165–#168 add bounded source recovery, corrected service
+history, a measured schedule-reliability report and minute evidence for model
+first-day ambiguity. The [current reconciliation](release-evidence/2026-10-13-evening-reconciliation/acceptance.json)
+matched 52 actual public files to `7e40716e`; its separate completed-main check
+receipt preserves the later passing tests. Both optional research and recovery
+receipts still returned 404. No new public browser acceptance or timely morning
+collection is claimed by that HTTP audit.
+
+Issue #164 is locally verified: first-screen stock finding, exact-ticker Enter,
+recovery from incompatible search/lens state, and explicit chart navigation on
+phone and desktop, including from Method help. Its
+[preparation evidence](release-evidence/2026-10-13-stock-finder/prepared.json)
+records current-source tests, independent review and mutation controls. Hosted
+checks and actual public acceptance remain pending. Service-policy PR #169 is
+owned by a concurrent builder; local #163 preparations stay unpublished.
+The next bounded UI milestone refreshes newly published research quotes through
+the visible reload controls. Actual delivery reliability and the first personal
+trade remain open under #108, #110 and #111.

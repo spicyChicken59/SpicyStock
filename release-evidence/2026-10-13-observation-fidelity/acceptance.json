@@ -1,0 +1,3931 @@
+{
+  "schema": "spicystock-release-acceptance-v1",
+  "recorded_at": "2026-10-13T08:33:45.551793+00:00",
+  "pr": "https://github.com/spicyChicken59/SpicyStock/pull/162",
+  "reviewed_head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+  "reviewed_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+  "merge": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+  "merge_tree_equals_reviewed_tree": true,
+  "status": "merged_deployed_and_publicly_verified",
+  "evidence": {
+    "checked_head": {
+      "sha256": "a224beb78f759d7b3e63292c06dfa589d8eb69dc525e9a6d1e0f3fa492619a4d",
+      "bytes": 21593,
+      "original_path": "/tmp/pr162-repaired-release-compact.json",
+      "evidence": {
+        "schema": "spicystock-exact-head-hosted-acceptance-compact-v1",
+        "observed_at": "2026-10-13T08:27:48.523419+00:00",
+        "pr": "https://github.com/spicyChicken59/SpicyStock/pull/162",
+        "head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+        "tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+        "base": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+        "local_review_head": "2810769f3f5525f95772f0430c4dc735f7a33805",
+        "local_review_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+        "test_merge_sha": "8581bb89a4aecbcd05e6f7947d54c2eaca86cb39",
+        "test_merge_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+        "identity_pass": true,
+        "review_receipt": {
+          "path": "/tmp/pr162-repair-final-review.json",
+          "sha256": "a54ff5d0ca350e4af6da94bfce907dcfd28cebefefb8e81047f2b7e5a3de051a"
+        },
+        "checks": [
+          {
+            "id": 115183581900,
+            "name": "historical-runtime (stress)",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642264/job/115183581900",
+            "started_at": "2026-10-13T07:36:01Z",
+            "completed_at": "2026-10-13T08:26:19Z"
+          },
+          {
+            "id": 115183581853,
+            "name": "historical-runtime (central)",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642264/job/115183581853",
+            "started_at": "2026-10-13T07:36:01Z",
+            "completed_at": "2026-10-13T08:03:35Z"
+          },
+          {
+            "id": 115183487951,
+            "name": "historical-runtime-gate",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642264/job/115183487951",
+            "started_at": "2026-10-13T07:35:45Z",
+            "completed_at": "2026-10-13T07:35:58Z"
+          },
+          {
+            "id": 115183487893,
+            "name": "page",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642264/job/115183487893",
+            "started_at": "2026-10-13T07:35:44Z",
+            "completed_at": "2026-10-13T07:50:13Z"
+          },
+          {
+            "id": 115183487845,
+            "name": "gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642386/job/115183487845",
+            "started_at": "2026-10-13T07:35:45Z",
+            "completed_at": "2026-10-13T07:36:00Z"
+          },
+          {
+            "id": 115183487492,
+            "name": "pytest",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363642264/job/115183487492",
+            "started_at": "2026-10-13T07:35:44Z",
+            "completed_at": "2026-10-13T07:56:13Z"
+          },
+          {
+            "id": 115183467372,
+            "name": "gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "details_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38363636202/job/115183467372",
+            "started_at": "2026-10-13T07:35:40Z",
+            "completed_at": "2026-10-13T07:35:52Z"
+          }
+        ],
+        "executed_counts": {
+          "page": {
+            "passed": 15007,
+            "total": 15007
+          },
+          "chart": {
+            "passed": 378,
+            "total": 378
+          },
+          "continuity": {
+            "passed": 137,
+            "scope": "offline DOM/store; not browser/layout acceptance"
+          },
+          "handoff_model": {
+            "passed": 76
+          },
+          "pytest": {
+            "passed": 4143,
+            "seconds": 1007.31
+          }
+        },
+        "native": [
+          {
+            "case": "central",
+            "job_id": 115183581853,
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "benchmark": "PASS",
+            "runtime_seconds": 1604.812389,
+            "memory_supervisor": "PASS",
+            "artifact_id": 11797516385,
+            "artifact_name": "historical-runtime-central-38363642264-1",
+            "artifact_size_bytes": 26652,
+            "upload_log_sha256": "bff093dba0742b818bf572cf6d32d8522cd9766a0e5b31f1a3a057c24c3a82a4",
+            "api_digest": "sha256:bff093dba0742b818bf572cf6d32d8522cd9766a0e5b31f1a3a057c24c3a82a4",
+            "digest_match": true,
+            "artifact_payload_downloaded": false,
+            "artifact_payload_read": false,
+            "scope": "Completed logs plus upload/API digests; no binary payload inspection"
+          },
+          {
+            "case": "stress",
+            "job_id": 115183581900,
+            "head_sha": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+            "benchmark": "PASS",
+            "runtime_seconds": 2971.062444,
+            "memory_supervisor": "PASS",
+            "artifact_id": 11797783547,
+            "artifact_name": "historical-runtime-stress-38363642264-1",
+            "artifact_size_bytes": 26551,
+            "upload_log_sha256": "28e812ea6494c49f290eacf90b46c4fc5b6f24fd84feebf5a61bc484196dc7ce",
+            "api_digest": "sha256:28e812ea6494c49f290eacf90b46c4fc5b6f24fd84feebf5a61bc484196dc7ce",
+            "digest_match": true,
+            "artifact_payload_downloaded": false,
+            "artifact_payload_read": false,
+            "scope": "Completed logs plus upload/API digests; no binary payload inspection"
+          }
+        ],
+        "historical_gate": {
+          "required": true,
+          "reason": "runtime_or_validation_inputs_changed",
+          "observed_before": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+          "observed_head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+          "job_id": 115183487951
+        },
+        "producer_fixtures": {
+          "page": 13,
+          "morning": 21,
+          "issuer": 30,
+          "stop_research": 22,
+          "research_outcomes": 40,
+          "research_observations": 24,
+          "all_current": true,
+          "working_tree_clean_step": "success"
+        },
+        "secret_scans": [
+          {
+            "job_id": 115183487845,
+            "scope": "pull request range",
+            "commits_scanned": 2,
+            "leaks_found": false
+          },
+          {
+            "job_id": 115183467372,
+            "scope": "push range",
+            "commits_scanned": 1,
+            "leaks_found": false
+          }
+        ],
+        "ready_to_merge": true,
+        "status": "all seven exact-head gates passed; independently reviewed tree identity and unchanged current main confirmed; authorized root may merge exact head",
+        "concurrency": {
+          "observed_at": "2026-10-13T08:27:48.523419+00:00",
+          "current_main": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+          "pr_head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+          "pr_base": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+          "open_pr_numbers": [
+            162
+          ],
+          "pr_mergeable": true,
+          "pr_mergeable_state": "clean",
+          "pr_issue_comments": [],
+          "pr_reviews": [],
+          "pr_review_comments": [],
+          "issue159_comments": [],
+          "stop_instruction_found": false,
+          "scope": "Standing user continuation plus PR162 and issue159 comments/reviews; root also confirms no user stop; no broader private communication access claimed."
+        },
+        "original_failed_head": {
+          "head": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+          "receipt": "/tmp/pr162-original-release-checks.json",
+          "pytest": "2 failed, 4131 passed; inherited rolling-input/datetime mismatch in dated evidence review; repair separately reviewed",
+          "receipt_sha256": "b4ee1b7f39512c4f68c8771d84d3caba6726b2f70927e4f8fceb7fa58f91ace3",
+          "final_summary": {
+            "passed": 6,
+            "failed": [
+              "pytest"
+            ],
+            "running": [],
+            "pytest_counts": {
+              "passed": 4131,
+              "failed": 2
+            },
+            "failures": [
+              "test_the_review_files_are_what_the_tool_writes",
+              "test_the_copied_blocks_are_the_files_own"
+            ],
+            "scope": "Historical failed head only; native successes on this head do not substitute for fresh repaired-head gates"
+          }
+        },
+        "raw_proof": {
+          "path": "/tmp/pr162-repaired-release-checks.json",
+          "sha256": "a3e668335bfed207e1f24744b243d7be187b74940f68093ed9810acf93e2bf7c",
+          "bytes": 2383278
+        },
+        "raw_artifacts": [
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-artifacts.json",
+            "sha256": "4bb9ac92d20d407875f42a1c3465c08ee26150d1cc0c1e773b15d818fc4eaa5c",
+            "bytes": 3675
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-comments.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            "bytes": 3
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-issue159-comments.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            "bytes": 3
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-jobs.json",
+            "sha256": "073e247c31b643828037bc6e5a5d21cef93c25cd7a20dbe1789bdb284d0d0048",
+            "bytes": 18624
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-main.json",
+            "sha256": "2da670c3efb3248e6bc8a39ec91aeabb592d014cfd5258347687f3263ecfbba0",
+            "bytes": 387
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-openprs.json",
+            "sha256": "e072871330648405f965f7fef5b65e9e4b831c584139b69c301eb4472dd86261",
+            "bytes": 23527
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-pr.json",
+            "sha256": "f26998520655251ee5e6a7b71088a87349029689bbc0b26b06f5d62500f48a5b",
+            "bytes": 23038
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-review-comments.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            "bytes": 3
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-reviews.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            "bytes": 3
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/final-run.json",
+            "sha256": "2b859426bb31709787fc4cae94c8eecc63132de8145340bc2d0483f5f8989b47",
+            "bytes": 14897
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-checks.json",
+            "sha256": "b70f5778ca5d9a19343b838f4041731f35095af078201ae88d2af9496959795a",
+            "bytes": 35695
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-comments.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+            "bytes": 3
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-commit.json",
+            "sha256": "2c5571c4baabb29de62bcbe168b81c857a99080d11c4e063399502d11b205130",
+            "bytes": 1360
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-main.json",
+            "sha256": "2da670c3efb3248e6bc8a39ec91aeabb592d014cfd5258347687f3263ecfbba0",
+            "bytes": 387
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-oldchecks.json",
+            "sha256": "9bb9df232954c9ce7e45ba5414aee2975264edeec8105218d34bc9501e9bcb30",
+            "bytes": 35758
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-openprs.json",
+            "sha256": "72dd3c894ccf0ee0ba6ad64e258d8c22be2a956072fbc259fbfb5d8ba9ef3134",
+            "bytes": 23527
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-pr.json",
+            "sha256": "b80fba0ffa16ed01a6c45f88ffdbacc3939aaf89d036d594dbd8a2d22856361a",
+            "bytes": 23041
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/initial-test-merge-commit.json",
+            "sha256": "cbe59340948e40c65f34fab5cee6e56b58501d82fd92f0de7f7b119c7416a529",
+            "bytes": 2867
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183467372-decoded-log.json",
+            "sha256": "10c872dcbce0964a9dcbc056063923206f1a59b19a257cc0b8d9b4f70f7b30c1",
+            "bytes": 29183
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183487492-decoded-log.json",
+            "sha256": "65a6d2cdb63505255a42f1b9c231a70ee8c550d402c95ff4fb2fb2899977819d",
+            "bytes": 57195
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183487845-decoded-log.json",
+            "sha256": "cb8de4718a68374ce5c0349f3b2a4368b95cdc8fa9ca674c721d65061dd395ef",
+            "bytes": 29660
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183487893-decoded-log.json",
+            "sha256": "e449c1d9ee9a883cb8624cbaab8b0db8b4add803100e4f9a0a4d4deb1eddc131",
+            "bytes": 82943
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183487951-decoded-log.json",
+            "sha256": "a909671d0adb326db95927728862095e277f627615a6ee306bf0c73aba1ccaab",
+            "bytes": 32470
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183581853-decoded-log.json",
+            "sha256": "b58638349f160747b80755725b91c49ad2d67a8c16da7884c263cc1bfb6263d9",
+            "bytes": 50903
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/job-115183581900-decoded-log.json",
+            "sha256": "e0b2c8d5330944b70a501d6159f25350be5c44d5744e37cc6e9a015a07ec85d3",
+            "bytes": 52109
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013073821.json",
+            "sha256": "6e7732f6038d790cd60058e87520a93ccd5e0db22b3ec9d8e834ff412b43a5c5",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013073936.json",
+            "sha256": "a291e1167980a131d85d3dc4e81b6e14c3b8b536394b7ed5de454ab6ee657f67",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074050.json",
+            "sha256": "6480f680e3bbeba360d03e6a2b762df3ec896a399ac29de227be49aebbc9c0c1",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074133.json",
+            "sha256": "300ff91276970ba7998135dbbcac8cb52b42fa6e9b790066c3eac5fac3224f5c",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074248.json",
+            "sha256": "f32f6c0093be2ce743f569bd9a0999fc904a8fe299d5707da42969d5fef96d9e",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074405.json",
+            "sha256": "67808af7618857ddd0ebdd12192bfd934f965fa7df348339d6eb705ae0e98f23",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074518.json",
+            "sha256": "45915fee9be169059429a20235328d76b522775eb8785a2317b0b1b2909d6b93",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074651.json",
+            "sha256": "69b9152e3c74d649a2e129909e8703b9d60554e1d9afd7268955a4f223659609",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074804.json",
+            "sha256": "840c41653500ddd2ef23efe1d07b7b310d34e323e1f34afbc4fa882ffd7696c5",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013074919.json",
+            "sha256": "0d729938b4b56e5c142743e0d7b3a7019fee40e270d5327281736401f814b550",
+            "bytes": 37709
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075033.json",
+            "sha256": "52dbf1ed8b1c15010d44d0065248af23a07725da19887f4d4ea6943066e09df6",
+            "bytes": 37730
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075201.json",
+            "sha256": "e3b12de629fa8d428afcd416090f302e25260c9700bd5747ca48b62a63be1b44",
+            "bytes": 37730
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075314.json",
+            "sha256": "055c4caeb08b48388ba3e826fae17ad5f271f2997307ca375a8e98b67c4f23a7",
+            "bytes": 37730
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075428.json",
+            "sha256": "61e0e5de35b55f1ef64e9e7b09d0ecc9e156783637dead7a7865c7895c1933a9",
+            "bytes": 37730
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075544.json",
+            "sha256": "59c796de2fbbf83bf0d1f2446652292c3813b91248dc608453c6f23f78274606",
+            "bytes": 37730
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075701.json",
+            "sha256": "03aa6d2c60ae6af7904507843c88306e54e83757f2d3dd958d278e9d6b0e4c5a",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075754.json",
+            "sha256": "5892509d603e7a74640ad26f87532d7fd422b7dc0bf4bbea2617edb5a0f7d6d1",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075915.json",
+            "sha256": "81bbf8fda92ae96c69d614b878fa00aa9dac6781aca16286919dfebf41d820d4",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013075942.json",
+            "sha256": "7510cfd70bec351210d0c9fb2b4577c5286aca02ffe9f512b659193d0498aa9b",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080052.json",
+            "sha256": "cb7d4ce46bd65c42dc00b210edd12540ce7749861a765e1bd83ad4201d2899a3",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080201.json",
+            "sha256": "920c0a394d605f3e45928122995b21f40c4a19b8db14a64d032411e62a5516db",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080311.json",
+            "sha256": "d93057c598c97793edacda01cf47139e122d6173ba8d4792418906d07d6b79d0",
+            "bytes": 37751
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080429.json",
+            "sha256": "8e76f15bf61cd4604f222a2f7ba05493f8cfab52cc9ff37b9d8e94899aa66a88",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080554.json",
+            "sha256": "ed5e1c208b5aa25c777979f7dbd0bdbbb25480e9856097abcb43eb307ea335bf",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080708.json",
+            "sha256": "a216cad7d9063e2d2a03b98657cb2276cd46a84e559f0cb4c83e894312caa37e",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080818.json",
+            "sha256": "82bd0f1f18100b5de8d95333318a6925c3772fe62226d6d45da2425a8eb0d583",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013080928.json",
+            "sha256": "e3289e1a583c9066a8dc0605c4d9075c909d446a0fd5adccfb83488f2a9cfcc8",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081044.json",
+            "sha256": "2bbb6dd44c0249442e124a06f65b87af121a43aa5a4512b0c29163d6da01fb41",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081154.json",
+            "sha256": "6f7f54c294779148b58f31cfe9b3a2b1d858396d32a2d0794f46b6464622677c",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081306.json",
+            "sha256": "0fcd0d5a7860a012ff05252fec4f883960f828630bd9e4eb0a0ec1f8628a5939",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081416.json",
+            "sha256": "4181344d8bcada9b7ca7de9f9cd34776015518078a67aa64a6ebd15201096cc2",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081529.json",
+            "sha256": "e14d3bce48f613e8034ac5e95a8a58de408c8d241d70d5843eacb579a9c25d55",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081640.json",
+            "sha256": "6d254d071e66edbd5742e387820f115c28f0f48c36b83015a9b2d65eff216864",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081753.json",
+            "sha256": "2a47870ef74f6252b43af27feeb6c2176b44dc19a9e6c446c2011d696f63f337",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013081904.json",
+            "sha256": "aa70617eecf7892e1a727f68a9848b87c0944beda5ab18763da2ccdd3b404e35",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082014.json",
+            "sha256": "ba55b0653a4c0124840a9cf4402f2a2d4fd4342ffabf1f036732537adff7cbf9",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082125.json",
+            "sha256": "04161fad23d7192b72e02c226a8b5f9d6bf11d114b341e603699ae1eb40c33d1",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082153.json",
+            "sha256": "3542be42957af6aef876d89a5f8a62f2418b7950c7ecae2f6879a8763adb59f5",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082311.json",
+            "sha256": "1cd2df311a57333d0fcf4b0f8e29081b84845488b3e3266fb465fab015b63876",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082421.json",
+            "sha256": "79a7381c7d3e3cc6ca72b109c5f5ade3de8afa4e28a7147315e40db02b444a28",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082533.json",
+            "sha256": "841f7d0323cb8a43bc9e3d293d006bd0c90e56492ea50c66c056ad86e4f47e37",
+            "bytes": 37772
+          },
+          {
+            "path": "/tmp/pr162-repaired-release-monitor/poll-20261013082644.json",
+            "sha256": "36f5808f624ffba0915793cbb3889433fb67bf0c9174b47027093887718ccbca",
+            "bytes": 37793
+          }
+        ],
+        "limits": [
+          "Hosted and local identity acceptance only; actual merge, deployment and public browser acceptance are separate.",
+          "Native artifact metadata and upload digests are retained; binary artifact payloads are not downloaded.",
+          "No formal GitHub review approval submitted; independent local source/tree review is retained."
+        ]
+      }
+    },
+    "exact_tree_review": {
+      "sha256": "a54ff5d0ca350e4af6da94bfce907dcfd28cebefefb8e81047f2b7e5a3de051a",
+      "bytes": 17444,
+      "original_path": "/tmp/pr162-repair-final-review.json",
+      "evidence": {
+        "version": 1,
+        "recorded_at": "2026-10-13T07:35:04.241180+00:00",
+        "head": "2810769f3f5525f95772f0430c4dc735f7a33805",
+        "tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+        "base": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+        "verdict": "no blockers for publication of this exact local tree",
+        "scope": "Independent final-tree review plus repair-author integrity checks. Required remote-head hosted gates, gated merge, deployment and actual public acceptance remain pending.",
+        "clean_before_and_after": true,
+        "expected_changed_paths": [
+          "CLAUDE.md",
+          "PRODUCT_GOAL.md",
+          "README.md",
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json",
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json",
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md",
+          "docs/input-truthfulness/2026-10-12-evidence-review.md",
+          "release-evidence/2026-10-13-observation-fidelity/dated-review-repair.json",
+          "tests/test_evidence_review.py",
+          "tools/evidence_review.py"
+        ],
+        "unchanged_other_files": true,
+        "retained_current_main": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+        "committed_repair_receipt_sha256": "dbbcce1a0ad50b4c206ef32c250669c59e045514e15946c258ae604fb8fd0b8b",
+        "root_validation_logs": {
+          "documentation_tests": {
+            "path": "/tmp/pr162-repair-docs.log",
+            "sha256": "7a3f309ecd3c9622847283b56fa6fff56601ecf0049c7fa923cbb08aa247b679",
+            "output": ".............................................................            [100%]\n=============================== warnings summary ===============================\n../.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n61 passed, 1 warning in 8.16s\n"
+          },
+          "collection": {
+            "path": "/tmp/pr162-repair-collection.log",
+            "sha256": "a5ee7315e10de94ccb2d3934fbff1077336b304ad39185b6b9d59eaf1846e742",
+            "output_tail": "rkflows.py::test_source_probe_is_opt_in_rehearsal_only_and_separately_retained\ntests/test_workflows.py::test_issuer_trigger_is_publication_bound_and_has_no_recursion_or_new_cron\ntests/test_workflows.py::test_issuer_readonly_collection_and_main_only_writer_are_separate\ntests/test_workflows.py::test_issuer_cache_and_capture_retention_do_not_promote_untrusted_artifacts\ntests/test_workflows.py::test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke\ntests/test_workflows.py::test_the_evening_and_the_tests_run_the_same_python\ntests/test_workflows.py::test_the_publisher_only_reads_committed_main_after_the_evening_workflow\n\n=============================== warnings summary ===============================\n../.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4143 tests collected in 2.10s\n",
+            "scope": "Raw output tail retained; full collection log remains at the digest-bound path."
+          },
+          "secret_scan": {
+            "path": "/tmp/pr162-repair-gitleaks.log",
+            "sha256": "44f85340b7f25c4620e8ad7543b51b55195334374b6abe4cdc37d8758b0704e9",
+            "output": "\n    \u25cb\n    \u2502\u2572\n    \u2502 \u25cb\n    \u25cb \u2591\n    \u2591    gitleaks\n\n7:33AM INF 2 commits scanned.\n7:33AM INF scanned ~2251499 bytes (2.25 MB) in 368ms\n7:33AM INF no leaks found\n"
+          }
+        },
+        "author_replay_check": {
+          "exit": 0,
+          "output": "/workspace/SpicyStock-observation-fidelity/docs/input-truthfulness/2026-10-12-evidence-review-evidence current: 5 changes reviewed, 0 supported\n"
+        },
+        "independent_review_sha256": "e5aad6f6bfdfa1ef0032f9da9ba6bb74cd76a422ea13948041f218f2863f8ed3",
+        "independent_review": {
+          "version": 1,
+          "recorded_at": "2026-10-13T07:34:40.382179+00:00",
+          "reviewed_head": "2810769f3f5525f95772f0430c4dc735f7a33805",
+          "reviewed_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+          "base_head": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+          "decision": "No blockers for publishing this exact local tree. Normal exact remote-head hosted gates, merge and actual public verification remain required.",
+          "scope": "The 11-path dated evidence repair plus preservation of all files outside that repair; prior source review retained. Historical CI claims are not new hosted acceptance.",
+          "checks": [
+            {
+              "name": "exact local head and tree",
+              "pass": true,
+              "details": {
+                "head": "2810769f3f5525f95772f0430c4dc735f7a33805",
+                "tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d"
+              }
+            },
+            {
+              "name": "clean worktree and index",
+              "pass": true,
+              "details": ""
+            },
+            {
+              "name": "only the 11 reviewed repair paths changed",
+              "pass": true,
+              "details": [
+                "CLAUDE.md",
+                "PRODUCT_GOAL.md",
+                "README.md",
+                "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json",
+                "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
+                "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json",
+                "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md",
+                "docs/input-truthfulness/2026-10-12-evidence-review.md",
+                "release-evidence/2026-10-13-observation-fidelity/dated-review-repair.json",
+                "tests/test_evidence_review.py",
+                "tools/evidence_review.py"
+              ]
+            },
+            {
+              "name": "tools/evidence_review.py matches independently reviewed source",
+              "pass": true,
+              "details": "9b93bbb49b6a464ae6c95614dad781a12ffb9adf09ef66f0fb71e88cce6618b7"
+            },
+            {
+              "name": "tests/test_evidence_review.py matches independently reviewed source",
+              "pass": true,
+              "details": "d0a0543ef54656c974c43d2a58d6b4a184bcb22fc1688c5ed4bfe40866b2389c"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json matches independently reviewed source",
+              "pass": true,
+              "details": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md matches independently reviewed source",
+              "pass": true,
+              "details": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json matches independently reviewed source",
+              "pass": true,
+              "details": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json matches independently reviewed source",
+              "pass": true,
+              "details": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+            },
+            {
+              "name": "committed receipt equals exact parent acceptance bytes",
+              "pass": true,
+              "details": "dbbcce1a0ad50b4c206ef32c250669c59e045514e15946c258ae604fb8fd0b8b"
+            },
+            {
+              "name": "tools/evidence_review.py receipt pin reconciles",
+              "pass": true,
+              "details": "9b93bbb49b6a464ae6c95614dad781a12ffb9adf09ef66f0fb71e88cce6618b7"
+            },
+            {
+              "name": "tests/test_evidence_review.py receipt pin reconciles",
+              "pass": true,
+              "details": "d0a0543ef54656c974c43d2a58d6b4a184bcb22fc1688c5ed4bfe40866b2389c"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json receipt pin reconciles",
+              "pass": true,
+              "details": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md receipt pin reconciles",
+              "pass": true,
+              "details": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json receipt pin reconciles",
+              "pass": true,
+              "details": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+            },
+            {
+              "name": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json receipt pin reconciles",
+              "pass": true,
+              "details": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+            },
+            {
+              "name": "receipt embeds prior independent control results",
+              "pass": true,
+              "details": {
+                "prior_passed": 25,
+                "embedded_keys": [
+                  "version",
+                  "scope",
+                  "recorded_at",
+                  "base_head",
+                  "source_pins",
+                  "checks",
+                  "passed",
+                  "failed",
+                  "findings",
+                  "decision"
+                ]
+              }
+            },
+            {
+              "name": "mutation baseline raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 0,
+                "actual": 0,
+                "sha256": "9475bd6579d64e5d420fc39ff65a94b0b37f8e6505564e1e2f48c61afdffd774"
+              }
+            },
+            {
+              "name": "mutation digest_guard raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 1,
+                "actual": 1,
+                "sha256": "66dc52c7558781784a5b8901bdbf1b01df7b1b5e67619b7d974bdf4144255707"
+              }
+            },
+            {
+              "name": "mutation rolling_paths raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 1,
+                "actual": 1,
+                "sha256": "b7478a5be5befcf6fae7e4beca9fbe6675503cee1543e7e293de62379e1a62f4"
+              }
+            },
+            {
+              "name": "mutation second_read raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 1,
+                "actual": 1,
+                "sha256": "106812bb5900b2b4179866ea0e4ee39fcf8fc17aa478c417379164bdb03a971d"
+              }
+            },
+            {
+              "name": "mutation origin_provenance raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 1,
+                "actual": 1,
+                "sha256": "49ac0612f02f1bd5c7829d84531cf69d2207d5c2d15917103a6d7e930d47e96c"
+              }
+            },
+            {
+              "name": "mutation unrelated_arithmetic raw log and expected outcome reconcile",
+              "pass": true,
+              "details": {
+                "expected": 0,
+                "actual": 0,
+                "sha256": "e8f0101aabbf8c8fa2490b74e9fc7e44f8f3701f3727c9c4a5ce5a78f10e9693"
+              }
+            },
+            {
+              "name": "original two-failure reproduction raw log reconciles",
+              "pass": true,
+              "details": {
+                "sha256": "c21e0907e9bf3dffb4a683c8b45360b1436f80aa404da0feb521a26b191995f1"
+              }
+            },
+            {
+              "name": "all other tracked files unchanged from reviewed original head",
+              "pass": true,
+              "details": {
+                "files": 20000,
+                "includes": "all current published data, quote-fidelity implementation and fixtures, workflow gates and pinned design system"
+              }
+            },
+            {
+              "name": "executed /workspace/.venv-spicystock/bin/python tools/evidence_review.py --check",
+              "pass": true,
+              "details": {
+                "command": [
+                  "/workspace/.venv-spicystock/bin/python",
+                  "tools/evidence_review.py",
+                  "--check"
+                ],
+                "exit": 0,
+                "output": "/workspace/SpicyStock-observation-fidelity/docs/input-truthfulness/2026-10-12-evidence-review-evidence current: 5 changes reviewed, 0 supported\n"
+              }
+            },
+            {
+              "name": "executed git diff --check 8ae8f0adc63daee746b37a8ec7c309de1abc1e42 2810769f3f5525f95772f0430c4dc735f7a33805",
+              "pass": true,
+              "details": {
+                "command": [
+                  "git",
+                  "diff",
+                  "--check",
+                  "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+                  "2810769f3f5525f95772f0430c4dc735f7a33805"
+                ],
+                "exit": 0,
+                "output": ""
+              }
+            },
+            {
+              "name": "docs_and_evidence parent execution log supports checkpoint",
+              "pass": true,
+              "details": {
+                "sha256": "7a3f309ecd3c9622847283b56fa6fff56601ecf0049c7fa923cbb08aa247b679",
+                "summary": "61 passed, 1 warning in 8.16s"
+              }
+            },
+            {
+              "name": "collection parent execution log supports checkpoint",
+              "pass": true,
+              "details": {
+                "sha256": "a5ee7315e10de94ccb2d3934fbff1077336b304ad39185b6b9d59eaf1846e742",
+                "summary": "4143 tests collected in 2.10s"
+              }
+            },
+            {
+              "name": "gitleaks parent execution log supports checkpoint",
+              "pass": true,
+              "details": {
+                "sha256": "44f85340b7f25c4620e8ad7543b51b55195334374b6abe4cdc37d8758b0704e9",
+                "summary": "7:33AM INF no leaks found"
+              }
+            },
+            {
+              "name": "final head tree index unchanged through review",
+              "pass": true,
+              "details": null
+            }
+          ],
+          "raw_checks": [
+            {
+              "command": [
+                "/workspace/.venv-spicystock/bin/python",
+                "tools/evidence_review.py",
+                "--check"
+              ],
+              "exit": 0,
+              "output": "/workspace/SpicyStock-observation-fidelity/docs/input-truthfulness/2026-10-12-evidence-review-evidence current: 5 changes reviewed, 0 supported\n"
+            },
+            {
+              "command": [
+                "git",
+                "diff",
+                "--check",
+                "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+                "2810769f3f5525f95772f0430c4dc735f7a33805"
+              ],
+              "exit": 0,
+              "output": ""
+            }
+          ],
+          "parent_log_evidence": {
+            "docs_and_evidence": {
+              "path": "/tmp/pr162-repair-docs.log",
+              "sha256": "7a3f309ecd3c9622847283b56fa6fff56601ecf0049c7fa923cbb08aa247b679",
+              "tail": ".............................................................            [100%]\n=============================== warnings summary ===============================\n../.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n61 passed, 1 warning in 8.16s"
+            },
+            "collection": {
+              "path": "/tmp/pr162-repair-collection.log",
+              "sha256": "a5ee7315e10de94ccb2d3934fbff1077336b304ad39185b6b9d59eaf1846e742",
+              "tail": "tests/test_workflows.py::test_issuer_cache_and_capture_retention_do_not_promote_untrusted_artifacts\ntests/test_workflows.py::test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke\ntests/test_workflows.py::test_the_evening_and_the_tests_run_the_same_python\ntests/test_workflows.py::test_the_publisher_only_reads_committed_main_after_the_evening_workflow\n\n=============================== warnings summary ===============================\n../.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n4143 tests collected in 2.10s"
+            },
+            "gitleaks": {
+              "path": "/tmp/pr162-repair-gitleaks.log",
+              "sha256": "44f85340b7f25c4620e8ad7543b51b55195334374b6abe4cdc37d8758b0704e9",
+              "tail": "\n    \u25cb\n    \u2502\u2572\n    \u2502 \u25cb\n    \u25cb \u2591\n    \u2591    gitleaks\n\n7:33AM INF 2 commits scanned.\n7:33AM INF scanned ~2251499 bytes (2.25 MB) in 368ms\n7:33AM INF no leaks found"
+            }
+          },
+          "prior_independent_receipt": {
+            "path": "/tmp/pr162-dated-replay-independent.json",
+            "sha256": "2eb9f9fc691ddf34a57be1b6573141bc420d0988987b4e4beb25c16d7ba00c9f",
+            "passed": 25
+          },
+          "harness_note": "Initial final-integrity harness assumed every mutation record had a log field; the original-failure record instead embeds output. Adjusted only the isolated reviewer harness and re-executed all checks; no shared source changed.",
+          "findings": [],
+          "passed": 31,
+          "failed": 0
+        }
+      }
+    },
+    "postmerge_snapshot": {
+      "sha256": "cdb6ba07b0b3353d35b09ecb5f288b7400fc1a0b96115d1df0c9a62bcb6637e4",
+      "bytes": 7575,
+      "original_path": "/tmp/pr162-postmerge-release-checks.json",
+      "evidence": {
+        "schema": "spicystock-postmerge-release-checks-v1",
+        "observed_at": "2026-10-13 08:33:15 UTC",
+        "pr": "https://github.com/spicyChicken59/SpicyStock/pull/162",
+        "reviewed_head": "1381d0da553af7fdfde4a77eab2c4f2cc20107da",
+        "merge_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+        "merge_tree": "930321fc0195f2a121f679e4ebe85a7e42e2b94d",
+        "reviewed_tree_equal": true,
+        "current_main": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+        "runs": {
+          "publisher": {
+            "id": 38369500620,
+            "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500620",
+            "event": "push",
+            "run_attempt": 1
+          },
+          "pages": {
+            "id": 38369524784,
+            "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369524784",
+            "event": "dynamic",
+            "run_attempt": 1
+          },
+          "pages-superseded": {
+            "id": 38369500155,
+            "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+            "status": "completed",
+            "conclusion": "cancelled",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500155",
+            "event": "dynamic",
+            "run_attempt": 1
+          },
+          "tests": {
+            "id": 38369500607,
+            "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+            "status": "in_progress",
+            "conclusion": null,
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500607",
+            "event": "push",
+            "run_attempt": 1
+          },
+          "scan": {
+            "id": 38369500773,
+            "head_sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+            "status": "completed",
+            "conclusion": "success",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500773",
+            "event": "push",
+            "run_attempt": 1
+          }
+        },
+        "publisher_and_pages_ready": true,
+        "main_tests_complete": false,
+        "public_verification": {
+          "status": "publisher verified 41 public files",
+          "publisher_run": 38369500620,
+          "publisher_job": 115202667751,
+          "verified_files": 41,
+          "checked_commit": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+          "exact_log_evidence": "2026-10-13T08:30:14.7757175Z Verified: every one of the 41 public files matches committed main.",
+          "browser_acceptance": "separate root/agent task; not claimed here"
+        },
+        "raw_artifacts": [
+          {
+            "path": "/tmp/pr162-postmerge-monitor/final-main.json",
+            "sha256": "545d8d0640307fd1798d017d304cfa0ed8e8c041c124211a5d1996e20111589e",
+            "bytes": 387
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/final-pages-jobs.json",
+            "sha256": "cfc05bfad2d37963cfcb59495df5f5802488103a6e883ced1240b8f52b761d7b",
+            "bytes": 6152
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/final-publisher-jobs.json",
+            "sha256": "01aad4622a08dbafe3826956637607a68ff90c59db3ea5702a88a534e6628da8",
+            "bytes": 2979
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-jobs-pages-superseded.json",
+            "sha256": "13f13931bad876046c79db1710007020bc76ca426bab42d5fa6c50b094befc30",
+            "bytes": 4599
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-jobs-pages.json",
+            "sha256": "5fa1c4f7c81d631bb850411e8980b8db799b9cc9b2b07a178e362ca0c5ffd4f6",
+            "bytes": 5867
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-jobs-publisher.json",
+            "sha256": "cf4cd831e3e6fb632dad32e96af212c62bcb9978a6dfd47008667bdd2919b3b2",
+            "bytes": 2608
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-jobs-scan.json",
+            "sha256": "f3a69215e8075379e11e5650058df859aa2a93e9c54901e5076fad0ac9f55482",
+            "bytes": 2405
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-jobs-tests.json",
+            "sha256": "411428e3e684cdf3e8c07b3cc78cd342d018a6efd803f872dcf0309c18cf6279",
+            "bytes": 9056
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-main.json",
+            "sha256": "545d8d0640307fd1798d017d304cfa0ed8e8c041c124211a5d1996e20111589e",
+            "bytes": 387
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-merge.json",
+            "sha256": "66bfad8fb00e126c2d6e2937ea364a3e3dc8edffcd749b7d3c265986e5db81de",
+            "bytes": 2977
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-pages-superseded.json",
+            "sha256": "01da084d284fcf3c572e75cd0e52eccc61b7c2da661b3da2547fe416181a2d88",
+            "bytes": 14211
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-pages.json",
+            "sha256": "810709d4d8d5598502ab8e6d5ad9fc413e6a3a962baeee1c4a707446f8b8d711",
+            "bytes": 14360
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-publisher.json",
+            "sha256": "dba6811bad02c1f3e6406075d8bea57287801b3c8c4209a3a888c27a3cc5b5db",
+            "bytes": 14253
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-scan.json",
+            "sha256": "15d411e1a5e5f5a7a862b19ad0a4b6143f4710509a65b9435a952aeaec621e21",
+            "bytes": 14234
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/initial-tests.json",
+            "sha256": "3b518dbb39fc76d893c0c882216e0d24f1df9f0ceda5266007e61b55f75bf079",
+            "bytes": 14219
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/job-115202666553-decoded-log.json",
+            "sha256": "9c5ac85e679967b7731a43cda2371f948cd2c8fd623f6af674c318f195e13e55",
+            "bytes": 29151
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/job-115202667751-decoded-log.json",
+            "sha256": "eb40e04c0c0c2cf15850e8a8dfdcd9aa4a69260eebe8c1ca89a109bd10ee8752",
+            "bytes": 16153
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/job-115202954911-decoded-log.json",
+            "sha256": "54fc8b1353fad7e1768c719ce9ea9f414012fd288a02ac3dc77abda6e952fe42",
+            "bytes": 4282
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-pages.json",
+            "sha256": "7cbe7a450d91d8acc4ec89f1458a11c0531e00dd293496213075e4b16c0dfa29",
+            "bytes": 14866
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-publisher.json",
+            "sha256": "15424596b3243d1ec65732f914e9b22641f1b25f3e7ef7f6663bb7d63837527d",
+            "bytes": 14759
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/poll-20261013083059-tests.json",
+            "sha256": "542271c108d147b8f2203fdfc73db54baed94bb2899edc7227a611319cd51a1c",
+            "bytes": 14722
+          },
+          {
+            "path": "/tmp/pr162-postmerge-monitor/poll-20261013083315-tests.json",
+            "sha256": "832bc8176ab7f575e8ddf88cd466fbf878982c729f82659868147f740cb17564",
+            "bytes": 14722
+          }
+        ],
+        "limits": [
+          "No workflow rerun, cancellation, dispatch or repository mutation by this monitor.",
+          "Main push native jobs are not applicable; exact PR-head native results remain in separate accepted premerge evidence."
+        ],
+        "pages_deployment": {
+          "run": 38369524784,
+          "deploy_job": 115202954911,
+          "pages_build_version": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+          "deployment_id": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+          "conclusion": "success",
+          "superseded_run": 38369500155,
+          "superseded_conclusion": "cancelled"
+        },
+        "main_secret_scan": {
+          "job_id": 115202666553,
+          "conclusion": "success",
+          "commits_scanned": 0,
+          "no_leaks_found": true,
+          "scope": "Merge push scan reports zero commits. Premerge exact-head PR scan covered two commits, and push scan covered one; those proofs are retained separately."
+        }
+      }
+    },
+    "actual_public": {
+      "sha256": "f432a03ed42460157e0ee94eb7e4c7ddfc6f8d2bb55d3b49390ef41bd7c67aef",
+      "bytes": 105516,
+      "original_path": "/tmp/pr162-public-repair-acceptance/acceptance.json",
+      "evidence": {
+        "scope": "ACTUAL PUBLIC, current default clock and unmodified deployed source/data. No routes, overrides, provider calls, private input or saves.",
+        "sha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+        "startedAt": "2026-10-13T08:31:26.023Z",
+        "originalReviewedHead": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+        "preparedRepairHead": "2810769f3f5525f95772f0430c4dc735f7a33805",
+        "coreInventory": [
+          "index.html",
+          "data.json",
+          "reader.json",
+          "picks.json",
+          "historical-validation.json",
+          "historical-findings.json",
+          "morning.json",
+          "design-system/assets/favicon.ico",
+          "design-system/assets/sc-avatar-tile.svg",
+          "design-system/assets/apple-touch-icon.png",
+          "design-system/sc.css",
+          "design-system/sc-theme.js",
+          "design-system/sc-charts.js",
+          "design-system/sc-motion.js",
+          "app.css",
+          "app-chart.js",
+          "app-map.js",
+          "app-follow.js",
+          "app-reading.js",
+          "app-method.js",
+          "app-findings.js",
+          "app-reader.js",
+          "app-observations.js",
+          "app-cash-preview.js",
+          "app-handoff.js",
+          "app-handoff-ui.js",
+          "app-issuer-evidence.js",
+          "app-research-observations.js",
+          "app-stop-research.js",
+          "app-research-outcomes.js",
+          "app-morning.js",
+          "app.js",
+          "design-system/assets/sc-mark-color-dark.svg",
+          "design-system/assets/sc-mark-mono-cream.svg",
+          "reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json",
+          "issuer-evidence.json",
+          "issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json",
+          "stop-research.json",
+          "stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+          "research-outcomes.json",
+          "research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json"
+        ],
+        "repairInventory": [
+          "input-truthfulness/2026-10-12-evidence-review.md",
+          "input-truthfulness/2026-10-12-evidence-review-evidence/review.json",
+          "input-truthfulness/2026-10-12-evidence-review-evidence/review.md",
+          "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
+          "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json"
+        ],
+        "files": [
+          {
+            "name": "index.html",
+            "bytes": 17065,
+            "sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944"
+          },
+          {
+            "name": "data.json",
+            "bytes": 11874754,
+            "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c"
+          },
+          {
+            "name": "reader.json",
+            "bytes": 3147742,
+            "sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581"
+          },
+          {
+            "name": "picks.json",
+            "bytes": 3921,
+            "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+          },
+          {
+            "name": "historical-validation.json",
+            "bytes": 5048,
+            "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+          },
+          {
+            "name": "historical-findings.json",
+            "bytes": 177697,
+            "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+          },
+          {
+            "name": "morning.json",
+            "bytes": 4284,
+            "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+          },
+          {
+            "name": "design-system/assets/favicon.ico",
+            "bytes": 5057,
+            "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+          },
+          {
+            "name": "design-system/assets/sc-avatar-tile.svg",
+            "bytes": 9274,
+            "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+          },
+          {
+            "name": "design-system/assets/apple-touch-icon.png",
+            "bytes": 11284,
+            "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+          },
+          {
+            "name": "design-system/sc.css",
+            "bytes": 130987,
+            "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+          },
+          {
+            "name": "design-system/sc-theme.js",
+            "bytes": 2077,
+            "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+          },
+          {
+            "name": "design-system/sc-charts.js",
+            "bytes": 27390,
+            "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+          },
+          {
+            "name": "design-system/sc-motion.js",
+            "bytes": 10458,
+            "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+          },
+          {
+            "name": "app.css",
+            "bytes": 89323,
+            "sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea"
+          },
+          {
+            "name": "app-chart.js",
+            "bytes": 73555,
+            "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+          },
+          {
+            "name": "app-map.js",
+            "bytes": 29522,
+            "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+          },
+          {
+            "name": "app-follow.js",
+            "bytes": 32450,
+            "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+          },
+          {
+            "name": "app-reading.js",
+            "bytes": 23705,
+            "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+          },
+          {
+            "name": "app-method.js",
+            "bytes": 44156,
+            "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+          },
+          {
+            "name": "app-findings.js",
+            "bytes": 68115,
+            "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+          },
+          {
+            "name": "app-reader.js",
+            "bytes": 9507,
+            "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+          },
+          {
+            "name": "app-observations.js",
+            "bytes": 44452,
+            "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+          },
+          {
+            "name": "app-cash-preview.js",
+            "bytes": 3836,
+            "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+          },
+          {
+            "name": "app-handoff.js",
+            "bytes": 39560,
+            "sha256": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938"
+          },
+          {
+            "name": "app-handoff-ui.js",
+            "bytes": 40586,
+            "sha256": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c"
+          },
+          {
+            "name": "app-issuer-evidence.js",
+            "bytes": 42047,
+            "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07"
+          },
+          {
+            "name": "app-research-observations.js",
+            "bytes": 29167,
+            "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+          },
+          {
+            "name": "app-stop-research.js",
+            "bytes": 38946,
+            "sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af"
+          },
+          {
+            "name": "app-research-outcomes.js",
+            "bytes": 43372,
+            "sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635"
+          },
+          {
+            "name": "app-morning.js",
+            "bytes": 26098,
+            "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4"
+          },
+          {
+            "name": "app.js",
+            "bytes": 420832,
+            "sha256": "36ba72539429d3ad5ac91cf995693b5d48f73e0e357ceecba51c747899ccda64"
+          },
+          {
+            "name": "design-system/assets/sc-mark-color-dark.svg",
+            "bytes": 6701,
+            "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+          },
+          {
+            "name": "design-system/assets/sc-mark-mono-cream.svg",
+            "bytes": 4901,
+            "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+          },
+          {
+            "name": "reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json",
+            "bytes": 5192350,
+            "sha256": "eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be"
+          },
+          {
+            "name": "issuer-evidence.json",
+            "bytes": 1762,
+            "sha256": "8093c3526f8dd7af445ec5ae0bcdd643345668cac2f128fa1008431c804b8352"
+          },
+          {
+            "name": "issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json",
+            "bytes": 2811,
+            "sha256": "d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9"
+          },
+          {
+            "name": "stop-research.json",
+            "bytes": 1650,
+            "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8"
+          },
+          {
+            "name": "stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+            "bytes": 8805,
+            "sha256": "4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a"
+          },
+          {
+            "name": "research-outcomes.json",
+            "bytes": 2133,
+            "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e"
+          },
+          {
+            "name": "research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+            "bytes": 32204,
+            "sha256": "3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189"
+          },
+          {
+            "name": "input-truthfulness/2026-10-12-evidence-review.md",
+            "bytes": 8292,
+            "sha256": "83bcf95e7a63c5630ba8325158ebe5e191f3b81c83e48f4b369ae727c9b71658"
+          },
+          {
+            "name": "input-truthfulness/2026-10-12-evidence-review-evidence/review.json",
+            "bytes": 25119,
+            "sha256": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060"
+          },
+          {
+            "name": "input-truthfulness/2026-10-12-evidence-review-evidence/review.md",
+            "bytes": 12998,
+            "sha256": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041"
+          },
+          {
+            "name": "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
+            "bytes": 1650,
+            "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+          },
+          {
+            "name": "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json",
+            "bytes": 2132,
+            "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+          }
+        ],
+        "pages": [
+          {
+            "width": 1280,
+            "receiptResponses": [
+              {
+                "status": 404,
+                "phase": "research"
+              },
+              {
+                "status": 404,
+                "phase": "reload"
+              }
+            ],
+            "requests": [
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-observations.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-stop-research.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "journal",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "journal",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "reload",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/index.html?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/data.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/reader.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/picks.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/historical-validation.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/historical-findings.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/morning.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/favicon.ico?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-avatar-tile.svg?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/apple-touch-icon.png?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.css?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-map.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-method.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-observations.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-stop-research.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.js?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-evidence-review.md?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-evidence-review-evidence/review.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-evidence-review-evidence/review.md?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "native",
+                "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json?public_acceptance=289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              }
+            ],
+            "errors": [],
+            "expectedAbsence": [
+              {
+                "kind": "http",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "status": 404
+              },
+              {
+                "kind": "console",
+                "message": "Failed to load resource: the server responded with a status of 404 ()",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+              },
+              {
+                "kind": "requestfailed",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "message": "net::ERR_ABORTED",
+                "status": 404
+              },
+              {
+                "kind": "http",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "status": 404
+              },
+              {
+                "kind": "console",
+                "message": "Failed to load resource: the server responded with a status of 404 ()",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+              },
+              {
+                "kind": "requestfailed",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "message": "net::ERR_ABORTED",
+                "status": 404
+              }
+            ],
+            "screenshots": [
+              {
+                "filename": "actual-landing-1280.png",
+                "sha256": "5fc5657cbf1401c90cacd576e89db126e516065d892dc34bc346e6cf38d365cd",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-research-absence-1280.png",
+                "sha256": "db35332a181f3bdbb15c3ee4843e942f69a3519ca9d103024a8b933127997cc2",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-QUAD-research-1280.png",
+                "sha256": "ec95eac258462cf046a6cd5bc24524722d3e8ef44f414fc3f79420c0fcd02220",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-GTE-research-1280.png",
+                "sha256": "9a9aaa16c77b5dae9565c8d884b86966698276d1f79ace7721e214617f0ac972",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-journal-no-fill-1280.png",
+                "sha256": "3bacc8b316a84e89f87b69df5128b066c18526f21b0affc2f31a9d252eb930af",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-journal-new-cohort-1280.png",
+                "sha256": "f02c7b0f331252a5f32dee465b94317ff0ad662576743b9086c73ffacf3fd69d",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-funnel-current-1280.png",
+                "sha256": "56666aa6d1d06b2b88eae4a13342606eab962c68ca7e5deffa7dd8487e8bafeb",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-method-current-1280.png",
+                "sha256": "f7e9c0b56ac1eddbed90eb75c40ba498f9b588ea37db676775a6305a238425cb",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              }
+            ],
+            "storageEvents": [],
+            "loadedObservationModule": [
+              {
+                "status": 200,
+                "bytes": 29167,
+                "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+              }
+            ],
+            "wallClock": "2026-10-13T08:31:28.262Z",
+            "chicagoClock": "Tuesday, October 13, 2026 at 3:31:28 AM CDT",
+            "firstScreen": {
+              "stage-band": {
+                "top": 525.296875,
+                "bottom": 611.984375
+              },
+              "search": {
+                "top": 635.984375,
+                "bottom": 671.984375
+              },
+              "detail": {
+                "top": 619.984375,
+                "bottom": 1407.984375
+              }
+            },
+            "researchStatus": {
+              "state": "unavailable",
+              "issue": "No dated observation has been published for this cohort.",
+              "settled": true,
+              "rows": 0,
+              "status": null,
+              "reason": null
+            },
+            "atCollectionVisibleScope": "No real quote rows: positive at-collection labels are not displayed or claimed observed.",
+            "morningText": "No qualifying entry plans",
+            "summary": "No dated observation has been published for this cohort.",
+            "journalStatus": {
+              "state": "loaded",
+              "issue": "",
+              "publication": {
+                "applicable_session": "2026-10-13",
+                "context_sha256": "5c7fbd5108beb52c4c75a645452988fec159598472dc27f47e75e701374dc0e8",
+                "data_sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+                "measured_session": "2026-10-12",
+                "published_at": "2026-10-13T03:02:09.473058+00:00",
+                "reader_projection_version": 1,
+                "reader_sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581",
+                "rules_version": "990399a6dd1c",
+                "run_id": "38339720035"
+              },
+              "rows": 10,
+              "cohorts": 2
+            },
+            "funnelSentence": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.",
+            "methodText": "Bars: Alpaca SIP, daily, split-adjusted (not dividend-adjusted), the request window sixteen minutes behind the clock; 4,778 selected stocks from nasdaq directory live (4778 classified US-listed stocks from the Nasdaq directory 2026-10-13; no directory price/volume gate (966 flagged biotech, 1068 flagged foreign)).Universe snapshot: 2026-10-13T03:02:09.473058+00:00; relative to scan session: after session. Security-name classification is an approximation. This snapshot does not establish historical point-in-time membership.Selection: 7,010 directory rows; 4,770 security-type admissions; 2,240 exclusions; 0 duplicate rows; 7 seed overrides; 1 seed additions; 0 directly selected; 0 capacity exclusions.Classification exclusions: blank check company: 184; not verified common stock: 1,509; symbol format: 387; unknown industry: 160.Coverage / input basis: 4,767 of 4,778 intended stocks had usable session bars (99.8%); acceptance degraded. The benchmark is excluded from this denominator. Coverage below 50% refuses publication. A shortfall degrades the run unless its only gap is stale frames ending within the 5 sessions before it \u2014 at most 1% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; that tail is counted and named, the next session\u2019s run reads every session each of them missed again, and it does not degrade the run.Stale tolerance: tolerated \u2014 11 stale stocks against a limit of 47.Stale follow-up: The 2026-10-09 publication's 1 stock without a bar, read again from this run's split-adjusted fetch at each of the 4 sessions missed (2026-10-06 to 2026-10-09), one reading per stock and session, 4 readings in all: 4 readings still find no bar for the session. A late bar is the bar the provider served at this run's check; it never becomes a signal, plan or ticket.Fetch, including benchmark: 4,779 intended = 4,779 requested + 0 budget-unfetched. Requested = 4,779 returned + 0 no bars + 0 failed after retry.Returned frames: 11 stale; 0 missing required previous session; 0 unreadable; 4,768 session-ready. 0 duplicate timestamps repaired (overlapping diagnostic).Actual sessions: 2026-10-05: 1; 2026-10-09: 10; 2026-10-12: 4,768. Expected 2026-10-12; evaluated 2026-10-12.Scan: 1,111 excluded by current-session price; 3,656 scan-ready; 3,656 measured; 0 scan/quality errors. Reaction matches: burst: 24; dollar: 315; both: 23; neither: 3,294.Graded by claude-sonnet-4-6 from the chart and the numbers; the model may only lower a grade, never raise it.Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past 25% of the night\u2019s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.Before chart review, 0 candidates fit the current regime and individual model sizing. 0 opportunity / 2 research reviews selected (2 of 12 available reads); 0 feasible candidates left unreviewed. Final review and combined cash allocation still decide tickets.Chart reader cost: 2 calls for 2 names, 2 replies; 14,734 input tokens (8,062 uncached, 3,336 written to the cache, 3,336 read from it) and 1,357 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.Rules 990399a6dd1c: a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity 40dd7df429a904c1.Timing: 135 s for the run, 56 s of it fetching; generated 2026-10-13T03:02:09.473058+00:00.Delivery: Published 11:02 PM ET on Mon 12 Oct, 407.2 minutes after the measured session's completion (4:15 PM ET); after both scheduled slots (6:16 PM and 8:16 PM ET); before the next session's open (Tue 13 Oct, 9:30 AM ET).Service schedule, as this record archived it: evening runs are scheduled at 6:16 PM ET with a retry at 8:16 PM ET. A delayed or retried run may still publish a missed session until the next session opens; after that open the service does not publish it. The page reads its pending and stale states from that window on the recorded calendar, not from a fixed hour.Exchange calendar: XNYS (New York Stock Exchange), exchange_calendars 4.13.2. Measured 2026-10-12; previous 2026-10-09; next applicable 2026-10-13. Completion policy: scheduled close plus 15 minutes. Browser schedule 2026-08-28 through 2026-11-26.The plans are for Tue 13 Oct, whose scheduled entry window is 9:30\u201310:00 AM ET (first 30 minutes), have the orders ready by 9:28 AM ET. Times are America/New_York, carried with their offsets so no clock here guesses one.Scheduled exchange close: 2026-10-13T16:00:00-04:00.Entry-timing limitation: Exchange schedules can change after publication; this record preserves the XNYS authority and version used.The run log for this record \u00b7 every evening run"
+          },
+          {
+            "width": 390,
+            "receiptResponses": [
+              {
+                "status": 404,
+                "phase": "research"
+              },
+              {
+                "status": 404,
+                "phase": "reload"
+              }
+            ],
+            "requests": [
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-observations.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-stop-research.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/instrumentsans/v4/pxiTypc9vsFDm051Uf6KVwgkfoSxQ0GsQv8ToedPibnr0SZe1Q.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgg.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1Xp.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3vAOwlBFgg.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q1w.woff2",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "initial",
+                "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": true
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "research",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "journal",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "journal",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              },
+              {
+                "phase": "reload",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "method": "GET",
+                "body": false,
+                "authorization": false,
+                "cookie": false,
+                "referrer": false
+              }
+            ],
+            "errors": [],
+            "expectedAbsence": [
+              {
+                "kind": "http",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "status": 404
+              },
+              {
+                "kind": "console",
+                "message": "Failed to load resource: the server responded with a status of 404 ()",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+              },
+              {
+                "kind": "requestfailed",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "message": "net::ERR_ABORTED",
+                "status": 404
+              },
+              {
+                "kind": "http",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "status": 404
+              },
+              {
+                "kind": "console",
+                "message": "Failed to load resource: the server responded with a status of 404 ()",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+              },
+              {
+                "kind": "requestfailed",
+                "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+                "message": "net::ERR_ABORTED",
+                "status": 404
+              }
+            ],
+            "screenshots": [
+              {
+                "filename": "actual-landing-390.png",
+                "sha256": "679d9f0250d91b0f894127b13055e55bb445ad0e652c45fdeb8f6cfbcdeb6b86",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-research-absence-390.png",
+                "sha256": "ad486b6f39be208e5e09e7d4c9d5b12c0b222560a33182a4cf7c2c562de2606d",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-QUAD-research-390.png",
+                "sha256": "de4f3cc34a80afd80e5cbebcc9e394863a78ea9cb14bf4e52319a02f31b203b9",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-GTE-research-390.png",
+                "sha256": "0ea56687fd99d4835e2a9417f5c27cf188f4229da43710f57a6459e02906ba4f",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-journal-no-fill-390.png",
+                "sha256": "58341eb3026f04f28eebe9a7a9eb160a632f799e8032970fdeefc4dd3173ffb3",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-journal-new-cohort-390.png",
+                "sha256": "bccbaa54d1ed58377221593111a58a143039224590bb6585eb43710a884437f9",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-funnel-current-390.png",
+                "sha256": "65ca9e0cfacb5d965ac14bdaf944e20e05aa816c776c1165cdd7344b292d6f34",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              },
+              {
+                "filename": "actual-method-current-390.png",
+                "sha256": "fe116c66a9867607f399e43c59ba2086d99206fbdee7e0683b4c5ef7fa165e01",
+                "visuallyInspected": true,
+                "visualInspection": {
+                  "at": "2026-10-13T08:33:06.064739+00:00",
+                  "method": "view_image tool; actual retained capture inspected individually",
+                  "result": "PASS; readable layout and truthful recorded/unknown research state at the captured viewport and scroll position."
+                }
+              }
+            ],
+            "storageEvents": [],
+            "loadedObservationModule": [
+              {
+                "status": 200,
+                "bytes": 29167,
+                "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+              }
+            ],
+            "wallClock": "2026-10-13T08:31:57.099Z",
+            "chicagoClock": "Tuesday, October 13, 2026 at 3:31:57 AM CDT",
+            "firstScreen": {
+              "stage-band": {
+                "top": 792.453125,
+                "bottom": 886.328125
+              },
+              "search": {
+                "top": 926.328125,
+                "bottom": 962.328125
+              },
+              "detail": {
+                "top": 1381.40625,
+                "bottom": 4404.1875
+              }
+            },
+            "researchStatus": {
+              "state": "unavailable",
+              "issue": "No dated observation has been published for this cohort.",
+              "settled": true,
+              "rows": 0,
+              "status": null,
+              "reason": null
+            },
+            "atCollectionVisibleScope": "No real quote rows: positive at-collection labels are not displayed or claimed observed.",
+            "morningText": "No qualifying entry plans",
+            "summary": "No dated observation has been published for this cohort.",
+            "journalStatus": {
+              "state": "loaded",
+              "issue": "",
+              "publication": {
+                "applicable_session": "2026-10-13",
+                "context_sha256": "5c7fbd5108beb52c4c75a645452988fec159598472dc27f47e75e701374dc0e8",
+                "data_sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+                "measured_session": "2026-10-12",
+                "published_at": "2026-10-13T03:02:09.473058+00:00",
+                "reader_projection_version": 1,
+                "reader_sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581",
+                "rules_version": "990399a6dd1c",
+                "run_id": "38339720035"
+              },
+              "rows": 10,
+              "cohorts": 2
+            },
+            "funnelSentence": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.",
+            "methodText": "Bars: Alpaca SIP, daily, split-adjusted (not dividend-adjusted), the request window sixteen minutes behind the clock; 4,778 selected stocks from nasdaq directory live (4778 classified US-listed stocks from the Nasdaq directory 2026-10-13; no directory price/volume gate (966 flagged biotech, 1068 flagged foreign)).Universe snapshot: 2026-10-13T03:02:09.473058+00:00; relative to scan session: after session. Security-name classification is an approximation. This snapshot does not establish historical point-in-time membership.Selection: 7,010 directory rows; 4,770 security-type admissions; 2,240 exclusions; 0 duplicate rows; 7 seed overrides; 1 seed additions; 0 directly selected; 0 capacity exclusions.Classification exclusions: blank check company: 184; not verified common stock: 1,509; symbol format: 387; unknown industry: 160.Coverage / input basis: 4,767 of 4,778 intended stocks had usable session bars (99.8%); acceptance degraded. The benchmark is excluded from this denominator. Coverage below 50% refuses publication. A shortfall degrades the run unless its only gap is stale frames ending within the 5 sessions before it \u2014 at most 1% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; that tail is counted and named, the next session\u2019s run reads every session each of them missed again, and it does not degrade the run.Stale tolerance: tolerated \u2014 11 stale stocks against a limit of 47.Stale follow-up: The 2026-10-09 publication's 1 stock without a bar, read again from this run's split-adjusted fetch at each of the 4 sessions missed (2026-10-06 to 2026-10-09), one reading per stock and session, 4 readings in all: 4 readings still find no bar for the session. A late bar is the bar the provider served at this run's check; it never becomes a signal, plan or ticket.Fetch, including benchmark: 4,779 intended = 4,779 requested + 0 budget-unfetched. Requested = 4,779 returned + 0 no bars + 0 failed after retry.Returned frames: 11 stale; 0 missing required previous session; 0 unreadable; 4,768 session-ready. 0 duplicate timestamps repaired (overlapping diagnostic).Actual sessions: 2026-10-05: 1; 2026-10-09: 10; 2026-10-12: 4,768. Expected 2026-10-12; evaluated 2026-10-12.Scan: 1,111 excluded by current-session price; 3,656 scan-ready; 3,656 measured; 0 scan/quality errors. Reaction matches: burst: 24; dollar: 315; both: 23; neither: 3,294.Graded by claude-sonnet-4-6 from the chart and the numbers; the model may only lower a grade, never raise it.Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past 25% of the night\u2019s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.Before chart review, 0 candidates fit the current regime and individual model sizing. 0 opportunity / 2 research reviews selected (2 of 12 available reads); 0 feasible candidates left unreviewed. Final review and combined cash allocation still decide tickets.Chart reader cost: 2 calls for 2 names, 2 replies; 14,734 input tokens (8,062 uncached, 3,336 written to the cache, 3,336 read from it) and 1,357 output tokens, under claude-sonnet-4-6. Token counts as the API reported them; the record carries no price.Rules 990399a6dd1c: a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity 40dd7df429a904c1.Timing: 135 s for the run, 56 s of it fetching; generated 2026-10-13T03:02:09.473058+00:00.Delivery: Published 11:02 PM ET on Mon 12 Oct, 407.2 minutes after the measured session's completion (4:15 PM ET); after both scheduled slots (6:16 PM and 8:16 PM ET); before the next session's open (Tue 13 Oct, 9:30 AM ET).Service schedule, as this record archived it: evening runs are scheduled at 6:16 PM ET with a retry at 8:16 PM ET. A delayed or retried run may still publish a missed session until the next session opens; after that open the service does not publish it. The page reads its pending and stale states from that window on the recorded calendar, not from a fixed hour.Exchange calendar: XNYS (New York Stock Exchange), exchange_calendars 4.13.2. Measured 2026-10-12; previous 2026-10-09; next applicable 2026-10-13. Completion policy: scheduled close plus 15 minutes. Browser schedule 2026-08-28 through 2026-11-26.The plans are for Tue 13 Oct, whose scheduled entry window is 9:30\u201310:00 AM ET (first 30 minutes), have the orders ready by 9:28 AM ET. Times are America/New_York, carried with their offsets so no clock here guesses one.Scheduled exchange close: 2026-10-13T16:00:00-04:00.Entry-timing limitation: Exchange schedules can change after publication; this record preserves the XNYS authority and version used.The run log for this record \u00b7 every evening run"
+          }
+        ],
+        "checks": [
+          {
+            "name": "1280 default-loaded observation module equals reviewed source",
+            "pass": true,
+            "detail": [
+              {
+                "status": 200,
+                "bytes": 29167,
+                "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+              }
+            ]
+          },
+          {
+            "name": "1280 real clock/default loader",
+            "pass": true
+          },
+          {
+            "name": "1280 canonical/reader exact",
+            "pass": true
+          },
+          {
+            "name": "1280 cash/private unknown/empty",
+            "pass": true
+          },
+          {
+            "name": "1280 baseline zero tickets",
+            "pass": true
+          },
+          {
+            "name": "1280 closed research performs no source requests",
+            "pass": true
+          },
+          {
+            "name": "1280 exact comparison and optional snapshot requests",
+            "pass": true,
+            "detail": [
+              "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+              "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+              "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+            ]
+          },
+          {
+            "name": "1280 observed optional404",
+            "pass": true
+          },
+          {
+            "name": "1280 honest unavailable quote status",
+            "pass": true,
+            "detail": {
+              "state": "unavailable",
+              "issue": "No dated observation has been published for this cohort.",
+              "settled": true,
+              "rows": 0,
+              "status": null,
+              "reason": null
+            }
+          },
+          {
+            "name": "1280 only two allocation-fit hosts",
+            "pass": true
+          },
+          {
+            "name": "1280 absent receipt cannot display positive at-collection labels",
+            "pass": true
+          },
+          {
+            "name": "1280 no invented observed values",
+            "pass": true
+          },
+          {
+            "name": "1280 absent summary visible",
+            "pass": true
+          },
+          {
+            "name": "1280 QUAD no baseline ticket and no quote",
+            "pass": true
+          },
+          {
+            "name": "1280 QUAD retained hypothetical size",
+            "pass": true
+          },
+          {
+            "name": "1280 QUAD event limitations",
+            "pass": true
+          },
+          {
+            "name": "1280 GTE no baseline ticket and no quote",
+            "pass": true
+          },
+          {
+            "name": "1280 GTE retained hypothetical size",
+            "pass": true
+          },
+          {
+            "name": "1280 GTE event limitations",
+            "pass": true
+          },
+          {
+            "name": "1280 research observations have no executable controls",
+            "pass": true
+          },
+          {
+            "name": "1280 snapshot GET has no body/auth/cookie/referrer",
+            "pass": true
+          },
+          {
+            "name": "1280 ten dated journal rows",
+            "pass": true
+          },
+          {
+            "name": "1280 KE original day1 no model fill",
+            "pass": true
+          },
+          {
+            "name": "1280 PSNL original day1 no model fill",
+            "pass": true
+          },
+          {
+            "name": "1280 QUAD new outcome pending",
+            "pass": true
+          },
+          {
+            "name": "1280 GTE new outcome pending",
+            "pass": true
+          },
+          {
+            "name": "1280 initial and reload both actual404",
+            "pass": true,
+            "detail": [
+              {
+                "status": 404,
+                "phase": "research"
+              },
+              {
+                "status": 404,
+                "phase": "reload"
+              }
+            ]
+          },
+          {
+            "name": "1280 explicit snapshot reload only static file",
+            "pass": true
+          },
+          {
+            "name": "1280 journal DOM/content and cash node preserved",
+            "pass": true
+          },
+          {
+            "name": "1280 archived funnel present",
+            "pass": true
+          },
+          {
+            "name": "1280 exact archived funnel explanation",
+            "pass": true,
+            "detail": {
+              "actual": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.",
+              "expected": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+            }
+          },
+          {
+            "name": "1280 funnel totals reflect362 discovered zero admitted",
+            "pass": true
+          },
+          {
+            "name": "1280 real archived token counts visible",
+            "pass": true
+          },
+          {
+            "name": "1280 delivery archived sentence visible",
+            "pass": true
+          },
+          {
+            "name": "1280 model tokens do not claim dollars",
+            "pass": true
+          },
+          {
+            "name": "1280 existing selected batch sentence retained",
+            "pass": true
+          },
+          {
+            "name": "1280 no private changes",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "name": "1280 no page horizontal overflow",
+            "pass": true
+          },
+          {
+            "name": "native index.html",
+            "pass": true,
+            "detail": {
+              "bytes": 17065,
+              "sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944"
+            }
+          },
+          {
+            "name": "native data.json",
+            "pass": true,
+            "detail": {
+              "bytes": 11874754,
+              "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c"
+            }
+          },
+          {
+            "name": "native reader.json",
+            "pass": true,
+            "detail": {
+              "bytes": 3147742,
+              "sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581"
+            }
+          },
+          {
+            "name": "native picks.json",
+            "pass": true,
+            "detail": {
+              "bytes": 3921,
+              "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+            }
+          },
+          {
+            "name": "native historical-validation.json",
+            "pass": true,
+            "detail": {
+              "bytes": 5048,
+              "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+            }
+          },
+          {
+            "name": "native historical-findings.json",
+            "pass": true,
+            "detail": {
+              "bytes": 177697,
+              "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+            }
+          },
+          {
+            "name": "native morning.json",
+            "pass": true,
+            "detail": {
+              "bytes": 4284,
+              "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+            }
+          },
+          {
+            "name": "native design-system/assets/favicon.ico",
+            "pass": true,
+            "detail": {
+              "bytes": 5057,
+              "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+            }
+          },
+          {
+            "name": "native design-system/assets/sc-avatar-tile.svg",
+            "pass": true,
+            "detail": {
+              "bytes": 9274,
+              "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+            }
+          },
+          {
+            "name": "native design-system/assets/apple-touch-icon.png",
+            "pass": true,
+            "detail": {
+              "bytes": 11284,
+              "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+            }
+          },
+          {
+            "name": "native design-system/sc.css",
+            "pass": true,
+            "detail": {
+              "bytes": 130987,
+              "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+            }
+          },
+          {
+            "name": "native design-system/sc-theme.js",
+            "pass": true,
+            "detail": {
+              "bytes": 2077,
+              "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+            }
+          },
+          {
+            "name": "native design-system/sc-charts.js",
+            "pass": true,
+            "detail": {
+              "bytes": 27390,
+              "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+            }
+          },
+          {
+            "name": "native design-system/sc-motion.js",
+            "pass": true,
+            "detail": {
+              "bytes": 10458,
+              "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+            }
+          },
+          {
+            "name": "native app.css",
+            "pass": true,
+            "detail": {
+              "bytes": 89323,
+              "sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea"
+            }
+          },
+          {
+            "name": "native app-chart.js",
+            "pass": true,
+            "detail": {
+              "bytes": 73555,
+              "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+            }
+          },
+          {
+            "name": "native app-map.js",
+            "pass": true,
+            "detail": {
+              "bytes": 29522,
+              "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+            }
+          },
+          {
+            "name": "native app-follow.js",
+            "pass": true,
+            "detail": {
+              "bytes": 32450,
+              "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+            }
+          },
+          {
+            "name": "native app-reading.js",
+            "pass": true,
+            "detail": {
+              "bytes": 23705,
+              "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+            }
+          },
+          {
+            "name": "native app-method.js",
+            "pass": true,
+            "detail": {
+              "bytes": 44156,
+              "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+            }
+          },
+          {
+            "name": "native app-findings.js",
+            "pass": true,
+            "detail": {
+              "bytes": 68115,
+              "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+            }
+          },
+          {
+            "name": "native app-reader.js",
+            "pass": true,
+            "detail": {
+              "bytes": 9507,
+              "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+            }
+          },
+          {
+            "name": "native app-observations.js",
+            "pass": true,
+            "detail": {
+              "bytes": 44452,
+              "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+            }
+          },
+          {
+            "name": "native app-cash-preview.js",
+            "pass": true,
+            "detail": {
+              "bytes": 3836,
+              "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+            }
+          },
+          {
+            "name": "native app-handoff.js",
+            "pass": true,
+            "detail": {
+              "bytes": 39560,
+              "sha256": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938"
+            }
+          },
+          {
+            "name": "native app-handoff-ui.js",
+            "pass": true,
+            "detail": {
+              "bytes": 40586,
+              "sha256": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c"
+            }
+          },
+          {
+            "name": "native app-issuer-evidence.js",
+            "pass": true,
+            "detail": {
+              "bytes": 42047,
+              "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07"
+            }
+          },
+          {
+            "name": "native app-research-observations.js",
+            "pass": true,
+            "detail": {
+              "bytes": 29167,
+              "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+            }
+          },
+          {
+            "name": "native app-stop-research.js",
+            "pass": true,
+            "detail": {
+              "bytes": 38946,
+              "sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af"
+            }
+          },
+          {
+            "name": "native app-research-outcomes.js",
+            "pass": true,
+            "detail": {
+              "bytes": 43372,
+              "sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635"
+            }
+          },
+          {
+            "name": "native app-morning.js",
+            "pass": true,
+            "detail": {
+              "bytes": 26098,
+              "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4"
+            }
+          },
+          {
+            "name": "native app.js",
+            "pass": true,
+            "detail": {
+              "bytes": 420832,
+              "sha256": "36ba72539429d3ad5ac91cf995693b5d48f73e0e357ceecba51c747899ccda64"
+            }
+          },
+          {
+            "name": "native design-system/assets/sc-mark-color-dark.svg",
+            "pass": true,
+            "detail": {
+              "bytes": 6701,
+              "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+            }
+          },
+          {
+            "name": "native design-system/assets/sc-mark-mono-cream.svg",
+            "pass": true,
+            "detail": {
+              "bytes": 4901,
+              "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+            }
+          },
+          {
+            "name": "native reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json",
+            "pass": true,
+            "detail": {
+              "bytes": 5192350,
+              "sha256": "eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be"
+            }
+          },
+          {
+            "name": "native issuer-evidence.json",
+            "pass": true,
+            "detail": {
+              "bytes": 1762,
+              "sha256": "8093c3526f8dd7af445ec5ae0bcdd643345668cac2f128fa1008431c804b8352"
+            }
+          },
+          {
+            "name": "native issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json",
+            "pass": true,
+            "detail": {
+              "bytes": 2811,
+              "sha256": "d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9"
+            }
+          },
+          {
+            "name": "native stop-research.json",
+            "pass": true,
+            "detail": {
+              "bytes": 1650,
+              "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8"
+            }
+          },
+          {
+            "name": "native stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+            "pass": true,
+            "detail": {
+              "bytes": 8805,
+              "sha256": "4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a"
+            }
+          },
+          {
+            "name": "native research-outcomes.json",
+            "pass": true,
+            "detail": {
+              "bytes": 2133,
+              "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e"
+            }
+          },
+          {
+            "name": "native research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+            "pass": true,
+            "detail": {
+              "bytes": 32204,
+              "sha256": "3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189"
+            }
+          },
+          {
+            "name": "native input-truthfulness/2026-10-12-evidence-review.md",
+            "pass": true,
+            "detail": {
+              "bytes": 8292,
+              "sha256": "83bcf95e7a63c5630ba8325158ebe5e191f3b81c83e48f4b369ae727c9b71658"
+            }
+          },
+          {
+            "name": "native input-truthfulness/2026-10-12-evidence-review-evidence/review.json",
+            "pass": true,
+            "detail": {
+              "bytes": 25119,
+              "sha256": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060"
+            }
+          },
+          {
+            "name": "native input-truthfulness/2026-10-12-evidence-review-evidence/review.md",
+            "pass": true,
+            "detail": {
+              "bytes": 12998,
+              "sha256": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041"
+            }
+          },
+          {
+            "name": "native input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
+            "pass": true,
+            "detail": {
+              "bytes": 1650,
+              "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+            }
+          },
+          {
+            "name": "native input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json",
+            "pass": true,
+            "detail": {
+              "bytes": 2132,
+              "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+            }
+          },
+          {
+            "name": "1280 only public/font/GitHub GETs",
+            "pass": true
+          },
+          {
+            "name": "1280 no unexpected browser/network errors",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "name": "390 default-loaded observation module equals reviewed source",
+            "pass": true,
+            "detail": [
+              {
+                "status": 200,
+                "bytes": 29167,
+                "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+              }
+            ]
+          },
+          {
+            "name": "390 real clock/default loader",
+            "pass": true
+          },
+          {
+            "name": "390 canonical/reader exact",
+            "pass": true
+          },
+          {
+            "name": "390 cash/private unknown/empty",
+            "pass": true
+          },
+          {
+            "name": "390 baseline zero tickets",
+            "pass": true
+          },
+          {
+            "name": "390 closed research performs no source requests",
+            "pass": true
+          },
+          {
+            "name": "390 exact comparison and optional snapshot requests",
+            "pass": true,
+            "detail": [
+              "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+              "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+              "https://spicychicken59.github.io/SpicyStock/research-observations.json"
+            ]
+          },
+          {
+            "name": "390 observed optional404",
+            "pass": true
+          },
+          {
+            "name": "390 honest unavailable quote status",
+            "pass": true,
+            "detail": {
+              "state": "unavailable",
+              "issue": "No dated observation has been published for this cohort.",
+              "settled": true,
+              "rows": 0,
+              "status": null,
+              "reason": null
+            }
+          },
+          {
+            "name": "390 only two allocation-fit hosts",
+            "pass": true
+          },
+          {
+            "name": "390 absent receipt cannot display positive at-collection labels",
+            "pass": true
+          },
+          {
+            "name": "390 no invented observed values",
+            "pass": true
+          },
+          {
+            "name": "390 absent summary visible",
+            "pass": true
+          },
+          {
+            "name": "390 QUAD no baseline ticket and no quote",
+            "pass": true
+          },
+          {
+            "name": "390 QUAD retained hypothetical size",
+            "pass": true
+          },
+          {
+            "name": "390 QUAD event limitations",
+            "pass": true
+          },
+          {
+            "name": "390 GTE no baseline ticket and no quote",
+            "pass": true
+          },
+          {
+            "name": "390 GTE retained hypothetical size",
+            "pass": true
+          },
+          {
+            "name": "390 GTE event limitations",
+            "pass": true
+          },
+          {
+            "name": "390 research observations have no executable controls",
+            "pass": true
+          },
+          {
+            "name": "390 snapshot GET has no body/auth/cookie/referrer",
+            "pass": true
+          },
+          {
+            "name": "390 ten dated journal rows",
+            "pass": true
+          },
+          {
+            "name": "390 KE original day1 no model fill",
+            "pass": true
+          },
+          {
+            "name": "390 PSNL original day1 no model fill",
+            "pass": true
+          },
+          {
+            "name": "390 QUAD new outcome pending",
+            "pass": true
+          },
+          {
+            "name": "390 GTE new outcome pending",
+            "pass": true
+          },
+          {
+            "name": "390 initial and reload both actual404",
+            "pass": true,
+            "detail": [
+              {
+                "status": 404,
+                "phase": "research"
+              },
+              {
+                "status": 404,
+                "phase": "reload"
+              }
+            ]
+          },
+          {
+            "name": "390 explicit snapshot reload only static file",
+            "pass": true
+          },
+          {
+            "name": "390 journal DOM/content and cash node preserved",
+            "pass": true
+          },
+          {
+            "name": "390 archived funnel present",
+            "pass": true
+          },
+          {
+            "name": "390 exact archived funnel explanation",
+            "pass": true,
+            "detail": {
+              "actual": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry.",
+              "expected": "Candidate funnel under a YELLOW market: 362 reaction candidates discovered, 0 potentially usable (mechanical grade in the admitted band, no veto), 0 reaction tickets. Reaction candidates stopped at: 362 mechanical grade below the regime's admitted band. Anticipation: 751 momentum names, 256 quiet, 15 passing the coil checks, 5 listed, 0 tickets. Listed setups stopped at: 1 known corporate event, 4 ticket withheld: stop rule at the limit. A stage is where the record's own gates stopped a name; it is not a judgement of the setup and establishes no entry."
+            }
+          },
+          {
+            "name": "390 funnel totals reflect362 discovered zero admitted",
+            "pass": true
+          },
+          {
+            "name": "390 real archived token counts visible",
+            "pass": true
+          },
+          {
+            "name": "390 delivery archived sentence visible",
+            "pass": true
+          },
+          {
+            "name": "390 model tokens do not claim dollars",
+            "pass": true
+          },
+          {
+            "name": "390 existing selected batch sentence retained",
+            "pass": true
+          },
+          {
+            "name": "390 no private changes",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "name": "390 no page horizontal overflow",
+            "pass": true
+          },
+          {
+            "name": "390 only public/font/GitHub GETs",
+            "pass": true
+          },
+          {
+            "name": "390 no unexpected browser/network errors",
+            "pass": true,
+            "detail": []
+          },
+          {
+            "name": "all 41 core and five repaired dated asset bytes verified",
+            "pass": true
+          },
+          {
+            "name": "pinned checkout remains clean",
+            "pass": true
+          },
+          {
+            "name": "fetched origin/main still matches release",
+            "pass": true
+          }
+        ],
+        "sourcePins": {
+          "index.html": {
+            "bytes": 17065,
+            "sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944"
+          },
+          "data.json": {
+            "bytes": 11874754,
+            "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c"
+          },
+          "reader.json": {
+            "bytes": 3147742,
+            "sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581"
+          },
+          "picks.json": {
+            "bytes": 3921,
+            "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774"
+          },
+          "historical-validation.json": {
+            "bytes": 5048,
+            "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e"
+          },
+          "historical-findings.json": {
+            "bytes": 177697,
+            "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
+          },
+          "morning.json": {
+            "bytes": 4284,
+            "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0"
+          },
+          "design-system/assets/favicon.ico": {
+            "bytes": 5057,
+            "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4"
+          },
+          "design-system/assets/sc-avatar-tile.svg": {
+            "bytes": 9274,
+            "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499"
+          },
+          "design-system/assets/apple-touch-icon.png": {
+            "bytes": 11284,
+            "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177"
+          },
+          "design-system/sc.css": {
+            "bytes": 130987,
+            "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55"
+          },
+          "design-system/sc-theme.js": {
+            "bytes": 2077,
+            "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe"
+          },
+          "design-system/sc-charts.js": {
+            "bytes": 27390,
+            "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85"
+          },
+          "design-system/sc-motion.js": {
+            "bytes": 10458,
+            "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a"
+          },
+          "app.css": {
+            "bytes": 89323,
+            "sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea"
+          },
+          "app-chart.js": {
+            "bytes": 73555,
+            "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509"
+          },
+          "app-map.js": {
+            "bytes": 29522,
+            "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f"
+          },
+          "app-follow.js": {
+            "bytes": 32450,
+            "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f"
+          },
+          "app-reading.js": {
+            "bytes": 23705,
+            "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21"
+          },
+          "app-method.js": {
+            "bytes": 44156,
+            "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02"
+          },
+          "app-findings.js": {
+            "bytes": 68115,
+            "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a"
+          },
+          "app-reader.js": {
+            "bytes": 9507,
+            "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274"
+          },
+          "app-observations.js": {
+            "bytes": 44452,
+            "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4"
+          },
+          "app-cash-preview.js": {
+            "bytes": 3836,
+            "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7"
+          },
+          "app-handoff.js": {
+            "bytes": 39560,
+            "sha256": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938"
+          },
+          "app-handoff-ui.js": {
+            "bytes": 40586,
+            "sha256": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c"
+          },
+          "app-issuer-evidence.js": {
+            "bytes": 42047,
+            "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07"
+          },
+          "app-research-observations.js": {
+            "bytes": 29167,
+            "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+          },
+          "app-stop-research.js": {
+            "bytes": 38946,
+            "sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af"
+          },
+          "app-research-outcomes.js": {
+            "bytes": 43372,
+            "sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635"
+          },
+          "app-morning.js": {
+            "bytes": 26098,
+            "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4"
+          },
+          "app.js": {
+            "bytes": 420832,
+            "sha256": "36ba72539429d3ad5ac91cf995693b5d48f73e0e357ceecba51c747899ccda64"
+          },
+          "design-system/assets/sc-mark-color-dark.svg": {
+            "bytes": 6701,
+            "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e"
+          },
+          "design-system/assets/sc-mark-mono-cream.svg": {
+            "bytes": 4901,
+            "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2"
+          },
+          "reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json": {
+            "bytes": 5192350,
+            "sha256": "eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be"
+          },
+          "issuer-evidence.json": {
+            "bytes": 1762,
+            "sha256": "8093c3526f8dd7af445ec5ae0bcdd643345668cac2f128fa1008431c804b8352"
+          },
+          "issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json": {
+            "bytes": 2811,
+            "sha256": "d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9"
+          },
+          "stop-research.json": {
+            "bytes": 1650,
+            "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8"
+          },
+          "stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json": {
+            "bytes": 8805,
+            "sha256": "4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a"
+          },
+          "research-outcomes.json": {
+            "bytes": 2133,
+            "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e"
+          },
+          "research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json": {
+            "bytes": 32204,
+            "sha256": "3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189"
+          },
+          "input-truthfulness/2026-10-12-evidence-review.md": {
+            "bytes": 8292,
+            "sha256": "83bcf95e7a63c5630ba8325158ebe5e191f3b81c83e48f4b369ae727c9b71658"
+          },
+          "input-truthfulness/2026-10-12-evidence-review-evidence/review.json": {
+            "bytes": 25119,
+            "sha256": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060"
+          },
+          "input-truthfulness/2026-10-12-evidence-review-evidence/review.md": {
+            "bytes": 12998,
+            "sha256": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041"
+          },
+          "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json": {
+            "bytes": 1650,
+            "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+          },
+          "input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json": {
+            "bytes": 2132,
+            "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+          }
+        },
+        "limitations": [
+          "Absent dated research receipt does not establish live quote coverage, timely delivery, order eligibility or trading returns.",
+          "Delivery time is the publication timestamp archived by the record, not independently observed public availability; actual Actions and public read times are retained separately.",
+          "No provider workflow or private trade was initiated.",
+          "New at-collection wording is verified as deployed module bytes; absent real quote rows cannot visibly demonstrate those labels."
+        ],
+        "transport": {
+          "managedProxy": true,
+          "certificateSpecificSPKI": "n9jEr2dCP1tg9exQzr7xEpZ4TjG2QWO02LUFhmAzII4=",
+          "globalTLSBypass": false,
+          "nativeBytes": "bounded clone EOF then original arrayBuffer"
+        },
+        "runtime": {
+          "playwright": "1.56.1",
+          "chromium": "141.0.7390.37"
+        },
+        "status": "PASS_ACTUAL_PUBLIC",
+        "finishedAt": "2026-10-13T08:32:20.777Z",
+        "runnerSha256": "8b3c0714bc6067ba55f2a2d7a281def1b3472a46347291bac4c1f195cce8aeaa",
+        "visualReview": {
+          "at": "2026-10-13T08:33:06.064739+00:00",
+          "capturesInspected": 16,
+          "viewports": [
+            1280,
+            390
+          ],
+          "findings": [],
+          "scope": "All retained screenshots inspected individually with view_image. Screenshots show targeted scroll positions rather than every pixel of every long panel. No assertion of positive observation rows, live quotes, executed trades, or trading returns."
+        },
+        "rawRunnerReceipt": {
+          "path": "/tmp/pr162-public-repair-acceptance/acceptance.raw.json",
+          "bytes": 99211,
+          "sha256": "d2bca5374f846e046d8276b725155f014d72b816fcd93a5f5c57a31dfaff37bd"
+        },
+        "deploymentContext": {
+          "providedBy": "root agent GO, not independently re-queried by this verifier",
+          "mergedSha": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+          "publisher": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369500620",
+          "pages": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38369524784",
+          "postMergeTests": "Running when root gave GO; this public acceptance does not assert their result."
+        }
+      }
+    }
+  },
+  "limits": [
+    "All seven premerge exact-head checks passed. The separate main push Tests run is retained at its observed status, not assumed complete.",
+    "Native artifact upload and API digests match; binary payloads were not downloaded.",
+    "No real quote receipt, morning coverage, broker execution or trading return is established. At-collection labels have local fixture coverage and deployed-byte identity, but no current quote row to display them."
+  ],
+  "next_step": "Release independently prepared service-arrival reporting issue163 through normal exact-head checks; then release the reviewed stock-finder issue164."
+}
