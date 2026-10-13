@@ -149,6 +149,12 @@ def test_each_outcome_is_read_off_what_came_back_in_a_fresh_collection(capture):
         assert (row["outcome"], row["ending"], row["ready_fault"]) == (outcome, ending, fault), (outcome, row)
         assert (out["recovered"]["session_ready"], out["recovered"]["zero_volume"]) == (ready, zero), (outcome, out["recovered"])
         assert (row["volume"] is None) == (outcome not in recovery.ARRIVED)
+        # each fault in its own words, read off this collection's own sentence
+        if fault == "gapped":
+            assert "1 carries it but not the session before (WBD)" in out["sentence"]
+        if fault == "unreadable":
+            assert "1 carries it, but it or the bar before it is unreadable (WBD)" in out["sentence"]
+            assert "not the session before" not in out["sentence"]
     # a ledger population that does not re-derive the record's own is refused, collected again
     withheld = generate.unnamed(generate.page("thin"))
     empty = {k: [] for k in ("no_bars", "dropped", "unfetched_budget", "unfetched_failure", "refused", "gapped", "unreadable")}
