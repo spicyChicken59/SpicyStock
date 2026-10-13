@@ -211,7 +211,11 @@ def quote_observation(raw, now, session, available=True, *, observed_at=None):
         out["status"] = "invalid"
     else:
         delta = out["ask"] - out["bid"]
-        percentage = delta / (out["bid"] / 2 + out["ask"] / 2) * 100
+        midpoint = out["bid"] / 2 + out["ask"] / 2
+        if not math.isfinite(midpoint) or midpoint <= 0:
+            out["status"] = "invalid"
+            return out
+        percentage = delta / midpoint * 100
         if not math.isfinite(delta) or not math.isfinite(percentage):
             out["status"] = "invalid"
         else:

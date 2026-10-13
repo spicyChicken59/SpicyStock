@@ -848,8 +848,12 @@ archived, and a record from before the block is asked for none. The run:
   night-bootstrap interval clear of zero; `supported` only when every direct
   source is positive and every evaluation period agrees). It writes
   `docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`
-  and `--check` holds both; no change is promoted by it, and today none earns
-  `supported`.
+  and `--check` holds both. Its October 12 research inputs are retained under
+  that directory's `inputs/`, with original commit/path and exact SHA-256
+  provenance; missing or changed bytes refuse before writing. The current
+  rolling cohort and journal may advance without rewriting this dated review.
+  A later evidence review needs a separately dated output. No change is promoted
+  by the October 12 review, and none earns `supported` in that review.
   `tools/service_health.py` reads the service rather than the signal: it walks
   the commits that put a publication on `main` and the commits that put a
   morning, issuer or research receipt beside it, and prints, per expected XNYS
@@ -1185,12 +1189,17 @@ subsequent observations.
 for the current registered cohort's allocation-fit rows (`src/research_observations.py`).
 It binds the exact canonical publication, the exact `stop-research.json` receipt
 and bundle beside it, and each row's original evidence identity, then makes at
-most one IEX snapshot request per run through the morning transport, under the
-same guards: a wrong session, an ended or not-yet-open collection window, a
+most one HTTP attempt to the fixed IEX snapshot endpoint per run, using the
+existing server-side Alpaca pair. This research-only transport does not follow
+redirects, retry failed requests or paginate. It limits the response body to
+256 KiB, connection time to 5 seconds and read inactivity to 30 seconds, within
+the 180-second collection deadline. The existing morning guards apply: a wrong
+session, an ended or not-yet-open collection window, a
 stale or future publication, a missing cohort or a cohort bound to another
 publication is an inapplicable receipt with zero provider requests, and a
 cohort with no allocation fit is recorded as one. Quotes and prints keep their
-provider timestamps and the 60-second freshness rule; the receipt expires after
+provider timestamps and the 60-second freshness rule, including microseconds;
+the receipt expires after
 300 seconds. Delayed volume is not requested, and halts, issuer news and earnings
 are not checked by this companion, which says so beside every row.
 
@@ -1199,13 +1208,21 @@ print, and where each sits against the published trigger, limit and stop, as a
 position and never a signal: no ready label, no quantity, no personal sizing,
 no order copy and no entry permission. Research rows remain hypothetical model
 research, not tickets. An observation collected over another cohort, an older
-publication, a forged level, price state or request count is refused in the
+publication, a forged level, price state, spread or request count is refused in the
 browser, and the cohort stays readable without it. Persistence is a second
 one-file commit on main (`publish_morning.py --target research`), revalidated
 against the record and the committed cohort; a cohort main has since replaced
 refuses the push. No new subscription, credential or environment variable is
-involved; Saturday tests cannot prove Monday delivery, and Actions timing stays
-a best-effort dated snapshot.
+involved. Local tests do not establish scheduled delivery: a delayed Actions
+run can finish successfully after its guard skips every collection step. Check
+the dated receipt and collection steps; the workflow conclusion alone does not
+establish a morning observation. Actions timing remains best effort.
+
+The production collector installs its wall-clock deadline on the main thread
+of the existing Linux Actions runner. A live collection refuses when that
+timer is unavailable, preserving the previous receipt; offline injected clients
+remain available for deterministic tests. The page prints the recorded request
+count, including zero when provider credentials are missing.
 
 ### Research follow-through
 
@@ -1667,7 +1684,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
-                evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and research numbers copied off their files with digests, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
+                evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)

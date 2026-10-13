@@ -4,8 +4,8 @@ A reader over committed evidence and nothing else: the frozen signal-outcome
 study (``signal_outcomes.py``'s rows under the extended spec), the findings
 file ``build_historical_findings.py`` writes (which already holds the owner's
 pasted backtest summaries under the tool's own grammar), the funnel and
-feasibility history readings, and the registered research companions on
-``main``. It re-derives the study's strata from its rows and refuses a file
+feasibility history readings, and retained copies of the registered research
+companions used for the 12 October review. It re-derives the study's strata from its rows and refuses a file
 whose summary is not its rows'; splits the admitted stratum by phase, month,
 halves of its nights and mechanical grade (``separate evaluation periods``);
 walks the cumulative-R path of each stratum's settled counterfactual tickets
@@ -50,7 +50,16 @@ STUDY_SPEC = bf.STUDY_SPEC
 FUNNEL = TRUTH / "2026-10-11-candidate-funnel-evidence" / "history.json"
 FEASIBILITY = {"archived": TRUTH / "2026-10-11-whole-share-feasibility-evidence" / "history-archived.json",
                "account_2000": TRUTH / "2026-10-11-whole-share-feasibility-evidence" / "history-account-2000.json"}
-RESEARCH = {"cohort": Path("docs/stop-research.json"), "journal": Path("docs/research-outcomes.json")}
+RESEARCH = {"cohort": TRUTH / "2026-10-12-evidence-review-evidence" / "inputs" / "stop-research.json",
+            "journal": TRUTH / "2026-10-12-evidence-review-evidence" / "inputs" / "research-outcomes.json"}
+# These are the exact bytes used by the dated review, not the rolling companions.
+RESEARCH_ORIGIN = {
+    "commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+    "cohort": {"path": "docs/stop-research.json",
+               "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"},
+    "journal": {"path": "docs/research-outcomes.json",
+                "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"},
+}
 
 #: the record's own floor for reading a rate rather than a count (record.SCORECARD_MIN_PLANS)
 MIN_SETTLED = record.SCORECARD_MIN_PLANS
@@ -195,6 +204,22 @@ def drawdown(rows: list[dict]) -> dict:
 
 def load_json(path: Path) -> dict:
     return json.loads((ROOT / path).read_text(encoding="utf-8"))
+
+
+def load_research(name: str) -> tuple[dict, dict]:
+    """Read the dated companion once; missing or changed bytes cannot fall back
+    to a newer night's state or silently change this historical review."""
+    path = RESEARCH[name]
+    origin = RESEARCH_ORIGIN[name]
+    try:
+        raw = (ROOT / path).read_bytes()
+    except OSError as exc:
+        raise ReviewError(f"retained research {name}: cannot read {path}") from exc
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != origin["sha256"]:
+        raise ReviewError(f"retained research {name}: SHA-256 does not match the dated input")
+    return json.loads(raw), {"path": str(path), "sha256": digest, "kind": "retained_companion",
+                             "origin": {"commit": RESEARCH_ORIGIN["commit"], "path": origin["path"]}}
 
 
 def crosscheck(study: dict) -> dict:
@@ -406,7 +431,8 @@ def build() -> dict:
         raise ReviewError("the findings file was built over a different study")
     funnel_history = load_json(FUNNEL)
     feasibility_history = {k: load_json(p) for k, p in FEASIBILITY.items()}
-    cohort, journal = load_json(RESEARCH["cohort"]), load_json(RESEARCH["journal"])
+    cohort, cohort_source = load_research("cohort")
+    journal, journal_source = load_research("journal")
     if cohort["policy"]["id"] != journal["policy"]["cohort_policy_id"]:
         raise ReviewError("the research journal does not follow the registered cohort")
 
@@ -427,7 +453,7 @@ def build() -> dict:
             "findings": bf.source(FINDINGS, kind="builder_output"),
             "funnel": bf.source(FUNNEL, kind="tool_output"),
             "feasibility": {k: bf.source(p, kind="tool_output") for k, p in FEASIBILITY.items()},
-            "research": {k: bf.source(p, kind="companion") for k, p in RESEARCH.items()},
+            "research": {"cohort": cohort_source, "journal": journal_source},
         },
         "evidence_through": {"study_newest_session": study["newest_session"],
                              "study_frozen_through": study["frozen_through_session"],
@@ -485,6 +511,11 @@ def render_md(review: dict) -> str:
             flat += [(f"{name} · {k}", v) for k, v in src.items()]
     for name, src in flat:
         lines.append(f"| {name} | `{src['path']}` | `{src['sha256'][:16]}…` |")
+    lines += ["", "The research inputs retain the exact companion bytes used on 12 October; their digests are checked before reading.",
+              "The rolling companions may advance without revising this dated review. Original sources:", ""]
+    for name, src in review["sources"]["research"].items():
+        origin = src["origin"]
+        lines.append(f"- {name}: `{origin['path']}` at commit `{origin['commit']}`.")
     et = review["evidence_through"]
     lines += ["", f"Evidence through: study newest session {et['study_newest_session']} (frozen through "
               f"{et['study_frozen_through']}); backtest through {et['backtest_through']}; funnel over "

@@ -10,6 +10,7 @@ and ``--check`` is pointed at copies in tmp_path."""
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import itertools
 import json
 import math
@@ -225,6 +226,92 @@ def test_the_copied_blocks_are_the_files_own(committed):
     assert committed["research"]["cohort_counts"] == cohort["counts"]
 
 
+def test_dated_research_sources_retain_original_bytes_and_provenance(committed):
+    expected = {
+        "cohort": ("stop-research.json", "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"),
+        "journal": ("research-outcomes.json", "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"),
+    }
+    for name, (filename, digest) in expected.items():
+        source = committed["sources"]["research"][name]
+        assert source == {
+            "path": f"docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/{filename}",
+            "sha256": digest, "kind": "retained_companion",
+            "origin": {"commit": "c759a1e671227717cae8d0bf1d50a4121d167396", "path": f"docs/{filename}"},
+        }
+        assert hashlib.sha256((ROOT / source["path"]).read_bytes()).hexdigest() == digest
+        payload, observed_source = er.load_research(name)
+        assert payload == json.loads((ROOT / source["path"]).read_bytes())
+        assert observed_source == source
+
+
+@pytest.mark.parametrize("replacement", [b'{"applicable_session":"2099-01-02","counts":{"resolved":42}}', b"not JSON"])
+def test_dated_review_ignores_rolling_companion_replacement(replacement, committed, monkeypatch):
+    """A new night's companions, including unreadable ones, cannot revise this review."""
+    rolling = {ROOT / "docs/stop-research.json", ROOT / "docs/research-outcomes.json"}
+    original_bytes, original_text = Path.read_bytes, Path.read_text
+    reads = []
+
+    def read_bytes(path):
+        if path in rolling:
+            reads.append(path)
+            return replacement
+        return original_bytes(path)
+
+    def read_text(path, *args, **kwargs):
+        if path in rolling:
+            reads.append(path)
+            return replacement.decode("utf-8")
+        return original_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_bytes", read_bytes)
+    monkeypatch.setattr(Path, "read_text", read_text)
+    assert er.build() == committed
+    assert reads == []
+
+
+@pytest.mark.parametrize("name", ["cohort", "journal"])
+@pytest.mark.parametrize("damage", ["missing", "whitespace", "changed_counts"])
+def test_dated_review_refuses_missing_or_changed_input_without_writing(name, damage, tmp_path, monkeypatch, capsys):
+    copied = tmp_path / "input.json"
+    raw = (ROOT / er.RESEARCH[name]).read_bytes()
+    if damage == "whitespace":
+        copied.write_bytes(raw + b"\n")  # same parsed value, different retained bytes
+    elif damage == "changed_counts":
+        data = json.loads(raw)
+        data["counts"] = {"resolved": 999}
+        copied.write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setitem(er.RESEARCH, name, copied)
+    out = tmp_path / "review"
+    out.mkdir()
+    original = {filename: b"previous dated evidence\n" for filename in ("review.json", "review.md")}
+    for filename, body in original.items():
+        (out / filename).write_bytes(body)
+    assert er.main(["--output-dir", str(out)]) == 2
+    refusal = capsys.readouterr().out
+    assert f"retained research {name}:" in refusal
+    assert ("cannot read" if damage == "missing" else "SHA-256 does not match") in refusal
+    assert {filename: (out / filename).read_bytes() for filename in original} == original
+
+
+def test_dated_input_digest_and_payload_use_the_same_read(monkeypatch):
+    path = ROOT / er.RESEARCH["cohort"]
+    raw = path.read_bytes()
+    original_read = Path.read_bytes
+    reads = []
+
+    def changing_file(candidate):
+        if candidate == path:
+            reads.append(candidate)
+            return raw if len(reads) == 1 else b'{"counts":{"resolved":999}}'
+        return original_read(candidate)
+
+    monkeypatch.setattr(Path, "read_bytes", changing_file)
+    payload, source = er.load_research("cohort")
+    assert len(reads) == 1
+    assert payload == json.loads(raw)
+    assert source["sha256"] == hashlib.sha256(raw).hexdigest()
+
+
 def test_the_ledger_verdicts_follow_from_their_sources(committed, built):
     assert [c["id"] for c in committed["ledger"]] == ["yellow_admits_a", "trade_red_nights", "anticipation_stop_5pct",
                                                       "ticket_without_accepted_review", "account_or_risk_increase"]
@@ -288,10 +375,17 @@ def test_the_review_refuses_evidence_that_does_not_reconcile(study, monkeypatch)
         journal = deepcopy(journal)
         journal["policy"]["cohort_policy_id"] = "another_cohort_v9"
         return journal
-    monkeypatch.setattr(er, "load_json", load_with({str(er.RESEARCH["journal"]): other_cohort}))
+    monkeypatch.setattr(er, "load_json", original_load)
+    original_research = er.load_research
+
+    def research_with_other_cohort(name):
+        data, source = original_research(name)
+        return (other_cohort(data) if name == "journal" else data), source
+
+    monkeypatch.setattr(er, "load_research", research_with_other_cohort)
     with pytest.raises(er.ReviewError, match="registered cohort"):
         er.build()
-    monkeypatch.setattr(er, "load_json", original_load)
+    monkeypatch.setattr(er, "load_research", original_research)
 
     # a summary that is not its rows'
     forged = deepcopy(study)
