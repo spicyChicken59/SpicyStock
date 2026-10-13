@@ -1194,6 +1194,8 @@
     // the API's token classes; the page prices nothing, because the record
     // archives no price
     if (text((run.reader_usage || {}).sentence)) line(run.reader_usage.sentence);
+    // the minute bars read for first days a daily bar could not place, in the record's own sentence
+    if (text((run.intraday || {}).sentence)) line('Minute bars: ' + run.intraday.sentence);
     line('Rules ' + (app.rules_version || '—') + ': a digest of recorded policy and universe identity. A changed digest can reflect membership alone; it does not necessarily mean the strategy changed. Universe identity ' + (uni.identity || '—') + '.');
     line('Timing: ' + num(run.elapsed_seconds) + ' s for the run, ' + num(run.fetch_seconds) + ' s of it fetching; generated ' + (run.published_at || '—') + '.');
     // where THIS publication fell against the service's schedule, and what that

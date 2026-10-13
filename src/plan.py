@@ -1145,6 +1145,12 @@ def _bar(raw: Mapping[str, Any], index: int) -> dict[str, Any]:
     if not (bar["l"] <= min(bar["o"], bar["c"]) and max(bar["o"], bar["c"]) <= bar["h"]):
         raise ValueError(f"later[{index}]: open {bar['o']} and close {bar['c']} must sit inside the bar "
                          f"{bar['l']}-{bar['h']}")
+    if raw.get("day_low") is not None:
+        # an entry day rebuilt from an intraday fill: its range is the fill on,
+        # and the session's own low is what the stop rises to at its close
+        bar["day_low"] = _price(raw.get("day_low"), f"later[{index}].day_low")
+        if bar["day_low"] > bar["l"]:
+            raise ValueError(f"later[{index}]: day_low {bar['day_low']} above the bar's low {bar['l']}")
     bar["date"] = raw.get("date")
     return bar
 
@@ -1283,8 +1289,9 @@ def follow(pick: Mapping[str, Any], later: Sequence[Mapping[str, Any]],
                 break
             instruction = (f"Day {SELL_HALF_DAY}: closed at {_usd(c)} ({_plus_pct(pct(c))}): sell at "
                            f"least {half_words} at the close.")
-        if day == ENTRY_DAY and l > stop:
-            stop = l
+        entry_low = bar.get("day_low", l)
+        if day == ENTRY_DAY and entry_low > stop:
+            stop = entry_low
             events.append({"day": day, "date": date, "event": "stop_raised_to_entry_low", "price": stop})
         elif day >= TRAIL_FROM_DAY and l > stop:
             stop = l
