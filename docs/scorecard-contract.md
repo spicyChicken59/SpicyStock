@@ -31,7 +31,7 @@ The following disjoint buckets sum to **published plans**:
 | Resolved (`settled`) | Model walk ended and sales reconcile to a defined R | Yes |
 | Open | Established fill, unfinished walk, bars current through the evaluation session | No |
 | Pending | Current-session publication awaiting its first entry session | No |
-| Uncertain | Daily bars cannot establish trigger timing or fill/stop sequence | No |
+| Uncertain | Daily bars cannot establish trigger timing or fill/stop sequence, and no usable retained minute bars do (`minute_order` when the crossing minute's own bar cannot) | No |
 | Not filled | Entry-day order could not fill, including expiry without reaching trigger | No |
 | Unmeasured | Missing bars or a stale unfinished observation | No |
 | Unreadable | Inconsistent or noncontiguous required bars | No |
@@ -45,15 +45,25 @@ without later bars; ambiguous or malformed required observations stay unscored.
 
 ## Model assumptions and metrics
 
-The existing fill model books only the next session's open inside the recorded
-trigger/limit zone. Other potential fills remain UNCERTAIN with their original
-reason. Stop-market gaps use the open; otherwise the stop takes precedence over
+The daily fill model books the next session's open inside the recorded
+trigger/limit zone. A first day uncertain for `trigger_timing` or
+`stop_sequence` is read again from that session's retained one-minute bars
+(`src/intraday.py`, `first_window_minute_v1`): the first minute of the entry
+window reaching the trigger fills at the trigger or that minute's open; no such
+minute is not filled; a crossing minute that opened over the limit and never
+traded back to it in the window is not filled; a crossing minute whose own bar
+cannot order the fill against the limit or the stop stays UNCERTAIN
+(`minute_order`). Minutes that do not reproduce the daily bar are not used, and
+every other potential fill remains UNCERTAIN with its original reason. The
+minutes establish the fill only; the walk from it is the daily model's.
+Stop-market gaps use the open; otherwise the stop takes precedence over
 same-bar profit-taking. Whole-share partial sales, stop raises and dated exits
 are exactly `plan.follow()`'s existing rules. All shares must reconcile before
-R exists. There is no second fill inference in the browser or analysis tool.
+R exists. There is no second fill inference in the browser; the analysis tool
+reads the same retained minutes only when given `--docs`.
 
 R is the whole-share-weighted result divided by initial model risk from the
-established open fill to the published protective stop. Existing two-decimal R
+established fill to the published protective stop. Existing two-decimal R
 rounding is retained: positive = win, negative = loss, zero = breakeven. Those
 three counts sum to resolved. Win rate = wins / resolved, including breakeven;
 mean and median R use exactly that denominator. Rates and mean/median are hidden
@@ -88,8 +98,11 @@ that missing-observation accounting was incomplete.
 ## Offline audit
 
 ```sh
-python tools/scorecard_analysis.py --picks saved-picks.json --frames frames.json --session 2026-09-16 --publication original-data.json
+python tools/scorecard_analysis.py --picks saved-picks.json --frames frames.json --session 2026-09-16 --publication original-data.json --docs docs
 ```
+
+`--docs` is optional: it reads the minute bars that directory retains under
+`intraday/`; its output says whether any were read.
 
 `frames.json` maps ticker to a provenance v1 normalized frame object. Inputs must
 already be local; no provider/model transport runs. Repeat `--publication` for

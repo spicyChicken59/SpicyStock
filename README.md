@@ -1644,10 +1644,16 @@ window's end however far the day went later; a crossing minute whose fill would
 be over the limit, or which reached the stop from under the trigger, cannot be
 ordered by its own bar and stays *uncertain* (`minute_order`). A fill is walked
 from the fill on: the entry day is rebuilt from the crossing minute, the close
-and the stop rises at day 1's close to the session's own low. Minutes that never
-show the day reaching the trigger disagree with the daily bar and are not used.
+and the stop rises at day 1's close to the session's own low. A crossing minute
+that opened over the limit is *not filled* when no minute of the window from it
+on traded back to the limit. The minutes establish the fill and nothing after
+it: the walk from the fill is the daily model's, so a day-1 bar reaching both the
+stop and +8% books the stop, as a fill at the open would. Minutes must reproduce
+the daily bar to be used: no minute outside its range (at four decimals), a
+minute reaching the trigger it reached, and a minute at or under the stop when
+its low reached it; minutes that do not are another feed's account of the day.
 An open past the limit or under the skip line keeps the daily answer, and a day
-with no retained minutes stays uncertain. The published stop is
+with no usable retained minutes stays uncertain. The published stop is
 one R on the whole position; a half sold at +8% or at day 3 is at least half in
 whole shares, and every sale is weighted by its quantity. With complete usable
 bars, everything settles by day 5. Missing evidence never establishes that exit.
@@ -1658,18 +1664,24 @@ The evening asks for those minutes itself, once: `record.needs_minutes()` names
 the plans in the scorecard window whose first day the daily bar left uncertain on
 a reason minutes can read, and `intraday.gather()` requests the `sip`,
 split-adjusted one-minute bars of each entry session's regular hours -- one
-request per session, at most 8 plans a run (newest first; the rest wait a night),
-each only once that session's close is behind the feed's 16-minute hold-back.
-Each answer is one content-addressed object under `docs/intraday/`, written once,
-read back and never replaced (512 objects, 16 MiB, 64 KiB an object; at capacity
-nothing new is written). Every walk of the night -- the model slots, the open
-plans, the scorecard and the quality ledger's re-derivation -- reads the same
-evidence, and a row walked from it names its object in `minute_evidence`.
-`run.intraday` counts what was needed, asked for, fetched and stored, the failures
-by kind (`no_minutes`, an error's type, never its text) and archive problems, in a
-sentence the Method view and the mail print; `report.validate()` holds it under
-rules that read minutes. A failed or empty request leaves the plan uncertain and
-never fails the run; a dry run reads what it fetched and writes nothing.
+request per session, at most 8 plans a run (newest first, the plans whose fetch
+failed the night before after the rest, so one cannot hold the cap; the others
+wait a night), each only once that session's close is behind the feed's 16-minute
+hold-back. Each answer is one content-addressed object under `docs/intraday/`,
+written once, read back and never replaced (512 objects, 16 MiB, 64 KiB an
+object; at capacity nothing new is written and the plan stays uncertain). A plan
+two objects claim is set aside by name, used by no walk and never asked for
+again. Every walk of the night -- the model slots, the open plans, the scorecard
+and the quality ledger's re-derivation -- reads the same evidence: what the
+archive retains, and what tonight stored; a row walked from it names its object
+in `minute_evidence`. `run.intraday` counts what was needed, set aside, asked for,
+fetched and stored, the failures by kind (`no_minutes`, an error's type, never
+its text) and archive problems, in a sentence the Method view and the mail
+print; `report.validate()` holds it under rules that read minutes (and every
+named object to what the walks could read). A failed or empty request leaves the
+plan uncertain and never fails the run; a gathering that fails whole is the
+block's `failed` status, and every walk still reads what the archive retains. A
+dry run reads what it fetched and writes nothing.
 
 It prints counts from the first night and rates only from twenty settled
 plans. Wins, losses and breakeven reconcile to that explicit resolved denominator;
@@ -1684,7 +1696,9 @@ retention, price basis, regime, versioning and the offline analysis command.
 `tools/scorecard_analysis.py` uses the same replay and summary for complete
 partitions by original rules version, burst/dollar/both, grade, regime, kind and
 reader source. Exact original publication receipts establish attribution;
-missing metadata stays unknown. These partitions do not select a preferred
+missing metadata stays unknown. `--docs` reads the minute bars a docs directory
+retains under `intraday/`, so a first day the published scorecard read from them
+is read the same way; without it that day stays as its daily bar leaves it. These partitions do not select a preferred
 strategy or change the aggregate. Legacy website summaries retain their recorded
 values and explicitly admit incomplete coverage accounting.
 
