@@ -608,8 +608,8 @@ def test_a_walk_from_a_minute_fill_keeps_the_daily_conventions_stop_first_on_day
 
 
 def test_the_same_minutes_are_the_same_object_and_the_same_name():
-    rows = [(5, 99.6, 100.1, 99.5, 100.0)]
-    a, b = obj(rows), obj(list(reversed(rows + rows)))
+    rows = [(5, 99.6, 100.1, 99.5, 100.0), (6, 100.0, 100.3, 99.9, 100.2)]
+    a, b = obj(rows), obj(list(reversed(rows)))                  # the feed's order is not the object's
     assert a == b and intraday.name_of(a) == intraday.name_of(b)
     assert intraday.name_of(a) != intraday.name_of(obj([(5, 99.6, 100.1, 99.5, 100.01)]))
 
