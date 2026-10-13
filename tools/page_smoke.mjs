@@ -46,6 +46,7 @@ import { checkJournalReports } from './journal_report_cases.mjs';
 import { checkDeferredScan } from './scan_cases.mjs';
 import { checkFunnel } from './funnel_cases.mjs';
 import { checkServiceState } from './service_state_cases.mjs';
+import { checkSourceRecovery } from './source_recovery_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
@@ -137,7 +138,7 @@ async function open(browser, base, dataUrl, now, width, opts) {
   // system declares a fallback stack) and the optional run-log fetch to the
   // GitHub API are the three requests this page may lose offline; the console
   // reports each as one "Failed to load resource", matched off below.
-  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/stop-research(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-outcomes(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-observations\.json$/.test(u);
+  const exempt = (u) => /\/charts\/[A-Z.]+\.png$/.test(u) || /fonts\.g(oogleapis|static)\.com/.test(u) || /api\.github\.com/.test(u) || /\/morning\.json$/.test(u) || /\/issuer-evidence(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/stop-research(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-outcomes(?:\.json|\/[a-f0-9]{64}\.json)$/.test(u) || /\/research-observations\.json$/.test(u) || /\/source-recovery\.json$/.test(u);
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => {
     const u = r.url();
@@ -3984,6 +3985,7 @@ async function main() {
       if (runs('findings')) await checkFindings({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('funnel')) await checkFunnel({ browser, base, open, check, eq, shotsDir });
       if (runs('service')) await checkServiceState({ browser, base, open, check, eq, shotsDir });
+      if (runs('recovery')) await checkSourceRecovery({ browser, base, open, check, eq, shotsDir });
     };
     // both lanes finish before the browser closes; the first to throw is the error
     const settled = await Promise.allSettled([lane.run('A', laneA), lane.run('B', laneB)]);

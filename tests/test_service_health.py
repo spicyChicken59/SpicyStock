@@ -179,6 +179,16 @@ def test_a_companion_receipt_is_read_for_its_binding_and_its_clock():
     research = sh.companion_reading("research_observations", receipt(requests=1, rows=None), commit="d" * 40, blob="e" * 40,
                                     landed_at="2026-10-12T13:21:00+00:00")
     assert research["requests"] == 1 and research["rows"] is None and "entry_phase" not in research
+    recovered = sh.companion_reading("source_recovery", receipt(status="recovered", collection_started_at="2026-10-12T13:19:00+00:00",
+                                                                observation_run_id="42", dry_run=False, rows=[{"ticker": "WBD"}],
+                                                                recovered={"arrived": 1, "session_ready": 1}, source={"batch_attempts": 1}),
+                                     commit="d" * 40, blob="e" * 40, landed_at="2026-10-12T13:21:00+00:00")
+    assert (recovered["status"], recovered["session_ready"], recovered["batch_attempts"], recovered["rows"], recovered["before_applicable_open"]) == \
+        ("recovered", 1, 1, 1, True)
+    assert "requests" not in recovered and "entry_phase" not in recovered
+    bare = sh.companion_reading("source_recovery", receipt(status="inapplicable", reason="recovery_window_ended", rows=[]),
+                                commit="d" * 40, blob="e" * 40, landed_at="2026-10-12T13:31:00+00:00")
+    assert (bare["session_ready"], bare["batch_attempts"], bare["rows"], bare["reason"]) == (None, None, 0, "recovery_window_ended")
 
 
 # -------------------------------------------------------------- sessions ----
@@ -193,7 +203,7 @@ def week():
             reading("2026-10-08", "2026-10-09T02:06:00+00:00")]
     morning = [sh.companion_reading("morning", receipt(applicable="2026-10-09", generated="2026-10-09T13:20:00+00:00"),
                                     commit="d" * 40, blob="e" * 40, landed_at="2026-10-09T13:21:00+00:00")]
-    return pubs, {"morning": morning, "issuer_evidence": [], "research_observations": []}
+    return pubs, {"morning": morning, "issuer_evidence": [], "research_observations": [], "source_recovery": []}
 
 
 def test_session_rows_name_every_expected_session_and_its_state(week):
@@ -294,7 +304,7 @@ def test_a_history_is_walked_from_its_tip_and_the_set_asides_are_named(repo):
     result = sh.build(ref="main")
     assert result["source"]["through"] == repo["third"] and result["source"]["clock"] == "2026-10-10T01:49:14+00:00"
     assert result["source"]["publication_commits"] == [repo["third"], repo["second"], repo["first"]]     # the walk's order, newest first
-    assert result["source"]["companion_commits"] == {"morning": [repo["morning"]], "issuer_evidence": [], "research_observations": []}
+    assert result["source"]["companion_commits"] == {"morning": [repo["morning"]], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
     assert result["skipped"] == [{"commit": repo["fixture"], "reason": f"{repo['fixture'][:8]}:docs/data.json: not a real schema-2 publication"}]
     assert [p["session"] for p in result["publications"]] == ["2026-10-08", "2026-10-08", "2026-10-09"]   # the readings, by session
     assert [r["session"] for r in result["sessions"]] == ["2026-10-08", "2026-10-09"]

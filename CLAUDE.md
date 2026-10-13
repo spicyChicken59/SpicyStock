@@ -338,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4143 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4258 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7506,3 +7506,175 @@ source-bound receipt is `release-evidence/2026-10-13-observation-fidelity/dated-
 The quote-fidelity runtime is byte-identical to the prior reviewed source.
 Independent final-tree review, all applicable hosted checks and actual public
 verification remain required on the new head; this entry does not claim release.
+
+## Checkpoint, 13 Oct 2026 — PR #161 accepted; the first live nights read; the publication's own missing stocks, asked for once more (#111)
+
+**PR #161, accepted.** Merged as `4bd38751` on `main` with a merge commit over
+`c174818e`. The code head `839f5d19` passed all seven checks on Tests run
+38208300516; the final head `f98359ad` (CLAUDE.md alone over it) passed
+pytest, page, the gate's docs-only decision and both gitleaks runs on run
+38208316663. One gitleaks run on `839f5d19` (38208300486) failed on a race
+with the checkpoint push -- `Invalid revision range 3f086182^..f98359ad`, 0
+bytes scanned -- and was explained on the PR. Publisher 38212808053 printed
+*Verified: every one of the 41 public files matches committed main* at
+06:31:00 UTC on 12 October; Pages 38212827405 deployed (38212807387 cancelled
+as superseded); the merge commit's own Secret scan 38212808057 passed.
+
+**The first live morning, read.** Both 12 October morning crons were created
+8 h 24 m late (13:20 and 13:28 UTC slots; runs 38312550090 and 38312772384 at
+21:44:56 and 21:47:04 UTC), their guard said `entry_window_ended`, and every
+collection step skipped: no morning, research or recovery observation exists
+yet. No 13 October morning run had been created by 14:58 UTC.
+
+**The first live night under every new block, read.** Session 12 October, run
+38339720035, published 03:02:09 UTC on 13 October: `run.delivery` 407.2
+minutes after completion, after both slots, before the 13 October open.
+`run.status` `ok` beside a degraded acceptance, the first live night the
+tolerance kept green: 4,767 of 4,778 ready, eleven stale stocks named in full
+(BEBE, ELLO, HFBL, MDRR, MGRT, NCEW, PFX, RAND, ROMA and TCBS ending 9
+October, WBD ending 5 October) within the limit of 47; `run.stale_followup`
+version 2 read WBD at the four sessions it missed (6–9 October), still missing
+at each. YELLOW (10-session ratio 1.0; up 50% in a month hot, 14 against
+11.2). `run.reads` 2 of 2, `complete`. The first archived `run.reader_usage`:
+2 calls for 2 names, 14,734 input tokens (8,062 uncached, 3,336 written to the
+cache, 3,336 read) and 1,357 output, under claude-sonnet-4-6. The first
+archived `run.funnel`: 362 reaction candidates, every one below YELLOW's A+
+band, 0 potentially usable, 0 tickets; anticipation 751 momentum names, 5
+listed, 1 refused for a known event and 4 for the stop rule at the limit, 0
+tickets.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `4bd38751`, `main` merged in again at `289ab4a1` (the 12
+October publication, the issuer receipt, and #162's research-observation
+fidelity), pushed as **PR #165**. #111's bounded same-session source-recovery
+study. `docs/data.json`, `docs/picks.json`, the compact reader, every receipt,
+the history, the evidence objects, the quality ledger and the vendored design
+system are untouched; nothing the evening runs changed
+(`pipeline.build_rules()` nests no rule of the new module, so `rules_version`
+does not move); no run, mail, dispatch, provider call or credential.
+
+**What the record showed.** The 9 October session was published three times
+under one universe identity: 22 stale stocks at 01:44:58 UTC on 10 October,
+one at 07:12:55, the same one at 07:30:15. The same provider, asked again five
+and a half hours later over the same selection, returned 21 of the 22 -- as
+two whole evening runs. The three share the universe, snapshot, feed,
+adjustment and session but not the rules digest (#115 and #121 merged between
+them), so `same_cohort()` refuses each pair while the bars request's own
+fields agree.
+
+**What was built.** `src/source_recovery.py` freezes the record's own basis
+(`frozen_basis()`), takes the window off the publication's own calendar
+(`window_of()`), copies its coverage facts (`original_facts()`) and names the
+deficits (`deficits()`): the record's tolerance names FIRST, the publication's
+quality-ledger exception membership SECOND, each held to the publication's own
+count and identity per category, never a guess. `_reason()` names every
+zero-call case before anything is asked. One request of at most two attempts
+over at most 100 names goes through `market_data.download_bars` under the
+record's feed, adjustment and lookback (`_fetch()`), the call under a
+main-thread timer set to the earlier of `FETCH_RESERVE_SECONDS` short of the
+300-second budget and the next open. Each row is the stock's own outcome
+(`_rows()`); `original` and `recovered` are never combined (`sentence_of()`).
+`validate_receipt()` re-derives what the bound inputs determine, compares it as
+JSON, and holds what only the provider determines to its shape and to every
+field it implies. `.github/workflows/source-recovery.yml` runs it at 07:37 and
+09:37 UTC on `main`, its persist job running whatever else happened, and the
+dashboard publisher now follows it. `tools/publish_morning.py --target
+recovery` commits one file with compare-and-swap on the record, the ledger
+entry on `main` and the prior receipt. `tools/service_health.py` reads it as a
+fourth companion. `docs/app.js` prints one Method line, *Recovery: <the
+receipt's sentence>*, after hashing the loaded publication against the
+receipt's binding.
+
+**The first review by execution** (the collector, over the first pushed tip)
+returned four findings and five surviving mutants, all fixed before the second
+push: the provider call had no bound of its own (the SDK retries a 429 or 504
+inside one call), a benchmark-only deficit read as `deficit_not_named`, a
+partly named night and an unreadable bar had no words of their own, and five
+mutants lived because the tests read only the committed fixtures, closed by a
+test that collects each outcome fresh. A browser mutant then found a real
+defect: a redraw of the Method view left its new line loading; each drawn line
+is asked once now.
+
+**The second review by execution** (five dimensions over `dd3314a9`, each
+finding reproduced by a finder and checked by two skeptics) returned 22: 17
+upheld by both, 5 split one each way, and all 22 reproduced again here before
+they were touched. The high one: the recovery rode the morning workflow
+as its third collector, about ten minutes before the open on time, and the 12
+October crons started 8 h 24 m late; it has its own workflow now. The
+mediums: a call answered after the open was published as before it (the open
+bounds the call now, and an answer after it is not kept); zero volume was
+counted beside the bars that pass the session rules when the placeholder had
+failed them; "in N requests" undercounted the SDK's retries and pages (it says
+calls to the bars endpoint, and `LIMITS` names what is not counted); 23
+validator checks had no test (each has a forgery refused by its own message
+now); a manual dry-run dispatch spent a request it could never record (the new
+workflow has no rehearsal input); a 500, a timeout and a truncated receipt all
+read "no receipt has been published" on the page (only a 404 says that now);
+an open tab never saw a receipt published the next morning, and a reload could
+serve the cached one (the page reads past the cache and again on an unchanged
+update check while Method is shown); the page suite never loaded the compact
+reader production serves, so breaking its digest binding passed every check;
+and the report promised a first receipt on mornings already past. The lows:
+the timer armed outside its `try`, so an expiry at the wrong instant leaked the
+handler or turned an answer into a timeout; a prior receipt of another
+publication and schema blocked collection; the size bound measured compact
+bytes while the indented ones are written; a zero-attempt timeout said the
+stocks were asked for; `True` and `4774.0` passed for `1` and `4774`; the
+rehearsal, `context_sha256` and `published_at` clauses on the page had no
+case; the page's status list was not held to the module's; and four wrong
+sentences in the report. The publisher also refuses a repeated inapplicable
+receipt for the same publication and reason now, so the daily schedule commits
+at most one receipt per publication and reason.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through
+Playwright 1.56.1, at `aed055c7`): 4258 tests collected, 4224 passed and 34
+environment-gated skips in 23 m 32 s; 13 page fixtures current and every
+cascaded generator current (morning 21, issuer-evidence 30, stop-research 22,
+research-outcomes 40, research-observations 24, cash-preview 6, source
+recovery 20); `tools/service_health.py --check` current with the history walked
+again; continuity 137; the chart check 378/378; the `recovery` suite 124/124,
+its failure-state and refresh cases red on the page from before the fix; the
+full smoke with `--shots` 15131/15131; gitleaks 8.24.3 over the branch's
+commits: no leaks; actionlint over the three changed workflows: clean.
+Screenshots of the Method line at 1280 dark, 390 light and 320 dark were looked
+at: one column on the phone, under the service schedule, "in 1 call to the bars
+endpoint". The continuity check first exited 1 here because this worktree had
+no `jsdom` installed; with the existing install linked it passes.
+
+**Mutation passes.** Page, through routed copies of `app.js` judged by `--only
+recovery`: ten mutants -- the projection's digest ignored, the reader digest
+unchecked, a rehearsal admitted anywhere, the context and publication-time
+clauses dropped, the HTTP cache allowed, no re-read on an unchanged update,
+every failure read as absent, a parse error read as absent, a re-read away from
+Method -- all dead, a control green. Python, each mutant in the mutation
+worktree at `500fc060` and judged by the whole test files naming the rule (the
+committed-fixture equality deselected, so each dies in the test that names its
+rule): twenty-four -- an unrelated prior refused and one of this publication
+accepted unread, the timer armed outside its `try` and raising when disarmed,
+the open not capping the call, an answer after the open kept and validated, a
+request window without a call written and unchecked, the zero-call sentence
+dropped, the open's words never used, the tallies, the original facts and the
+window compared by Python's `==`, a flat flag of `0` admitted, zero volume
+counted beside the session-ready clause, the size bound on compact bytes, and
+five of the checks the review found untested (the inapplicable source, the
+duration bound, the symbols requested, the row category, a missing row's
+ending), with the publisher committing an unchanged receipt and raising on an
+unrelated prior -- all dead, two controls green.
+
+**Keep / fix / defer / omit.** Keep: the receipt reads and never decides; the
+record is unchanged by it; `original` and `recovered` are never one figure.
+Fix if it bites: the ledger entry is read whole (up to 8 MiB) to name a few
+stocks; the second slot may spend once more after a first slot whose persist
+was refused, which `LIMITS` says; GitHub's scheduled starts are late by hours
+on some days, and nothing here can make them punctual. Defer: #111's
+ten-session acceptance, which needs morning checks not yet observed; a reading
+of the receipts across nights once there are some. Omit: any change to the
+stale tolerance, the coverage denominators or the scan on a recovered bar; a
+late bar treated as a signal.
+
+**Not claimable:** a live receipt. The first can exist on the first scheduled
+slot after the merge whose publication's next open is still ahead, only if
+GitHub starts it before that open, and only with the Alpaca pair present. Read
+its status, reason, rows, call count and the page's line, and record them here.
+Also still not claimable: a live morning or research observation, the ten
+consecutive sessions with morning checks, and any trading edge.

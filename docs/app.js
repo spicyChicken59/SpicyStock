@@ -1064,6 +1064,82 @@
       plain(+(100 * f).toFixed(4)) + '% of the intended stocks, the benchmark outside that count as it is outside the denominator, and no open model plan among them; ' +
       'that tail is counted and named, the next session\u2019s run ' + reads + ', and it does not degrade the run.';
   }
+  // ---------------------------------------------------------- source recovery
+  // The bytes of the record on screen, hashed once per load, so a companion
+  // receipt can be held to the publication it names and never to a look-alike.
+  const recovery = { data: null, digest: null, receipt: null, line: null, lineData: null, askedLine: null };
+  const RECOVERY_STATUSES = ['recovered', 'partial', 'nothing_recovered', 'provider_unavailable', 'inapplicable'];
+  function bindRecoveryDigest(data, bytes, projection) {
+    recovery.data = data;
+    recovery.receipt = null;
+    recovery.digest = (w.crypto && w.crypto.subtle && bytes
+      ? w.crypto.subtle.digest('SHA-256', typeof bytes === 'string' ? new TextEncoder().encode(bytes) : bytes)
+        .then(buf => Array.from(new Uint8Array(buf), n => n.toString(16).padStart(2, '0')).join(''))
+      : Promise.reject(Object.assign(shownError('This browser cannot verify the record’s bytes.'), { state: 'unbound' })))
+      .then(hex => ({ canonical: projection ? projection.canonicalSha : hex, reader: projection ? hex : null }));
+    recovery.digest.catch(() => {});
+  }
+  // whole or not at all: a receipt bound to the record on screen by its bytes
+  // and its identity, with a status and a sentence this page can print
+  function recoveryOf(receipt, data, digest) {
+    const out = { known: false, sentence: null, status: null, reason: null, why: null };
+    if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) { out.why = 'not an object'; return out; }
+    if (receipt.schema_version !== 1) { out.why = 'unsupported schema'; return out; }
+    if (!(receipt.dry_run === false || (receipt.dry_run === true && !!(data && data.fixture)))) { out.why = 'a rehearsal receipt'; return out; }
+    const p = receipt.publication, run = (data && data.run) || {}, app = (data && data.app) || {};
+    if (!p || typeof p !== 'object' || Array.isArray(p)) { out.why = 'no publication binding'; return out; }
+    if (!digest || p.data_sha256 !== digest.canonical || (digest.reader && p.reader_sha256 !== digest.reader)) { out.why = 'another publication’s bytes'; return out; }
+    if (p.context_sha256 !== (run.evidence || {}).context_sha256 || p.rules_version !== app.rules_version ||
+        p.measured_session !== run.session || p.published_at !== run.published_at) { out.why = 'another publication’s identity'; return out; }
+    if (RECOVERY_STATUSES.indexOf(receipt.status) < 0) { out.why = 'unknown status'; return out; }
+    if (!(receipt.reason === null || text(receipt.reason))) { out.why = 'unreadable reason'; return out; }
+    if (!text(receipt.sentence)) { out.why = 'no sentence'; return out; }
+    out.known = true; out.sentence = receipt.sentence; out.status = receipt.status; out.reason = receipt.reason;
+    return out;
+  }
+  SCStock.recoveryOf = recoveryOf;
+  function loadRecovery(li, data) {
+    const settle = (state, sentence) => {
+      if (!w.document || !li.isConnected || current !== data) return;
+      li.textContent = 'Recovery: ' + sentence;
+      li.setAttribute('data-source-recovery', state);
+    };
+    if (recovery.data !== data || !recovery.digest) {
+      settle('unbound', 'this record was handed to the page without its served bytes, so no receipt is read for it.');
+      return;
+    }
+    if (!recovery.receipt) recovery.receipt = recoveryReceipt();
+    Promise.all([recovery.digest, recovery.receipt]).then(([digest, receipt]) => {
+      const r = recoveryOf(receipt, data, digest);
+      if (r.known) settle(r.status, r.sentence);
+      else settle('unbound', 'the published receipt is not bound to this record (' + r.why + '), so nothing of it is said here.');
+    }).catch(error => settle(error && error.state || 'unbound', error && error.shown ? error.message : 'the receipt could not be read.'));
+  }
+  // The receipt is published the morning after the record it binds, so it is
+  // read past the HTTP cache, as the other morning companions are. Only a 404
+  // says no receipt was published; any other status, no answer or a body that
+  // is not JSON says the receipt could not be read, and never that none exists.
+  function recoveryReceipt() {
+    const fail = (state, message) => Object.assign(shownError(message), { state });
+    const ctl = w.AbortController ? new w.AbortController() : null;
+    const timer = ctl ? w.setTimeout(() => ctl.abort(), Number(SCStock.evidenceTimeout) || EVIDENCE_TIMEOUT_MS) : 0;
+    return w.fetch('source-recovery.json', { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+      mode: 'same-origin', redirect: 'error', signal: ctl ? ctl.signal : undefined })
+      .then(r => {
+        if (r.status === 404) throw fail('absent', 'no receipt has been published beside this record.');
+        if (!r.ok) throw fail('unreadable', 'the published receipt could not be read (HTTP ' + r.status + ').');
+        return r.json().catch(() => { throw fail('unreadable', 'the published receipt could not be read (its body is not JSON).'); });
+      }, () => { throw fail('unreadable', 'the published receipt could not be read (no answer).'); })
+      .finally(() => { if (timer) w.clearTimeout(timer); });
+  }
+  // an update check that finds the record unchanged asks for the receipt again
+  // while Method is shown: a receipt published since is read for the record on screen
+  function refreshRecovery() {
+    const li = recovery.line;
+    if (state.view !== 'method' || !li || !li.isConnected || recovery.data !== recovery.lineData) return;
+    recovery.receipt = null; recovery.askedLine = li;
+    loadRecovery(li, recovery.lineData);
+  }
   function renderMethod(data) {
     renderStrip(data);
     const run = data.run || {}, uni = run.universe || {}, app = data.app || {}, acct = data.account || {};
@@ -1129,6 +1205,13 @@
         '. ' + RECOVERY_WORDS[dv.policy.recoveryUntil] + ' The page reads its pending and stale states from that window on the recorded calendar, not from a fixed hour.');
     } else if (dv.present) line('Delivery: this record carries a delivery block in a shape this page cannot read, so nothing is said of when it landed.');
     else line('Delivery: this record predates the delivery block; when it landed against the service’s schedule is not recorded.');
+    // the publication's own named missing or stale stocks, asked for again
+    // once before the next open (docs/source-recovery.json, src/source_recovery.py):
+    // printed in the receipt's own sentence once its binding to THIS record's
+    // bytes has been checked, and otherwise one sentence saying what is absent
+    const recoveryLine = line('Recovery: reading the bound receipt…');
+    recoveryLine.setAttribute('data-source-recovery', 'loading');
+    recovery.line = recoveryLine; recovery.lineData = data;
     // what the record says about WHEN its plans apply, and what its calendar
     // could not read. Printed here rather than argued: the run wrote it.
     const calendar = run.calendar;
@@ -1952,6 +2035,16 @@
     d.documentElement.setAttribute('data-ss-view', state.view);
     if (scrollTop) w.scrollTo(0, 0);
     if (state.view === 'record') loadHistoricalEvidence();
+    if (state.view === 'method') askRecovery();
+  }
+  // each Method line is settled once, the first time the Method view is shown
+  // over it: a page that never opens Method never fetches the receipt, and a
+  // line drawn again over the same served bytes reads the one already fetched
+  function askRecovery() {
+    const li = recovery.line;
+    if (!li || !li.isConnected || recovery.askedLine === li) return;
+    recovery.askedLine = li;
+    loadRecovery(li, recovery.lineData);
   }
 
   // ---------------------------------------------------------------- Explore: the stages
@@ -5325,6 +5418,7 @@
         const raw = SCStock.reader.decode(bytes);
         if (loaded) { applyUpdate(raw, bytes); return; }
         const { data, projection } = parsePublication(raw);
+        bindRecoveryDigest(data, bytes, projection);
         // An injected clock is a pin; otherwise the page uses the real clock.
         render(data, w.SCStock.now ? new Date(w.SCStock.now) : null, null, projection);
         rawRecord = raw;
@@ -5356,7 +5450,7 @@
   function applyUpdate(raw, bytes) {
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
-    if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
+    if (sameBytes(raw)) { saidUpdate('unchanged'); refreshRecovery(); return; }
     let next = null, projection = null;
     try { ({ data: next, projection } = SCStock.reader.parse(raw, w.SCStock.dataUrl || 'reader.json')); } catch (e) { saidUpdate(e instanceof SyntaxError ? 'failed' : 'invalid'); return; }
     if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||
@@ -5384,6 +5478,7 @@
       pins: state.pins.slice(), scroll: w.pageYOffset || 0, sizeForm: openSizeForm(),
       savedOpen: savedOpen, comparing: !!(state.pins.length === 2 && $('compare') && $('compare').open)
     };
+    bindRecoveryDigest(next, bytes, projection);
     render(next, clockPinned ? clockAt : null, keep, projection);
     rawRecord = raw;
     SCStock.observations.bind(next, bytes, projection);

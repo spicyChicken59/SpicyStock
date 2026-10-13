@@ -470,3 +470,171 @@ def test_dashboard_publication_fetches_optional_research_observation_once_commit
     assert 'research-observations.json' not in publish_dashboard.public_files(tmp_path)
     (docs / 'research-observations.json').write_bytes(b'{"dated":"research observation"}\n')
     assert 'research-observations.json' in publish_dashboard.public_files(tmp_path)
+
+
+# ------------------------------------------------- the recovery target -----
+RECOVERY_FIXTURES = Path(__file__).resolve().parent / 'fixtures/source-recovery'
+
+
+def recovery_receipt(raw, ledger_raw, *, previous=None, started='2026-01-02T13:20:00+00:00',
+                     generated='2026-01-02T13:20:01+00:00', attempts=1, **changes):
+    ledger = {'sha256': hashlib.sha256(ledger_raw).hexdigest()} if ledger_raw is not None else None
+    return {'dry_run': False, 'publication': {'data_sha256': hashlib.sha256(raw).hexdigest()},
+            'previous_observation_sha256': hashlib.sha256(previous).hexdigest() if previous else None,
+            'collection_started_at': started, 'generated_at': generated, 'deficits': {'ledger': ledger},
+            'source': {'batch_attempts': attempts}, 'observation_run_id': '42',
+            'status': 'recovered' if attempts else 'inapplicable', **changes}
+
+
+def ledger_entry_path(raw):
+    from src import quality_ledger
+    return Path('docs') / quality_ledger.DIRECTORY / f'{hashlib.sha256(raw).hexdigest()}.json.gz'
+
+
+@pytest.fixture
+def recovery_schema(monkeypatch):
+    from src import source_recovery
+    monkeypatch.setattr(source_recovery, 'validate_receipt', lambda *args, **kwargs: None)
+
+
+@pytest.fixture
+def recovery_repository(repository):
+    root, remote, raw = repository
+    ledger_raw = b'ledger entry for the first publication\n'
+    (root / ledger_entry_path(raw)).parent.mkdir(parents=True)
+    (root / ledger_entry_path(raw)).write_bytes(ledger_raw)
+    (root / 'docs/morning.json').write_bytes(b'{"morning":"untouched"}\n')
+    git(root, 'add', 'docs')
+    git(root, 'commit', '-m', 'ledger entry beside the record')
+    git(root, 'push', 'origin', 'main')
+    return root, remote, raw, ledger_raw
+
+
+def test_recovery_target_commits_only_its_own_file_beside_the_ledger_entry(recovery_repository, recovery_schema):
+    root, remote, raw, ledger_raw = recovery_repository
+    before = git(remote, 'rev-parse', 'main').strip()
+    receipt = recovery_receipt(raw, ledger_raw)
+    assert publisher.publish(root, encode(receipt), ref='refs/heads/main', run_id='42', target='recovery') == 'published'
+    assert git(remote, 'show', 'main:docs/source-recovery.json') == encode(receipt)
+    assert git(remote, 'show', 'main:docs/data.json') == raw
+    assert git(remote, 'show', f'main:{ledger_entry_path(raw).as_posix()}') == ledger_raw
+    assert git(remote, 'show', 'main:docs/morning.json') == b'{"morning":"untouched"}\n'
+    assert git(remote, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'main') == b'docs/source-recovery.json\n'
+    assert git(remote, 'log', '-1', '--format=%s', 'main').strip() == b'Publish bound source recovery'
+    assert git(remote, 'rev-parse', 'main^').strip() == before
+
+
+def test_recovery_target_refuses_when_main_rewrote_the_ledger_entry(tmp_path, recovery_repository, recovery_schema, monkeypatch):
+    root, remote, raw, ledger_raw = recovery_repository
+    other = competing_checkout(tmp_path, remote)
+
+    def advance():
+        (other / ledger_entry_path(raw)).write_bytes(b'the same publication, re-captured\n')
+        git(other, 'add', 'docs')
+        git(other, 'commit', '-m', 'rewritten ledger entry')
+        git(other, 'push', 'origin', 'main')
+
+    pushes = race_once(monkeypatch, advance)
+    assert publisher.publish(root, encode(recovery_receipt(raw, ledger_raw)), ref='refs/heads/main',
+                             run_id='42', target='recovery') == 'ledger_entry_changed'
+    assert len(pushes) == 1
+    assert git(remote, 'ls-tree', 'main', '--', 'docs/source-recovery.json') == b''
+
+
+def test_recovery_target_refuses_a_ledger_binding_main_does_not_carry(repository, recovery_schema):
+    root, remote, raw = repository          # no ledger entry on main at all
+    assert publisher.publish(root, encode(recovery_receipt(raw, b'an entry main never had')), ref='refs/heads/main',
+                             run_id='42', target='recovery') == 'ledger_entry_changed'
+    assert publisher.publish(root, encode(recovery_receipt(raw, None)), ref='refs/heads/main',
+                             run_id='42', target='recovery') == 'published'
+    assert git(remote, 'diff-tree', '--no-commit-id', '--name-only', '-r', 'main') == b'docs/source-recovery.json\n'
+
+
+def test_recovery_check_races_and_ordering(recovery_schema):
+    raw, ledger_raw = b'{}', b'{"ledger":1}'
+    now = datetime(2026, 10, 12, 14, tzinfo=timezone.utc)
+    check = lambda value, previous=None: publisher.recovery_check(value, raw, ledger_raw, previous, now)
+    assert check(recovery_receipt(raw, ledger_raw)) is None
+    assert check(recovery_receipt(b'other', ledger_raw)) == 'source_record_changed'
+    assert check(recovery_receipt(raw, b'other ledger')) == 'ledger_entry_changed'
+    assert check(recovery_receipt(raw, None)) == 'ledger_entry_changed'
+    assert publisher.recovery_check(recovery_receipt(raw, None), raw, None, None, now) is None
+    assert publisher.recovery_check(recovery_receipt(raw, ledger_raw), raw, None, None, now) == 'ledger_entry_changed'
+    spent = encode(recovery_receipt(raw, ledger_raw))                       # a prior that spent the one request
+    assert check(recovery_receipt(raw, ledger_raw), spent) == 'previous_observation_changed'   # a prior the receipt never saw
+    assert check(recovery_receipt(raw, ledger_raw, previous=spent, started='2026-01-02T13:28:00+00:00',
+                                  generated='2026-01-02T13:28:01+00:00'), spent) == 'recovery_already_published'
+    unspent = encode(recovery_receipt(raw, ledger_raw, attempts=0))         # a prior that fetched nothing may be replaced by a newer one
+    assert check(recovery_receipt(raw, ledger_raw, previous=unspent), unspent) == 'newer_or_equal_observation_exists'
+    assert check(recovery_receipt(raw, ledger_raw, previous=unspent, started='2026-01-02T13:28:00+00:00',
+                                  generated='2026-01-02T13:28:01+00:00'), unspent) is None
+    foreign = encode(recovery_receipt(b'an older publication', ledger_raw))   # a spent prior of ANOTHER publication binds nothing here
+    assert check(recovery_receipt(raw, ledger_raw, previous=foreign), foreign) is None
+    # nor does a prior of another schema, or one that is not JSON at all: the
+    # receipt carries its bytes' hash, and that is the whole binding
+    for other in (b'{"schema_version": 99, "publication": "elsewhere"}\n', b'[1, 2]\n', b'not json\n'):
+        assert check(recovery_receipt(raw, ledger_raw, previous=other), other) is None
+    # the same publication declined again for the same reason commits nothing;
+    # a different reason, or a spent request, is a receipt worth keeping
+    declined = encode(recovery_receipt(raw, ledger_raw, attempts=0, reason='no_coverage_deficit'))
+    later = dict(started='2026-01-02T13:28:00+00:00', generated='2026-01-02T13:28:01+00:00')
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, attempts=0, reason='no_coverage_deficit',
+                                  **later), declined) == 'recovery_unchanged'
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, attempts=0, reason='recovery_window_ended',
+                                  **later), declined) is None
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, **later), declined) is None
+    with pytest.raises(ValueError, match='future'):
+        check(recovery_receipt(raw, ledger_raw, generated='2099-10-12T13:20:01+00:00'))
+    with pytest.raises(ValueError, match='rehearsal'):
+        check(recovery_receipt(raw, ledger_raw, dry_run=True))
+    with pytest.raises(ValueError, match='binding_missing'):
+        value = recovery_receipt(raw, ledger_raw)
+        del value['previous_observation_sha256']
+        check(value)
+
+
+def test_recovery_validator_failure_prevents_any_commit(recovery_repository, monkeypatch):
+    from src import source_recovery
+    root, remote, raw, ledger_raw = recovery_repository
+    before = git(remote, 'rev-parse', 'main')
+    seen = []
+
+    def reject(value, data_raw, ledger=None, *, previous_raw=None, require_continuity=False):
+        seen.append((data_raw, ledger, previous_raw, require_continuity))
+        raise ValueError('source recovery: deficit accounting differs')
+
+    monkeypatch.setattr(source_recovery, 'validate_receipt', reject)
+    with pytest.raises(ValueError, match='deficit accounting differs'):
+        publisher.publish(root, encode(recovery_receipt(raw, ledger_raw)), ref='refs/heads/main', run_id='42', target='recovery')
+    assert git(remote, 'rev-parse', 'main') == before
+    assert seen == [(raw, ledger_raw, None, True)]
+
+
+def test_real_recovery_collector_receipt_passes_the_publisher_without_provider_calls(monkeypatch):
+    import importlib.util
+    from src import source_recovery
+    spec = importlib.util.spec_from_file_location('source_recovery_fixture_for_publisher', RECOVERY_FIXTURES / 'generate.py')
+    generate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(generate)
+    raw, ledger_raw = generate.capture()
+    monkeypatch.setattr(source_recovery, '_fetch', lambda *args, **kwargs: pytest.fail('The publisher must not request a provider'))
+    receipt = json.loads((RECOVERY_FIXTURES / 'recovered.json').read_bytes())
+    assert receipt['status'] == 'recovered' and receipt['source']['batch_attempts'] == 1
+    assert publisher.recovery_check(receipt, raw, ledger_raw, None, now=generate.NOW) is None
+    assert publisher.recovery_check(receipt, raw, None, None, now=generate.NOW) == 'ledger_entry_changed'
+    assert publisher.recovery_check(receipt, raw, ledger_raw, encode(receipt), now=generate.NOW) == 'previous_observation_changed'
+    receipt['publication']['run_id'] = 'foreign-publication'
+    with pytest.raises(ValueError, match='binding'):
+        publisher.recovery_check(receipt, raw, ledger_raw, None, now=generate.NOW)
+
+
+def test_dashboard_publication_fetches_optional_source_recovery_once_committed(tmp_path):
+    from tools import publish_dashboard
+    from tests.test_publish_dashboard import write_reader_records
+    docs = tmp_path / 'docs'
+    docs.mkdir()
+    (docs / 'index.html').write_text('<html></html>')
+    write_reader_records(docs)
+    assert 'source-recovery.json' not in publish_dashboard.public_files(tmp_path)
+    (docs / 'source-recovery.json').write_bytes(b'{"dated":"source recovery"}\n')
+    assert 'source-recovery.json' in publish_dashboard.public_files(tmp_path)

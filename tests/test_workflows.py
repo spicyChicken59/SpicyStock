@@ -59,9 +59,9 @@ def run_scheduled_guard(monkeypatch, tmp_path, at, cron='16 0 * * 2-6', previous
     return dict(line.split('=', 1) for line in output.read_text().splitlines())
 
 
-def test_the_workflow_inventory_is_exactly_the_eight_the_docs_name():
+def test_the_workflow_inventory_is_exactly_the_nine_the_docs_name():
     assert sorted(p.name for p in WORKFLOWS.glob("*.yml")) == \
-        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "issuer-evidence.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "tests.yml"]
+        ["evening.yml", "historical-input-proof.yml", "intraday.yml", "issuer-evidence.yml", "morning.yml", "publish-dashboard.yml", "secret-scan.yml", "source-recovery.yml", "tests.yml"]
 
 
 # ----------------------------------------------------------- evening -----
@@ -356,6 +356,67 @@ def test_research_observation_rides_the_same_guard_credentials_and_artifact_path
     assert names.index('Publish only against the unchanged source record') < names.index(publish['name'])
 
 
+def test_source_recovery_runs_on_its_own_schedule_credentials_and_artifact_path():
+    """Its own workflow, so no other collector's guard or publish step decides
+    whether it runs or whether its receipt is kept: two daily slots after the
+    late bars observed for 9 October had arrived and hours before the open, the
+    Alpaca pair and nothing else, read-only collection on main, and a persist
+    job that revalidates against main's record, its ledger entry and the prior
+    receipt whatever else happened in the run."""
+    wf = load('source-recovery.yml')
+    on = triggers(wf)
+    assert [c['cron'] for c in on['schedule']] == ['37 7 * * *', '37 9 * * *']
+    # a manual dispatch is a real collection, recorded like a scheduled one: no rehearsal input
+    assert on['workflow_dispatch'] in (None, {}) or 'inputs' not in on['workflow_dispatch']
+    assert wf['permissions'] == {'contents': 'read'}
+    assert wf['concurrency'] == {'group': 'source-recovery', 'cancel-in-progress': False}
+    collect = wf['jobs']['collect']
+    assert collect['if'] == "github.ref == 'refs/heads/main'"
+    from src import source_recovery
+    assert source_recovery.MAX_COLLECTION_SECONDS < collect['timeout-minutes'] * 60
+    current = steps(wf, 'collect')
+    assert current['actions/checkout@v4']['with'] == {'ref': '${{ github.ref }}', 'persist-credentials': False}
+    step = current['Collect a bound source recovery']
+    assert step['id'] == 'recovery' and 'if' not in step and 'continue-on-error' not in step
+    assert step['env']['SCAN_SEND_EMAIL'] == 'false'
+    assert {k for k, value in step['env'].items() if 'secrets.' in value} == {'ALPACA_API_KEY', 'ALPACA_SECRET_KEY'}
+    assert step['run'].splitlines()[0] == 'python -m src.source_recovery --docs docs --output "$RUNNER_TEMP/source-recovery.json"'
+    assert 'git ' not in step['run'] and '--dry-run' not in step['run']
+    assert collect['outputs']['ready'] == '${{ steps.recovery.outputs.ready }}'
+    artifact = current['Retain only this source recovery']
+    assert artifact['if'] == "steps.recovery.outputs.ready == 'true'"
+    assert artifact['with'] == {'name': 'source-recovery-${{ github.run_id }}-${{ github.run_attempt }}',
+                                'path': '${{ runner.temp }}/source-recovery.json',
+                                'if-no-files-found': 'error', 'retention-days': 14}
+    persist = wf['jobs']['persist']
+    assert persist['needs'] == 'collect' and persist['permissions'] == {'contents': 'write'}
+    assert persist['if'] == "${{ !cancelled() && needs.collect.outputs.ready == 'true' }}"
+    written = steps(wf, 'persist')
+    assert written['actions/checkout@v4']['with'] == {'ref': 'main'}
+    download = written["Download only this run's source recovery"]
+    publish = written['Publish only against the unchanged record, ledger entry and prior recovery']
+    assert download['with'] == {'name': 'source-recovery-${{ github.run_id }}-${{ github.run_attempt }}',
+                                'path': '${{ runner.temp }}/source-recovery'}
+    assert publish['run'] == ('python -m tools.publish_morning publish --target recovery '
+                              '--snapshot "$RUNNER_TEMP/source-recovery/source-recovery.json"')
+    # the evening and morning workflows carry none of it; the dashboard publisher follows it
+    assert 'source_recovery' not in str(load('evening.yml')) and 'source_recovery' not in str(load('morning.yml'))
+    assert 'source-recovery' not in str(load('morning.yml'))
+    assert wf['name'] in triggers(load('publish-dashboard.yml'))['workflow_run']['workflows']
+
+
+def test_source_recovery_slots_fall_after_the_observed_late_bars_and_before_either_open():
+    """The 9 October late bars had arrived by 07:12 UTC; the slots are after
+    that and before the 13:30 UTC open (14:30 in winter), with the collector's
+    own bound inside the gap even for the later slot."""
+    from src import source_recovery
+    for cron in ('37 7 * * *', '37 9 * * *'):
+        minute, hour = (int(x) for x in cron.split()[:2])
+        start = hour * 60 + minute
+        assert 7 * 60 + 12 < start
+        assert start + source_recovery.MAX_COLLECTION_SECONDS / 60 < 13 * 60 + 30
+
+
 def test_source_probe_is_opt_in_rehearsal_only_and_separately_retained():
     wf = load('morning.yml')
     current = steps(wf, 'collect')
@@ -434,7 +495,8 @@ def test_ci_runs_the_suite_the_fixture_check_the_chart_check_and_the_page_smoke(
         'python tests/fixtures/issuer-evidence/generate.py --check',
         'python tests/fixtures/stop-research/generate.py --check',
         'python tests/fixtures/research-outcomes/generate.py --check',
-        'python tests/fixtures/research-observations/generate.py --check']
+        'python tests/fixtures/research-observations/generate.py --check',
+        'python tests/fixtures/source-recovery/generate.py --check']
     page = steps(wf, "page")["Open the page against every fixture and read it back"]["run"]
     assert "node tools/handoff_model_cases.mjs" in page
     assert "node tools/chart_check.mjs" in page and "node tools/page_smoke.mjs --shots" in page
@@ -451,7 +513,8 @@ def test_the_evening_and_the_tests_run_the_same_python():
 def test_the_publisher_only_reads_committed_main_after_the_evening_workflow():
     wf = load("publish-dashboard.yml")
     on = triggers(wf)
-    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"], load('morning.yml')['name'], load('issuer-evidence.yml')['name']]
+    assert on["workflow_run"]["workflows"] == [load("evening.yml")["name"], load('morning.yml')['name'],
+                                               load('issuer-evidence.yml')['name'], load('source-recovery.yml')['name']]
     assert on["workflow_run"]["branches"] == ["main"]
     checkout = [s for s in wf["jobs"]["publish"]["steps"] if str(s.get("uses", "")).startswith("actions/checkout")][0]
     assert checkout["with"] == {"ref": "main", "persist-credentials": False}
