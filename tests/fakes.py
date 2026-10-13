@@ -81,6 +81,13 @@ class FakeAlpaca:
         self.holes: dict[str, set] = {}
         #: symbols whose session bar is sent twice -- see send_session_bar_twice
         self.duplicated: dict[str, int] = {}
+        #: minute bars by symbol -- see add_minutes; a minute request for any
+        #: other symbol gets nothing, as a name with no prints in the window would
+        self.minutes: dict[str, pd.DataFrame] = {}
+        #: the minute requests among bar_requests, in order
+        self.minute_requests: list[Any] = []
+        #: when set, a minute request raises this instead of answering
+        self.raise_on_minutes: Exception | None = None
 
     # -- registration -------------------------------------------------
     def add_history(self, ticker: str, df: pd.DataFrame, *, stale_sessions: int = 0,
@@ -143,6 +150,33 @@ class FakeAlpaca:
         scanner keeps is asserted against a genuine BarSet instead.
         """
         self.duplicated[ticker] = int(copies)
+
+    def add_minutes(self, ticker: str, df: pd.DataFrame) -> None:
+        """Register minute bars for `ticker`: a frame indexed by each minute's
+        start, timezone-aware, with capitalised OHLCV columns. A minute request
+        is answered with the registered minutes inside its window, unaligned:
+        they are dated as handed in, because a minute request names its session."""
+        self.minutes[ticker] = df
+
+    def minutes_frame(self, symbols: list[str], start: Any, end: Any) -> pd.DataFrame:
+        frames, keys = [], []
+        for sym in symbols:
+            df = self.minutes.get(sym)
+            if df is None:
+                continue
+            lower = df.rename(columns=str.lower).copy()
+            # the SDK sends its bounds as naive UTC, as the wire reads them
+            for bound, keep in ((start, lambda ix, b: ix >= b), (end, lambda ix, b: ix <= b)):
+                if bound is not None:
+                    at = pd.Timestamp(bound)
+                    lower = lower[keep(lower.index, at if at.tzinfo else at.tz_localize("UTC"))]
+            if lower.empty:
+                continue
+            frames.append(lower)
+            keys.append(sym)
+        if not frames:
+            return pd.DataFrame()
+        return pd.concat(frames, keys=keys, names=["symbol", "timestamp"])
 
     def add_split(self, ticker: str, ratio: float, *, sessions_ago: int = 0) -> None:
         """Record a forward split of `ratio`-for-1 with this ex-date.
@@ -256,6 +290,14 @@ class FakeDataClient:
             symbols = list(self._parent.history)
         elif isinstance(symbols, str):
             symbols = [symbols]
+        frame = getattr(request, "timeframe", None)
+        unit = getattr(getattr(frame, "unit", None), "value", getattr(frame, "unit", None))
+        if unit == "Min":
+            self._parent.minute_requests.append(request)
+            if self._parent.raise_on_minutes is not None:
+                raise self._parent.raise_on_minutes
+            return FakeBarSet(self._parent.minutes_frame(list(symbols), getattr(request, "start", None),
+                                                         getattr(request, "end", None)))
         if self._parent.raise_on_bars is not None and (
             not self._parent.fail_symbols
             or set(symbols) & self._parent.fail_symbols

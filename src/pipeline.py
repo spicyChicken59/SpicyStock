@@ -21,7 +21,7 @@ import pandas as pd
 from src import history, breadth, charts, clock, discovery, grader, market_data, plan, quality, record, report, scans
 from src import timing, inputs, sessions, provenance, input_diagnostics, quality_ledger, reader_authority
 from src import universe, reader_coverage, followup
-from src import watchlist, allocation, event_risk, review_selection, funnel, delivery
+from src import watchlist, allocation, event_risk, review_selection, funnel, delivery, intraday
 
 log = logging.getLogger("spicystock.pipeline")
 
@@ -664,7 +664,7 @@ def build_rules(uni: universe.Universe) -> dict:
     plus the universe's session price policy and identity. The digest of this block is
     ``app.rules_version``."""
     flat: dict = {}
-    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, RULES):
+    for block in (scans.RULES, discovery.RULES, reader_authority.RULES, grader.RULES, quality.RULES, plan.RULES, watchlist.RULES, record.RULES, timing.RULES, sessions.RULES, provenance.RULES, event_risk.RULES, review_selection.RULES, funnel.RULES, intraday.RULES, RULES):
         flat.update(block)
     flat.update({(k if k.startswith("breadth.") else "breadth." + k): v for k, v in breadth_rules().items()})
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
@@ -827,7 +827,13 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         record_problem = rec.get("problem")
         if rec.get("problem"):
             log.warning("picks.json: %s", rec["problem"])
-        open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"))
+        # a first day the daily bar left uncertain is read again from that
+        # session's minute bars, retained once (src/intraday.py); every walk
+        # below -- the slots, the open plans, the scorecard, the ledger -- reads
+        # the same evidence
+        minutes, intraday_block = gather_minutes(client, docs, rec, frames, session, now, dry_run, previous)
+        open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"),
+                                     minutes=minutes)
         held = slots_held(open_now)
         # a stale frame under an unfinished open model plan leaves that plan
         # unwalked tonight: never tolerated, whatever the count
@@ -893,6 +899,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
             "calendar": sessions.publication(session),
             # where this publication fell against the service's own schedule (src/delivery.py)
             "delivery": delivery.block(session, generated),
+            # the minute bars read for first days a daily bar could not place
+            "intraday": intraday_block,
         }
         account_block = account.to_dict() | {"notes": plan.account_notes(account)}
         rules_block = build_rules(uni)
@@ -920,9 +928,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                       if row.get("plan") and row["plan"].get("eligible") and row["plan"].get("action") in plan.ORDER_ACTIONS]
             rec = record.append(rec, session.isoformat(), picks, regime.get("verdict", "green"))
         walk_session = expected if closed else session
-        open_plans = record.open_plans(rec, frames, walk_session.isoformat(), regime.get("verdict", "green"))
+        open_plans = record.open_plans(rec, frames, walk_session.isoformat(), regime.get("verdict", "green"),
+                                       minutes=minutes)
         scorecard = record.scorecard(rec, frames, session.isoformat(), input_basis=run_block["input_basis"],
-                                     replay_rules_version=report.rules_version(rules_block), problem=record_problem)
+                                     replay_rules_version=report.rules_version(rules_block), problem=record_problem,
+                                     minutes=minutes)
 
         rep.stage = "publish"
         miss = report.closest_miss([_strip_private(b) for b in bursts], trades, beyond_cap)
@@ -974,7 +984,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                 publish_research_outcomes(docs, rec)
                 if not data.get("fixture"):
                     history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
-                rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
+                rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
                 rep.fail(exc)
                 return rep
         restamp(data, rep, closed)
@@ -984,7 +994,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         publish_research_outcomes(docs, rec)
         if not data.get("fixture"):
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
-        rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats)
+        rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
         return rep
     except PreflightError:
         raise
@@ -1002,6 +1012,32 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 #: model holds it, its ticket is live and may still fill, or the bars cannot
 #: say whether it filled (an uncertain plan is not freed capacity).
 SLOT_STATUSES = allocation.OCCUPIED_STATUSES
+
+
+def gather_minutes(client, docs: Path, rec: dict, frames: dict, session: date, now: datetime,
+                   dry_run: bool, previous: dict | None = None) -> tuple[dict, dict]:
+    """The minute evidence every walk tonight reads: what ``docs/intraday/``
+    retains, and minutes fetched for the plans whose first day the daily bar
+    left uncertain on a reason minutes can read (``record.needs_minutes``),
+    stored unless this is a dry run; the plans whose fetch failed in the
+    previous publication go after the rest. It never fails the run: when the
+    gathering itself fails, every walk still reads what the archive retains,
+    and the block says so."""
+    needed: list = []
+    try:
+        needed = record.needs_minutes(rec, frames, session.isoformat())
+        failed = (((previous or {}).get("run") or {}).get("intraday") or {}).get("failures") or []
+        failed_before = {f["key"] for f in failed if isinstance(f, dict) and isinstance(f.get("key"), str)}
+        return intraday.gather(client, docs, needed, now=now, write=not dry_run, failed_before=failed_before)
+    except Exception as exc:  # noqa: BLE001 -- the evening goes on with what is retained
+        log.error("minute evidence could not be gathered: %s", type(exc).__name__)
+        try:
+            evidence, problems, _ = intraday.load_archive(docs)
+        except Exception:  # noqa: BLE001
+            evidence, problems = {}, []
+        wanted = sum(1 for p in needed if intraday.key(p) not in evidence)
+        return evidence, intraday.failed_block(wanted=wanted, retained=len(evidence), kind=type(exc).__name__,
+                                               problems=problems)
 
 
 def slots_held(open_plans: list[dict]) -> int:

@@ -46,7 +46,7 @@ from typing import Any
 
 import pandas as pd
 
-from src import plan
+from src import intraday, plan
 
 log = logging.getLogger("spicystock.record")
 
@@ -70,13 +70,18 @@ UNCERTAIN = "uncertain"                    # the bars cannot say whether, when o
 KNOWN_FILL = "open_inside_zone"
 #: Why a fill is uncertain, one code each; ``UNCERTAIN_WORDS`` is the short
 #: phrase the page and the mail print beside a count.
-UNCERTAIN_REASONS = ("trigger_timing", "stop_sequence", "open_above_limit", "open_below_skip")
+UNCERTAIN_REASONS = ("trigger_timing", "stop_sequence", "open_above_limit", "open_below_skip",
+                     intraday.MINUTE_ORDER)
 UNCERTAIN_WORDS = {
     "trigger_timing": "reached the trigger after the open, at a time the bar cannot give",
     "stop_sequence": "reached the trigger with the day's low under the stop: fill and stop in unknown order",
     "open_above_limit": "opened above the limit, which the plan skips, then traded back under it",
     "open_below_skip": "opened under the skip line, which the plan skips, then recovered through the trigger",
+    intraday.MINUTE_ORDER: intraday.MINUTE_ORDER_WORDS,
 }
+#: (P) how a first day the daily bar leaves uncertain is read again from that
+#: session's retained minute bars (``intraday.resolve``)
+INTRADAY_FILL = intraday.POLICY
 
 RULES: dict[str, Any] = {
     "record.open_plan_sessions": OPEN_PLAN_SESSIONS,
@@ -86,12 +91,17 @@ RULES: dict[str, Any] = {
     "record.max_picks": MAX_PICKS,
     "record.benchmark": BENCHMARK,
     "record.known_fill": KNOWN_FILL,
+    "record.intraday_fill": INTRADAY_FILL,
 }
 
-SCORECARD_NOTE = ("from bars alone, a model and not a brokerage record: a fill is booked only at the next "
-                  "open at or over the trigger and at or under the limit; a day that reaches the trigger after "
-                  "the open, an open past the limit or under the skip line that could still have filled, and a "
-                  "fill-day low under the stop are uncertain, counted here and in no rate; the published stop "
+SCORECARD_NOTE = ("from bars alone, a model and not a brokerage record: a daily bar books a fill only at the "
+                  "next open at or over the trigger and at or under the limit; a day that reaches the trigger "
+                  "after the open is read again from that session's retained minute bars, which book a fill in "
+                  f"the {plan.ENTRY_WINDOW} at the trigger (or the crossing minute's open over it), none after "
+                  "it, and leave a crossing minute that cannot order the fill against the limit or the stop "
+                  "uncertain; without those minutes such a day, an open past the limit or under the skip line "
+                  "that could still have filled, and a fill-day low under the stop are uncertain, counted here "
+                  "and in no rate; the published stop "
                   "is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by "
                   f"day {plan.FINAL_EXIT_DAY}")
 
@@ -299,6 +309,18 @@ def later_bars(df: pd.DataFrame | None, after: str, through: str | None = None) 
     return rows
 
 
+def ticket_levels(pick: dict) -> dict:
+    """The ticket's trigger, limit, skip line and stop, as ``fill()`` reads
+    them: a burst's trigger is its ``entry_ref`` with ``entry_high`` the limit
+    and ``entry_low`` the skip line; an anticipation ticket has ``trigger`` (or
+    ``entry_ref``) and ``limit`` and no skip line."""
+    if pick.get("kind") == "anticipation":
+        trigger, limit, skip = float(pick.get("trigger") or pick["entry_ref"]), pick.get("limit"), None
+    else:
+        trigger, limit, skip = float(pick["entry_ref"]), pick.get("entry_high"), pick.get("entry_low")
+    return {"trigger": trigger, "limit": limit, "skip": skip, "stop": float(pick["stop"])}
+
+
 def fill(pick: dict, bar: dict) -> tuple[str, float | None, str, str | None]:
     """What the ticket did on its first session, as far as that daily bar
     can say.
@@ -327,11 +349,8 @@ def fill(pick: dict, bar: dict) -> tuple[str, float | None, str, str | None]:
     each None unless the status calls for them.
     """
     o, h, l = bar["o"], bar["h"], bar["l"]
-    stop = float(pick["stop"])
-    if pick.get("kind") == "anticipation":
-        trigger, limit, skip = float(pick.get("trigger") or pick["entry_ref"]), pick.get("limit"), None
-    else:
-        trigger, limit, skip = float(pick["entry_ref"]), pick.get("entry_high"), pick.get("entry_low")
+    levels = ticket_levels(pick)
+    trigger, limit, skip, stop = levels["trigger"], levels["limit"], levels["skip"], levels["stop"]
     usd = plan._usd
     if limit is not None and o > float(limit):
         limit = float(limit)
@@ -385,13 +404,18 @@ IF_TAKEN = ("The model books no fill. If you took this plan: the sell stop is {s
             "day {sell_half_day}'s close and be out by day {final_day}'s close.")
 
 
-def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
+def replay(pick: dict, bars: list[dict], regime: str = "green", minutes: dict | None = None) -> dict:
     """One pick walked over its later bars: the fill rule, then
     ``plan.follow()`` from the open fill over whole bars. The row carries the
     published stop and targets beside the walk's own numbers, so the page
     can draw stop, entry and aim on one scale. A first bar the walk could
     not read is ``unreadable``, the way a later one is; a fill the bar
-    cannot establish is ``uncertain`` with its reason, and is never walked."""
+    cannot establish is ``uncertain`` with its reason, and is never walked --
+    unless the reason is one ``intraday.RESOLVABLE`` names and ``minutes``
+    holds that session's retained minute bars, which ``intraday.resolve()``
+    reads again: a fill in the entry window is walked from the fill, with the
+    entry day rebuilt from the fill on; none in it is not filled; a crossing
+    minute that cannot be ordered stays uncertain (``minute_order``)."""
     base = {"ticker": pick["ticker"], "kind": pick.get("kind", "burst"), "picked": pick["date"],
             "grade": pick.get("grade"), "stop": pick["stop"], "targets": pick.get("targets"),
             "fill": None, "uncertainty": None, "sessions": len(bars),
@@ -416,6 +440,13 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
                                      f"{first['c']} outside {first['l']}-{first['h']}); follow the plan's own stop."),
                         events=[], regime=regime)
     status, price, note, why = fill(pick, first)
+    entry_day = None
+    if status == UNCERTAIN and why in intraday.RESOLVABLE and minutes is not None:
+        read = intraday.resolve(ticket_levels(pick), minutes, first)
+        if read is not None:
+            status, price, note, why, entry_day = read
+            # the object the answer came from, by its content address under docs/intraday/
+            base["minute_evidence"] = intraday.name_of(minutes)
     if status == NOT_FILLED:
         return _no_walk(base, pick, first, day=1, status=NOT_FILLED, fill_note=note,
                         instruction=f"Day 1 ({first['date']}): {note}. Nothing to hold.",
@@ -433,7 +464,7 @@ def replay(pick: dict, bars: list[dict], regime: str = "green") -> dict:
                         regime=regime, uncertainty=why)
     filled = {**pick, "entry_ref": price}
     try:
-        walk = plan.follow(filled, bars, regime)
+        walk = plan.follow(filled, [entry_day, *bars[1:]] if entry_day else bars, regime)
     except ValueError as exc:
         return _no_walk({**base, "entry_ref": price}, {**pick, "entry_ref": price}, None, day=len(bars),
                         status=UNREADABLE, fill_note=note,
@@ -466,17 +497,40 @@ def r_multiple(row: dict, stop: float) -> float | None:
 
 
 # ------------------------------------------------------------- sessions ----
+def needs_minutes(rec: dict, frames: dict[str, pd.DataFrame], session: str) -> list[dict]:
+    """The scorecard window's picks whose first session the daily bar leaves
+    uncertain on a reason minute bars can read again (``intraday.RESOLVABLE``):
+    the picks a run asks the provider's minute bars for."""
+    window = set(sessions_before(frames, session, SCORECARD_SESSIONS))
+    out = []
+    for pick in rec.get("picks", []):
+        if pick["date"] not in window:
+            continue
+        bars = later_bars(frames.get(pick["ticker"]), pick["date"], session)
+        if not bars or bars[0]["date"] != str(intraday.entry_session(pick)):
+            continue
+        first = bars[0]
+        if not (first["l"] <= min(first["o"], first["c"]) and max(first["o"], first["c"]) <= first["h"]):
+            continue
+        status, _, _, why = fill(pick, first)
+        if status == UNCERTAIN and why in intraday.RESOLVABLE:
+            out.append(pick)
+    return out
+
+
 def sessions_before(frames: dict[str, pd.DataFrame], session: str, n: int) -> list[str]:
     """Expected XNYS sessions, whether or not the provider returned bars."""
     end = _parse_date(session)
     return [str(d) for d in exchange_sessions.sessions_before(end, n)] if end else []
 
 
-def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime: str = "green") -> list[dict]:
+def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime: str = "green",
+               minutes: dict[str, dict] | None = None) -> list[dict]:
     """Every pick from the last ``OPEN_PLAN_SESSIONS`` sessions before
     ``session``, walked through ``session``'s bars, oldest pick first (the
     one nearest its day-5 exit is the most urgent). A pick whose name the
-    night did not fetch is returned with no bars and says so."""
+    night did not fetch is returned with no bars and says so. ``minutes`` is
+    the retained minute evidence by ``intraday.key()``."""
     from src import market_data
     window = set(sessions_before(frames, session, OPEN_PLAN_SESSIONS))
     calendar_dates = [str(d) for d in exchange_sessions.dates(date.fromisoformat(min(window)), date.fromisoformat(session))] if window else []
@@ -486,7 +540,7 @@ def open_plans(rec: dict, frames: dict[str, pd.DataFrame], session: str, regime:
             continue
         df = frames.get(pick["ticker"])
         bars = later_bars(df, pick["date"], session)
-        row = replay(pick, bars, regime)
+        row = replay(pick, bars, regime, (minutes or {}).get(intraday.key(pick)))
         passed = [d for d in calendar_dates if pick["date"] < d <= session]
         if df is None or (not bars and passed):
             # the night did not fetch the name, or the market printed sessions
@@ -520,7 +574,7 @@ SCORECARD_BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "u
 
 
 def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str, *,
-                   window_sessions: int | None = None) -> list[dict]:
+                   window_sessions: int | None = None, minutes: dict[str, dict] | None = None) -> list[dict]:
     """One audit row per retained plan in the prior window or current session.
 
     Replay remains the sole fill/exit authority. Only its five-session horizon
@@ -550,9 +604,11 @@ def scorecard_rows(rec: dict, frames: dict[str, pd.DataFrame], session: str, *,
         elif not bars:
             row["bucket"] = "unmeasured"
         else:
-            walk = replay(pick, bars, "green")
+            walk = replay(pick, bars, "green", (minutes or {}).get(intraday.key(pick)))
             status = row["status"] = walk["status"]
             row["uncertainty"] = walk.get("uncertainty")
+            if walk.get("minute_evidence"):
+                row["minute_evidence"] = walk["minute_evidence"]
             if status in (UNCERTAIN, NOT_FILLED, UNREADABLE):
                 row["bucket"] = status
             else:
@@ -595,7 +651,7 @@ def summarize_scorecard(rows: list[dict]) -> dict:
 
 
 def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str, *, input_basis=None,
-              replay_rules_version=None, problem=None) -> dict:
+              replay_rules_version=None, problem=None, minutes: dict[str, dict] | None = None) -> dict:
     """All retained plans; personal browser choices never enter this function.
 
     Current-session plans await their first session. Missing observations stay
@@ -604,7 +660,7 @@ def scorecard(rec: dict, frames: dict[str, pd.DataFrame], session: str, *, input
     publication, not an inference from a ticker or from today's rules.
     """
     window = sessions_before(frames, session, SCORECARD_SESSIONS)
-    rows = scorecard_rows(rec, frames, session)
+    rows = scorecard_rows(rec, frames, session, minutes=minutes)
     return {**summarize_scorecard(rows), "contract_version": SCORECARD_VERSION,
         "sessions": SCORECARD_SESSIONS, "note": SCORECARD_NOTE,
         "population": {"from": min(window) if window else session, "through": session,

@@ -208,7 +208,11 @@ def test_the_next_night_records_last_nights_stale_stocks(wide, claude, fake_rese
     kept = {d: {k: v for k, v in files(docs / d).items() if k != 'index.json'}
             for d in ('history', quality_ledger.DIRECTORY)}
     assert all(kept.values())
-    asked = len(fake_alpaca.bar_requests)
+    # the daily fetch's requests; the minute bars of last night's tickets' first day
+    # are a request of their own (src/intraday.py), never the follow-up's
+    def daily():
+        return len(fake_alpaca.bar_requests) - len(fake_alpaca.minute_requests)
+    asked = daily()
     c = float(fake_alpaca.history['QAAA']['Close'].iloc[-1])
     late(fake_alpaca, 'QAAA', [[c, c, c, c, 0.0]], still_behind=True)
     c = float(fake_alpaca.history['QAAB']['Close'].iloc[-1])
@@ -224,8 +228,8 @@ def test_the_next_night_records_last_nights_stale_stocks(wide, claude, fake_rese
                                         "this run's split-adjusted fetch: 2 now carry a 2026-09-10 bar (2 with zero "
                                         "volume); none of them would have been listed.")
     assert data['run']['input_tolerance']['names'] == ['QAAA']
-    # no request of its own: tonight asked exactly what last night asked
-    assert len(fake_alpaca.bar_requests) - asked == asked
+    # no request of its own: tonight's daily fetch asked exactly what last night's did
+    assert daily() - asked == asked
     # and the previous night's archive and ledger entry are untouched, byte for byte
     for d, before in kept.items():
         after = files(docs / d)

@@ -128,7 +128,10 @@ CONTRACT: dict[str, str] = {
            "degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's "
            "stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is "
            "what the night's chart reads cost in the API's own units -- calls sent, replies received, the four "
-           "token classes -- under the model the run asked; it carries no price.",
+           "token classes -- under the model the run asked; it carries no price. run.intraday is the minute "
+           "bars read for plans whose first day the daily bar could not place (a day that reached the trigger "
+           "after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the "
+           "failures by kind; a plan walked from them names its object in minute_evidence.",
     "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
     "account": "The configured sizing assumptions every plan below was computed from: equity, risk per "
                "trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
@@ -678,8 +681,9 @@ def validate(data: dict) -> None:
     faults.extend(delivery.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
     faults.extend(reader_coverage.usage_faults(data))
-    from src import funnel
+    from src import funnel, intraday
     faults.extend(funnel.faults(data))
+    faults.extend(intraday.record_faults(data))
     verdict = _get(data, "breadth", "regime", "verdict")
     if verdict is not None and verdict not in REGIMES:
         faults.append(f"breadth.regime.verdict {verdict!r} is not one of {REGIMES}")
@@ -1036,6 +1040,9 @@ def _inputs_block(run: dict) -> str:
     cost = _text(_get(run, "reader_usage", "sentence"))
     if cost:
         lines.append(cost)
+    minutes = _text(_get(run, "intraday", "sentence"))
+    if minutes:
+        lines.append(minutes)
     if not lines:
         return ""
     body = "".join(f'<p style="{_S_MUTED}">{esc(s)}</p>' for s in lines)

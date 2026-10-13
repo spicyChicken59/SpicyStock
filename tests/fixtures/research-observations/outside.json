@@ -7,20 +7,20 @@
   "previous_observation_sha256": null,
   "dry_run": false,
   "publication": {
-    "data_sha256": "7c34b5f39fda821bd979e3badf6329b7a0169595f41e05b008380091fdadbe5c",
-    "context_sha256": "a072b23d17d0ed5837931b26a5bfcfb34a1048774662028ea9a21324ae0bef73",
+    "data_sha256": "a34e8e0eac922e9f9ecab8c3d9f2ee3b850bcfdd213b106172934b378a997e03",
+    "context_sha256": "e33c384e581d3a8bb8c374e7f08ad3a0bb07dd28abb6d72264ce6f8b04847bae",
     "run_id": "synthetic-stop-research-outside",
-    "rules_version": "784177584fbe",
+    "rules_version": "12b2a4590ff1",
     "measured_session": "2026-09-10",
     "applicable_session": "2026-09-11",
     "published_at": "2026-09-10T22:30:00+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "58234ce5c81e355138787503daa45e0d14028b641652d8d254731e8249ae4f29"
+    "reader_sha256": "f3d10e307484fbf45cfaa90bcc0c6875aa2746e90d4fd601c1045d31ece5c1c2"
   },
   "cohort": {
-    "receipt_sha256": "81edb2e5757180947fd75488fbaa70bbad83996cc63173c6b88f9972fd9f986b",
-    "bundle_sha256": "b73eb6accee0ddb15764ef1f6d8ed9c18245b804cd01b56ca1939a7ca5de81b8",
-    "bundle_path": "stop-research/b73eb6accee0ddb15764ef1f6d8ed9c18245b804cd01b56ca1939a7ca5de81b8.json",
+    "receipt_sha256": "5f8f6d1ed0845be289994460d43d3cdc2c65aac7c814a0ff56ef069209c58012",
+    "bundle_sha256": "cdadd3e1cd032c5ec7b9a0fec98e5bffdd1bcd40b4d32e8bc039e1763bacdb2d",
+    "bundle_path": "stop-research/cdadd3e1cd032c5ec7b9a0fec98e5bffdd1bcd40b4d32e8bc039e1763bacdb2d.json",
     "bundle_bytes": 2258,
     "policy_id": "anticipation_stop_width_4_to_5_v1",
     "generated_at": "2026-10-10T12:00:00+00:00",

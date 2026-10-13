@@ -142,12 +142,13 @@ def execution_revision():
         return None
 
 
-def capture(*, docs, rec, frames, stats):
+def capture(*, docs, rec, frames, stats, minutes=None):
     """After the final public write; isolated from grading, delivery and status.
 
     Only already-published real runs are eligible. A process interrupted before
     this call can leave a publication without an entry; no completeness is
     inferred from the ledger alone. Explicit status exposes capture failures.
+    ``minutes`` is the minute evidence the publication's scorecard walked with.
     """
     try:
         raw = (Path(docs) / 'data.json').read_bytes()
@@ -161,7 +162,7 @@ def capture(*, docs, rec, frames, stats):
             for key, names in exceptions.items():
                 if universe.population(names) != data['run']['coverage']['reasons'][key]:
                     raise ValueError('quality ledger exception membership mismatch')
-        rows = record.scorecard_rows(rec, frames, data['run']['session'])
+        rows = record.scorecard_rows(rec, frames, data['run']['session'], minutes=minutes)
         summary = record.summarize_scorecard(rows)
         if summary != {k: data['scorecard'][k] for k in summary}:
             raise ValueError('quality ledger outcomes disagree with published scorecard')

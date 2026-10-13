@@ -46,7 +46,7 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 
-from src import charts, funnel, grader, market_data, pipeline  # noqa: E402
+from src import charts, funnel, grader, intraday, market_data, pipeline  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
@@ -253,6 +253,7 @@ def record_facts(docs: Path) -> dict | None:
             "reads": {"requested": reads.get("requested"), "done": reads.get("done"), "verdict": reads.get("verdict"),
                       "causes": reads.get("causes")},
             "reader_usage": run.get("reader_usage"),
+            "intraday": {k: (run.get("intraday") or {}).get(k) for k in ("wanted", "asked", "fetched", "stored", "retained")},
             "trades": list(data.get("trades") or []),
             "reaction_tickets": stages["reaction"]["stages"].get("ticket"),
             "anticipation_tickets": stages["anticipation"]["stages"].get("ticket"),
@@ -312,7 +313,8 @@ class Night:
         self.inject(scenario["inject"])
         before = snapshot(self.docs)
         before_identity = identity(self.docs)
-        counts = (len(self.fake.bar_requests), len(self.claude.calls), len(self.resend.sent))
+        counts = (len(self.fake.bar_requests), len(self.claude.calls), len(self.resend.sent),
+                  len(self.fake.minute_requests))
         checks = slot_checks(scenario)
         decisions = [dict(when=label, **guard(root, at, cron, self.code)) for label, at, cron in checks if label.startswith("before")]
         rep = pipeline.run_evening(tickers=[n for n in self.frames if n != pipeline.BENCHMARK_SYMBOL],
@@ -326,7 +328,11 @@ class Night:
             outcome = previous_outcome(before, after, published=rep.published)
         except RehearsalError as exc:
             raise RehearsalError(f"{scenario['name']}: {exc}") from exc
-        bars = len(self.fake.bar_requests) - counts[0]
+        # the minute bars of earlier plans' first days go to the same endpoint and
+        # are counted on their own, against the plans the night asked for
+        minutes = len(self.fake.minute_requests) - counts[3]
+        bars = len(self.fake.bar_requests) - counts[0] - minutes
+        asked = ((record_facts(self.docs) or {}).get("intraday") or {}).get("asked") if rep.published else None
         facts = {
             "name": scenario["name"], "words": scenario["words"], "clock": scenario["at"],
             "session": scenario["session"], "injected": INJECTIONS[scenario["inject"]],
@@ -334,13 +340,18 @@ class Night:
                     "failed": rep.failed, "failure": rep.failure, "skipped": rep.skipped, "stage": rep.stage,
                     "problems": [p.get("kind") for p in rep.problems],
                     "calendar_outcome": (rep.calendar_outcome or {}).get("outcome")},
-            "calls": {"bars_requests": bars, "reader_calls": reader_calls,
+            "calls": {"bars_requests": bars, "minute_requests": minutes, "reader_calls": reader_calls,
                       "mails": len(self.resend.sent) - counts[2],
                       "mail_subjects": [m.get("subject") for m in self.resend.sent[counts[2]:]]},
             "previous": {"publication": before_identity, "outcome": outcome},
             "files_changed": len(changed),
             "bars_requests_bound": {"symbols": len(self.frames), "attempts_per_batch": BARS_ATTEMPTS_PER_BATCH,
                                     "maximum": bars_bound(len(self.frames)), "within": bars <= bars_bound(len(self.frames))},
+            # one request per entry session, never more than the plans the night asked for;
+            # a night that published nothing names no ask, and is held to the run's own cap
+            "minute_requests_bound": {"asked": asked,
+                                      "maximum": asked if asked is not None else intraday.MAX_PICKS_PER_RUN,
+                                      "within": minutes <= (asked if asked is not None else intraday.MAX_PICKS_PER_RUN)},
             "publication": record_facts(self.docs) if rep.published else None,
             "publication_identity": identity(self.docs) if rep.published else None,
             "reader_calls_bound": {"requested": requested, "attempts": grader.ATTEMPTS,
@@ -423,6 +434,8 @@ def summary(nights: list[dict]) -> dict:
         "exit_codes": {n["name"]: n["run"]["exit_code"] for n in nights},
         "reader_calls_within_bound_every_night": all(n["reader_calls_bound"]["within"] for n in nights),
         "bars_requests_within_bound_every_night": all(n["bars_requests_bound"]["within"] for n in nights),
+        "minute_requests_within_bound_every_night": all(n["minute_requests_bound"]["within"] for n in nights),
+        "minute_requests": {n["name"]: n["calls"]["minute_requests"] for n in nights},
         "reader_calls": {n["name"]: n["calls"]["reader_calls"] for n in nights},
         "bars_requests": {n["name"]: n["calls"]["bars_requests"] for n in nights},
         "mails": {n["name"]: n["calls"]["mails"] for n in nights},
@@ -442,8 +455,8 @@ def markdown(result: dict) -> str:
              f"(`{result['source']['workflow']}`, SHA-256 `{result['source']['guard_sha256'][:12]}…`) executed as written under a frozen clock. "
              "Every failure is injected; nothing here is a live provider, a runner or GitHub.", "",
              "## Nights", "",
-             "| night | session | clock (UTC) | injected | exit | status | published | previous publication | bars requests (bound) | reader calls (bound) | mails |",
-             "|---|---|---|---|---|---|---|---|---|---|---|"]
+             "| night | session | clock (UTC) | injected | exit | status | published | previous publication | bars requests (bound) | minute requests (bound) | reader calls (bound) | mails |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for n in result["nights"]:
         pub = n["publication"]
         bound = n["reader_calls_bound"]
@@ -451,7 +464,9 @@ def markdown(result: dict) -> str:
         bars = n["bars_requests_bound"]
         lines.append(f"| {n['name']} | {n['session'] or '—'} | {n['clock'][:16]} | {n['injected']} | {n['run']['exit_code']} | "
                      f"{n['run']['status']} | {'yes, ' + pub['session'] + ' (' + pub['status'] + ', mail ' + str(pub['email']) + ')' if pub else 'no'} | "
-                     f"{previous} | {n['calls']['bars_requests']} (≤ {bars['maximum']}) | {n['calls']['reader_calls']} (≤ {bound['maximum'] if bound['maximum'] is not None else 0}) | "
+                     f"{previous} | {n['calls']['bars_requests']} (≤ {bars['maximum']}) | "
+                     f"{n['calls']['minute_requests']} (≤ {n['minute_requests_bound']['maximum']}) | "
+                     f"{n['calls']['reader_calls']} (≤ {bound['maximum'] if bound['maximum'] is not None else 0}) | "
                      f"{n['calls']['mails']} |")
     lines += ["", "## What each night did", ""]
     for n in result["nights"]:
@@ -475,6 +490,8 @@ def markdown(result: dict) -> str:
               f"- The previous publication's files survived every night that published nothing: {'yes' if s['previous_preserved_on_every_night_that_published_nothing'] else 'NO'}.",
               f"- Bars requests within batches × {BARS_ATTEMPTS_PER_BATCH} attempts every night: {'yes' if s['bars_requests_within_bound_every_night'] else 'NO'}; by night: "
               + ", ".join(f"{k} {v}" for k, v in s["bars_requests"].items()) + ".",
+              f"- Minute-bar requests within the plans each night asked for: {'yes' if s['minute_requests_within_bound_every_night'] else 'NO'}; by night: "
+              + ", ".join(f"{k} {v}" for k, v in s["minute_requests"].items()) + ".",
               f"- Reader calls within names × {result['source']['attempts']} attempts every night: {'yes' if s['reader_calls_within_bound_every_night'] else 'NO'}; by night: "
               + ", ".join(f"{k} {v}" for k, v in s["reader_calls"].items()) + ".",
               f"- Guard decisions: {s['guard']['permitted']} permitted, {s['guard']['already_published']} refused as already published, "

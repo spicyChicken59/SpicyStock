@@ -506,7 +506,8 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    stock, the lens, the scroll and the focus they left.
 4. **Record.** **Open model plans** is every pick from the last five
    sessions walked from bars alone as a model: *day 3: sell half*,
-   *stopped*, *not filled*, *uncertain* (the bars cannot say whether it
+   *stopped*, *not filled*, *uncertain* (neither the daily bar nor, where
+   the run retained them, that session's minute bars can say whether it
    filled), with the stop the rules would have moved it to; SpicyStock
    does not know what you hold. Then the bars-only scorecard (plans, fills,
    win rate, average R, SPY over the same days) and fourteen dots for the
@@ -1632,14 +1633,55 @@ Non-ticket setups and browser-local selections never enter that population.
 File-capacity and malformed-record limits are disclosed; this is not an
 unlimited inception-to-date record.
 
-The existing daily-bar replay is unchanged: a ticket is booked filled only at
-the next open, at or over its trigger and at or under its limit. Ambiguous
-trigger timing or fill/stop ordering remains uncertain. The published stop is
+A daily bar books a ticket filled only at the next open, at or over its trigger
+and at or under its limit. A first day that opened under the trigger and reached
+it later -- the usual first day of a buy-stop ticket -- is read again from that
+session's one-minute bars (`src/intraday.py`, policy `first_window_minute_v1`):
+the first minute of the plan's first 30 whose high reaches the trigger fills at
+the trigger, or at that minute's open when it opened over it; no such minute in
+the window is *not filled*, the plan's day order having been cancelled at the
+window's end however far the day went later; a crossing minute whose fill would
+be over the limit, or which reached the stop from under the trigger, cannot be
+ordered by its own bar and stays *uncertain* (`minute_order`). A fill is walked
+from the fill on: the entry day is rebuilt from the crossing minute, the close
+and the stop rises at day 1's close to the session's own low. A crossing minute
+that opened over the limit is *not filled* when no minute of the window from it
+on traded back to the limit. The minutes establish the fill and nothing after
+it: the walk from the fill is the daily model's, so a day-1 bar reaching both the
+stop and +8% books the stop, as a fill at the open would. Minutes must reproduce
+the daily bar to be used: no minute outside its range (at four decimals), a
+minute reaching the trigger it reached, and a minute at or under the stop when
+its low reached it; minutes that do not are another feed's account of the day.
+An open past the limit or under the skip line keeps the daily answer, and a day
+with no usable retained minutes stays uncertain. The published stop is
 one R on the whole position; a half sold at +8% or at day 3 is at least half in
 whole shares, and every sale is weighted by its quantity. With complete usable
 bars, everything settles by day 5. Missing evidence never establishes that exit.
 Only those five sessions feed the scorecard; later data gaps cannot erase its
 resolved result. A stop gap is modeled at the open, not at the stop price.
+
+The evening asks for those minutes itself, once: `record.needs_minutes()` names
+the plans in the scorecard window whose first day the daily bar left uncertain on
+a reason minutes can read, and `intraday.gather()` requests the `sip`,
+split-adjusted one-minute bars of each entry session's regular hours -- one
+request per session, at most 8 plans a run (newest first, the plans whose fetch
+failed the night before after the rest, so one cannot hold the cap; the others
+wait a night), each only once that session's close is behind the feed's 16-minute
+hold-back. Each answer is one content-addressed object under `docs/intraday/`,
+written once, read back and never replaced (512 objects, 16 MiB, 64 KiB an
+object; at capacity nothing new is written and the plan stays uncertain). A plan
+two objects claim is set aside by name, used by no walk and never asked for
+again. Every walk of the night -- the model slots, the open plans, the scorecard
+and the quality ledger's re-derivation -- reads the same evidence: what the
+archive retains, and what tonight stored; a row walked from it names its object
+in `minute_evidence`. `run.intraday` counts what was needed, set aside, asked for,
+fetched and stored, the failures by kind (`no_minutes`, an error's type, never
+its text) and archive problems, in a sentence the Method view and the mail
+print; `report.validate()` holds it under rules that read minutes (and every
+named object to what the walks could read). A failed or empty request leaves the
+plan uncertain and never fails the run; a gathering that fails whole is the
+block's `failed` status, and every walk still reads what the archive retains. A
+dry run reads what it fetched and writes nothing.
 
 It prints counts from the first night and rates only from twenty settled
 plans. Wins, losses and breakeven reconcile to that explicit resolved denominator;
@@ -1654,7 +1696,9 @@ retention, price basis, regime, versioning and the offline analysis command.
 `tools/scorecard_analysis.py` uses the same replay and summary for complete
 partitions by original rules version, burst/dollar/both, grade, regime, kind and
 reader source. Exact original publication receipts establish attribution;
-missing metadata stays unknown. These partitions do not select a preferred
+missing metadata stays unknown. `--docs` reads the minute bars a docs directory
+retains under `intraday/`, so a first day the published scorecard read from them
+is read the same way; without it that day stays as its daily bar leaves it. These partitions do not select a preferred
 strategy or change the aggregate. Legacy website summaries retain their recorded
 values and explicitly admit incomplete coverage accounting.
 
@@ -1741,6 +1785,7 @@ src/            history.py (public recovery and coverage)
                 pipeline.py (the run) · inputs.py (population ledger) · universe.py · market_data.py · clock.py
                 input_diagnostics.py (run-scoped exception membership and observations)
                 followup.py (the next session's read of the previous publication's stale stocks, from its own fetch; never a signal)
+                intraday.py (one-minute bars for a plan's first day the daily bar cannot place: fetched once, bounded, retained content-addressed; read again by every walk)
                 quality_ledger.py (immutable publication input/grade/model-outcome facts)
                 review_selection.py (feasible-first chart review and bounded spare research)
                 funnel.py (one terminal stage per discovered candidate, read off the record's own fields and re-derived by the validator; the candidate funnel)
@@ -1760,6 +1805,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
                 history/ (recovery) · evidence/ (deduplicated source objects)
+                intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
