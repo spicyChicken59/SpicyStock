@@ -7690,8 +7690,9 @@ it) passed pytest, page and the gate's docs-only decision on run 38425035651
 and both gitleaks runs. Publisher 38428819520 printed *Verified: every one of
 the 41 public files matches committed main* at 16:15:21 UTC; Pages 38428851261
 deployed (38428818848 cancelled as superseded, as every merge does); the merge
-commit's own Secret scans 38428819611 and 38428944632 passed; its Tests run
-38428819598 was still running at 16:26 UTC and is recorded on the next PR. The
+commit's own Secret scans 38428819611 and 38428944632 passed, and so did its
+Tests run 38428819598 (page 16:14–16:31 UTC, pytest 16:14–16:39; the native
+cases skipped by the gate, as a merge's are). The
 source-recovery workflow (id 383411937) is registered and active; its first
 slot is 07:37 UTC on 14 October. **No 13 October morning run had been created
 by 16:26 UTC** (the 12 October ones were created at 21:44 and 21:47 UTC), so
