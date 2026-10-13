@@ -3,6 +3,9 @@
 Frames are a JSON mapping from ticker to provenance v1 normalized frame objects.
 Optional original publications supply verified attribution, never replacement
 prices or outcomes. Missing attribution remains unknown in every partition.
+``--docs`` reads the minute bars the evening retained under ``docs/intraday/``
+(``src/intraday.py``), so a first day the published scorecard read from them is
+read the same way here; without it such a day stays as its daily bar leaves it.
 """
 from __future__ import annotations
 
@@ -13,14 +16,14 @@ import sys
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from src import provenance, record  # noqa: E402
+from src import intraday, provenance, record  # noqa: E402
 
 
 def identity(ref):
     return tuple((ref or {}).get(k) for k in ("id", "context_sha256", "plan_sha256", "pick_sha256"))
 
 
-def analyze(rec, frames, session, publications=()):
+def analyze(rec, frames, session, publications=(), minutes=None):
     for pick in rec.get("picks", []):
         problem = record.pick_problem(pick)
         if problem:
@@ -43,7 +46,7 @@ def analyze(rec, frames, session, publications=()):
                 "reader_source": e.get("reader_source", "not_applicable"),
                 "grade": e["gate"]["final_grade"], "regime": e["gate"]["regime"],
                 "ticker": e["ticker"], "picked": e["session"], "kind": e["kind"]}
-    rows = record.scorecard_rows(rec, frames, session)
+    rows = record.scorecard_rows(rec, frames, session, minutes=minutes)
     for row in rows:
         meta = metadata.get(identity(row["evidence_ref"]), {})
         if meta and any(row[k] != meta[k] for k in ("ticker", "picked", "kind", "grade", "regime")):
@@ -53,9 +56,10 @@ def analyze(rec, frames, session, publications=()):
     dimensions = ("rules_version", "scan", "grade", "regime", "kind", "reader_source")
     groups = {key: {value: record.summarize_scorecard([r for r in rows if (r.get(key) or "unknown") == value])
                     for value in sorted({r.get(key) or "unknown" for r in rows})} for key in dimensions}
-    return {"scorecard": record.scorecard(rec, frames, session), "rows": rows, "partitions": groups,
+    return {"scorecard": record.scorecard(rec, frames, session, minutes=minutes), "rows": rows, "partitions": groups,
             "sources": sources, "attribution_check": "publication integrity only; source-frame replay not requested",
             "basis": "Caller-supplied offline bars; original price-basis compatibility must be established separately.",
+            "minute_evidence": "retained minute bars read" if minutes is not None else "no minute bars read",
             "interpretation": "All plans remain in the aggregate. Partitions are descriptive, not strategy selection or evidence of profitability."}
 
 
@@ -65,13 +69,16 @@ def main(argv=None):
     parser.add_argument("--frames", required=True, type=Path)
     parser.add_argument("--session", required=True)
     parser.add_argument("--publication", action="append", type=Path, default=[])
+    parser.add_argument("--docs", type=Path, help="a docs directory whose retained minute bars (intraday/) are read")
     args = parser.parse_args(argv)
     try:
         rec = json.loads(args.picks.read_bytes())
         if rec.get("fixture"):
             raise ValueError("placeholder picks are not published history")
         frames = {ticker: provenance.frame_of(obj) for ticker, obj in json.loads(args.frames.read_bytes()).items()}
-        result = analyze(rec, frames, args.session, [json.loads(p.read_bytes()) for p in args.publication])
+        minutes = intraday.load_archive(args.docs)[0] if args.docs else None
+        result = analyze(rec, frames, args.session, [json.loads(p.read_bytes()) for p in args.publication],
+                         minutes=minutes)
     except (OSError, ValueError, KeyError, TypeError) as exc:
         parser.exit(1, str(exc) + "\n")
     print(json.dumps(result, indent=2, allow_nan=False))

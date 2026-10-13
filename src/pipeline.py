@@ -831,7 +831,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
         # session's minute bars, retained once (src/intraday.py); every walk
         # below -- the slots, the open plans, the scorecard, the ledger -- reads
         # the same evidence
-        minutes, intraday_block = gather_minutes(client, docs, rec, frames, session, now, dry_run)
+        minutes, intraday_block = gather_minutes(client, docs, rec, frames, session, now, dry_run, previous)
         open_now = record.open_plans(rec, frames, session.isoformat(), regime.get("verdict", "green"),
                                      minutes=minutes)
         held = slots_held(open_now)
@@ -1015,19 +1015,29 @@ SLOT_STATUSES = allocation.OCCUPIED_STATUSES
 
 
 def gather_minutes(client, docs: Path, rec: dict, frames: dict, session: date, now: datetime,
-                   dry_run: bool) -> tuple[dict, dict]:
+                   dry_run: bool, previous: dict | None = None) -> tuple[dict, dict]:
     """The minute evidence every walk tonight reads: what ``docs/intraday/``
     retains, and minutes fetched for the plans whose first day the daily bar
     left uncertain on a reason minutes can read (``record.needs_minutes``),
-    stored unless this is a dry run. It never fails the run: a failure here
-    leaves those plans uncertain and is named in the block."""
+    stored unless this is a dry run; the plans whose fetch failed in the
+    previous publication go after the rest. It never fails the run: when the
+    gathering itself fails, every walk still reads what the archive retains,
+    and the block says so."""
+    needed: list = []
     try:
         needed = record.needs_minutes(rec, frames, session.isoformat())
-        return intraday.gather(client, docs, needed, now=now, write=not dry_run)
-    except Exception as exc:  # noqa: BLE001 -- the evening goes on without the minutes
-        log.error("minute evidence unavailable: %s", type(exc).__name__)
-        return {}, intraday.block(wanted=0, asked=0, fetched=0, stored=0, retained=0, waiting=0, beyond_cap=0,
-                                  failures=[], problems=[f"the minute evidence could not be gathered: {type(exc).__name__}"])
+        failed = (((previous or {}).get("run") or {}).get("intraday") or {}).get("failures") or []
+        failed_before = {f["key"] for f in failed if isinstance(f, dict) and isinstance(f.get("key"), str)}
+        return intraday.gather(client, docs, needed, now=now, write=not dry_run, failed_before=failed_before)
+    except Exception as exc:  # noqa: BLE001 -- the evening goes on with what is retained
+        log.error("minute evidence could not be gathered: %s", type(exc).__name__)
+        try:
+            evidence, problems, _ = intraday.load_archive(docs)
+        except Exception:  # noqa: BLE001
+            evidence, problems = {}, []
+        wanted = sum(1 for p in needed if intraday.key(p) not in evidence)
+        return evidence, intraday.failed_block(wanted=wanted, retained=len(evidence), kind=type(exc).__name__,
+                                               problems=problems)
 
 
 def slots_held(open_plans: list[dict]) -> int:

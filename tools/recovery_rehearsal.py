@@ -46,7 +46,7 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd  # noqa: E402
 import yaml  # noqa: E402
 
-from src import charts, funnel, grader, market_data, pipeline  # noqa: E402
+from src import charts, funnel, grader, intraday, market_data, pipeline  # noqa: E402
 from tests.fakes import FakeAlpaca, FakeAnthropic, FakeDataClient, FakeResend  # noqa: E402
 from tests.synthetic import make_ohlcv  # noqa: E402
 from tests.test_quality import frame as qframe, ideal_bars  # noqa: E402
@@ -347,9 +347,11 @@ class Night:
             "files_changed": len(changed),
             "bars_requests_bound": {"symbols": len(self.frames), "attempts_per_batch": BARS_ATTEMPTS_PER_BATCH,
                                     "maximum": bars_bound(len(self.frames)), "within": bars <= bars_bound(len(self.frames))},
-            # one request per entry session, never more than the plans the night asked for
-            "minute_requests_bound": {"asked": asked, "maximum": asked or 0,
-                                      "within": minutes <= (asked or 0)},
+            # one request per entry session, never more than the plans the night asked for;
+            # a night that published nothing names no ask, and is held to the run's own cap
+            "minute_requests_bound": {"asked": asked,
+                                      "maximum": asked if asked is not None else intraday.MAX_PICKS_PER_RUN,
+                                      "within": minutes <= (asked if asked is not None else intraday.MAX_PICKS_PER_RUN)},
             "publication": record_facts(self.docs) if rep.published else None,
             "publication_identity": identity(self.docs) if rep.published else None,
             "reader_calls_bound": {"requested": requested, "attempts": grader.ATTEMPTS,

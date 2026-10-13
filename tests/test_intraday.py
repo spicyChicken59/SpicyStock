@@ -30,9 +30,11 @@ def pick(**over) -> dict:
 
 
 def obj(rows, p=None) -> dict:
-    """An evidence object built the way a fetch builds one."""
-    return intraday.build(p or pick(), [(OPEN + timedelta(minutes=m), o, h, low, c) for m, o, h, low, c in rows],
-                          FETCHED)
+    """An evidence object built the way a fetch builds one, its offsets from
+    the pick's own entry session's open."""
+    p = p or pick()
+    opens, _, _ = exchange_sessions.hours(intraday.entry_session(p))
+    return intraday.build(p, [(opens + timedelta(minutes=m), o, h, low, c) for m, o, h, low, c in rows])
 
 
 def day(o, h, low, c) -> dict:
@@ -196,9 +198,9 @@ def test_build_keeps_regular_hours_rounds_once_and_keeps_the_last_copy_of_a_minu
             (OPEN, 99.123456, 99.5, 98.9, 99.4),
             (OPEN, 99.2, 99.6, 98.95, 99.5),                                 # the same minute again
             (OPEN + timedelta(minutes=390), 99.0, 99.0, 99.0, 99.0)]         # after the close
-    built = intraday.build(pick(), rows, FETCHED)
+    built = intraday.build(pick(), rows)
     assert built["minutes"] == [[0, 99.2, 99.6, 98.95, 99.5]]
-    first = intraday.build(pick(), rows[1:2], FETCHED)
+    first = intraday.build(pick(), rows[1:2])
     assert first["minutes"] == [[0, 99.1235, 99.5, 98.9, 99.4]]
     assert built["session"] == "2026-09-02" and built["key"] == "burst:AAA:2026-09-01"
     assert built["opens_at"] == "2026-09-02T13:30:00+00:00" and built["closes_at"] == "2026-09-02T20:00:00+00:00"
@@ -208,7 +210,7 @@ def test_an_early_close_bounds_the_session_by_its_own_hours():
     p = pick(date="2026-11-25")                    # entry Friday 27 November, closing at 13:00 ET
     opens, closes, _ = exchange_sessions.hours(date(2026, 11, 27))
     built = intraday.build(p, [(closes - timedelta(minutes=1), 50.0, 50.0, 50.0, 50.0),
-                               (closes, 51.0, 51.0, 51.0, 51.0)], FETCHED)
+                               (closes, 51.0, 51.0, 51.0, 51.0)])
     assert [m[0] for m in built["minutes"]] == [209]
 
 
@@ -219,7 +221,9 @@ def test_an_early_close_bounds_the_session_by_its_own_hours():
     (lambda o: o.update(session="2026-09-03"), "not the session after"),
     (lambda o: o.update(key="burst:BBB:2026-09-01"), "not this ticker"),
     (lambda o: o.update(opens_at="2026-09-02T13:31:00+00:00"), "hours"),
-    (lambda o: o.update(fetched_at="yesterday"), "fetch time"),
+    (lambda o: o.update(fetched_at="2026-09-02T22:30:00+00:00"), "keys"),
+    (lambda o: o.update(minutes=[]), "non-empty"),
+    (lambda o: o.update(signal_session="2026-02-30", session="2026-03-02"), "sessions unreadable"),
     (lambda o: o.update(minutes=[[0, 99.0, 99.5, 98.9, 99.4]] * 2), "out of order"),
     (lambda o: o.update(minutes=[[390, 99.0, 99.5, 98.9, 99.4]]), "outside the session"),
     (lambda o: o.update(minutes=[[True, 99.0, 99.5, 98.9, 99.4]]), r"is not \[offset"),
@@ -244,8 +248,8 @@ def test_store_writes_once_reads_back_and_load_returns_it_by_key(tmp_path):
     assert path.read_bytes() == intraday.canonical(o)
     again, problems = intraday.store(tmp_path, [o])                # the same object: already there
     assert again == [o["key"]] and problems == [] and len(list(path.parent.glob("*.json"))) == 1
-    evidence, problems = intraday.load_archive(tmp_path)
-    assert evidence == {o["key"]: o} and problems == []
+    evidence, problems, set_aside = intraday.load_archive(tmp_path)
+    assert evidence == {o["key"]: o} and problems == [] and set_aside == set()
 
 
 def test_a_file_whose_bytes_are_not_its_name_is_named_and_not_used(tmp_path):
@@ -253,7 +257,7 @@ def test_a_file_whose_bytes_are_not_its_name_is_named_and_not_used(tmp_path):
     intraday.store(tmp_path, [o])
     path = tmp_path / intraday.DIR_NAME / intraday.name_of(o)
     path.write_bytes(intraday.canonical({**o, "minutes": [[5, 99.6, 100.2, 99.5, 100.0]]}))
-    evidence, problems = intraday.load_archive(tmp_path)
+    evidence, problems, _ = intraday.load_archive(tmp_path)
     assert evidence == {} and "bytes are not the object its name gives" in problems[0]
     stored, problems = intraday.store(tmp_path, [o])
     assert stored == [] and "a different file holds this object's name" in problems[0]
@@ -265,8 +269,9 @@ def test_two_objects_claiming_one_pick_are_both_set_aside(tmp_path):
     a = obj([(5, 99.6, 100.1, 99.5, 100.0)])
     b = obj([(6, 99.6, 100.1, 99.5, 100.0)])
     intraday.store(tmp_path, [a, b])
-    evidence, problems = intraday.load_archive(tmp_path)
+    evidence, problems, set_aside = intraday.load_archive(tmp_path)
     assert evidence == {} and problems == [f"{a['key']}: 2 objects claim it; none is used"]
+    assert set_aside == {a["key"]}
 
 
 def test_the_archive_refuses_past_its_bounds_and_names_it(tmp_path, monkeypatch):
@@ -303,7 +308,9 @@ def test_fetch_asks_once_per_entry_session_for_the_sip_split_minutes_of_regular_
     # the SDK sends UTC without its zone
     assert req.start == datetime(2026, 9, 2, 13, 30) and req.end == datetime(2026, 9, 2, 19, 59, 59)
     assert [o["key"] for o in objects] == ["burst:AAA:2026-09-01"]
-    assert failures == [{"key": "burst:BBB:2026-09-01", "kind": "no_minutes"},     # only pre-market rows
+    # BBB's only row is before the open, outside the window asked, so the double sends nothing for it;
+    # a reply carrying rows outside regular hours is the next test's
+    assert failures == [{"key": "burst:BBB:2026-09-01", "kind": "no_minutes"},
                         {"key": "burst:CCC:2026-09-01", "kind": "no_minutes"}]
 
 
@@ -381,7 +388,7 @@ def test_a_night_with_nothing_to_read_says_how_much_is_retained(tmp_path):
 
 # ----------------------------------------------------------------- faults ----
 def good_block() -> dict:
-    return intraday.block(wanted=3, asked=2, fetched=1, stored=1, retained=4, waiting=1, beyond_cap=0,
+    return intraday.block(wanted=3, set_aside=0, asked=2, fetched=1, stored=1, retained=4, waiting=1, beyond_cap=0,
                           failures=[{"key": "burst:AAA:2026-09-01", "kind": "no_minutes"}], problems=[])
 
 
@@ -390,7 +397,12 @@ def good_block() -> dict:
     (lambda b: b.update(stored=True), "not a count"),
     (lambda b: b.update(policy="other"), "not this version"),
     (lambda b: b.update(asked=intraday.MAX_PICKS_PER_RUN + 1, wanted=99), "its bound"),
-    (lambda b: b.update(asked=4), "its bound or its wants"),
+    (lambda b: b.update(wanted=9), "wanted is not its set-aside, waiting, asked"),
+    (lambda b: b.update(beyond_cap=2, wanted=5), "a cap it did not reach"),
+    (lambda b: b.update(retained=0), "retains fewer than it stored"),
+    (lambda b: b.update(failures=b["failures"] * 2, asked=3, wanted=4), "names a failure twice"),
+    (lambda b: b.update(status="maybe"), "neither gathered nor failed"),
+    (lambda b: b.update(set_aside=-1), "not a count"),
     (lambda b: b.update(fetched=2), "do not add up"),
     (lambda b: b.update(stored=2), "stored more"),
     (lambda b: b.update(failures=[{"key": 1, "kind": "x"}]), "pairs"),
