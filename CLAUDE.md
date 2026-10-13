@@ -338,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4174 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4215 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7328,3 +7328,181 @@ Omit: any change to the crons or the guard; a countdown.
 October), the first archived `run.reader_usage`, `run.funnel` and `run.delivery`
 blocks (the next evening's publication), the ten consecutive sessions with
 morning checks, and any trading edge.
+
+## Checkpoint, 12 Oct 2026 — current public release reconciled; observation fidelity correction #159
+
+The pause advanced `main` to `c759a1e671227717cae8d0bf1d50a4121d167396`
+through PRs #154–#157. #154 ships a different implementation of #151.
+The locally prepared `a328b6b4` and tree `d5c3883e` were never published to a
+branch or PR; an immutable API tree object alone is not a release. Preserve
+that old preparation as history and do not transplant it over the shipped code.
+The same applies to superseded local review-layout preparation `203fa3cd`.
+
+Independent read-only reconciliation found each PR's final tree equal to its
+merge tree. Applicable final-head checks passed. On #154, #156 and #157 the
+native matrix was skipped by the existing observed-docs-only gate; predecessor
+native/memory passes and the exact intervening source differences were checked,
+not described as new executions on the final heads. #155 passed all seven
+checks on its exact final head. No formal GitHub approval is invented. The
+latest main Tests run `38190278502` passed 4026 Python, 14517 page and 378 chart
+checks; publisher `38190278545` verified all 41 public files and final Pages
+`38190292804` passed. #156's earlier post-merge page failure remains recorded:
+the findings Play test raced its first tick, which active PR #158 addresses.
+
+Actual public verification of `c759a1e6` at 02:00 UTC passed 107 checks, matched
+41 assets, and inspected 14 captures on desktop and phone. The default clock
+and public data were unmodified. KE/PSNL observation requests actually returned
+404 with explicit unavailable wording; no quote, cash, execution or profit was
+invented. Zero baseline tickets, pending journal rows and the original research
+sizes remain. The old record truthfully has no archived funnel or token bill.
+There were no unexpected browser errors or private-storage writes. Two initial
+runner expectation errors were corrected only in the temporary audit harness
+and retained separately from the final acceptance. Phone search is still below
+the first screen; this release does not claim to solve that navigation gap.
+`release-evidence/2026-10-12-public-reconciliation/acceptance.json` preserves the
+public proof and hosted audit with their exact identities and scopes.
+
+PR #158 at `1836d6ff` is another builder's active service-health milestone.
+Independent source review and 60 local service/docs tests ran without editing
+its worktree. Additional isolated probes found two issues the existing tests
+miss: service delivery metrics use embedded generation time rather than commit
+landing time, and syntactically invalid historical JSON aborts instead of being
+named under skipped records. Choosing the first delivery also needs landing-time
+ordering. No retained record changes its before-open classification, but actual
+commit-latency min/median/max is 55.8/266.7/367.0 minutes versus the reported
+53.1/261.9/362.1 generation latency. All 69 examined history JSON blobs parse;
+no actual malformed record or late-open incident is claimed. Independent
+receipts are embedded in the reconciliation file. These findings remain open;
+this branch does not modify the concurrent service tool or its report.
+
+Issue #159 is the independent next deliverable. On the shipped research
+implementation, real-SDK/fake-HTTP probes made four HTTP attempts while the
+receipt reported one; producer-generated microsecond boundary receipts disagreed
+with browser parsing; forged spread percentages were rendered; missing credentials
+still printed one request; and a subnormal locked quote divided by zero. All
+are isolated executable findings, not reports of a live provider failure.
+The correction keeps the shipped schema, cohort bindings, strategy, schedules,
+private records and pinned design system. No production collection is needed.
+Local final checks, exact-head review, hosted gates and public acceptance for
+#159 are pending until explicitly recorded below.
+
+
+### #159 local acceptance, 12 Oct 2026
+
+The research-only transport now makes one counted, streamed HTTPS attempt to
+Alpaca's fixed IEX snapshots endpoint, with no retry, redirect or pagination.
+It prepares headers and the environment's TLS/proxy settings before counting
+an attempt, caps decoded input at 256 KiB, and enforces the remaining existing
+180-second collection budget with the POSIX main-thread timer. Unsupported or
+busy timer/configuration preflight refuses without replacing previous evidence.
+The evening and normal morning SDK paths, schedules and publication rules are
+unchanged. A nonpositive or nonfinite computed quote midpoint is invalid, so a
+subnormal locked quote cannot crash the collector.
+
+The browser preserves timestamp microseconds and offsets at the 60-second age
+and 5-second future boundaries, verifies both recorded spread fields against
+bid/ask, preserves legitimate producer rounding, and reports zero or one actual
+request. Prices and statuses are explicitly described at collection time.
+
+Final-source local evidence: 26 transport checks, 17 quote checks, 40 independent
+backend controls (including six real Requests/urllib3 loopback controls), 360
+pinned browser checks, 24 exactly reproduced producer fixtures, 450 additional
+producer/browser numeric comparisons, and 235 independent DOM controls passed.
+Eight transport, one midpoint and eleven browser targeted mutations failed their
+named guards; each unrelated control passed. Three final browser captures were
+inspected. Continuity passed 137 offline DOM/store checks; its initial missing
+jsdom dependency was fixed in the ignored local environment and is not counted
+as a product failure. Docs passed 37 tests; collection found 4056 tests. A broad
+190-test run imported earlier transport source and is retained only as
+supplementary history, excluded from final-source acceptance. No whole-suite
+local pass is claimed. Source identities, raw receipts, limits and earlier
+release reconciliation are preserved under
+`release-evidence/2026-10-12-observation-fidelity/prepared.json`.
+
+This is local preparation, not hosted acceptance or a public release. Exact
+remote head review, CI, merge, publisher, Pages and actual public verification
+must be read back before claiming #159 shipped. Public observations are still
+absent at the last actual 02:00 UTC read. No live quote or trade is inferred
+from fixture controls. Next: finish that release chain, then resolve the
+independent #158 delivery-clock/history findings when its builder is finished,
+or improve the first-screen ticker path without changing trading authority.
+
+
+## Checkpoint, 13 Oct 2026 — resume #159 over the new publication
+
+The earlier #159 preparation at `04fc0a70` was reviewed locally but never
+published as a commit, branch or PR. Its API tree `0416eece` exists; that is
+not a release. The branch is now rebased onto
+`0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3`, preserving PRs #158, #160 and #161,
+the October 12 evening publication and the subsequent issuer receipt. No open
+PR or competing #159 builder was found at the 04:04 UTC read. The only manual
+rebase conflict was CLAUDE.md: both sets of checkpoints are retained, and the
+current collection count is 4133. Runtime correction files are byte-identical
+to the independently reviewed preparation. Existing fixtures regenerated by
+#161 remain current; their changed publication bindings need fresh browser
+verification, not a reuse of the old acceptance claim.
+
+Monday's scheduled morning runs did not deliver quotes. The 13:20 and 13:28 UTC
+runs `38312550090` and `38312772384` were created at 21:44:56 and 21:47:04 UTC,
+respectively; their guards reported `entry_window_ended` and all collection and
+retention steps skipped. The inactive winter-slot pair also skipped. Successful
+Actions conclusions are not successful morning collection. No manual dispatch,
+provider call or email was made to manufacture an observation. The optional
+research receipt remains absent at the initial October 13 public read.
+
+The new evening record is measured October 12 and applies October 13. Its real
+funnel, reader usage and delivery blocks now exist. The initial read finds zero
+baseline tickets and two completed research reviews; current hypothetical
+allocation-fit research is QUAD/GTE, while the retained KE/PSNL journal has its
+first dated no-fill observation. These are public model records, not Mo's
+executions. Full current public acceptance and final #159 local/hosted/release
+readbacks are recorded separately when completed. The prior dated preparation
+receipts remain historical source-bound evidence, not checks on this rebased
+head. Next release must retain the actual scheduling gap and unknown issuer
+coverage explicitly.
+
+
+### #159 acceptance after rebasing
+
+The rebased runtime passed 26 transport tests, 17 quote tests and 40 independent
+backend controls, including six Requests/urllib3 loopback controls without any
+provider traffic. All 24 producer fixtures remain exactly current. The pinned
+Playwright 1.56.1 / Chromium 141.0.7390.37 run passed 360 browser checks, 137
+continuity checks and 235 additional DOM controls. Three final captures were
+inspected. Independent rebase review passed 39 integrity/scope checks with no
+findings and preserved all 19,981 other current-main tree entries. Python
+3.12.14 collected 4133 tests; current docs passed 38. The old mutation receipts
+still pin identical feature runtime/test sources; their execution date is not
+changed into a new run. Final rebase receipts and source hashes are retained in
+`release-evidence/2026-10-13-observation-fidelity/prepared.json`. These local
+results do not claim hosted or public acceptance for the correction; those
+remain required on the final published head before merging and releasing it.
+
+
+### #159 CI repair — preserve the dated review inputs
+
+PR #162's original head `8ae8f0adc63daee746b37a8ec7c309de1abc1e42`
+failed the required pytest gate: 4131 passed and two dated evidence-review
+checks failed. The October 12 evening publication had advanced the rolling
+research cohort and journal, while `tools/evidence_review.py` still read them
+into the October 12 historical report. Both failures reproduce on the
+unchanged base inputs; the gate stays binding. Page checks passed 15007/15007,
+chart checks 378/378 and DOM/store continuity 137/137 on that original head.
+Those outcomes are historical checks on that head, not acceptance of the repair.
+
+The repair retains the exact original cohort and journal bytes under the dated
+review's `inputs/`, verifies their digests from one read, and records original
+commit/path provenance. Missing or changed inputs refuse before writing; rolling
+publications can advance independently. Every historical numeric result and
+verdict remains unchanged, as do today's live cohort, journal and publication.
+The outer report and README now describe a frozen October 12 review. A later
+evidence review needs separately dated outputs. No configuration changes apply;
+`.env.example` remains correct.
+
+Local repair acceptance passed 23 focused tests, 25 independent controls and
+`--check`. Four named isolated mutations failed their intended guards; baseline
+and unrelated controls passed. Python 3.12.14 now collects 4143 tests. The
+source-bound receipt is `release-evidence/2026-10-13-observation-fidelity/dated-review-repair.json`.
+The quote-fidelity runtime is byte-identical to the prior reviewed source.
+Independent final-tree review, all applicable hosted checks and actual public
+verification remain required on the new head; this entry does not claim release.

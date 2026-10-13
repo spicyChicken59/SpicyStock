@@ -163,9 +163,12 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     };
     await reloadTo(variants.outage);
     eq('outage: one failed request is provider unavailable', [(await state(page)).status, variants.outage.value.source.requests], ['provider_unavailable', 1]);
+    check('outage: the summary counts its single failed request', /one IEX snapshot request/.test(await summary(page)));
     check('outage: the row says the provider returned an error, with no price', /unavailable — the provider returned an error/.test(await value(page, 'KE', 'bid-ask')) && /No price was observed/.test(await summary(page)));
     await reloadTo(variants['no-credentials']);
     eq('no credentials: zero requests, provider unavailable', [(await state(page)).status, variants['no-credentials'].value.source.requests], ['provider_unavailable', 0]);
+    check('no credentials: the summary reports zero requests, never one', /zero IEX snapshot requests/.test(await summary(page)) && !/one IEX snapshot request/.test(await summary(page)));
+    await capture(page, 'research-observation-no-credentials-1280-dark', 'KE');
     check('no credentials: the row names the missing credentials', /no provider credentials were configured/.test(await value(page, 'PSNL', 'bid-ask')));
     for (const [name, reasonWords] of [['before-window', 'before the half-hour collection window'], ['expired', 'after the entry window ended'], ['wrong-session', 'a day other than the applicable session']]) {
       await reloadTo(variants[name]);
@@ -202,6 +205,43 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     eq('handled transports produce no page exceptions', [...states.errors], []);
   } finally { await states.context.close(); }
 
+  const precision = await setup(current, observed, { width: 390, theme: 'light' });
+  try {
+    const { page, transport } = precision;
+    await reveal(page);
+    const original = await snapshot(page);
+    for (const suffix of ['', '-offset']) {
+      for (const [name, expected] of [['age-60s', 'recent'], ['age-60s-plus-microsecond', 'stale'], ['future-5s', 'recent'], ['future-5s-plus-microsecond', 'invalid']]) {
+        const label = name + suffix, served = await observation(label);
+        transport.current = served;
+        await page.evaluate(now => { SCStock.now = now; return SCStock.researchObservations.reload(); }, clockFor(current, served));
+        await settled(page);
+        eq(label + ': producer-derived quote and trade bind without timestamp truncation', [(await state(page)).state, (await state(page)).status], ['loaded', expected === 'recent' ? 'observed' : 'partial']);
+        eq(label + ': both producer states describe the exact collection boundary', [served.value.rows[0].quote.status, served.value.rows[0].trade.status], [expected, expected]);
+        eq(label + ': the ask position is unknown unless the collected quote was recent', await value(page, 'KE', 'ask-state'), expected === 'recent' ? 'below the published trigger' : 'unknown — no recent observation');
+        eq(label + ': the trade position is unknown unless the collected print was recent', await value(page, 'KE', 'trade-state'), expected === 'recent' ? 'below the published trigger' : 'unknown — no recent observation');
+        check(label + ': the row identifies positions as at collection time', /Recent\/stale labels and level positions describe collection time/.test(await section(page, 'KE').textContent()));
+        if (expected === 'stale') check(label + ': the accepted older prices remain visibly stale', /\(stale\)/.test(await value(page, 'KE', 'bid-ask')) && /\(stale\)/.test(await value(page, 'KE', 'trade')));
+        if (expected === 'invalid') check(label + ': invalid future prices are not displayed', /invalid provider quote/.test(await value(page, 'KE', 'bid-ask')) && /invalid provider print/.test(await value(page, 'KE', 'trade')));
+        eq(label + ': no publication, private state or authority changes', await snapshot(page), original);
+        await noActions(page, label);
+        if (label === 'age-60s-plus-microsecond-offset') await capture(page, 'research-observation-microsecond-stale-390-light', 'KE');
+      }
+    }
+    for (const [name, expected] of [['locked-zero-spread', 'observed'], ['rounded-spread-tie', 'observed'], ['large-dollar-spread', 'observed'], ['midpoint-underflow', 'partial']]) {
+      transport.current = await observation(name); await page.evaluate(() => SCStock.researchObservations.reload()); await settled(page);
+      eq(name + ': producer-derived result loads', [(await state(page)).state, (await state(page)).status], ['loaded', expected]);
+      if (expected === 'observed') eq(name + ': a legitimate spread stays readable', await value(page, 'KE', 'spread'), name === 'locked-zero-spread' ? '$0.00 (0.00%)' : name === 'rounded-spread-tie' ? '$0.027 (0.03%)' : '$999,999,999,999,900.00 (200.00%)');
+      else {
+        check(name + ': the invalid subnormal quote is not shown', /invalid provider quote/.test(await value(page, 'KE', 'bid-ask')));
+        eq(name + ': a collapsed midpoint is never promoted against levels', await value(page, 'KE', 'ask-state'), 'unknown — no recent observation');
+      }
+      eq(name + ': no publication, private state or authority changes', await snapshot(page), original);
+      await noActions(page, name);
+    }
+    eq('precise clocks and spreads produce no page exceptions', [...precision.errors], []);
+  } finally { await precision.context.close(); }
+
   const boundary = await setup(current, observed);
   try {
     const { page, transport } = boundary;
@@ -226,6 +266,19 @@ export async function checkResearchObservations({ browser, base, open, check, eq
       ['invented ready state', changed(v => { v.rows[0].price_checks.ask = 'ready'; })],
       ['stale print called recent', changed(v => { v.rows[0].trade.timestamp = new Date(Date.parse(v.generated_at) - 120000).toISOString(); })],
       ['missing quote with values', changed(v => { v.rows[0].quote.status = 'missing'; })],
+      ['forged spread percentage', changed(v => { v.rows[0].quote.spread_pct = 9876.54; })],
+      ['negative spread percentage', changed(v => { v.rows[0].quote.spread_pct = -0.1; })],
+      ['wrong rounded spread percentage', changed(v => { v.rows[0].quote.spread_pct += 0.00000001; })],
+      ['wrong rounded dollar spread', changed(v => { v.rows[0].quote.spread_usd += 0.00000001; })],
+      ['quote without exchange called recent', changed(v => { v.rows[0].quote.bid_exchange = null; })],
+      ['trade without exchange called recent', changed(v => { v.rows[0].trade.exchange = null; })],
+      ['quote without conditions called recent', changed(v => { v.rows[0].quote.conditions = null; })],
+      ['trade without conditions called recent', changed(v => { v.rows[0].trade.conditions = null; })],
+      ['midpoint underflow called recent', changed(v => { Object.assign(v.rows[0].quote, { bid: 5e-324, ask: 5e-324, spread_usd: 0, spread_pct: 0 }); v.rows[0].price_checks.ask = 'below_stop'; })],
+      ['sub-microsecond timestamp', changed(v => { v.rows[0].quote.timestamp = '2026-10-12T13:19:59.1234567+00:00'; })],
+      ['invalid timestamp offset', changed(v => { v.rows[0].quote.timestamp = '2026-10-12T13:19:59+24:00'; })],
+      ['expiry advanced one microsecond', changed(v => { v.expires_at = '2026-10-12T13:25:00.000001+00:00'; })],
+      ['provider check before start by one microsecond', changed(v => { v.source.checked_at = '2026-10-12T13:19:59.999999+00:00'; })],
       ['crossed quote called recent', changed(v => { v.rows[0].quote.ask = v.rows[0].quote.bid - 0.01; })],
       ['failed source with prices', changed(v => { v.source.status = 'unavailable'; v.source.entitlement = 'unavailable'; v.source.error_kind = 'provider_error'; })],
       ['second request', changed(v => { v.source.requests = 2; })],
@@ -245,6 +298,19 @@ export async function checkResearchObservations({ browser, base, open, check, eq
       ['dropped limits', changed(v => { v.limits = []; })],
       ['research sizing smuggled in', changed(v => { v.rows[0].research_shares = 1; })],
     ];
+    for (const suffix of ['', '-offset']) {
+      const oldPrint = structuredClone((await observation('age-60s-plus-microsecond' + suffix)).value);
+      oldPrint.rows[0].quote.status = 'recent'; oldPrint.rows[0].trade.status = 'recent';
+      oldPrint.rows[0].price_checks = { ask: 'below_entry_floor', trade: 'below_entry_floor' }; oldPrint.status = 'observed';
+      cases.push(['60.000001 seconds called recent' + suffix, { value: oldPrint }]);
+      const futurePrint = structuredClone((await observation('future-5s-plus-microsecond' + suffix)).value);
+      futurePrint.rows[0].quote.status = 'recent'; futurePrint.rows[0].trade.status = 'recent';
+      futurePrint.rows[0].price_checks = { ask: 'below_entry_floor', trade: 'below_entry_floor' }; futurePrint.status = 'observed';
+      cases.push(['5.000001 future seconds called recent' + suffix, { value: futurePrint }]);
+    }
+    const largeSpread = structuredClone((await observation('large-dollar-spread')).value);
+    largeSpread.rows[0].quote.spread_usd -= 0.125;
+    cases.push(['adjacent float forged dollar spread', { value: largeSpread }]);
     for (const [name, served] of cases) {
       transport.current = served; await page.evaluate(() => SCStock.researchObservations.reload()); await settled(page);
       eq(name + ': a malformed observation is refused', (await state(page)).state, 'unavailable');

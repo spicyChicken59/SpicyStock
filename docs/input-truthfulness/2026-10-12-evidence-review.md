@@ -19,9 +19,12 @@ under criteria the tool states and archives, never a recommendation to trade.
 | the owner's backtest ([6 Oct](2026-10-06-backtest-results.md)) | 158 sessions of the run-6 archive through the run's own stages, reader not run, pasted as two summaries | 2026-09-25 |
 | the candidate funnel ([11 Oct](2026-10-11-candidate-funnel.md)) | where every discovered candidate of 26 publications stopped | 21 sessions to 2026-10-09 |
 | the whole-share feasibility reading ([11 Oct](2026-10-11-whole-share-feasibility.md)) | every archived candidate sized again at the archived account and at $2,000 | the same 26 publications |
-| the registered stop-width research (`docs/stop-research.json`, `docs/research-outcomes.json`) | the prospective 4% → 5% anticipation cohort and its frozen journal | applicable session 2026-10-12 |
+| the registered stop-width research ([retained cohort](2026-10-12-evidence-review-evidence/inputs/stop-research.json), [retained journal](2026-10-12-evidence-review-evidence/inputs/research-outcomes.json)) | exact copies of the prospective 4% → 5% anticipation cohort and journal used by this review, from commit `c759a1e671227717cae8d0bf1d50a4121d167396` | applicable session 2026-10-12 |
 
-Each file's SHA-256 is in `review.json`; a findings file built over a
+Each file's SHA-256 is in `review.json`; the retained research inputs also name
+their original commit and paths. Their exact bytes are checked before reading.
+The rolling research files can advance without revising this dated evidence.
+A findings file built over a
 different study, a journal that follows another cohort, or a study whose
 summary is not its own rows is refused rather than read.
 
@@ -79,7 +82,7 @@ under YELLOW at $2,000, 5 of 40 in-band names size to a whole share.
 | Write an A+ ticket on the checklist alone when the reader refuses | **insufficient** | the backtest's production policy (44 settled, +0.085R) has no interval; the live policy's own reader-accepted admissions have 0 settled; the retained HAE reply is the case this would admit |
 | Raise the base risk or the account | **insufficient** | a sizing change: the ceiling decides which names can be bought, not whether they win; no outcome evidence exists at either size |
 
-No change earns **supported** today, and nothing is promoted by this file.
+No change earns **supported** in this October 12 review, and nothing is promoted by this file.
 
 ## The retained HAE reply
 
@@ -107,6 +110,7 @@ corrected grade for HAE.
 - GREEN has never been published, nor observed in 158 backtest sessions.
 - The registered research is a design until its rows resolve.
 - A verdict reads evidence sufficiency under the criteria above. It is not a
-  recommendation, and no change is promoted by this review. Re-run the tool as
-  publications and the journal mature; a change in any verdict is a change in
-  these two files, which `--check` will show.
+  recommendation, and no change is promoted by this review. Re-running the tool
+  reproduces these frozen October 12 inputs. As publications and the journal
+  mature, review the later evidence in a separately dated report; preserve this
+  review and its historical verdicts.

@@ -762,13 +762,21 @@
   },
   "research": {
    "cohort": {
-    "kind": "companion",
-    "path": "docs/stop-research.json",
+    "kind": "retained_companion",
+    "origin": {
+     "commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+     "path": "docs/stop-research.json"
+    },
+    "path": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json",
     "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
    },
    "journal": {
-    "kind": "companion",
-    "path": "docs/research-outcomes.json",
+    "kind": "retained_companion",
+    "origin": {
+     "commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+     "path": "docs/research-outcomes.json"
+    },
+    "path": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json",
     "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
    }
   },
