@@ -8,7 +8,12 @@ for, when it landed against the session's completion and the evening cron's
 nominal slot, whether it landed before the next open, how often a session was
 published twice, what the inputs covered, what the chart reader did and what
 it cost -- with the signal (the regime and the tickets) kept in its own
-column, because zero tickets can be a successful research run and stale data
+column. "Landed" is the commit's committer time -- the instant git keeps for
+the commit that put the record on ``main``; the push follows it by seconds and
+Pages serves it later still, so it is a lower bound on when a reader could see
+it. The record's own ``published_at`` is when the run generated it, and is kept
+beside every landed fact rather than read as one. The order things landed in
+is the history's own (children after parents), never a clock; because zero tickets can be a successful research run and stale data
 cannot be called fresh. It changes no record, decides nothing and fetches
 nothing from any provider; what it fetches is a commit this checkout lacks,
 exactly the ones the committed reading names, so a shallow clone can hold
@@ -22,7 +27,11 @@ The expected sessions are the exchange's own (``src/sessions.py``), from the
 first retained publication's session through the newest one's; a session the
 reading's clock has not reached is not yet due, one whose next open has passed
 without a publication is missing. A publication made under older rules is read
-for what it recorded: a block it lacks is ``None``, never guessed.
+for what it recorded: a block it lacks is ``None``, never guessed; a commit
+whose file the reading cannot place -- not JSON, not a real record, a field
+it cannot read -- is set aside by name with the reason, never fatal to the walk,
+while a git store that cannot produce a named object is a refusal. Fresh is
+what ``main`` carries: its newest record commit, read or set aside.
 """
 from __future__ import annotations
 
@@ -40,8 +49,11 @@ sys.path.insert(0, str(ROOT))
 
 from src import delivery, funnel, sessions  # noqa: E402
 
-VERSION = 1
-POLICY = "service_health_v1"
+#: 2: every delivery fact is the commit's landing time, the record's own clock kept beside
+#: it; a session's first delivery is the first to land in the history's order; an
+#: unreadable file is set aside; fresh is what main's newest record commit carries
+VERSION = 2
+POLICY = "service_health_v2"
 RECORD_PATH = "docs/data.json"
 #: the companion receipts whose commits are read beside the publications
 COMPANIONS = {"morning": "docs/morning.json",
@@ -103,10 +115,11 @@ def committed_at(full: str) -> str:
 
 
 def file_commits(through: str, path: str, limit: int) -> list[str]:
-    """The commits at or before ``through`` that changed ``path``, newest first, bounded."""
+    """The commits at or before ``through`` that changed ``path``, newest first in
+    the history's own order (a child before its parent, whatever the clocks say), bounded."""
     if limit < 1:
         raise ServiceError("limit must be at least 1")
-    return _git("log", "--format=%H", f"--max-count={limit}", through, "--", path).decode().split()
+    return _git("log", "--topo-order", "--format=%H", f"--max-count={limit}", through, "--", path).decode().split()
 
 
 def present(commit: str) -> bool:
@@ -126,6 +139,12 @@ def fetch_missing(commits: list[str]) -> list[str]:
     return missing
 
 
+class NotJSON(ServiceError):
+    """A file the history carries that does not parse: the commit is set aside by
+    name. Any other git failure stays a refusal: a store that cannot produce a
+    named object is not a fact about the service."""
+
+
 def read_at(commit: str, path: str) -> tuple[dict | list | None, str | None]:
     """The JSON a commit carries at ``path`` and its blob identity; (None, None) when absent."""
     done = subprocess.run(["git", "rev-parse", f"{commit}:{path}"], cwd=ROOT, capture_output=True)
@@ -136,7 +155,7 @@ def read_at(commit: str, path: str) -> tuple[dict | list | None, str | None]:
     try:
         return json.loads(raw), blob
     except ValueError as exc:
-        raise ServiceError(f"{commit[:8]}:{path} is not JSON: {exc}") from exc
+        raise NotJSON(f"{commit[:8]}:{path}: not JSON: {exc}") from exc
 
 
 def shallow() -> bool:
@@ -195,8 +214,21 @@ def _dict(value) -> dict | None:
     return value if isinstance(value, dict) else None
 
 
+def _count(value, where: str, field: str):
+    """A count the summary adds up: None when the record has no such block, else a
+    non-negative integer; anything else is a record the reading cannot place."""
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ServiceError(f"{where}: {field} is not a count: {value!r}")
+    return value
+
+
 def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict:
-    """One publication's service facts, read off the record and its commit alone."""
+    """One publication's service facts, read off the record and its commit alone.
+    Every delivery fact is the commit's landing time; the record's own clock is
+    kept beside it as ``generated_*``, because a record generated before the
+    next open and landed after it was not there to read before the open."""
     where = f"{commit[:8]}:{RECORD_PATH}"
     data = _real(data, where)
     run = data["run"]
@@ -238,11 +270,15 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
         "elapsed_seconds": run.get("elapsed_seconds"), "fetch_seconds": run.get("fetch_seconds"),
         "timing": {
             "completion_at": fr["completion_at"], "completion_basis": "archived" if archived else "re-derived",
-            "delivery_basis": "archived" if archived_delivery is not None else "re-derived",
-            "latency_minutes": minutes_between(published, completion),
-            "primary_slot_at": fr["primary_at"], "after_primary_minutes": minutes_between(published, parse_instant(fr["primary_at"])),
-            "retry_slot_at": fr["retry_at"], "after_retry_slot": published >= parse_instant(fr["retry_at"]),
-            "next_open_at": fr["next_open_at"], "before_next_open": published < parse_instant(fr["next_open_at"]),
+            # the record's own run.delivery block, held to its published_at (the run's clock), or absent
+            "record_delivery_block": "held" if archived_delivery is not None else "absent",
+            "latency_minutes": minutes_between(landed, completion),
+            "primary_slot_at": fr["primary_at"], "after_primary_minutes": minutes_between(landed, parse_instant(fr["primary_at"])),
+            "retry_slot_at": fr["retry_at"], "after_retry_slot": landed >= parse_instant(fr["retry_at"]),
+            "next_open_at": fr["next_open_at"], "before_next_open": landed < parse_instant(fr["next_open_at"]),
+            # the run's own clock, beside the landing and never read as it
+            "generated_latency_minutes": minutes_between(published, completion),
+            "generated_before_next_open": published < parse_instant(fr["next_open_at"]),
             "landed_minutes": minutes_between(landed, published),
         },
         "inputs": {
@@ -252,10 +288,13 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
             "stale": (coverage or {}).get("stale"), "tolerance": (tolerance or {}).get("verdict"),
         },
         "reader": {
-            "requested": (reads or {}).get("requested"), "done": (reads or {}).get("done"), "verdict": (reads or {}).get("verdict"),
+            "requested": _count((reads or {}).get("requested"), where, "run.reads.requested"),
+            "done": _count((reads or {}).get("done"), where, "run.reads.done"), "verdict": (reads or {}).get("verdict"),
             "usage": None if usage is None else {
-                "model": usage.get("model"), "calls": usage.get("calls"), "responses": usage.get("responses"),
-                "input_tokens": usage.get("input_tokens"), "output_tokens": tokens.get("output"),
+                "model": usage.get("model"), "calls": _count(usage.get("calls"), where, "run.reader_usage.calls"),
+                "responses": _count(usage.get("responses"), where, "run.reader_usage.responses"),
+                "input_tokens": _count(usage.get("input_tokens"), where, "run.reader_usage.input_tokens"),
+                "output_tokens": _count(tokens.get("output"), where, "run.reader_usage.tokens.output"),
             },
         },
         "signal": {
@@ -267,7 +306,9 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
 
 def companion_reading(kind: str, data, *, commit: str, blob: str, landed_at: str) -> dict:
     """One companion receipt's facts: which publication and applicable session it
-    binds, when it was generated, what it says of itself; nothing re-derived."""
+    binds, when it was generated and when it landed, what it says of itself;
+    nothing re-derived. Before the applicable open is the landing's, the
+    receipt's own clock beside it."""
     where = f"{commit[:8]}:{COMPANIONS[kind]}"
     if not isinstance(data, dict) or not isinstance(data.get("publication"), dict):
         raise ServiceError(f"{where}: not a bound receipt")
@@ -280,11 +321,13 @@ def companion_reading(kind: str, data, *, commit: str, blob: str, landed_at: str
     except (TypeError, ValueError) as exc:
         raise ServiceError(f"{where}: publication.applicable_session is not an exchange session") from exc
     opens = sessions.hours(applicable_day)[0].astimezone(timezone.utc)
+    landed = parse_instant(landed_at)
     rows = data.get("rows")
-    out = {"kind": kind, "commit": commit, "blob": blob, "landed_at": parse_instant(landed_at).isoformat(),
+    out = {"kind": kind, "commit": commit, "blob": blob, "landed_at": landed.isoformat(),
            "bound_run_id": binding.get("run_id"), "measured_session": binding.get("measured_session"),
            "applicable_session": applicable, "applicable_open_at": opens.isoformat(),
-           "generated_at": generated.isoformat(), "before_applicable_open": generated < opens,
+           "generated_at": generated.isoformat(), "before_applicable_open": landed < opens,
+           "generated_before_applicable_open": generated < opens,
            "rows": len(rows) if isinstance(rows, list) else None}
     for field in COMPANION_FIELDS[kind]:
         if field != "generated_at":
@@ -303,8 +346,10 @@ def companion_reading(kind: str, data, *, commit: str, blob: str, landed_at: str
 def session_rows(pubs: list[dict], companions: dict[str, list[dict]], clock: datetime) -> list[dict]:
     """One row per expected XNYS session from the first publication's to the
     newest one's, or to the newest session the clock has reached: its
-    publications in the order they were published, the first one's delivery
-    facts as the service column, its signal beside them, and the companion
+    publications in the order they landed (the history's order), the first to
+    land as the service column and the last as ``latest`` (what ``main`` carried
+    of the session when it was last published; ``main_carries`` says what it
+    carries now), its signal beside them, and the companion
     receipts bound to the session its plans are for (the next one)."""
     if not pubs:
         raise ServiceError("no publication to read")
@@ -315,7 +360,7 @@ def session_rows(pubs: list[dict], companions: dict[str, list[dict]], clock: dat
     reached = market_day if sessions.is_session(market_day) else sessions.previous_session(market_day)
     last = max(max(date.fromisoformat(p["session"]) for p in pubs), reached)
     by_session: dict[str, list[dict]] = {}
-    for p in sorted(pubs, key=lambda p: (p["session"], p["published_at"], p["commit"])):
+    for p in sorted(pubs, key=landing_order):
         by_session.setdefault(p["session"], []).append(p)
     rows = []
     for day in sessions.dates(first, last):
@@ -329,17 +374,23 @@ def session_rows(pubs: list[dict], companions: dict[str, list[dict]], clock: dat
             "due": due, "published": bool(mine), "overdue": overdue, "pending": due and not mine and not overdue,
             "publications": [p["commit"] for p in mine], "revisions": len(mine),
             "service": None if head is None else {
-                "status": head["status"], "problems": head["problems"], "published_at": head["published_at"], "run_id": head["run_id"],
+                "status": head["status"], "problems": head["problems"], "landed_at": head["landed_at"],
+                "published_at": head["published_at"], "run_id": head["run_id"],
                 "latency_minutes": head["timing"]["latency_minutes"], "after_primary_minutes": head["timing"]["after_primary_minutes"],
                 "after_retry_slot": head["timing"]["after_retry_slot"], "before_next_open": head["timing"]["before_next_open"],
+                "generated_latency_minutes": head["timing"]["generated_latency_minutes"],
+                "generated_before_next_open": head["timing"]["generated_before_next_open"],
+                "landed_minutes": head["timing"]["landed_minutes"],
                 "inputs": head["inputs"], "reader": head["reader"], "elapsed_seconds": head["elapsed_seconds"],
             },
             "signal": None if head is None else head["signal"],
             "latest": None if head is None else {"commit": mine[-1]["commit"], "status": mine[-1]["status"], "email": mine[-1]["email"],
-                                                  "published_at": mine[-1]["published_at"], "signal": mine[-1]["signal"]},
+                                                  "landed_at": mine[-1]["landed_at"], "published_at": mine[-1]["published_at"],
+                                                  "signal": mine[-1]["signal"]},
             "applicable_session": fr["next_session"],
             "receipts": {kind: [{"commit": i["commit"], "status": i["status"], "reason": i.get("reason"),
-                                 "generated_at": i["generated_at"], "before_applicable_open": i["before_applicable_open"], "rows": i["rows"]}
+                                 "landed_at": i["landed_at"], "generated_at": i["generated_at"],
+                                 "before_applicable_open": i["before_applicable_open"], "rows": i["rows"]}
                                 for i in items if i["applicable_session"] == fr["next_session"]]
                          for kind, items in companions.items()},
         })
@@ -348,7 +399,8 @@ def session_rows(pubs: list[dict], companions: dict[str, list[dict]], clock: dat
 
 def _streaks(rows: list[dict]) -> dict:
     """Consecutive due sessions whose first publication landed before the next
-    open: the longest run and the run ending at the newest due session."""
+    open (its commit's time, not the record's own clock): the longest run and
+    the run ending at the newest due session."""
     longest = current = 0
     for row in rows:
         if not row["due"]:
@@ -359,11 +411,12 @@ def _streaks(rows: list[dict]) -> dict:
     return {"longest": longest, "current": current}
 
 
-def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]], clock: datetime) -> dict:
+def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]], clock: datetime, carries: dict) -> dict:
     due = [r for r in rows if r["due"]]
     published = [r for r in due if r["published"]]
     firsts = [r["service"] for r in published]
     latencies = [s["latency_minutes"] for s in firsts]
+    generated = [s["generated_latency_minutes"] for s in firsts]
     statuses: dict[str, int] = {}
     for p in pubs:
         statuses[str(p["status"])] = statuses.get(str(p["status"]), 0) + 1
@@ -380,8 +433,9 @@ def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]
         "pending_sessions": [r["session"] for r in due if r["pending"]],
         "not_yet_due": [r["session"] for r in rows if not r["due"]],
         "before_next_open": sum(1 for s in firsts if s["before_next_open"]),
+        "generated_before_next_open": sum(1 for s in firsts if s["generated_before_next_open"]),
         "after_retry_slot": sum(1 for s in firsts if s["after_retry_slot"]),
-        "latency_minutes": None if not latencies else {"min": min(latencies), "median": round(statistics.median(latencies), 1), "max": max(latencies)},
+        "latency_minutes": _spread(latencies), "generated_latency_minutes": _spread(generated),
         "streak": _streaks(rows),
         "publications": len(pubs), "revisions": sum(max(0, r["revisions"] - 1) for r in rows),
         "republished_sessions": [r["session"] for r in rows if r["revisions"] > 1],
@@ -397,13 +451,43 @@ def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]
         "signal": {"regimes": _tally(p["signal"]["regime"] for p in pubs),
                    "reaction_tickets": sum(p["signal"]["reaction_tickets"] for p in pubs),
                    "anticipation_tickets": sum(p["signal"]["anticipation_tickets"] for p in pubs)},
-        "fresh": {"newest_due_session": newest_due, "newest_published_session": newest_published,
-                  "fresh": newest_due is not None and newest_due == newest_published},
+        "fresh": {"newest_due_session": newest_due, "newest_published_session": newest_published, "main_carries": carries,
+                  "fresh": carries["readable"] and newest_due is not None and carries["session"] == newest_due},
         "companions": {kind: {"receipts": len(items), "statuses": _tally(i["status"] for i in items),
                               "before_applicable_open": sum(1 for i in items if i["before_applicable_open"]),
+                              "generated_before_applicable_open": sum(1 for i in items if i["generated_before_applicable_open"]),
                               "applicable_sessions": sorted({i["applicable_session"] for i in items})}
                        for kind, items in companions.items()},
     }
+
+
+def _spread(values: list[float]) -> dict | None:
+    return None if not values else {"min": min(values), "median": round(statistics.median(values), 1), "max": max(values)}
+
+
+def landing_order(item: dict) -> tuple:
+    """The order things reached ``main``: the history's own (``sequence``, the
+    commit's place in the walk, oldest first), never a clock -- a committer
+    time can tie inside one second or run behind its parent's; the session
+    first, for the publications."""
+    return (item.get("session", ""), item["sequence"])
+
+
+def sequenced(commits: list[str]) -> dict[str, int]:
+    """Each named commit's place in the walk, oldest first (the walk names them newest first)."""
+    return {c: n for n, c in enumerate(reversed(commits))}
+
+
+def main_carries(pubs: list[dict], skipped: list[dict], record_head: str) -> dict:
+    """What ``main``'s record is at the reading's commit: its newest commit that
+    changed the record, read or set aside -- never the newest that could be read."""
+    reading = next((p for p in pubs if p["commit"] == record_head), None)
+    if reading is not None:
+        return {"commit": record_head, "readable": True, "session": reading["session"], "reason": None}
+    reason = next((row["reason"] for row in skipped if row["commit"] == record_head), None)
+    if reason is None:
+        raise ServiceError(f"the newest {RECORD_PATH} commit {record_head[:8]} is neither read nor set aside")
+    return {"commit": record_head, "readable": False, "session": None, "reason": reason}
 
 
 def _tally(values) -> dict:
@@ -415,8 +499,10 @@ def _tally(values) -> dict:
 
 # ----------------------------------------------------------------- build ----
 
-#: what a reading of one commit may fail with; the commit is then set aside by name, never guessed at
-UNREADABLE = (ServiceError, KeyError, TypeError, ValueError, AttributeError)
+#: what reading one commit's record or receipt may fail with once git has produced it (a file
+#: that is not JSON is read_at's NotJSON, caught on its own); the commit is then set aside by
+#: name, never guessed at and never fatal. A git failure is not among them: it is a refusal
+UNREADABLE = (ServiceError, LookupError, TypeError, ValueError, AttributeError)
 
 
 def _placed(commit: str, path: str, exc: BaseException) -> str:
@@ -430,13 +516,19 @@ def read_publications(commits: list[str]) -> tuple[list[dict], list[dict]]:
     the reason (the first build's records and the fixtures a ref's history
     carries; a commit that removed the file; a record the reading cannot place)."""
     readings, skipped = [], []
+    order = sequenced(commits)
     for commit in commits:
-        data, blob = read_at(commit, RECORD_PATH)
+        try:
+            data, blob = read_at(commit, RECORD_PATH)
+        except NotJSON as exc:
+            skipped.append({"commit": commit, "reason": _placed(commit, RECORD_PATH, exc)})
+            continue
         if blob is None:
             skipped.append({"commit": commit, "reason": f"{commit[:8]}: no {RECORD_PATH} at this commit"})
             continue
+        landed = committed_at(commit)
         try:
-            readings.append(publication_reading(data, commit=commit, blob=blob, landed_at=committed_at(commit)))
+            readings.append({**publication_reading(data, commit=commit, blob=blob, landed_at=landed), "sequence": order[commit]})
         except UNREADABLE as exc:
             skipped.append({"commit": commit, "reason": _placed(commit, RECORD_PATH, exc)})
     return readings, skipped
@@ -449,48 +541,56 @@ def read_companions(by_kind: dict[str, list[str]]) -> tuple[dict[str, list[dict]
     skipped = []
     for kind, path in COMPANIONS.items():
         items = []
+        order = sequenced(by_kind.get(kind, []))
         for commit in by_kind.get(kind, []):
-            data, blob = read_at(commit, path)
+            try:
+                data, blob = read_at(commit, path)
+            except NotJSON as exc:
+                skipped.append({"commit": commit, "reason": _placed(commit, path, exc)})
+                continue
             if blob is None:
                 skipped.append({"commit": commit, "reason": f"{commit[:8]}: no {path} at this commit"})
                 continue
+            landed = committed_at(commit)
             try:
-                items.append(companion_reading(kind, data, commit=commit, blob=blob, landed_at=committed_at(commit)))
+                items.append({**companion_reading(kind, data, commit=commit, blob=blob, landed_at=landed), "sequence": order[commit]})
             except UNREADABLE as exc:
                 skipped.append({"commit": commit, "reason": _placed(commit, path, exc)})
-        out[kind] = sorted(items, key=lambda i: (i["generated_at"], i["commit"]))
+        out[kind] = sorted(items, key=landing_order)
     return out, skipped
 
 
 def assemble(*, ref: str | None, through: str, publication_commits: list[str], skipped: list[dict],
-             companion_commits: dict[str, list[str]], limit: int) -> dict:
+             companion_commits: dict[str, list[str]], limit: int, record_head: str) -> dict:
     through_full = rev_parse(through)
     clock = parse_instant(committed_at(through_full))
     pubs, refused = read_publications(publication_commits)
     if refused:
         raise ServiceError("a named publication commit does not carry a real publication: " + refused[0]["reason"])
-    pubs.sort(key=lambda p: (p["session"], p["published_at"], p["commit"]))
+    pubs.sort(key=landing_order)
     companions, set_aside = read_companions(companion_commits)
     if any(row not in skipped for row in set_aside):
         raise ServiceError("a named companion commit was set aside and the reading does not say so: " + set_aside[0]["reason"])
     rows = session_rows(pubs, companions, clock)
+    carries = main_carries(pubs, skipped, record_head)
     return {
         "version": VERSION, "policy": POLICY,
         "source": {"ref": ref, "through": through_full, "clock": clock.isoformat(), "limit": limit,
-                   "record_path": RECORD_PATH, "companion_paths": dict(COMPANIONS),
+                   "record_path": RECORD_PATH, "record_head": record_head, "companion_paths": dict(COMPANIONS),
                    "publication_commits": list(publication_commits), "companion_commits": {k: list(v) for k, v in companion_commits.items()}},
         "slots": {"evening_primary_et": EVENING_PRIMARY.isoformat(timespec="minutes"), "evening_retry_et": EVENING_RETRY.isoformat(timespec="minutes"),
                   "morning_chicago": list(MORNING_SLOTS), "completion_buffer_minutes": sessions.COMPLETION_BUFFER_MINUTES,
                   "basis": "the workflows' cron tables read in the exchange's and the desk's zones; a session's instants are the pinned XNYS calendar's"},
         "words": dict(SERVICE_WORDS),
         "publications": pubs, "skipped": list(skipped), "sessions": rows, "companions": companions,
-        "summary": summary(rows, pubs, companions, clock),
+        "summary": summary(rows, pubs, companions, clock, carries),
     }
 
 
-def walk(through: str, limit: int) -> tuple[list[str], list[dict], dict[str, list[str]]]:
+def walk(through: str, limit: int) -> tuple[list[str], list[dict], dict[str, list[str]], str]:
     """The history through a commit: the publication commits that carry a real
-    record, the ones set aside with their reasons, and each companion's commits."""
+    record, the ones set aside with their reasons, each companion's commits, and
+    the newest commit that changed the record (what ``main`` carries)."""
     commits = file_commits(through, RECORD_PATH, limit)
     if not commits:
         raise ServiceError(f"no commit at or before {through[:8]} changed {RECORD_PATH}")
@@ -499,7 +599,7 @@ def walk(through: str, limit: int) -> tuple[list[str], list[dict], dict[str, lis
     pubs, skipped = read_publications(commits)
     companions = {kind: file_commits(through, path, limit) for kind, path in COMPANIONS.items()}
     skipped += read_companions(companions)[1]
-    return [p["commit"] for p in pubs], skipped, companions
+    return [p["commit"] for p in pubs], skipped, companions, commits[0]
 
 
 def build(*, ref: str = "origin/main", through: str | None = None, limit: int = HISTORY_LIMIT) -> dict:
@@ -508,8 +608,9 @@ def build(*, ref: str = "origin/main", through: str | None = None, limit: int = 
     if shallow():
         raise ServiceError("a shallow clone cannot walk the history; --check reads the committed reading's named commits instead")
     head = rev_parse(through or ref)
-    publications, skipped, companions = walk(head, limit)
-    return assemble(ref=ref, through=head, publication_commits=publications, skipped=skipped, companion_commits=companions, limit=limit)
+    publications, skipped, companions, record_head = walk(head, limit)
+    return assemble(ref=ref, through=head, publication_commits=publications, skipped=skipped, companion_commits=companions, limit=limit,
+                    record_head=record_head)
 
 
 def rebuild(committed: dict) -> tuple[dict, str]:
@@ -520,20 +621,22 @@ def rebuild(committed: dict) -> tuple[dict, str]:
     source = committed.get("source") if isinstance(committed, dict) else None
     if not isinstance(source, dict) or not isinstance(source.get("publication_commits"), list) \
             or not isinstance(source.get("companion_commits"), dict) or not isinstance(source.get("through"), str) \
-            or not isinstance(source.get("limit"), int) or not isinstance(committed.get("skipped"), list):
+            or not isinstance(source.get("limit"), int) or not isinstance(committed.get("skipped"), list) \
+            or not isinstance(source.get("record_head"), str):
         raise ServiceError("the committed reading names no commits")
     named = [source["through"], *source["publication_commits"], *(c for v in source["companion_commits"].values() for c in v)]
     fetch_missing(named)
     skipped = committed["skipped"]
     walked = "not_walked_in_shallow_clone"
     if not shallow():
-        publications, skipped, companions = walk(source["through"], source["limit"])
+        publications, skipped, companions, record_head = walk(source["through"], source["limit"])
         if publications != source["publication_commits"] or companions != {k: source["companion_commits"].get(k, []) for k in COMPANIONS} \
-                or skipped != committed["skipped"]:
+                or skipped != committed["skipped"] or record_head != source["record_head"]:
             raise ServiceError("the committed reading's commits are not the history's")
         walked = "walked_again"
     return assemble(ref=source.get("ref"), through=source["through"], publication_commits=source["publication_commits"], skipped=skipped,
-                    companion_commits={k: source["companion_commits"].get(k, []) for k in COMPANIONS}, limit=source["limit"]), walked
+                    companion_commits={k: source["companion_commits"].get(k, []) for k in COMPANIONS}, limit=source["limit"],
+                    record_head=source["record_head"]), walked
 
 
 # -------------------------------------------------------------- markdown ----
@@ -552,29 +655,33 @@ def markdown(result: dict) -> str:
              f"Read from `{result['source']['ref']}` through commit `{result['source']['through'][:8]}` "
              f"(clock {_hm(result['source']['clock'])}), {len(result['publications'])} publications and "
              f"{len(result['skipped'])} commits set aside. "
-             "The service columns say whether and when a publication landed; the signal column is the record's own "
-             "regime and ticket count and is never a service verdict.", "",
+             "The service columns say whether and when a publication landed -- the committer time of the commit that put "
+             "it on `main`, which the push follows by seconds -- with the record's own clock beside it as the minutes from "
+             "generation to landing; a session's publications are in the history's order; the signal column is the "
+             "record's own regime and ticket count and is never a service verdict.", "",
              "## Expected sessions", "",
-             "| session | due | published | revisions | status | published at (UTC) | latency after completion (min) | after primary slot (min) | after retry slot | before next open | inputs ready | reads done/requested | regime | tickets (reaction/anticipation) |",
-             "|---|---|---|---:|---|---|---:|---:|---|---|---|---|---|---|"]
+             "| session | due | published | revisions | status | landed at (UTC) | latency after completion (min) | generation to landing (min) | after primary slot (min) | after retry slot | before next open | inputs ready | reads done/requested | regime | tickets (reaction/anticipation) |",
+             "|---|---|---|---:|---|---|---:|---:|---:|---|---|---|---|---|---|"]
     for r in result["sessions"]:
         sv, sg = r["service"], r["signal"]
         if sv is None:
             state = "not yet due" if not r["due"] else ("missing" if r["overdue"] else "pending")
-            lines.append(f"| {r['session']} | {_yn(r['due'])} | no ({state}) | 0 | — | — | — | — | — | — | — | — | — | — |")
+            lines.append(f"| {r['session']} | {_yn(r['due'])} | no ({state}) | 0 | — | — | — | — | — | — | — | — | — | — | — |")
             continue
         ready = "—" if sv["inputs"]["ready_stocks"] is None else f"{sv['inputs']['ready_stocks']}/{sv['inputs']['intended_stocks']}"
         reads = "—" if sv["reader"]["requested"] is None else f"{sv['reader']['done']}/{sv['reader']['requested']}"
-        lines.append(f"| {r['session']} | yes | yes | {r['revisions']} | {sv['status']} | {_hm(sv['published_at'])} | {sv['latency_minutes']} | "
-                     f"{sv['after_primary_minutes']} | {_yn(sv['after_retry_slot'])} | {_yn(sv['before_next_open'])} | {ready} | {reads} | "
+        lines.append(f"| {r['session']} | yes | yes | {r['revisions']} | {sv['status']} | {_hm(sv['landed_at'])} | {sv['latency_minutes']} | "
+                     f"{sv['landed_minutes']} | {sv['after_primary_minutes']} | {_yn(sv['after_retry_slot'])} | {_yn(sv['before_next_open'])} | {ready} | {reads} | "
                      f"{sg['regime']} | {sg['reaction_tickets']}/{sg['anticipation_tickets']} |")
-    lat = s["latency_minutes"] or {}
+    lat, gen = s["latency_minutes"] or {}, s["generated_latency_minutes"] or {}
     lines += ["", "## Summary", "",
               f"- expected sessions {s['expected_sessions']}, due {s['due_sessions']}, published {s['published_sessions']}, "
               f"missing {len(s['missing_sessions'])} ({', '.join(s['missing_sessions']) or 'none'}), pending {len(s['pending_sessions'])}, "
               f"not yet due {len(s['not_yet_due'])}",
-              f"- first publications before the next open: {s['before_next_open']} of {s['published_sessions']}; after the retry slot: {s['after_retry_slot']}",
-              f"- latency after completion, minutes: min {lat.get('min')}, median {lat.get('median')}, max {lat.get('max')}",
+              f"- first publications landed before the next open: {s['before_next_open']} of {s['published_sessions']} "
+              f"(generated before it: {s['generated_before_next_open']}); landed after the retry slot: {s['after_retry_slot']}",
+              f"- latency after completion, landed, minutes: min {lat.get('min')}, median {lat.get('median')}, max {lat.get('max')}; "
+              f"generated, by the record's own clock: min {gen.get('min')}, median {gen.get('median')}, max {gen.get('max')}",
               f"- streak of due sessions published before the next open: current {s['streak']['current']}, longest {s['streak']['longest']}",
               f"- publications {s['publications']}, re-published sessions {len(s['republished_sessions'])} ({', '.join(s['republished_sessions']) or 'none'}), "
               f"statuses {json.dumps(s['statuses'], sort_keys=True)}",
@@ -584,9 +691,13 @@ def markdown(result: dict) -> str:
               f"{s['reader_usage']['responses']} replies, {s['reader_usage']['input_tokens']:,} input and {s['reader_usage']['output_tokens']:,} output tokens)",
               f"- signal, kept apart: regimes {json.dumps(s['signal']['regimes'], sort_keys=True)}, reaction tickets {s['signal']['reaction_tickets']}, "
               f"anticipation tickets {s['signal']['anticipation_tickets']}",
-              f"- fresh: newest due session {s['fresh']['newest_due_session']}, newest published {s['fresh']['newest_published_session']}: {_yn(s['fresh']['fresh'])}",
+              f"- fresh: newest due session {s['fresh']['newest_due_session']}, newest published {s['fresh']['newest_published_session']}, "
+              f"main carries `{s['fresh']['main_carries']['commit'][:8]}` "
+              + (f"(session {s['fresh']['main_carries']['session']})" if s['fresh']['main_carries']['readable']
+                 else f"(not readable: {s['fresh']['main_carries']['reason'].split(': ', 1)[-1]})")
+              + f": {_yn(s['fresh']['fresh'])}",
               "", "## Companion receipts", "",
-              "| kind | landed (UTC) | generated (UTC) | status | reason | applicable session | before its open | rows | bound run |",
+              "| kind | landed (UTC) | generated (UTC) | status | reason | applicable session | landed before its open | rows | bound run |",
               "|---|---|---|---|---|---|---|---:|---|"]
     for kind, items in result["companions"].items():
         if not items:

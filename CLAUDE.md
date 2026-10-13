@@ -338,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4258 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4269 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7678,3 +7678,144 @@ GitHub starts it before that open, and only with the Alpaca pair present. Read
 its status, reason, rows, call count and the page's line, and record them here.
 Also still not claimable: a live morning or research observation, the ten
 consecutive sessions with morning checks, and any trading edge.
+
+## Checkpoint, 13 Oct 2026 — PR #165 accepted; the service read by the commit that landed it (#111)
+
+**PR #165, accepted.** Merged as `279ec5a3` on `main` with a merge commit over
+`289ab4a1` (the merge of #162). The code tip `aed055c7` passed all seven checks
+on Tests run 38417767071 (pytest 14:56–15:22 UTC; page 14:56–15:11; the gate;
+the native stress case 14:57–15:25 and central 14:57–15:47) and Secret scans
+38417767097 and 38417758819; the final head `849fd510` (CLAUDE.md alone over
+it) passed pytest, page and the gate's docs-only decision on run 38425035651
+and both gitleaks runs. Publisher 38428819520 printed *Verified: every one of
+the 41 public files matches committed main* at 16:15:21 UTC; Pages 38428851261
+deployed (38428818848 cancelled as superseded, as every merge does); the merge
+commit's own Secret scans 38428819611 and 38428944632 passed, and so did its
+Tests run 38428819598 (page 16:14–16:31 UTC, pytest 16:14–16:39; the native
+cases skipped by the gate, as a merge's are). The
+source-recovery workflow (id 383411937) is registered and active; its first
+slot is 07:37 UTC on 14 October. **No 13 October morning run had been created
+by 16:26 UTC** (the 12 October ones were created at 21:44 and 21:47 UTC), so
+the morning checks still stand at zero observed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `279ec5a3`. The service-health findings the 12 October
+reconciliation recorded and left open while PR #158's builder was working.
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; nothing under `src/` changed; no run,
+mail, dispatch, provider call or credential.
+
+**Reproduced first** (`scratchpad/landing/repro.py`, synthetic histories
+through the tool as it stood): a record generated at 13:25 UTC and landed at
+13:40, after a 13:30 open, read `before_next_open: true`; a session whose
+later-generated run landed first named the other as its first delivery, while
+`main` had carried the first to land; and one commit whose `docs/data.json` was
+not JSON stopped the whole walk (`read_at()` ran outside the `try` that sets a
+commit aside). Over the committed reading, the commit-landing latency was
+55.8/266.7/367.0 minutes against the 53.1/261.9/362.1 it reported.
+
+**Changed** (`tools/service_health.py`, version 2, `service_health_v2`). Every
+delivery fact is the commit's landing -- the committer time of the commit that
+put the record on `main`, which the push follows by seconds and Pages later
+still, so a lower bound on when a reader could see it: latency after
+completion, the minutes after the primary slot, after the retry slot, before
+the next open, the streak and the summary. The record's own `published_at` is
+kept beside it as `generated_latency_minutes` and `generated_before_next_open`,
+and the companions' `before_applicable_open` is the landing's with
+`generated_before_applicable_open` beside it. A file that is not JSON
+(`read_at()`'s `NotJSON`, named `<commit>:<path>: not JSON: ...`) or a record a
+reader indexes past (`UNREADABLE` takes `LookupError`) is set aside by name with
+its reason, as the first build's records are.
+
+**The review, worked.** A reviewer by execution over the first pushed tip
+(`133612de`) returned eleven findings, each reproduced here before it was
+touched; ten are fixed and one is recorded. Ordering by committer time was
+still a clock: a child commit dated inside its parent's second, or behind it,
+was ordered before it and named the first delivery. The walk is `--topo-order`
+now, each reading carries its place in it (`sequence`), and `landing_order()`
+reads that and no clock. A truncated record on `main` read as fresh, because
+fresh compared the newest record that could be read; `main_carries()` names the
+newest commit that changed the record, read or set aside, the committed reading
+names it (`source.record_head`) and `--check` holds it to the walk, and fresh
+needs it readable and for the newest due session. Moving `read_at()` inside the
+`try` had turned a git store that could not produce an object into a missing
+session; only `NotJSON` is set aside now, and a git failure is a refusal again.
+A count the summary adds up that was not a non-negative integer took the summary
+down with a traceback (pre-existing); `_count()` makes it a record the reading
+cannot place. The markdown's generation-to-landing column rounded twice; it
+prints `landed_minutes`. `delivery_basis` is `record_delivery_block`
+(`held`/`absent`), because the record's own block is the run's clock beside the
+landing figures, and `src/delivery.py`'s docstring says the rule is shared and
+the instant is not. A test held the archived latency equal to the block's only
+because its helper landed each record at its own clock; it lands twenty minutes
+later now. And the dated report was mine to get wrong: it quoted 137.7 where the
+file's minimum is 137.2, said two reads where one publication asked for two, and
+gave the morning receipts' generation times as landings; each is corrected, and
+the report test, which a substitution of 13 for 14 or 25 for 26 passed because
+those numbers sit elsewhere in the prose, anchors every count to its own phrase
+and the slot ranges to the file's minimum and maximum (seven substitutions now
+fail it, a control passes). Recorded, not fixed: a shallow `--check` takes the
+set-aside reasons and the newest record commit as the committed file names them
+(the report says so). The reviewer's uncounted note -- that "the first instant
+the record was there to serve" overstated what a committer time is -- is fixed:
+it is worded as a lower bound everywhere.
+
+The pinned reading was regenerated at the same commit, `c759a1e6`: identical to
+the first version apart from the new fields -- the history's order is the
+committer times' on every commit here -- so no before-open verdict, first
+delivery, revision count, set-aside or order moved; the latency is the
+landing's, 55.8/266.7/367.0, with the generated 53.1/261.9/362.1 beside it, and
+each commit landed 2.4 to 5.5 minutes after its record's clock. `main` carried
+`43dcb8d7`, the 9 October session, readable: fresh.
+
+**Through the current tip** (`279ec5a3`, 16:13 UTC, measured here and not
+committed; the dated reading stays pinned): 22 of 22 due sessions published,
+all landed before the next open, latency 55.8/283.4/410.5 landed against
+53.1/278.6/407.2 generated, 15 of 22 after the retry slot, the 12 October
+session landed at 03:05 UTC, 410.5 minutes after completion and 3.3 after its
+record's clock; one cost block archived (2 calls, 14,734 input and 1,357 output
+tokens); the 13 October session not yet due.
+
+**Measured** (this sandbox, Python 3.11.15): 4269 tests collected, 4235 passed
+and 34 environment-gated skips in 19 m 22 s at `7f85e911`; `tools/service_health.py
+--check` current with the history walked again; `tests/test_service_health.py`
+35 passed (13 new). No record, rule or page file moved, so the fixtures and the
+page smoke are CI's, recorded on the PR. gitleaks 8.24.3 over the branch's
+commits with the repository's config: no leaks.
+
+**Mutation passes**, each mutant in the mutation worktree and judged by the
+whole `tests/test_service_health.py` with the committed-files byte comparison
+deselected (a markdown mutant's rule IS that comparison, and it was judged with
+it). Before the review, at `074f5697`, twenty-one over the landing rules
+(latency, both slots and before-the-open read off the record's clock; the
+generated figures read off the landing; the companions' flags swapped; three
+sorts by the records' clocks; the summary's generated counts and spread; the
+reads outside the `try`; `KeyError` for `LookupError`; the not-JSON words; the
+service column's landing; the markdown column): all die in the test naming their
+rule, after three cases were added that could tell landing from generation at
+all; the control survives. After the review, at `ea05a9fc`, twenty more (order
+by committer time, the sequence reversed, fresh off the newest readable
+record, fresh off the newest published session, `main_carries()` never
+refusing, a git failure set aside, three count checks, the record head
+uncompared and taken from the first readable commit, the delivery block's label
+swapped, the markdown gap as latency, and five of the first pass's rules again):
+eighteen die, each in the test naming its rule; the control survives; two are
+equivalent. Dropping `--topo-order` changes nothing on a linear history, where
+git already lists a child before its parent whatever the dates (the real
+history's five paths walk identically both ways); and fresh's `readable` guard
+is redundant beside its session comparison, an unreadable head having no
+session. Both are kept as statements of intent.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and the records and
+decides nothing; the record's clock is printed beside the landing and never
+read as it. Fix if it bites: the committer time is the commit's own clock on
+the runner that made it, the push follows it by seconds and Pages serves it
+later still (the publication gate's log says when); a rebase before a push
+rewrites it to the rebase's instant, which is closer to the landing, not
+further. Defer: #111's ten-session acceptance, which needs morning checks not
+yet observed; a newer dated reading once the morning and recovery receipts
+exist. Omit: any change to the crons or the guard on these numbers.
+
+**Not claimable:** a live morning, research or recovery observation; the ten
+consecutive sessions with morning checks; any trading edge.

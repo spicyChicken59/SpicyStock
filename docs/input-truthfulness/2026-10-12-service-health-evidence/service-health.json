@@ -12,10 +12,12 @@
     "commit": "981e6792827a222c26b94da622f30d88b74d53e1",
     "dry_run": false,
     "generated_at": "2026-10-10T07:35:36.385307+00:00",
+    "generated_before_applicable_open": true,
     "kind": "issuer_evidence",
     "landed_at": "2026-10-10T07:36:12+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 0,
     "status": "unavailable"
    },
    {
@@ -29,10 +31,12 @@
     "commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
     "dry_run": false,
     "generated_at": "2026-10-10T08:57:46.469022+00:00",
+    "generated_before_applicable_open": true,
     "kind": "issuer_evidence",
     "landed_at": "2026-10-10T08:58:21+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 1,
     "status": "unavailable"
    },
    {
@@ -46,10 +50,12 @@
     "commit": "f9b91d00123281039436bcd4e8a7646992517265",
     "dry_run": false,
     "generated_at": "2026-10-10T09:18:39.533632+00:00",
+    "generated_before_applicable_open": true,
     "kind": "issuer_evidence",
     "landed_at": "2026-10-10T09:19:16+00:00",
     "measured_session": "2026-10-09",
     "rows": null,
+    "sequence": 2,
     "status": "unavailable"
    }
   ],
@@ -65,12 +71,14 @@
     "dry_run": false,
     "entry_phase": "ended",
     "generated_at": "2026-10-09T17:10:18.034037+00:00",
+    "generated_before_applicable_open": false,
     "kind": "morning",
     "landed_at": "2026-10-09T17:11:03+00:00",
     "measured_session": "2026-10-08",
     "observation_run_id": "37964299335",
     "reason": "entry_window_ended",
     "rows": 0,
+    "sequence": 0,
     "status": "inapplicable"
    },
    {
@@ -84,19 +92,21 @@
     "dry_run": false,
     "entry_phase": "upcoming",
     "generated_at": "2026-10-10T08:56:34.636611+00:00",
+    "generated_before_applicable_open": true,
     "kind": "morning",
     "landed_at": "2026-10-10T08:57:05+00:00",
     "measured_session": "2026-10-09",
     "observation_run_id": "38039598040",
     "reason": "wrong_session",
     "rows": 0,
+    "sequence": 1,
     "status": "inapplicable"
    }
   ],
   "research_observations": [],
   "source_recovery": []
  },
- "policy": "service_health_v1",
+ "policy": "service_health_v2",
  "publications": [
   {
    "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
@@ -125,6 +135,7 @@
    },
    "rules_version": "015229b909b7",
    "run_id": "34647793285",
+   "sequence": 0,
    "session": "2026-09-11",
    "session_state": "open",
    "signal": {
@@ -136,16 +147,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": -67.9,
+    "after_primary_minutes": -65.2,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-11T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 53.1,
     "landed_minutes": 2.7,
-    "latency_minutes": 53.1,
+    "latency_minutes": 55.8,
     "next_open_at": "2026-09-14T13:30:00+00:00",
     "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-12T00:16:00+00:00"
    }
   },
@@ -176,6 +189,7 @@
    },
    "rules_version": "2fe10c171341",
    "run_id": "34653694658",
+   "sequence": 1,
    "session": "2026-09-11",
    "session_state": "open",
    "signal": {
@@ -187,16 +201,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 6.7,
+    "after_primary_minutes": 9.6,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-11T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.7,
     "landed_minutes": 2.8,
-    "latency_minutes": 127.7,
+    "latency_minutes": 130.6,
     "next_open_at": "2026-09-14T13:30:00+00:00",
     "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-12T00:16:00+00:00"
    }
   },
@@ -227,6 +243,7 @@
    },
    "rules_version": "953f37fb787a",
    "run_id": "34903940252",
+   "sequence": 2,
    "session": "2026-09-14",
    "session_state": "open",
    "signal": {
@@ -238,16 +255,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 8.8,
+    "after_primary_minutes": 11.7,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-14T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 129.8,
     "landed_minutes": 2.8,
-    "latency_minutes": 129.8,
+    "latency_minutes": 132.7,
     "next_open_at": "2026-09-15T13:30:00+00:00",
     "primary_slot_at": "2026-09-14T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-15T00:16:00+00:00"
    }
   },
@@ -278,6 +297,7 @@
    },
    "rules_version": "e1032aa5ee21",
    "run_id": "35030668710",
+   "sequence": 3,
    "session": "2026-09-15",
    "session_state": "open",
    "signal": {
@@ -289,16 +309,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 7.3,
+    "after_primary_minutes": 10.3,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-15T20:15:00+00:00",
     "completion_basis": "re-derived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.3,
     "landed_minutes": 3.0,
-    "latency_minutes": 128.3,
+    "latency_minutes": 131.3,
     "next_open_at": "2026-09-16T13:30:00+00:00",
     "primary_slot_at": "2026-09-15T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-16T00:16:00+00:00"
    }
   },
@@ -331,6 +353,7 @@
    },
    "rules_version": "1fe2b3171634",
    "run_id": "35157356943",
+   "sequence": 4,
    "session": "2026-09-16",
    "session_state": "open",
    "signal": {
@@ -342,16 +365,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 7.0,
+    "after_primary_minutes": 10.5,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-16T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.0,
     "landed_minutes": 3.5,
-    "latency_minutes": 128.0,
+    "latency_minutes": 131.5,
     "next_open_at": "2026-09-17T13:30:00+00:00",
     "primary_slot_at": "2026-09-16T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-17T00:16:00+00:00"
    }
   },
@@ -384,6 +409,7 @@
    },
    "rules_version": "7ca2debdce10",
    "run_id": "35281605621",
+   "sequence": 5,
    "session": "2026-09-17",
    "session_state": "open",
    "signal": {
@@ -395,16 +421,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 6.0,
+    "after_primary_minutes": 9.6,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-17T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.0,
     "landed_minutes": 3.6,
-    "latency_minutes": 127.0,
+    "latency_minutes": 130.6,
     "next_open_at": "2026-09-18T13:30:00+00:00",
     "primary_slot_at": "2026-09-17T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-18T00:16:00+00:00"
    }
   },
@@ -437,6 +465,7 @@
    },
    "rules_version": "e2cace0f7bc6",
    "run_id": "35401227388",
+   "sequence": 6,
    "session": "2026-09-18",
    "session_state": "open",
    "signal": {
@@ -448,16 +477,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 6.6,
+    "after_primary_minutes": 10.1,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-18T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.6,
     "landed_minutes": 3.5,
-    "latency_minutes": 127.6,
+    "latency_minutes": 131.1,
     "next_open_at": "2026-09-21T13:30:00+00:00",
     "primary_slot_at": "2026-09-18T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-19T00:16:00+00:00"
    }
   },
@@ -490,6 +521,7 @@
    },
    "rules_version": "d5d62f525e0f",
    "run_id": "35669619745",
+   "sequence": 7,
    "session": "2026-09-21",
    "session_state": "open",
    "signal": {
@@ -501,16 +533,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 98.4,
+    "after_primary_minutes": 102.2,
     "after_retry_slot": false,
     "before_next_open": true,
     "completion_at": "2026-09-21T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 219.4,
     "landed_minutes": 3.8,
-    "latency_minutes": 219.4,
+    "latency_minutes": 223.2,
     "next_open_at": "2026-09-22T13:30:00+00:00",
     "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-22T00:16:00+00:00"
    }
   },
@@ -543,6 +577,7 @@
    },
    "rules_version": "d5d62f525e0f",
    "run_id": "35673429253",
+   "sequence": 8,
    "session": "2026-09-21",
    "session_state": "open",
    "signal": {
@@ -554,16 +589,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 152.7,
+    "after_primary_minutes": 156.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-21T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 273.7,
     "landed_minutes": 3.7,
-    "latency_minutes": 273.7,
+    "latency_minutes": 277.4,
     "next_open_at": "2026-09-22T13:30:00+00:00",
     "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-22T00:16:00+00:00"
    }
   },
@@ -597,6 +634,7 @@
    },
    "rules_version": "b2da771252f8",
    "run_id": "35802203679",
+   "sequence": 9,
    "session": "2026-09-22",
    "session_state": "open",
    "signal": {
@@ -608,16 +646,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 132.9,
+    "after_primary_minutes": 137.7,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-22T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 253.9,
     "landed_minutes": 4.8,
-    "latency_minutes": 253.9,
+    "latency_minutes": 258.7,
     "next_open_at": "2026-09-23T13:30:00+00:00",
     "primary_slot_at": "2026-09-22T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-23T00:16:00+00:00"
    }
   },
@@ -651,6 +691,7 @@
    },
    "rules_version": "f70560c58f76",
    "run_id": "35938584554",
+   "sequence": 10,
    "session": "2026-09-23",
    "session_state": "open",
    "signal": {
@@ -662,16 +703,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 133.0,
+    "after_primary_minutes": 137.2,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-23T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 254.0,
     "landed_minutes": 4.2,
-    "latency_minutes": 254.0,
+    "latency_minutes": 258.2,
     "next_open_at": "2026-09-24T13:30:00+00:00",
     "primary_slot_at": "2026-09-23T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-24T00:16:00+00:00"
    }
   },
@@ -705,6 +748,7 @@
    },
    "rules_version": "7c02ee92cb05",
    "run_id": "36077970591",
+   "sequence": 11,
    "session": "2026-09-24",
    "session_state": "open",
    "signal": {
@@ -716,16 +760,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 136.5,
+    "after_primary_minutes": 141.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-24T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 257.5,
     "landed_minutes": 4.5,
-    "latency_minutes": 257.5,
+    "latency_minutes": 262.0,
     "next_open_at": "2026-09-25T13:30:00+00:00",
     "primary_slot_at": "2026-09-24T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-25T00:16:00+00:00"
    }
   },
@@ -759,6 +805,7 @@
    },
    "rules_version": "81ed3b38d571",
    "run_id": "36205470985",
+   "sequence": 12,
    "session": "2026-09-25",
    "session_state": "open",
    "signal": {
@@ -770,16 +817,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 140.9,
+    "after_primary_minutes": 145.7,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-25T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 261.9,
     "landed_minutes": 4.8,
-    "latency_minutes": 261.9,
+    "latency_minutes": 266.7,
     "next_open_at": "2026-09-28T13:30:00+00:00",
     "primary_slot_at": "2026-09-25T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-26T00:16:00+00:00"
    }
   },
@@ -813,6 +862,7 @@
    },
    "rules_version": "3978da99f5c0",
    "run_id": "36510040469",
+   "sequence": 13,
    "session": "2026-09-28",
    "session_state": "open",
    "signal": {
@@ -824,16 +874,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 218.4,
+    "after_primary_minutes": 222.9,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-28T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.4,
     "landed_minutes": 4.5,
-    "latency_minutes": 339.4,
+    "latency_minutes": 343.9,
     "next_open_at": "2026-09-29T13:30:00+00:00",
     "primary_slot_at": "2026-09-28T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-29T00:16:00+00:00"
    }
   },
@@ -867,6 +919,7 @@
    },
    "rules_version": "009babeb3f65",
    "run_id": "36654325015",
+   "sequence": 14,
    "session": "2026-09-29",
    "session_state": "open",
    "signal": {
@@ -878,16 +931,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 181.1,
+    "after_primary_minutes": 185.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-29T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 302.1,
     "landed_minutes": 4.3,
-    "latency_minutes": 302.1,
+    "latency_minutes": 306.4,
     "next_open_at": "2026-09-30T13:30:00+00:00",
     "primary_slot_at": "2026-09-29T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-09-30T00:16:00+00:00"
    }
   },
@@ -921,6 +976,7 @@
    },
    "rules_version": "db2828fd59da",
    "run_id": "36800284304",
+   "sequence": 15,
    "session": "2026-09-30",
    "session_state": "open",
    "signal": {
@@ -932,16 +988,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 180.9,
+    "after_primary_minutes": 185.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-09-30T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 301.9,
     "landed_minutes": 4.5,
-    "latency_minutes": 301.9,
+    "latency_minutes": 306.4,
     "next_open_at": "2026-10-01T13:30:00+00:00",
     "primary_slot_at": "2026-09-30T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-01T00:16:00+00:00"
    }
   },
@@ -974,6 +1032,7 @@
    },
    "rules_version": "4219629da532",
    "run_id": "36951987679",
+   "sequence": 16,
    "session": "2026-10-01",
    "session_state": "open",
    "signal": {
@@ -985,16 +1044,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 204.1,
+    "after_primary_minutes": 208.9,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-01T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 325.1,
     "landed_minutes": 4.8,
-    "latency_minutes": 325.1,
+    "latency_minutes": 329.9,
     "next_open_at": "2026-10-02T13:30:00+00:00",
     "primary_slot_at": "2026-10-01T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-02T00:16:00+00:00"
    }
   },
@@ -1028,6 +1089,7 @@
    },
    "rules_version": "efad1dbdba5a",
    "run_id": "37085032782",
+   "sequence": 17,
    "session": "2026-10-02",
    "session_state": "open",
    "signal": {
@@ -1039,16 +1101,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 174.4,
+    "after_primary_minutes": 179.1,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-02T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 295.4,
     "landed_minutes": 4.7,
-    "latency_minutes": 295.4,
+    "latency_minutes": 300.1,
     "next_open_at": "2026-10-05T13:30:00+00:00",
     "primary_slot_at": "2026-10-02T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-03T00:16:00+00:00"
    }
   },
@@ -1082,6 +1146,7 @@
    },
    "rules_version": "9d480ae7f6fb",
    "run_id": "37403330047",
+   "sequence": 18,
    "session": "2026-10-05",
    "session_state": "open",
    "signal": {
@@ -1093,16 +1158,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 241.1,
+    "after_primary_minutes": 246.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-05T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 362.1,
     "landed_minutes": 4.9,
-    "latency_minutes": 362.1,
+    "latency_minutes": 367.0,
     "next_open_at": "2026-10-06T13:30:00+00:00",
     "primary_slot_at": "2026-10-05T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-06T00:16:00+00:00"
    }
   },
@@ -1136,6 +1203,7 @@
    },
    "rules_version": "7f2ec51c1970",
    "run_id": "37557449315",
+   "sequence": 19,
    "session": "2026-10-06",
    "session_state": "open",
    "signal": {
@@ -1147,16 +1215,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 195.1,
+    "after_primary_minutes": 198.8,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-06T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 316.1,
     "landed_minutes": 3.8,
-    "latency_minutes": 316.1,
+    "latency_minutes": 319.9,
     "next_open_at": "2026-10-07T13:30:00+00:00",
     "primary_slot_at": "2026-10-06T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-07T00:16:00+00:00"
    }
   },
@@ -1189,6 +1259,7 @@
    },
    "rules_version": "ec0230c4307e",
    "run_id": "37715183976",
+   "sequence": 20,
    "session": "2026-10-07",
    "session_state": "open",
    "signal": {
@@ -1200,16 +1271,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 218.5,
+    "after_primary_minutes": 224.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-07T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.5,
     "landed_minutes": 5.5,
-    "latency_minutes": 339.5,
+    "latency_minutes": 345.0,
     "next_open_at": "2026-10-08T13:30:00+00:00",
     "primary_slot_at": "2026-10-07T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-08T00:16:00+00:00"
    }
   },
@@ -1242,6 +1315,7 @@
    },
    "rules_version": "669435d895d7",
    "run_id": "37872972790",
+   "sequence": 21,
    "session": "2026-10-08",
    "session_state": "open",
    "signal": {
@@ -1253,16 +1327,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 230.9,
+    "after_primary_minutes": 236.1,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-08T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 351.9,
     "landed_minutes": 5.2,
-    "latency_minutes": 351.9,
+    "latency_minutes": 357.1,
     "next_open_at": "2026-10-09T13:30:00+00:00",
     "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-09T00:16:00+00:00"
    }
   },
@@ -1295,6 +1371,7 @@
    },
    "rules_version": "8e9ea8528b31",
    "run_id": "37928234562",
+   "sequence": 22,
    "session": "2026-10-08",
    "session_state": "open",
    "signal": {
@@ -1306,16 +1383,18 @@
    },
    "status": "degraded",
    "timing": {
-    "after_primary_minutes": 834.3,
+    "after_primary_minutes": 839.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-08T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 955.3,
     "landed_minutes": 5.1,
-    "latency_minutes": 955.3,
+    "latency_minutes": 960.4,
     "next_open_at": "2026-10-09T13:30:00+00:00",
     "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-09T00:16:00+00:00"
    }
   },
@@ -1346,6 +1425,7 @@
    },
    "rules_version": "8e9ea8528b31",
    "run_id": "38014333381",
+   "sequence": 23,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1357,16 +1437,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 209.0,
+    "after_primary_minutes": 213.2,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 330.0,
     "landed_minutes": 4.3,
-    "latency_minutes": 330.0,
+    "latency_minutes": 334.2,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   },
@@ -1397,6 +1479,7 @@
    },
    "rules_version": "4f69dc967d7a",
    "run_id": "38033614291",
+   "sequence": 24,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1408,16 +1491,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 536.9,
+    "after_primary_minutes": 541.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 657.9,
     "landed_minutes": 4.5,
-    "latency_minutes": 657.9,
+    "latency_minutes": 662.4,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   },
@@ -1448,6 +1533,7 @@
    },
    "rules_version": "c9dc7d6d1d87",
    "run_id": "38034610157",
+   "sequence": 25,
    "session": "2026-10-09",
    "session_state": "open",
    "signal": {
@@ -1459,16 +1545,18 @@
    },
    "status": "ok",
    "timing": {
-    "after_primary_minutes": 554.3,
+    "after_primary_minutes": 556.6,
     "after_retry_slot": true,
     "before_next_open": true,
     "completion_at": "2026-10-09T20:15:00+00:00",
     "completion_basis": "archived",
-    "delivery_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 675.3,
     "landed_minutes": 2.4,
-    "latency_minutes": 675.3,
+    "latency_minutes": 677.6,
     "next_open_at": "2026-10-12T13:30:00+00:00",
     "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
     "retry_slot_at": "2026-10-10T00:16:00+00:00"
    }
   }
@@ -1481,6 +1569,7 @@
    "latest": {
     "commit": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
     "email": "delivered",
+    "landed_at": "2026-09-11T22:25:33+00:00",
     "published_at": "2026-09-11T22:22:44.126296+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1507,10 +1596,12 @@
    },
    "revisions": 2,
    "service": {
-    "after_primary_minutes": -67.9,
+    "after_primary_minutes": -65.2,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 163.5,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 53.1,
     "inputs": {
      "acceptance": null,
      "intended_stocks": null,
@@ -1520,7 +1611,9 @@
      "tolerance": null,
      "version": null
     },
-    "latency_minutes": 53.1,
+    "landed_at": "2026-09-11T21:10:48+00:00",
+    "landed_minutes": 2.7,
+    "latency_minutes": 55.8,
     "problems": [],
     "published_at": "2026-09-11T21:08:04.147459+00:00",
     "reader": {
@@ -1549,6 +1642,7 @@
    "latest": {
     "commit": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
     "email": "delivered",
+    "landed_at": "2026-09-14T22:27:41+00:00",
     "published_at": "2026-09-14T22:24:50.953539+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1574,10 +1668,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 8.8,
+    "after_primary_minutes": 11.7,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 169.2,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 129.8,
     "inputs": {
      "acceptance": null,
      "intended_stocks": null,
@@ -1587,7 +1683,9 @@
      "tolerance": null,
      "version": null
     },
-    "latency_minutes": 129.8,
+    "landed_at": "2026-09-14T22:27:41+00:00",
+    "landed_minutes": 2.8,
+    "latency_minutes": 132.7,
     "problems": [],
     "published_at": "2026-09-14T22:24:50.953539+00:00",
     "reader": {
@@ -1616,6 +1714,7 @@
    "latest": {
     "commit": "442db489342660d7588d16dcc18e6c126187c1e6",
     "email": "delivered",
+    "landed_at": "2026-09-15T22:26:18+00:00",
     "published_at": "2026-09-15T22:23:17.742488+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1641,10 +1740,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 7.3,
+    "after_primary_minutes": 10.3,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 179.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.3,
     "inputs": {
      "acceptance": null,
      "intended_stocks": null,
@@ -1654,7 +1755,9 @@
      "tolerance": null,
      "version": null
     },
-    "latency_minutes": 128.3,
+    "landed_at": "2026-09-15T22:26:18+00:00",
+    "landed_minutes": 3.0,
+    "latency_minutes": 131.3,
     "problems": [],
     "published_at": "2026-09-15T22:23:17.742488+00:00",
     "reader": {
@@ -1683,6 +1786,7 @@
    "latest": {
     "commit": "580805487b22006c6f2fa35490c3edc8a5760d73",
     "email": "delivered",
+    "landed_at": "2026-09-16T22:26:30+00:00",
     "published_at": "2026-09-16T22:23:02.757794+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1708,10 +1812,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 7.0,
+    "after_primary_minutes": 10.5,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 189.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.0,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4795,
@@ -1721,7 +1827,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 128.0,
+    "landed_at": "2026-09-16T22:26:30+00:00",
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.5,
     "problems": [
      "coverage_thin"
     ],
@@ -1752,6 +1860,7 @@
    "latest": {
     "commit": "ebcdea34464b9090e7734ca543be8733d39fc20a",
     "email": "delivered",
+    "landed_at": "2026-09-17T22:25:36+00:00",
     "published_at": "2026-09-17T22:21:57.200360+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1777,10 +1886,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 6.0,
+    "after_primary_minutes": 9.6,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 195.2,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.0,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4794,
@@ -1790,7 +1901,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 127.0,
+    "landed_at": "2026-09-17T22:25:36+00:00",
+    "landed_minutes": 3.6,
+    "latency_minutes": 130.6,
     "problems": [
      "coverage_thin"
     ],
@@ -1821,6 +1934,7 @@
    "latest": {
     "commit": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
     "email": "delivered",
+    "landed_at": "2026-09-18T22:26:07+00:00",
     "published_at": "2026-09-18T22:22:34.176134+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1846,10 +1960,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 6.6,
+    "after_primary_minutes": 10.1,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 189.7,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.6,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4793,
@@ -1859,7 +1975,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 127.6,
+    "landed_at": "2026-09-18T22:26:07+00:00",
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.1,
     "problems": [
      "coverage_thin"
     ],
@@ -1890,6 +2008,7 @@
    "latest": {
     "commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
     "email": "delivered",
+    "landed_at": "2026-09-22T00:52:24+00:00",
     "published_at": "2026-09-22T00:48:42.004722+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1916,10 +2035,12 @@
    },
    "revisions": 2,
    "service": {
-    "after_primary_minutes": 98.4,
+    "after_primary_minutes": 102.2,
     "after_retry_slot": false,
     "before_next_open": true,
     "elapsed_seconds": 202.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 219.4,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4796,
@@ -1929,7 +2050,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 219.4,
+    "landed_at": "2026-09-21T23:58:13+00:00",
+    "landed_minutes": 3.8,
+    "latency_minutes": 223.2,
     "problems": [
      "coverage_thin"
     ],
@@ -1960,6 +2083,7 @@
    "latest": {
     "commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
     "email": "delivered",
+    "landed_at": "2026-09-23T00:33:41+00:00",
     "published_at": "2026-09-23T00:28:52.357015+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -1985,10 +2109,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 132.9,
+    "after_primary_minutes": 137.7,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 263.7,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 253.9,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4778,
@@ -1998,7 +2124,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 253.9,
+    "landed_at": "2026-09-23T00:33:41+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 258.7,
     "problems": [
      "coverage_thin",
      "claude_unavailable"
@@ -2030,6 +2158,7 @@
    "latest": {
     "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
     "email": "delivered",
+    "landed_at": "2026-09-24T00:33:15+00:00",
     "published_at": "2026-09-24T00:29:00.615148+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2055,10 +2184,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 133.0,
+    "after_primary_minutes": 137.2,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 238.5,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 254.0,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4781,
@@ -2068,7 +2199,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 254.0,
+    "landed_at": "2026-09-24T00:33:15+00:00",
+    "landed_minutes": 4.2,
+    "latency_minutes": 258.2,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2100,6 +2233,7 @@
    "latest": {
     "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
     "email": "delivered",
+    "landed_at": "2026-09-25T00:37:01+00:00",
     "published_at": "2026-09-25T00:32:29.515829+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2125,10 +2259,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 136.5,
+    "after_primary_minutes": 141.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 243.9,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 257.5,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4779,
@@ -2138,7 +2274,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 257.5,
+    "landed_at": "2026-09-25T00:37:01+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 262.0,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2170,6 +2308,7 @@
    "latest": {
     "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
     "email": "delivered",
+    "landed_at": "2026-09-26T00:41:44+00:00",
     "published_at": "2026-09-26T00:36:55.145085+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2195,10 +2334,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 140.9,
+    "after_primary_minutes": 145.7,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 259.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 261.9,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4780,
@@ -2208,7 +2349,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 261.9,
+    "landed_at": "2026-09-26T00:41:44+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 266.7,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2240,6 +2383,7 @@
    "latest": {
     "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
     "email": "delivered",
+    "landed_at": "2026-09-29T01:58:52+00:00",
     "published_at": "2026-09-29T01:54:23.545923+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2265,10 +2409,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 218.4,
+    "after_primary_minutes": 222.9,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 246.6,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.4,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4780,
@@ -2278,7 +2424,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 339.4,
+    "landed_at": "2026-09-29T01:58:52+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 343.9,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2310,6 +2458,7 @@
    "latest": {
     "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
     "email": "delivered",
+    "landed_at": "2026-09-30T01:21:22+00:00",
     "published_at": "2026-09-30T01:17:04.438845+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2335,10 +2484,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 181.1,
+    "after_primary_minutes": 185.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 242.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 302.1,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4781,
@@ -2348,7 +2499,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 302.1,
+    "landed_at": "2026-09-30T01:21:22+00:00",
+    "landed_minutes": 4.3,
+    "latency_minutes": 306.4,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2380,6 +2533,7 @@
    "latest": {
     "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
     "email": "delivered",
+    "landed_at": "2026-10-01T01:21:22+00:00",
     "published_at": "2026-10-01T01:16:51.463947+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2405,10 +2559,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 180.9,
+    "after_primary_minutes": 185.4,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 255.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 301.9,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4779,
@@ -2418,7 +2574,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 301.9,
+    "landed_at": "2026-10-01T01:21:22+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 306.4,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2450,6 +2608,7 @@
    "latest": {
     "commit": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
     "email": "delivered",
+    "landed_at": "2026-10-02T01:44:57+00:00",
     "published_at": "2026-10-02T01:40:08.024617+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2475,10 +2634,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 204.1,
+    "after_primary_minutes": 208.9,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 246.1,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 325.1,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4781,
@@ -2488,7 +2649,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 325.1,
+    "landed_at": "2026-10-02T01:44:57+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 329.9,
     "problems": [
      "coverage_thin"
     ],
@@ -2519,6 +2682,7 @@
    "latest": {
     "commit": "58e0f38430ae82249db435ff397477bd2221106e",
     "email": "delivered",
+    "landed_at": "2026-10-03T01:15:05+00:00",
     "published_at": "2026-10-03T01:10:25.044083+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2544,10 +2708,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 174.4,
+    "after_primary_minutes": 179.1,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 248.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 295.4,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4781,
@@ -2557,7 +2723,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 295.4,
+    "landed_at": "2026-10-03T01:15:05+00:00",
+    "landed_minutes": 4.7,
+    "latency_minutes": 300.1,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2589,6 +2757,7 @@
    "latest": {
     "commit": "178956b46bc50d8998636e9b4bc785ce3687c84a",
     "email": "delivered",
+    "landed_at": "2026-10-06T02:22:00+00:00",
     "published_at": "2026-10-06T02:17:03.294319+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2614,10 +2783,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 241.1,
+    "after_primary_minutes": 246.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 253.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 362.1,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4778,
@@ -2627,7 +2798,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 362.1,
+    "landed_at": "2026-10-06T02:22:00+00:00",
+    "landed_minutes": 4.9,
+    "latency_minutes": 367.0,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2659,6 +2832,7 @@
    "latest": {
     "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
     "email": "delivered",
+    "landed_at": "2026-10-07T01:34:51+00:00",
     "published_at": "2026-10-07T01:31:04.894157+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2684,10 +2858,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 195.1,
+    "after_primary_minutes": 198.8,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 194.9,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 316.1,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4778,
@@ -2697,7 +2873,9 @@
      "tolerance": null,
      "version": 1
     },
-    "latency_minutes": 316.1,
+    "landed_at": "2026-10-07T01:34:51+00:00",
+    "landed_minutes": 3.8,
+    "latency_minutes": 319.9,
     "problems": [
      "coverage_thin",
      "claude_partial"
@@ -2729,6 +2907,7 @@
    "latest": {
     "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
     "email": "delivered",
+    "landed_at": "2026-10-08T02:00:02+00:00",
     "published_at": "2026-10-08T01:54:31.922070+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2754,10 +2933,12 @@
    },
    "revisions": 1,
    "service": {
-    "after_primary_minutes": 218.5,
+    "after_primary_minutes": 224.0,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 305.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.5,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4775,
@@ -2767,7 +2948,9 @@
      "tolerance": "not_tolerated",
      "version": 1
     },
-    "latency_minutes": 339.5,
+    "landed_at": "2026-10-08T02:00:02+00:00",
+    "landed_minutes": 5.5,
+    "latency_minutes": 345.0,
     "problems": [
      "coverage_thin"
     ],
@@ -2798,6 +2981,7 @@
    "latest": {
     "commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
     "email": "skipped",
+    "landed_at": "2026-10-09T12:15:26+00:00",
     "published_at": "2026-10-09T12:10:20.678352+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2823,6 +3007,7 @@
       "before_applicable_open": false,
       "commit": "2fa9773f046299de78c95d1b513c05880a3eefdb",
       "generated_at": "2026-10-09T17:10:18.034037+00:00",
+      "landed_at": "2026-10-09T17:11:03+00:00",
       "reason": "entry_window_ended",
       "rows": 0,
       "status": "inapplicable"
@@ -2833,10 +3018,12 @@
    },
    "revisions": 2,
    "service": {
-    "after_primary_minutes": 230.9,
+    "after_primary_minutes": 236.1,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 261.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 351.9,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4777,
@@ -2846,7 +3033,9 @@
      "tolerance": "tolerated",
      "version": 1
     },
-    "latency_minutes": 351.9,
+    "landed_at": "2026-10-09T02:12:06+00:00",
+    "landed_minutes": 5.2,
+    "latency_minutes": 357.1,
     "problems": [
      "claude_partial"
     ],
@@ -2877,6 +3066,7 @@
    "latest": {
     "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
     "email": "skipped",
+    "landed_at": "2026-10-10T07:32:39+00:00",
     "published_at": "2026-10-10T07:30:15.553690+00:00",
     "signal": {
      "anticipation_tickets": 0,
@@ -2902,6 +3092,7 @@
       "before_applicable_open": true,
       "commit": "981e6792827a222c26b94da622f30d88b74d53e1",
       "generated_at": "2026-10-10T07:35:36.385307+00:00",
+      "landed_at": "2026-10-10T07:36:12+00:00",
       "reason": null,
       "rows": null,
       "status": "unavailable"
@@ -2910,6 +3101,7 @@
       "before_applicable_open": true,
       "commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
       "generated_at": "2026-10-10T08:57:46.469022+00:00",
+      "landed_at": "2026-10-10T08:58:21+00:00",
       "reason": null,
       "rows": null,
       "status": "unavailable"
@@ -2918,6 +3110,7 @@
       "before_applicable_open": true,
       "commit": "f9b91d00123281039436bcd4e8a7646992517265",
       "generated_at": "2026-10-10T09:18:39.533632+00:00",
+      "landed_at": "2026-10-10T09:19:16+00:00",
       "reason": null,
       "rows": null,
       "status": "unavailable"
@@ -2928,6 +3121,7 @@
       "before_applicable_open": true,
       "commit": "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
       "generated_at": "2026-10-10T08:56:34.636611+00:00",
+      "landed_at": "2026-10-10T08:57:05+00:00",
       "reason": "wrong_session",
       "rows": 0,
       "status": "inapplicable"
@@ -2938,10 +3132,12 @@
    },
    "revisions": 3,
    "service": {
-    "after_primary_minutes": 209.0,
+    "after_primary_minutes": 213.2,
     "after_retry_slot": true,
     "before_next_open": true,
     "elapsed_seconds": 233.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 330.0,
     "inputs": {
      "acceptance": "degraded",
      "intended_stocks": 4775,
@@ -2951,7 +3147,9 @@
      "tolerance": "tolerated",
      "version": 1
     },
-    "latency_minutes": 330.0,
+    "landed_at": "2026-10-10T01:49:14+00:00",
+    "landed_minutes": 4.3,
+    "latency_minutes": 334.2,
     "problems": [],
     "published_at": "2026-10-10T01:44:58.778069+00:00",
     "reader": {
@@ -3188,6 +3386,7 @@
    "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
    "7380a97605c7f16eb902421486c491a95b957cd7"
   ],
+  "record_head": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
   "record_path": "docs/data.json",
   "ref": "origin/main",
   "through": "c759a1e671227717cae8d0bf1d50a4121d167396"
@@ -3202,6 +3401,7 @@
      "2026-10-12"
     ],
     "before_applicable_open": 3,
+    "generated_before_applicable_open": 3,
     "receipts": 3,
     "statuses": {
      "unavailable": 3
@@ -3213,6 +3413,7 @@
      "2026-10-12"
     ],
     "before_applicable_open": 1,
+    "generated_before_applicable_open": 1,
     "receipts": 2,
     "statuses": {
      "inapplicable": 2
@@ -3221,12 +3422,14 @@
    "research_observations": {
     "applicable_sessions": [],
     "before_applicable_open": 0,
+    "generated_before_applicable_open": 0,
     "receipts": 0,
     "statuses": {}
    },
    "source_recovery": {
     "applicable_sessions": [],
     "before_applicable_open": 0,
+    "generated_before_applicable_open": 0,
     "receipts": 0,
     "statuses": {}
    }
@@ -3237,13 +3440,25 @@
   "fetch_seconds": 1335.2,
   "fresh": {
    "fresh": true,
+   "main_carries": {
+    "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+    "readable": true,
+    "reason": null,
+    "session": "2026-10-09"
+   },
    "newest_due_session": "2026-10-09",
    "newest_published_session": "2026-10-09"
   },
-  "latency_minutes": {
+  "generated_before_next_open": 21,
+  "generated_latency_minutes": {
    "max": 362.1,
    "median": 261.9,
    "min": 53.1
+  },
+  "latency_minutes": {
+   "max": 367.0,
+   "median": 266.7,
+   "min": 55.8
   },
   "missing_sessions": [],
   "not_yet_due": [],
@@ -3286,7 +3501,7 @@
    "longest": 21
   }
  },
- "version": 1,
+ "version": 2,
  "words": {
   "before_next_open": "its first publication landed before the next session's open",
   "due": "the session's close plus the completion buffer is at or before the reading's clock",
