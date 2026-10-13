@@ -557,3 +557,263 @@ def test_a_first_day_the_minutes_say_never_filled_frees_its_model_slot(market, c
     assert aaa["status"] == record.NOT_FILLED and "11:00 ET" in aaa["fill"]
     assert "AAA" not in data["cash_budget"]["open_symbols"]
     assert data["cash_budget"]["open_positions"] == held["cash_budget"]["open_positions"] - 1
+
+
+# ------------------------------------------------- what the review asked for ----
+# The minutes must be the daily bar's own day: a minute outside its range, or a
+# stop the bar reached that no minute shows, is another feed's account.
+@pytest.mark.parametrize("rows, bar", [
+    ([(0, 99.0, 99.5, 98.0, 99.4), (5, 99.6, 100.1, 99.5, 100.0)], (99.0, 100.5, 98.9, 100.0)),   # a minute under its low
+    ([(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 101.0, 99.5, 100.0)], (99.0, 100.5, 98.9, 100.0)),   # a minute over its high
+])
+def test_minutes_outside_the_daily_bars_range_are_not_used(rows, bar):
+    assert intraday.resolve(LEVELS, obj(rows), day(*bar)) is None
+
+
+def test_minutes_inside_the_bars_range_by_its_own_rounding_are_used():
+    rows = [(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 100.1, 99.5, 100.0)]
+    # the bar arrives with the feed's own decimals; the minutes were rounded once on the way in
+    assert intraday.resolve(LEVELS, obj(rows), day(99.0, 100.100004, 98.899996, 100.0))[0] == intraday.FILLED
+
+
+def test_a_stop_the_daily_bar_reached_that_no_minute_shows_is_another_account():
+    """The bar's low reached the 96 stop (``stop_sequence``) and no minute did:
+    the walk cannot know when the stop came, so the minutes are not used."""
+    rows = [(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 100.1, 99.5, 100.0)]
+    assert intraday.resolve(LEVELS, obj(rows), day(99.0, 100.1, 96.0, 100.0)) is None
+    shown = rows + [(200, 99.0, 99.0, 96.0, 96.5)]
+    assert intraday.resolve(LEVELS, obj(shown), day(99.0, 100.1, 96.0, 96.5))[0] == intraday.FILLED
+
+
+def test_a_crossing_over_the_limit_that_never_trades_back_inside_the_window_is_not_filled():
+    rows = [(0, 99.0, 99.5, 98.9, 99.4), (3, 102.5, 103.0, 102.1, 102.8), (10, 102.8, 103.2, 102.05, 103.0),
+            (40, 103.0, 103.0, 101.0, 101.5)]                              # back under the limit after the window
+    status, price, note, why, entry = intraday.resolve(LEVELS, obj(rows), day(99.0, 103.2, 98.9, 101.5))
+    assert status == intraday.NOT_FILLED and price is None and why is None and entry is None
+    assert "no minute of the first 30 minutes traded back to it" in note
+    back = rows[:2] + [(10, 102.8, 103.2, 102.0, 103.0)] + rows[3:]          # at the limit, inside the window
+    assert intraday.resolve(LEVELS, obj(back), day(99.0, 103.2, 98.9, 101.5))[3] == intraday.MINUTE_ORDER
+
+
+def test_a_walk_from_a_minute_fill_keeps_the_daily_conventions_stop_first_on_day_one():
+    """The minutes after the fill reach +8% at 10:30 and the stop at 12:50; the
+    walk is the daily model, which books the stop on a day-1 bar reaching both."""
+    rows = [(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 100.1, 99.5, 100.0), (60, 100.0, 108.5, 100.0, 108.0),
+            (200, 108.0, 108.0, 95.5, 96.0)]
+    bar = day(99.0, 108.5, 95.5, 96.0)
+    assert intraday.resolve(LEVELS, obj(rows), bar)[0] == intraday.FILLED
+    row = record.replay(pick(), [bar], minutes=obj(rows))
+    assert row["status"] == "stopped" and row["exit_price"] == 96.0 and row["minute_evidence"] == intraday.name_of(obj(rows))
+
+
+def test_the_same_minutes_are_the_same_object_and_the_same_name():
+    rows = [(5, 99.6, 100.1, 99.5, 100.0)]
+    a, b = obj(rows), obj(list(reversed(rows + rows)))
+    assert a == b and intraday.name_of(a) == intraday.name_of(b)
+    assert intraday.name_of(a) != intraday.name_of(obj([(5, 99.6, 100.1, 99.5, 100.01)]))
+
+
+def test_a_writing_run_walks_only_what_it_stored(tmp_path, monkeypatch):
+    def fetcher(client, picks, now):
+        return [obj([(5, 99.6, 100.1, 99.5, 100.0)], p) for p in picks], []
+    monkeypatch.setattr(intraday, "ARCHIVE_MAX_OBJECTS", 0)
+    evidence, block = intraday.gather(object(), tmp_path, [pick()], now=FETCHED, write=True, fetcher=fetcher)
+    assert evidence == {} and (block["fetched"], block["stored"], block["retained"]) == (1, 0, 0)
+    assert "at capacity" in block["problems"][0] and intraday.faults(block) == []
+
+
+def test_retained_counts_what_the_archive_holds_before_and_after_tonight(tmp_path):
+    intraday.store(tmp_path, [obj([(5, 99.6, 100.1, 99.5, 100.0)], pick(ticker="OLD"))])
+
+    def fetcher(client, picks, now):
+        return [obj([(5, 99.6, 100.1, 99.5, 100.0)], p) for p in picks], []
+    evidence, block = intraday.gather(object(), tmp_path, [pick()], now=FETCHED, write=True, fetcher=fetcher)
+    assert sorted(evidence) == ["burst:AAA:2026-09-01", "burst:OLD:2026-09-01"]
+    assert (block["wanted"], block["stored"], block["retained"]) == (1, 1, 2)
+
+
+def test_a_pick_the_archive_sets_aside_is_never_asked_again(tmp_path):
+    intraday.store(tmp_path, [obj([(5, 99.6, 100.1, 99.5, 100.0)]), obj([(6, 99.6, 100.1, 99.5, 100.0)])])
+    asked = []
+
+    def fetcher(client, picks, now):
+        asked.extend(picks)
+        return [], []
+    evidence, block = intraday.gather(object(), tmp_path, [pick()], now=FETCHED, write=True, fetcher=fetcher)
+    assert asked == [] and evidence == {}
+    assert (block["wanted"], block["set_aside"], block["asked"]) == (1, 1, 0) and intraday.faults(block) == []
+    assert "1 set aside by the archive" in block["sentence"] and "2 objects claim it" in block["problems"][0]
+
+
+def test_last_nights_failures_go_after_the_rest_so_one_cannot_hold_the_cap(tmp_path, monkeypatch):
+    asked = []
+
+    def fetcher(client, picks, now):
+        asked.extend(p["ticker"] for p in picks)
+        return [], [{"key": intraday.key(p), "kind": "no_minutes"} for p in picks]
+    monkeypatch.setattr(intraday, "MAX_PICKS_PER_RUN", 1)
+    picks = [pick(ticker="NEW", date="2026-09-01"), pick(ticker="OLD", date="2026-08-28")]
+    intraday.gather(object(), tmp_path, picks, now=FETCHED, write=True, fetcher=fetcher)
+    intraday.gather(object(), tmp_path, picks, now=FETCHED, write=True, fetcher=fetcher,
+                    failed_before={"burst:NEW:2026-09-01"})
+    assert asked == ["NEW", "OLD"]
+
+
+def test_the_evening_hands_last_nights_failures_to_the_gathering(tmp_path, monkeypatch):
+    from src import pipeline
+    seen = {}
+    monkeypatch.setattr(record, "needs_minutes", lambda rec, frames, session: [pick()])
+
+    def gather(client, docs, needed, **kw):
+        seen.update(kw)
+        return {}, intraday.block(wanted=0, set_aside=0, asked=0, fetched=0, stored=0, retained=0, waiting=0,
+                                  beyond_cap=0, failures=[], problems=[])
+    monkeypatch.setattr(intraday, "gather", gather)
+    previous = {"run": {"intraday": {"failures": [{"key": "burst:AAA:2026-09-01", "kind": "no_minutes"},
+                                                  {"key": 7, "kind": "x"}, "junk"]}}}
+    pipeline.gather_minutes(object(), tmp_path, {}, {}, date(2026, 9, 2), FETCHED, False, previous)
+    assert seen["failed_before"] == {"burst:AAA:2026-09-01"} and seen["write"] is True
+    pipeline.gather_minutes(object(), tmp_path, {}, {}, date(2026, 9, 2), FETCHED, True, None)
+    assert seen["failed_before"] == set() and seen["write"] is False
+
+
+def test_a_gathering_that_fails_still_walks_what_the_archive_retains(tmp_path, monkeypatch):
+    from src import pipeline
+    o = obj([(5, 99.6, 100.1, 99.5, 100.0)])
+    intraday.store(tmp_path, [o])
+    monkeypatch.setattr(record, "needs_minutes", lambda rec, frames, session: [pick(), pick(ticker="BBB")])
+
+    def broken(*a, **kw):
+        raise RuntimeError("the gathering itself")
+    monkeypatch.setattr(intraday, "gather", broken)
+    evidence, block = pipeline.gather_minutes(object(), tmp_path, {}, {}, date(2026, 9, 2), FETCHED, False)
+    assert evidence == {o["key"]: o}
+    assert block["status"] == intraday.FAILED and (block["wanted"], block["retained"], block["asked"]) == (1, 1, 0)
+    assert block["problems"] == ["the minute evidence could not be gathered: RuntimeError"]
+    assert intraday.faults(block) == []
+    assert block["sentence"] == ("The minute evidence could not be gathered tonight: 1 plan needing it read only "
+                                 "what was retained; 1 problem named; minute bars are retained for 1 plan's "
+                                 "first day.")
+
+
+def test_an_evening_whose_gathering_fails_publishes_from_the_archive(market, claude, fake_resend, fake_alpaca,
+                                                                    tmp_path, monkeypatch):
+    evening(tmp_path, market)
+    fake_alpaca.add_minutes("AAA", friday_minutes())
+    _, first, docs = evening(tmp_path, market, now=FRIDAY)
+    name = next(p for p in first["open_plans"] if p["ticker"] == "AAA")["minute_evidence"]
+
+    def broken(*a, **kw):
+        raise RuntimeError("the gathering itself")
+    monkeypatch.setattr(intraday, "gather", broken)
+    rep, data, docs = evening(tmp_path, market, now=FRIDAY)              # the same session re-run
+    assert rep.exit_code() == 0, rep.problems
+    aaa = next(p for p in data["open_plans"] if p["ticker"] == "AAA")
+    assert aaa["status"] == "hold" and aaa["minute_evidence"] == name
+    block = data["run"]["intraday"]
+    assert block["status"] == intraday.FAILED and block["retained"] == 1 and intraday.faults(block) == []
+    report.validate(data)
+
+
+@pytest.mark.parametrize("change, words", [
+    (lambda b: b.update(asked=1), "failed but counts work done"),
+    (lambda b: b.update(failures=[{"key": "k", "kind": "x"}]), "failed but counts work done"),
+    (lambda b: b.update(problems=[]), "failed without naming why"),
+])
+def test_a_failed_block_that_counts_work_or_names_no_reason_is_named(change, words):
+    b = intraday.failed_block(wanted=2, retained=1, kind="RuntimeError", problems=[])
+    assert intraday.faults(b) == []
+    change(b)
+    b["sentence"] = intraday.sentence(b)
+    assert any(words in f for f in intraday.faults(b)), intraday.faults(b)
+
+
+def test_a_block_that_counts_set_asides_must_still_add_up():
+    b = intraday.block(wanted=2, set_aside=1, asked=1, fetched=1, stored=1, retained=1, waiting=0, beyond_cap=0,
+                       failures=[], problems=[])
+    assert intraday.faults(b) == []
+    b["set_aside"] = 0
+    b["sentence"] = intraday.sentence(b)
+    assert any("wanted is not its set-aside" in f for f in intraday.faults(b))
+
+
+def test_a_record_naming_objects_the_walks_could_not_read_is_refused():
+    rules = {"intraday": {"version": intraday.VERSION}}
+    b = intraday.block(wanted=1, set_aside=0, asked=1, fetched=1, stored=0, retained=0, waiting=0, beyond_cap=0,
+                       failures=[], problems=[])
+    name = intraday.name_of(obj([(5, 99.6, 100.1, 99.5, 100.0)]))
+    data = {"rules": rules, "run": {"intraday": b, "dry_run": True}, "open_plans": [{"minute_evidence": name}]}
+    assert intraday.record_faults(data) == []                    # a dry run walked what it fetched
+    data["run"]["dry_run"] = False
+    assert intraday.record_faults(data) == ["open plans name more minute objects than the walks could read"]
+    data["run"]["dry_run"] = True
+    data["open_plans"] = [{"minute_evidence": "not-a-name.json"}]
+    assert intraday.record_faults(data) == ["an open plan's minute_evidence is not an archive object's name"]
+    data["open_plans"] = [{"minute_evidence": None}]
+    assert intraday.record_faults(data) == ["an open plan's minute_evidence is not an archive object's name"]
+
+
+def test_the_sentence_counts_one_plans_first_day_in_the_singular(tmp_path):
+    intraday.store(tmp_path, [obj([(5, 99.6, 100.1, 99.5, 100.0)])])
+    _, block = intraday.gather(None, tmp_path, [], now=FETCHED, write=True)
+    assert block["sentence"] == ("No plan's first day needed its minute bars tonight; minute bars are retained "
+                                 "for 1 plan's first day.")
+
+
+def test_a_write_the_disk_refuses_or_reads_back_differently_is_named(tmp_path, monkeypatch):
+    o = obj([(5, 99.6, 100.1, 99.5, 100.0)])
+
+    def refuse(path, data):
+        raise OSError("disk full")
+    monkeypatch.setattr(intraday, "_write", refuse)
+    stored, problems = intraday.store(tmp_path, [o])
+    assert stored == [] and problems == [f"{o['key']}: not written (OSError)"]
+
+    def garble(path, data):
+        path.write_bytes(data + b" ")
+    monkeypatch.setattr(intraday, "_write", garble)
+    stored, problems = intraday.store(tmp_path, [o])
+    assert stored == [] and problems == [f"{intraday.name_of(o)}: read back differently"]
+
+
+def test_an_archive_that_cannot_be_opened_stores_nothing(tmp_path):
+    (tmp_path / intraday.DIR_NAME).write_text("a file where the folder belongs")
+    stored, problems = intraday.store(tmp_path, [obj([(5, 99.6, 100.1, 99.5, 100.0)])])
+    assert stored == [] and problems[0].startswith("the archive could not be opened:")
+
+
+def test_the_rules_archive_every_bound_the_reading_keeps():
+    rules = intraday.RULES
+    assert rules["intraday.max_minutes"] == intraday.MAX_MINUTES
+    assert rules["intraday.archive_max_objects"] == intraday.ARCHIVE_MAX_OBJECTS
+    assert rules["intraday.archive_max_bytes"] == intraday.ARCHIVE_MAX_BYTES
+    assert rules["intraday.object_max_bytes"] == intraday.OBJECT_MAX_BYTES
+    assert rules["intraday.price_decimals"] == intraday.PRICE_DECIMALS
+    assert rules["intraday.holdback_minutes"] == intraday.HOLDBACK_MINUTES
+    assert rules["intraday.max_picks_per_run"] == intraday.MAX_PICKS_PER_RUN
+    assert rules["intraday.resolvable"] == list(intraday.RESOLVABLE)
+    from types import SimpleNamespace
+    from src import pipeline
+    nested = pipeline.build_rules(SimpleNamespace(identity="test"))["intraday"]
+    assert {f"intraday.{k}": v for k, v in nested.items()} == rules
+
+
+def test_the_offline_analysis_reads_the_retained_minutes_with_docs(tmp_path, capsys):
+    from src import provenance
+    from tools.scorecard_analysis import main
+    rows = [(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 100.1, 99.5, 100.0), (60, 100.0, 101.0, 99.8, 100.8)]
+    intraday.store(tmp_path, [obj(rows)])
+    bars = pd.DataFrame([{"Open": 95.0, "High": 101.0, "Low": 94.0, "Close": 100.0, "Volume": 1_000_000},
+                         {"Open": 99.0, "High": 101.0, "Low": 98.9, "Close": 100.8, "Volume": 1_000_000}],
+                        index=pd.DatetimeIndex([pd.Timestamp("2026-09-01"), pd.Timestamp("2026-09-02")]))
+    (tmp_path / "picks.json").write_text(json.dumps({"schema_version": 2, "picks": [pick()]}))
+    (tmp_path / "frames.json").write_text(json.dumps({"AAA": provenance.source_object(bars)}))
+    args = ["--picks", str(tmp_path / "picks.json"), "--frames", str(tmp_path / "frames.json"),
+            "--session", "2026-09-02"]
+    assert main(args) == 0
+    without = json.loads(capsys.readouterr().out)
+    assert without["minute_evidence"] == "no minute bars read" and without["rows"][0]["status"] == "uncertain"
+    assert main(args + ["--docs", str(tmp_path)]) == 0
+    read = json.loads(capsys.readouterr().out)
+    assert read["minute_evidence"] == "retained minute bars read" and read["rows"][0]["status"] == "hold"
+    assert read["rows"][0]["minute_evidence"] == intraday.name_of(obj(rows))
