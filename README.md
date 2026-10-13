@@ -1226,9 +1226,15 @@ count, including zero when provider credentials are missing.
 
 ### Same-session source recovery
 
-`morning.yml` also asks the provider once more for the stocks the night's own
-record says it could not read (`src/source_recovery.py`, writing
-`docs/source-recovery.json`). The receipt binds the exact canonical publication
+Its own workflow, `source-recovery.yml`, asks the provider once more for the
+stocks the night's own record says it could not read (`src/source_recovery.py`,
+writing `docs/source-recovery.json`), at 07:37 and 09:37 UTC every day: after
+the hour the 9 October late bars had arrived by (07:12 UTC), and hours before
+either open. No other collector's guard or publish step decides whether it runs
+or whether its receipt is kept. The schedule is best effort -- GitHub started
+the 12 October morning crons 8 h 24 m late -- and a slot that starts after the
+next open records `recovery_window_ended` and asks nothing; a manual dispatch is
+a real collection, recorded like a scheduled one. The receipt binds the exact canonical publication
 and its compact reader and freezes the record's own basis -- universe identity,
 feed, split adjustment, lookback, measured session and rules digest; a record
 whose basis differs is `basis_differs`, and nothing is fetched. The names come
@@ -1236,18 +1242,25 @@ from the record first (`run.input_tolerance.names`, the stale frames the
 tolerance named in full) and from the publication's quality-ledger entry second
 (its complete exception membership for `stale`, `no_bars`, `dropped`,
 `unfetched_budget`, `unfetched_failure`, `gapped` and `unreadable`, each held to
-the ledger's own coverage counts), and never from a guess: a deficit the record
-counted but named nowhere is `deficit_not_named`, a count that is the benchmark's
-frame alone is `benchmark_only`, and the request stays unspent either way.
+the publication's own count and identity for its category), and never from a
+guess: when no counted stock is named anywhere the receipt is
+`deficit_not_named`, a count that is the benchmark's frame alone is
+`benchmark_only`, and the request stays unspent either way; when only some are
+named, the named ones are asked for and the rest are counted as named nowhere.
 At most `MAX_NAMES` (100, one provider batch) are asked for in `MAX_BATCHES` (1)
 request of at most `MAX_BATCH_ATTEMPTS` (2) attempts, through the same Alpaca
 pair the morning collector reads, within `MAX_COLLECTION_SECONDS` (300) and only
 before the next session opens (`recovery_until: next_session_open`). The provider
-call runs under a main-thread timer set `FETCH_RESERVE_SECONDS` (10) short of
-that bound, because the SDK retries a 429 or 504 on its own; a call the timer
-stops is kept as `provider_unavailable` with error kind `timeout` and its
-attempts counted, so a slow answer still binds the next slot, and where the
-timer cannot be installed nothing is asked. More named
+call runs under a main-thread timer set to the earlier of
+`FETCH_RESERVE_SECONDS` (10) short of that bound and the next open, because the
+SDK retries a 429 or 504 on its own; a call the timer stops is kept as
+`provider_unavailable` with error kind `timeout` and its attempts counted, so a
+request that was sent still binds the next slot, an answer that lands after the
+open is not kept, a bound that expires before any call is sent says the stocks
+were not asked for and spends nothing, and where the timer cannot be installed
+nothing is asked. The receipt counts calls to the
+bars endpoint; a retry the SDK makes inside one call, and a page it follows,
+are not counted (`sdk_retries_and_pages_not_counted`). More named
 deficits than the budget is `deficit_over_budget` whole, never a prefix, and a
 publication whose one request was already spent is `already_attempted`. The
 benchmark is never requested. Each row says what came back for its stock --
@@ -1261,9 +1274,18 @@ measurements, grades, plans and tickets, and the receipt establishes neither
 why a bar was absent nor when it arrived at the provider. Persistence is a
 one-file commit on main (`publish_morning.py --target recovery`), revalidated
 against the record, the ledger entry on main and the prior receipt; a spent
-receipt is never replaced. The Method view prints the receipt's one sentence
-after hashing the loaded publication's bytes against the receipt's binding, and
-nothing else on the page reads it.
+receipt is never replaced, and a later inapplicable receipt for the same
+publication and the same reason is refused as unchanged, so the daily schedule
+commits at most one receipt per publication and reason. A prior receipt of
+another publication, of any schema or size, binds nothing beyond its bytes'
+hash. The dashboard publisher runs after the workflow completes. The Method view
+prints the receipt's one sentence after hashing the loaded publication's bytes
+against the receipt's binding -- the canonical digest and, on a compact-reader
+load, the reader's -- and nothing else on the page reads it. It reads the
+receipt past the HTTP cache, says that no receipt was published only on a 404
+(any other failure says the receipt could not be read), and reads it again when
+an update check finds the record unchanged while Method is shown, because the
+receipt lands the morning after the record it binds.
 
 ### Research follow-through
 
@@ -1731,7 +1753,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
-.github/        evening.yml · intraday.yml · morning.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
+.github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 
 Paper prices, one venue's prints, no slippage. Not investment advice.

@@ -3,7 +3,7 @@
   "collection_started_at": "2026-10-12T13:20:00+00:00",
   "generated_at": "2026-10-12T13:20:00+00:00",
   "observation_run_id": "synthetic-already-attempted",
-  "previous_observation_sha256": "c2aaa6093ba4f1d45c446f50d6a72eeef125e45087d27907703fb73e8236dcb7",
+  "previous_observation_sha256": "9f8c136323b726b44489c197541ac6f08380f3c3d970d92ac1f9598856d4f846",
   "dry_run": false,
   "publication": {
     "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
@@ -192,10 +192,10 @@
     "not_a_fixed_cohort_improvement",
     "ready_names_not_refetched",
     "arrival_time_unknown",
-    "wire_requests_by_arithmetic_only",
+    "sdk_retries_and_pages_not_counted",
     "one_bounded_attempt_per_publication",
     "second_slot_may_spend_once_more_after_a_refused_persist",
-    "rides_the_morning_collectors_success",
+    "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
   "sentence": "No source recovery for the 2026-10-09 publication at 9:20 AM ET on Mon 12 Oct: this publication's one bounded recovery was already made; nothing was fetched."

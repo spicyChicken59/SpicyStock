@@ -166,6 +166,88 @@ def test_each_outcome_is_read_off_what_came_back_in_a_fresh_collection(capture):
     assert (out["reason"], out["requested"], len(fake.bar_requests)) == (None, ["QAA"], 1)
 
 
+
+def test_zero_volume_is_counted_in_the_clause_that_holds_the_bar(capture):
+    """A placeholder bar (one price, zero volume) that arrived without the
+    session before it is not a bar that passes the session rules, so its zero
+    volume is said beside the fault that kept it out, never beside a count of
+    zero that passes."""
+    raw, ledger = capture
+    out = collect(raw, ledger, fake=generate.double("WBD", placeholder=True, hole=date(2026, 10, 8)))
+    row = out["rows"][0]
+    assert (row["outcome"], row["ready_fault"], row["volume"]) == ("arrived_not_ready", "gapped", 0)
+    assert (out["recovered"]["session_ready"], out["recovered"]["zero_volume"]) == (0, 1)
+    assert "0 now carry a 2026-10-09 bar that passes the session rules;" in out["sentence"]
+    assert "(1 with zero volume)" not in out["sentence"]
+    assert "1 carries it but not the session before (WBD), 1 of them with zero volume" in out["sentence"]
+    # a placeholder that does pass keeps its count where it passed
+    held = collect(raw, ledger, fake=generate.double("WBD", placeholder=True))
+    assert "passes the session rules (1 with zero volume)" in held["sentence"] and "of them with zero volume" not in held["sentence"]
+
+
+def test_the_timer_restores_the_callers_handler_at_any_instant_and_never_outlives_its_answer():
+    import signal
+    import time
+
+    def sentinel(*_):
+        raise AssertionError("the caller's handler ran")
+
+    before = signal.signal(signal.SIGALRM, sentinel)
+    try:
+        expired = 0
+        for _ in range(200):
+            # a one-microsecond budget expires wherever the timer happens to be:
+            # before the body, inside it, or on the way out
+            try:
+                with recovery._deadline(1e-6) as armed:
+                    time.sleep(0.001)
+                    armed["on"] = False
+            except recovery._CollectionDeadline:
+                expired += 1
+            assert signal.getsignal(signal.SIGALRM) is sentinel
+            assert signal.getitimer(signal.ITIMER_REAL)[0] == 0
+        assert expired == 200
+        # an answer that came back disarms the timer, so its expiry later is no timeout
+        with recovery._deadline(0.05) as armed:
+            armed["on"] = False
+            time.sleep(0.1)
+        assert signal.getsignal(signal.SIGALRM) is sentinel and signal.getitimer(signal.ITIMER_REAL)[0] == 0
+    finally:
+        signal.signal(signal.SIGALRM, before)
+
+
+def test_a_prior_receipt_binds_only_when_it_is_this_publications(capture):
+    """The prior receipt in docs/ may be another publication's of any schema or
+    size: it binds nothing here beyond its bytes' hash, and the collection goes
+    ahead. One of THIS publication that cannot be read is refused rather than
+    guessed past, because it may have spent the one request."""
+    raw, ledger = capture
+    digest = recovery._sha(raw)
+    others = (b'{"schema_version": 99, "publication": {"data_sha256": "0"}}\n', b'[1, 2]\n', b"not json\n",
+              b"x" * (recovery.MAX_RECEIPT_BYTES + 1), (FIXTURES / "thin-recovered.json").read_bytes())
+    for other in others:
+        fake = generate.double("WBD")
+        out = collect(raw, ledger, fake=fake, previous=other)
+        assert (out["reason"], len(fake.bar_requests)) == (None, 1), other[:40]
+        assert out["previous_observation_sha256"] == hashlib.sha256(other).hexdigest()
+    ours = json.dumps({"schema_version": 99, "publication": {"data_sha256": digest}}).encode()
+    for unreadable in (ours, ours + b" " * recovery.MAX_RECEIPT_BYTES):
+        fake = generate.double("WBD")
+        with pytest.raises(ValueError, match="prior receipt of this publication is unsupported"):
+            collect(raw, ledger, fake=fake, previous=unreadable)
+        assert fake.bar_requests == []
+
+
+def test_the_size_bound_is_measured_on_the_bytes_written(capture, monkeypatch):
+    raw, ledger = capture
+    out = fixture("recovered")
+    compact = len(json.dumps(out, allow_nan=False, separators=(",", ":")).encode())
+    assert compact < len(recovery.written(out))
+    monkeypatch.setattr(recovery, "MAX_RECEIPT_BYTES", compact + 1)
+    with pytest.raises(ValueError, match="receipt exceeds size bound"):
+        recovery.validate_receipt(out, raw, ledger)
+
+
 class _Slow:
     """A client whose every bars request takes longer than the bound allows."""
 
@@ -215,7 +297,7 @@ def test_the_sentence_says_what_was_asked_and_what_came_back_and_adds_no_coverag
     out = fixture("recovered")
     assert out["sentence"] == (
         "Source recovery for the 2026-10-09 publication: its 1 stock without a usable 2026-10-09 bar, named in full, "
-        "was asked for again at 9:20 AM ET on Mon 12 Oct, before the 2026-10-12 open, in 1 request; "
+        "was asked for again at 9:20 AM ET on Mon 12 Oct, before the 2026-10-12 open, in 1 call to the bars endpoint; "
         "1 now carries a 2026-10-09 bar that passes the session rules. The publication stays 4774 of 4775 intended "
         "stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established.")
     assert "4775 of 4775" not in out["sentence"] and "4,775 of 4,775" not in json.dumps(out)
@@ -465,6 +547,145 @@ def test_a_forged_receipt_is_refused_by_name(capture, name, mutate, match):
         recovery.validate_receipt(forge(name, mutate), raw, ledger, require_continuity=True)
 
 
+
+def reforge(name, mutate):
+    """A forgery whose tallies and sentence are recomputed after the change, so
+    the check it names is what refuses it and never a stale sentence."""
+    out = fixture(name)
+    mutate(out)
+    for key, derive in (("recovered", lambda o: recovery.tallies(o["rows"])), ("sentence", recovery.sentence_of)):
+        try:
+            out[key] = derive(out)
+        except Exception:  # noqa: BLE001 -- a forgery the derivation cannot read keeps its old field
+            pass
+    return out
+
+
+def _first_row(o, **changes):
+    o["rows"][0].update(changes)
+
+
+@pytest.mark.parametrize("name,mutate,match", [
+    ("recovered", lambda o: o.update(generated_at=(datetime.fromisoformat(o["collection_started_at"])
+                                                   + timedelta(seconds=recovery.MAX_COLLECTION_SECONDS + 1)).isoformat()),
+     "collection exceeded duration bound"),
+    ("recovered", lambda o: o.update(generated_at=(datetime.fromisoformat(o["collection_started_at"])
+                                                   - timedelta(seconds=1)).isoformat()), "invalid collection time ordering"),
+    ("recovered", lambda o: o.update(limits=o["limits"][:-1]), "recovery policy differs"),
+    ("recovered", lambda o: o["coverage"].update(scan="run"), "recovery policy differs"),
+    ("recovered", lambda o: o.update(observation_run_id=""), "invalid observation run identity"),
+    ("recovered", lambda o: o.update(requested=o["requested"] + ["ZZZ"]), "requested names differ"),
+    ("recovered", lambda o: o["source"].update(provider="Elsewhere"), "source basis differs"),
+    ("recovered", lambda o: o["source"].update(status="partial"), "unknown source state"),
+    ("outage", lambda o: o["source"].update(error_kind="weather"), "unknown source state"),
+    ("window-ended", lambda o: o["source"].update(status="ok", batch_attempts=1), "an inapplicable recovery requested a provider"),
+    ("recovered", lambda o: o["source"].update(symbols_requested=2), "request not recorded"),
+    ("recovered", lambda o: o["source"].update(checked_at=(datetime.fromisoformat(o["collection_started_at"])
+                                                           - timedelta(seconds=1)).isoformat()), "invalid provider check time"),
+    ("recovered", lambda o: o["source"].update(error_kind="timeout"), "provider status contradicts error"),
+    ("recovered", lambda o: o["source"]["window"].update(start="2025-01-01"), "request window differs"),
+    ("recovered", lambda o: _first_row(o, note="x"), "row fields differ"),
+    ("recovered", lambda o: _first_row(o, category="no_bars"), "row category differs"),
+    ("recovered", lambda o: _first_row(o, original_ending="2026-10-06"), "row original ending differs"),
+    ("recovered", lambda o: _first_row(o, outcome="arrived"), "unknown row outcome"),
+    ("recovered", lambda o: _first_row(o, ending="2026-10-08"), "an arrived row does not end on the session"),
+    ("recovered", lambda o: _first_row(o, ready_fault="gapped"), "ready fault contradicts the outcome"),
+    ("recovered", lambda o: _first_row(o, flat="yes"), "invalid flat flag"),
+    ("recovered", lambda o: _first_row(o, flat=0), "invalid flat flag"),
+    ("recovered", lambda o: _first_row(o, volume=-1), "invalid volume"),
+    ("still-missing", lambda o: _first_row(o, ending="2026-10-08"), "a missing row carries an ending"),
+    ("still-stale", lambda o: _first_row(o, ending="2026-10-09"), "a still-stale row ends on or after the session"),
+    ("recovered", lambda o: o.update(previous_observation_sha256="xyz"), "invalid prior receipt binding"),
+    ("no-credentials", lambda o: o["source"].update(window={"start": "2025-01-01"}), "credentials absent yet a request counted"),
+    # Python's == would take each of these for the value the sentence prints differently
+    ("recovered", lambda o: o["original"].update(ready_stocks=float(o["original"]["ready_stocks"])), "original coverage facts differ"),
+    ("recovered", lambda o: o["window"].update(before_next_open=1), "recovery window differs"),
+])
+def test_each_validator_check_refuses_its_own_forgery(capture, name, mutate, match):
+    raw, ledger = capture
+    out = reforge(name, mutate)
+    with pytest.raises(ValueError, match=match):
+        recovery.validate_receipt(out, raw, ledger, require_continuity=True)
+
+
+
+def test_tallies_are_compared_as_json_not_as_python_numbers(capture):
+    raw, ledger = capture
+    out = fixture("recovered")
+    out["recovered"]["session_ready"] = True                 # True == 1 in Python; the sentence prints "True"
+    out["sentence"] = recovery.sentence_of(out)
+    assert "True now carries" in out["sentence"]
+    with pytest.raises(ValueError, match="recovered tallies differ"):
+        recovery.validate_receipt(out, raw, ledger, require_continuity=True)
+
+def test_an_answer_after_the_next_open_is_not_kept_and_says_so(capture):
+    """The open bounds the call as the budget does: a call that started a
+    second before 9:30 and was answered after it keeps nothing it returned, and
+    a receipt claiming such an answer is refused."""
+    raw, ledger = capture
+    started, after = datetime(2026, 10, 12, 13, 29, 59, tzinfo=timezone.utc), datetime(2026, 10, 12, 13, 33, 19, tzinfo=timezone.utc)
+    ticks = iter([started, started, after, after])
+    fake = generate.double("WBD")
+    out = collect(raw, ledger, fake=fake, clock=lambda: next(ticks))
+    assert len(fake.bar_requests) == 1
+    assert (out["status"], out["source"]["error_kind"], out["source"]["batch_attempts"]) == ("provider_unavailable", "timeout", 1)
+    assert [r["outcome"] for r in out["rows"]] == ["not_returned"]
+    assert "nothing was returned: the provider did not answer before the 2026-10-12 open" in out["sentence"]
+    assert recovery.attempted(out, out["publication"]["data_sha256"])      # the request was sent: it binds the next slot
+    # the same answer claimed as kept is refused by name
+    claimed = fixture("recovered")
+    claimed.update(collection_started_at="2026-10-12T13:29:59+00:00", generated_at="2026-10-12T13:30:01+00:00")
+    claimed["source"]["checked_at"] = "2026-10-12T13:30:00.000001+00:00"
+    claimed["sentence"] = recovery.sentence_of(claimed)
+    with pytest.raises(ValueError, match="a provider answer after the next open"):
+        recovery.validate_receipt(claimed, raw, ledger, require_continuity=True)
+
+
+def test_the_open_stops_a_call_in_flight(capture):
+    import signal
+    import time
+    raw, ledger = capture
+    # the clock stands at one second before the open until the provider call is
+    # about to be made, then moves in real time: the open is one second after it
+    base, moving = datetime(2026, 10, 12, 13, 29, 59, tzinfo=timezone.utc), []
+
+    def clock():
+        if len(moving) < 2:
+            moving.append(time.monotonic())
+            return base
+        return base + timedelta(seconds=time.monotonic() - moving[1])
+    slow = _Slow(FakeDataClient(generate.double("WBD")), 3)
+    out = recovery.collect(raw, ledger, client=slow, clock=clock, observation_run_id="t")
+    assert slow.calls == 1 and out["source"]["error_kind"] == "timeout"
+    assert datetime.fromisoformat(out["source"]["checked_at"]) - base < timedelta(seconds=2)   # stopped at the open, not after 3 s
+    assert "the provider did not answer before the 2026-10-12 open" in out["sentence"]
+    assert signal.getitimer(signal.ITIMER_REAL)[0] == 0
+
+
+def test_a_bound_that_expires_before_any_call_spends_nothing_and_says_nothing_was_asked(capture, monkeypatch):
+    import time
+    raw, ledger = capture
+    monkeypatch.setattr(recovery, "MAX_COLLECTION_SECONDS", recovery.FETCH_RESERVE_SECONDS + 1)
+    original = market_data.download_bars
+
+    def late(client, *args, **kwargs):
+        time.sleep(1.5)                                     # the timer fires before the client is asked
+        return original(client, *args, **kwargs)
+    monkeypatch.setattr(market_data, "download_bars", late)
+    fake = generate.double("WBD")
+    out = collect(raw, ledger, fake=fake)
+    assert fake.bar_requests == []
+    assert (out["source"]["error_kind"], out["source"]["batch_attempts"], out["source"]["window"]) == ("timeout", 0, None)
+    assert "was not asked for again at 9:20 AM ET on Mon 12 Oct: the 1-second bound expired before a call to the bars endpoint was sent" in out["sentence"]
+    assert "asked for again at 9:20 AM ET on Mon 12 Oct, before" not in out["sentence"]
+    assert not recovery.attempted(out, out["publication"]["data_sha256"])   # nothing was sent: the next slot may ask
+    windowed = reforge("no-credentials", lambda o: None)
+    windowed["source"].update(error_kind="timeout", window=fixture("recovered")["source"]["window"])
+    windowed["sentence"] = recovery.sentence_of(windowed)
+    with pytest.raises(ValueError, match="a request window without a call"):
+        recovery.validate_receipt(windowed, raw, ledger, require_continuity=True)
+
+
 def test_a_malformed_receipt_structure_is_one_refusal(capture):
     raw, ledger = capture
     with pytest.raises(ValueError, match="malformed receipt structure"):
@@ -487,8 +708,8 @@ def test_the_receipt_is_bound_to_its_own_bytes_and_ledger(capture):
         recovery.validate_receipt(out, thin, None)
     with pytest.raises(ValueError, match="deficit accounting differs"):
         recovery.validate_receipt(out, raw, None)   # the receipt names a ledger entry; none was given
-    encoded = json.dumps(out, allow_nan=False, separators=(",", ":")).encode()
-    assert len(encoded) <= recovery.MAX_RECEIPT_BYTES
+    assert len(recovery.written(out)) <= recovery.MAX_RECEIPT_BYTES
+    assert recovery.written(out) == (FIXTURES / "recovered.json").read_bytes()   # the bound is on the bytes committed
     # continuity: the publisher asks for the prior's bytes, and a different prior is refused
     chain = fixture("already-attempted")
     recovery.validate_receipt(chain, raw, ledger, previous_raw=(FIXTURES / "recovered.json").read_bytes(), require_continuity=True)
@@ -583,7 +804,7 @@ def test_the_module_never_imports_the_followup_reader_into_its_request_path_and_
     assert 180 + 180 + recovery.MAX_COLLECTION_SECONDS < 15 * 60
 
 
-def test_the_next_evening_is_byte_identical_with_and_without_a_committed_receipt(tmp_path, mocked_boundaries, fake_alpaca, fake_anthropic, seed):
+def test_the_next_evening_is_unchanged_by_a_committed_receipt(tmp_path, mocked_boundaries, fake_alpaca, fake_anthropic, seed):
     """The recovery is a companion: the pipeline never reads it, so a committed
     receipt changes no record, pick or follow-up the next evening writes."""
     from tests.test_pipeline import evening, a_plus_frame, coil, base_frames, CLAUDE_A_PLUS

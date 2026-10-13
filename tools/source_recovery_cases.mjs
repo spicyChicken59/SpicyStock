@@ -7,6 +7,8 @@
    those records with a pinned clock and the suite's Alpaca double, routed under
    the page's own file name. Lane B: writes no scratch record, reads no clipboard. */
 import { mkdir, readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 
 const PAGE = path.resolve('tests/fixtures/page');
@@ -14,11 +16,20 @@ const RECEIPTS = path.resolve('tests/fixtures/source-recovery');
 // 8:20 Chicago on Friday 11 Sep 2026, the thin night's recovery slot
 const FRESH = '2026-09-11T13:20:00Z';
 const clone = (d) => JSON.parse(JSON.stringify(d));
+const sha = (raw) => createHash('sha256').update(raw).digest('hex');
+const python = process.env.SCSTOCK_PYTHON || 'python3';
+// the compact reader the publication step derives from a canonical record, so a
+// case can load the record the way production serves it
+function readerOf(raw) {
+  return execFileSync(python, ['-c', 'import sys\nfrom src.reader import derive\nsys.stdout.buffer.write(derive(sys.stdin.buffer.read())[0])'],
+    { cwd: path.resolve('.'), input: raw, maxBuffer: 64 * 1024 * 1024 });
+}
 const PREFIX = 'Recovery: ';
 
 function served(body, status = 200) {
   return (p) => p.route('**/source-recovery.json', (route) => status === 200
     ? route.fulfill({ contentType: 'application/json', body })
+    : status === 'abort' ? route.abort('failed')
     : route.fulfill({ status, contentType: 'text/plain', body: 'absent' }));
 }
 const recoveryLine = async (page) => {
@@ -86,11 +97,18 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
   const cases = [
     ['inapplicable', JSON.stringify(inapplicable), 200, 'inapplicable', PREFIX + inapplicable.sentence],
     ['absent', '', 404, 'absent', PREFIX + 'no receipt has been published beside this record.'],
+    // only a 404 says no receipt exists: a server error, no answer and a body that
+    // is not JSON say the receipt could not be read
+    ['server error', '', 500, 'unreadable', PREFIX + 'the published receipt could not be read (HTTP 500).'],
+    ['no answer', '', 'abort', 'unreadable', PREFIX + 'the published receipt could not be read (no answer).'],
+    ['truncated', JSON.stringify(recovered).slice(0, 200), 200, 'unreadable', PREFIX + 'the published receipt could not be read (its body is not JSON).'],
     ['another-publication', JSON.stringify(production), 200, 'unbound', 'another publication’s bytes'],
     ...[
       unbound(r => { r.publication.data_sha256 = '0'.repeat(64); }, 'another publication’s bytes'),
       unbound(r => { r.publication.rules_version = 'other'; }, 'another publication’s identity'),
       unbound(r => { r.publication.measured_session = '2026-09-09'; }, 'another publication’s identity'),
+      unbound(r => { r.publication.context_sha256 = 'e'.repeat(64); }, 'another publication’s identity'),
+      unbound(r => { r.publication.published_at = '2026-09-10T23:00:00+00:00'; }, 'another publication’s identity'),
       unbound(r => { r.status = 'ready'; }, 'unknown status'),
       unbound(r => { r.sentence = ''; }, 'no sentence'),
       unbound(r => { r.schema_version = 2; }, 'unsupported schema'),
@@ -105,6 +123,7 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
       eq(`${name}: the line's state`, got.state, state);
       check(`${name}: the line says ${words.slice(0, 60)}`, got.text.includes(words), got.text);
       if (state !== 'inapplicable') check(`${name}: and prints none of the receipt's own words`, !got.text.includes('asked for again'), got.text);
+      if (state === 'unreadable') check(`${name}: and never says that no receipt was published`, !got.text.includes('no receipt has been published'), got.text);
       eq(`${name}: page errors`, [...errors], []);
     } finally { await context.close(); }
   }
@@ -120,14 +139,6 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
     eq('no deficit: the receipt binds and says why nothing was fetched', [got.state, got.text], ['inapplicable', PREFIX + noDeficit.sentence]);
     const read = await page.evaluate(([receipt]) => { const r = window.SCStock.recoveryOf(receipt, window.SCStock.data, null); return [r.known, r.why]; }, [noDeficit]);
     eq('recoveryOf refuses a receipt it cannot hold to the record\'s bytes', read, [false, 'another publication’s bytes']);
-    // a projected load carries the compact reader's digest beside the canonical one; both are held
-    const projected = await page.evaluate(([receipt]) => {
-      const bound = { canonical: receipt.publication.data_sha256, reader: receipt.publication.reader_sha256 };
-      const ok = window.SCStock.recoveryOf(receipt, window.SCStock.data, bound);
-      const other = window.SCStock.recoveryOf(receipt, window.SCStock.data, { canonical: bound.canonical, reader: 'f'.repeat(64) });
-      return [[ok.known, ok.why], [other.known, other.why]];
-    }, [noDeficit]);
-    eq('a projected load binds by both digests', projected, [[true, null], [false, 'another publication’s bytes']]);
     eq('page errors', [...errors], []);
   } finally { await context.close(); }
 
@@ -146,6 +157,76 @@ export async function checkSourceRecovery({ browser, base, open, check, eq, shot
       eq('redraw: the new line settles from the fetched receipt', [got.count, got.state, got.text], [1, 'recovered', PREFIX + recovered.sentence]);
       eq('redraw: and nothing was fetched again', await fetched(), 1);
       eq('redraw: page errors', [...errors], []);
+    } finally { await context.close(); }
+  }
+  // ---- production loads the compact reader: the receipt is held to the
+  // canonical digest the projection names AND the hash of the reader bytes served
+  {
+    const thinRaw = await readFile(path.join(PAGE, 'thin.json'));
+    const projection = readerOf(thinRaw);
+    eq('the thin receipt names the reader the publication step derives', recovered.publication.reader_sha256, sha(projection));
+    const servedReader = (body) => (p) => p.route('**/docs/reader.json*', (route) => route.fulfill({ contentType: 'application/json', body }));
+    const forged = clone(recovered); forged.publication.reader_sha256 = 'f'.repeat(64);
+    for (const [name, receipt, state, words] of [
+      ['projected', recovered, 'recovered', PREFIX + recovered.sentence],
+      ['projected, another reader', forged, 'unbound', 'another publication’s bytes'],
+    ]) {
+      const { page, context, errors } = await open(browser, base, null, FRESH, 1280, { reducedMotion: 'reduce', lens: 'all', hash: '#/method',
+        beforeLoad: async (pg) => { await servedReader(projection)(pg); await served(JSON.stringify(receipt))(pg); } });
+      try {
+        eq(`${name}: the page loaded the projection`, await page.evaluate(() => window.SCStock.reader.status().projected), true);
+        const got = await recoveryLine(page);
+        eq(`${name}: the line's state`, got.state, state);
+        check(`${name}: the line says ${words.slice(0, 60)}`, got.text.includes(words), got.text);
+        eq(`${name}: page errors`, [...errors], []);
+      } finally { await context.close(); }
+    }
+  }
+
+  // ---- a rehearsal receipt is admitted over a fixture page only: the same thin
+  // record without its fixture mark, its receipt rebound to those bytes, is refused
+  {
+    const live = JSON.parse(await readFile(path.join(PAGE, 'thin.json'), 'utf8'));
+    delete live.fixture;
+    const body = JSON.stringify(live);
+    const rebound = clone(recovered); rebound.publication.data_sha256 = sha(body);
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin-live.json', FRESH, 1280, { reducedMotion: 'reduce', lens: 'all', hash: '#/method',
+      beforeLoad: async (pg) => { await pg.route('**/thin-live.json', (route) => route.fulfill({ contentType: 'application/json', body })); await served(JSON.stringify(rebound))(pg); } });
+    try {
+      const got = await recoveryLine(page);
+      eq('a rehearsal over the live record: unbound', got.state, 'unbound');
+      check('a rehearsal over the live record: says why', got.text.includes('a rehearsal receipt'), got.text);
+      eq('rehearsal page errors', [...errors], []);
+    } finally { await context.close(); }
+  }
+
+  // ---- the receipt is published the morning after the record it binds: an
+  // update check that finds the record unchanged reads it again, past the cache
+  {
+    let body = JSON.stringify(production), hits = 0;
+    const { page, context, errors } = await open(browser, base, '/tests/fixtures/page/thin.json', FRESH, 1280, { reducedMotion: 'reduce', lens: 'all', hash: '#/method',
+      beforeLoad: async (pg) => {
+        // the route answers every request itself, which the browser's HTTP cache never sees, so
+        // the cache mode is read off the page's own fetch call instead
+        await pg.addInitScript(() => {
+          const fetch = window.fetch; window.__recoveryCache = [];
+          window.fetch = function (input, init) { if (/source-recovery\.json/.test(String(input))) window.__recoveryCache.push(init && init.cache); return fetch.apply(this, arguments); };
+        });
+        await pg.route('**/source-recovery.json', (route) => { hits++; route.fulfill({ contentType: 'application/json', body, headers: { 'Cache-Control': 'max-age=600' } }); });
+      } });
+    try {
+      eq('evening: another publication\'s receipt', (await recoveryLine(page)).state, 'unbound');
+      body = JSON.stringify(recovered);
+      await page.evaluate(() => window.SCStock.checkUpdates());
+      await page.waitForFunction(() => document.querySelector('#run-meta li[data-source-recovery]').getAttribute('data-source-recovery') === 'recovered', null, { timeout: 15000 }).catch(() => {});
+      const got = await recoveryLine(page);
+      eq('morning: the unchanged record\'s check reads the new receipt', [got.state, got.text], ['recovered', PREFIX + recovered.sentence]);
+      eq('morning: two reads of the receipt, the second past the cache', hits, 2);
+      eq('each read asks past the HTTP cache', await page.evaluate(() => window.__recoveryCache), ['no-store', 'no-store']);
+      await page.evaluate(() => { location.hash = '#/record'; }); await page.waitForTimeout(150);
+      await page.evaluate(() => window.SCStock.checkUpdates()); await page.waitForTimeout(400);
+      eq('an unchanged check away from Method reads nothing', hits, 2);
+      eq('refresh page errors', [...errors], []);
     } finally { await context.close(); }
   }
 }

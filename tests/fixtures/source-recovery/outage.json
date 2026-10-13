@@ -209,11 +209,11 @@
     "not_a_fixed_cohort_improvement",
     "ready_names_not_refetched",
     "arrival_time_unknown",
-    "wire_requests_by_arithmetic_only",
+    "sdk_retries_and_pages_not_counted",
     "one_bounded_attempt_per_publication",
     "second_slot_may_spend_once_more_after_a_refused_persist",
-    "rides_the_morning_collectors_success",
+    "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "Source recovery for the 2026-10-09 publication: its 1 stock without a usable 2026-10-09 bar, named in full, was asked for again at 9:20 AM ET on Mon 12 Oct, before the 2026-10-12 open, in 2 requests; nothing was returned: the provider request failed (provider_error). The publication stays 4774 of 4775 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
+  "sentence": "Source recovery for the 2026-10-09 publication: its 1 stock without a usable 2026-10-09 bar, named in full, was asked for again at 9:20 AM ET on Mon 12 Oct, before the 2026-10-12 open, in 2 calls to the bars endpoint; nothing was returned: the provider request failed (provider_error). The publication stays 4774 of 4775 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
 }

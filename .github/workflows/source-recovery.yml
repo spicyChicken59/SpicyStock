@@ -1,0 +1,91 @@
+name: Source recovery (best effort)
+# The latest publication's own named missing or stale stocks, asked for once
+# more under its frozen basis before the next session opens
+# (src/source_recovery.py). Its own workflow, so no other collector's guard or
+# publish step decides whether it runs or whether its receipt is kept. Two
+# daily slots: after the late bars observed for 9 October had arrived by
+# 07:12 UTC, and six and four hours before the 13:30 UTC open (14:30 in
+# winter), because Actions starts scheduled runs late -- the 12 October
+# morning slots started 8 h 24 m late. A slot past the open, a publication
+# already recovered, or one with nothing to recover records an inapplicable
+# receipt and asks nothing.
+run-name: >-
+  ${{ github.event_name == 'workflow_dispatch' && 'Source recovery (manual)'
+      || format('Source recovery cron {0}', github.event.schedule) }}
+on:
+  schedule:
+    - cron: "37 7 * * *"
+    - cron: "37 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-recovery
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    # Production collection and every repository write are restricted to main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # one bounded collector (300 s) and setup
+    timeout-minutes: 10
+    outputs:
+      ready: ${{ steps.recovery.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Collect a bound source recovery
+        id: recovery
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          SCAN_SEND_EMAIL: "false"
+        run: |
+          python -m src.source_recovery --docs docs --output "$RUNNER_TEMP/source-recovery.json"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Retain only this source recovery
+        if: steps.recovery.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-recovery.json
+          if-no-files-found: error
+          retention-days: 14
+
+  persist:
+    needs: collect
+    # a receipt that spent its request is kept whatever else happened in the run
+    if: ${{ !cancelled() && needs.collect.outputs.ready == 'true' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      # Only the artifact produced by the read-only job in this exact run and
+      # attempt is accepted; the helper revalidates it against main's record,
+      # the quality ledger's entry for it and the prior receipt.
+      - name: Download only this run's source recovery
+        uses: actions/download-artifact@v4
+        with:
+          name: source-recovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/source-recovery
+      - name: Publish only against the unchanged record, ledger entry and prior recovery
+        run: python -m tools.publish_morning publish --target recovery --snapshot "$RUNNER_TEMP/source-recovery/source-recovery.json"

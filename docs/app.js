@@ -1075,7 +1075,7 @@
     recovery.digest = (w.crypto && w.crypto.subtle && bytes
       ? w.crypto.subtle.digest('SHA-256', typeof bytes === 'string' ? new TextEncoder().encode(bytes) : bytes)
         .then(buf => Array.from(new Uint8Array(buf), n => n.toString(16).padStart(2, '0')).join(''))
-      : Promise.reject(shownError('This browser cannot verify the record’s bytes.')))
+      : Promise.reject(Object.assign(shownError('This browser cannot verify the record’s bytes.'), { state: 'unbound' })))
       .then(hex => ({ canonical: projection ? projection.canonicalSha : hex, reader: projection ? hex : null }));
     recovery.digest.catch(() => {});
   }
@@ -1108,12 +1108,37 @@
       settle('unbound', 'this record was handed to the page without its served bytes, so no receipt is read for it.');
       return;
     }
-    if (!recovery.receipt) recovery.receipt = evidenceJSON('source-recovery.json', 'no receipt has been published beside this record.');
+    if (!recovery.receipt) recovery.receipt = recoveryReceipt();
     Promise.all([recovery.digest, recovery.receipt]).then(([digest, receipt]) => {
       const r = recoveryOf(receipt, data, digest);
       if (r.known) settle(r.status, r.sentence);
       else settle('unbound', 'the published receipt is not bound to this record (' + r.why + '), so nothing of it is said here.');
-    }).catch(error => settle('absent', error && error.shown ? error.message : 'the receipt could not be read.'));
+    }).catch(error => settle(error && error.state || 'unbound', error && error.shown ? error.message : 'the receipt could not be read.'));
+  }
+  // The receipt is published the morning after the record it binds, so it is
+  // read past the HTTP cache, as the other morning companions are. Only a 404
+  // says no receipt was published; any other status, no answer or a body that
+  // is not JSON says the receipt could not be read, and never that none exists.
+  function recoveryReceipt() {
+    const fail = (state, message) => Object.assign(shownError(message), { state });
+    const ctl = w.AbortController ? new w.AbortController() : null;
+    const timer = ctl ? w.setTimeout(() => ctl.abort(), Number(SCStock.evidenceTimeout) || EVIDENCE_TIMEOUT_MS) : 0;
+    return w.fetch('source-recovery.json', { cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer',
+      mode: 'same-origin', redirect: 'error', signal: ctl ? ctl.signal : undefined })
+      .then(r => {
+        if (r.status === 404) throw fail('absent', 'no receipt has been published beside this record.');
+        if (!r.ok) throw fail('unreadable', 'the published receipt could not be read (HTTP ' + r.status + ').');
+        return r.json().catch(() => { throw fail('unreadable', 'the published receipt could not be read (its body is not JSON).'); });
+      }, () => { throw fail('unreadable', 'the published receipt could not be read (no answer).'); })
+      .finally(() => { if (timer) w.clearTimeout(timer); });
+  }
+  // an update check that finds the record unchanged asks for the receipt again
+  // while Method is shown: a receipt published since is read for the record on screen
+  function refreshRecovery() {
+    const li = recovery.line;
+    if (state.view !== 'method' || !li || !li.isConnected || recovery.data !== recovery.lineData) return;
+    recovery.receipt = null; recovery.askedLine = li;
+    loadRecovery(li, recovery.lineData);
   }
   function renderMethod(data) {
     renderStrip(data);
@@ -5425,7 +5450,7 @@
   function applyUpdate(raw, bytes) {
     // identical bytes: nothing is parsed, nothing is rendered, and the
     // Following shelf is not asked to observe a session it already has
-    if (sameBytes(raw)) { saidUpdate('unchanged'); return; }
+    if (sameBytes(raw)) { saidUpdate('unchanged'); refreshRecovery(); return; }
     let next = null, projection = null;
     try { ({ data: next, projection } = SCStock.reader.parse(raw, w.SCStock.dataUrl || 'reader.json')); } catch (e) { saidUpdate(e instanceof SyntaxError ? 'failed' : 'invalid'); return; }
     if (!next || typeof next !== 'object' || next.schema_version !== 2 || !next.run ||

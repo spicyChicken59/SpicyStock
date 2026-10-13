@@ -214,7 +214,10 @@ def recovery_check(observation: dict, data_raw: bytes, ledger_raw: bytes | None,
     ledger's entry for the record on main: a receipt whose deficits were named
     off an entry main no longer carries (or carries differently) describes
     nothing main publishes. A receipt that spent the publication's one bounded
-    request is never replaced; an inapplicable one may be, by a newer one.
+    request is never replaced; an inapplicable one may be, by a newer one that
+    says something else (a later inapplicable receipt for the same publication
+    and the same reason is refused as unchanged, so a daily schedule commits at
+    most one receipt per publication and reason).
     """
     from src.source_recovery import attempted, validate_receipt
 
@@ -239,16 +242,23 @@ def recovery_check(observation: dict, data_raw: bytes, ledger_raw: bytes | None,
     if instant(observation['generated_at']) > now + timedelta(seconds=MAX_FUTURE_SKEW_SECONDS):
         raise ValueError('recovery_completion_is_in_future')
     if previous_raw is not None:
-        previous = read_snapshot(previous_raw)
-        previous_binding = previous.get('publication')
-        if not isinstance(previous_binding, dict):
-            raise ValueError('existing_recovery_binding_invalid')
-        if previous_binding.get('data_sha256') == binding['data_sha256']:
+        try:
+            previous = json.loads(previous_raw)
+        except ValueError:
+            previous = None
+        previous_binding = previous.get('publication') if isinstance(previous, dict) else None
+        # a prior receipt of another publication, of any schema, binds nothing
+        # here beyond the bytes' hash the receipt already carries
+        if isinstance(previous_binding, dict) and previous_binding.get('data_sha256') == binding['data_sha256']:
             if attempted(previous, binding['data_sha256']):
                 return 'recovery_already_published'
             if (instant(previous['generated_at']) >= instant(observation['generated_at'])
                     or instant(previous['collection_started_at']) >= instant(observation['collection_started_at'])):
                 return 'newer_or_equal_observation_exists'
+            if (observation['status'] == previous.get('status') == 'inapplicable'
+                    and observation.get('reason') == previous.get('reason')):
+                # the same publication declined for the same reason: nothing to commit
+                return 'recovery_unchanged'
     return None
 
 

@@ -570,6 +570,19 @@ def test_recovery_check_races_and_ordering(recovery_schema):
                                   generated='2026-01-02T13:28:01+00:00'), unspent) is None
     foreign = encode(recovery_receipt(b'an older publication', ledger_raw))   # a spent prior of ANOTHER publication binds nothing here
     assert check(recovery_receipt(raw, ledger_raw, previous=foreign), foreign) is None
+    # nor does a prior of another schema, or one that is not JSON at all: the
+    # receipt carries its bytes' hash, and that is the whole binding
+    for other in (b'{"schema_version": 99, "publication": "elsewhere"}\n', b'[1, 2]\n', b'not json\n'):
+        assert check(recovery_receipt(raw, ledger_raw, previous=other), other) is None
+    # the same publication declined again for the same reason commits nothing;
+    # a different reason, or a spent request, is a receipt worth keeping
+    declined = encode(recovery_receipt(raw, ledger_raw, attempts=0, reason='no_coverage_deficit'))
+    later = dict(started='2026-01-02T13:28:00+00:00', generated='2026-01-02T13:28:01+00:00')
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, attempts=0, reason='no_coverage_deficit',
+                                  **later), declined) == 'recovery_unchanged'
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, attempts=0, reason='recovery_window_ended',
+                                  **later), declined) is None
+    assert check(recovery_receipt(raw, ledger_raw, previous=declined, **later), declined) is None
     with pytest.raises(ValueError, match='future'):
         check(recovery_receipt(raw, ledger_raw, generated='2099-10-12T13:20:01+00:00'))
     with pytest.raises(ValueError, match='rehearsal'):

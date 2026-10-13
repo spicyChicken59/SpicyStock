@@ -391,6 +391,15 @@ def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_th
             f"{source_recovery.MAX_COLLECTION_SECONDS} seconds)") in env
 
 
+def test_the_page_reads_the_recovery_statuses_the_collector_writes():
+    """The Method line prints a receipt only in a status the collector writes;
+    the page's list is a copy, held to the module's here."""
+    from src import source_recovery
+    page = (ROOT / "docs" / "app.js").read_text()
+    listed = re.search(r"const RECOVERY_STATUSES = \[(.*?)\];", page).group(1)
+    assert tuple(re.findall(r"'(\w+)'", listed)) == source_recovery.STATUSES
+
+
 def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
     """The budget's reason for a withheld plan opens with "ticket withheld",
     so a line that introduces it with "No ticket" says it twice. Both

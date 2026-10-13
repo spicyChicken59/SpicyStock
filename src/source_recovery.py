@@ -68,9 +68,9 @@ RULES = {
     "benchmark_requested": False, "basis": "the publication's own feed, adjustment, session and lookback",
 }
 LIMITS = ["original_publication_immutable", "no_combined_coverage_figure", "not_a_fixed_cohort_improvement",
-          "ready_names_not_refetched", "arrival_time_unknown", "wire_requests_by_arithmetic_only",
+          "ready_names_not_refetched", "arrival_time_unknown", "sdk_retries_and_pages_not_counted",
           "one_bounded_attempt_per_publication", "second_slot_may_spend_once_more_after_a_refused_persist",
-          "rides_the_morning_collectors_success", "prior_session_followup_is_separate"]
+          "scheduled_dispatch_is_best_effort", "prior_session_followup_is_separate"]
 COVERAGE = {"scan": "not_run", "grades": "unchanged", "plans": "unchanged", "tickets": "unchanged",
             "scorecard": "unchanged", "cause_of_absence": "not_established"}
 STATUSES = ("recovered", "partial", "nothing_recovered", "provider_unavailable", "inapplicable")
@@ -281,12 +281,21 @@ def _category_of(defs, ticker):
 
 # ------------------------------------------------------------------ reason ----
 
-def _previous(previous_raw):
+def _previous(previous_raw, data_sha256):
+    """The prior receipt when it is THIS publication's; another publication's
+    receipt, of any schema or size, binds nothing here beyond its bytes' hash."""
     if previous_raw is None:
         return None
-    _require(isinstance(previous_raw, bytes) and 0 < len(previous_raw) <= MAX_RECEIPT_BYTES, "prior receipt exceeds size bound")
-    previous = morning._json(previous_raw)
-    _require(isinstance(previous, dict) and previous.get("schema_version") == VERSION, "prior receipt is unsupported")
+    _require(isinstance(previous_raw, bytes) and len(previous_raw) > 0, "prior receipt is empty")
+    try:
+        previous = json.loads(previous_raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        previous = None
+    binding = previous.get("publication") if isinstance(previous, dict) else None
+    if not isinstance(binding, dict) or binding.get("data_sha256") != data_sha256:
+        return None
+    _require(len(previous_raw) <= MAX_RECEIPT_BYTES and previous.get("schema_version") == VERSION,
+             "prior receipt of this publication is unsupported")
     return previous
 
 
@@ -364,21 +373,28 @@ def _timer_ready(seconds):
     runs on the Actions main thread, and an unbounded call is never offered."""
     _require(threading.current_thread() is threading.main_thread() and hasattr(signal, "setitimer")
              and not signal.getitimer(signal.ITIMER_REAL)[0], "bounded transport requires an available main-thread timer")
-    _require(seconds > 0, "collection budget spent before the provider call")
+    _require(seconds > 0, "the collection bound or the next open came before the provider call")
 
 
 @contextmanager
 def _deadline(seconds):
+    """Arm the timer inside the try, so an expiry at any instant restores the
+    caller's handler; the handler raises only while armed, and the caller
+    disarms it as the first thing after the call returns, so an answer that
+    came back is never turned into a timeout on the way out."""
     previous = signal.getsignal(signal.SIGALRM)
+    armed = {"on": True}
 
     def expired(*_):
-        raise _CollectionDeadline()
+        if armed["on"]:
+            raise _CollectionDeadline()
 
-    signal.signal(signal.SIGALRM, expired)
-    signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
-        yield
+        signal.signal(signal.SIGALRM, expired)
+        signal.setitimer(signal.ITIMER_REAL, seconds)
+        yield armed
     finally:
+        armed["on"] = False
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous)
 
@@ -393,20 +409,26 @@ def _error_kind(exc):
     return morning._error(exc)
 
 
-def _fetch(client, requested, frozen, started, clock):
+def _fetch(client, requested, frozen, started, clock, next_open):
     """One bounded batch through the scan's own transport; what came back, the
-    counts behind it and the failure kind, never the failure's text."""
+    counts behind it and the failure kind, never the failure's text. The call
+    is bounded by the collection budget AND the next session's open, whichever
+    comes first, and an answer that lands after the open is not kept: nothing
+    this receipt reports was answered once the session it precedes had opened."""
     from alpaca.data.enums import DataFeed
     feed = DataFeed(frozen["feed"])
     session = date.fromisoformat(frozen["session"])
     frames, stats, error_kind = {}, None, None
-    remaining = MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS - (clock() - started).total_seconds()
+    now = clock()
+    remaining = min(MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS - (now - started).total_seconds(),
+                    (next_open - now).total_seconds())
     _timer_ready(remaining)
     counted = _Counted(client)
     try:
-        with _deadline(remaining):
+        with _deadline(remaining) as armed:
             frames, stats = market_data.download_bars(counted, requested, session, lookback_days=frozen["lookback_days"],
                                                       feed=feed, batch_size=MAX_NAMES, now=started)
+            armed["on"] = False
     except _CollectionDeadline:
         # stopped mid-call: nothing it returned is kept, and every attempt it sent is counted
         frames, stats, error_kind = {}, None, "timeout"
@@ -414,13 +436,17 @@ def _fetch(client, requested, frozen, started, clock):
         stats = getattr(exc, "download_stats", None)
         frames = getattr(exc, "frames", None) or {}
         error_kind = _error_kind(exc)
+    checked = clock()
+    if error_kind is None and checked > next_open:
+        # it answered, but after the open: not kept, and said as not answering before it
+        frames, error_kind = {}, "timeout"
     if stats is None:
         stats = market_data.DownloadStats(session=session, feed=feed.value)
         stats.batch_attempts = counted.calls if error_kind == "timeout" else max(counted.calls, 1)
     if error_kind is None and (stats.dropped_symbols or stats.refused or stats.unrequested):
         error_kind = "provider_error"
     ready = market_data.apply_session_rules(dict(frames), session, stats) if frames else {}
-    return frames, ready, stats, error_kind, clock()
+    return frames, ready, stats, error_kind, checked
 
 
 def _rows(requested, defs, frames, ready, stats, available, session):
@@ -505,29 +531,41 @@ def sentence_of(out):
     asked = (f"its {_n(t['requested'], 'stock', 'stocks')} without a usable {session} bar, named in full," if not unnamed else
              f"the {_n(t['requested'], 'stock', 'stocks')} it names of those without a usable {session} bar "
              f"({_n(unnamed, 'more counted frame is', 'more counted frames are')} named nowhere)")
-    head = (f"Source recovery for the {session} publication: {asked} {'was' if t['requested'] == 1 else 'were'} asked for again at "
-            f"{_when(started)}, {opened} the {out['window']['next_session']} open, in "
-            f"{_n(source['batch_attempts'], 'request', 'requests')}")
-    if source["status"] == "unavailable":
+    tail = (f". The publication stays {original['ready_stocks']} of {original['intended_stocks']} intended stocks ready; "
+            "its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established.")
+    verb, next_session = ('was' if t['requested'] == 1 else 'were'), out["window"]["next_session"]
+    at_open = (source["error_kind"] == "timeout"
+               and morning._instant(source["checked_at"]) >= morning._instant(out["window"]["next_open_at"]))
+    if source["status"] == "unavailable" and source["batch_attempts"] == 0:
+        # nothing was sent: the stocks were not asked for, and the receipt says why
         cause = ("no credentials were present" if source["error_kind"] == "missing_credentials" else
+                 f"the {next_session} session opened before a call to the bars endpoint was sent" if at_open else
+                 f"the {MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS}-second bound expired before a call to the bars endpoint was sent")
+        return f"Source recovery for the {session} publication: {asked} {verb} not asked for again at {_when(started)}: {cause}" + tail
+    head = (f"Source recovery for the {session} publication: {asked} {verb} asked for again at "
+            f"{_when(started)}, {opened} the {next_session} open, in "
+            f"{_n(source['batch_attempts'], 'call', 'calls')} to the bars endpoint")
+    if source["status"] == "unavailable":
+        cause = (f"the provider did not answer before the {next_session} open" if at_open else
                  f"the provider did not answer within the {MAX_COLLECTION_SECONDS - FETCH_RESERVE_SECONDS}-second bound"
                  if source["error_kind"] == "timeout" else f"the provider request failed ({source['error_kind']})")
         body = f"; nothing was returned: {cause}"
     else:
+        ready_zero = sum(1 for r in rows if r["outcome"] == "recovered" and r["volume"] == 0)
         parts = [f"{t['session_ready']} now {_verb(t['session_ready'], 'carries', 'carry')} a {session} bar that passes the session rules"
-                 + (f" ({t['zero_volume']} with zero volume)" if t["zero_volume"] else "")]
+                 + (f" ({ready_zero} with zero volume)" if ready_zero else "")]
         for fault, words in (("gapped", "it but not the session before"), ("unreadable", "it, but it or the bar before it is unreadable")):
             faulted = [r for r in rows if r["outcome"] == "arrived_not_ready" and r["ready_fault"] == fault]
             if faulted:
                 names = ", ".join(r["ticker"] for r in faulted[:3]) + (f" and {len(faulted) - 3} more" if len(faulted) > 3 else "")
-                parts.append(f"{len(faulted)} {_verb(len(faulted), 'carries', 'carry')} {words} ({names})")
+                zero = sum(1 for r in faulted if r["volume"] == 0)
+                parts.append(f"{len(faulted)} {_verb(len(faulted), 'carries', 'carry')} {words} ({names})"
+                             + (f", {zero} of them with zero volume" if zero else ""))
         if t["still_stale"]:
             parts.append(f"{t['still_stale']} still {_verb(t['still_stale'], 'ends', 'end')} before it{_names(rows, 'still_stale')}")
         if t["still_missing"]:
             parts.append(f"{t['still_missing']} returned nothing{_names(rows, 'still_missing')}")
         body = "; " + "; ".join(parts)
-    tail = (f". The publication stays {original['ready_stocks']} of {original['intended_stocks']} intended stocks ready; "
-            "its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established.")
     return head + body + tail
 
 
@@ -546,7 +584,7 @@ def collect(canonical_raw, ledger_raw=None, *, client=None, clock=None, dry_run=
     window = window_of(frozen, started)
     original = original_facts(run)
     defs = deficits(run, _benchmark(run), entry, ledger_raw)
-    previous = _previous(previous_raw)
+    previous = _previous(previous_raw, binding["data_sha256"])
     reason = _reason(data, binding, frozen, window, started, defs, previous)
     requested = [] if reason else _requested(defs)
     source, rows = _source(frozen), []
@@ -558,10 +596,12 @@ def collect(canonical_raw, ledger_raw=None, *, client=None, clock=None, dry_run=
             rows = _rows(requested, defs, {}, {}, None, False, session)
         else:
             client = client or market_data.get_clients()
-            frames, ready, stats, error_kind, checked = _fetch(client, requested, frozen, started, clock)
+            frames, ready, stats, error_kind, checked = _fetch(client, requested, frozen, started, clock,
+                                                               morning._instant(window["next_open_at"]))
             source.update(status="ok" if error_kind is None else "unavailable", error_kind=error_kind,
                           checked_at=checked.isoformat(), batch_attempts=stats.batch_attempts,
-                          symbols_requested=len(requested), window=_window(requested, frozen, stats, started))
+                          symbols_requested=len(requested),
+                          window=_window(requested, frozen, stats, started) if stats.batch_attempts else None)
             rows = _rows(requested, defs, frames, ready, stats, error_kind is None, session)
     completed = clock()
     _require(morning._instant(completed) is not None and completed >= started, "collection clock moved backwards")
@@ -581,11 +621,20 @@ def collect(canonical_raw, ledger_raw=None, *, client=None, clock=None, dry_run=
 # ---------------------------------------------------------------- validate ----
 
 def validate_receipt(out, canonical_raw, ledger_raw=None, *, previous_raw=None, require_continuity=False):
-    """Strict offline gate: every field is re-derived from the bound inputs."""
+    """Strict offline gate. Every field the bound inputs determine is
+    re-derived from them; what only the provider's answer determines (each
+    row's outcome, ending and volume; the source's status, error kind, attempts
+    and check time) is held to its shape and to every other field it implies."""
     try:
         _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity)
     except (KeyError, TypeError, AttributeError, IndexError, OverflowError):
         raise ValueError("source recovery: malformed receipt structure") from None
+
+
+def _same(a, b):
+    """Equal as JSON: True is not 1 and 4774.0 is not 4774, which the sentence
+    would print differently, so a comparison is of canonical bytes."""
+    return json.dumps(a, sort_keys=True, allow_nan=False) == json.dumps(b, sort_keys=True, allow_nan=False)
 
 
 def _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity):
@@ -596,26 +645,26 @@ def _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity):
     _require(previous_sha is None or isinstance(previous_sha, str) and HEX.fullmatch(previous_sha), "invalid prior receipt binding")
     data, binding = morning._publication(canonical_raw, allow_fixture=out["dry_run"])
     run = data["run"]
-    _require(out["publication"] == binding and set(out["publication"]) == set(binding), "publication binding differs")
+    _require(_same(out["publication"], binding), "publication binding differs")
     frozen = frozen_basis(data, binding)
-    _require(out["frozen"] == frozen and set(out["frozen"]) == FROZEN_KEYS, "frozen basis differs")
+    _require(_same(out["frozen"], frozen) and set(out["frozen"]) == FROZEN_KEYS, "frozen basis differs")
     started, generated = (morning._instant(out[k]) for k in ("collection_started_at", "generated_at"))
     _require(started is not None and generated is not None and started <= generated, "invalid collection time ordering")
     _require((generated - started).total_seconds() <= MAX_COLLECTION_SECONDS, "collection exceeded duration bound")
     window = window_of(frozen, started)
-    _require(out["window"] == window, "recovery window differs")
+    _require(_same(out["window"], window), "recovery window differs")
     archived = run.get("delivery")
     if isinstance(archived, dict) and isinstance(archived.get("next_session"), str) and window["next_session"] is not None:
         _require(archived["next_session"] == window["next_session"], "recovery window disagrees with the archived delivery block")
-    _require(out["original"] == original_facts(run), "original coverage facts differ")
+    _require(_same(out["original"], original_facts(run)), "original coverage facts differ")
     entry = ledger_entry(ledger_raw, binding["data_sha256"])
     defs = deficits(run, _benchmark(run), entry, ledger_raw)
     public = {k: v for k, v in defs.items() if k not in ("mismatch", "stale_endings")}
-    _require(out["deficits"] == public, "deficit accounting differs")
-    _require(provenance.digest(out["policy"]) == provenance.digest(RULES) and out["limits"] == LIMITS
-             and out["coverage"] == COVERAGE, "recovery policy differs")
+    _require(_same(out["deficits"], public), "deficit accounting differs")
+    _require(provenance.digest(out["policy"]) == provenance.digest(RULES) and _same(out["limits"], LIMITS)
+             and _same(out["coverage"], COVERAGE), "recovery policy differs")
     _require(morning._text(out["observation_run_id"], 128) is not None, "invalid observation run identity")
-    previous = _previous(previous_raw) if previous_raw is not None else None
+    previous = _previous(previous_raw, binding["data_sha256"])
     _require(out["reason"] in REASONS and out["reason"] == _reason(data, binding, frozen, window, started, defs, previous),
              "recovery reason differs")
     _require(out["status"] in STATUSES, "unknown recovery status")
@@ -631,19 +680,24 @@ def _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity):
     rows = out["rows"]
     _require(isinstance(rows, list) and [r["ticker"] for r in rows] == requested, "row membership differs")
     if not requested:
-        _require(source == reference and rows == [], "an inapplicable recovery requested a provider")
+        _require(_same(source, reference) and rows == [], "an inapplicable recovery requested a provider")
     else:
         _require(source["status"] != "not_requested" and source["symbols_requested"] == len(requested), "request not recorded")
         checked = morning._instant(source["checked_at"])
         _require(checked is not None and started <= checked <= generated, "invalid provider check time")
         _require((source["error_kind"] is None) == (source["status"] == "ok"), "provider status contradicts error")
+        if source["status"] == "ok":
+            _require(checked <= morning._instant(window["next_open_at"]), "a provider answer after the next open")
         if source["error_kind"] == "missing_credentials":
             _require(source["batch_attempts"] == 0 and source["window"] is None, "credentials absent yet a request counted")
         else:
             _require(source["batch_attempts"] >= (0 if source["error_kind"] == "timeout" else 1), "a request without an attempt")
-            stats = market_data.DownloadStats(session=date.fromisoformat(frozen["session"]), feed=frozen["feed"])
-            stats.batch_attempts = source["batch_attempts"]
-            _require(source["window"] == _window(requested, frozen, stats, started), "request window differs")
+            if source["batch_attempts"] == 0:
+                _require(source["window"] is None, "a request window without a call")
+            else:
+                stats = market_data.DownloadStats(session=date.fromisoformat(frozen["session"]), feed=frozen["feed"])
+                stats.batch_attempts = source["batch_attempts"]
+                _require(_same(source["window"], _window(requested, frozen, stats, started)), "request window differs")
     session = frozen["session"]
     for row in rows:
         _require(isinstance(row, dict) and set(row) == ROW_KEYS, "row fields differ")
@@ -655,20 +709,24 @@ def _validate(out, canonical_raw, ledger_raw, previous_raw, require_continuity):
             _require(row["ending"] == session, "an arrived row does not end on the session")
             _require((row["ready_fault"] is not None) == (row["outcome"] == "arrived_not_ready"), "ready fault contradicts the outcome")
             _require(row["volume"] is None or (type(row["volume"]) is int and row["volume"] >= 0), "invalid volume")
-            _require(row["flat"] in (None, True, False), "invalid flat flag")
+            _require(row["flat"] is None or type(row["flat"]) is bool, "invalid flat flag")
         else:
             _require(row["ready_fault"] is None and row["volume"] is None and row["flat"] is None, "facts on a bar that did not arrive")
             if row["outcome"] == "still_stale":
                 _require(row["ending"] is None or (isinstance(row["ending"], str) and row["ending"] < session), "a still-stale row ends on or after the session")
             else:
                 _require(row["ending"] is None, "a missing row carries an ending")
-    _require(out["recovered"] == tallies(rows), "recovered tallies differ")
+    _require(_same(out["recovered"], tallies(rows)), "recovered tallies differ")
     _require(out["status"] == _status(rows, source, out["reason"]), "recovery status contradicts its rows")
     _require(out["sentence"] == sentence_of(out), "recovery sentence differs")
     if require_continuity or previous_raw is not None:
         _require(previous_sha == (_sha(previous_raw) if previous_raw is not None else None), "prior receipt bytes differ")
-    encoded = json.dumps(out, allow_nan=False, separators=(",", ":")).encode()
-    _require(len(encoded) <= MAX_RECEIPT_BYTES, "receipt exceeds size bound")
+    _require(len(written(out)) <= MAX_RECEIPT_BYTES, "receipt exceeds size bound")
+
+
+def written(out):
+    """The bytes run() writes and the publisher commits, which the size bound measures."""
+    return json.dumps(out, allow_nan=False, indent=2).encode() + b"\n"
 
 
 def same_cohort(frozen_a, frozen_b):
@@ -708,7 +766,7 @@ def run(*, docs=Path("docs"), output=None, dry_run=False, client=None, clock=Non
     _require((previous_path.read_bytes() if previous_path.exists() else None) == previous_raw,
              "previous receipt changed during collection")
     output.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(receipt, allow_nan=False, indent=2).encode() + b"\n"
+    payload = written(receipt)
     with tempfile.NamedTemporaryFile(dir=output.parent, prefix=".source-recovery-", delete=False) as handle:
         temporary = Path(handle.name)
         try:
