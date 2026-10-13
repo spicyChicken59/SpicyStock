@@ -11,7 +11,7 @@ shallow checkout exactly as the findings suite fetches its own."""
 from __future__ import annotations
 
 from copy import deepcopy
-from datetime import date, time
+from datetime import date, datetime, time, timezone
 import json
 import os
 from pathlib import Path
@@ -83,11 +83,12 @@ def test_a_publications_timing_is_hand_computed():
     r = reading("2026-10-09", "2026-10-10T07:30:00+00:00", landed_at="2026-10-10T07:32:24+00:00")
     t = r["timing"]
     assert t["completion_at"] == "2026-10-09T20:15:00+00:00" and t["completion_basis"] == "re-derived"
-    assert t["latency_minutes"] == 675.0            # 20:15 -> 07:30 the next day
-    assert t["after_primary_minutes"] == 554.0      # 22:16 -> 07:30
+    # the service's facts are the landing's: 20:15 -> 07:32:24 the next day; 22:16 -> 07:32:24
+    assert t["latency_minutes"] == 677.4 and t["after_primary_minutes"] == 556.4
     assert t["after_retry_slot"] is True and t["retry_slot_at"] == "2026-10-10T00:16:00+00:00"
     assert t["before_next_open"] is True and t["next_open_at"] == "2026-10-12T13:30:00+00:00"
-    assert t["landed_minutes"] == 2.4
+    # the record's own clock beside it: 20:15 -> 07:30, and 2.4 minutes from generation to landing
+    assert (t["generated_latency_minutes"], t["generated_before_next_open"], t["landed_minutes"]) == (675.0, True, 2.4)
     early = reading("2026-10-09", "2026-10-09T21:08:00+00:00")
     assert early["timing"]["after_primary_minutes"] == -68.0 and early["timing"]["after_retry_slot"] is False
     late = reading("2026-10-09", "2026-10-12T13:30:00+00:00")
@@ -95,6 +96,19 @@ def test_a_publications_timing_is_hand_computed():
     at_retry = reading("2026-10-09", "2026-10-10T00:16:00+00:00")
     assert at_retry["timing"]["after_retry_slot"] is True and at_retry["timing"]["after_primary_minutes"] == 120.0
     assert reading("2026-10-09", "2026-10-10T00:15:59+00:00")["timing"]["after_retry_slot"] is False
+
+
+def test_a_record_generated_before_the_open_and_landed_after_it_was_not_delivered_before_it():
+    # the run wrote it at 13:25Z on the 12th; its commit reached main at 13:40Z, after the 13:30Z open
+    t = reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:40:00+00:00")["timing"]
+    assert (t["before_next_open"], t["generated_before_next_open"]) == (False, True)
+    assert (t["latency_minutes"], t["generated_latency_minutes"], t["landed_minutes"]) == (3925.0, 3910.0, 15.0)
+    # one landed AT the open is not before it; one landed a second before it is
+    assert reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:30:00+00:00")["timing"]["before_next_open"] is False
+    assert reading("2026-10-09", "2026-10-12T13:25:00+00:00", landed_at="2026-10-12T13:29:59+00:00")["timing"]["before_next_open"] is True
+    # the retry slot is the landing's too: generated a minute before 8:16 PM ET, landed two minutes after it
+    edge = reading("2026-10-09", "2026-10-10T00:15:00+00:00", landed_at="2026-10-10T00:18:00+00:00")["timing"]
+    assert (edge["after_retry_slot"], edge["after_primary_minutes"]) == (True, 122.0)
 
 
 def test_a_publication_reading_copies_the_records_own_blocks_and_keeps_the_signal_apart():
@@ -170,8 +184,11 @@ def test_a_companion_receipt_is_read_for_its_binding_and_its_clock():
     late = sh.companion_reading("morning", receipt(applicable="2026-10-09", generated="2026-10-09T17:10:18+00:00", status="inapplicable",
                                                    reason="entry_window_ended", rows=[]), commit="d" * 40, blob="e" * 40, landed_at="2026-10-09T17:11:03+00:00")
     assert late["before_applicable_open"] is False and late["reason"] == "entry_window_ended" and late["rows"] == 0
-    at_open = sh.companion_reading("morning", receipt(generated="2026-10-12T13:30:00+00:00"), commit="d" * 40, blob="e" * 40, landed_at="2026-10-12T13:31:00+00:00")
-    assert at_open["before_applicable_open"] is False       # at the open is not before it
+    at_open = sh.companion_reading("morning", receipt(generated="2026-10-12T13:30:00+00:00"), commit="d" * 40, blob="e" * 40, landed_at="2026-10-12T13:30:00+00:00")
+    assert (at_open["before_applicable_open"], at_open["generated_before_applicable_open"]) == (False, False)   # at the open is not before it
+    # generated a minute before the open, landed a minute after it: the desk could not have read it before the open
+    straddle = sh.companion_reading("morning", receipt(generated="2026-10-12T13:29:00+00:00"), commit="d" * 40, blob="e" * 40, landed_at="2026-10-12T13:31:00+00:00")
+    assert (straddle["before_applicable_open"], straddle["generated_before_applicable_open"]) == (False, True)
     for bad, match in ((receipt(applicable="2026-10-10"), "not an exchange session"), ({"status": "x"}, "not a bound receipt"),
                        (receipt(generated="noon"), "not an instant")):
         with pytest.raises(sh.ServiceError, match=match):
@@ -241,20 +258,47 @@ def test_streaks_and_the_summary_are_hand_computed(week):
     s = sh.summary(rows, pubs, companions, clock)
     assert (s["expected_sessions"], s["due_sessions"], s["published_sessions"]) == (6, 5, 3)
     assert s["missing_sessions"] == ["2026-10-06", "2026-10-09"] and s["pending_sessions"] == [] and s["not_yet_due"] == ["2026-10-12"]
-    assert (s["before_next_open"], s["after_retry_slot"]) == (2, 3)
-    # latencies of the first publications: 5th 20:15->02:17 = 362, 7th 20:15->14:00 = 1065, 8th 20:15->02:06 = 351
-    assert s["latency_minutes"] == {"min": 351.0, "median": 362.0, "max": 1065.0}
+    assert (s["before_next_open"], s["generated_before_next_open"], s["after_retry_slot"]) == (2, 2, 3)
+    # latencies of the first publications: 5th 20:15->02:17 = 362, 7th 20:15->14:00 = 1065, 8th 20:15->02:06 = 351;
+    # each landed at its own clock here, so the generated spread is the landed one
+    assert s["latency_minutes"] == s["generated_latency_minutes"] == {"min": 351.0, "median": 362.0, "max": 1065.0}
     assert (s["publications"], s["revisions"], s["republished_sessions"], s["statuses"]) == (4, 1, ["2026-10-05"], {"ok": 3, "degraded": 1})
     assert s["elapsed_seconds"] == round(112.7 * 4, 1) and s["fetch_seconds"] == round(59.2 * 4, 1)
     assert s["reads"] == {"requested": 8, "done": 8, "publications_with_block": 4}
     assert s["reader_usage"] == {"publications_with_block": 4, "calls": 8, "responses": 8, "input_tokens": 6998 * 4, "output_tokens": 720}
     assert s["signal"] == {"regimes": {"yellow": 4}, "reaction_tickets": 0, "anticipation_tickets": 0}
     assert s["fresh"] == {"newest_due_session": "2026-10-09", "newest_published_session": "2026-10-08", "fresh": False}
-    assert s["companions"]["morning"] == {"receipts": 1, "statuses": {"observed": 1}, "before_applicable_open": 1, "applicable_sessions": ["2026-10-09"]}
+    assert s["companions"]["morning"] == {"receipts": 1, "statuses": {"observed": 1}, "before_applicable_open": 1,
+                                          "generated_before_applicable_open": 1, "applicable_sessions": ["2026-10-09"]}
     fresh = sh.summary(sh.session_rows(pubs, companions, sh.parse_instant("2026-10-09T19:00:00+00:00")), pubs, companions,
                        sh.parse_instant("2026-10-09T19:00:00+00:00"))
     assert fresh["fresh"] == {"newest_due_session": "2026-10-08", "newest_published_session": "2026-10-08", "fresh": True}
     assert fresh["not_yet_due"] == ["2026-10-09"] and fresh["streak"] == {"longest": 1, "current": 1}
+
+
+def test_a_sessions_first_delivery_is_the_first_to_land_and_its_latest_the_last():
+    # a dispatched run generated at 02:10Z lands at 03:30Z, after a later run generated at 03:00Z landed at 03:02Z;
+    # main carried the ok record first and carries the degraded one now
+    late_land = reading("2026-10-08", "2026-10-09T02:10:00+00:00", landed_at="2026-10-09T03:30:00+00:00", status="degraded")
+    first_land = reading("2026-10-08", "2026-10-09T03:00:00+00:00", landed_at="2026-10-09T03:02:00+00:00")
+    late_land["commit"], first_land["commit"] = "a" * 40, "f" * 40
+    companions = {"morning": [], "issuer_evidence": [], "research_observations": [], "source_recovery": []}
+    clock = sh.parse_instant("2026-10-09T12:00:00+00:00")
+    for order in ([late_land, first_land], [first_land, late_land]):
+        row = sh.session_rows(order, companions, clock)[0]
+        assert row["publications"] == ["f" * 40, "a" * 40]
+        assert (row["service"]["status"], row["service"]["landed_at"], row["service"]["latency_minutes"]) == ("ok", "2026-10-09T03:02:00+00:00", 407.0)
+        assert (row["latest"]["status"], row["latest"]["landed_at"]) == ("degraded", "2026-10-09T03:30:00+00:00")
+    # one second apart on main, the commit time decides however the records' own clocks fall
+    tie = reading("2026-10-08", "2026-10-09T01:00:00+00:00", landed_at="2026-10-09T03:02:01+00:00")
+    tie["commit"] = "0" * 40
+    assert sh.session_rows([tie, first_land], companions, clock)[0]["publications"] == ["f" * 40, "0" * 40]
+    # companions bound to one session are listed in the order they landed
+    a = sh.companion_reading("issuer_evidence", receipt(applicable="2026-10-09", generated="2026-10-09T07:00:00+00:00"), commit="1" * 40, blob="e" * 40,
+                             landed_at="2026-10-09T09:00:00+00:00")
+    b = sh.companion_reading("issuer_evidence", receipt(applicable="2026-10-09", generated="2026-10-09T08:00:00+00:00"), commit="2" * 40, blob="e" * 40,
+                             landed_at="2026-10-09T08:01:00+00:00")
+    assert [i["commit"] for i in sorted([a, b], key=sh.landing_order)] == ["2" * 40, "1" * 40]
 
 
 def test_an_empty_history_is_refused():
@@ -352,6 +396,48 @@ def test_a_removed_companion_and_an_unplaceable_record_are_set_aside_by_name(rep
         sh.shallow = monkeypatch_shallow
 
 
+def raw(repo: Path, path: str, text: str, message: str, date_: str) -> str:
+    (repo / path).parent.mkdir(parents=True, exist_ok=True)
+    (repo / path).write_text(text)
+    git(repo, "add", path)
+    git(repo, "commit", "-q", "-m", message, date_=date_)
+    return git(repo, "rev-parse", "HEAD")
+
+
+def test_a_file_that_is_not_json_is_set_aside_by_name_and_the_walk_goes_on(repo, tmp_path):
+    r = repo["repo"]
+    bad_record = raw(r, "docs/data.json", "{not json\n", "a truncated record", "2026-10-10T02:00:00+00:00")
+    bad_receipt = raw(r, "docs/morning.json", "", "an empty receipt", "2026-10-10T02:05:00+00:00")
+    fourth = commit(r, "docs/data.json", record("2026-10-12", "2026-10-13T01:00:00+00:00"), "run 2026-10-12", "2026-10-13T01:03:00+00:00")
+    result = sh.build(ref="main")
+    reasons = {row["commit"]: row["reason"] for row in result["skipped"]}
+    assert reasons[bad_record].startswith(f"{bad_record[:8]}:docs/data.json: not JSON: ")
+    assert reasons[bad_receipt].startswith(f"{bad_receipt[:8]}:docs/morning.json: not JSON: ")
+    assert result["source"]["publication_commits"] == [fourth, repo["third"], repo["second"], repo["first"]]
+    assert result["source"]["companion_commits"]["morning"] == [bad_receipt, repo["morning"]]
+    assert [i["commit"] for i in result["companions"]["morning"]] == [repo["morning"]]
+    assert (result["summary"]["published_sessions"], result["summary"]["fresh"]["newest_published_session"]) == (3, "2026-10-12")
+    # written, held by --check, and the markdown tallies the reason without its commit
+    out = tmp_path / "out"
+    sh.write(result, out)
+    assert sh.check(out) == []
+    assert "not JSON: Expecting property name enclosed in double quotes" in (out / sh.OUTPUT_MD.name).read_text()
+
+
+def test_any_lookup_a_record_fails_sets_the_commit_aside(repo, monkeypatch):
+    # a record from before a rule that a reader indexes past its end is the walk's to name, not to die on
+    real = sh.funnel.build
+    def index_past_the_end(data):
+        if data["run"]["session"] == "2026-10-09":
+            return [][0]
+        return real(data)
+    monkeypatch.setattr(sh.funnel, "build", index_past_the_end)
+    result = sh.build(ref="main")
+    assert result["source"]["publication_commits"] == [repo["second"], repo["first"]]
+    assert {row["commit"]: row["reason"] for row in result["skipped"]}[repo["third"]] == \
+        f"{repo['third'][:8]}:docs/data.json: list index out of range"
+
+
 def test_the_written_files_are_held_by_check_and_a_drift_is_named(repo, tmp_path):
     out = tmp_path / "out"
     assert sh.main(["--ref", "main", "--output-dir", str(out)]) == 0
@@ -412,7 +498,7 @@ def test_the_committed_reading_is_what_the_tool_writes(committed):
 
 def test_the_committed_reading_reads_the_records_it_names(committed):
     # the newest publication's facts, read again off its commit without the tool's own reading
-    newest = max(committed["publications"], key=lambda p: (p["session"], p["published_at"]))
+    newest = max(committed["publications"], key=lambda p: (p["session"], p["landed_at"]))
     data, blob = sh.read_at(newest["commit"], sh.RECORD_PATH)
     assert blob == newest["blob"]
     run = data["run"]
@@ -429,10 +515,29 @@ def test_the_committed_reading_reads_the_records_it_names(committed):
     assert all(r["service"]["before_next_open"] for r in committed["sessions"] if r["published"])
 
 
+def test_the_committed_readings_landing_is_each_commits_own_time(committed):
+    # each landing read again off git directly, and its latency and before-open re-derived by hand from it
+    for p in committed["publications"]:
+        done = subprocess.run(["git", "log", "-1", "--format=%ct", p["commit"]], cwd=sh.ROOT, capture_output=True, text=True, check=True)
+        landed = datetime.fromtimestamp(int(done.stdout.strip()), tz=timezone.utc)
+        assert landed.isoformat() == p["landed_at"], p["commit"]
+        completion = datetime.fromisoformat(p["timing"]["completion_at"])
+        assert p["timing"]["latency_minutes"] == round((landed - completion).total_seconds() / 60, 1)
+        assert p["timing"]["before_next_open"] is (landed < datetime.fromisoformat(p["timing"]["next_open_at"]))
+        generated = datetime.fromisoformat(p["published_at"])
+        assert p["timing"]["generated_latency_minutes"] == round((generated - completion).total_seconds() / 60, 1)
+    # each session's first delivery is its first to land
+    by_commit = {p["commit"]: p for p in committed["publications"]}
+    for r in committed["sessions"]:
+        landings = [by_commit[c]["landed_at"] for c in r["publications"]]
+        assert landings == sorted(landings), r["session"]
+
+
 def test_the_report_quotes_the_reading(committed):
     text = REPORT.read_text(encoding="utf-8")
     s = committed["summary"]
     for quoted in (f"{s['published_sessions']} of {s['due_sessions']}", f"median {s['latency_minutes']['median']}",
+                   f"median {s['generated_latency_minutes']['median']}", "service_health_v2",
                    f"longest {s['streak']['longest']}", str(s["publications"]), str(s["after_retry_slot"])):
         assert quoted in text, quoted
     assert committed["source"]["through"][:8] in text
@@ -442,3 +547,6 @@ def test_the_report_quotes_the_reading(committed):
         assert session in prose or f"{day.day} {day.strftime('%B')}" in prose, session
     numbers = {float(n) for n in re.findall(r"\b\d+\.\d\b", text)}
     assert {s["latency_minutes"]["min"], s["latency_minutes"]["median"], s["latency_minutes"]["max"]} <= numbers
+    assert {s["generated_latency_minutes"]["min"], s["generated_latency_minutes"]["max"]} <= numbers
+    landed = [p["timing"]["landed_minutes"] for p in committed["publications"]]
+    assert f"{min(landed)} to {max(landed)} minutes" in prose

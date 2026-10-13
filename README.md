@@ -861,7 +861,12 @@ archived, and a record from before the block is asked for none. The run:
   completion and after the evening cron's 6:16 PM ET slot, read in the
   exchange's zone), whether before the next open, how many times, what the
   inputs covered, what the reader did and what it cost, with the regime and the
-  ticket counts in a column that makes no service verdict. It writes
+  ticket counts in a column that makes no service verdict. "Landed" is the
+  commit's committer time on `main`; the record's own `published_at` is when
+  the run generated it and is printed beside every landed fact, never read as
+  one; a session's first delivery is the first commit to land, and a commit
+  whose file it cannot place -- one that is not JSON among them -- is set aside
+  by name and never stops the walk. It writes
   `docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.
@@ -1750,7 +1755,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
-                service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
+                service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml

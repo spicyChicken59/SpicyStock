@@ -19,6 +19,24 @@ exactly those, so `--check` holds the two files under
 pinned to one commit, `c759a1e6` (the merge of #157, 01:01 UTC on 12 October),
 whose time is its clock; `python tools/service_health.py` writes a newer one.
 
+**Corrected 13 October (`service_health_v2`).** Every delivery fact is now the
+commit's landing time -- its committer time on `main`, the first instant the
+record was there to serve -- and the record's own `published_at`, when the run
+generated it, is kept beside it as `generated_*` and never read as a delivery.
+The first reading measured the latency, the slots and before-the-open off the
+generation instant, chose a session's first delivery by generation order, and
+would have stopped the whole walk on one commit whose file was not JSON. Each
+was reproduced on synthetic histories before it was changed: a record generated
+at 13:25 UTC and landed at 13:40, after a 13:30 open, read as before it; a
+session whose later-generated run landed first named the other as its first
+delivery; a truncated record aborted the walk. A session's publications are in
+the order they landed now (the last to land is what `main` carries), and a
+commit whose file the reading cannot place -- not JSON among the reasons -- is
+set aside by name and counted like the first build's records. Over this history
+the correction moves the latency by the 2.4 to 5.5 minutes each commit took
+after its record's clock and changes no before-open verdict, no first delivery
+and no count.
+
 ## What the history establishes (11 September to 9 October 2026)
 
 - **21 expected sessions, 21 published, 21 of 21 first publications before the
@@ -33,16 +51,18 @@ whose time is its clock; `python tools/service_health.py` writes a newer one.
   the scheduled run with the mail delivered, then two no-email production runs
   for the ZIM correction and the review-budget policy). Every revision landed
   after a first publication that was already before the next open.
-- **Latency after completion: min 53.1, median 261.9, max 362.1 minutes.** The
-  minimum is 11 September's manual run, made before the slot (68 minutes before
-  it). From 14 to 18 September the scheduled runs landed 6 to 9 minutes after
-  the primary slot. From 22 September every scheduled run landed after the retry
-  slot, 133 to 241 minutes after the primary one: **14 of 21** first publications
-  are after 8:16 PM ET. The reading reads the publication's instant, not which
+- **Latency after completion, landed: min 55.8, median 266.7, max 367.0
+  minutes** (by the records' own clocks: min 53.1, median 261.9, max 362.1). The
+  minimum is 11 September's manual run, landed before the slot (65 minutes
+  before it). From 14 to 18 September the scheduled runs landed 9.6 to 11.7
+  minutes after the primary slot. From 22 September every scheduled run landed after the
+  retry slot, 137.7 to 246.0 minutes after the primary one: **14 of 21** first
+  publications landed after 8:16 PM ET, as 14 were generated after it. The reading reads the publication's instant, not which
   cron fired it; CLAUDE.md records the primary slot itself firing hours late on
   7 October, so "after the retry slot" is a position, not an attribution.
-- The commit landed 2 to 5 minutes after the record's own `published_at` on
-  every publication (`landed_minutes`).
+- The commit landed 2.4 to 5.5 minutes after the record's own `published_at`
+  on every publication (`landed_minutes`); every first publication was
+  generated, and landed, before the next open.
 - **Statuses: 19 degraded, 7 ok.** Where the coverage ledger exists (from 16
   September) the inputs ready were 4,753 to 4,776 of 4,775 to 4,796 intended
   stocks; the 9 October publications are the first under the stale tolerance to
