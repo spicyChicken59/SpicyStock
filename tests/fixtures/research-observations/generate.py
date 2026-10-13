@@ -101,6 +101,30 @@ def build():
     collect("stale-cohort", current, (red_receipt, red_bundle), client=Client(), clock=lambda: NOW)
     later = NOW + timedelta(seconds=30)
     collect("followup", current, (receipt, bundle), client=Client(later), clock=lambda: later, previous=files["observed.json"])
+    # Both legs cross the boundaries by one microsecond, retaining producer
+    # timestamps and replayed statuses. Offset forms represent the same instants.
+    precise = NOW.replace(microsecond=123456)
+    for suffix, offset in (("", timezone.utc), ("-offset", timezone(timedelta(hours=5, minutes=30)))):
+        for name, age in (("age-60s", timedelta(seconds=60)), ("age-60s-plus-microsecond", timedelta(seconds=60, microseconds=1)),
+                          ("future-5s", -timedelta(seconds=5)), ("future-5s-plus-microsecond", -timedelta(seconds=5, microseconds=1))):
+            def change_time(result, age=age, offset=offset):
+                stamp = (precise - age).astimezone(offset)
+                result["KE"]["latest_quote"]["timestamp"] = stamp
+                result["KE"]["latest_trade"]["timestamp"] = stamp
+            collect(name + suffix, current, (receipt, bundle), client=Client(precise, edit=change_time), clock=lambda: precise)
+    for name, locked_price in (("locked-zero-spread", 29.12), ("midpoint-underflow", 5e-324)):
+        def locked(result, locked_price=locked_price):
+            result["KE"]["latest_quote"]["bid_price"] = locked_price
+            result["KE"]["latest_quote"]["ask_price"] = locked_price
+        collect(name, current, (receipt, bundle), client=Client(edit=locked), clock=lambda: NOW)
+    def rounded_tie(result):
+        result["KE"]["latest_quote"]["bid_price"] = 100
+        result["KE"]["latest_quote"]["ask_price"] = 100.02697564293588
+    collect("rounded-spread-tie", current, (receipt, bundle), client=Client(edit=rounded_tie), clock=lambda: NOW)
+    def large_spread(result):
+        result["KE"]["latest_quote"]["bid_price"] = 100
+        result["KE"]["latest_quote"]["ask_price"] = 1e15
+    collect("large-dollar-spread", current, (receipt, bundle), client=Client(edit=large_spread), clock=lambda: NOW)
     return files
 
 

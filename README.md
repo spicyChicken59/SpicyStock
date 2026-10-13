@@ -1185,12 +1185,17 @@ subsequent observations.
 for the current registered cohort's allocation-fit rows (`src/research_observations.py`).
 It binds the exact canonical publication, the exact `stop-research.json` receipt
 and bundle beside it, and each row's original evidence identity, then makes at
-most one IEX snapshot request per run through the morning transport, under the
-same guards: a wrong session, an ended or not-yet-open collection window, a
+most one HTTP attempt to the fixed IEX snapshot endpoint per run, using the
+existing server-side Alpaca pair. This research-only transport does not follow
+redirects, retry failed requests or paginate. It limits the response body to
+256 KiB, connection time to 5 seconds and read inactivity to 30 seconds, within
+the 180-second collection deadline. The existing morning guards apply: a wrong
+session, an ended or not-yet-open collection window, a
 stale or future publication, a missing cohort or a cohort bound to another
 publication is an inapplicable receipt with zero provider requests, and a
 cohort with no allocation fit is recorded as one. Quotes and prints keep their
-provider timestamps and the 60-second freshness rule; the receipt expires after
+provider timestamps and the 60-second freshness rule, including microseconds;
+the receipt expires after
 300 seconds. Delayed volume is not requested, and halts, issuer news and earnings
 are not checked by this companion, which says so beside every row.
 
@@ -1199,13 +1204,21 @@ print, and where each sits against the published trigger, limit and stop, as a
 position and never a signal: no ready label, no quantity, no personal sizing,
 no order copy and no entry permission. Research rows remain hypothetical model
 research, not tickets. An observation collected over another cohort, an older
-publication, a forged level, price state or request count is refused in the
+publication, a forged level, price state, spread or request count is refused in the
 browser, and the cohort stays readable without it. Persistence is a second
 one-file commit on main (`publish_morning.py --target research`), revalidated
 against the record and the committed cohort; a cohort main has since replaced
 refuses the push. No new subscription, credential or environment variable is
-involved; Saturday tests cannot prove Monday delivery, and Actions timing stays
-a best-effort dated snapshot.
+involved. Local tests do not establish scheduled delivery: a delayed Actions
+run can finish successfully after its guard skips every collection step. Check
+the dated receipt and collection steps; the workflow conclusion alone does not
+establish a morning observation. Actions timing remains best effort.
+
+The production collector installs its wall-clock deadline on the main thread
+of the existing Linux Actions runner. A live collection refuses when that
+timer is unavailable, preserving the previous receipt; offline injected clients
+remain available for deterministic tests. The page prints the recorded request
+count, including zero when provider credentials are missing.
 
 ### Research follow-through
 

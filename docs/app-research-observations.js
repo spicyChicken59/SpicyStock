@@ -29,10 +29,17 @@
   const finite = x => typeof x === 'number' && Number.isFinite(x);
   const price = x => finite(x) && x > 0 && x <= 1e15;
   const day = x => typeof x === 'string' && /^\d{4}-\d\d-\d\d$/.test(x) && Number.isFinite(Date.parse(x)) && new Date(x).toISOString().slice(0, 10) === x;
-  const instant = x => {
-    const match = typeof x === 'string' && /^(\d{4}-\d\d-\d\d)T(\d\d):(\d\d):(\d\d)(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.exec(x);
-    return match && day(match[1]) && Number(match[2]) < 24 && Number(match[3]) < 60 && Number(match[4]) < 60 ? Date.parse(x) : NaN;
+  // The producer retains microseconds. Date.parse truncates them, which would
+  // move a print across the exact 60-second age or five-second future boundary.
+  const micros = x => {
+    const match = typeof x === 'string' && /^(\d{4}-\d\d-\d\d)T(\d\d):(\d\d):(\d\d)(?:\.(\d{1,6}))?(Z|[+-](\d\d):(\d\d))$/.exec(x);
+    if (!match || !day(match[1]) || Number(match[2]) >= 24 || Number(match[3]) >= 60 || Number(match[4]) >= 60 ||
+      match[6] !== 'Z' && (Number(match[7]) >= 24 || Number(match[8]) >= 60)) return null;
+    const whole = Date.parse(match[1] + 'T' + match[2] + ':' + match[3] + ':' + match[4] + match[6]);
+    return Number.isFinite(whole) ? BigInt(whole) * 1000n + BigInt((match[5] || '').padEnd(6, '0')) : null;
   };
+  const instant = x => { const value = micros(x); return value === null ? NaN : Number(value) / 1000; };
+  const clockMicros = () => api.now ? micros(api.now instanceof Date ? api.now.toISOString() : api.now) : BigInt(Date.now()) * 1000n;
   const clock = () => api.now ? new Date(api.now).getTime() : Date.now();
   const atCT = x => Number.isFinite(instant(x)) ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' }).format(new Date(x)) + ' CT' : 'time unavailable';
   const money = x => finite(x) ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 4 }).format(x) : 'unavailable';
@@ -100,10 +107,25 @@
       return;
     }
     if (['recent', 'stale'].includes(datum.status)) {
-      const stamp = instant(datum.timestamp);
-      require(fields.every(field => price(datum[field])) && stamp <= observed + SKEW_MS, 'Observed values or time are invalid.');
-      require(datum.status === (generated - stamp <= QUOTE_AGE_MS && sessionAt(stamp) === session ? 'recent' : 'stale'), 'Freshness differs from the provider timestamp.');
-      if ('ask' in datum) require(datum.ask >= datum.bid && finite(datum.spread_usd) && Math.abs(datum.spread_usd - (datum.ask - datum.bid)) < 1e-6 && finite(datum.spread_pct), 'Quote spread is invalid.');
+      const stamp = micros(datum.timestamp);
+      const exchanges = 'ask' in datum ? ['bid_exchange', 'ask_exchange'] : ['exchange'];
+      require(fields.every(field => price(datum[field])) && datum.conditions !== null &&
+        exchanges.every(field => typeof datum[field] === 'string' && datum[field].length > 0 && datum[field].length <= 32) &&
+        stamp !== null && observed !== null && stamp <= observed + BigInt(SKEW_MS) * 1000n, 'Observed values or time are invalid.');
+      require(datum.status === (generated - stamp <= BigInt(QUOTE_AGE_MS) * 1000n && sessionAt(Number(stamp / 1000n)) === session ? 'recent' : 'stale'), 'Freshness differs from the provider timestamp.');
+      if ('ask' in datum) {
+        const delta = datum.ask - datum.bid, midpoint = datum.bid / 2 + datum.ask / 2;
+        const percentage = delta / midpoint * 100;
+        // The producer rounds both spread fields to eight decimal places. Allow
+        // that half-unit plus binary floating-point representation at a tie.
+        // At 2**26 and above float spacing exceeds 1e-8, so rounding to eight
+        // decimals preserves the original float and needs exact equality.
+        const roundedMatch = (given, derived) => finite(given) && finite(derived) &&
+          (Math.abs(derived) >= 2 ** 26 ? given === derived :
+            Math.abs(given - derived) <= 5e-9 + Number.EPSILON * Math.max(1, Math.abs(derived)));
+        require(delta >= 0 && finite(midpoint) && midpoint > 0 &&
+          roundedMatch(datum.spread_usd, delta) && roundedMatch(datum.spread_pct, percentage), 'Quote spread is invalid.');
+      }
     }
   }
   function validate(value) {
@@ -118,11 +140,11 @@
       c.receipt_sha256 === cohort.receiptSha && c.bundle_sha256 === receipt.bundle.sha256 && c.bundle_path === receipt.bundle.path && c.bundle_bytes === receipt.bundle.bytes &&
       c.policy_id === receipt.policy.id && c.generated_at === receipt.timing.generated_at && c.status === receipt.status && c.applicable_session === receipt.publication.applicable_session && c.bound === true,
     'The dated observation describes another research cohort.');
-    const started = instant(value.collection_started_at), generated = instant(value.generated_at), expires = instant(value.expires_at);
-    require([started, generated, expires].every(Number.isFinite) && started <= generated && expires === generated + RECEIPT_AGE_MS && generated - started <= MAX_COLLECTION_MS && generated <= clock() + SKEW_MS, 'Observation clocks are invalid.');
+    const started = micros(value.collection_started_at), generated = micros(value.generated_at), expires = micros(value.expires_at), now = clockMicros();
+    require([started, generated, expires, now].every(value => value !== null) && started <= generated && expires === generated + BigInt(RECEIPT_AGE_MS) * 1000n && generated - started <= BigInt(MAX_COLLECTION_MS) * 1000n && generated <= now + BigInt(SKEW_MS) * 1000n, 'Observation clocks are invalid.');
     require(REASONS.includes(value.reason) && STATUSES.includes(value.status) && ['upcoming', 'open', 'ended', 'unknown'].includes(value.entry_phase), 'Observation outcome is unknown.');
-    const timing = record.run.timing || {}, opens = instant(timing.opens_at), cutoff = instant(timing.cutoff_at);
-    if (value.reason === null) require(Number.isFinite(opens) && Number.isFinite(cutoff) && started >= opens - POLICY.preopen_minutes * 60000 && started < cutoff && sessionAt(started) === receipt.publication.applicable_session, 'An applicable observation sits outside its collection window.');
+    const timing = record.run.timing || {}, opens = micros(timing.opens_at), cutoff = micros(timing.cutoff_at);
+    if (value.reason === null) require(opens !== null && cutoff !== null && started >= opens - BigInt(POLICY.preopen_minutes * 60000) * 1000n && started < cutoff && sessionAt(Number(started / 1000n)) === receipt.publication.applicable_session, 'An applicable observation sits outside its collection window.');
     const expected = value.reason === null && receipt.status === 'recorded' ? cohort.bundle.rows.filter(row => row.research.allocation_fit) : [];
     require(Array.isArray(value.rows) && value.rows.length === expected.length, 'Observation rows differ from the cohort’s allocation fits.');
     const source = value.source;
@@ -131,12 +153,12 @@
     if (!expected.length) {
       require(source.status === 'not_requested' && source.entitlement === 'not_requested' && source.checked_at === null && source.error_kind === null && source.requests === 0, 'An inapplicable observation requested a provider.');
     } else {
-      const checked = instant(source.checked_at);
-      require(Number.isFinite(checked) && started <= checked && checked <= generated, 'Provider check time is invalid.');
+      const checked = micros(source.checked_at);
+      require(checked !== null && started <= checked && checked <= generated, 'Provider check time is invalid.');
       require((source.status === 'ok' && source.entitlement === 'request_succeeded' && source.error_kind === null) || (source.status === 'unavailable' && source.entitlement === 'unavailable' && source.error_kind !== null), 'Source status contradicts its error.');
       require(source.requests === (source.error_kind === 'missing_credentials' ? 0 : 1), 'Request count differs from the budget.');
     }
-    const observed = source.checked_at === null ? NaN : instant(source.checked_at), session = receipt.publication.applicable_session;
+    const observed = micros(source.checked_at), session = receipt.publication.applicable_session;
     let allRecent = true;
     value.rows.forEach((row, index) => {
       const original = expected[index], levels = original.levels;
@@ -216,7 +238,7 @@
     const fits = observation.rows.length, when = atCT(observation.generated_at), expired = now > instant(observation.expires_at);
     if (observation.reason) return 'No dated observation applies to this cohort: ' + REASON_WORDS[observation.reason] + ' (' + when + '). Zero provider requests were made.';
     if (observation.status === 'no_research_rows') return 'This cohort has no allocation-fit research row, so no price was observed (' + when + '). Zero provider requests were made.';
-    const lead = (expired ? 'Expired dated observation' : 'Dated observation') + ' · ' + when + ' · ' + ageWords(observation.generated_at, now) + ' · ' + fits + (fits === 1 ? ' research row' : ' research rows') + ' · one IEX snapshot request';
+    const lead = (expired ? 'Expired dated observation' : 'Dated observation') + ' · ' + when + ' · ' + ageWords(observation.generated_at, now) + ' · ' + fits + (fits === 1 ? ' research row' : ' research rows') + ' · ' + (observation.source.requests === 0 ? 'zero IEX snapshot requests' : 'one IEX snapshot request');
     if (observation.status === 'provider_unavailable') return lead + ' · IEX unavailable: ' + (SOURCE_WORDS[observation.source.error_kind] || 'the source failed') + '. No price was observed.';
     return lead + (observation.status === 'partial' ? ' · some prices were stale, invalid or missing' : '') + '. Single venue, not consolidated; halts, volume pace, issuer news and earnings were not checked.';
   }
@@ -235,12 +257,12 @@
     } else fact('bid-ask', 'Bid / ask', quote.status === 'unavailable' ? 'unavailable — ' + (SOURCE_WORDS[observation.source.error_kind] || 'the source failed') : quote.status === 'invalid' ? 'invalid provider quote (not shown)' : 'missing from the provider snapshot');
     if (['recent', 'stale'].includes(trade.status)) fact('trade', 'Last trade', money(trade.price) + ' at ' + atCT(trade.timestamp) + (trade.status === 'stale' ? ' (stale)' : '') + ' · a print, not a current quote');
     else fact('trade', 'Last trade', trade.status === 'unavailable' ? 'unavailable' : trade.status === 'invalid' ? 'invalid provider print (not shown)' : 'missing from the provider snapshot');
-    fact('ask-state', 'Ask against the published levels', STATE_WORDS[row.price_checks.ask]);
-    fact('trade-state', 'Last trade against the published levels', STATE_WORDS[row.price_checks.trade]);
+    fact('ask-state', 'Ask at collection against the published levels', STATE_WORDS[row.price_checks.ask]);
+    fact('trade-state', 'Last trade at collection against the published levels', STATE_WORDS[row.price_checks.trade]);
     fact('levels', 'Published levels', 'trigger ' + money(row.levels.trigger) + ' · limit ' + money(row.levels.limit) + ' · stop ' + money(row.levels.stop));
     section.append(list);
     paragraph(section, 'Not checked here:', 'trading halts, delayed volume pace, issuer news and earnings. The archived known-event registry had ' + (row.event.blocked ? 'a match' : 'no match') + ' for ' + row.ticker + ', which is not news clearance.');
-    paragraph(section, 'Research context only.', 'A dated single-venue snapshot of a hypothetical research row: not a ready signal, not a quantity, not an order and not an entry permission. Check current prices, spread and trading status at your broker.');
+    paragraph(section, 'Research context only.', 'Recent/stale labels and level positions describe collection time. A dated single-venue snapshot of a hypothetical research row: not a ready signal, not a quantity, not an order and not an entry permission. Check current prices, spread and trading status at your broker.');
     host.append(section);
   }
   function paint() {

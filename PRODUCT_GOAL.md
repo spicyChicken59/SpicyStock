@@ -400,3 +400,44 @@ is released. All seven checks passed and actual public acceptance matched all
 restore and re-export. Seven phone/desktop views were inspected. The
 [release receipt](release-evidence/2026-10-10-private-backup/acceptance.json)
 retains both scopes without claiming an actual personal trade.
+
+## Current release reconciliation — 12 October 2026
+
+[Review clarity and journal reports #153](https://github.com/spicyChicken59/SpicyStock/pull/153),
+[research observations #154](https://github.com/spicyChicken59/SpicyStock/pull/154),
+[the candidate funnel #155](https://github.com/spicyChicken59/SpicyStock/pull/155),
+[review usage and whole-share feasibility #156](https://github.com/spicyChicken59/SpicyStock/pull/156)
+and [the evidence review #157](https://github.com/spicyChicken59/SpicyStock/pull/157)
+are merged and deployed. They supersede the pending descriptions above.
+The current release at `c759a1e6` passed 107 actual public checks, with all
+41 required files matching and 14 phone/desktop captures inspected.
+The [reconciliation receipt](release-evidence/2026-10-12-public-reconciliation/acceptance.json)
+separates hosted checks, public behavior and independent review findings.
+
+KE and PSNL still have no published dated research quotes: the actual optional
+file returns HTTP 404 and the site clearly shows unavailable evidence. The
+original hypothetical sizes, zero baseline tickets, pending research outcomes
+and unknown personal cash remain intact. No morning delivery or actual personal
+execution is inferred. #109's analysis deliverables are complete; an established
+trading edge is not claimed. #108, #110 and #111 remain open.
+
+The current correction, [#159](https://github.com/spicyChicken59/SpicyStock/issues/159),
+addresses reproduced discrepancies in the research request budget, timestamp
+precision, spread validation and request-count wording. Its implementation and
+synthetic verification remain separate from an actual applicable quote receipt.
+Service-health work in #158 has another active builder; the independent timing
+and malformed-history findings are retained without overlapping source edits.
+
+
+## Current continuation — 13 October 2026
+
+PRs #158, #160 and #161 add service history, deterministic failure/recovery
+rehearsals and pending/stale recovery guidance. The October 12 evening record
+now archives actual review usage, candidate funnel and delivery timing.
+Monday's 13:20/13:28 UTC morning schedules started more than eight hours late;
+the guards skipped collection after the window ended. A successful workflow
+conclusion does not establish timely morning coverage. No actual successful
+personal trade is recorded. Issue #159 remains the active quote-fidelity fix,
+rebased over these releases; its earlier local checks are historical evidence
+until final current-source and hosted/public acceptance complete. Improving
+actual morning delivery remains open under #108 and #111.

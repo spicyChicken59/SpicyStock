@@ -5,6 +5,12 @@ import gzip
 import hashlib
 import importlib.util
 import json
+import signal
+import threading
+import time
+from urllib.parse import parse_qs, urlsplit
+
+import requests
 from pathlib import Path
 
 import pytest
@@ -316,3 +322,237 @@ def test_fixture_regeneration_is_required_in_ci():
     workflow = yaml.safe_load((ROOT / ".github/workflows/tests.yml").read_text())
     commands = "\n".join(step.get("run", "") for step in workflow["jobs"]["pytest"]["steps"])
     assert "python tests/fixtures/research-observations/generate.py --check" in commands
+
+
+# Exercise Requests below its API boundary; these doubles never use the network.
+class Body:
+    def __init__(self, data, trace):
+        self.data, self.trace = data, trace
+        self.closed = False
+    def stream(self, amount, decode_content=True):
+        self.trace['read_started'] = True
+        for offset in range(0, len(self.data), amount):
+            chunk = self.data[offset:offset+amount]
+            self.trace['bytes_read'] += len(chunk)
+            yield chunk
+    def close(self):
+        self.closed = True
+        self.trace['response_closed'] = True
+    def release_conn(self):
+        self.trace['response_closed'] = True
+
+@pytest.fixture
+def transport(monkeypatch):
+    monkeypatch.setenv('ALPACA_API_KEY', 'offline-probe')
+    monkeypatch.setenv('ALPACA_SECRET_KEY', 'offline-probe')
+    def install(body=b'{}', status=200, headers=None, error=None):
+        trace = {'calls': [], 'bytes_read': 0, 'read_started': False, 'response_closed': False}
+        def send(_session, prepared, **kwargs):
+            trace['calls'].append({'method': prepared.method, 'url': prepared.url,
+                                   'stream': kwargs.get('stream'), 'allow_redirects': kwargs.get('allow_redirects'),
+                                   'timeout': kwargs.get('timeout'),
+                                   'verify': kwargs.get('verify'),
+                                   'retries': _session.adapters['https://'].max_retries.total})
+            if len(trace['calls']) > 1:
+                raise AssertionError('transport sent a second HTTP request')
+            if error:
+                raise error
+            response = requests.Response()
+            response.status_code = status
+            response.url = prepared.url
+            response.request = prepared
+            response.encoding = 'utf-8'
+            response.headers.update(headers or {})
+            response.raw = Body(body, trace)
+            return response
+        monkeypatch.setattr(requests.Session, 'send', send)
+        return trace
+    return install
+
+def fetch():
+    return observations._fetch_once(['KE', 'PSNL'], lambda: NOW)
+
+def snapshot():
+    return {'KE': {'latestTrade': {'t': NOW.isoformat(), 'p': 29.12, 'x': 'V', 'c': ['@']},
+                   'latestQuote': {'t': NOW.isoformat(), 'bp': 29.10, 'ap': 29.14,
+                                   'bs': 100, 'as': 200, 'bx': 'V', 'ax': 'V', 'c': ['R']}},
+            'PSNL': {'latestTrade': {'t': NOW.isoformat(), 'p': 16.29, 'x': 'V', 'c': ['@']},
+                     'latestQuote': {'t': NOW.isoformat(), 'bp': 16.28, 'ap': 16.30,
+                                     'bs': 100, 'as': 200, 'bx': 'V', 'ax': 'V', 'c': ['R']}}}
+
+def test_single_http_request_and_actual_compact_field_mapping(transport):
+    trace = transport(json.dumps(snapshot()).encode())
+    rows, source = fetch()
+    assert source['status'] == 'ok' and source['requests'] == 1
+    assert len(trace['calls']) == 1
+    request = trace['calls'][0]
+    url = urlsplit(request['url'])
+    assert (request['method'], url.scheme, url.netloc, url.path) == ('GET','https','data.alpaca.markets','/v2/stocks/snapshots')
+    assert parse_qs(url.query) == {'symbols':['KE,PSNL'], 'feed':['iex']}
+    assert request['stream'] is True and request['allow_redirects'] is False
+    assert request['timeout'] == (5,30) and request['retries'] == 0
+    quote = morning.quote_observation(rows['KE']['latest_quote'], NOW, '2026-10-12')
+    trade = morning.trade_observation(rows['KE']['latest_trade'], NOW, '2026-10-12')
+    assert quote['status'] == trade['status'] == 'recent'
+    assert (quote['bid'], quote['ask'], quote['bid_size'], quote['ask_size']) == (29.10,29.14,100,200)
+    assert trade['price'] == 29.12
+    assert trace['response_closed']
+
+
+@pytest.mark.parametrize('variable', ['REQUESTS_CA_BUNDLE', 'CURL_CA_BUNDLE'])
+def test_prepared_request_preserves_configured_tls_trust(transport, monkeypatch, variable):
+    for name in ('REQUESTS_CA_BUNDLE', 'CURL_CA_BUNDLE'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(variable, '/tmp/synthetic-research-ca.pem')
+    trace = transport()
+    _, source = fetch()
+    assert source['status'] == 'ok' and source['requests'] == 1
+    assert trace['calls'][0]['verify'] == '/tmp/synthetic-research-ca.pem'
+
+@pytest.mark.parametrize('status,error_kind',[(401,'authentication'),(403,'entitlement'),(429,'rate_limit'),(504,'provider_error'),(500,'provider_error')])
+def test_http_failures_spend_one_attempt_without_sdk_retry(transport,status,error_kind):
+    trace = transport(b'{"message":"synthetic private provider body"}',status=status)
+    rows, source = fetch()
+    assert rows == {} and source['status'] == 'unavailable'
+    assert source['error_kind'] == error_kind
+    assert len(trace['calls']) == 1
+    assert not trace['read_started']
+    assert trace['response_closed']
+
+@pytest.mark.parametrize('status',[301,302,303,307,308])
+def test_redirect_refused_without_following_location(transport,status):
+    trace = transport(status=status,headers={'Location':'https://unrelated.invalid/never-follow'})
+    rows, source = fetch()
+    assert rows == {} and source['status'] == 'unavailable'
+    assert len(trace['calls']) == 1 and trace['calls'][0]['allow_redirects'] is False
+    assert not trace['read_started']
+
+@pytest.mark.parametrize('next_token',['next'])
+def test_pagination_marker_cannot_trigger_another_request(transport,next_token):
+    trace = transport(json.dumps({'KE':{},'next_page_token':next_token}).encode())
+    rows, source = fetch()
+    assert rows == {} and source['status'] == 'unavailable'
+    assert len(trace['calls']) == 1
+
+@pytest.mark.parametrize('extra',[0,1])
+def test_body_cap_at_exact_boundary_without_content_length(transport,extra):
+    trace = transport(b'{}' + b' ' * (256 * 1024 - 2 + extra))
+    rows, source = fetch()
+    assert source['status'] == ('ok' if extra == 0 else 'unavailable')
+    assert len(trace['calls']) == 1
+    assert trace['response_closed']
+
+
+def test_oversized_content_length_refuses_before_reading_body(transport):
+    trace = transport(headers={'Content-Length': str(256 * 1024 + 1)})
+    rows, source = fetch()
+    assert rows == {} and source['status'] == 'unavailable' and source['requests'] == 1
+    assert len(trace['calls']) == 1 and not trace['read_started']
+    assert trace['response_closed']
+
+
+def test_one_underflowing_quote_preserves_the_other_research_row():
+    def underflow(result):
+        result['KE']['latest_quote'].update(bid_price=5e-324, ask_price=5e-324)
+    out = collect(client=Client(edit=underflow))
+    rows = {row['ticker']: row for row in out['rows']}
+    assert out['status'] == 'partial'
+    assert rows['KE']['quote']['status'] == 'invalid'
+    assert rows['KE']['quote']['spread_pct'] is rows['KE']['quote']['spread_usd'] is None
+    assert rows['KE']['price_checks']['ask'] == 'unknown'
+    assert rows['PSNL']['quote']['status'] == 'recent'
+    observations.validate_observation(out, *source())
+
+@pytest.mark.parametrize('error',[requests.ConnectTimeout('synthetic private error'),requests.ReadTimeout('synthetic private error')])
+def test_timeout_is_sanitized_one_attempt(transport,error):
+    trace=transport(error=error)
+    rows, source=fetch()
+    assert rows == {} and source['status'] == 'unavailable' and source['error_kind'] == 'timeout'
+    assert len(trace['calls']) == 1
+    assert 'synthetic private' not in json.dumps(source)
+
+def test_collection_uses_one_real_transport_request_and_receipt_count(transport,monkeypatch):
+    trace=transport(json.dumps(snapshot()).encode())
+    def sdk_forbidden(*args,**kwargs):
+        raise AssertionError('research collection called the retrying Alpaca SDK')
+    monkeypatch.setattr(observations.market_data,'get_clients',sdk_forbidden)
+    stop=ROOT/'tests/fixtures/stop-research'
+    canonical=gzip.decompress((stop/'current-publication.json.gz').read_bytes())
+    out=observations.collect(canonical,(stop/'current-receipt.json').read_bytes(),(stop/'current-bundle.json').read_bytes(),clock=lambda:NOW,observation_run_id='offline-real-transport')
+    assert out['status']=='observed'
+    assert out['source']['requests']==len(trace['calls'])==1
+    assert all(row['quote']['status']==row['trade']['status']=='recent' for row in out['rows'])
+
+
+def test_hard_deadline_interrupts_blocking_body_and_restores_timer(transport, monkeypatch):
+    trace=transport(b'{}')
+    assert signal.getitimer(signal.ITIMER_REAL) == (0.0,0.0)
+    before_handler=signal.getsignal(signal.SIGALRM)
+    trace['sleep_completed']=False
+    def blocking_stream(self, amount, decode_content=True):
+        self.trace['read_started']=True
+        time.sleep(1)
+        self.trace['sleep_completed']=True
+        yield self.data
+    monkeypatch.setattr(Body,'stream',blocking_stream)
+    started=time.monotonic()
+    rows,source=observations._fetch_once(['KE','PSNL'],lambda:NOW,seconds=.1)
+    elapsed=time.monotonic()-started
+    assert rows == {} and source['status']=='unavailable' and source['error_kind']=='timeout'
+    assert len(trace['calls'])==1 and trace['read_started'] and not trace['sleep_completed']
+    assert trace['response_closed']
+    assert signal.getitimer(signal.ITIMER_REAL) == (0.0,0.0)
+    assert signal.getsignal(signal.SIGALRM) == before_handler
+
+
+def test_existing_timer_refuses_transport_without_replacing_timer(transport):
+    trace=transport()
+    assert signal.getitimer(signal.ITIMER_REAL) == (0.0,0.0)
+    before_handler=signal.getsignal(signal.SIGALRM)
+    signal.setitimer(signal.ITIMER_REAL,60)
+    try:
+        with pytest.raises(ValueError, match='available main-thread timer'):
+            fetch()
+        assert trace['calls']==[]
+        remaining,interval=signal.getitimer(signal.ITIMER_REAL)
+        assert 0 < remaining <= 60 and interval==0
+        assert signal.getsignal(signal.SIGALRM)==before_handler
+    finally:
+        signal.setitimer(signal.ITIMER_REAL,0)
+
+
+def test_no_platform_timer_refuses_transport(transport,monkeypatch):
+    trace=transport()
+    monkeypatch.delattr(signal,'setitimer')
+    with pytest.raises(ValueError, match='available main-thread timer'):
+        fetch()
+    assert trace['calls']==[]
+
+
+def test_invalid_header_refuses_before_any_http_attempt(transport, monkeypatch, tmp_path):
+    trace = transport()
+    monkeypatch.setenv('ALPACA_API_KEY', 'synthetic\ninvalid')
+    docs = docs_with(tmp_path)
+    prior = (FIXTURES / 'observed.json').read_bytes()
+    target = docs / observations.RECEIPT_FILE
+    target.write_bytes(prior)
+    with pytest.raises(requests.exceptions.InvalidHeader):
+        observations.run(docs=docs, clock=lambda: NOW)
+    assert trace['calls'] == []
+    assert target.read_bytes() == prior
+
+
+def test_off_main_thread_refuses_transport(transport):
+    trace=transport()
+    answer=[]
+    def run():
+        try:
+            fetch()
+        except ValueError as exc:
+            answer.append(str(exc))
+    worker=threading.Thread(target=run)
+    worker.start()
+    worker.join(timeout=1)
+    assert not worker.is_alive() and len(answer)==1
+    assert 'available main-thread timer' in answer[0]
+    assert trace['calls']==[]

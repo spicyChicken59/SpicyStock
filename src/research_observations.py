@@ -3,13 +3,14 @@
 The cohort's allocation-fit rows are hypothetical model research, not tickets.
 This companion binds the exact publication, the exact cohort receipt and
 bundle and each row's original evidence, then records one bounded single-venue
-IEX snapshot per run through the morning transport. Halts, delayed volume,
+IEX HTTP snapshot per run using the morning observation normalizers. Halts, delayed volume,
 issuer news and earnings are explicitly not checked here, and nothing in the
 receipt is a ready label, a personal size or an entry permission.
 """
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -17,7 +18,12 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import tempfile
+import threading
+import time
+
+import requests
 
 from src import market_data, morning, provenance, stop_research, timing
 
@@ -25,6 +31,11 @@ VERSION = 1
 RECEIPT_FILE = "research-observations.json"
 MAX_OBSERVATION_BYTES = 64 * 1024
 MAX_REQUESTS = 1
+SNAPSHOT_URL = "https://data.alpaca.markets/v2/stocks/snapshots"
+MAX_RESPONSE_BYTES = 256 * 1024
+CONNECT_TIMEOUT_SECONDS = 5
+READ_TIMEOUT_SECONDS = 30
+RESPONSE_CHUNK_BYTES = 4096
 FEED = "iex"
 POLICY = {
     "version": VERSION, "feed": FEED, "max_requests_per_run": MAX_REQUESTS,
@@ -117,6 +128,93 @@ def _source():
     return {**morning._source(FEED), "requests": 0}
 
 
+@contextmanager
+def _deadline(seconds):
+    """Interrupt a slow response, including a body that never stops trickling.
+
+    Production runs on the Linux Actions main thread. Refuse a live read when
+    that hard bound cannot be installed; do not quietly offer an unbounded path.
+    """
+    _require(threading.current_thread() is threading.main_thread()
+             and hasattr(signal, "setitimer") and not signal.getitimer(signal.ITIMER_REAL)[0],
+             "bounded transport requires an available main-thread timer")
+    if seconds <= 0:
+        raise requests.Timeout("research collection deadline")
+    previous = signal.getsignal(signal.SIGALRM)
+    def expired(*_):
+        raise requests.Timeout("research collection deadline")
+    signal.signal(signal.SIGALRM, expired)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous)
+
+
+def _snapshot_rows(payload, symbols):
+    """Map Alpaca's compact wire fields to the existing observation normalizer."""
+    _require(isinstance(payload, dict) and not payload.get("next_page_token"), "unexpected snapshot envelope")
+    def fields(raw, mapping):
+        return {name: raw.get(key) for name, key in mapping.items()} if isinstance(raw, dict) else None
+    rows = {}
+    for symbol in symbols:
+        raw = payload.get(symbol)
+        if raw is None:
+            continue
+        _require(isinstance(raw, dict), "invalid symbol snapshot")
+        rows[symbol] = {
+            "latest_trade": fields(raw.get("latestTrade"), {
+                "timestamp": "t", "price": "p", "exchange": "x", "conditions": "c"}),
+            "latest_quote": fields(raw.get("latestQuote"), {
+                "timestamp": "t", "bid_price": "bp", "ask_price": "ap", "bid_size": "bs", "ask_size": "as",
+                "bid_exchange": "bx", "ask_exchange": "ax", "conditions": "c"}),
+        }
+    return rows
+
+
+def _fetch_once(symbols, clock, *, seconds=None):
+    """Exactly one HTTP attempt, with no SDK retries, redirects or pagination."""
+    source, rows = _source(), {}
+    try:
+        with _deadline(POLICY["max_collection_seconds"] if seconds is None else seconds):
+            with requests.Session() as session:
+                session.mount("https://", requests.adapters.HTTPAdapter(max_retries=0))
+                request = session.prepare_request(requests.Request(
+                    "GET", SNAPSHOT_URL, params={"symbols": ",".join(symbols), "feed": FEED},
+                    headers={"APCA-API-KEY-ID": os.environ["ALPACA_API_KEY"],
+                             "APCA-API-SECRET-KEY": os.environ["ALPACA_SECRET_KEY"]}))
+                settings = session.merge_environment_settings(request.url, {}, True, None, None)
+                # Header preparation can refuse malformed credentials without
+                # reaching the transport. Count only the ensuing HTTP attempt.
+                source["requests"] = 1
+                with session.send(request, **settings, allow_redirects=False,
+                                  timeout=(CONNECT_TIMEOUT_SECONDS, READ_TIMEOUT_SECONDS)) as response:
+                    if response.status_code != 200:
+                        source.update(status="unavailable", entitlement="unavailable",
+                                      error_kind={401: "authentication", 403: "entitlement", 429: "rate_limit"}.get(response.status_code, "provider_error"))
+                    else:
+                        length = response.headers.get("Content-Length")
+                        _require(length is None or 0 <= int(length) <= MAX_RESPONSE_BYTES, "snapshot response exceeds size bound")
+                        body = bytearray()
+                        for chunk in response.iter_content(chunk_size=RESPONSE_CHUNK_BYTES):
+                            _require(len(body) + len(chunk) <= MAX_RESPONSE_BYTES, "snapshot response exceeds size bound")
+                            body.extend(chunk)
+                        rows = _snapshot_rows(morning._json(bytes(body)), symbols)
+                        source.update(status="ok", entitlement="request_succeeded")
+    except Exception as exc:
+        if source["requests"] == 0:
+            # No request was attempted. Refuse collection without inventing a
+            # provider failure or a receipt with an impossible request count.
+            raise
+        # Response bodies, headers, credentials and exception text never enter
+        # the public receipt or log. A refusal cannot carry previous prices.
+        rows = {}
+        source.update(status="unavailable", entitlement="unavailable", error_kind=morning._error(exc))
+    source["checked_at"] = clock().isoformat()
+    return rows, source
+
+
 def _status(rows, source, reason):
     if reason:
         return "inapplicable"
@@ -139,8 +237,9 @@ def _previous(previous_raw):
 
 def collect(canonical_raw, receipt_raw=None, bundle_raw=None, *, client=None, clock=None, dry_run=False,
             observation_run_id=None, previous_raw=None):
-    """One bounded observation; an injectable clock and provider make it a pure function."""
+    """One bounded observation; an injectable clock and client support offline fixtures."""
     clock = clock or (lambda: datetime.now(timezone.utc))
+    deadline = time.monotonic() + POLICY["max_collection_seconds"]
     started = clock()
     _require(morning._instant(started) is not None, "collection requires an aware clock")
     data, binding = morning._publication(canonical_raw, allow_fixture=dry_run)
@@ -155,9 +254,13 @@ def collect(canonical_raw, receipt_raw=None, bundle_raw=None, *, client=None, cl
             source.update(status="unavailable", entitlement="unavailable", checked_at=clock().isoformat(),
                           error_kind="missing_credentials")
         else:
-            client = client or market_data.get_clients()
-            response, fetched = morning._fetch(client, requested, FEED, clock)
-            source = {**fetched, "requests": 1}
+            if client is None:
+                response, source = _fetch_once(requested, clock, seconds=deadline - time.monotonic())
+            else:
+                # Explicit offline doubles retain the existing fixture seam;
+                # production never constructs or calls the retrying SDK client.
+                response, fetched = morning._fetch(client, requested, FEED, clock)
+                source = {**fetched, "requests": 1}
     completed = clock()
     _require(morning._instant(completed) is not None and completed >= started, "collection clock moved backwards")
     session, ok = binding["applicable_session"], source["status"] == "ok"

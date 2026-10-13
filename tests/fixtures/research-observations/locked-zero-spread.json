@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-10-12T13:20:00+00:00",
+  "generated_at": "2026-10-12T13:20:00+00:00",
+  "expires_at": "2026-10-12T13:25:00+00:00",
+  "observation_run_id": "synthetic-locked-zero-spread",
+  "previous_observation_sha256": null,
+  "dry_run": false,
+  "publication": {
+    "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+    "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+    "run_id": "38034610157",
+    "rules_version": "c9dc7d6d1d87",
+    "measured_session": "2026-10-09",
+    "applicable_session": "2026-10-12",
+    "published_at": "2026-10-10T07:30:15.553690+00:00",
+    "reader_projection_version": 1,
+    "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+  },
+  "cohort": {
+    "receipt_sha256": "a9d48e93b8e0f8463bff42694ca97e461622ef669ebad723aeda8d67c9dadfa9",
+    "bundle_sha256": "6b84c6d6f4d286d0bc47618229da6fdd458ccba3a43dfa8c1c480c4cfac7f963",
+    "bundle_path": "stop-research/6b84c6d6f4d286d0bc47618229da6fdd458ccba3a43dfa8c1c480c4cfac7f963.json",
+    "bundle_bytes": 8911,
+    "policy_id": "anticipation_stop_width_4_to_5_v1",
+    "generated_at": "2026-10-10T12:00:00+00:00",
+    "status": "recorded",
+    "applicable_session": "2026-10-12",
+    "bound": true
+  },
+  "policy": {
+    "version": 1,
+    "feed": "iex",
+    "max_requests_per_run": 1,
+    "selection": "allocation_fit_rows_of_the_bound_registered_cohort",
+    "cohort_policy_id": "anticipation_stop_width_4_to_5_v1",
+    "cohort_schema_version": 1,
+    "quote_max_age_seconds": 60,
+    "trade_max_age_seconds": 60,
+    "snapshot_max_age_seconds": 300,
+    "max_future_skew_seconds": 5,
+    "preopen_minutes": 30,
+    "max_collection_seconds": 180,
+    "market_timezone": "America/New_York"
+  },
+  "status": "observed",
+  "reason": null,
+  "entry_phase": "upcoming",
+  "source": {
+    "status": "ok",
+    "feed": "iex",
+    "scope": "single_venue",
+    "entitlement": "request_succeeded",
+    "checked_at": "2026-10-12T13:20:00+00:00",
+    "error_kind": null,
+    "minimum_delay_seconds": 0,
+    "requests": 1
+  },
+  "coverage": {
+    "halts": "not_checked",
+    "delayed_volume": "not_requested",
+    "issuer_news": "not_checked",
+    "earnings": "not_checked",
+    "corporate_action": "archived_cohort_registry_only"
+  },
+  "rows": [
+    {
+      "rank": 2,
+      "ticker": "KE",
+      "kind": "anticipation",
+      "evidence": {
+        "id": "d2fd523332158801e28d50e17d6e06688882fda6d3b2e3fcd34b478de230f0a2",
+        "inputs_sha256": "3f37e164f19a115525e37dd4085371888c7ee4c1ab5c203aca64c756ff02f239",
+        "plan_sha256": "8a55c24d9d7f299d3d7518891acebdde96703ae3fc9629867fc8eea7659c7c16",
+        "source_sha256": "2d6a7ada010e7ff1921fdd285b360fe95aede612a6571347273a81d88069848e"
+      },
+      "projection_sha256": "a3fc5c011f04cc3bdad24193ab88bb76d0100a71e28a2472d8c6752032124ba3",
+      "levels": {
+        "trigger": 29.23,
+        "limit": 29.52,
+        "stop": 28.25,
+        "entry_low": 29.23,
+        "day2_spent_above": null
+      },
+      "event": {
+        "blocked": false,
+        "event_ids": [],
+        "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
+        "status": "not_in_registry"
+      },
+      "trade": {
+        "status": "recent",
+        "timestamp": "2026-10-12T13:19:58+00:00",
+        "age_seconds": 2.0,
+        "price": 29.12,
+        "exchange": "V",
+        "conditions": [
+          "@"
+        ]
+      },
+      "quote": {
+        "status": "recent",
+        "timestamp": "2026-10-12T13:19:59+00:00",
+        "age_seconds": 1.0,
+        "bid": 29.12,
+        "ask": 29.12,
+        "bid_size": 100,
+        "ask_size": 200,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 0.0,
+        "spread_pct": 0.0
+      },
+      "price_checks": {
+        "trade": "below_entry_floor",
+        "ask": "below_entry_floor"
+      }
+    },
+    {
+      "rank": 5,
+      "ticker": "PSNL",
+      "kind": "anticipation",
+      "evidence": {
+        "id": "610dba74a1391e47359329a6e9f1a7047e8318c409060d9cc3985224b8adf165",
+        "inputs_sha256": "874849d66d2338e24c6e1870b529c4602b75f38e145dd761cbf8dcf6a209ba9c",
+        "plan_sha256": "ef31ad4a42774d8e18230b242b2ba49b5fb98383f4c3890424c7e115126991d7",
+        "source_sha256": "1241dd5609f110acacea7938743b1e087843b910d17e9485629c8f300cc23dfa"
+      },
+      "projection_sha256": "c80949599c24b896254706b84d4377ec48baa0097e286d91cabd3d0c9e524183",
+      "levels": {
+        "trigger": 16.26,
+        "limit": 16.42,
+        "stop": 15.68,
+        "entry_low": 16.26,
+        "day2_spent_above": null
+      },
+      "event": {
+        "blocked": false,
+        "event_ids": [],
+        "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
+        "status": "not_in_registry"
+      },
+      "trade": {
+        "status": "recent",
+        "timestamp": "2026-10-12T13:19:58+00:00",
+        "age_seconds": 2.0,
+        "price": 16.29,
+        "exchange": "V",
+        "conditions": [
+          "@"
+        ]
+      },
+      "quote": {
+        "status": "recent",
+        "timestamp": "2026-10-12T13:19:59+00:00",
+        "age_seconds": 1.0,
+        "bid": 16.28,
+        "ask": 16.3,
+        "bid_size": 100,
+        "ask_size": 200,
+        "bid_exchange": "V",
+        "ask_exchange": "V",
+        "conditions": [
+          "R"
+        ],
+        "spread_usd": 0.02,
+        "spread_pct": 0.12277471
+      },
+      "price_checks": {
+        "trade": "within_published_band",
+        "ask": "within_published_band"
+      }
+    }
+  ],
+  "limits": [
+    "dated_best_effort_snapshot",
+    "iex_single_venue_not_consolidated",
+    "no_delayed_volume_request",
+    "halts_news_earnings_not_checked",
+    "research_rows_are_not_tickets",
+    "no_ready_label_or_entry_authority",
+    "no_personal_sizing_or_cash",
+    "broker_verification_required"
+  ]
+}

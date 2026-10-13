@@ -35,6 +35,19 @@ def quote(at=NOW, bid=125, ask=125.02):
             "bid_exchange": "V", "ask_exchange": "V", "conditions": ["R"]}
 
 
+def test_locked_subnormal_quote_is_invalid_instead_of_dividing_by_zero():
+    out = morning.quote_observation(quote(bid=5e-324, ask=5e-324), NOW, SESSION)
+    assert out["status"] == "invalid"
+    assert out["spread_usd"] is out["spread_pct"] is None
+
+
+@pytest.mark.parametrize("value", [1e-300, 1.0, 1e15])
+def test_representable_locked_midpoints_preserve_zero_spread(value):
+    out = morning.quote_observation(quote(bid=value, ask=value), NOW, SESSION)
+    assert out["status"] == "recent"
+    assert out["spread_usd"] == out["spread_pct"] == 0
+
+
 def snapshot(at=NOW):
     return {"latest_trade": trade(at), "latest_quote": quote(at),
             "daily_bar": {"timestamp": datetime(2026, 9, 11, 4, tzinfo=timezone.utc), "volume": 200},
