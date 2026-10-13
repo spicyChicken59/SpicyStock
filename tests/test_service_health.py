@@ -213,6 +213,15 @@ def test_a_publication_is_read_against_the_slots_its_own_rules_archived():
         reading("2026-10-09", published, rules_pipeline=later)
     with pytest.raises(sh.ServiceError, match="does not re-derive"):
         reading("2026-10-09", published, delivery=block, rules_pipeline=rules)
+    # a block beside rules that archive no delivery rule has no slots to be held to, whatever slots it names
+    for pipeline in (None, {"trade_grades": ["A+", "A"]}):
+        with pytest.raises(sh.ServiceError, match="archive no delivery rule"):
+            reading("2026-10-09", published, delivery=block, rules_pipeline=pipeline)
+    # a session's row carries its FIRST publication's basis, not a later one's
+    first, later_one = in_history(reading("2026-10-09", "2026-10-10T00:10:00+00:00", sha="5" * 40),
+                                  reading("2026-10-09", published, landed_at=landed, delivery=block, rules_pipeline=later, sha="6" * 40))
+    row = sh.session_rows([later_one, first], EMPTY, sh.parse_instant("2026-10-10T12:00:00+00:00"))[0]
+    assert (row["publications"], row["service"]["slot_basis"]) == (["5" * 40, "6" * 40], "current_policy")
     # the session's row carries the basis, and the summary counts each
     before_rule, under_rule = in_history(reading("2026-10-08", "2026-10-09T02:06:00+00:00", sha="1" * 40),
                                            reading("2026-10-09", published, landed_at=landed, delivery=block, rules_pipeline=later,

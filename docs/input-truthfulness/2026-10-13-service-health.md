@@ -9,8 +9,10 @@ publication whose rules archive the evening workflow's slots
 current ones, so a schedule changed later cannot move where an earlier
 publication fell. The archived slots are used only once the record's own
 `run.delivery` re-derives from them (`delivery.faults()`, the validator's own
-check); rules that archive the delivery rule beside a record without its block
-are a record the reading cannot place. A record from before the rule archived
+check). Rules that archive the delivery rule beside a record without its block,
+and a block beside rules that archive no delivery rule, are a record the
+reading cannot place: the commit is set aside by name and its session reads
+unpublished. A record from before the rule archived
 no slots and is read against the current policy's, 6:16 and 8:16 PM ET. Each
 publication's timing names which (`slot_basis`: `archived` or
 `current_policy`) and the wall-clock slots it was read against (`slots_et`);
@@ -24,7 +26,7 @@ ET): the reading validated the block and then measured it against 22:16 and
 after the retry slot. Read against the slots it archived, 23:16 and 01:16 UTC,
 it is 90.0 minutes after the primary slot and before the retry slot. The same
 reproduction showed a record whose rules archive the delivery rule and that
-carries no block read without a word; it is refused now. The defect was in the
+carries no block read without a word; it is set aside now. The defect was in the
 reading alone: `delivery.faults()` already held each block to the slots its
 record archived.
 
@@ -66,9 +68,15 @@ The reading is pinned to `7e40716e`, the merge of #168, whose committer time,
 - **Companions:** two morning receipts, both `inapplicable`; four issuer
   receipts, all `unavailable`, the newest for 13 October; no research
   observation and no source-recovery receipt. The 12 and 13 October morning
-  runs wrote no receipt: GitHub created them hours after their slots and every
-  collection step skipped ([schedule reliability](2026-10-13-schedule-reliability.md)).
-- 38 commits set aside, each the first build's record, named in the reading.
+  runs wrote no receipt. GitHub created the 12 October ones hours after their
+  slots ([schedule reliability](2026-10-13-schedule-reliability.md)); the 13
+  October ones, which that snapshot predates, were created at 19:52, 19:53,
+  20:15 and 20:18 UTC (runs 38458332290, 38458466585, 38461411014 and
+  38461736889, read off the Actions API and not retained here), and each skipped
+  every collection step and its persist job.
+- 38 commits set aside, each a record that is not a real schema-2 publication
+  (the first build's, and five of the second build's fixture from 11 September
+  before its first real night), named with the reason in the reading.
 
 ## What it does not establish
 
@@ -78,6 +86,16 @@ delivery fact here is a lower bound on when a reader could see the record,
 never a claim that Pages served it then (the publication gate's log says
 when). Nothing here says why a run landed when it did. No morning check has
 been observed, and nothing here is a trading result.
+
+## Known limits, written down rather than worked
+
+- A record archived under a delivery version this code does not re-derive
+  (`delivery.VERSION` moving past 1) would be set aside, as `report.validate()`
+  refuses it; the version has not moved.
+- `delivery.slots()` places both slots on the session's own date, so an
+  archived slot past midnight ET would land on the session's morning. The
+  current slots are 6:16 and 8:16 PM ET, and no record archives another.
+- `slots_et` prints the archived times to the minute, as the rules spell them.
 
 ## The earlier readings
 

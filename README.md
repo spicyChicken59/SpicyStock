@@ -875,7 +875,9 @@ archived, and a record from before the block is asked for none. The run:
   aside by name and never stops the walk; a git store that cannot produce a
   named object is a refusal. A publication whose rules archive the delivery
   rule is read against those slots only once its `run.delivery` re-derives
-  from them (`delivery.faults()`), and is refused when it carries no block. It
+  from them (`delivery.faults()`); one without its block, or a block beside
+  rules that archive no delivery rule, is set aside by name, its session then
+  reading unpublished. It
   writes `docs/input-truthfulness/2026-10-13-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.

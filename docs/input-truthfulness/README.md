@@ -43,9 +43,9 @@ closes #163: `service_health_v3` reads a publication whose rules archive the
 evening slots against those slots, once its `run.delivery` re-derives from
 them, and a record from before the rule against the current policy's, saying
 which. Over the history it moves nothing (the 12 October publication, the only
-one under the rule, archived the current slots). Through 13 October: 22 of 22
-due sessions published before the next open, the 13 October session pending
-at the clock, latency median 283.4 minutes by the landing commit, 15 of 22
+one under the rule, archived the current slots). Through 13 October: 22 of 23
+due sessions published, all 22 before the next open, the 13 October session
+pending at the clock, latency median 283.4 minutes by the landing commit, 15 of 22
 after the retry slot. The 12 October reading is kept as written (v2, and v1
 under its `v1/`); `--check` holds the 13 October files.
 

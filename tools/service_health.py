@@ -236,9 +236,12 @@ def slot_policy(data: dict, where: str) -> tuple[time, time, str]:
     (``delivery.faults``, the validator's own check): a schedule changed later
     cannot move where an earlier publication fell. A record from before the
     rule archived no slots and is read against the code's current ones, and
-    says so."""
+    says so; a ``run.delivery`` beside rules that archive no delivery rule has no
+    slots to be held to, and is a record the reading cannot place."""
     rules = _dict((_dict(data.get("rules")) or {}).get("pipeline")) or {}
     if "delivery_version" not in rules:
+        if data["run"].get("delivery") is not None:
+            raise ServiceError(f"{where}: run.delivery sits beside rules that archive no delivery rule to hold it to")
         return EVENING_PRIMARY, EVENING_RETRY, SLOT_CURRENT
     faults = delivery.faults(data["run"], rules)
     if faults:
@@ -279,15 +282,10 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
     archived = _dict((_dict(run.get("calendar")) or {}).get("measured")) or {}
     if archived.get("completion_at") is not None and parse_instant(archived["completion_at"]) != completion:
         raise ServiceError(f"{where}: the archived completion {archived['completion_at']} is not the calendar's {fr['completion_at']}")
+    # a block is held to the slots its rules archived (its publication instant among them) here or nowhere
     primary_et, retry_et, slot_basis = slot_policy(data, where)
     fr.update(slots(session, primary_et, retry_et))
     archived_delivery = _dict(run.get("delivery"))
-    if archived_delivery is not None:
-        rules = _dict((_dict(data.get("rules")) or {}).get("pipeline")) or {}
-        if delivery.faults(run, rules):
-            raise ServiceError(f"{where}: run.delivery does not re-derive from the archived slots: {delivery.faults(run, rules)[0]}")
-        if parse_instant(archived_delivery["published_at"]) != published:
-            raise ServiceError(f"{where}: run.delivery names another publication instant")
     coverage = _dict(run.get("coverage"))
     acceptance = _dict((coverage or {}).get("acceptance"))
     tolerance = _dict(run.get("input_tolerance"))
