@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "784177584fbe"
+  "rules_version": "39b14687c691"
  },
  "cover": {
   "h1": "Trade small. 1 A+ burst.",
@@ -881,9 +881,62 @@
    },
    "sentence": "Published 6:30 PM ET on Thu 10 Sep, 135 minutes after the measured session's completion (4:15 PM ET); after the primary slot (6:16 PM ET) and before the retry slot (8:16 PM ET); before the next session's open (Fri 11 Sep, 9:30 AM ET)."
   },
+  "intraday": {
+   "version": 1,
+   "policy": "first_window_minute_v1",
+   "basis": {
+    "provider": "Alpaca",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Min"
+   },
+   "wanted": 12,
+   "asked": 8,
+   "fetched": 0,
+   "stored": 0,
+   "retained": 0,
+   "waiting": 0,
+   "beyond_cap": 4,
+   "failures": [
+    {
+     "key": "burst:ANET:2026-07-29",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:CRDO:2026-08-31",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:FIX:2026-07-23",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:IONQ:2026-08-21",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:MU:2026-08-17",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:PLTR:2026-08-12",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:SMCI:2026-09-04",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:UBER:2026-08-05",
+     "kind": "no_minutes"
+    }
+   ],
+   "problems": [],
+   "sentence": "12 plans had a first day the daily bar could not place without minute bars; 8 asked for, 0 fetched, 0 stored; 4 past the run's 8; 8 not fetched (no_minutes); minute bars are retained for 0 plans' first days."
+  },
   "evidence": {
    "version": 1,
-   "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5"
+   "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c"
   },
   "sanitised": {
    "replaced": 0,
@@ -1134,7 +1187,8 @@
    "nights_kept": 20,
    "max_picks": 260,
    "benchmark": "SPY",
-   "known_fill": "open_inside_zone"
+   "known_fill": "open_inside_zone",
+   "intraday_fill": "first_window_minute_v1"
   },
   "timing": {
    "regular_open_et": "09:30",
@@ -1387,6 +1441,20 @@
   "funnel": {
    "version": 1,
    "policy": "candidate_funnel_v1"
+  },
+  "intraday": {
+   "version": 1,
+   "policy": "first_window_minute_v1",
+   "timeframe": "1Min",
+   "feed": "sip",
+   "adjustment": "split",
+   "resolvable": [
+    "trigger_timing",
+    "stop_sequence"
+   ],
+   "window_minutes": 30,
+   "max_picks_per_run": 8,
+   "archive_max_objects": 512
   },
   "pipeline": {
    "max_reads": 12,
@@ -2277,8 +2345,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "d4ac7f3b0620c44312fdc707436f9464c4596656aab17a296ccaf92c64fb087e",
-     "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+     "id": "6ba241e8a8004319d4431042878c3548d145cfd2179e663ecacff0a031761976",
+     "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
      "plan_sha256": "f13537ef90c8fafcf9542204b56db012ef992a64d5fe01a908e26aec86e0ca07",
      "pick_sha256": "01edb4cba4c2cef86223fb006fabd189bcd5aac5e19f87460a4bdc336a388db9"
     }
@@ -2410,8 +2478,8 @@
     "kind": "burst",
     "ticker": "AAPL",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -2423,7 +2491,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "d4ac7f3b0620c44312fdc707436f9464c4596656aab17a296ccaf92c64fb087e"
+    "id": "6ba241e8a8004319d4431042878c3548d145cfd2179e663ecacff0a031761976"
    },
    "series": [
     {
@@ -3851,8 +3919,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "a7f39d09e14cad2c668cde45645cca32f78453ad919d39ad1d49db842cea2c46",
-     "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+     "id": "09345e9cca02f6a460f3f5a1d5d7762bd1935d9a1dd6d9337556d3a1b1f34663",
+     "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
      "plan_sha256": "8eb988e9ff9654f0f8dcc8762d4961f98f4ed676ab401540cfcb2d1cf22abf8a",
      "pick_sha256": "42a1cec80962d92c0b959b0bc9cc17c450d2c60a172a5a5ce8869008788857a5"
     }
@@ -3984,8 +4052,8 @@
     "kind": "burst",
     "ticker": "AMD",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -3997,7 +4065,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take AMD only if a plan above is not held or stops out"
     },
-    "id": "a7f39d09e14cad2c668cde45645cca32f78453ad919d39ad1d49db842cea2c46"
+    "id": "09345e9cca02f6a460f3f5a1d5d7762bd1935d9a1dd6d9337556d3a1b1f34663"
    },
    "series": [
     {
@@ -5394,8 +5462,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "b693ebb316ee0511d026f7572deb39ba768c451e530e0bc0d774bef760f65b72",
-     "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+     "id": "faa5081af4ecf98005302592f83166b3b6286dc0c27c7156e4cefdce3e88c227",
+     "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
      "plan_sha256": "bfcaba42a241742b1ce2230c8d8656e68e56ac9859ab7fef482dfcdae8e20a1e",
      "pick_sha256": "c1e46723bffb688fe33a641c4722b2a32c0340bc5a0885e3ac99258e83b9bc9c"
     }
@@ -5527,8 +5595,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -5540,7 +5608,7 @@
      "reason": "slot_cap",
      "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take NVDA only if a plan above is not held or stops out"
     },
-    "id": "b693ebb316ee0511d026f7572deb39ba768c451e530e0bc0d774bef760f65b72"
+    "id": "faa5081af4ecf98005302592f83166b3b6286dc0c27c7156e4cefdce3e88c227"
    },
    "series": [
     {
@@ -6977,8 +7045,8 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "3ed0af408785770314adb898efbf5ce039db2b27736456e6108505b94fb7f618",
-     "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+     "id": "13ec309b033181ea50973214858397bc81f45b116d6a7eadb3a624bc4703c67c",
+     "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
      "plan_sha256": "20dd190f70b96e2313c2c41de0d9572753c7e926f50160e0589dd594268761b7",
      "pick_sha256": "422fd1758a4423f2078425b78b61817f94057e341bada74e8d72189d520b8c3f"
     }
@@ -7114,8 +7182,8 @@
     "kind": "burst",
     "ticker": "TSLA",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "yellow",
@@ -7127,7 +7195,7 @@
      "reason": "withheld",
      "detail": "ticket withheld: no limit above the $124.21 buy stop keeps a stop inside his 4% line — the burst day's low $113.59 caps the limit at $118.32, at or under that buy stop; the bar's midpoint $119.18 caps the limit at $124.14, at or under that buy stop; the setup stands, the ticket does not"
     },
-    "id": "3ed0af408785770314adb898efbf5ce039db2b27736456e6108505b94fb7f618"
+    "id": "13ec309b033181ea50973214858397bc81f45b116d6a7eadb3a624bc4703c67c"
    },
    "series": [
     {
@@ -8361,8 +8429,8 @@
     "kind": "burst",
     "ticker": "PLUG",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "yellow",
@@ -8374,7 +8442,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "6d7724aaa7fbeec27b9698add36afe33b38be7adfb77f0137e0f750faf7b3cfe"
+    "id": "be81b52efd1769b4dc3609f867bb682e6df235143b7cea6c7deec689f7e2c7af"
    },
    "series": [
     {
@@ -9608,8 +9676,8 @@
     "kind": "burst",
     "ticker": "DLLR",
     "session": "2026-09-10",
-    "rules_version": "784177584fbe",
-    "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+    "rules_version": "39b14687c691",
+    "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
     "gate": {
      "reader_coverage": "not_selected_budget",
      "regime": "yellow",
@@ -9621,7 +9689,7 @@
      "reason": "regime_gate",
      "detail": null
     },
-    "id": "4b14570fd077a7e82c3f5afe942538d978c933448e09092f344f397c725fb921"
+    "id": "0349979e58860f75f6b9e8b8acdac5e37c845fb70c086df64b4359ae2165fc77"
    },
    "series": [
     {
@@ -10939,8 +11007,8 @@
      },
      "evidence_ref": {
       "version": 1,
-      "id": "4b7c490e41b2f685a54d4dc450172b4797d56a0976a63df4eceebfb229f79660",
-      "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+      "id": "7c31cfe31fecc181288419892d9a1780fa2494ee3944b47a178c2ac405dfba52",
+      "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
       "plan_sha256": "fe062c927af606a40e595f00d3f16005edc6ca905ce74dd823728c58f27720ae",
       "pick_sha256": "992faea8848ee15965510567067003652e3efceb022bf870a3b38a36598bdd34"
      }
@@ -11948,8 +12016,8 @@
      "kind": "anticipation",
      "ticker": "COIL",
      "session": "2026-09-10",
-     "rules_version": "784177584fbe",
-     "context_sha256": "9e7c93499d331a2fbb69687b575fdd3947a5abe317b1423fccee2a0aeec883c5",
+     "rules_version": "39b14687c691",
+     "context_sha256": "7a798b3db059cb538030d024f90e5112a8da15d049a11ab2d0a549666be1f75c",
      "gate": {
       "regime": "yellow",
       "final_grade": "watch",
@@ -11958,7 +12026,7 @@
       "reason": "no_order",
       "detail": "the 4-slot model cap: 3 open model plans and AAPL take the rest; take COIL only if a plan above is not held or stops out"
      },
-     "id": "4b7c490e41b2f685a54d4dc450172b4797d56a0976a63df4eceebfb229f79660"
+     "id": "7c31cfe31fecc181288419892d9a1780fa2494ee3944b47a178c2ac405dfba52"
     }
    }
   ],
@@ -12193,7 +12261,7 @@
   "readable": true,
   "contract_version": 2,
   "sessions": 60,
-  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
   "population": {
    "from": "2026-06-15",
    "through": "2026-09-10",
@@ -12211,7 +12279,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "784177584fbe"
+  "replay_rules_version": "39b14687c691"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -12429,53 +12497,53 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:784177584fbe": {
+   "burst:AAPL:2026-09-10:39b14687c691": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:784177584fbe": {
+   "burst:AMD:2026-09-10:39b14687c691": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:784177584fbe": {
+   "burst:NVDA:2026-09-10:39b14687c691": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:784177584fbe": {
+   "burst:TSLA:2026-09-10:39b14687c691": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:784177584fbe": {
+   "burst:PLUG:2026-09-10:39b14687c691": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:784177584fbe": {
+   "burst:DLLR:2026-09-10:39b14687c691": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:784177584fbe": {
+   "anticipation:COIL:2026-09-10:39b14687c691": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "784177584fbe",
+    "rules_version": "39b14687c691",
     "coverage": "observed"
    }
   },
@@ -12659,7 +12727,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

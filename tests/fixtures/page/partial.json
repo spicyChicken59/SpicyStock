@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "784177584fbe"
+  "rules_version": "39b14687c691"
  },
  "cover": {
   "h1": "No qualifying tickets in the evaluated subset.",
@@ -881,9 +881,62 @@
    },
    "sentence": "Published 6:30 PM ET on Thu 10 Sep, 135 minutes after the measured session's completion (4:15 PM ET); after the primary slot (6:16 PM ET) and before the retry slot (8:16 PM ET); before the next session's open (Fri 11 Sep, 9:30 AM ET)."
   },
+  "intraday": {
+   "version": 1,
+   "policy": "first_window_minute_v1",
+   "basis": {
+    "provider": "Alpaca",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Min"
+   },
+   "wanted": 18,
+   "asked": 8,
+   "fetched": 0,
+   "stored": 0,
+   "retained": 0,
+   "waiting": 0,
+   "beyond_cap": 10,
+   "failures": [
+    {
+     "key": "burst:ANET:2026-09-01",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:DELL:2026-08-28",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:ELF:2026-08-27",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:GLW:2026-08-25",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:IONQ:2026-08-21",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:KTOS:2026-08-19",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:LITE:2026-08-18",
+     "kind": "no_minutes"
+    },
+    {
+     "key": "burst:NBIS:2026-09-08",
+     "kind": "no_minutes"
+    }
+   ],
+   "problems": [],
+   "sentence": "18 plans had a first day the daily bar could not place without minute bars; 8 asked for, 0 fetched, 0 stored; 10 past the run's 8; 8 not fetched (no_minutes); minute bars are retained for 0 plans' first days."
+  },
   "evidence": {
    "version": 1,
-   "context_sha256": "fdf65b42603b34fa0c5dba048eafd5ceff1895ae2cf929375873e5dbcac37d40"
+   "context_sha256": "2a8cbff949bf6ac430795de1bdd2c0c99fa9c74c3dfb34fa8dfb6b015f9af16c"
   },
   "sanitised": {
    "replaced": 0,
@@ -1134,7 +1187,8 @@
    "nights_kept": 20,
    "max_picks": 260,
    "benchmark": "SPY",
-   "known_fill": "open_inside_zone"
+   "known_fill": "open_inside_zone",
+   "intraday_fill": "first_window_minute_v1"
   },
   "timing": {
    "regular_open_et": "09:30",
@@ -1387,6 +1441,20 @@
   "funnel": {
    "version": 1,
    "policy": "candidate_funnel_v1"
+  },
+  "intraday": {
+   "version": 1,
+   "policy": "first_window_minute_v1",
+   "timeframe": "1Min",
+   "feed": "sip",
+   "adjustment": "split",
+   "resolvable": [
+    "trigger_timing",
+    "stop_sequence"
+   ],
+   "window_minutes": 30,
+   "max_picks_per_run": 8,
+   "archive_max_objects": 512
   },
   "pipeline": {
    "max_reads": 12,
@@ -1957,7 +2025,7 @@
   "readable": false,
   "contract_version": 2,
   "sessions": 60,
-  "note": "from bars alone, a model and not a brokerage record: a fill is booked only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
+  "note": "from bars alone, a model and not a brokerage record: a daily bar books a fill only at the next open at or over the trigger and at or under the limit; a day that reaches the trigger after the open is read again from that session's retained minute bars, which book a fill in the first 30 minutes at the trigger (or the crossing minute's open over it), none after it, and leave a crossing minute that cannot order the fill against the limit or the stop uncertain; without those minutes such a day, an open past the limit or under the skip line that could still have filled, and a fill-day low under the stop are uncertain, counted here and in no rate; the published stop is one R on the whole position, every sale weighted by the whole shares it sold; with complete bars, settled by day 5",
   "population": {
    "from": "2026-06-15",
    "through": "2026-09-10",
@@ -1975,7 +2043,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "784177584fbe"
+  "replay_rules_version": "39b14687c691"
  },
  "observations": {
   "as_of": "2026-09-10",
@@ -2149,7 +2217,7 @@
   "generated": "When this file was written, ISO-8601 UTC. The page reads staleness off run.session, run.calendar and the browser's clock in ET; missing calendar evidence stays unknown.",
   "app": "Who wrote the file: the app name, its version, and rules_version -- a 12-hex digest of the rules block, so two nights under different constants never read as one screener.",
   "cover": "The night's verdict as sentences: h1, dek, the primary action's label and anchor, and the verb. Composed from the numbers below; never edited by hand.",
-  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price.",
+  "run": "The run that produced this file: session, session_state, expected_session, status (ok|degraded|closed|failed), problems (stage, kind, message -- kind is one of seven words and the page prints one fixed sentence per kind), versioned coverage ledger, universe snapshot provenance, input_basis (Alpaca daily feed, split adjustment and sessions), counts, email state, timings. run.sanitised counts the non-finite numbers replaced with null on the way in. run.timing is a different fact from the two above it: the session tonight's plans are FOR and the instants its entry window is scheduled between, offset and all. run.calendar records XNYS/library/version, measured/previous/next dates, actual open/close/shortened hours, completion buffer and a bounded browser schedule. Schedules may change. A record without it is one published before the field existed, and the page says entry timing is unavailable rather than guessing at a deadline. run.input_tolerance says whether a degraded acceptance is only the stale tail the recorded tolerance allows -- status ok beside acceptance degraded means exactly that -- and names those stocks; run.stale_followup reads the previous publication's stale stocks again from this run's fetch and never turns a late bar into a signal. run.reader_usage is what the night's chart reads cost in the API's own units -- calls sent, replies received, the four token classes -- under the model the run asked; it carries no price. run.intraday is the minute bars read for plans whose first day the daily bar could not place (a day that reached the trigger after the open): what tonight needed, asked for, fetched and stored under docs/intraday/, and the failures by kind; a plan walked from them names its object in minute_evidence.",
   "nights": "The last twenty runs as a ring: session, status, published_at. The reliability dots.",
   "account": "The configured sizing assumptions every plan below was computed from: equity, risk per trade, the position cap, the slot count. Not a balance, not settled cash, not buying power.",
   "rules": "Every strategy constant, keyed by module. Archived so the record says which screener made it.",

@@ -307,6 +307,21 @@ def test_fetch_asks_once_per_entry_session_for_the_sip_split_minutes_of_regular_
                         {"key": "burst:CCC:2026-09-01", "kind": "no_minutes"}]
 
 
+def test_rows_the_provider_sends_outside_regular_hours_are_no_minutes_and_nothing_is_built():
+    """A reply that ignores the request's window: every row it carries is
+    before the open, so the pick has no minutes, not an empty object."""
+    from tests.fakes import FakeBarSet
+
+    class Client:
+        def get_stock_bars(self, request):
+            frame = minute_frame([(0, 99.0, 99.5, 98.9, 99.4), (30, 99.4, 99.6, 99.3, 99.5)],
+                                 start=OPEN - timedelta(hours=2))
+            frame.columns = [c.lower() for c in frame.columns]
+            return FakeBarSet(pd.concat([frame], keys=["AAA"], names=["symbol", "timestamp"]))
+    objects, failures = intraday.fetch(Client(), [pick()], FETCHED)
+    assert objects == [] and failures == [{"key": "burst:AAA:2026-09-01", "kind": "no_minutes"}]
+
+
 def test_a_refused_minute_request_is_named_by_its_kind_and_never_its_text(fake_alpaca):
     from src import market_data
     fake_alpaca.raise_on_minutes = RuntimeError("secret-looking text")
@@ -512,3 +527,21 @@ def test_the_rules_archive_the_minute_policy_and_a_record_without_the_block_is_r
     del data["run"]["intraday"]
     with pytest.raises(ValueError, match="run.intraday is missing under rules that read minute bars"):
         report.validate(data)
+
+
+def test_a_first_day_the_minutes_say_never_filled_frees_its_model_slot(market, claude, fake_resend, fake_alpaca,
+                                                                     tmp_path):
+    """The slots tonight's tickets are sized against read the same minutes as
+    the published plans: AAA uncertain holds a slot and its commitment; the
+    minutes saying the trigger came only at 11:00 ET free both."""
+    evening(tmp_path / "without", market)
+    _, held, _ = evening(tmp_path / "without", market, now=FRIDAY)
+    assert "AAA" in held["cash_budget"]["open_symbols"]
+    evening(tmp_path / "with", market)
+    late = [(0, 123.95, 124.00, 123.92, 123.98), (90, 124.00, 124.23, 123.99, 124.15)]
+    fake_alpaca.add_minutes("AAA", minute_frame(late, start=datetime(2026, 9, 11, 13, 30, tzinfo=timezone.utc)))
+    rep, data, _ = evening(tmp_path / "with", market, now=FRIDAY)
+    aaa = next(p for p in data["open_plans"] if p["ticker"] == "AAA")
+    assert aaa["status"] == record.NOT_FILLED and "11:00 ET" in aaa["fill"]
+    assert "AAA" not in data["cash_budget"]["open_symbols"]
+    assert data["cash_budget"]["open_positions"] == held["cash_budget"]["open_positions"] - 1

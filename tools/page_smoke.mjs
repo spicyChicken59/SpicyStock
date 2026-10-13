@@ -3754,6 +3754,10 @@ async function checkStaleTolerance(browser, base) {
       check(tag + ': the fixture archives what its reads cost', cost && cost.version === 1 && cost.candidates === reads.requested &&
         cost.calls === 2 && cost.responses === 2 && cost.sentence.startsWith('Chart reader cost: 2 calls for 2 names, 2 replies; '), cost);
       check(tag + ': Method prints the reader cost sentence verbatim and nothing priced', method.includes(cost.sentence) && !/\$\s*\d/.test(method.slice(method.indexOf('Chart reader cost'))), method.slice(method.indexOf('Chart reader cost'), method.indexOf('Chart reader cost') + 300));
+      // the minute bars read for first days a daily bar could not place, in the record's own sentence
+      const minutes = thin.run.intraday;
+      check(tag + ': the fixture archives its minute-bar block', minutes && minutes.version === 1 && typeof minutes.sentence === 'string' && minutes.sentence.length > 0, minutes);
+      check(tag + ': Method prints the minute-bar sentence verbatim', method.includes('Minute bars: ' + minutes.sentence), method.slice(method.indexOf('Minute bars'), method.indexOf('Minute bars') + 300));
       const strip = await said(page, '#run-strip');
       check(tag + ': the strip says incomplete, tolerated', strip.includes('incomplete, tolerated'), strip);
       check(tag + ': the strip counts the completed research reads without inventing refusals',
@@ -3799,6 +3803,7 @@ async function checkStaleTolerance(browser, base) {
       delete d.run.input_tolerance; delete d.run.stale_followup; delete d.run.reads.version; delete d.run.reads.causes; delete d.run.reads.sentence;
       delete d.rules.pipeline.stale_tolerance_fraction; delete d.rules.pipeline.reader_refusal_fraction;
       delete d.run.reader_usage; delete d.rules.pipeline.reader_usage_version;
+      delete d.run.intraday; delete d.rules.intraday;
     },
     'a half-written reader cost': (d) => { d.run.reader_usage = { version: 1, calls: 2 }; },
   };
@@ -3840,6 +3845,7 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the coverage line is the composed warning', coverage.startsWith('Incomplete input coverage:') && !coverage.includes('stale tolerance'), coverage.slice(0, 200));
         check('thin ' + name + ': Method keeps the rule it was published under', method.includes('any missing stocks or capacity cuts degrade it.') && !method.includes('Stale tolerance:') && !method.includes('Chart reader: a reply refused'), method);
         check('thin ' + name + ': Method prints no reader cost a record did not archive', !method.includes('Chart reader cost'), method.slice(0, 600));
+        check('thin ' + name + ': Method prints no minute-bar line a record did not archive', !method.includes('Minute bars:'), method.slice(0, 600));
         check('thin ' + name + ': the strip keeps its old note', !(await said(page, '#run-strip')).includes('tolerated'));
       }
       const body = await page.locator('body').innerText();

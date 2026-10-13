@@ -151,6 +151,8 @@ CI holds the committed fixtures to it.
 → session state from the bars → the stale tolerance (`run.input_tolerance`)
 and the previous publication's stale stocks read again from this run's frames
 (`run.stale_followup`, `src/followup.py`) → breadth → scan and checklist →
+the minute bars of earlier plans' first days a daily bar could not place
+(`run.intraday`, `src/intraday.py`; every walk below reads them) →
 charts and Claude (down-only; `run.reads` by cause) → plans and the cash
 budget → the record (`picks.json`, open plans, scorecard) → `report.build()`
 and validate → email. Exit codes 0/1/2/3; seven problem words; `run.status`
@@ -338,7 +340,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4320 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4385 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the

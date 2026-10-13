@@ -13,6 +13,7 @@
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-04"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 2
    },
    "clock": "2026-09-04T22:30:00+00:00",
@@ -36,6 +37,11 @@
     }
    ],
    "injected": "nothing injected",
+   "minute_requests_bound": {
+    "asked": 0,
+    "maximum": 0,
+    "within": true
+   },
    "name": "clean",
    "previous": {
     "outcome": "none",
@@ -45,6 +51,13 @@
     "anticipation_tickets": 1,
     "cover": "Trade next session. 2 A-quality bursts.",
     "email": "delivered",
+    "intraday": {
+     "asked": 0,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 0
+    },
     "problems": [],
     "published_at": "2026-09-04T22:30:00+00:00",
     "reaction_tickets": 2,
@@ -84,8 +97,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "fd426c898a0d97e46dde5cc97f2c69d3484d15fc010c0264dbb01ff4db0699d1",
-    "picks_json": "f690e3a44b1522d236ca71549035d6d2b62cfb06f6c0319180fbb9da6f27f932"
+    "data_json_without_clock_fields": "3ba4a2cb4ec58e277bdd4315dae3dcb54b7aeab2f9e1956536cd7d08086c25b7",
+    "picks_json": "4883d73f77ed9ac5be40e91b973b26ce9de91744140e91dd165619a268e481f2"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -118,6 +131,7 @@
     "bars_requests": 0,
     "mail_subjects": [],
     "mails": 0,
+    "minute_requests": 0,
     "reader_calls": 0
    },
    "clock": "2026-09-07T22:30:00+00:00",
@@ -141,12 +155,17 @@
     }
    ],
    "injected": "nothing injected",
+   "minute_requests_bound": {
+    "asked": null,
+    "maximum": 0,
+    "within": true
+   },
    "name": "holiday",
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "fd426c898a0d97e46dde5cc97f2c69d3484d15fc010c0264dbb01ff4db0699d1",
-     "picks_json": "f690e3a44b1522d236ca71549035d6d2b62cfb06f6c0319180fbb9da6f27f932"
+     "data_json_without_clock_fields": "3ba4a2cb4ec58e277bdd4315dae3dcb54b7aeab2f9e1956536cd7d08086c25b7",
+     "picks_json": "4883d73f77ed9ac5be40e91b973b26ce9de91744140e91dd165619a268e481f2"
     }
    },
    "publication": null,
@@ -184,6 +203,7 @@
      "FAILED \u2014 no plan for 2026-09-08"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 0
    },
    "clock": "2026-09-08T22:30:00+00:00",
@@ -215,12 +235,17 @@
     }
    ],
    "injected": "the Alpaca double raises ConnectionError('no route to host') on every bars request",
+   "minute_requests_bound": {
+    "asked": null,
+    "maximum": 0,
+    "within": true
+   },
    "name": "provider_outage",
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "fd426c898a0d97e46dde5cc97f2c69d3484d15fc010c0264dbb01ff4db0699d1",
-     "picks_json": "f690e3a44b1522d236ca71549035d6d2b62cfb06f6c0319180fbb9da6f27f932"
+     "data_json_without_clock_fields": "3ba4a2cb4ec58e277bdd4315dae3dcb54b7aeab2f9e1956536cd7d08086c25b7",
+     "picks_json": "4883d73f77ed9ac5be40e91b973b26ce9de91744140e91dd165619a268e481f2"
     }
    },
    "publication": null,
@@ -258,6 +283,7 @@
      "Nothing qualifies. Keep cash. \u00b7 2026-09-08"
     ],
     "mails": 1,
+    "minute_requests": 1,
     "reader_calls": 2
    },
    "clock": "2026-09-09T00:30:00+00:00",
@@ -297,18 +323,30 @@
     }
    ],
    "injected": "nothing injected",
+   "minute_requests_bound": {
+    "asked": 2,
+    "maximum": 2,
+    "within": true
+   },
    "name": "provider_recovered_at_retry",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "fd426c898a0d97e46dde5cc97f2c69d3484d15fc010c0264dbb01ff4db0699d1",
-     "picks_json": "f690e3a44b1522d236ca71549035d6d2b62cfb06f6c0319180fbb9da6f27f932"
+     "data_json_without_clock_fields": "3ba4a2cb4ec58e277bdd4315dae3dcb54b7aeab2f9e1956536cd7d08086c25b7",
+     "picks_json": "4883d73f77ed9ac5be40e91b973b26ce9de91744140e91dd165619a268e481f2"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
     "cover": "Nothing qualifies. Keep cash.",
     "email": "delivered",
+    "intraday": {
+     "asked": 2,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 2
+    },
     "problems": [],
     "published_at": "2026-09-09T00:30:00+00:00",
     "reaction_tickets": 0,
@@ -345,8 +383,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "3d0c9704709bc89d177d4cea16474c39d5db2b82f7a4b23b925eed839c3dbf64",
-    "picks_json": "9cbe9355c0223a713664c3400d78773f62d167d98a7f80cb0a3ff04d9ce6ecaf"
+    "data_json_without_clock_fields": "ebb94dff60504b23965b8f2a39603c8789a12a29eed36e186ba941b13a8e619a",
+    "picks_json": "2753f025a3d6e1d0b7897278408b0c02c989291769f653d6335f4ed1a815fdbe"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -381,6 +419,7 @@
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-09"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 1
    },
    "clock": "2026-09-09T22:30:00+00:00",
@@ -404,18 +443,30 @@
     }
    ],
    "injected": "the Anthropic double raises the provider's empty-balance error on every call",
+   "minute_requests_bound": {
+    "asked": 0,
+    "maximum": 0,
+    "within": true
+   },
    "name": "reader_credit",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "3d0c9704709bc89d177d4cea16474c39d5db2b82f7a4b23b925eed839c3dbf64",
-     "picks_json": "9cbe9355c0223a713664c3400d78773f62d167d98a7f80cb0a3ff04d9ce6ecaf"
+     "data_json_without_clock_fields": "ebb94dff60504b23965b8f2a39603c8789a12a29eed36e186ba941b13a8e619a",
+     "picks_json": "2753f025a3d6e1d0b7897278408b0c02c989291769f653d6335f4ed1a815fdbe"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
     "cover": "No new burst tickets. Reader review incomplete.",
     "email": "delivered",
+    "intraday": {
+     "asked": 0,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 0
+    },
     "problems": [
      "claude_unavailable"
     ],
@@ -454,8 +505,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "645cc525846a6ddd63a964647ad6a2c2c9db53915f3bdf68abba9448f3c9baab",
-    "picks_json": "28162ae63cf597bab4255660eb91ba201b7cd735def0ea93d2b5d4eeec93f2d0"
+    "data_json_without_clock_fields": "d7dd4aa5063850d6fa2befa0b80fd40c202ccb43a35d3a72e0e30ca6a2c38f5f",
+    "picks_json": "904f8b9e398e141c53079d1cee0397adc812493e974b292205c8b55bb33ad9a1"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -492,6 +543,7 @@
      "No new burst tickets. Reader review incomplete. \u00b7 2026-09-10"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 4
    },
    "clock": "2026-09-10T22:30:00+00:00",
@@ -515,18 +567,30 @@
     }
    ],
    "injected": "the Anthropic double raises RuntimeError('upstream connect error or disconnect/reset before headers') on every call",
+   "minute_requests_bound": {
+    "asked": 0,
+    "maximum": 0,
+    "within": true
+   },
    "name": "reader_transport",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "645cc525846a6ddd63a964647ad6a2c2c9db53915f3bdf68abba9448f3c9baab",
-     "picks_json": "28162ae63cf597bab4255660eb91ba201b7cd735def0ea93d2b5d4eeec93f2d0"
+     "data_json_without_clock_fields": "d7dd4aa5063850d6fa2befa0b80fd40c202ccb43a35d3a72e0e30ca6a2c38f5f",
+     "picks_json": "904f8b9e398e141c53079d1cee0397adc812493e974b292205c8b55bb33ad9a1"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
     "cover": "No new burst tickets. Reader review incomplete.",
     "email": "delivered",
+    "intraday": {
+     "asked": 0,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 0
+    },
     "problems": [
      "claude_unavailable"
     ],
@@ -565,8 +629,8 @@
     "trades": []
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "dda4f925067c3ee768e3ebc749e40dc8911222ee667a5486b8c11b91e7a24943",
-    "picks_json": "5309b5f3d1b45570ad68cd67c0ed36ce358a8223635c6fbaf352757747a113f5"
+    "data_json_without_clock_fields": "9bded7feb6698bebaf59462351ba8d54a4cd808ef6b0de75e039ca33d97b7bd2",
+    "picks_json": "58d3e144e3253621b72cfe310e19b500199ed42782703b9ccabd1d3a667b6e32"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -601,6 +665,7 @@
     "bars_requests": 1,
     "mail_subjects": [],
     "mails": 0,
+    "minute_requests": 0,
     "reader_calls": 2
    },
    "clock": "2026-09-11T22:30:00+00:00",
@@ -624,18 +689,30 @@
     }
    ],
    "injected": "the Resend double raises RuntimeError('Resend refused the request') on every send",
+   "minute_requests_bound": {
+    "asked": 0,
+    "maximum": 0,
+    "within": true
+   },
    "name": "email_failed",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "dda4f925067c3ee768e3ebc749e40dc8911222ee667a5486b8c11b91e7a24943",
-     "picks_json": "5309b5f3d1b45570ad68cd67c0ed36ce358a8223635c6fbaf352757747a113f5"
+     "data_json_without_clock_fields": "9bded7feb6698bebaf59462351ba8d54a4cd808ef6b0de75e039ca33d97b7bd2",
+     "picks_json": "58d3e144e3253621b72cfe310e19b500199ed42782703b9ccabd1d3a667b6e32"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
     "cover": "Trade next session. 2 A-quality bursts.",
     "email": "failed",
+    "intraday": {
+     "asked": 0,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 0
+    },
     "problems": [
      "email_failed"
     ],
@@ -677,8 +754,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "0ec631f0e1ef2cd084e1b17e190452985c258fec660eddc4ab002cdc6c7652eb",
-    "picks_json": "8f5d382c72b670d9103660e20fc1e7c74707e237c154946420b76fba9fc05523"
+    "data_json_without_clock_fields": "9f395ea5aa73989591609f28db5fc2043fa5b2ff262febf80a6b370467386f3c",
+    "picks_json": "5e911f31c039c9c798fb0164991fe218aa827fa1f8eb594ccc61232cfb8a7b8f"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -715,6 +792,7 @@
      "FAILED \u2014 no plan for 2026-09-14"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 0
    },
    "clock": "2026-09-14T22:30:00+00:00",
@@ -746,12 +824,17 @@
     }
    ],
    "injected": "every registered frame, the benchmark's included, is served two sessions stale",
+   "minute_requests_bound": {
+    "asked": null,
+    "maximum": 0,
+    "within": true
+   },
    "name": "stale_feed",
    "previous": {
     "outcome": "preserved",
     "publication": {
-     "data_json_without_clock_fields": "0ec631f0e1ef2cd084e1b17e190452985c258fec660eddc4ab002cdc6c7652eb",
-     "picks_json": "8f5d382c72b670d9103660e20fc1e7c74707e237c154946420b76fba9fc05523"
+     "data_json_without_clock_fields": "9f395ea5aa73989591609f28db5fc2043fa5b2ff262febf80a6b370467386f3c",
+     "picks_json": "5e911f31c039c9c798fb0164991fe218aa827fa1f8eb594ccc61232cfb8a7b8f"
     }
    },
    "publication": null,
@@ -789,6 +872,7 @@
      "Trade next session. 2 A-quality bursts. \u00b7 2026-09-15"
     ],
     "mails": 1,
+    "minute_requests": 0,
     "reader_calls": 2
    },
    "clock": "2026-09-15T22:30:00+00:00",
@@ -812,18 +896,30 @@
     }
    ],
    "injected": "nothing injected",
+   "minute_requests_bound": {
+    "asked": 0,
+    "maximum": 0,
+    "within": true
+   },
    "name": "next_session_after_a_missed_night",
    "previous": {
     "outcome": "replaced",
     "publication": {
-     "data_json_without_clock_fields": "0ec631f0e1ef2cd084e1b17e190452985c258fec660eddc4ab002cdc6c7652eb",
-     "picks_json": "8f5d382c72b670d9103660e20fc1e7c74707e237c154946420b76fba9fc05523"
+     "data_json_without_clock_fields": "9f395ea5aa73989591609f28db5fc2043fa5b2ff262febf80a6b370467386f3c",
+     "picks_json": "5e911f31c039c9c798fb0164991fe218aa827fa1f8eb594ccc61232cfb8a7b8f"
     }
    },
    "publication": {
     "anticipation_tickets": 1,
     "cover": "Trade next session. 2 A-quality bursts.",
     "email": "delivered",
+    "intraday": {
+     "asked": 0,
+     "fetched": 0,
+     "retained": 0,
+     "stored": 0,
+     "wanted": 0
+    },
     "problems": [],
     "published_at": "2026-09-15T22:30:00+00:00",
     "reaction_tickets": 2,
@@ -863,8 +959,8 @@
     ]
    },
    "publication_identity": {
-    "data_json_without_clock_fields": "69410147ba997d44d471e335262fd4bef535fbeb55f34535c9a1739d95cfbf59",
-    "picks_json": "d3396c2be0d1ab6dcff1c18b37c6a27b7dc825912747b11094b063f64028ca90"
+    "data_json_without_clock_fields": "819e41251da4f3d102af30a6ccd2fb885b77f6e2ef12f6f101fd60dfeb99b5f8",
+    "picks_json": "fb43fe978a5df2875b647268bc6e20b1788bb9a3a7f02cdcf54dd7cf57a1a49e"
    },
    "reader_calls_bound": {
     "attempts": 2,
@@ -963,6 +1059,18 @@
    "reader_transport": 1,
    "stale_feed": 1
   },
+  "minute_requests": {
+   "clean": 0,
+   "email_failed": 0,
+   "holiday": 0,
+   "next_session_after_a_missed_night": 0,
+   "provider_outage": 0,
+   "provider_recovered_at_retry": 1,
+   "reader_credit": 0,
+   "reader_transport": 0,
+   "stale_feed": 0
+  },
+  "minute_requests_within_bound_every_night": true,
   "nights": 9,
   "previous_outcomes": {
    "clean": "none",
