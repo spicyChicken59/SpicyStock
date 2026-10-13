@@ -7991,3 +7991,143 @@ the workflows on these numbers here.
 **Not claimable:** a live morning, research or recovery observation; the ten
 consecutive sessions with morning checks; any cause for the scheduler's delay;
 any trading edge.
+
+## Checkpoint, 13 Oct 2026 — PR #167 accepted; a first day read again from its minute bars (#111, #109)
+
+**PR #167, accepted.** Merged as `c83ce0f2` on `main` with a merge commit over
+`3a972ad7`. The head `abe7c2f7` passed pytest and page on Tests run
+38451315934 (19:00–19:25 UTC; the native cases skipped by the gate, nothing
+under `src/` having changed) and both Secret scans (38451316009, 38451310011).
+Publisher 38454824707 printed *Verified: every one of the 41 public files
+matches committed main* at 19:26:41 UTC; Pages 38454858877 deployed
+(38454822745 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 38454824651 and Tests run 38454824683 (pytest 19:26–19:51,
+page 19:26–19:42) are green. **The 13 October morning runs, read:** the 13:20
+and 13:28 UTC slots were created at 19:52:41 and 19:53:42 UTC (392.7 and 385.7
+minutes late), their guards passed the job through and every collection step
+skipped, as on 12 October. The morning checks still stand at zero observed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `c83ce0f2`, pushed as **PR #168**. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the
+evidence objects, the quality ledger, the workflows and the vendored design
+system are untouched; no run, mail, dispatch, provider call or credential.
+
+**What was missing.** A daily bar books a fill only at the next open
+(`record.fill()`). A first day that opened under the trigger and reached it
+later is `uncertain` for ever: `trigger_timing`, or `stop_sequence` when the
+day's low also reached the stop. That is the usual first day of a buy-stop
+ticket and of every anticipation ticket; the October production tickets
+(SN, ZIM) sit there, each holding a model slot and settling nowhere, and
+twelve of every page fixture's seeded picks do too.
+
+**What was built.** `src/intraday.py` (policy `first_window_minute_v1`,
+archived as `rules.intraday` and `rules.record.intraday_fill`, so
+`rules_version` moves). `resolve()` reads the entry session's regular-hours
+one-minute bars: the first minute of the plan's first 30 whose high reaches
+the trigger fills at the trigger, or at its own open when it opened over it;
+none in the window is `not_filled` (the plan's day order is cancelled at the
+window's end); a crossing minute that opened over the limit is `not_filled`
+when no minute of the window traded back to it and stays `uncertain` with a new
+reason, `minute_order`, when one did, as does one that reached the stop from
+under the trigger; minutes that do not reproduce the daily bar (`_disagrees()`)
+are not used. `record.replay(..., minutes=)` reads only the two resolvable
+reasons again, walks a fill from the fill on over an entry day
+rebuilt from the crossing minute (`plan._bar()`'s `day_low` carrying the
+session's own low, which `plan.follow()` raises the stop to at day 1's
+close), and names the object in `minute_evidence`.
+`record.needs_minutes()` names the scorecard window's plans needing them;
+`intraday.gather()` asks one `sip`, split-adjusted `1Min` request per entry
+session, at most `MAX_PICKS_PER_RUN` (8) plans a run, newest first, each only
+past the session's close plus the 16-minute hold-back, and keeps them as one
+content-addressed object per plan under `docs/intraday/`, written once and
+read back (512 objects, 16 MiB, 64 KiB an object). `pipeline.gather_minutes()`
+runs before the first walk, so the model slots, the published open plans, the
+scorecard and `quality_ledger.capture()` all read the same evidence; it never
+fails the run, and a dry run writes nothing. `run.intraday` names what was
+needed, asked, fetched and stored and the failures by kind;
+`intraday.record_faults()` holds it in `report.validate()` under rules that
+read minutes; the Method view and the mail print its sentence.
+
+**Measured** (this sandbox, Python 3.11.15, Chromium through Playwright 1.56.1):
+4416 tests collected; the full suite at `b093afc2` 4382 passed and 34
+environment-gated skips in 18 m 37 s; `tests/test_intraday.py` 96 at `fb42ac0f`;
+13 page fixtures and every cascaded generator regenerated and current, their
+`--check`s run last (morning 21, issuer-evidence 30, stop-research 22,
+research-outcomes 40, research-observations 24, source-recovery 20,
+cash-preview 8 tests); `tools/recovery_rehearsal.py --check` current after its
+evidence was regenerated; the page smoke with `--shots` 15144/15144 at
+`2b7ed442` (no page file changed after it); gitleaks 8.24.3: no leaks. The
+first full run at `2b7ed442` found the follow-up's no-request test counting the
+minute request as a daily one (`b32d655d` counts the daily fetch alone).
+
+**The review, worked.** A reviewer by execution over `2b7ed442` returned
+twelve findings, each reproduced before it was touched. The high one: minutes
+that are not the daily bar's day were used -- a minute outside the bar's range,
+or a stop the bar's low reached that no minute showed, read as a clean fill.
+`_disagrees()` refuses them now (the range at four decimals, a minute reaching
+the trigger, a minute at the stop when the bar's low reached it). Then: a
+crossing over the limit that never trades back in the window is `not_filled`;
+the walk from a minute fill is the daily model's, documented and pinned (a
+day-1 bar reaching the stop and +8% books the stop); a writing run walked
+objects it failed to store, and walks only what it stored now, `retained`
+counting the disk; a gathering that failed whole dropped the archive, and the
+evening reads what is retained under the block's `failed` status; last night's
+failures go after the rest, so one cannot hold the cap; a key two objects claim
+is set aside and never asked for again (`set_aside`); the block's invariants,
+the record's object names against what the walks could read, the singular, the
+store's disk failures, every bound in `RULES` and `scorecard_analysis.py
+--docs`. The validator's new name check found a defect of its own on its first
+run: a dry run's record names objects it fetched and did not store, which the
+first rule refused; a dry run's fetched objects count as readable now.
+
+**CI on the code head `fb42ac0f`**, Tests run 38468073418: pytest 21:06–21:26
+UTC, page 21:06–21:22, the gate, the native central case 21:06–21:42 and stress
+21:06–21:55; Secret scans 38468073473 and 38468066425. All seven green.
+
+**Mutation passes**, in the mutation worktree at `9181355a`, each judged by the
+whole test files naming its rule (`tests/test_intraday.py`, `test_record.py`,
+`test_plan.py`; the evening's and the validator's by `tests/test_intraday.py`):
+35 mutants -- the window inclusive, the fill always at the trigger, the limit
+and stop boundaries, the stop check ignoring the open, the day's low and the
+post-fill range, disagreeing minutes used, another session's minutes used, the
+hold-back strict, oldest first, the cap ignored, a reply with no regular-hours
+row kept, a dry run storing, the first copy of a minute kept, rows outside
+hours kept, the hours unchecked, a file's bytes unchecked, a doubly claimed pick
+used, a different file overwritten, the capacity unchecked, the block's sum and
+sentence unchecked, a missing block admitted, every uncertain reason read again,
+the evidence unnamed, the entry session unchecked, the walk from the daily bar,
+the day's low ignored, each of the four walks of the evening without the
+minutes, and the validator skipping the block. 33 died at once, **two
+survived, each a missing case**: a reply whose every row is outside regular
+hours never reached the empty-minutes check, because the double filters by the
+request's window (a stub client that ignores the window holds it now); and the
+first walk, the slots tonight's tickets are sized against, read no minutes
+without any test noticing, because a resolved fill and an uncertain one both
+hold a slot (minutes saying the trigger came after the window free AAA's slot
+and its commitment now). Both die; two controls (a docstring, a comment)
+survive. Over the review's rules, at `c595e8f3`, 28 more: 27 died, and
+**`unordered_rows` survived** -- the second shape this file names: the
+same-object test reversed two copies of one minute, so the order never
+mattered. It reverses two different minutes now and dies (`fb42ac0f`). The
+first pass re-run at `fb42ac0f`: the 31 mutants that still apply die, and the
+four whose text the review replaced die in their new form. Controls survive
+every pass.
+
+**Keep / fix / defer / omit.** Keep: the daily answer wherever minutes cannot
+read it; uncertain stays uncertain without evidence. Fix if it bites: a plan
+whose minutes the provider never returns is asked again every night until it
+leaves the 60-session window (bounded by the cap, and behind the rest after
+its first failure); the archive fills in about a
+year of two tickets a night, after which nothing new is written and the block
+says so; no page fixture shows a minute-resolved plan (the end-to-end tests
+do). Defer: a crossing over the limit that trades back to it inside the
+window, which only sub-minute data could order. Omit: minute bars for any other purpose; a fill inferred
+from a bar the minutes do not show.
+
+**Not claimable:** a live night with minute bars. The first evening after the
+merge whose window holds a `trigger_timing` or `stop_sequence` first day asks
+for them (the 12 October record carries two, SN and ZIM); read its
+`run.intraday`, the rows' `minute_evidence` and the objects under
+`docs/intraday/`, and record them here. Also not claimable: a live
+morning, research or recovery observation; any trading edge.
