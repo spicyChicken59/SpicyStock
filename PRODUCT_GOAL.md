@@ -441,3 +441,12 @@ personal trade is recorded. Issue #159 remains the active quote-fidelity fix,
 rebased over these releases; its earlier local checks are historical evidence
 until final current-source and hosted/public acceptance complete. Improving
 actual morning delivery remains open under #108 and #111.
+
+
+PR #162 also repairs a release-gate failure exposed by the new evening data:
+the dated October 12 evidence review now retains and verifies its original
+research inputs, leaving the current journal free to advance. Historical
+results and verdicts are unchanged. Local replay, mutation and independent
+checks pass; hosted checks and actual release verification remain pending.
+The isolated next deliverables are truthful service-arrival reporting (#163)
+and a reliable first-screen stock finder (#164). Neither is claimed released.

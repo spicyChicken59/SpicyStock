@@ -338,7 +338,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4133 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4143 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -7477,3 +7477,32 @@ changed into a new run. Final rebase receipts and source hashes are retained in
 `release-evidence/2026-10-13-observation-fidelity/prepared.json`. These local
 results do not claim hosted or public acceptance for the correction; those
 remain required on the final published head before merging and releasing it.
+
+
+### #159 CI repair — preserve the dated review inputs
+
+PR #162's original head `8ae8f0adc63daee746b37a8ec7c309de1abc1e42`
+failed the required pytest gate: 4131 passed and two dated evidence-review
+checks failed. The October 12 evening publication had advanced the rolling
+research cohort and journal, while `tools/evidence_review.py` still read them
+into the October 12 historical report. Both failures reproduce on the
+unchanged base inputs; the gate stays binding. Page checks passed 15007/15007,
+chart checks 378/378 and DOM/store continuity 137/137 on that original head.
+Those outcomes are historical checks on that head, not acceptance of the repair.
+
+The repair retains the exact original cohort and journal bytes under the dated
+review's `inputs/`, verifies their digests from one read, and records original
+commit/path provenance. Missing or changed inputs refuse before writing; rolling
+publications can advance independently. Every historical numeric result and
+verdict remains unchanged, as do today's live cohort, journal and publication.
+The outer report and README now describe a frozen October 12 review. A later
+evidence review needs separately dated outputs. No configuration changes apply;
+`.env.example` remains correct.
+
+Local repair acceptance passed 23 focused tests, 25 independent controls and
+`--check`. Four named isolated mutations failed their intended guards; baseline
+and unrelated controls passed. Python 3.12.14 now collects 4143 tests. The
+source-bound receipt is `release-evidence/2026-10-13-observation-fidelity/dated-review-repair.json`.
+The quote-fidelity runtime is byte-identical to the prior reviewed source.
+Independent final-tree review, all applicable hosted checks and actual public
+verification remain required on the new head; this entry does not claim release.

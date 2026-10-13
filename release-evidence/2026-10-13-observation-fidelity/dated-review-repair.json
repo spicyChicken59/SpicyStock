@@ -1,0 +1,373 @@
+{
+  "version": 1,
+  "recorded_at": "2026-10-13T07:32:04.446764+00:00",
+  "scope": "Offline repair of the October 12 evidence review after rolling companion replacement; no market-data, strategy, current journal, hosted-check or deployment change claimed.",
+  "base_head": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+  "source_pins": {
+    "tools/evidence_review.py": "9b93bbb49b6a464ae6c95614dad781a12ffb9adf09ef66f0fb71e88cce6618b7",
+    "tests/test_evidence_review.py": "d0a0543ef54656c974c43d2a58d6b4a184bcb22fc1688c5ed4bfe40866b2389c",
+    "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060",
+    "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041",
+    "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22",
+    "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+  },
+  "historical_source_commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+  "initial_reproduction": {
+    "tests": [
+      "test_the_review_files_are_what_the_tool_writes",
+      "test_the_copied_blocks_are_the_files_own"
+    ],
+    "failures": 2,
+    "observed_before_edit": true,
+    "cause": "The dated review loaded October 13 rolling research companions instead of its original October 12 companion bytes."
+  },
+  "focused_pytest": {
+    "command": "/workspace/.venv-spicystock/bin/python -m pytest -q tests/test_evidence_review.py",
+    "exit": 0,
+    "passed": 23,
+    "output": ".......................                                                  [100%]\n=============================== warnings summary ===============================\n../.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n23 passed, 1 warning in 2.26s\n"
+  },
+  "replay_check": {
+    "command": "/workspace/.venv-spicystock/bin/python tools/evidence_review.py --check",
+    "exit": 0,
+    "output": "/workspace/SpicyStock-observation-fidelity/docs/input-truthfulness/2026-10-12-evidence-review-evidence current: 5 changes reviewed, 0 supported\n"
+  },
+  "historical_output_preservation": {
+    "all_fields_except_sources_research_exactly_equal_to_original": true,
+    "changed_fields": "sources.research retains original digests, changes paths/kinds to dated inputs and adds original commit/path provenance; Markdown adds only this provenance explanation."
+  },
+  "preserved_current_data": {
+    "docs/stop-research.json": {
+      "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8",
+      "unchanged_from_base": true
+    },
+    "docs/research-outcomes.json": {
+      "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e",
+      "unchanged_from_base": true
+    },
+    "docs/data.json": {
+      "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+      "unchanged_from_base": true
+    },
+    "docs/picks.json": {
+      "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+      "unchanged_from_base": true
+    }
+  },
+  "input_sweep": {
+    "already_dated": [
+      "study",
+      "study_spec",
+      "funnel",
+      "feasibility.archived",
+      "feasibility.account_2000"
+    ],
+    "historical_findings": "Undated path, but its tool builds fixed historical analysis and no scheduled workflow writes it; existing study digest cross-check retained."
+  },
+  "mutations": {
+    "isolated_root": "/tmp/pr162-dated-replay-mutants-7l1dc0cx",
+    "source_sha256": "9b93bbb49b6a464ae6c95614dad781a12ffb9adf09ef66f0fb71e88cce6618b7",
+    "tests_sha256": "d0a0543ef54656c974c43d2a58d6b4a184bcb22fc1688c5ed4bfe40866b2389c",
+    "results": [
+      {
+        "name": "baseline",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_research_sources or dated_review or dated_input"
+        ],
+        "expected_exit": 0,
+        "exit": 0,
+        "log": "/tmp/pr162-dated-replay-baseline.log",
+        "log_sha256": "9475bd6579d64e5d420fc39ff65a94b0b37f8e6505564e1e2f48c61afdffd774",
+        "output": "..........                                                               [100%]\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n10 passed, 13 deselected, 1 warning in 1.21s\n"
+      },
+      {
+        "name": "digest_guard",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_review_refuses_missing_or_changed_input"
+        ],
+        "expected_exit": 1,
+        "exit": 1,
+        "log": "/tmp/pr162-dated-replay-digest_guard.log",
+        "log_sha256": "66dc52c7558781784a5b8901bdbf1b01df7b1b5e67619b7d974bdf4144255707",
+        "output": "..FFFF                                                                   [100%]\n=================================== FAILURES ===================================\n_ test_dated_review_refuses_missing_or_changed_input_without_writing[whitespace-cohort] _\n\nname = 'cohort', damage = 'whitespace'\ntmp_path = PosixPath('/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss2')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f47b4960290>\ncapsys = <_pytest.capture.CaptureFixture object at 0x7f47b4960110>\n\n    @pytest.mark.parametrize(\"name\", [\"cohort\", \"journal\"])\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"whitespace\", \"changed_counts\"])\n    def test_dated_review_refuses_missing_or_changed_input_without_writing(name, damage, tmp_path, monkeypatch, capsys):\n        copied = tmp_path / \"input.json\"\n        raw = (ROOT / er.RESEARCH[name]).read_bytes()\n        if damage == \"whitespace\":\n            copied.write_bytes(raw + b\"\\n\")  # same parsed value, different retained bytes\n        elif damage == \"changed_counts\":\n            data = json.loads(raw)\n            data[\"counts\"] = {\"resolved\": 999}\n            copied.write_text(json.dumps(data), encoding=\"utf-8\")\n        monkeypatch.setitem(er.RESEARCH, name, copied)\n        out = tmp_path / \"review\"\n        out.mkdir()\n        original = {filename: b\"previous dated evidence\\n\" for filename in (\"review.json\", \"review.md\")}\n        for filename, body in original.items():\n            (out / filename).write_bytes(body)\n>       assert er.main([\"--output-dir\", str(out)]) == 2\nE       AssertionError: assert 0 == 2\nE        +  where 0 = <function main at 0x7f47b492e480>(['--output-dir', '/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss2/review'])\nE        +    where <function main at 0x7f47b492e480> = er.main\n\ntests/test_evidence_review.py:289: AssertionError\n----------------------------- Captured stdout call -----------------------------\nwrote /tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss2/review: 5 changes reviewed, 0 supported\n_ test_dated_review_refuses_missing_or_changed_input_without_writing[whitespace-journal] _\n\nname = 'journal', damage = 'whitespace'\ntmp_path = PosixPath('/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss3')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f47b498b4d0>\ncapsys = <_pytest.capture.CaptureFixture object at 0x7f47b498b0b0>\n\n    @pytest.mark.parametrize(\"name\", [\"cohort\", \"journal\"])\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"whitespace\", \"changed_counts\"])\n    def test_dated_review_refuses_missing_or_changed_input_without_writing(name, damage, tmp_path, monkeypatch, capsys):\n        copied = tmp_path / \"input.json\"\n        raw = (ROOT / er.RESEARCH[name]).read_bytes()\n        if damage == \"whitespace\":\n            copied.write_bytes(raw + b\"\\n\")  # same parsed value, different retained bytes\n        elif damage == \"changed_counts\":\n            data = json.loads(raw)\n            data[\"counts\"] = {\"resolved\": 999}\n            copied.write_text(json.dumps(data), encoding=\"utf-8\")\n        monkeypatch.setitem(er.RESEARCH, name, copied)\n        out = tmp_path / \"review\"\n        out.mkdir()\n        original = {filename: b\"previous dated evidence\\n\" for filename in (\"review.json\", \"review.md\")}\n        for filename, body in original.items():\n            (out / filename).write_bytes(body)\n>       assert er.main([\"--output-dir\", str(out)]) == 2\nE       AssertionError: assert 0 == 2\nE        +  where 0 = <function main at 0x7f47b492e480>(['--output-dir', '/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss3/review'])\nE        +    where <function main at 0x7f47b492e480> = er.main\n\ntests/test_evidence_review.py:289: AssertionError\n----------------------------- Captured stdout call -----------------------------\nwrote /tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss3/review: 5 changes reviewed, 0 supported\n_ test_dated_review_refuses_missing_or_changed_input_without_writing[changed_counts-cohort] _\n\nname = 'cohort', damage = 'changed_counts'\ntmp_path = PosixPath('/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss4')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f47b498fb60>\ncapsys = <_pytest.capture.CaptureFixture object at 0x7f47b498f5f0>\n\n    @pytest.mark.parametrize(\"name\", [\"cohort\", \"journal\"])\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"whitespace\", \"changed_counts\"])\n    def test_dated_review_refuses_missing_or_changed_input_without_writing(name, damage, tmp_path, monkeypatch, capsys):\n        copied = tmp_path / \"input.json\"\n        raw = (ROOT / er.RESEARCH[name]).read_bytes()\n        if damage == \"whitespace\":\n            copied.write_bytes(raw + b\"\\n\")  # same parsed value, different retained bytes\n        elif damage == \"changed_counts\":\n            data = json.loads(raw)\n            data[\"counts\"] = {\"resolved\": 999}\n            copied.write_text(json.dumps(data), encoding=\"utf-8\")\n        monkeypatch.setitem(er.RESEARCH, name, copied)\n        out = tmp_path / \"review\"\n        out.mkdir()\n        original = {filename: b\"previous dated evidence\\n\" for filename in (\"review.json\", \"review.md\")}\n        for filename, body in original.items():\n            (out / filename).write_bytes(body)\n>       assert er.main([\"--output-dir\", str(out)]) == 2\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n\ntests/test_evidence_review.py:289: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntools/evidence_review.py:619: in main\n    outputs = {args.output_dir / OUTPUT_JSON.name: render_json(review), args.output_dir / OUTPUT_MD.name: render_md(review)}\n                                                                                                          ^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nreview = {'version': 'evidence-review-v1', 'criteria': {'version': 'evidence-review-v1', 'min_settled': 20, 'sign': {'unreadabl...'2026-10-05', 'study_frozen_through': '2026-10-01', 'backtest_through': '2026-09-25', 'funnel_sessions': 21, ...}, ...}\n\n    def render_md(review: dict) -> str:\n        lines = [f\"# Evidence review ({review['version']})\", \"\",\n                 \"Generated by `python tools/evidence_review.py` from the committed evidence named below; \"\n                 \"`--check` holds this file and `review.json` beside it. A reading, not a rule: no number here \"\n                 \"changes a threshold, a record or the account, and no change is promoted by it.\", \"\"]\n        lines += [\"## Sources\", \"\", \"| source | path | SHA-256 |\", \"|---|---|---|\"]\n        flat = []\n        for name, src in review[\"sources\"].items():\n            if \"path\" in src:\n                flat.append((name, src))\n            else:\n                flat += [(f\"{name} \u00b7 {k}\", v) for k, v in src.items()]\n        for name, src in flat:\n            lines.append(f\"| {name} | `{src['path']}` | `{src['sha256'][:16]}\u2026` |\")\n        lines += [\"\", \"The research inputs retain the exact companion bytes used on 12 October; their digests are checked before reading.\",\n                  \"The rolling companions may advance without revising this dated review. Original sources:\", \"\"]\n        for name, src in review[\"sources\"][\"research\"].items():\n            origin = src[\"origin\"]\n            lines.append(f\"- {name}: `{origin['path']}` at commit `{origin['commit']}`.\")\n        et = review[\"evidence_through\"]\n        lines += [\"\", f\"Evidence through: study newest session {et['study_newest_session']} (frozen through \"\n                  f\"{et['study_frozen_through']}); backtest through {et['backtest_through']}; funnel over \"\n                  f\"{et['funnel_sessions']} sessions; research applicable session {et['research_applicable_session']}.\", \"\"]\n        lines += [\"## Criteria\", \"\", f\"A rate is read at {review['criteria']['min_settled']} settled tickets or more \"\n                  \"(`record.SCORECARD_MIN_PLANS`); below it a population is a count.\", \"\"]\n        for kind in (\"sign\", \"verdict\", \"scope\"):\n            lines += [f\"**{kind}**\", \"\"] + [f\"- `{k}`: {v}\" for k, v in review[\"criteria\"][kind].items()] + [\"\"]\n        lines += [\"## The study, re-derived from its rows\", \"\",\n                  f\"{review['study']['rows']} rows over {review['study']['publications']} publications; every night \"\n                  f\"{', '.join(review['study']['night_regimes']).upper()}.\", \"\",\n                  \"| population | settled | wins / losses / even | sum R | mean R | median R |\", \"|---|---:|---:|---:|---:|---:|\"]\n        for name, s in review[\"study\"][\"crosscheck\"].items():\n            lines.append(f\"| {name} | {s['n']} | {s['wins']} / {s['losses']} / {s['breakeven']} | {_r(s['sum_r'], 2)} | {_r(s['mean_r'])} | {_r(s['median_r'], 2)} |\")\n        lines += [\"\", \"### Costs per side (mean settled R)\", \"\", \"| stratum | 0 bps | 5 bps | 20 bps |\", \"|---|---:|---:|---:|\"]\n        for stratum, c in review[\"study\"][\"costs_per_side_bps\"].items():\n            lines.append(f\"| {stratum} | {_r(c['0']['mean_r'])} | {_r(c['5']['mean_r'])} | {_r(c['20']['mean_r'])} |\")\n        lines += [\"\", \"### Drawdown of the cumulative-R path\", \"\",\n                  \"Settled tickets in the study's own order (session, then row order); a stream no slot cap held, so a \"\n                  \"path of R paid and not an equity curve. The night-means path sums each night's mean R once.\", \"\",\n                  \"| stratum | settled | final R | deepest fall (R) | from | to | night-means final R | night-means deepest fall |\",\n                  \"|---|---:|---:|---:|---|---|---:|---:|\"]\n        for stratum, d in review[\"study\"][\"drawdown\"].items():\n            n = d[\"night_means\"]\n            lines.append(f\"| {stratum} | {d['settled']} | {_r(d['final_r'], 2)} | {d['max_drawdown_r']:.2f} | {d['drawdown_from'] or '\u2014'} | \"\n                         f\"{d['drawdown_to'] or '\u2014'} | {_r(n['final_r'], 2)} | {n['max_drawdown_r']:.2f} |\")\n        lines += [\"\", \"## Separate evaluation periods (admitted stratum unless named)\", \"\",\n                  \"| population | sessions | nights | nights settled | settled | wins / losses / even | mean R | 95% night CI | sign |\",\n                  \"|---|---|---:|---:|---:|---:|---:|---|---|\"]\n        p = review[\"periods\"]\n        for group in (\"by_phase\", \"by_month\", \"by_half\", \"by_mechanical_grade\", \"all_strata_by_phase\"):\n            for pop in p[group].values():\n                lines.append(_pop_row(pop))\n        bt = review[\"backtest\"]\n        lines += [\"\", \"## The owner's backtest, as the findings file parsed it\", \"\",\n                  f\"{bt['evaluated']['count']} sessions, {bt['evaluated']['from']} \u2192 {bt['evaluated']['through']}; account \"\n                  f\"${bt['account']['equity']:,.0f} / {bt['account']['risk_pct']}%; reader {bt['reader']}.\", \"\",\n                  \"| gate | tickets | settled | wins / losses / even | sum R | mean R | median R | win rate | SPY % |\",\n                  \"|---|---:|---:|---:|---:|---:|---:|---:|---:|\"]\n        for gate, g in bt[\"gates\"].items():\n            lines.append(f\"| {g['label']} | {g['tickets']} | {g['settled']} | {g['wins']} / {g['losses']} / {g['breakeven']} | \"\n                         f\"{_r(g['sum_r'], 2)} | {_r(g['mean_r'])} | {_r(g['median_r'], 2)} | {g['win_rate']} | {g['spy_avg_pct']} |\")\n        cf = bt[\"gates\"][\"no_regime_gate\"]\n        lines += [\"\", \"Counterfactual splits (settled \u00b7 sum R \u00b7 mean R): \" + \"; \".join(\n            f\"{k} {v['settled']} \u00b7 {_r(v['sum_r'], 2)} \u00b7 {_r(v['mean_r'])}\" for k, v in {**{f\"grade {g}\": v for g, v in cf[\"by_grade\"].items()},\n                                                                                        **{f\"regime {g}\": v for g, v in cf[\"by_regime\"].items()}}.items()) + \".\", \"\"]\n        f = review[\"funnel\"]\n        lines += [\"## The funnel and the feasibility reading\", \"\",\n                  f\"Funnel: {f['publications']} publications over {f['sessions']} sessions ({json.dumps(f['regimes'], sort_keys=True)}); \"\n                  f\"{f['discovered']} reaction candidates discovered, {f['reaction']['market']} stopped at the market, \"\n                  f\"{f['reaction']['grade']} at the grade, {f['potentially_usable']} potentially usable, \"\n                  f\"{f['reaction']['review_refused']} refused by reader authority, {f['reaction']['review_downgraded']} lowered, \"\n                  f\"{f['reaction']['ticket']} tickets; {f['listed']} anticipation setups listed, {f['anticipation']['ticket']} tickets.\", \"\",\n                  \"| account | tonight: in band / stop rule / whole share | YELLOW | GREEN |\", \"|---|---:|---:|---:|\"]\n        for name, fe in review[\"feasibility\"].items():\n            b = fe[\"bands\"]\n            cell = lambda band: f\"{b[band]['in_band']} / {b[band]['past_stop_rule']} / {b[band]['whole_share']}\"  # noqa: E731\n            accounts = \", \".join(f\"{n} \u00d7 {label}\" for label, n in sorted(fe[\"accounts\"].items()))\n            lines.append(f\"| {name} ({accounts}) | {cell('tonight')} | {cell('yellow')} | {cell('green')} |\")\n        r = review[\"research\"]\n        lines += [\"\", \"## The registered research\", \"\",\n                  f\"`{r['policy']}` ({r['status']}): stop cap {r['stop_pct']['baseline']}% \u2192 {r['stop_pct']['research']}%, applicable \"\n>                 f\"{r['applicable']['from']} \u2192 {r['applicable']['through']}; cohort of {r['cohort_counts']['considered']} with \"\n                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n                  f\"{r['cohort_counts']['allocation_fit']} allocation-fit rows; journal `{r['journal']['policy']}`: \"\n                  f\"{r['journal']['rows']} rows, {r['journal']['eligible']} eligible, by status \"\n                  f\"{json.dumps(r['journal']['by_status'], sort_keys=True)}.\", \"\"]\nE       KeyError: 'considered'\n\ntools/evidence_review.py:581: KeyError\n_ test_dated_review_refuses_missing_or_changed_input_without_writing[changed_counts-journal] _\n\nname = 'journal', damage = 'changed_counts'\ntmp_path = PosixPath('/tmp/pytest-of-agent/pytest-356/test_dated_review_refuses_miss5')\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f47b49d4b00>\ncapsys = <_pytest.capture.CaptureFixture object at 0x7f47b49d7d10>\n\n    @pytest.mark.parametrize(\"name\", [\"cohort\", \"journal\"])\n    @pytest.mark.parametrize(\"damage\", [\"missing\", \"whitespace\", \"changed_counts\"])\n    def test_dated_review_refuses_missing_or_changed_input_without_writing(name, damage, tmp_path, monkeypatch, capsys):\n        copied = tmp_path / \"input.json\"\n        raw = (ROOT / er.RESEARCH[name]).read_bytes()\n        if damage == \"whitespace\":\n            copied.write_bytes(raw + b\"\\n\")  # same parsed value, different retained bytes\n        elif damage == \"changed_counts\":\n            data = json.loads(raw)\n            data[\"counts\"] = {\"resolved\": 999}\n            copied.write_text(json.dumps(data), encoding=\"utf-8\")\n        monkeypatch.setitem(er.RESEARCH, name, copied)\n        out = tmp_path / \"review\"\n        out.mkdir()\n        original = {filename: b\"previous dated evidence\\n\" for filename in (\"review.json\", \"review.md\")}\n        for filename, body in original.items():\n            (out / filename).write_bytes(body)\n        assert er.main([\"--output-dir\", str(out)]) == 2\n        refusal = capsys.readouterr().out\n>       assert f\"retained research {name}:\" in refusal\nE       assert 'retained research journal:' in \"evidence review: 'rows'\\n\"\n\ntests/test_evidence_review.py:291: AssertionError\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_evidence_review.py::test_dated_review_refuses_missing_or_changed_input_without_writing[whitespace-cohort]\nFAILED tests/test_evidence_review.py::test_dated_review_refuses_missing_or_changed_input_without_writing[whitespace-journal]\nFAILED tests/test_evidence_review.py::test_dated_review_refuses_missing_or_changed_input_without_writing[changed_counts-cohort]\nFAILED tests/test_evidence_review.py::test_dated_review_refuses_missing_or_changed_input_without_writing[changed_counts-journal]\n4 failed, 2 passed, 17 deselected, 1 warning in 1.10s\n"
+      },
+      {
+        "name": "rolling_paths",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_review_ignores_rolling_companion_replacement"
+        ],
+        "expected_exit": 1,
+        "exit": 1,
+        "log": "/tmp/pr162-dated-replay-rolling_paths.log",
+        "log_sha256": "b7478a5be5befcf6fae7e4beca9fbe6675503cee1543e7e293de62379e1a62f4",
+        "output": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n_ test_dated_review_ignores_rolling_companion_replacement[{\"applicable_session\":\"2099-01-02\",\"counts\":{\"resolved\":42}}] _\n\nreplacement = b'{\"applicable_session\":\"2099-01-02\",\"counts\":{\"resolved\":42}}'\ncommitted = {'backtest': {'account': {'equity': 10000.0, 'max_open_positions': 4, 'max_position_pct': 25.0, 'risk_pct': 0.5}, 'eva... 8, 'whole_share': 5}, 'yellow': {'in_band': 40, 'past_stop_rule': 40, 'whole_share': 35}}, 'candidates': 11513}}, ...}\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1cacd2da00>\n\n    @pytest.mark.parametrize(\"replacement\", [b'{\"applicable_session\":\"2099-01-02\",\"counts\":{\"resolved\":42}}', b\"not JSON\"])\n    def test_dated_review_ignores_rolling_companion_replacement(replacement, committed, monkeypatch):\n        \"\"\"A new night's companions, including unreadable ones, cannot revise this review.\"\"\"\n        rolling = {ROOT / \"docs/stop-research.json\", ROOT / \"docs/research-outcomes.json\"}\n        original_bytes, original_text = Path.read_bytes, Path.read_text\n        reads = []\n    \n        def read_bytes(path):\n            if path in rolling:\n                reads.append(path)\n                return replacement\n            return original_bytes(path)\n    \n        def read_text(path, *args, **kwargs):\n            if path in rolling:\n                reads.append(path)\n                return replacement.decode(\"utf-8\")\n            return original_text(path, *args, **kwargs)\n    \n        monkeypatch.setattr(Path, \"read_bytes\", read_bytes)\n        monkeypatch.setattr(Path, \"read_text\", read_text)\n>       assert er.build() == committed\n               ^^^^^^^^^^\n\ntests/test_evidence_review.py:268: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntools/evidence_review.py:434: in build\n    cohort, cohort_source = load_research(\"cohort\")\n                            ^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nname = 'cohort'\n\n    def load_research(name: str) -> tuple[dict, dict]:\n        \"\"\"Read the dated companion once; missing or changed bytes cannot fall back\n        to a newer night's state or silently change this historical review.\"\"\"\n        path = RESEARCH[name]\n        origin = RESEARCH_ORIGIN[name]\n        try:\n            raw = (ROOT / path).read_bytes()\n        except OSError as exc:\n            raise ReviewError(f\"retained research {name}: cannot read {path}\") from exc\n        digest = hashlib.sha256(raw).hexdigest()\n        if digest != origin[\"sha256\"]:\n>           raise ReviewError(f\"retained research {name}: SHA-256 does not match the dated input\")\nE           tools.evidence_review.ReviewError: retained research cohort: SHA-256 does not match the dated input\n\ntools/evidence_review.py:220: ReviewError\n______ test_dated_review_ignores_rolling_companion_replacement[not JSON] _______\n\nreplacement = b'not JSON'\ncommitted = {'backtest': {'account': {'equity': 10000.0, 'max_open_positions': 4, 'max_position_pct': 25.0, 'risk_pct': 0.5}, 'eva... 8, 'whole_share': 5}, 'yellow': {'in_band': 40, 'past_stop_rule': 40, 'whole_share': 35}}, 'candidates': 11513}}, ...}\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f1cabeeb9b0>\n\n    @pytest.mark.parametrize(\"replacement\", [b'{\"applicable_session\":\"2099-01-02\",\"counts\":{\"resolved\":42}}', b\"not JSON\"])\n    def test_dated_review_ignores_rolling_companion_replacement(replacement, committed, monkeypatch):\n        \"\"\"A new night's companions, including unreadable ones, cannot revise this review.\"\"\"\n        rolling = {ROOT / \"docs/stop-research.json\", ROOT / \"docs/research-outcomes.json\"}\n        original_bytes, original_text = Path.read_bytes, Path.read_text\n        reads = []\n    \n        def read_bytes(path):\n            if path in rolling:\n                reads.append(path)\n                return replacement\n            return original_bytes(path)\n    \n        def read_text(path, *args, **kwargs):\n            if path in rolling:\n                reads.append(path)\n                return replacement.decode(\"utf-8\")\n            return original_text(path, *args, **kwargs)\n    \n        monkeypatch.setattr(Path, \"read_bytes\", read_bytes)\n        monkeypatch.setattr(Path, \"read_text\", read_text)\n>       assert er.build() == committed\n               ^^^^^^^^^^\n\ntests/test_evidence_review.py:268: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \ntools/evidence_review.py:434: in build\n    cohort, cohort_source = load_research(\"cohort\")\n                            ^^^^^^^^^^^^^^^^^^^^^^^\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nname = 'cohort'\n\n    def load_research(name: str) -> tuple[dict, dict]:\n        \"\"\"Read the dated companion once; missing or changed bytes cannot fall back\n        to a newer night's state or silently change this historical review.\"\"\"\n        path = RESEARCH[name]\n        origin = RESEARCH_ORIGIN[name]\n        try:\n            raw = (ROOT / path).read_bytes()\n        except OSError as exc:\n            raise ReviewError(f\"retained research {name}: cannot read {path}\") from exc\n        digest = hashlib.sha256(raw).hexdigest()\n        if digest != origin[\"sha256\"]:\n>           raise ReviewError(f\"retained research {name}: SHA-256 does not match the dated input\")\nE           tools.evidence_review.ReviewError: retained research cohort: SHA-256 does not match the dated input\n\ntools/evidence_review.py:220: ReviewError\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_evidence_review.py::test_dated_review_ignores_rolling_companion_replacement[{\"applicable_session\":\"2099-01-02\",\"counts\":{\"resolved\":42}}]\nFAILED tests/test_evidence_review.py::test_dated_review_ignores_rolling_companion_replacement[not JSON]\n2 failed, 21 deselected, 1 warning in 0.78s\n"
+      },
+      {
+        "name": "second_read",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_input_digest_and_payload_use_the_same_read"
+        ],
+        "expected_exit": 1,
+        "exit": 1,
+        "log": "/tmp/pr162-dated-replay-second_read.log",
+        "log_sha256": "106812bb5900b2b4179866ea0e4ee39fcf8fc17aa478c417379164bdb03a971d",
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n____________ test_dated_input_digest_and_payload_use_the_same_read _____________\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f4d34bfd970>\n\n    def test_dated_input_digest_and_payload_use_the_same_read(monkeypatch):\n        path = ROOT / er.RESEARCH[\"cohort\"]\n        raw = path.read_bytes()\n        original_read = Path.read_bytes\n        reads = []\n    \n        def changing_file(candidate):\n            if candidate == path:\n                reads.append(candidate)\n                return raw if len(reads) == 1 else b'{\"counts\":{\"resolved\":999}}'\n            return original_read(candidate)\n    \n        monkeypatch.setattr(Path, \"read_bytes\", changing_file)\n        payload, source = er.load_research(\"cohort\")\n>       assert len(reads) == 1\nE       AssertionError: assert 2 == 1\nE        +  where 2 = len([PosixPath('/tmp/pr162-dated-replay-mutants-7l1dc0cx/docs/input-truthfulness/2026-10-12-evidence-review-evidence/input...-dated-replay-mutants-7l1dc0cx/docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json')])\n\ntests/test_evidence_review.py:310: AssertionError\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_evidence_review.py::test_dated_input_digest_and_payload_use_the_same_read\n1 failed, 22 deselected, 1 warning in 0.65s\n"
+      },
+      {
+        "name": "origin_provenance",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_research_sources_retain_original_bytes_and_provenance"
+        ],
+        "expected_exit": 1,
+        "exit": 1,
+        "log": "/tmp/pr162-dated-replay-origin_provenance.log",
+        "log_sha256": "49ac0612f02f1bd5c7829d84531cf69d2207d5c2d15917103a6d7e930d47e96c",
+        "output": "F                                                                        [100%]\n=================================== FAILURES ===================================\n_______ test_dated_research_sources_retain_original_bytes_and_provenance _______\n\ncommitted = {'backtest': {'account': {'equity': 10000.0, 'max_open_positions': 4, 'max_position_pct': 25.0, 'risk_pct': 0.5}, 'eva... 8, 'whole_share': 5}, 'yellow': {'in_band': 40, 'past_stop_rule': 40, 'whole_share': 35}}, 'candidates': 11513}}, ...}\n\n    def test_dated_research_sources_retain_original_bytes_and_provenance(committed):\n        expected = {\n            \"cohort\": (\"stop-research.json\", \"98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22\"),\n            \"journal\": (\"research-outcomes.json\", \"15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2\"),\n        }\n        for name, (filename, digest) in expected.items():\n            source = committed[\"sources\"][\"research\"][name]\n            assert source == {\n                \"path\": f\"docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/{filename}\",\n                \"sha256\": digest, \"kind\": \"retained_companion\",\n                \"origin\": {\"commit\": \"c759a1e671227717cae8d0bf1d50a4121d167396\", \"path\": f\"docs/{filename}\"},\n            }\n            assert hashlib.sha256((ROOT / source[\"path\"]).read_bytes()).hexdigest() == digest\n            payload, observed_source = er.load_research(name)\n            assert payload == json.loads((ROOT / source[\"path\"]).read_bytes())\n>           assert observed_source == source\nE           AssertionError: assert {'path': 'doc...search.json'}} == {'kind': 'ret...c5be7e2eeb22'}\nE             \nE             Omitting 3 identical items, use -vv to show\nE             Differing items:\nE             {'origin': {'commit': '0000000000000000000000000000000000000000', 'path': 'docs/stop-research.json'}} != {'origin': {'commit': 'c759a1e671227717cae8d0bf1d50a4121d167396', 'path': 'docs/stop-research.json'}}\nE             Use -v to get more diff\n\ntests/test_evidence_review.py:244: AssertionError\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_evidence_review.py::test_dated_research_sources_retain_original_bytes_and_provenance\n1 failed, 22 deselected, 1 warning in 0.70s\n"
+      },
+      {
+        "name": "unrelated_arithmetic",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py",
+          "-k",
+          "dated_research_sources or dated_review_refuses or dated_input"
+        ],
+        "expected_exit": 0,
+        "exit": 0,
+        "log": "/tmp/pr162-dated-replay-unrelated_arithmetic.log",
+        "log_sha256": "e8f0101aabbf8c8fa2490b74e9fc7e44f8f3701f3727c9c4a5ce5a78f10e9693",
+        "output": "........                                                                 [100%]\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n8 passed, 15 deselected, 1 warning in 1.10s\n"
+      },
+      {
+        "name": "original_two_failures",
+        "command": [
+          "/workspace/.venv-spicystock/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_evidence_review.py::test_the_review_files_are_what_the_tool_writes",
+          "tests/test_evidence_review.py::test_the_copied_blocks_are_the_files_own"
+        ],
+        "exit": 1,
+        "scope": "Original implementation with current retained outputs; initial shared-tree reproduction also failed before edits",
+        "output": "FF                                                                       [100%]\n=================================== FAILURES ===================================\n________________ test_the_review_files_are_what_the_tool_writes ________________\n\nbuilt = {'version': 'evidence-review-v1', 'criteria': {'version': 'evidence-review-v1', 'min_settled': 20, 'sign': {'unreadabl...'2026-10-05', 'study_frozen_through': '2026-10-01', 'backtest_through': '2026-09-25', 'funnel_sessions': 21, ...}, ...}\ntmp_path = PosixPath('/tmp/pytest-of-agent/pytest-358/test_the_review_files_are_what0')\ncapsys = <_pytest.capture.CaptureFixture object at 0x7ff8b7a8c1d0>\n\n    def test_the_review_files_are_what_the_tool_writes(built, tmp_path, capsys):\n>       assert er.render_json(built) == (ROOT / er.OUTPUT_JSON).read_text(encoding=\"utf-8\")\nE       assert '{\\n \"backtes...view-v1\"\\n}\\n' == '{\\n \"backtes...view-v1\"\\n}\\n'\nE         \nE         Skipping 3118 identical leading characters in diff, use -v to show\nE         - \"2026-10-12\",\nE         ?           ^\nE         + \"2026-10-13\",\nE         ?           ^\nE             \"study_frozen_through\": \"2026-10-01\",...\nE         \nE         ...Full output truncated (960 lines hidden), use '-vv' to show\n\ntests/test_evidence_review.py:145: AssertionError\n___________________ test_the_copied_blocks_are_the_files_own ___________________\n\ncommitted = {'backtest': {'account': {'equity': 10000.0, 'max_open_positions': 4, 'max_position_pct': 25.0, 'risk_pct': 0.5}, 'eva... 8, 'whole_share': 5}, 'yellow': {'in_band': 40, 'past_stop_rule': 40, 'whole_share': 35}}, 'candidates': 11513}}, ...}\n\n    def test_the_copied_blocks_are_the_files_own(committed):\n        findings = json.loads((ROOT / er.FINDINGS).read_text(encoding=\"utf-8\"))\n        gates = findings[\"backtest\"][\"lookback_130\"][\"gates\"]\n        for gate in (\"production\", \"no_regime_gate\"):\n            mine, theirs = committed[\"backtest\"][\"gates\"][gate], gates[gate]\n            assert (mine[\"settled\"], mine[\"sum_r\"], mine[\"mean_r_pasted\"], mine[\"win_rate\"], mine[\"tickets\"]) == (\n                theirs[\"settled\"][\"n\"], theirs[\"settled\"][\"sum_r\"], theirs[\"settled\"][\"avg_r\"], theirs[\"settled\"][\"win_rate\"], theirs[\"tickets\"])\n            assert mine[\"mean_r\"] == round(theirs[\"settled\"][\"sum_r\"] / theirs[\"settled\"][\"n\"], 3)\n            for grade, v in theirs[\"by_grade\"].items():\n                assert mine[\"by_grade\"][grade][\"mean_r\"] == round(v[\"sum_r\"] / v[\"settled\"], 3)\n        assert committed[\"sources\"][\"findings\"][\"sha256\"] == bf.sha256_of(er.FINDINGS)\n        funnel = json.loads((ROOT / er.FUNNEL).read_text(encoding=\"utf-8\"))[\"totals\"]\n        assert committed[\"funnel\"][\"discovered\"] == funnel[\"discovered\"] and committed[\"funnel\"][\"potentially_usable\"] == funnel[\"potentially_usable\"]\n        assert committed[\"funnel\"][\"reaction\"][\"grade\"] == funnel[\"reaction\"][\"grade\"] and committed[\"funnel\"][\"regimes\"] == funnel[\"regimes\"]\n        for name, path in er.FEASIBILITY.items():\n            history = json.loads((ROOT / path).read_text(encoding=\"utf-8\"))\n            for band in (\"tonight\", \"yellow\", \"green\"):\n                theirs = history[\"totals\"][\"bands\"][band][\"in_band\"]\n                assert committed[\"feasibility\"][name][\"bands\"][band] == {\n                    \"in_band\": theirs[\"candidates\"], \"past_stop_rule\": theirs[\"eligible\"], \"whole_share\": theirs[\"whole_share\"]}\n            assert committed[\"feasibility\"][name][\"candidates\"] == sum(r[\"candidates\"] for r in history[\"readings\"])\n        cohort = json.loads((ROOT / er.RESEARCH[\"cohort\"]).read_text(encoding=\"utf-8\"))\n        journal = json.loads((ROOT / er.RESEARCH[\"journal\"]).read_text(encoding=\"utf-8\"))\n        assert committed[\"research\"][\"policy\"] == cohort[\"policy\"][\"id\"] == journal[\"policy\"][\"cohort_policy_id\"]\n>       assert committed[\"research\"][\"journal\"][\"by_status\"] == journal[\"counts\"][\"by_status\"]\nE       AssertionError: assert {'basis_confl...lled': 0, ...} == {'basis_confl...lled': 2, ...}\nE         \nE         Omitting 9 identical items, use -vv to show\nE         Differing items:\nE         {'excluded': 3} != {'excluded': 6}\nE         {'not_filled': 0} != {'not_filled': 2}\nE         Use -v to get more diff\n\ntests/test_evidence_review.py:225: AssertionError\n=============================== warnings summary ===============================\n../../workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6\n  /workspace/.venv-spicystock/lib/python3.12/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions\n    warnings.warn(  # deprecated in 14.0 - 2024-11-09\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_evidence_review.py::test_the_review_files_are_what_the_tool_writes\nFAILED tests/test_evidence_review.py::test_the_copied_blocks_are_the_files_own\n2 failed, 1 warning in 0.85s\n"
+      }
+    ]
+  },
+  "independent_review": {
+    "version": 1,
+    "scope": "independent offline dated evidence review repair; no provider, public, CI, or deployment claim",
+    "recorded_at": "2026-10-13T07:29:59.172831+00:00",
+    "base_head": "8ae8f0adc63daee746b37a8ec7c309de1abc1e42",
+    "source_pins": {
+      "tools/evidence_review.py": "9b93bbb49b6a464ae6c95614dad781a12ffb9adf09ef66f0fb71e88cce6618b7",
+      "tests/test_evidence_review.py": "d0a0543ef54656c974c43d2a58d6b4a184bcb22fc1688c5ed4bfe40866b2389c",
+      "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.json": "482b9f0e0c07697e56f15251fb347cdbaae47f34d97c8fd94b35be7758b25060",
+      "docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.md": "89b761e5110e8143c2c0fb23363b4c3c75423d06b726b39dbcb2423b46d08041",
+      "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22",
+      "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+    },
+    "checks": [
+      {
+        "name": "snapshot cohort exact historical git bytes",
+        "pass": true,
+        "details": {
+          "bytes": 1650,
+          "sha256": "98cc1b85b04aa3b570c777576d7d49f55edfe2bab5fe4e804362c5be7e2eeb22"
+        }
+      },
+      {
+        "name": "snapshot journal exact historical git bytes",
+        "pass": true,
+        "details": {
+          "bytes": 2132,
+          "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"
+        }
+      },
+      {
+        "name": "final source build equals committed JSON",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "final source markdown equals committed markdown",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "historical analysis numerics and verdicts unchanged outside research provenance",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "provenance cohort historical path commit and digest",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "provenance journal historical path commit and digest",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "future rolling companions do not alter dated build",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "malformed rolling companions do not affect dated build",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "absent rolling companions do not affect dated build",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "one byte read per companion for parsing and provenance",
+        "pass": true,
+        "details": {
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json": 1,
+          "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json": 1
+        }
+      },
+      {
+        "name": "cohort missing refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research cohort: cannot read docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/stop-research.json"
+        }
+      },
+      {
+        "name": "cohort valid_json_whitespace_tamper refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research cohort: SHA-256 does not match the dated input"
+        }
+      },
+      {
+        "name": "cohort valid_json_whitespace_tamper diagnosed as SHA mismatch before JSON parsing",
+        "pass": true,
+        "details": "evidence review: retained research cohort: SHA-256 does not match the dated input"
+      },
+      {
+        "name": "cohort malformed_json_tamper refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research cohort: SHA-256 does not match the dated input"
+        }
+      },
+      {
+        "name": "cohort malformed_json_tamper diagnosed as SHA mismatch before JSON parsing",
+        "pass": true,
+        "details": "evidence review: retained research cohort: SHA-256 does not match the dated input"
+      },
+      {
+        "name": "journal missing refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research journal: cannot read docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/research-outcomes.json"
+        }
+      },
+      {
+        "name": "journal valid_json_whitespace_tamper refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research journal: SHA-256 does not match the dated input"
+        }
+      },
+      {
+        "name": "journal valid_json_whitespace_tamper diagnosed as SHA mismatch before JSON parsing",
+        "pass": true,
+        "details": "evidence review: retained research journal: SHA-256 does not match the dated input"
+      },
+      {
+        "name": "journal malformed_json_tamper refuses without replacing previous outputs",
+        "pass": true,
+        "details": {
+          "exit": 2,
+          "diagnostic": "evidence review: retained research journal: SHA-256 does not match the dated input"
+        }
+      },
+      {
+        "name": "journal malformed_json_tamper diagnosed as SHA mismatch before JSON parsing",
+        "pass": true,
+        "details": "evidence review: retained research journal: SHA-256 does not match the dated input"
+      },
+      {
+        "name": "reviewed source and snapshot pins unchanged during controls",
+        "pass": true,
+        "details": null
+      },
+      {
+        "name": "docs/stop-research.json rolling published bytes unchanged from current HEAD",
+        "pass": true,
+        "details": {
+          "bytes": 1650,
+          "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8"
+        }
+      },
+      {
+        "name": "docs/research-outcomes.json rolling published bytes unchanged from current HEAD",
+        "pass": true,
+        "details": {
+          "bytes": 2133,
+          "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e"
+        }
+      },
+      {
+        "name": "docs/data.json rolling published bytes unchanged from current HEAD",
+        "pass": true,
+        "details": {
+          "bytes": 11874754,
+          "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c"
+        }
+      }
+    ],
+    "passed": 25,
+    "failed": 0,
+    "findings": [],
+    "decision": "No blockers found for the narrow dated research snapshot repair. Existing non-research historical evidence inputs were inspected; dated study, spec, funnel, and feasibility paths remain unchanged. The undated findings input is produced by an explicit historical builder, not a scheduled rolling companion; it remains cross-bound to the frozen study."
+  },
+  "harness_note": "The first isolated mutation harness imported the unmodified shared module through a namespace package and failed its single-read control. The harness was corrected by creating a local tools package, then all named mutations and controls were executed on isolated copies. Shared source was never mutated.",
+  "remaining": "Parent must complete documentation/checkpoint integration, final exact-head hosted checks, normal merge/deployment and public acceptance."
+}
