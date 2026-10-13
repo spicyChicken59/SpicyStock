@@ -1,0 +1,1881 @@
+{
+ "change": {
+  "first_late": {
+   "created_at": "2026-09-22T00:48:11+00:00",
+   "cron": "16 22 * * 1-5",
+   "delay_minutes": 152.2,
+   "path": ".github/workflows/evening.yml",
+   "slot": "2026-09-21T22:16:00+00:00"
+  },
+  "last_prompt_before": {
+   "created_at": "2026-09-21T06:04:19+00:00",
+   "cron": "0 6 * * 1",
+   "delay_minutes": 4.3,
+   "path": ".github/workflows/secret-scan.yml",
+   "slot": "2026-09-21T06:00:00+00:00"
+  },
+  "since": {
+   "beyond": {
+    "15": 71,
+    "240": 42,
+    "360": 13,
+    "60": 71
+   },
+   "delay_minutes": {
+    "max": 504.9,
+    "median": 276.5,
+    "min": 130.6,
+    "n": 71
+   },
+   "prompt": 0
+  }
+ },
+ "contrast": {
+  "all": {
+   "max": 0.4,
+   "median": 0.1,
+   "min": 0.0,
+   "n": 360
+  },
+  "branch": "main",
+  "event": "push",
+  "since_change": {
+   "max": 0.3,
+   "median": 0.1,
+   "min": 0.0,
+   "n": 144
+  },
+  "within_prompt_since_change": 144
+ },
+ "policy": "schedule_reliability_v1",
+ "rules": {
+  "attribution": "the run name's cron at its latest instant at or before the run was created, else the nearest preceding instant of the workflow's table in force; a delay shorter than the cron's period assumed",
+  "delay_marks_minutes": [
+   15,
+   60,
+   240,
+   360
+  ],
+  "late_minutes": 60,
+  "prompt_minutes": 15,
+  "unseen_after_hours": 24
+ },
+ "snapshot": {
+  "fetched_at": "2026-10-13T18:13:00+00:00",
+  "file": "runs.json",
+  "push_runs": 360,
+  "ref_commit": "3a972ad7a08e2846c86069bf7d212c8c3d392f13",
+  "repository": "spicyChicken59/SpicyStock",
+  "runs": 128,
+  "sha256": "115c2af0f0454249987527dfd6f707f63033b085ab5273f7a2716017d0e36328"
+ },
+ "version": 1,
+ "workflows": {
+  ".github/workflows/evening.yml": {
+   "beyond": {
+    "15": 66,
+    "240": 35,
+    "360": 6,
+    "60": 64
+   },
+   "by_cron": {
+    "16 0 * * 2-6": {
+     "max": 387.9,
+     "median": 286.8,
+     "min": 13.1,
+     "n": 22
+    },
+    "16 1 * * 2-6": {
+     "max": 389.8,
+     "median": 310.4,
+     "min": 10.2,
+     "n": 22
+    },
+    "16 22 * * 1-5": {
+     "max": 285.6,
+     "median": 132.5,
+     "min": 5.3,
+     "n": 30
+    },
+    "16 23 * * 1-5": {
+     "max": 259.4,
+     "median": 132.9,
+     "min": 7.4,
+     "n": 30
+    }
+   },
+   "delay_minutes": {
+    "max": 389.8,
+    "median": 173.2,
+    "min": 5.3,
+    "n": 104
+   },
+   "expected": 104,
+   "no_run": [],
+   "not_started": [],
+   "path": ".github/workflows/evening.yml",
+   "runs": [
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-01T22:21:16+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 5.3,
+     "head_sha": "d04208824da9bfb64b17e5822b09371b71372c72",
+     "id": 33565868672,
+     "slot": "2026-09-01T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-01T23:23:22+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 7.4,
+     "head_sha": "d3ada993a6c7834076f52e8028911adbf221da0d",
+     "id": 33570796496,
+     "slot": "2026-09-01T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-02T22:22:21+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.3,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33690037845,
+     "slot": "2026-09-02T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-02T23:25:31+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 9.5,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33695013676,
+     "slot": "2026-09-02T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-03T22:22:17+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.3,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33812718941,
+     "slot": "2026-09-03T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-03T23:24:24+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 8.4,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33817461580,
+     "slot": "2026-09-03T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-04T22:21:35+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 5.6,
+     "head_sha": "8dc0d343ce01f6d577936390a0bcbca92d57955d",
+     "id": 33925167245,
+     "slot": "2026-09-04T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-04T23:24:10+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 8.2,
+     "head_sha": "8dc0d343ce01f6d577936390a0bcbca92d57955d",
+     "id": 33929360899,
+     "slot": "2026-09-04T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "failure",
+     "created_at": "2026-09-07T22:22:27+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.5,
+     "head_sha": "4a1cf5801d4f10bbc3ed1586dcf9a9310040c89f",
+     "id": 34166446137,
+     "slot": "2026-09-07T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-07T23:26:05+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.1,
+     "head_sha": "4a1cf5801d4f10bbc3ed1586dcf9a9310040c89f",
+     "id": 34170026501,
+     "slot": "2026-09-07T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-08T22:22:39+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.7,
+     "head_sha": "e95d6d57d5b2ad0cce963b233dbdc53523fc2958",
+     "id": 34285587015,
+     "slot": "2026-09-08T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-08T23:26:06+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.1,
+     "head_sha": "e81f3c72748e83d709156f4341e1b46b16bb6fcf",
+     "id": 34290628559,
+     "slot": "2026-09-08T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "failure",
+     "created_at": "2026-09-09T22:22:26+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.4,
+     "head_sha": "a15a4ee959c0fa2f7222050b1c36a490cf96572d",
+     "id": 34411881765,
+     "slot": "2026-09-09T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-09T23:26:16+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.3,
+     "head_sha": "76783a17561f6864f7e09ced8abf0366d830494d",
+     "id": 34416923429,
+     "slot": "2026-09-09T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-10T22:21:36+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 5.6,
+     "head_sha": "671b309d58d9dbbf3efb37175ca109dca9c88b76",
+     "id": 34537042656,
+     "slot": "2026-09-10T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-10T23:25:09+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 9.2,
+     "head_sha": "e6bbab7153d3abfb7c31d1ca91edd0888e6b53f4",
+     "id": 34542060374,
+     "slot": "2026-09-10T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-11T22:22:16+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.3,
+     "head_sha": "7380a97605c7f16eb902421486c491a95b957cd7",
+     "id": 34653694658,
+     "slot": "2026-09-11T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-11T23:25:07+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 9.1,
+     "head_sha": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+     "id": 34657984887,
+     "slot": "2026-09-11T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-12T00:29:04+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 13.1,
+     "head_sha": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+     "id": 34661779782,
+     "slot": "2026-09-12T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-12T01:26:12+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 10.2,
+     "head_sha": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+     "id": 34664809932,
+     "slot": "2026-09-12T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-14T22:24:24+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 8.4,
+     "head_sha": "3d60ae15b9f615f6364358affb944a67e869e566",
+     "id": 34903940252,
+     "slot": "2026-09-14T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-14T23:25:50+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 9.8,
+     "head_sha": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+     "id": 34908828755,
+     "slot": "2026-09-14T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-15T00:31:53+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 15.9,
+     "head_sha": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+     "id": 34913564196,
+     "slot": "2026-09-15T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-15T01:31:53+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 15.9,
+     "head_sha": "591837b8fdd538d93fb92bb8855e217dba11610a",
+     "id": 34917634439,
+     "slot": "2026-09-15T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-15T22:22:53+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.9,
+     "head_sha": "0233b309a43d3c3f64d30ee974d2be15d1fcea28",
+     "id": 35030668710,
+     "slot": "2026-09-15T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-15T23:26:15+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.2,
+     "head_sha": "4f640d95f154ece89d26f57e76ca53a4e0abc0f2",
+     "id": 35035650704,
+     "slot": "2026-09-15T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-16T00:29:38+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 13.6,
+     "head_sha": "7e6d056672079e2ac46b6e5a84ae9589f1648e80",
+     "id": 35040225753,
+     "slot": "2026-09-16T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-16T01:27:22+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 11.4,
+     "head_sha": "7e6d056672079e2ac46b6e5a84ae9589f1648e80",
+     "id": 35044152806,
+     "slot": "2026-09-16T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-16T22:22:30+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.5,
+     "head_sha": "7859ae081a1cbb12ef4c2f949ee0e699df893bc8",
+     "id": 35157356943,
+     "slot": "2026-09-16T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-16T23:26:53+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.9,
+     "head_sha": "580805487b22006c6f2fa35490c3edc8a5760d73",
+     "id": 35162328106,
+     "slot": "2026-09-16T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-17T00:29:55+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 13.9,
+     "head_sha": "580805487b22006c6f2fa35490c3edc8a5760d73",
+     "id": 35166796923,
+     "slot": "2026-09-17T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-17T01:28:39+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 12.7,
+     "head_sha": "bd34b8b65cbeb0951a659f4002734170e43c26a5",
+     "id": 35170698063,
+     "slot": "2026-09-17T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-17T22:21:28+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 5.5,
+     "head_sha": "bd34b8b65cbeb0951a659f4002734170e43c26a5",
+     "id": 35281605621,
+     "slot": "2026-09-17T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-17T23:23:52+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 7.9,
+     "head_sha": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+     "id": 35286651528,
+     "slot": "2026-09-17T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-18T00:29:32+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 13.5,
+     "head_sha": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+     "id": 35291412518,
+     "slot": "2026-09-18T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-18T01:26:42+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 10.7,
+     "head_sha": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+     "id": 35295334465,
+     "slot": "2026-09-18T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-18T22:22:06+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 6.1,
+     "head_sha": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+     "id": 35401227388,
+     "slot": "2026-09-18T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-18T23:26:22+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 10.4,
+     "head_sha": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+     "id": 35405690566,
+     "slot": "2026-09-18T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-19T00:29:19+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 13.3,
+     "head_sha": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+     "id": 35409518342,
+     "slot": "2026-09-19T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-19T01:28:26+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 12.4,
+     "head_sha": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+     "id": 35412757035,
+     "slot": "2026-09-19T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-22T00:48:11+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 152.2,
+     "head_sha": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+     "id": 35673429253,
+     "slot": "2026-09-21T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-22T01:36:57+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 140.9,
+     "head_sha": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+     "id": 35676414184,
+     "slot": "2026-09-21T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-22T04:49:26+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 273.4,
+     "head_sha": "2d790e1f95a8df746d9e7cb7870d16444462725d",
+     "id": 35688338243,
+     "slot": "2026-09-22T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-22T06:17:30+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 301.5,
+     "head_sha": "6533e616bd14ebfebeeccb4c9b1b0d463b47dbb4",
+     "id": 35694175722,
+     "slot": "2026-09-22T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-23T00:28:22+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 132.4,
+     "head_sha": "6533e616bd14ebfebeeccb4c9b1b0d463b47dbb4",
+     "id": 35802203679,
+     "slot": "2026-09-22T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-23T01:31:19+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 135.3,
+     "head_sha": "e2dee988ad5d36876b7c73090502720e995c65f4",
+     "id": 35806625084,
+     "slot": "2026-09-22T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-23T04:40:32+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 264.5,
+     "head_sha": "897f507aa2a85f4493c7cc742661d06a1a8ba6f8",
+     "id": 35819287266,
+     "slot": "2026-09-23T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-23T06:01:07+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 285.1,
+     "head_sha": "897f507aa2a85f4493c7cc742661d06a1a8ba6f8",
+     "id": 35824840446,
+     "slot": "2026-09-23T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-24T00:28:36+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 132.6,
+     "head_sha": "9357a2791b8440af4b397dec57dee94a14551a0b",
+     "id": 35938584554,
+     "slot": "2026-09-23T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-24T01:26:33+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 130.6,
+     "head_sha": "456edb836cc42c908c50330b723dbfd97be5d506",
+     "id": 35942929232,
+     "slot": "2026-09-23T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-24T04:43:17+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 267.3,
+     "head_sha": "470c358c06bc9c997184d829c63845c4db0dc4f5",
+     "id": 35956841225,
+     "slot": "2026-09-24T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-24T06:12:11+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 296.2,
+     "head_sha": "470c358c06bc9c997184d829c63845c4db0dc4f5",
+     "id": 35963368322,
+     "slot": "2026-09-24T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-25T00:32:00+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 136.0,
+     "head_sha": "470c358c06bc9c997184d829c63845c4db0dc4f5",
+     "id": 36077970591,
+     "slot": "2026-09-24T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-25T01:32:41+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 136.7,
+     "head_sha": "6822dddd14d0a541083e7caaecca9c945b451af2",
+     "id": 36082476927,
+     "slot": "2026-09-24T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-25T04:52:28+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 276.5,
+     "head_sha": "6822dddd14d0a541083e7caaecca9c945b451af2",
+     "id": 36096206901,
+     "slot": "2026-09-25T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-25T06:10:37+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 294.6,
+     "head_sha": "6822dddd14d0a541083e7caaecca9c945b451af2",
+     "id": 36101700307,
+     "slot": "2026-09-25T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-26T00:36:28+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 140.5,
+     "head_sha": "e1359495ad267365dae9b6d03712fe7f17dc70cb",
+     "id": 36205470985,
+     "slot": "2026-09-25T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-26T01:36:20+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 140.3,
+     "head_sha": "8be007f68deaa417b85a512d2e16a37899d27011",
+     "id": 36208988750,
+     "slot": "2026-09-25T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-26T04:52:14+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 276.2,
+     "head_sha": "8be007f68deaa417b85a512d2e16a37899d27011",
+     "id": 36219105233,
+     "slot": "2026-09-26T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-26T06:10:41+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 294.7,
+     "head_sha": "8be007f68deaa417b85a512d2e16a37899d27011",
+     "id": 36222967269,
+     "slot": "2026-09-26T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-29T01:53:50+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 217.8,
+     "head_sha": "56b34a8bc7a8980559cad56be488e8a29489e4fd",
+     "id": 36510040469,
+     "slot": "2026-09-28T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-29T02:35:12+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 199.2,
+     "head_sha": "786ade7013a0c55d172d89118322b19a056fa8a6",
+     "id": 36513292486,
+     "slot": "2026-09-28T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-29T05:39:02+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 323.0,
+     "head_sha": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+     "id": 36527159263,
+     "slot": "2026-09-29T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-29T06:57:50+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 341.8,
+     "head_sha": "33ec181ca60adaf2f7c0ef19a1889a5517161585",
+     "id": 36533874414,
+     "slot": "2026-09-29T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-30T01:16:31+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 180.5,
+     "head_sha": "2687b96d0200903c5d457301e4b3f335fcfb79ce",
+     "id": 36654325015,
+     "slot": "2026-09-29T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-30T02:08:38+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 172.6,
+     "head_sha": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+     "id": 36658458348,
+     "slot": "2026-09-29T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-30T05:27:27+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 311.4,
+     "head_sha": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+     "id": 36673486910,
+     "slot": "2026-09-30T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-30T06:46:28+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 330.5,
+     "head_sha": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+     "id": 36679999069,
+     "slot": "2026-09-30T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-01T01:16:12+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 180.2,
+     "head_sha": "5d9b9add4a122c53e461ec07ed9f8e99cceb2fae",
+     "id": 36800284304,
+     "slot": "2026-09-30T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-01T02:11:15+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 175.2,
+     "head_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+     "id": 36804632740,
+     "slot": "2026-09-30T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-01T05:45:53+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 329.9,
+     "head_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+     "id": 36821350880,
+     "slot": "2026-10-01T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-01T07:12:28+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 356.5,
+     "head_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+     "id": 36829002066,
+     "slot": "2026-10-01T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-02T01:39:36+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 203.6,
+     "head_sha": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+     "id": 36951987679,
+     "slot": "2026-10-01T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-02T02:17:24+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 181.4,
+     "head_sha": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+     "id": 36954935002,
+     "slot": "2026-10-01T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-02T05:30:25+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 314.4,
+     "head_sha": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+     "id": 36969234279,
+     "slot": "2026-10-02T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-02T07:02:27+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 346.4,
+     "head_sha": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+     "id": 36976493298,
+     "slot": "2026-10-02T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-03T01:09:56+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 173.9,
+     "head_sha": "d185e48a9c17780ddf368ba746fb364567779ba6",
+     "id": 37085032782,
+     "slot": "2026-10-02T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-03T02:00:45+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 164.8,
+     "head_sha": "58e0f38430ae82249db435ff397477bd2221106e",
+     "id": 37088260113,
+     "slot": "2026-10-02T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-03T05:12:58+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 297.0,
+     "head_sha": "58e0f38430ae82249db435ff397477bd2221106e",
+     "id": 37099104537,
+     "slot": "2026-10-03T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-03T06:35:25+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 319.4,
+     "head_sha": "58e0f38430ae82249db435ff397477bd2221106e",
+     "id": 37103566750,
+     "slot": "2026-10-03T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-06T02:16:31+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 240.5,
+     "head_sha": "58e0f38430ae82249db435ff397477bd2221106e",
+     "id": 37403330047,
+     "slot": "2026-10-05T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-06T03:01:07+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 225.1,
+     "head_sha": "178956b46bc50d8998636e9b4bc785ce3687c84a",
+     "id": 37406965450,
+     "slot": "2026-10-05T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-06T06:14:59+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 359.0,
+     "head_sha": "788aa092a94aff38ce64138024bff43b1581452a",
+     "id": 37422693650,
+     "slot": "2026-10-06T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-06T07:36:21+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 380.4,
+     "head_sha": "788aa092a94aff38ce64138024bff43b1581452a",
+     "id": 37430708651,
+     "slot": "2026-10-06T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-07T01:30:33+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 194.6,
+     "head_sha": "e57b41eed584ae102f9ec7a2f6b6f9170942e9e6",
+     "id": 37557449315,
+     "slot": "2026-10-06T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-07T02:25:20+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 189.3,
+     "head_sha": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+     "id": 37561898873,
+     "slot": "2026-10-06T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-07T05:52:42+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 336.7,
+     "head_sha": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+     "id": 37578505785,
+     "slot": "2026-10-07T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-07T07:16:55+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 360.9,
+     "head_sha": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+     "id": 37586364154,
+     "slot": "2026-10-07T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-08T01:53:51+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 217.8,
+     "head_sha": "d3a1ea7ca230db6a064e8fa94c18d9caf2d19d58",
+     "id": 37715183976,
+     "slot": "2026-10-07T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-08T02:42:31+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 206.5,
+     "head_sha": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+     "id": 37719186734,
+     "slot": "2026-10-07T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-08T05:56:41+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 340.7,
+     "head_sha": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+     "id": 37734941835,
+     "slot": "2026-10-08T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-08T07:27:55+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 371.9,
+     "head_sha": "b24d0af1664a10e80e3b289553ff3fe086e1894f",
+     "id": 37743585290,
+     "slot": "2026-10-08T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-09T02:06:21+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 230.3,
+     "head_sha": "57cf2ad0adde442d3e051f66c9435d8160076b0d",
+     "id": 37872972790,
+     "slot": "2026-10-08T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-09T02:57:00+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 221.0,
+     "head_sha": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+     "id": 37876986048,
+     "slot": "2026-10-08T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-09T06:03:02+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 347.0,
+     "head_sha": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+     "id": 37891525985,
+     "slot": "2026-10-09T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-09T07:26:25+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 370.4,
+     "head_sha": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+     "id": 37899021983,
+     "slot": "2026-10-09T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-10T01:44:28+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 208.5,
+     "head_sha": "fa0d58fd2e67b0631b81200e6586eb8e07741940",
+     "id": 38014333381,
+     "slot": "2026-10-09T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-10T02:22:11+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 186.2,
+     "head_sha": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+     "id": 38016708738,
+     "slot": "2026-10-09T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-10T05:45:58+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 330.0,
+     "head_sha": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+     "id": 38028617410,
+     "slot": "2026-10-10T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-10T07:12:22+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 356.4,
+     "head_sha": "21cd3497cd7ee06c66e4c2b46dcbed4782a7213e",
+     "id": 38033615932,
+     "slot": "2026-10-10T01:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-13T03:01:38+00:00",
+     "cron": "16 22 * * 1-5",
+     "delay_minutes": 285.6,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38339720035,
+     "slot": "2026-10-12T22:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-13T03:35:21+00:00",
+     "cron": "16 23 * * 1-5",
+     "delay_minutes": 259.4,
+     "head_sha": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+     "id": 38342420178,
+     "slot": "2026-10-12T23:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-13T06:43:53+00:00",
+     "cron": "16 0 * * 2-6",
+     "delay_minutes": 387.9,
+     "head_sha": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+     "id": 38358365264,
+     "slot": "2026-10-13T00:16:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-13T07:45:50+00:00",
+     "cron": "16 1 * * 2-6",
+     "delay_minutes": 389.8,
+     "head_sha": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+     "id": 38364751632,
+     "slot": "2026-10-13T01:16:00+00:00",
+     "status": "completed"
+    }
+   ],
+   "unexpected": [],
+   "weeks": [
+    {
+     "max": 9.5,
+     "median": 6.8,
+     "min": 5.3,
+     "n": 8,
+     "week": "2026-08-31"
+    },
+    {
+     "max": 13.1,
+     "median": 9.1,
+     "min": 5.6,
+     "n": 12,
+     "week": "2026-09-07"
+    },
+    {
+     "max": 15.9,
+     "median": 10.8,
+     "min": 5.5,
+     "n": 20,
+     "week": "2026-09-14"
+    },
+    {
+     "max": 301.5,
+     "median": 208.3,
+     "min": 130.6,
+     "n": 20,
+     "week": "2026-09-21"
+    },
+    {
+     "max": 356.5,
+     "median": 257.4,
+     "min": 164.8,
+     "n": 20,
+     "week": "2026-09-28"
+    },
+    {
+     "max": 380.4,
+     "median": 285.2,
+     "min": 186.2,
+     "n": 20,
+     "week": "2026-10-05"
+    },
+    {
+     "max": 389.8,
+     "median": 336.8,
+     "min": 259.4,
+     "n": 4,
+     "week": "2026-10-12"
+    }
+   ]
+  },
+  ".github/workflows/morning.yml": {
+   "beyond": {
+    "15": 8,
+    "240": 4,
+    "360": 4,
+    "60": 4
+   },
+   "by_cron": {
+    "20 13 * * 1-5": {
+     "max": 504.9,
+     "median": 504.9,
+     "min": 504.9,
+     "n": 1
+    },
+    "20 14 * * 1-5": {
+     "max": 469.0,
+     "median": 469.0,
+     "min": 469.0,
+     "n": 1
+    },
+    "28 13 * * 1-5": {
+     "max": 499.1,
+     "median": 499.1,
+     "min": 499.1,
+     "n": 1
+    },
+    "28 14 * * 1-5": {
+     "max": 463.3,
+     "median": 463.3,
+     "min": 463.3,
+     "n": 1
+    },
+    "30 12 * * 1-5": {
+     "max": 17.0,
+     "median": 15.9,
+     "min": 14.9,
+     "n": 7
+    },
+    "30 13 * * 1-5": {
+     "max": 14.3,
+     "median": 12.5,
+     "min": 12.2,
+     "n": 7
+    }
+   },
+   "delay_minutes": {
+    "max": 504.9,
+    "median": 14.9,
+    "min": 12.2,
+    "n": 18
+   },
+   "expected": 22,
+   "no_run": [],
+   "not_started": [
+    {
+     "cron": "20 13 * * 1-5",
+     "slot": "2026-10-13T13:20:00+00:00"
+    },
+    {
+     "cron": "28 13 * * 1-5",
+     "slot": "2026-10-13T13:28:00+00:00"
+    },
+    {
+     "cron": "20 14 * * 1-5",
+     "slot": "2026-10-13T14:20:00+00:00"
+    },
+    {
+     "cron": "28 14 * * 1-5",
+     "slot": "2026-10-13T14:28:00+00:00"
+    }
+   ],
+   "path": ".github/workflows/morning.yml",
+   "runs": [
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-02T12:44:52+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 14.9,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33631662158,
+     "slot": "2026-09-02T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-02T13:42:32+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 12.5,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33637381061,
+     "slot": "2026-09-02T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-03T12:44:56+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 14.9,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33756986939,
+     "slot": "2026-09-03T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-03T13:42:09+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 12.2,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33762608049,
+     "slot": "2026-09-03T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-04T12:45:00+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 15.0,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33874355148,
+     "slot": "2026-09-04T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-04T13:42:11+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 12.2,
+     "head_sha": "79da6f8de0c0c46b3c498c8b10e5857285af8f71",
+     "id": 33879538139,
+     "slot": "2026-09-04T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-07T12:45:54+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 15.9,
+     "head_sha": "cc0cd5477021de1485d0bec75906c7263fe6fe4e",
+     "id": 34123648599,
+     "slot": "2026-09-07T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-07T13:43:50+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 13.8,
+     "head_sha": "cc0cd5477021de1485d0bec75906c7263fe6fe4e",
+     "id": 34129025427,
+     "slot": "2026-09-07T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "failure",
+     "created_at": "2026-09-08T12:46:58+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 17.0,
+     "head_sha": "e95d6d57d5b2ad0cce963b233dbdc53523fc2958",
+     "id": 34228038529,
+     "slot": "2026-09-08T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-08T13:44:21+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 14.3,
+     "head_sha": "e95d6d57d5b2ad0cce963b233dbdc53523fc2958",
+     "id": 34233828193,
+     "slot": "2026-09-08T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "failure",
+     "created_at": "2026-09-09T12:46:27+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 16.4,
+     "head_sha": "5e6bbb22107fae02ba1574316035db2c4723c3ad",
+     "id": 34352986329,
+     "slot": "2026-09-09T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-09T13:44:19+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 14.3,
+     "head_sha": "a15a4ee959c0fa2f7222050b1c36a490cf96572d",
+     "id": 34359005086,
+     "slot": "2026-09-09T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-10T12:46:23+00:00",
+     "cron": "30 12 * * 1-5",
+     "delay_minutes": 16.4,
+     "head_sha": "671b309d58d9dbbf3efb37175ca109dca9c88b76",
+     "id": 34478616407,
+     "slot": "2026-09-10T12:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-09-10T13:42:21+00:00",
+     "cron": "30 13 * * 1-5",
+     "delay_minutes": 12.3,
+     "head_sha": "671b309d58d9dbbf3efb37175ca109dca9c88b76",
+     "id": 34484311942,
+     "slot": "2026-09-10T13:30:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-12T21:44:56+00:00",
+     "cron": "20 13 * * 1-5",
+     "delay_minutes": 504.9,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38312550090,
+     "slot": "2026-10-12T13:20:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-12T21:47:04+00:00",
+     "cron": "28 13 * * 1-5",
+     "delay_minutes": 499.1,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38312772384,
+     "slot": "2026-10-12T13:28:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-12T22:09:00+00:00",
+     "cron": "20 14 * * 1-5",
+     "delay_minutes": 469.0,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38314959465,
+     "slot": "2026-10-12T14:20:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "run_name",
+     "conclusion": "success",
+     "created_at": "2026-10-12T22:11:19+00:00",
+     "cron": "28 14 * * 1-5",
+     "delay_minutes": 463.3,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38315192117,
+     "slot": "2026-10-12T14:28:00+00:00",
+     "status": "completed"
+    }
+   ],
+   "unexpected": [],
+   "weeks": [
+    {
+     "max": 15.0,
+     "median": 13.7,
+     "min": 12.2,
+     "n": 6,
+     "week": "2026-08-31"
+    },
+    {
+     "max": 17.0,
+     "median": 15.1,
+     "min": 12.3,
+     "n": 8,
+     "week": "2026-09-07"
+    },
+    {
+     "max": 504.9,
+     "median": 484.1,
+     "min": 463.3,
+     "n": 4,
+     "week": "2026-10-12"
+    }
+   ]
+  },
+  ".github/workflows/secret-scan.yml": {
+   "beyond": {
+    "15": 3,
+    "240": 3,
+    "360": 3,
+    "60": 3
+   },
+   "by_cron": {
+    "0 6 * * 1": {
+     "max": 470.0,
+     "median": 191.3,
+     "min": 4.2,
+     "n": 6
+    }
+   },
+   "delay_minutes": {
+    "max": 470.0,
+    "median": 191.3,
+    "min": 4.2,
+    "n": 6
+   },
+   "expected": 6,
+   "no_run": [],
+   "not_started": [],
+   "path": ".github/workflows/secret-scan.yml",
+   "runs": [
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-07T06:04:14+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 4.2,
+     "head_sha": "791fbb7359c63d84fcd56905d1efbfd59f602ff0",
+     "id": 34089219455,
+     "slot": "2026-09-07T06:00:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "failure",
+     "created_at": "2026-09-14T06:04:24+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 4.4,
+     "head_sha": "14f9d18de738d99d382ad1119166e60f1f69925f",
+     "id": 34811928399,
+     "slot": "2026-09-14T06:00:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-21T06:04:19+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 4.3,
+     "head_sha": "89d31535fe1684711fb6c15e8541b573b1963f03",
+     "id": 35566872709,
+     "slot": "2026-09-21T06:00:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-09-28T12:18:18+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 378.3,
+     "head_sha": "8be007f68deaa417b85a512d2e16a37899d27011",
+     "id": 36420977365,
+     "slot": "2026-09-28T06:00:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-10-05T12:58:02+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 418.0,
+     "head_sha": "58e0f38430ae82249db435ff397477bd2221106e",
+     "id": 37313228984,
+     "slot": "2026-10-05T06:00:00+00:00",
+     "status": "completed"
+    },
+    {
+     "attempt": 1,
+     "basis": "nearest_slot",
+     "conclusion": "success",
+     "created_at": "2026-10-12T13:50:02+00:00",
+     "cron": "0 6 * * 1",
+     "delay_minutes": 470.0,
+     "head_sha": "4bd38751c109a2db797173f0cdf679f20d16c1fb",
+     "id": 38258477789,
+     "slot": "2026-10-12T06:00:00+00:00",
+     "status": "completed"
+    }
+   ],
+   "unexpected": [],
+   "weeks": [
+    {
+     "max": 4.2,
+     "median": 4.2,
+     "min": 4.2,
+     "n": 1,
+     "week": "2026-09-07"
+    },
+    {
+     "max": 4.4,
+     "median": 4.4,
+     "min": 4.4,
+     "n": 1,
+     "week": "2026-09-14"
+    },
+    {
+     "max": 4.3,
+     "median": 4.3,
+     "min": 4.3,
+     "n": 1,
+     "week": "2026-09-21"
+    },
+    {
+     "max": 378.3,
+     "median": 378.3,
+     "min": 378.3,
+     "n": 1,
+     "week": "2026-09-28"
+    },
+    {
+     "max": 418.0,
+     "median": 418.0,
+     "min": 418.0,
+     "n": 1,
+     "week": "2026-10-05"
+    },
+    {
+     "max": 470.0,
+     "median": 470.0,
+     "min": 470.0,
+     "n": 1,
+     "week": "2026-10-12"
+    }
+   ]
+  }
+ }
+}
