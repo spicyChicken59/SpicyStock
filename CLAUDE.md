@@ -340,7 +340,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4416 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4419 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -8132,6 +8132,113 @@ for them (the 12 October record carries two, SN and ZIM); read its
 `docs/intraday/`, and record them here. Also not claimable: a live
 morning, research or recovery observation; any trading edge.
 
+## Checkpoint, 13 Oct 2026 — PR #168 accepted; each publication read against the slots it archived (#163)
+
+**PR #168, accepted.** Merged as `7e40716e` on `main` with a merge commit over
+`c83ce0f2`. The code head `fb42ac0f` passed all seven checks on Tests run
+38468073418; the final head `36c11cc1` (CLAUDE.md alone over it) passed
+pytest, page, the gate's docs-only decision and both gitleaks runs.
+Publisher 38476351986 printed *Verified: every one of the 41 public files
+matches committed main* at 22:14:57 UTC; Pages 38476380614 deployed
+(38476350936 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 38476351921 and Tests run 38476351925 (pytest
+22:13–22:40 UTC, page 22:14–22:29; the native cases skipped by the gate, as
+a merge's are) are green. The first evening after the merge whose window
+holds a `trigger_timing` or `stop_sequence` first day is still the test of
+the minute bars; not claimable yet.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `7e40716e`, pushed as **PR #169**, closing #163. Its first
+three items shipped in #166; this is the last: *an alternate archived
+delivery schedule is validated, but reporting still calculates against
+today's slots.* `docs/data.json`, `docs/picks.json`, the compact reader,
+every receipt, the history, the evidence objects, the quality ledger, the
+workflows and the vendored design system are untouched; nothing under
+`src/` changed; no run, mail, dispatch, provider call or credential.
+
+**Reproduced first** (`scratchpad/slots/repro.py`, the tool as `main` carried
+it): a synthetic 9 October record whose rules archive 7:16 and 9:16 PM ET
+slots, its `run.delivery` re-deriving from them, landed 00:46 UTC on the
+10th, was validated and then measured against 22:16 and 00:16 UTC, today's
+slots: 150.0 minutes after the primary, after the retry. A record whose rules
+archive the delivery rule and that carries no block was read without a word.
+
+**Changed** (`tools/service_health.py`, `service_health_v3`).
+`slot_policy()` reads a publication whose `rules.pipeline` archives the
+delivery rule against THOSE slots, once its `run.delivery` re-derives from
+them (`delivery.faults()`, the validator's own check, now asked in one
+place); rules that archive the rule beside a record without its block, and a
+block beside rules that archive no rule, are set aside by name and do not
+count as publications. A session reads unpublished only when no other
+readable publication exists for it; a record from before the rule is read
+against the current policy's slots and says so. Each publication's `timing` names
+`slot_basis` and `slots_et`; a session row carries its FIRST publication's
+basis; the summary counts each; the markdown prints one line. The dated
+reading moves to `2026-10-13-service-health-evidence/`, pinned at `7e40716e`
+(clock 22:13 UTC on 13 October). The 12 October reading is kept as written --
+v2 in place, v1 copied byte for byte from `279ec5a3` into its `v1/`, as #163
+asked -- each file held to its git blob identity by the tests, and the old
+report says it is superseded.
+
+**What it moves over the history: nothing.** The only publication under the
+rule, 12 October's, archived the current slots; the v3 reading pinned at
+`c759a1e6` is the frozen v2 with the new fields added. Through `7e40716e`: 22
+of 23 due sessions published, all 22 before the next open; the 13 October
+session pending at the clock (completed 20:15 UTC, nothing on `main` at
+22:13), so fresh reads no and the current streak 0, the longest 22; latency
+by the landing commit 55.8 / 283.4 / 410.5 minutes (53.1 / 278.6 / 407.2 by
+the records' own clocks); 15 of 22 after the retry slot; 1 publication read
+against its own archived slots, 26 against the current policy's.
+
+**The review, worked.** A reviewer by execution in its own worktree checked
+the slot rule against an independent zoneinfo computation (196 comparisons
+across the DST change, Thanksgiving, both early closes and New Year, four
+archived slot pairs, every boundary at and a second before each slot and
+open: 0 mismatches), the frozen bytes, the v2-equivalence claim and every
+number in the report. Nine findings, each reproduced; six fixed in
+`9e1e6afb`. The medium one was mine: the report cited the schedule-reliability
+snapshot for the 13 October morning runs, which predates them; it cites the
+four runs by id now (38458332290, 38458466585, 38461411014, 38461736889,
+created 19:52–20:18 UTC, each skipping every collection step and its persist
+job, re-read off the Actions API). Then: the index said "22 of 22 due"; five
+of the 38 set-aside commits are the second build's 11 September fixtures,
+not the first build's records; README said "refused" for a set-aside; a block
+beside rules that archive no delivery rule read as `held` against today's
+slots (set aside now); and a review mutant reading a row's basis off its LAST
+publication survived (pinned now). Three are written into the report as
+known limits: a future `delivery.VERSION` sets aside version-1 records, as
+`report.validate()` already refuses them; `delivery.slots()` places an
+archived slot past midnight ET on the session's own date; `slots_et` prints
+to the minute.
+
+**Measured** (this sandbox, Python 3.11.15): 4419 collected; the full suite
+at `4082d51c` 4385 passed and 34 environment-gated skips in 18 m 27 s;
+`tests/test_service_health.py` and `tests/test_docs.py` 78 passed at
+`9e1e6afb`; `python tools/service_health.py --check` current with the history
+walked again; gitleaks 8.24.3 over the branch's commits: no leaks. No record,
+rule or page file moved, so the fixtures and the page smoke are CI's.
+
+**Mutation passes**, each mutant in the mutation worktree and judged by the
+whole `tests/test_service_health.py`, the committed-file comparison
+deselected except where it is the rule's own test. At `4082d51c` thirteen:
+the archived slots ignored, `faults()` skipped, the retry from the current
+policy, the frame not updated, the basis always current, `slots()` ignoring
+its arguments, the row basis fixed, the summary over one publication, the
+words swapped, `slots_et` from the current policy, the markdown line dropped,
+`OUT_DIR` back at 12 October, the version back at 2: all die, a control
+survives. At `9e1e6afb` the same thirteen die again and two more (a block
+without rules read, a row's basis off its last publication); a control
+survives.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and the records
+and decides nothing; a record is read under the rules it archived. Fix if it
+bites: the three known limits above. Defer: #111's ten-session acceptance,
+which needs morning checks not yet observed. Omit: any change to the crons,
+the guard or `src/delivery.py` on these numbers.
+
+**Not claimable:** Pages serving a publication at the instant its commit
+landed; a live morning, research or recovery observation; any trading edge.
+
 
 ## Continuation, 13 Oct 2026 — #162 verified; the intended stock within reach (#164)
 
@@ -8236,3 +8343,36 @@ corrected head needs fresh independent review and normal hosted gates before
 merge, deployment and actual public acceptance. Research quote reload plus its
 owner-workflow handoff are prepared separately for a subsequent coherent
 milestone and must reconcile this correction after #170 releases.
+
+## Main reconciliation, 13 Oct 2026 — retain the reviewed finder over #169
+
+The concurrent service-policy PR #169 merged as `bf266a6e` while #170's
+required checks were finishing. Its tree equals reviewed `174f47c0`.
+The existing #170 branch is reconciled over that main without changing either
+the six reviewed stock-finder runtime/test files from `05794ffe` or the merged
+service-health runtime/tests. Both appended CLAUDE checkpoints are preserved.
+
+Independent execution found one remaining prose error in #169: a later
+malformed revision is skipped, while an earlier readable publication still
+keeps that session published. README, the current dated service report and
+the corresponding checkpoint now say that the offending commit does not
+count; the session is unpublished only if no other readable publication
+exists. Current-main freshness is a separate result. Generated service-report
+evidence and all published record/history bytes retain their existing values.
+
+The reconciliation passes 110 service/delivery/documentation tests, 307
+reading/finder browser checks and the full pinned service-history replay.
+Two synthetic phone/tablet captures were inspected. The design-system pin and
+`.env.example` are unchanged. The exact repair review and
+`release-evidence/2026-10-13-stock-finder/main-reconciliation.json` retain the
+source comparisons, executed checks, prior service finding and deployment
+provenance.
+
+All seven checks ultimately passed at the preceding head `05794ffe`: 4416
+Python tests, current producer fixtures, 15459 page checks, 378 chart checks,
+both native benchmarks and memory supervisors, gate and secret scans. That
+completed evidence belongs to its old `7e40716e` base; it does not replace
+fresh required checks for the reconciled head. Independent final review,
+normal hosted gates, merge and actual public verification remain required.
+The combined research-quote reload/owner-workflow preparation must then be
+rebased onto this accepted release before publication.

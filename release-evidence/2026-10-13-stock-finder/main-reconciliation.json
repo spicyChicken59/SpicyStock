@@ -1,0 +1,929 @@
+{
+  "schema": "spicystock.stock-finder.main-reconciliation.v1",
+  "recorded_at": "2026-10-13T23:44:31.832860+00:00",
+  "status": "LOCAL_RECONCILIATION_TESTED_PENDING_FINAL_COMMIT_REVIEW_AND_FRESH_HOSTED_GATES",
+  "prior_head": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+  "new_main": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+  "new_main_tree": "77d2edd3f6b274eff99474d7296ba748c508d527",
+  "merge_resolution": "Preserved both appended CLAUDE checkpoints. Retained reviewed stock-finder runtime and merged service-report runtime unchanged. Corrected three inaccurate prose descriptions of skipped malformed revisions.",
+  "source_pins": [
+    {
+      "path": "docs/app.js",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "exact": true
+    },
+    {
+      "path": "docs/app.css",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586",
+      "exact": true
+    },
+    {
+      "path": "docs/index.html",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "exact": true
+    },
+    {
+      "path": "tools/page_smoke.mjs",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "5f3bc9e84b27c233e7df63b90597de901df1802e529974853d0d32d987aeadcd",
+      "exact": true
+    },
+    {
+      "path": "tools/stock_finder_cases.mjs",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "1bc33659e56fa54c8f57e7cd8d4bfa7bc68509d799b8ef32d0ef0b7760184091",
+      "exact": true
+    },
+    {
+      "path": "tools/check_decision_inspection.mjs",
+      "reference": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "sha256": "53a02c6cb5a394b0f9605825bae04ef99b884cb27b7565abede63797f011b068",
+      "exact": true
+    },
+    {
+      "path": "tools/service_health.py",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "cda31646330bb77098a8ab8295385ab90ff706035a39a30f333cb42de9535ab3",
+      "exact": true
+    },
+    {
+      "path": "tests/test_service_health.py",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "a871356e4adff750cb90eec896df70a101c1370fa40c041eb67d75ddd7213b79",
+      "exact": true
+    },
+    {
+      "path": ".env.example",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "44d8c6d427ac39ddbdc3374ad3de56c563a5764f8bc28606f73222693e464b00",
+      "exact": true
+    },
+    {
+      "path": "docs/data.json",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+      "exact": true
+    },
+    {
+      "path": "docs/reader.json",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581",
+      "exact": true
+    },
+    {
+      "path": "docs/design-system/provenance.json",
+      "reference": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "sha256": "adadd2be64f8ee4480acfdccc91d524c6650ae41e4fd77552af800fe4ff0cec9",
+      "exact": true
+    }
+  ],
+  "local_validation": [
+    {
+      "command": "python -m pytest tests/test_service_health.py tests/test_delivery.py tests/test_docs.py -q",
+      "exit_code": 0,
+      "passed": 110,
+      "seconds": 29.4,
+      "log": {
+        "path": "/tmp/pr170-main-reconcile-tests.log",
+        "bytes": 718,
+        "sha256": "db1b488020d8c86c7938b78258ccee45dcb60988c9a9540f6acc4498be4b3159"
+      }
+    },
+    {
+      "command": "node tools/page_smoke.mjs --only reading,stock-finder --shots /tmp/pr170-main-reconcile-shots",
+      "exit_code": 0,
+      "passed": 307,
+      "total": 307,
+      "log": {
+        "path": "/tmp/pr170-main-reconcile-browser.log",
+        "bytes": 212,
+        "sha256": "2bc6514e4d4c86aa73e10f99d12d1d8f05434625edfa3a433bd6f077f616dd59"
+      }
+    },
+    {
+      "command": "python tools/service_health.py --check",
+      "exit_code": 0,
+      "result": "history walked again; both generated service report files current",
+      "log": {
+        "path": "/tmp/pr170-main-reconcile-service-check.log",
+        "bytes": 98,
+        "sha256": "4225134a8c00e827dddb598e7ca219f6a6f3aa40ab790ae672c380206097bf09"
+      }
+    }
+  ],
+  "visual_review": {
+    "scope": "Local synthetic producer fixtures, not actual public acceptance",
+    "inspected": [
+      {
+        "path": "/tmp/pr170-main-reconcile-shots/reading-first-721-dark.png",
+        "bytes": 131567,
+        "sha256": "d7b8b96d3324b6eeab4e079678bf22fdd16fdef110647f975c2792bc062cc2e2"
+      },
+      {
+        "path": "/tmp/pr170-main-reconcile-shots/stock-finder-recovered-following-390.png",
+        "bytes": 54945,
+        "sha256": "a2a07e65aeba343947525580f64bb64f56207aafee5dba5d66831559aa4e9141"
+      }
+    ],
+    "finding": null
+  },
+  "prior_head_completed_ci": {
+    "file": {
+      "path": "/tmp/pr170-05794-completed-ci.json",
+      "bytes": 12401,
+      "sha256": "2398983dfd7aaa37142ec0b2afab34224b3c08a4d6bd027e8a83982b959be55c"
+    },
+    "evidence": {
+      "evidence_name": "PR170 completed repaired head 05794 CI evidence before main reconciliation",
+      "observed_at": "2026-10-13T23:43:42.682Z",
+      "head": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "tree": "dd78ca7da3eeec9c76989cd9f1e1154cd1133c5b",
+      "base_at_test": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "test_merge": "b50d0f0e841968b1678bf47d5d594c3920470613",
+      "test_merge_tree_equal": true,
+      "test_merge_parents": [
+        "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "05794ffe7dcffe5f2a8f02f2d596072366678551"
+      ],
+      "checks": [
+        {
+          "id": 115589836606,
+          "name": "historical-runtime (central)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/job/115589836606",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:29Z",
+          "completed_at": "2026-10-13T23:32:40Z"
+        },
+        {
+          "id": 115589836281,
+          "name": "historical-runtime (stress)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/job/115589836281",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:28Z",
+          "completed_at": "2026-10-13T23:42:40Z"
+        },
+        {
+          "id": 115589756822,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/job/115589756822",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:15Z",
+          "completed_at": "2026-10-13T23:31:01Z"
+        },
+        {
+          "id": 115589756767,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/job/115589756767",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:14Z",
+          "completed_at": "2026-10-13T23:29:45Z"
+        },
+        {
+          "id": 115589756606,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/job/115589756606",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:14Z",
+          "completed_at": "2026-10-13T23:14:25Z"
+        },
+        {
+          "id": 115589756596,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976107/job/115589756596",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:14Z",
+          "completed_at": "2026-10-13T23:14:30Z"
+        },
+        {
+          "id": 115589732255,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38482968369/job/115589732255",
+          "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "started_at": "2026-10-13T23:14:10Z",
+          "completed_at": "2026-10-13T23:14:22Z"
+        }
+      ],
+      "jobs": [
+        {
+          "pr": 170,
+          "evidence_name": "repaired-page",
+          "id": 115589756822,
+          "path": "/tmp/pr170-repaired-page-115589756822.log",
+          "length": 81062,
+          "lines": [
+            "2026-10-13T23:15:00.7216949Z # Subtest: planned source clocks preserve upstream microseconds while manual event clocks remain strict",
+            "2026-10-13T23:15:00.7218344Z ok 24 - planned source clocks preserve upstream microseconds while manual event clocks remain strict",
+            "2026-10-13T23:15:46.9943038Z 378/378 chart checks passed; screenshots in /tmp/claude-0/-home-user/edc6f11d-ce23-5094-b116-41a165a13e91/scratchpad/chart/shots",
+            "2026-10-13T23:23:50.0774999Z [A] reader measurement {\"width\":1280,\"canonicalBytes\":11874754,\"readerBytes\":3147742,\"sidecarBytes\":5192350,\"transport\":\"local uncompressed Playwright route; not a Pages compression measurement\",\"firstRenderMs\":586.5,\"resources\":[{\"transferSize\":3148042,\"encodedBodySize\":3147742,\"decodedBodySize\":3147742}]}",
+            "2026-10-13T23:23:51.2905146Z [A] reader measurement {\"width\":390,\"canonicalBytes\":11874754,\"readerBytes\":3147742,\"sidecarBytes\":5192350,\"transport\":\"local uncompressed Playwright route; not a Pages compression measurement\",\"firstRenderMs\":503.5999999999767,\"resources\":[{\"transferSize\":3148042,\"encodedBodySize\":3147742,\"decodedBodySize\":3147742}]}",
+            "2026-10-13T23:29:20.9988143Z [A] -- the ticket limit, the day-2 line and the indicative entry",
+            "2026-10-13T23:30:54.3319492Z 15459/15459 page checks passed; screenshots in /tmp/shots",
+            "2026-10-13T23:30:58.9417045Z SHA256 digest of uploaded artifact zip is 616f6d5b056b2c88c66357ca45651db93e03403720bdb5690d7c116211889412"
+          ],
+          "upload_log_digest": "616f6d5b056b2c88c66357ca45651db93e03403720bdb5690d7c116211889412",
+          "api_digest_match": true,
+          "artifact_id": 11859165653
+        },
+        {
+          "pr": 170,
+          "evidence_name": "repaired-central",
+          "id": 115589836606,
+          "path": "/tmp/pr170-repaired-central-115589836606.log",
+          "length": 48694,
+          "lines": [
+            "2026-10-13T23:14:59.6923686Z \u001b[36;1m  -- \"$(command -v python)\" -I -B tools/historical_memory_supervisor.py --case \"$BENCHMARK_CASE\" \\\u001b[0m",
+            "2026-10-13T23:32:35.6849993Z {\"status\": \"PASS\", \"case\": \"central\", \"runtime_seconds\": 1054.819447}",
+            "2026-10-13T23:32:35.8249416Z {\"memory_supervisor_status\": \"PASS\", \"case\": \"central\"}",
+            "2026-10-13T23:32:35.8390883Z   path: /home/runner/work/_temp/historical-runtime-38482976125-1-central/memory-envelope.json",
+            "2026-10-13T23:32:36.6787343Z SHA256 digest of uploaded artifact is 58c76813098b2a9120a20402c547458bd20a53bdfa8c340aa8a93c9378ed4dd8"
+          ],
+          "upload_log_digest": "58c76813098b2a9120a20402c547458bd20a53bdfa8c340aa8a93c9378ed4dd8",
+          "api_digest_match": true,
+          "artifact_id": 11858874768
+        },
+        {
+          "evidence_name": "PR170 repaired native stress",
+          "head": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+          "job_id": 115589836281,
+          "path": "/tmp/pr170-repaired-stress-115589836281.log",
+          "lines": [
+            "2026-10-13T23:42:35.6010563Z {\"status\": \"PASS\", \"case\": \"stress\", \"runtime_seconds\": 1647.544299}",
+            "2026-10-13T23:42:35.6830908Z {\"memory_supervisor_status\": \"PASS\", \"case\": \"stress\"}",
+            "2026-10-13T23:42:36.5364745Z SHA256 digest of uploaded artifact is ab26a65c6b4f590d1843683e3fdc6679e9ce4da36d3c950689aa0079a736a8b0",
+            "2026-10-13T23:42:36.8997198Z Artifact download URL: https://github.com/spicyChicken59/SpicyStock/actions/runs/38482976125/artifacts/11859981685"
+          ],
+          "upload_log_digest": "ab26a65c6b4f590d1843683e3fdc6679e9ce4da36d3c950689aa0079a736a8b0",
+          "api_digest_match": true,
+          "artifact_id": 11859981685
+        }
+      ],
+      "pytest": {
+        "head": "05794ffe7dcffe5f2a8f02f2d596072366678551",
+        "job_id": 115589756767,
+        "run": 38482976125,
+        "status": "PASS",
+        "log_path": "/tmp/pr170-repaired-pytest-115589756767.log",
+        "lines": [
+          "2026-10-13T23:14:20.2321709Z ##[group]Checking out the ref",
+          "2026-10-13T23:14:21.3023612Z HEAD is now at b50d0f0e Merge 05794ffe7dcffe5f2a8f02f2d596072366678551 into 7e40716ee3bc9460854d649be249fde5e5de021f",
+          "2026-10-13T23:27:29.1618394Z 4416 passed, 1 warning in 768.16s (0:12:48)",
+          "2026-10-13T23:27:46.1174311Z 13 fixtures current",
+          "2026-10-13T23:27:48.9552809Z 21 morning fixture files current",
+          "2026-10-13T23:27:52.3874834Z 30 issuer producer fixtures current",
+          "2026-10-13T23:28:13.6355965Z 22 stop-research fixture files current",
+          "2026-10-13T23:28:38.8553067Z 40 research-outcomes fixture files current",
+          "2026-10-13T23:29:17.7145066Z 24 research observation fixture files current",
+          "2026-10-13T23:29:43.2404809Z 20 source recovery fixture files current"
+        ],
+        "log_sha256": "612bebe892e806527678a0dd6518af307ad5b141e96190d92b48e53694cc1bd3"
+      },
+      "artifacts": {
+        "run": 38482976125,
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs/38482976125/artifacts",
+        "total_count": 4,
+        "artifacts": [
+          {
+            "id": 11859981685,
+            "name": "historical-runtime-stress-38482976125-1",
+            "size_in_bytes": 26550,
+            "digest": "sha256:ab26a65c6b4f590d1843683e3fdc6679e9ce4da36d3c950689aa0079a736a8b0",
+            "expired": false,
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/artifacts/11859981685",
+            "created_at": "2026-10-13T23:42:36Z",
+            "workflow_run": {
+              "id": 38482976125,
+              "repository_id": 1352997802,
+              "head_repository_id": 1352997802,
+              "head_branch": "codex/stock-finder-164",
+              "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551"
+            }
+          },
+          {
+            "id": 11859165653,
+            "name": "page-shots",
+            "size_in_bytes": 90526465,
+            "digest": "sha256:616f6d5b056b2c88c66357ca45651db93e03403720bdb5690d7c116211889412",
+            "expired": false,
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/artifacts/11859165653",
+            "created_at": "2026-10-13T23:30:59Z",
+            "workflow_run": {
+              "id": 38482976125,
+              "repository_id": 1352997802,
+              "head_repository_id": 1352997802,
+              "head_branch": "codex/stock-finder-164",
+              "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551"
+            }
+          },
+          {
+            "id": 11858874768,
+            "name": "historical-runtime-central-38482976125-1",
+            "size_in_bytes": 26646,
+            "digest": "sha256:58c76813098b2a9120a20402c547458bd20a53bdfa8c340aa8a93c9378ed4dd8",
+            "expired": false,
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/artifacts/11858874768",
+            "created_at": "2026-10-13T23:32:36Z",
+            "workflow_run": {
+              "id": 38482976125,
+              "repository_id": 1352997802,
+              "head_repository_id": 1352997802,
+              "head_branch": "codex/stock-finder-164",
+              "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551"
+            }
+          },
+          {
+            "id": 11858676737,
+            "name": "historical-runtime-gate-38482976125-1",
+            "size_in_bytes": 540,
+            "digest": "sha256:92b39c535775190d4b63cd81e87079744d191de5dbad748dcc65e6f10fdb1aeb",
+            "expired": false,
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/artifacts/11858676737",
+            "created_at": "2026-10-13T23:14:24Z",
+            "workflow_run": {
+              "id": 38482976125,
+              "repository_id": 1352997802,
+              "head_repository_id": 1352997802,
+              "head_branch": "codex/stock-finder-164",
+              "head_sha": "05794ffe7dcffe5f2a8f02f2d596072366678551"
+            }
+          }
+        ]
+      },
+      "limits": {
+        "memory_limit_bytes": 12884901888,
+        "swap_limit_bytes": 0,
+        "total_seconds": 4500,
+        "final_receipt_reserve_seconds": 30,
+        "source_blob_sha256": "d9443b73c840ed951a144ed54af356e28774133fccc1626028047691ac331fcd"
+      },
+      "limitation": "Historical exact prior-head CI evidence after main advanced externally to bf266a6e. It never substitutes for reconciled head checks. No artifact binaries downloaded or inspected; native limits are source constants and memory supervisor PASS is observed log evidence.",
+      "raw_log_proofs": [
+        {
+          "path": "/tmp/pr170-repaired-page-115589756822.log",
+          "bytes": 83708,
+          "sha256": "238a9db2281387e2b0311d5e2452f7b8cb5d7181eda9792273c47ed74998a6f7"
+        },
+        {
+          "path": "/tmp/pr170-repaired-central-115589836606.log",
+          "bytes": 49657,
+          "sha256": "e92eebe442d03284335aa3b1f16824bcb4e3797b646b00beb91e61c874c19093"
+        },
+        {
+          "path": "/tmp/pr170-repaired-stress-115589836281.log",
+          "bytes": 49749,
+          "sha256": "a70ce50d314449445355d97f2433a089bed78e7d34923352f73112c0ec3f5d05"
+        },
+        {
+          "path": "/tmp/pr170-repaired-pytest-115589756767.log",
+          "bytes": 55725,
+          "sha256": "612bebe892e806527678a0dd6518af307ad5b141e96190d92b48e53694cc1bd3"
+        }
+      ]
+    },
+    "limitation": "All seven checks passed at prior head05794 and old main7e. These do not establish checks for the reconciled head."
+  },
+  "merged_service_review": {
+    "file": {
+      "path": "/tmp/pr169-174f47c0-review.json",
+      "bytes": 12991,
+      "sha256": "4d209b4d51f3a616186f731392ddc6fd8941aab8379e0dc74c005622366c3fe5"
+    },
+    "evidence": {
+      "schema_version": 1,
+      "reviewed_at": "2026-10-13T23:26:36.893163+00:00",
+      "pr": "https://github.com/spicyChicken59/SpicyStock/pull/169",
+      "head": "174f47c0e3cc1a1fdb7b9a4d9215b07b56c9b548",
+      "tree": "77d2edd3f6b274eff99474d7296ba748c508d527",
+      "prior_head": "9e1e6afb3e691f91f74aaded5930c1981863ed36",
+      "prior_tree": "b510fca3307ec4a018db9162d5e6766fba015869",
+      "worktree": "/tmp/SpicyStock-pr169-174f47c0-review",
+      "scope": "Read-only exact delta review of external-builder successor head; local /tmp worktree, harness and receipt only.",
+      "delta": {
+        "changed_paths": [
+          "CLAUDE.md"
+        ],
+        "total_tracked_entries": 20050,
+        "identical_other_entries": 20049,
+        "all_other_git_modes_types_and_blob_ids_equal": true,
+        "CLAUDE_prior_entry": "100644 blob 070ebd4f5a4ed23d4ed6c169796b4fe2ac92a1fe",
+        "CLAUDE_current_entry": "100644 blob 7b41c08b029c3dc0f86761999ff449d0e32f21b7"
+      },
+      "source_pins": {
+        "CLAUDE.md": {
+          "sha256": "ea301338eec85c8630a61a804f7117585669ed556ebf57c6c637f6376ece2031",
+          "git_entry": "100644 blob 7b41c08b029c3dc0f86761999ff449d0e32f21b7"
+        },
+        "README.md": {
+          "sha256": "f97ee7af882a91a423e2a9a53f66b6755bc680f215f3072e83c17db5d57e3ca2",
+          "git_entry": "100644 blob 11c7ba1e294dc8f3c96735f764089a0ca9f6b5fa"
+        },
+        "docs/input-truthfulness/2026-10-13-service-health.md": {
+          "sha256": "adb0632618eb2a1c318aa6951825447992b6ca4987434e948044d6cf42a5a4b8",
+          "git_entry": "100644 blob 6662eefdf5a66d49116b9bdb55fc096e31b525b4"
+        },
+        "docs/input-truthfulness/README.md": {
+          "sha256": "1ddfdb17e275a419e52988702199b415ee27758eba983ab482003ffbcd0b95d5",
+          "git_entry": "100644 blob 997804e1e3875e315ea257d3d7eca9b05552621e"
+        },
+        "tools/service_health.py": {
+          "sha256": "cda31646330bb77098a8ab8295385ab90ff706035a39a30f333cb42de9535ab3",
+          "git_entry": "100644 blob 8b88780ffff270ca74b27ec02397084c8993ea14"
+        },
+        "src/delivery.py": {
+          "sha256": "4ef230e2210263275549d21d35a89d3a022c4a6ca023f172665820e4e1efa487",
+          "git_entry": "100644 blob 130904f74404ca29fc4b27d26bd87fb1de6371ff"
+        },
+        "tests/test_service_health.py": {
+          "sha256": "a871356e4adff750cb90eec896df70a101c1370fa40c041eb67d75ddd7213b79",
+          "git_entry": "100644 blob 2b9e57b77fc5fcb556902461610428b621ccfc13"
+        },
+        "docs/data.json": {
+          "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+          "git_entry": "100644 blob e3fc4bfecc1c559bc70b70d39cd0f7aedb214dec"
+        },
+        "docs/input-truthfulness/2026-10-13-service-health-evidence/service-health.json": {
+          "sha256": "57e6ebd25d224cedf38cbcc8bc8bd8152ce27ce2523a5d6e62044b327fcf95fe",
+          "git_entry": "100644 blob 2cbf147a09e108deef5d38ac524a84a46ca49f04"
+        },
+        "docs/input-truthfulness/2026-10-13-service-health-evidence/service-health.md": {
+          "sha256": "814ca420f364fa9a64165fd677670627187743488610ed0b04150b76ce2b6731",
+          "git_entry": "100644 blob 11bde5218ab509e2f6d566107dc3cdefc858c40e"
+        }
+      },
+      "executed_now": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 /workspace/.venv-spicystock/bin/python /tmp/pr169-174f47c0-bounded-review.py",
+        "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+        "cases": [
+          {
+            "name": "valid_earlier_only_control",
+            "pass": true,
+            "synthetic": true,
+            "base_record_session": "2026-10-12",
+            "input_history_newest_first": [
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ],
+            "skipped": [],
+            "published": true,
+            "pending": false,
+            "publications": [
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ]
+          },
+          {
+            "name": "valid_earlier_unversioned_delivery_later",
+            "pass": true,
+            "synthetic": true,
+            "base_record_session": "2026-10-12",
+            "input_history_newest_first": [
+              "cccccccccccccccccccccccccccccccccccccccc",
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ],
+            "skipped": [
+              {
+                "commit": "cccccccccccccccccccccccccccccccccccccccc",
+                "reason": "cccccccc:docs/data.json: run.delivery sits beside rules that archive no delivery rule to hold it to"
+              }
+            ],
+            "published": true,
+            "pending": false,
+            "publications": [
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ]
+          },
+          {
+            "name": "valid_earlier_missing_delivery_later",
+            "pass": true,
+            "synthetic": true,
+            "base_record_session": "2026-10-12",
+            "input_history_newest_first": [
+              "cccccccccccccccccccccccccccccccccccccccc",
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ],
+            "skipped": [
+              {
+                "commit": "cccccccccccccccccccccccccccccccccccccccc",
+                "reason": "cccccccc:docs/data.json: run.delivery does not re-derive from the archived slots: run.delivery is missing"
+              }
+            ],
+            "published": true,
+            "pending": false,
+            "publications": [
+              "dddddddddddddddddddddddddddddddddddddddd"
+            ]
+          }
+        ],
+        "passed": 3,
+        "total": 3,
+        "script": {
+          "path": "/tmp/pr169-174f47c0-bounded-review.py",
+          "bytes": 7886,
+          "sha256": "e82fd5dee377d3f2f19136ae750608538eb6eea5e3cbb0ed86d32ab43244180b"
+        },
+        "log": {
+          "path": "/tmp/pr169-174f47c0-bounded-review.log",
+          "sha256": "9777358f670980a78e9787cf3275390c24f88e95c26564db4fe5aa10831e7964"
+        }
+      },
+      "retained_prior_evidence": {
+        "receipt": {
+          "path": "/tmp/pr169-9e1e6afb-review.json",
+          "bytes": 46800,
+          "sha256": "1bb3088c5f9d9ad728b0f80ce853a2108268b76c94c2aeef559714c381326b5c"
+        },
+        "applies_by_source_equivalence": true,
+        "counts": {
+          "focused_tests": 110,
+          "independent_runtime_cases": 29,
+          "expected_baseline_failures": 13,
+          "independent_docs_report_checks": 15,
+          "artifact_history_replay": "passed"
+        },
+        "not_rerun_here": true,
+        "artifacts_integrity": [
+          {
+            "path": "/tmp/pr169-9e1e6afb-focused.log",
+            "sha256": "4e687609a41ace2ba2dc487a8673afca5f5234399934dba816f897cad60b9c40",
+            "bytes": 731,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-artifact-check.log",
+            "sha256": "4225134a8c00e827dddb598e7ca219f6a6f3aa40ab790ae672c380206097bf09",
+            "bytes": 98,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-independent-cases.py",
+            "sha256": "6fcc96178ca7b848fcb8bc0e1aad555a2c1ff03917ee5c65c19e6589db893b17",
+            "bytes": 13810,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-independent-cases.json",
+            "sha256": "b516927ae05e4130f7e207a17adcb3ed3322f0f72df62c830fc4cc060474329a",
+            "bytes": 37991,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-independent-cases.log",
+            "sha256": "e98a42542158a509dc5f4330ed2fd73bb44fc6919f9bbb2d91585604c616a672",
+            "bytes": 1966,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-independent-initial-wording.json",
+            "sha256": "d9ec248c0f2acdd0d9fd43880053a54e02f93d71badfbd74d4338e3f1169b3ca",
+            "bytes": 45852,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-independent-initial-wording.log",
+            "sha256": "674d05f252daa2827b164990b6c537bac4ecb08b355d3ae4c0507edf6c857a95",
+            "bytes": 1967,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-unversioned-proof.py",
+            "sha256": "8d173ab368beac8e8ab41b913d806466c782f7347577a558a51c2e3239259571",
+            "bytes": 1830,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-unversioned-proof.json",
+            "sha256": "0803781c5695b43255ee3fe9b4401f4b21cf4845e62f4c7ddbd61cf95f4a089e",
+            "bytes": 6527,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-unversioned-proof.log",
+            "sha256": "e9b25ae0a64e08602c8c4a25b028039717129cc29534ebbf08fddbb9cb718370",
+            "bytes": 5977,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-doc-review.py",
+            "sha256": "39f5c759d271947a312bb0b3fd529e508843c8f10c1c7f1e15be21cbf86846fe",
+            "bytes": 9460,
+            "intact": true
+          },
+          {
+            "path": "/tmp/pr169-9e1e6afb-doc-review.json",
+            "sha256": "fcdf1f3de7c81ca282b9e2aac58122ef5c6db934b0a51aad9e82848382d85604",
+            "bytes": 16047,
+            "intact": true
+          }
+        ]
+      },
+      "findings": [
+        {
+          "priority": "P3",
+          "title": "Qualify the claim that a skipped revision makes its session unpublished",
+          "locations": [
+            "CLAUDE.md new PR169 checkpoint Changed paragraph",
+            "README.md service-health paragraph",
+            "docs/input-truthfulness/2026-10-13-service-health.md opening paragraph"
+          ],
+          "new_checkpoint_quote": "block beside rules that archive no rule, are set aside by name, the session\nthen reading unpublished;",
+          "reproduction": "Both a later unversioned delivery block and a later missing delivery block are set aside while an earlier valid publication keeps the same session published=true, pending=false.",
+          "suggested_correction": "The offending commit is set aside and does not count as a publication. Its session is unpublished only when it has no other readable publication.",
+          "impact": "Documentation-only failure-mode wording. No new runtime defect, production corruption or change of strategy behavior is claimed."
+        }
+      ],
+      "checks_snapshot": {
+        "metadata": {
+          "path": "/tmp/pr169-new-head-174f47c0.json",
+          "bytes": 10857,
+          "sha256": "bb6d7be3a086bc9ed7a25014a7bb49ad30dbc7447f8251c3d81b62b1338b2422"
+        },
+        "observed_at": "2026-10-13T23:23:10.930Z",
+        "checks": [
+          {
+            "id": 115592743065,
+            "name": "historical-runtime (${{ matrix.case }})",
+            "status": "completed",
+            "conclusion": "skipped",
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483858638/job/115592743065"
+          },
+          {
+            "id": 115592670904,
+            "name": "pytest",
+            "status": "in_progress",
+            "conclusion": null,
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483858638/job/115592670904"
+          },
+          {
+            "id": 115592670873,
+            "name": "page",
+            "status": "in_progress",
+            "conclusion": null,
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483858638/job/115592670873"
+          },
+          {
+            "id": 115592670834,
+            "name": "gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483858623/job/115592670834"
+          },
+          {
+            "id": 115592670671,
+            "name": "historical-runtime-gate",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483858638/job/115592670671"
+          },
+          {
+            "id": 115592652780,
+            "name": "gitleaks",
+            "status": "completed",
+            "conclusion": "success",
+            "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38483853373/job/115592652780"
+          }
+        ],
+        "interpretation": "Docs-only historical-runtime-gate succeeded; native matrix was skipped, not passed. Pytest/page were in progress at this saved snapshot. Root owns later exact-head gate monitoring and merge decisions."
+      },
+      "clean_before": true,
+      "clean_after": true,
+      "source_hashes_unchanged": true,
+      "verdict": {
+        "runtime_delta": "none",
+        "runtime_reproduction": "3/3 pass",
+        "documentation": "remaining P3 repeated in new checkpoint",
+        "merge_approval_claimed": false
+      },
+      "limits": [
+        "This verifies exact 174f47c0 only, not later commits or current production.",
+        "Retained prior suites are source-equivalent evidence, not new executions at this head.",
+        "No current GitHub check reread, native runtime execution, browser run or public production test was performed for this documentation-only delta.",
+        "New checkpoint claims about external reviewer counts, API run times and full author suite were read but not independently re-executed by this bounded review.",
+        "Only synthetic revision copies were tested; no actual malformed production revision is claimed.",
+        "No source, index, PR, comment or remote branch writes; no provider calls or workflow dispatch. Public exact-commit Git fetch was read-only network access."
+      ],
+      "independent_review": {
+        "path": "/tmp/pr169-174f47c0-independent-prose-review.json",
+        "sha256": "0931484eba808505893f7f7c1b2520620faa5e83fce4b7c4e002f8511337180f",
+        "result": "Confirms CLAUDE-only delta and remaining P3 repeated in checkpoint; source/report bytes equivalent; no additional runtime finding. No separate execution or hosted claims by this reviewer."
+      }
+    },
+    "disposition": "Three reviewed prose phrases corrected in README, current dated report and CLAUDE. Runtime and generated JSON/Markdown evidence unchanged."
+  },
+  "main_deployment": {
+    "file": {
+      "path": "/tmp/pr169-main-deployment-evidence.json",
+      "bytes": 7598,
+      "sha256": "e984816f34ab4dbf4ba9ddbce543f184034d98806c58648357751655807d99e8"
+    },
+    "evidence": {
+      "evidence_name": "Post-PR169 main deployment evidence",
+      "observed_at": "2026-10-13T23:41:15.694Z",
+      "sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+      "tree": "77d2edd3f6b274eff99474d7296ba748c508d527",
+      "runs": {
+        "evidence_name": "Post-PR169 main workflow status",
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/runs?head_sha=bf266a6e8dfa026ee60ca729c59573d497547b83&per_page=30",
+        "observed_at": "2026-10-13T23:40:50.108Z",
+        "runs": [
+          {
+            "id": 38485556648,
+            "name": "pages build and deployment",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+            "created_at": "2026-10-13T23:39:22Z",
+            "updated_at": "2026-10-13T23:40:09Z",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485556648"
+          },
+          {
+            "id": 38485531013,
+            "name": "pages build and deployment",
+            "status": "completed",
+            "conclusion": "cancelled",
+            "head_sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+            "created_at": "2026-10-13T23:39:06Z",
+            "updated_at": "2026-10-13T23:39:26Z",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485531013"
+          },
+          {
+            "id": 38485532024,
+            "name": "Secret scan",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+            "created_at": "2026-10-13T23:39:06Z",
+            "updated_at": "2026-10-13T23:39:26Z",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532024"
+          },
+          {
+            "id": 38485532032,
+            "name": "Tests",
+            "status": "in_progress",
+            "conclusion": null,
+            "head_sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+            "created_at": "2026-10-13T23:39:06Z",
+            "updated_at": "2026-10-13T23:39:11Z",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532032"
+          },
+          {
+            "id": 38485532089,
+            "name": "Publish committed dashboard",
+            "status": "completed",
+            "conclusion": "success",
+            "head_sha": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+            "created_at": "2026-10-13T23:39:06Z",
+            "updated_at": "2026-10-13T23:39:32Z",
+            "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532089"
+          }
+        ]
+      },
+      "jobs": [
+        {
+          "evidence_name": "Post-PR169 main job status",
+          "run": 38485532089,
+          "observed_at": "2026-10-13T23:41:03.476Z",
+          "jobs": [
+            {
+              "id": 115598136072,
+              "name": "publish",
+              "status": "completed",
+              "conclusion": "success",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532089/job/115598136072",
+              "started_at": "2026-10-13T23:39:10Z",
+              "completed_at": "2026-10-13T23:39:31Z"
+            }
+          ]
+        },
+        {
+          "evidence_name": "Post-PR169 main job status",
+          "run": 38485556648,
+          "observed_at": "2026-10-13T23:41:03.594Z",
+          "jobs": [
+            {
+              "id": 115598237193,
+              "name": "build",
+              "status": "completed",
+              "conclusion": "success",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485556648/job/115598237193",
+              "started_at": "2026-10-13T23:39:29Z",
+              "completed_at": "2026-10-13T23:39:45Z"
+            },
+            {
+              "id": 115598344070,
+              "name": "deploy",
+              "status": "completed",
+              "conclusion": "success",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485556648/job/115598344070",
+              "started_at": "2026-10-13T23:39:49Z",
+              "completed_at": "2026-10-13T23:40:08Z"
+            },
+            {
+              "id": 115598344104,
+              "name": "report-build-status",
+              "status": "completed",
+              "conclusion": "success",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485556648/job/115598344104",
+              "started_at": "2026-10-13T23:39:48Z",
+              "completed_at": "2026-10-13T23:39:51Z"
+            }
+          ]
+        },
+        {
+          "evidence_name": "Post-PR169 main job status",
+          "run": 38485532032,
+          "observed_at": "2026-10-13T23:41:03.560Z",
+          "jobs": [
+            {
+              "id": 115598135016,
+              "name": "pytest",
+              "status": "in_progress",
+              "conclusion": null,
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532032/job/115598135016",
+              "started_at": "2026-10-13T23:39:10Z",
+              "completed_at": null
+            },
+            {
+              "id": 115598135372,
+              "name": "page",
+              "status": "in_progress",
+              "conclusion": null,
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532032/job/115598135372",
+              "started_at": "2026-10-13T23:39:10Z",
+              "completed_at": null
+            },
+            {
+              "id": 115598136453,
+              "name": "historical-runtime (${{ matrix.case }})",
+              "status": "completed",
+              "conclusion": "skipped",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532032/job/115598136453",
+              "started_at": "2026-10-13T23:39:07Z",
+              "completed_at": "2026-10-13T23:39:07Z"
+            },
+            {
+              "id": 115598136852,
+              "name": "historical-runtime-gate",
+              "status": "completed",
+              "conclusion": "skipped",
+              "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38485532032/job/115598136852",
+              "started_at": "2026-10-13T23:39:07Z",
+              "completed_at": "2026-10-13T23:39:07Z"
+            }
+          ]
+        }
+      ],
+      "publisher": {
+        "path": "/tmp/pr169-main-publisher-115598136072.log",
+        "job": 115598136072,
+        "lines": [
+          "2026-10-13T23:39:18.5911941Z Updating files:  86% (17243/20050)",
+          "2026-10-13T23:39:18.6036671Z Updating files:  87% (17444/20050)",
+          "2026-10-13T23:39:18.6158076Z Updating files:  88% (17644/20050)",
+          "2026-10-13T23:39:18.6298599Z Updating files:  89% (17845/20050)",
+          "2026-10-13T23:39:18.6434949Z Updating files:  90% (18045/20050)",
+          "2026-10-13T23:39:18.6560876Z Updating files:  91% (18246/20050)",
+          "2026-10-13T23:39:18.6687372Z Updating files:  92% (18446/20050)",
+          "2026-10-13T23:39:18.6821208Z Updating files:  93% (18647/20050)",
+          "2026-10-13T23:39:18.7103257Z Updating files:  94% (18847/20050)",
+          "2026-10-13T23:39:18.7461666Z Updating files:  95% (19048/20050)",
+          "2026-10-13T23:39:18.7625084Z Updating files:  96% (19248/20050)",
+          "2026-10-13T23:39:18.8496984Z Updating files:  97% (19449/20050)",
+          "2026-10-13T23:39:18.8745368Z Updating files:  98% (19649/20050)",
+          "2026-10-13T23:39:18.8983816Z Updating files:  99% (19850/20050)",
+          "2026-10-13T23:39:18.8984361Z Updating files: 100% (20050/20050)",
+          "2026-10-13T23:39:18.8985176Z Updating files: 100% (20050/20050), done.",
+          "2026-10-13T23:39:22.6008219Z Pages build requested; checking the 41 files a reader loads.",
+          "2026-10-13T23:39:28.8391179Z Verified: every one of the 41 public files matches committed main."
+        ]
+      },
+      "limitation": "Publisher observed 41 core files; dated study additions require independent HTTP inventory verification. Main pytest/page pending in this receipt; native/gate skipped on merge. No browser verification or binary artifact download."
+    },
+    "limitation": "External169 deployment proof, not170 acceptance or a complete browser review."
+  },
+  "required_next": [
+    "Independent exact committed reconciliation review",
+    "Publish to existing PR170 with expected prior-head lease",
+    "Normal required checks on the reconciled exact head",
+    "Merge only reviewed checked head then verify actual Pages bytes and browser behavior",
+    "Reconcile combined morning workflow preparation after this release"
+  ],
+  "limitations": [
+    "No mutation suite repeated because stock-finder runtime is byte-identical to reviewed05794; prior mutation proof is retained.",
+    "No service calculation, fixture, strategy, data, receipt, design-system or configuration change.",
+    "No actual public170 acceptance or timely quote/trade result claimed."
+  ]
+}

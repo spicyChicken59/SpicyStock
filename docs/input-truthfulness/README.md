@@ -38,6 +38,17 @@ recovery at the next open; reader calls stayed within names times attempts, the
 empty balance stopping them after one. `--check` runs it again and holds both
 files. Everything is injected: it is not a live provider, a runner or GitHub.
 
+[13 October 2026: the service, read against each publication's own slots](2026-10-13-service-health.md)
+closes #163: `service_health_v3` reads a publication whose rules archive the
+evening slots against those slots, once its `run.delivery` re-derives from
+them, and a record from before the rule against the current policy's, saying
+which. Over the history it moves nothing (the 12 October publication, the only
+one under the rule, archived the current slots). Through 13 October: 22 of 23
+due sessions published, all 22 before the next open, the 13 October session
+pending at the clock, latency median 283.4 minutes by the landing commit, 15 of 22
+after the retry slot. The 12 October reading is kept as written (v2, and v1
+under its `v1/`); `--check` holds the 13 October files.
+
 [12 October 2026: the service, read off the retained publications](2026-10-12-service-health.md)
 starts #111's accounting: `tools/service_health.py` walks the commits that put
 each publication and companion receipt on `main` and reads, per expected XNYS

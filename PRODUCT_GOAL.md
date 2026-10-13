@@ -490,3 +490,12 @@ limit, with 307 local reading/finder checks passing. Its
 preserves the original failed checks separately. Fresh review, hosted gates
 and actual public verification are still required. The following milestone
 will pair research quote reload with the repository-owner workflow handoff.
+
+PR #169 subsequently merged as `bf266a6e`. The existing stock-finder PR #170
+is reconciled over it, preserving its reviewed behavior and correcting the
+service report's description of a skipped malformed revision. Its
+[reconciliation evidence](release-evidence/2026-10-13-stock-finder/main-reconciliation.json)
+records 110 affected Python/documentation tests, 307 browser checks and a
+fresh service-history replay. Completed checks from the previous head are
+retained separately; the reconciled head still needs final review, fresh
+required gates and actual public acceptance.

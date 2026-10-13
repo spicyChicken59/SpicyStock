@@ -1,0 +1,261 @@
+{
+  "schema": "spicystock-pr170-compact-exact-commit-review-v1",
+  "recorded_at": "2026-10-13T23:12:52.775111+00:00",
+  "status": "PASS_EXACT_COMMIT",
+  "head": "0165b19f7d795a25ea96f7b8c4ba7737cf942d1a",
+  "tree": "dd78ca7da3eeec9c76989cd9f1e1154cd1133c5b",
+  "parent": "0e2a681a46aa76f0c11da19d1af2c508d7522ad5",
+  "worktree": "/workspace/SpicyStock-stock-finder-fix",
+  "clean_before": true,
+  "clean_after": true,
+  "findings": [],
+  "verdict": "No blocking findings. Exact0165b19f preserves independently verified current-source repair; suitable to update existing PR170 for fresh required hosted checks. No merge/deploy approval or public acceptance implied.",
+  "changed_paths": [
+    "CLAUDE.md",
+    "PRODUCT_GOAL.md",
+    "docs/app.css",
+    "release-evidence/2026-10-13-stock-finder/compact-repair.json",
+    "tools/stock_finder_cases.mjs"
+  ],
+  "source_identities": [
+    {
+      "path": "docs/app.css",
+      "base_sha256": "c7e8fe2b6620abc811d838c4acf8a7a6778f4704e9f4bcac7cca830169788861",
+      "current_sha256": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586",
+      "unchanged": false
+    },
+    {
+      "path": "tools/stock_finder_cases.mjs",
+      "base_sha256": "71ec812164c3f0059dbbafdb86348e6f89c47f0da0f6fafce41f37aef1c3767f",
+      "current_sha256": "1bc33659e56fa54c8f57e7cd8d4bfa7bc68509d799b8ef32d0ef0b7760184091",
+      "unchanged": false
+    },
+    {
+      "path": "tools/reading_cases.mjs",
+      "base_sha256": "c742cc8649a0116dfcdfaeb9ce42050d21391135daf3696845fdce701df4e179",
+      "current_sha256": "c742cc8649a0116dfcdfaeb9ce42050d21391135daf3696845fdce701df4e179",
+      "unchanged": true
+    },
+    {
+      "path": "docs/app.js",
+      "base_sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "current_sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "unchanged": true
+    },
+    {
+      "path": "docs/index.html",
+      "base_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "current_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "unchanged": true
+    },
+    {
+      "path": ".env.example",
+      "base_sha256": "44d8c6d427ac39ddbdc3374ad3de56c563a5764f8bc28606f73222693e464b00",
+      "current_sha256": "44d8c6d427ac39ddbdc3374ad3de56c563a5764f8bc28606f73222693e464b00",
+      "unchanged": true
+    },
+    {
+      "path": "docs/design-system/provenance.json",
+      "base_sha256": "adadd2be64f8ee4480acfdccc91d524c6650ae41e4fd77552af800fe4ff0cec9",
+      "current_sha256": "adadd2be64f8ee4480acfdccc91d524c6650ae41e4fd77552af800fe4ff0cec9",
+      "unchanged": true
+    }
+  ],
+  "source_diff_review": "Single existing breakpoint declaration removes inherited row gap while preserving horizontal token; test width list adds721/768/820. Existing reading height assertions, font sizes, copy and44px target unchanged.",
+  "proof_review": {
+    "committed_receipt": {
+      "path": "/workspace/SpicyStock-stock-finder-fix/release-evidence/2026-10-13-stock-finder/compact-repair.json",
+      "bytes": 152087,
+      "sha256": "e3f25b2393694f1ed66222f7c156c31e76d2d83e8792b3eea1453fa71a9f8e66"
+    },
+    "artifact_hashes_verified": 14,
+    "artifacts": [
+      {
+        "context": "receipt.hosted_failure.log",
+        "path": "/tmp/pr170-page-failed-115582440825.log",
+        "sha256": "325ba9770da6d038ea0462df08ef3eeeeba36b37adab0eb6249d47c495deaf17"
+      },
+      {
+        "context": "receipt.before.log",
+        "path": "/tmp/pr170-compact-before.log",
+        "sha256": "0ba7a016150e56df42d8fc101eb14e69582491c7f64562d4545aeb4c03805090"
+      },
+      {
+        "context": "receipt.after.log",
+        "path": "/tmp/pr170-compact-after.log",
+        "sha256": "8a04b54f35e672c04acba74ccdedc8d21bb1b1b2180bd1a313076b8dc704de5f"
+      },
+      {
+        "context": "receipt.specificity.log",
+        "path": "/tmp/pr170-compact-unrelated.log",
+        "sha256": "0d8479292da73da241b6e419af43ac71a2fdecf456813f82a15d0281d2dba67a"
+      },
+      {
+        "context": "receipt.independent_diagnosis.receipt",
+        "path": "/tmp/pr170-width-independent/review.json",
+        "sha256": "ec97e2f0cc2bd4d343bea1353ad9e678641e3815b08a9c483b4d83aedcdac48a"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.inspected_screenshots.0",
+        "path": "/tmp/pr170-width-independent/before-721-dark.png",
+        "sha256": "d27479ee5fc8831b60cbf604455bb55eb80fbdad167994c0f986c3ffd519e1e7"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.inspected_screenshots.1",
+        "path": "/tmp/pr170-width-independent/after-721-dark.png",
+        "sha256": "ceea1678ee722da1b7ba40ddddf742b6e63f7c82e07b659b799a87ebbeea3584"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.inspected_screenshots.2",
+        "path": "/tmp/pr170-width-independent/after-820-light.png",
+        "sha256": "c3dbac34a6c98b0fff3983b010241aeb749c3bf9c5c82ef7bb8dc6b00b25661e"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.artifacts.0",
+        "path": "/tmp/pr170-width-independent/runner.mjs",
+        "sha256": "43c0bf413ea1b83d459b83964ad2ebf4a8234ff5c55f670bbbe228556101e5db"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.artifacts.1",
+        "path": "/tmp/pr170-width-independent/result.json",
+        "sha256": "7871fbc924af776ac508afd9692284723a227109de2b1c7ece4c02916bb70bc3"
+      },
+      {
+        "context": "receipt.independent_diagnosis.evidence.artifacts.2",
+        "path": "/tmp/pr170-width-independent/run.log",
+        "sha256": "6e774baf543de4c99a177377756d1c2ac8f22ea6d2b898c5d69e472b11a036aa"
+      },
+      {
+        "context": "receipt.root_visual_review.0",
+        "path": "/tmp/pr170-compact-before/reading-first-721-dark.png",
+        "sha256": "eccb61ec7aac5e76e4f338d47132cc75f5e3a5f2ddf02e2ef9d33e0801277386"
+      },
+      {
+        "context": "receipt.root_visual_review.1",
+        "path": "/tmp/pr170-compact-after/reading-first-721-dark.png",
+        "sha256": "d7b8b96d3324b6eeab4e079678bf22fdd16fdef110647f975c2792bc062cc2e2"
+      },
+      {
+        "context": "receipt.root_visual_review.2",
+        "path": "/tmp/pr170-compact-after/reading-first-820-light.png",
+        "sha256": "4ada9394e29ebb417048477cea0f8e2ffeb23f6b83b014f32baac1b69e1ec574"
+      }
+    ],
+    "independent_embedded_receipt_matches": true,
+    "before": {
+      "checks": 141,
+      "failed": 6
+    },
+    "after": {
+      "checks": 307,
+      "failed": 0
+    },
+    "unrelated_control": {
+      "checks": 141,
+      "failed": 0
+    },
+    "execution_note": "These root-run results were checked for consistent counts and retained artifact/source identity, not rerun by this reviewer."
+  },
+  "independent_current_source": {
+    "receipt": {
+      "path": "/tmp/pr170-width-current/review.json",
+      "bytes": 23664,
+      "sha256": "4c2ae121e5c53c00a7e30545af4ff852ded948bb2e04da815ef987609a03d6f9"
+    },
+    "cases": 8,
+    "source_matches_exact_commit": true,
+    "geometry": [
+      {
+        "width": 820,
+        "theme": "dark",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 820,
+        "theme": "light",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 768,
+        "theme": "dark",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 768,
+        "theme": "light",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 721,
+        "theme": "dark",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 721,
+        "theme": "light",
+        "orientation_height": 86,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 390,
+        "theme": "dark",
+        "orientation_height": 117,
+        "exclusive_max": 180,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      },
+      {
+        "width": 1280,
+        "theme": "dark",
+        "orientation_height": 44,
+        "exclusive_max": 90,
+        "button_height": 44,
+        "keyboard_opens_chooser": true
+      }
+    ],
+    "visual_review": [
+      {
+        "path": "/tmp/pr170-width-current/current-721-dark.png",
+        "bytes": 112402,
+        "sha256": "ceea1678ee722da1b7ba40ddddf742b6e63f7c82e07b659b799a87ebbeea3584",
+        "notes": "Actual source capture inspected: compact readable tablet guidance, unchanged44px control, no overlap or clipping."
+      },
+      {
+        "path": "/tmp/pr170-width-current/current-820-light.png",
+        "bytes": 122848,
+        "sha256": "0449e24b17511445c2dc62522429c9ab4ebf21e1629d16c483368b26b5883513",
+        "notes": "Actual source capture inspected: compact readable tablet guidance, unchanged44px control, no overlap or clipping."
+      }
+    ],
+    "execution_note": "Executed against frozen corrected source before documentation commit; exact source hashes now match committed0165b19f."
+  },
+  "documentation_review": [
+    "CLAUDE accurately retains the original hosted15426/15432 failure, six reproduced tablet cases and94px versus strict<90px rule. It distinguishes repair evidence from pending corrected-head gates and public acceptance.",
+    "PRODUCT_GOAL explicitly keeps PR170 unreleased, preserves original failures and names the next independently prepared milestone.",
+    "README and .env.example remain unchanged and accurate for the spacing-only repair; all unrelated paths including design-system and fixture objects unchanged according to complete five-path diff."
+  ],
+  "docs_tests": "Root-reported40 docs pass is recorded in committed receipt; no additional docs/browser suite repeated here.",
+  "gitleaks": "Root reports successful complete two-commit scan; not rerun or counted as reviewer execution.",
+  "limits": [
+    "Exact committed source and evidence review only; native GitHub gates must run again on the updated PR head.",
+    "Eight current-source geometry/keyboard cases and earlier independent original/injected diagnosis are local producer-fixture evidence, not public deployment evidence.",
+    "No source/index/remote writes by reviewer; all test processes finished."
+  ]
+}
