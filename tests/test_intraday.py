@@ -572,8 +572,9 @@ def test_minutes_outside_the_daily_bars_range_are_not_used(rows, bar):
 
 def test_minutes_inside_the_bars_range_by_its_own_rounding_are_used():
     rows = [(0, 99.0, 99.5, 98.9, 99.4), (5, 99.6, 100.1, 99.5, 100.0)]
-    # the bar arrives with the feed's own decimals; the minutes were rounded once on the way in
-    assert intraday.resolve(LEVELS, obj(rows), day(99.0, 100.100004, 98.899996, 100.0))[0] == intraday.FILLED
+    # the bar arrives with the feed's own decimals, a hair inside the minutes' rounded range;
+    # the minutes were rounded once on the way in, and the bar is read at the same four places
+    assert intraday.resolve(LEVELS, obj(rows), day(99.0, 100.099996, 98.900004, 100.0))[0] == intraday.FILLED
 
 
 def test_a_stop_the_daily_bar_reached_that_no_minute_shows_is_another_account():
