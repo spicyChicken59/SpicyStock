@@ -199,8 +199,25 @@ def test_the_change_is_the_first_late_run_in_slot_order_and_the_last_prompt_befo
     assert c["last_prompt_before"]["path"] == SCAN and c["last_prompt_before"]["delay_minutes"] == 4.3
     assert c["since"] == {"delay_minutes": {"n": 3, "min": 10.0, "median": 60.0, "max": 152.2}, "prompt": 1,
                           "beyond": {"15": 2, "60": 1, "240": 0, "360": 0}}
+    # the workflow's own counts: 15.0 and 60.0 are not beyond 15 and 60
+    assert result["workflows"][EVENING]["beyond"] == {"15": 2, "60": 1, "240": 0, "360": 0}
     # a run exactly an hour late is not the change
     assert sr.build(snap(runs[:2] + runs[3:4], tables, fetched="2026-09-29T00:00:00+00:00"))["change"] is None
+    # a run exactly fifteen minutes late is prompt, and can be the last prompt run before the change
+    only = sr.build(snap([runs[0], runs[2]], tables, fetched="2026-09-29T00:00:00+00:00"))["change"]
+    assert only["last_prompt_before"]["delay_minutes"] == 15.0 and only["since"]["prompt"] == 0
+
+
+def test_the_change_is_read_in_slot_order_never_in_creation_order():
+    tables = {SCAN: [version("2026-09-01T00:00:00+00:00", ["0 6 * * 1"])],
+              MORNING: [version("2026-09-01T00:00:00+00:00", ["0 8 * * 1"])]}
+    # the 06:00 slot was created at 12:40, after the 08:00 slot's run at 09:30: both late,
+    # and the earlier slot is the change though its run was created second
+    runs = [run(1, MORNING, "2026-09-21T09:30:00Z", "Morning cron 0 8 * * 1"),     # 90.0
+            run(2, SCAN, "2026-09-21T12:40:00Z")]                                 # 400.0
+    c = sr.build(snap(runs, tables, fetched="2026-09-22T00:00:00+00:00"))["change"]
+    assert (c["first_late"]["path"], c["first_late"]["slot"], c["first_late"]["delay_minutes"]) == \
+        (SCAN, "2026-09-21T06:00:00+00:00", 400.0)
 
 
 def test_the_contrast_is_each_push_runs_creation_after_its_commit():
