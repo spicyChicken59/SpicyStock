@@ -333,8 +333,15 @@ def test_table_versions_are_each_change_of_the_crons_on_the_first_parent_line(tm
     _commit(repo, "2026-09-02T00:00:00+00:00", "comment")
     (repo / "other.txt").write_text("x")
     _commit(repo, "2026-09-03T00:00:00+00:00", "another file")
+    # a branch changes the crons on 5 October; they take effect only when it lands on main, on the 9th
+    subprocess.run(["git", "checkout", "-q", "-b", "side"], cwd=repo, check=True)
     wf.write_text("on:\n  schedule:\n    - cron: '20 13 * * 1-5'\n    - cron: \"28 13 * * 1-5\"\n")
-    c3 = _commit(repo, "2026-10-09T17:07:37+00:00", "two")
+    _commit(repo, "2026-10-05T12:00:00+00:00", "two, on a branch")
+    subprocess.run(["git", "checkout", "-q", "main"], cwd=repo, check=True)
+    env = {**os.environ, "GIT_AUTHOR_DATE": "2026-10-09T17:07:37+00:00", "GIT_COMMITTER_DATE": "2026-10-09T17:07:37+00:00",
+           "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
+    subprocess.run(["git", "merge", "-q", "--no-ff", "-m", "two, merged", "side"], cwd=repo, check=True, env=env)
+    c3 = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, check=True, capture_output=True, text=True).stdout.strip()
     wf.unlink()
     c4 = _commit(repo, "2026-10-10T00:00:00-04:00", "gone")
     monkeypatch.setattr(sr, "ROOT", repo)
