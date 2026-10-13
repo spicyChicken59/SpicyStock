@@ -5,19 +5,21 @@ publication on ``main`` and the commits that put a morning, issuer or
 research receipt beside it, and prints what the records and their commit
 times establish about delivery -- which expected XNYS session each one is
 for, when it landed against the session's completion and the evening cron's
-nominal slot, whether it landed before the next open, how often a session was
-published twice, what the inputs covered, what the chart reader did and what
-it cost -- with the signal (the regime and the tickets) kept in its own
-column. "Landed" is the commit's committer time -- the instant git keeps for
-the commit that put the record on ``main``; the push follows it by seconds and
-Pages serves it later still, so it is a lower bound on when a reader could see
-it. The record's own ``published_at`` is when the run generated it, and is kept
-beside every landed fact rather than read as one. The order things landed in
-is the history's own (children after parents), never a clock; because zero tickets can be a successful research run and stale data
-cannot be called fresh. It changes no record, decides nothing and fetches
-nothing from any provider; what it fetches is a commit this checkout lacks,
-exactly the ones the committed reading names, so a shallow clone can hold
-``--check``.
+nominal slots (the ones the publication's own rules archived, or the current
+policy's for a record from before the rule), whether it landed before the
+next open, how often a session was published twice, what the inputs covered,
+what the chart reader did and what it cost -- with the signal (the regime and
+the tickets) kept in its own column, because zero tickets can be a successful
+research run and stale data cannot be called fresh. "Landed" is the commit's
+committer time -- the instant git keeps for the commit that put the record on
+``main``; the push follows it by seconds and Pages serves it later still, so
+it is a lower bound on when a reader could see it. The record's own
+``published_at`` is when the run generated it, and is kept beside every
+landed fact rather than read as one. The order things landed in is the
+history's own (children after parents), never a clock. It changes no record,
+decides nothing and fetches nothing from any provider; what it fetches is a
+commit this checkout lacks, exactly the ones the committed reading names, so
+a shallow clone can hold ``--check``.
 
     python tools/service_health.py                       # write the dated reading, origin/main's tip the clock
     python tools/service_health.py --through 43dcb8d7    # ... the history through a named commit, its time the clock
@@ -51,9 +53,12 @@ from src import delivery, funnel, sessions  # noqa: E402
 
 #: 2: every delivery fact is the commit's landing time, the record's own clock kept beside
 #: it; a session's first delivery is the first to land in the history's order; an
-#: unreadable file is set aside; fresh is what main's newest record commit carries
-VERSION = 2
-POLICY = "service_health_v2"
+#: unreadable file is set aside; fresh is what main's newest record commit carries.
+#: 3: a publication whose rules archive the evening slots is read against THOSE slots
+#: (``timing.slot_basis`` "archived", held by ``delivery.faults``); one from before the
+#: rule against the code's current ones ("current_policy"), and says so
+VERSION = 3
+POLICY = "service_health_v3"
 RECORD_PATH = "docs/data.json"
 #: the companion receipts whose commits are read beside the publications
 COMPANIONS = {"morning": "docs/morning.json",
@@ -62,15 +67,22 @@ COMPANIONS = {"morning": "docs/morning.json",
               "source_recovery": "docs/source-recovery.json"}
 HISTORY_LIMIT = 128
 #: the evening cron's nominal instants in the exchange's zone: ``16 22 * * 1-5`` on EDT
-#: and ``16 23`` on EST are one wall-clock time, 6:16 PM ET; the retry pair is 8:16 PM
-# the one slot rule: the record archives it (src/delivery.py) and this reading reads it
+#: and ``16 23`` on EST are one wall-clock time, 6:16 PM ET; the retry pair is 8:16 PM.
+#: The one slot rule: the record archives it (src/delivery.py) and this reading reads a
+#: publication against the slots ITS rules archived; these are the slots for a record
+#: from before the rule, which archived none
 EVENING_PRIMARY = delivery.EVENING_PRIMARY_ET
 EVENING_RETRY = delivery.EVENING_RETRY_ET
+#: where a publication's slots came from
+SLOT_ARCHIVED = "archived"
+SLOT_CURRENT = "current_policy"
 #: the morning workflow's two best-effort attempts, in the desk's zone
 MORNING_SLOTS = ("08:20", "08:28")
 DESK_TZ = ZoneInfo("America/Chicago")
 TRUTH = "docs/input-truthfulness"
-OUT_DIR = ROOT / TRUTH / "2026-10-12-service-health-evidence"
+#: the dated reading this version writes; the 12 October one (v2, and v1 under its v1/) is
+#: kept as it was written, historical evidence the tool no longer re-derives
+OUT_DIR = ROOT / TRUTH / "2026-10-13-service-health-evidence"
 OUTPUT_JSON = OUT_DIR / "service-health.json"
 OUTPUT_MD = OUT_DIR / "service-health.md"
 #: the fields a companion receipt is read for, by kind; a field a receipt lacks is None
@@ -181,16 +193,19 @@ def minutes_between(later: datetime, earlier: datetime) -> float:
     return round((later - earlier).total_seconds() / 60, 1)
 
 
-def slots(session: date) -> dict:
-    """The evening cron's nominal instants for a session: the primary pair's
-    6:16 PM and the retry pair's 8:16 PM in the exchange's zone, so the DST
-    change is the tz database's answer and no UTC hour is written here."""
-    primary, retry = delivery.slots(session, EVENING_PRIMARY, EVENING_RETRY)
+def slots(session: date, primary_et: time = EVENING_PRIMARY, retry_et: time = EVENING_RETRY) -> dict:
+    """The evening cron's nominal instants for a session -- by default the
+    primary pair's 6:16 PM and the retry pair's 8:16 PM -- in the exchange's
+    zone, so the DST change is the tz database's answer and no UTC hour is
+    written here."""
+    primary, retry = delivery.slots(session, primary_et, retry_et)
     return {"primary_at": primary.astimezone(timezone.utc).isoformat(), "retry_at": retry.astimezone(timezone.utc).isoformat()}
 
 
 def frame(session: date) -> dict:
-    """The exchange's own facts about a session and the one after it."""
+    """The exchange's own facts about a session and the one after it (the
+    evening slots here are the current policy's; a publication is read against
+    its own, ``slot_policy()``)."""
     opens, closes, shortened = sessions.hours(session)
     following = sessions.next_sessions(session, 1)[0]
     morning = [datetime.combine(following, time.fromisoformat(s), tzinfo=DESK_TZ).astimezone(timezone.utc).isoformat() for s in MORNING_SLOTS]
@@ -212,6 +227,23 @@ def _real(data, where: str) -> dict:
 
 def _dict(value) -> dict | None:
     return value if isinstance(value, dict) else None
+
+
+def slot_policy(data: dict, where: str) -> tuple[time, time, str]:
+    """The evening slots a publication is read against, and where they came
+    from. A record whose rules archive the delivery rule is read against the
+    slots IT archived, and only once its ``run.delivery`` re-derives from them
+    (``delivery.faults``, the validator's own check): a schedule changed later
+    cannot move where an earlier publication fell. A record from before the
+    rule archived no slots and is read against the code's current ones, and
+    says so."""
+    rules = _dict((_dict(data.get("rules")) or {}).get("pipeline")) or {}
+    if "delivery_version" not in rules:
+        return EVENING_PRIMARY, EVENING_RETRY, SLOT_CURRENT
+    faults = delivery.faults(data["run"], rules)
+    if faults:
+        raise ServiceError(f"{where}: run.delivery does not re-derive from the archived slots: {faults[0]}")
+    return time.fromisoformat(rules["delivery_primary_et"]), time.fromisoformat(rules["delivery_retry_et"]), SLOT_ARCHIVED
 
 
 def _count(value, where: str, field: str):
@@ -247,6 +279,8 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
     archived = _dict((_dict(run.get("calendar")) or {}).get("measured")) or {}
     if archived.get("completion_at") is not None and parse_instant(archived["completion_at"]) != completion:
         raise ServiceError(f"{where}: the archived completion {archived['completion_at']} is not the calendar's {fr['completion_at']}")
+    primary_et, retry_et, slot_basis = slot_policy(data, where)
+    fr.update(slots(session, primary_et, retry_et))
     archived_delivery = _dict(run.get("delivery"))
     if archived_delivery is not None:
         rules = _dict((_dict(data.get("rules")) or {}).get("pipeline")) or {}
@@ -272,6 +306,9 @@ def publication_reading(data, *, commit: str, blob: str, landed_at: str) -> dict
             "completion_at": fr["completion_at"], "completion_basis": "archived" if archived else "re-derived",
             # the record's own run.delivery block, held to its published_at (the run's clock), or absent
             "record_delivery_block": "held" if archived_delivery is not None else "absent",
+            # the slots this publication is read against: the ones its rules archived, or the current policy's
+            "slot_basis": slot_basis,
+            "slots_et": {"primary": primary_et.isoformat(timespec="minutes"), "retry": retry_et.isoformat(timespec="minutes")},
             "latency_minutes": minutes_between(landed, completion),
             "primary_slot_at": fr["primary_at"], "after_primary_minutes": minutes_between(landed, parse_instant(fr["primary_at"])),
             "retry_slot_at": fr["retry_at"], "after_retry_slot": landed >= parse_instant(fr["retry_at"]),
@@ -378,6 +415,7 @@ def session_rows(pubs: list[dict], companions: dict[str, list[dict]], clock: dat
                 "published_at": head["published_at"], "run_id": head["run_id"],
                 "latency_minutes": head["timing"]["latency_minutes"], "after_primary_minutes": head["timing"]["after_primary_minutes"],
                 "after_retry_slot": head["timing"]["after_retry_slot"], "before_next_open": head["timing"]["before_next_open"],
+                "slot_basis": head["timing"]["slot_basis"],
                 "generated_latency_minutes": head["timing"]["generated_latency_minutes"],
                 "generated_before_next_open": head["timing"]["generated_before_next_open"],
                 "landed_minutes": head["timing"]["landed_minutes"],
@@ -435,6 +473,7 @@ def summary(rows: list[dict], pubs: list[dict], companions: dict[str, list[dict]
         "before_next_open": sum(1 for s in firsts if s["before_next_open"]),
         "generated_before_next_open": sum(1 for s in firsts if s["generated_before_next_open"]),
         "after_retry_slot": sum(1 for s in firsts if s["after_retry_slot"]),
+        "slot_basis": _tally(p["timing"]["slot_basis"] for p in pubs),
         "latency_minutes": _spread(latencies), "generated_latency_minutes": _spread(generated),
         "streak": _streaks(rows),
         "publications": len(pubs), "revisions": sum(max(0, r["revisions"] - 1) for r in rows),
@@ -580,7 +619,8 @@ def assemble(*, ref: str | None, through: str, publication_commits: list[str], s
                    "publication_commits": list(publication_commits), "companion_commits": {k: list(v) for k, v in companion_commits.items()}},
         "slots": {"evening_primary_et": EVENING_PRIMARY.isoformat(timespec="minutes"), "evening_retry_et": EVENING_RETRY.isoformat(timespec="minutes"),
                   "morning_chicago": list(MORNING_SLOTS), "completion_buffer_minutes": sessions.COMPLETION_BUFFER_MINUTES,
-                  "basis": "the workflows' cron tables read in the exchange's and the desk's zones; a session's instants are the pinned XNYS calendar's"},
+                  "basis": "the workflows' cron tables read in the exchange's and the desk's zones, the current policy's; a publication whose "
+                           "rules archive its own evening slots is read against those (timing.slot_basis); a session's instants are the pinned XNYS calendar's"},
         "words": dict(SERVICE_WORDS),
         "publications": pubs, "skipped": list(skipped), "sessions": rows, "companions": companions,
         "summary": summary(rows, pubs, companions, clock, carries),
@@ -649,6 +689,11 @@ def _yn(value) -> str:
     return "yes" if value is True else "no" if value is False else "—"
 
 
+def _basis_words(tally: dict) -> str:
+    words = {SLOT_ARCHIVED: "the slots its own rules archived", SLOT_CURRENT: "the current policy's, its rules archiving none"}
+    return "; ".join(f"{n} {words.get(k, k)}" for k, n in tally.items()) or "none"
+
+
 def markdown(result: dict) -> str:
     s = result["summary"]
     lines = [f"# Service health reading ({POLICY})", "",
@@ -680,6 +725,7 @@ def markdown(result: dict) -> str:
               f"not yet due {len(s['not_yet_due'])}",
               f"- first publications landed before the next open: {s['before_next_open']} of {s['published_sessions']} "
               f"(generated before it: {s['generated_before_next_open']}); landed after the retry slot: {s['after_retry_slot']}",
+              f"- evening slots each publication is read against: {_basis_words(s['slot_basis'])}",
               f"- latency after completion, landed, minutes: min {lat.get('min')}, median {lat.get('median')}, max {lat.get('max')}; "
               f"generated, by the record's own clock: min {gen.get('min')}, median {gen.get('median')}, max {gen.get('max')}",
               f"- streak of due sessions published before the next open: current {s['streak']['current']}, longest {s['streak']['longest']}",
@@ -744,7 +790,7 @@ def check(out_dir: Path) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--ref", default="origin/main")
-    parser.add_argument("--through", help="read the history through this commit (default: the newest publication commit on --ref)")
+    parser.add_argument("--through", help="read the history through this commit, its time the clock (default: --ref's tip)")
     parser.add_argument("--limit", type=int, default=HISTORY_LIMIT)
     parser.add_argument("--output-dir", type=Path, default=OUT_DIR)
     parser.add_argument("--check", action="store_true", help="hold the committed files to the tool")

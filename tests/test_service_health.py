@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date, datetime, time, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -24,7 +25,15 @@ from src import sessions
 from tools import service_health as sh
 
 ROOT = Path(__file__).resolve().parent.parent
-REPORT = ROOT / "docs/input-truthfulness/2026-10-12-service-health.md"
+REPORT = ROOT / "docs/input-truthfulness/2026-10-13-service-health.md"
+#: the 12 October reading as it was written, kept and no longer re-derived: v2 (the merge of
+#: #166) and, under v1/, v1 as main carried it before (279ec5a3), each by its git blob identity
+FROZEN = ROOT / "docs/input-truthfulness/2026-10-12-service-health-evidence"
+FROZEN_REPORT = ROOT / "docs/input-truthfulness/2026-10-12-service-health.md"
+FROZEN_BLOBS = {"service-health.json": "a044ec838d7b2ff681201dc8ffca55eccf0ff978",
+                "service-health.md": "7ee0a0bf349e870e9a4e7856cd8d978bf4bfc468",
+                "v1/service-health.json": "d6ef16b1e641131eb67d250ac8e2d9e91b03c392",
+                "v1/service-health.md": "1044e3c85ffbb7c62d3298a2eba3348c4090b417"}
 
 
 def record(session="2026-10-09", published_at="2026-10-10T07:30:00+00:00", *, status="ok", regime="yellow", rules_pipeline=None, **run_extra):
@@ -172,6 +181,50 @@ def test_the_slot_rule_is_the_records_own_and_an_archived_block_is_held_to_it():
         reading("2026-10-09", "2026-10-10T07:30:00+00:00", delivery=other, rules_pipeline=rules)
 
 
+def test_a_publication_is_read_against_the_slots_its_own_rules_archived():
+    from src import delivery
+    rules = {k.split(".", 1)[1]: v for k, v in delivery.RULES.items()}
+    later = dict(rules, delivery_primary_et="19:16", delivery_retry_et="21:16")
+    # 9 October, on EDT: 19:16 and 21:16 ET are 23:16Z and 01:16Z; generated 00:40Z, landed 00:46Z on the 10th (8:46 PM ET)
+    published, landed = "2026-10-10T00:40:00+00:00", "2026-10-10T00:46:00+00:00"
+    block = delivery.block(date(2026, 10, 9), published, primary_et=time(19, 16), retry_et=time(21, 16))
+    t = reading("2026-10-09", published, landed_at=landed, delivery=block, rules_pipeline=later)["timing"]
+    assert (t["slot_basis"], t["slots_et"]) == ("archived", {"primary": "19:16", "retry": "21:16"})
+    assert (t["primary_slot_at"], t["retry_slot_at"]) == ("2026-10-09T23:16:00+00:00", "2026-10-10T01:16:00+00:00")
+    assert (t["after_primary_minutes"], t["after_retry_slot"]) == (90.0, False)
+    # the same landing read against the current slots is after both: what a record from before the rule is read against
+    old = reading("2026-10-09", published, landed_at=landed)["timing"]
+    assert (old["slot_basis"], old["slots_et"]) == ("current_policy", {"primary": "18:16", "retry": "20:16"})
+    assert (old["primary_slot_at"], old["after_primary_minutes"], old["after_retry_slot"]) == ("2026-10-09T22:16:00+00:00", 150.0, True)
+    # archived at the current slots it reads as they do, and says where its slots came from
+    same = reading("2026-10-09", published, landed_at=landed, delivery=delivery.block(date(2026, 10, 9), published),
+                   rules_pipeline=rules)["timing"]
+    assert (same["slot_basis"], same["after_primary_minutes"], same["after_retry_slot"]) == ("archived", 150.0, True)
+    # at the archived retry slot is after it, a second before it is not
+    for landed_at, after in (("2026-10-10T01:16:00+00:00", True), ("2026-10-10T01:15:59+00:00", False)):
+        assert reading("2026-10-09", published, landed_at=landed_at, delivery=block, rules_pipeline=later)["timing"]["after_retry_slot"] is after
+    # across the November change the archived wall clock is the tz database's answer: 19:16 EST is 00:16Z
+    november = delivery.block(date(2026, 11, 2), "2026-11-03T01:00:00+00:00", primary_et=time(19, 16), retry_et=time(21, 16))
+    nov = reading("2026-11-02", "2026-11-03T01:00:00+00:00", delivery=november, rules_pipeline=later)["timing"]
+    assert (nov["primary_slot_at"], nov["retry_slot_at"], nov["after_retry_slot"]) == \
+        ("2026-11-03T00:16:00+00:00", "2026-11-03T02:16:00+00:00", False)
+    # rules that archive the delivery rule beside a record without its block, or a block the archived slots do not re-derive: refused
+    with pytest.raises(sh.ServiceError, match="run.delivery is missing"):
+        reading("2026-10-09", published, rules_pipeline=later)
+    with pytest.raises(sh.ServiceError, match="does not re-derive"):
+        reading("2026-10-09", published, delivery=block, rules_pipeline=rules)
+    # the session's row carries the basis, and the summary counts each
+    before_rule, under_rule = in_history(reading("2026-10-08", "2026-10-09T02:06:00+00:00", sha="1" * 40),
+                                           reading("2026-10-09", published, landed_at=landed, delivery=block, rules_pipeline=later,
+                                                   sha="2" * 40))
+    clock = sh.parse_instant("2026-10-10T12:00:00+00:00")
+    rows = sh.session_rows([before_rule, under_rule], EMPTY, clock)
+    assert [r["service"]["slot_basis"] for r in rows] == ["current_policy", "archived"]
+    s = sh.summary(rows, [before_rule, under_rule], EMPTY, clock, sh.main_carries([before_rule, under_rule], [], "2" * 40))
+    assert (s["slot_basis"], s["after_retry_slot"]) == ({"archived": 1, "current_policy": 1}, 1)
+    assert sh._basis_words(s["slot_basis"]) == "1 the slots its own rules archived; 1 the current policy's, its rules archiving none"
+
+
 def test_an_archived_completion_is_held_to_the_calendar():
     cal = {"measured": {"session": "2026-10-09", "completion_at": "2026-10-09T16:15:00-04:00"}}
     assert reading("2026-10-09", "2026-10-10T07:30:00+00:00", calendar=cal)["timing"]["completion_basis"] == "archived"
@@ -299,6 +352,7 @@ def test_streaks_and_the_summary_are_hand_computed(week):
     assert (s["expected_sessions"], s["due_sessions"], s["published_sessions"]) == (6, 5, 3)
     assert s["missing_sessions"] == ["2026-10-06", "2026-10-09"] and s["pending_sessions"] == [] and s["not_yet_due"] == ["2026-10-12"]
     assert (s["before_next_open"], s["generated_before_next_open"], s["after_retry_slot"]) == (2, 2, 3)
+    assert s["slot_basis"] == {"current_policy": 4}
     # latencies of the first publications: 5th 20:15->02:17 = 362, 7th 20:15->14:00 = 1065, 8th 20:15->02:06 = 351;
     # each landed at its own clock here, so the generated spread is the landed one
     assert s["latency_minutes"] == s["generated_latency_minutes"] == {"min": 351.0, "median": 362.0, "max": 1065.0}
@@ -634,6 +688,14 @@ def test_the_committed_reading_reads_the_records_it_names(committed):
         (newest["session"], newest["run_id"], newest["status"], sh.parse_instant(run["published_at"]).isoformat())
     assert sh.parse_instant(run["calendar"]["measured"]["completion_at"]).isoformat() == newest["timing"]["completion_at"]
     assert newest["timing"]["completion_basis"] == "archived"
+    # the newest record archives its own evening slots, and the reading read it against them
+    pipeline = data["rules"]["pipeline"]
+    assert newest["timing"]["slot_basis"] == "archived" and newest["timing"]["record_delivery_block"] == "held"
+    assert newest["timing"]["slots_et"] == {"primary": pipeline["delivery_primary_et"], "retry": pipeline["delivery_retry_et"]}
+    assert (newest["timing"]["primary_slot_at"], newest["timing"]["retry_slot_at"]) == \
+        tuple(sh.parse_instant(run["delivery"][k]).isoformat() for k in ("primary_slot_at", "retry_slot_at"))
+    assert newest["timing"]["generated_latency_minutes"] == run["delivery"]["latency_minutes"]
+    assert committed["summary"]["slot_basis"] == sh._tally(p["timing"]["slot_basis"] for p in committed["publications"])
     assert newest["inputs"]["ready_stocks"] == run["coverage"]["acceptance"]["ready_stocks"]
     assert newest["reader"]["done"] == run["reads"]["done"]
     # every expected XNYS session between the first and the newest is a row, and the sum of rows' publications is the publications
@@ -661,8 +723,33 @@ def test_the_committed_readings_landing_is_each_commits_own_time(committed):
         assert landings == sorted(landings), r["session"]
 
 
-def test_the_report_quotes_the_reading(committed):
-    text = REPORT.read_text(encoding="utf-8")
+def blob_id(path: Path) -> str:
+    """Git's identity for a file's bytes, computed here so a shallow checkout needs no history."""
+    data = path.read_bytes()
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+@pytest.fixture(scope="module")
+def frozen_v2():
+    return json.loads((FROZEN / "service-health.json").read_text(encoding="utf-8"))
+
+
+def test_the_earlier_readings_are_kept_as_they_were_written(frozen_v2):
+    for name, blob in FROZEN_BLOBS.items():
+        assert blob_id(FROZEN / name) == blob, name
+    v1 = json.loads((FROZEN / "v1/service-health.json").read_text(encoding="utf-8"))
+    assert (v1["version"], v1["policy"], frozen_v2["version"], frozen_v2["policy"]) == (1, "service_health_v1", 2, "service_health_v2")
+    # both pinned to one commit, the merge of #157, and neither re-derived by this version
+    assert v1["source"]["through"] == frozen_v2["source"]["through"] == "c759a1e671227717cae8d0bf1d50a4121d167396"
+    assert sh.OUT_DIR != FROZEN and (sh.VERSION, sh.POLICY) == (3, "service_health_v3")
+    # the earlier report says it is superseded and where the newer reading is
+    assert "2026-10-13-service-health.md" in FROZEN_REPORT.read_text(encoding="utf-8")
+
+
+def test_the_earlier_report_quotes_its_own_reading(frozen_v2):
+    # the 12 October report and the reading it quotes, both kept as written
+    committed = frozen_v2
+    text = FROZEN_REPORT.read_text(encoding="utf-8")
     s = committed["summary"]
     for quoted in (f"{s['published_sessions']} of {s['due_sessions']}", f"median {s['latency_minutes']['median']}",
                    f"median {s['generated_latency_minutes']['median']}", "service_health_v2",
@@ -692,3 +779,54 @@ def test_the_report_quotes_the_reading(committed):
     assert {s["generated_latency_minutes"]["min"], s["generated_latency_minutes"]["max"]} <= numbers
     landed = [p["timing"]["landed_minutes"] for p in committed["publications"]]
     assert f"{min(landed)} to {max(landed)} minutes" in prose
+
+
+def test_the_report_quotes_the_reading(committed):
+    text = REPORT.read_text(encoding="utf-8")
+    prose = " ".join(text.split())
+    s = committed["summary"]
+    assert "service_health_v3" in text and committed["source"]["through"][:8] in text
+    # each count in its own phrase, so a number the prose carries elsewhere cannot stand in for it
+    for phrase in (f"**{s['expected_sessions']} expected sessions, {s['published_sessions']} published, "
+                   f"{s['before_next_open']} of {s['published_sessions']} first publications landed before the next session's open.**",
+                   f"**{s['after_retry_slot']} of {s['published_sessions']}** first publications landed after the retry slot",
+                   f"**{s['publications']} publications**", f"the current streak reads {s['streak']['current']}; the longest is {s['streak']['longest']}",
+                   f"{s['slot_basis']['archived']} publication read against the slots its own rules archived",
+                   f"{s['slot_basis']['current_policy']} against the current policy's",
+                   f"{s['reads']['done']} of {s['reads']['requested']} requested reads done over {s['reads']['publications_with_block']} publications",
+                   f"{s['reader_usage']['input_tokens']:,} input and {s['reader_usage']['output_tokens']:,} output tokens",
+                   f"Statuses {s['statuses']['degraded']} degraded and {s['statuses']['ok']} ok",
+                   f"{s['signal']['regimes']['red']} RED and {s['signal']['regimes']['yellow']} YELLOW publications, "
+                   f"{s['signal']['reaction_tickets']} reaction tickets, {s['signal']['anticipation_tickets']} anticipation tickets",
+                   f"`main` carries `{s['fresh']['main_carries']['commit'][:8]}`",
+                   f"{len(committed['skipped'])} commits set aside"):
+        assert phrase in prose, phrase
+    assert (s["fresh"]["fresh"], s["missing_sessions"]) == (False, []) and "**Fresh: no.**" in prose and "None is missing" in prose
+    for session in s["pending_sessions"]:
+        day = date.fromisoformat(session)
+        assert f"The {day.day} {day.strftime('%B')} session is pending" in prose
+    for session in s["republished_sessions"]:
+        day = date.fromisoformat(session)
+        assert f"{day.day} {day.strftime('%B')}" in prose or f"{day.day} and" in prose, session
+    first = {r["publications"][0] for r in committed["sessions"] if r["published"]}
+    generated_after_retry = sum(1 for p in committed["publications"] if p["commit"] in first
+                                and datetime.fromisoformat(p["published_at"]) >= datetime.fromisoformat(p["timing"]["retry_slot_at"]))
+    assert f"as {generated_after_retry} were generated after it" in prose
+    # the slot ranges the prose quotes are the file's own minimum and maximum, and every first publication from 22 September is after the retry slot
+    def span(lo, hi):
+        values = [r["service"]["after_primary_minutes"] for r in committed["sessions"] if r["published"] and lo <= r["session"] <= hi]
+        return f"{min(values)} to {max(values)}"
+    last = max(r["session"] for r in committed["sessions"] if r["published"])
+    assert f"landed {span('2026-09-14', '2026-09-18')} minutes after the primary slot" in prose
+    assert f"retry slot, {span('2026-09-22', last)} minutes after the primary one" in prose
+    assert all(r["service"]["after_retry_slot"] for r in committed["sessions"] if r["published"] and r["session"] >= "2026-09-22")
+    lat, gen = s["latency_minutes"], s["generated_latency_minutes"]
+    assert f"min {lat['min']}, median {lat['median']}, max {lat['max']} minutes" in prose
+    assert f"{gen['min']}, {gen['median']} and {gen['max']}" in prose
+    landed = [p["timing"]["landed_minutes"] for p in committed["publications"]]
+    assert f"{min(landed)} to {max(landed)} minutes" in prose
+    # the companions as the file counts them
+    c = s["companions"]
+    assert (c["morning"]["receipts"], c["morning"]["statuses"]) == (2, {"inapplicable": 2}) and "two morning receipts, both `inapplicable`" in prose
+    assert (c["issuer_evidence"]["receipts"], c["issuer_evidence"]["statuses"]) == (4, {"unavailable": 4}) and "four issuer receipts, all `unavailable`" in prose
+    assert c["research_observations"]["receipts"] == c["source_recovery"]["receipts"] == 0

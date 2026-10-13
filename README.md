@@ -859,8 +859,10 @@ archived, and a record from before the block is asked for none. The run:
   the commits that put a publication on `main` and the commits that put a
   morning, issuer or research receipt beside it, and prints, per expected XNYS
   session, whether a publication landed, when (its latency after the session's
-  completion and after the evening cron's 6:16 PM ET slot, read in the
-  exchange's zone), whether before the next open, how many times, what the
+  completion and after the evening cron's slots, read in the exchange's zone:
+  the slots the record's own rules archived (6:16 and 8:16 PM ET so far), or
+  the current policy's for a record from before the rule, and the reading
+  says which), whether before the next open, how many times, what the
   inputs covered, what the reader did and what it cost, with the regime and the
   ticket counts in a column that makes no service verdict. "Landed" is the
   committer time of the commit that put the record on `main` (the push follows
@@ -871,10 +873,14 @@ archived, and a record from before the block is asked for none. The run:
   newest record commit, read or set aside -- for the newest due session. A
   commit whose file it cannot place -- one that is not JSON among them -- is set
   aside by name and never stops the walk; a git store that cannot produce a
-  named object is a refusal. It writes
-  `docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.{json,md}`
+  named object is a refusal. A publication whose rules archive the delivery
+  rule is read against those slots only once its `run.delivery` re-derives
+  from them (`delivery.faults()`), and is refused when it carries no block. It
+  writes `docs/input-truthfulness/2026-10-13-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.
+  The 12 October reading beside it (v2, and v1 under its `v1/`) is kept as it
+  was written and no longer re-derived; the tests hold its bytes.
   `tools/recovery_rehearsal.py` rehearses what #111 asks the service to survive:
   it drives `pipeline.run_evening()` through the suite's own doubles over one
   synthetic market, one pinned night after another, injecting one failure a
@@ -1819,7 +1825,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
-                service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
+                service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
