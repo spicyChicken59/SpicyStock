@@ -7715,23 +7715,58 @@ commit aside). Over the committed reading, the commit-landing latency was
 55.8/266.7/367.0 minutes against the 53.1/261.9/362.1 it reported.
 
 **Changed** (`tools/service_health.py`, version 2, `service_health_v2`). Every
-delivery fact is the commit's landing -- its committer time on `main`, the
-first instant the record was there to serve: latency after completion, the
-minutes after the primary slot, after the retry slot, before the next open, the
-streak and the summary. The record's own `published_at` is kept beside it as
-`generated_latency_minutes` and `generated_before_next_open`, and the
-companions' `before_applicable_open` is the landing's with
-`generated_before_applicable_open` beside it. `landing_order()` is the one
-order: a session's publications and a kind's receipts are in the order they
-landed, the first to land the service column and the last the one `main`
-carries. A file that is not JSON (`read_at()` names it `<commit>:<path>: not
-JSON: ...`) or a record a reader indexes past (`UNREADABLE` takes `LookupError`)
-is set aside by name with its reason, as the first build's records are. The
-pinned reading was regenerated at the same commit, `c759a1e6`: no before-open
-verdict, first delivery, revision count or set-aside moved; the latency is the
+delivery fact is the commit's landing -- the committer time of the commit that
+put the record on `main`, which the push follows by seconds and Pages later
+still, so a lower bound on when a reader could see it: latency after
+completion, the minutes after the primary slot, after the retry slot, before
+the next open, the streak and the summary. The record's own `published_at` is
+kept beside it as `generated_latency_minutes` and `generated_before_next_open`,
+and the companions' `before_applicable_open` is the landing's with
+`generated_before_applicable_open` beside it. A file that is not JSON
+(`read_at()`'s `NotJSON`, named `<commit>:<path>: not JSON: ...`) or a record a
+reader indexes past (`UNREADABLE` takes `LookupError`) is set aside by name with
+its reason, as the first build's records are.
+
+**The review, worked.** A reviewer by execution over the first pushed tip
+(`133612de`) returned eleven findings, each reproduced here before it was
+touched; ten are fixed and one is recorded. Ordering by committer time was
+still a clock: a child commit dated inside its parent's second, or behind it,
+was ordered before it and named the first delivery. The walk is `--topo-order`
+now, each reading carries its place in it (`sequence`), and `landing_order()`
+reads that and no clock. A truncated record on `main` read as fresh, because
+fresh compared the newest record that could be read; `main_carries()` names the
+newest commit that changed the record, read or set aside, the committed reading
+names it (`source.record_head`) and `--check` holds it to the walk, and fresh
+needs it readable and for the newest due session. Moving `read_at()` inside the
+`try` had turned a git store that could not produce an object into a missing
+session; only `NotJSON` is set aside now, and a git failure is a refusal again.
+A count the summary adds up that was not a non-negative integer took the summary
+down with a traceback (pre-existing); `_count()` makes it a record the reading
+cannot place. The markdown's generation-to-landing column rounded twice; it
+prints `landed_minutes`. `delivery_basis` is `record_delivery_block`
+(`held`/`absent`), because the record's own block is the run's clock beside the
+landing figures, and `src/delivery.py`'s docstring says the rule is shared and
+the instant is not. A test held the archived latency equal to the block's only
+because its helper landed each record at its own clock; it lands twenty minutes
+later now. And the dated report was mine to get wrong: it quoted 137.7 where the
+file's minimum is 137.2, said two reads where one publication asked for two, and
+gave the morning receipts' generation times as landings; each is corrected, and
+the report test, which a substitution of 13 for 14 or 25 for 26 passed because
+those numbers sit elsewhere in the prose, anchors every count to its own phrase
+and the slot ranges to the file's minimum and maximum (seven substitutions now
+fail it, a control passes). Recorded, not fixed: a shallow `--check` takes the
+set-aside reasons and the newest record commit as the committed file names them
+(the report says so). The reviewer's uncounted note -- that "the first instant
+the record was there to serve" overstated what a committer time is -- is fixed:
+it is worded as a lower bound everywhere.
+
+The pinned reading was regenerated at the same commit, `c759a1e6`: identical to
+the first version apart from the new fields -- the history's order is the
+committer times' on every commit here -- so no before-open verdict, first
+delivery, revision count, set-aside or order moved; the latency is the
 landing's, 55.8/266.7/367.0, with the generated 53.1/261.9/362.1 beside it, and
-each commit landed 2.4 to 5.5 minutes after its record's clock. The dated
-report carries the correction; README and the index say what "landed" means.
+each commit landed 2.4 to 5.5 minutes after its record's clock. `main` carried
+`43dcb8d7`, the 9 October session, readable: fresh.
 
 **Through the current tip** (`279ec5a3`, 16:13 UTC, measured here and not
 committed; the dated reading stays pinned): 22 of 22 due sessions published,
@@ -7743,27 +7778,32 @@ tokens); the 13 October session not yet due.
 
 **Measured** (this sandbox, Python 3.11.15): <PYTEST>; `tools/service_health.py
 --check` current with the history walked again; `tests/test_service_health.py`
-30 passed. No record, rule or page file moved, so the fixtures and the page
-smoke are CI's, recorded on the PR. <GITLEAKS>
+35 passed (13 new). No record, rule or page file moved, so the fixtures and the
+page smoke are CI's, recorded on the PR. gitleaks 8.24.3 over the branch's
+commits with the repository's config: no leaks.
 
-**Mutation pass.** Twenty-one mutants over the correction in the mutation
-worktree at `074f5697`, each judged by the whole `tests/test_service_health.py`
-with the committed-files byte comparison deselected (the markdown mutant's rule
-IS that comparison, and it was judged with it): latency, the primary slot, the
-retry slot and before-the-open read off the record's clock; the generated
-latency and before-the-open read off the landing; the companions' two
-before-the-open flags swapped; the session rows, the assembled publications and
-the companions sorted by their own clocks; the order dropping the landing; the
-summary's generated counts and spread and the companions' generated count read
-off the landing; the record's and the receipt's read outside the `try`;
-`UNREADABLE` back to `KeyError`; the old not-JSON words; the service column's
-landing read off the record; the markdown's generation-to-landing column
-reversed. All twenty-one die, each in the test naming its rule; the control (a
-docstring) survives. Before the pass, three rules were seen to have no case that
-could tell them apart -- every fixture landed each record at its own clock --
-so a straddling publication and receipt and a history whose second run and
-second receipt land in the other order to their clocks were added first; the
-three mutants they hold die there.
+**Mutation passes**, each mutant in the mutation worktree and judged by the
+whole `tests/test_service_health.py` with the committed-files byte comparison
+deselected (a markdown mutant's rule IS that comparison, and it was judged with
+it). Before the review, at `074f5697`, twenty-one over the landing rules
+(latency, both slots and before-the-open read off the record's clock; the
+generated figures read off the landing; the companions' flags swapped; three
+sorts by the records' clocks; the summary's generated counts and spread; the
+reads outside the `try`; `KeyError` for `LookupError`; the not-JSON words; the
+service column's landing; the markdown column): all die in the test naming their
+rule, after three cases were added that could tell landing from generation at
+all; the control survives. After the review, at `ea05a9fc`, twenty more (order
+by committer time, the sequence reversed, fresh off the newest readable
+record, fresh off the newest published session, `main_carries()` never
+refusing, a git failure set aside, three count checks, the record head
+uncompared and taken from the first readable commit, the delivery block's label
+swapped, the markdown gap as latency, and five of the first pass's rules again):
+eighteen die, each in the test naming its rule; the control survives; two are
+equivalent. Dropping `--topo-order` changes nothing on a linear history, where
+git already lists a child before its parent whatever the dates (the real
+history's five paths walk identically both ways); and fresh's `readable` guard
+is redundant beside its session comparison, an unreadable head having no
+session. Both are kept as statements of intent.
 
 **Keep / fix / defer / omit.** Keep: the reading reads git and the records and
 decides nothing; the record's clock is printed beside the landing and never
