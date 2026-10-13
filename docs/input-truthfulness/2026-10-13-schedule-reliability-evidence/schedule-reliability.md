@@ -1,6 +1,6 @@
 # Schedule reliability reading (schedule_reliability_v1)
 
-128 scheduled runs of `spicyChicken59/SpicyStock` as the public Actions API listed them at 2026-10-13 18:13Z (snapshot `runs.json`, SHA-256 `115c2af0f0454249…`), with each workflow's cron tables as `main` carried them at `3a972ad7`. A delay is the minutes from the cron instant a run was for to the moment GitHub created it -- the scheduler's own, before any step of ours ran. Delays are min / median / max (runs).
+128 scheduled runs of `spicyChicken59/SpicyStock` as the public Actions API listed them at 2026-10-13 18:14Z (snapshot `runs.json`, SHA-256 `17a831a997da7173…`), with each workflow's cron tables as `main` carried them at `3a972ad7`. A delay is the minutes from the cron instant a run was for to the moment GitHub created it -- the scheduler's own, before any step of ours ran. Delays are min / median / max (runs).
 
 ## The change
 
@@ -76,3 +76,8 @@ Expected slots not started at the snapshot: `20 13 * * 1-5` at 2026-10-13 13:20Z
 | 2026-09-28 | 378.3 / 378.3 / 378.3 (1) |
 | 2026-10-05 | 418.0 / 418.0 / 418.0 (1) |
 | 2026-10-12 | 470.0 / 470.0 / 470.0 (1) |
+
+## .github/workflows/source-recovery.yml
+
+- runs 0; expected slots 0; with no run 0; not started yet 0; runs for a slot no table named 0
+- delay, minutes: —; beyond 15 min 0, 60 min 0, 240 min 0, 360 min 0

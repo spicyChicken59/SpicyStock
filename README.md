@@ -891,6 +891,20 @@ archived, and a record from before the block is asked for none. The run:
   `--check` runs the whole rehearsal again and holds both files. It decides
   nothing and calls no provider: every failure is injected, so it shows what the
   code does under a failure it was told to have, not how a real provider fails.
+  `tools/schedule_reliability.py` reads when GitHub started each scheduled run:
+  `--fetch` snapshots the public Actions listing of scheduled runs, and of the
+  runs a push to `main` triggered as a contrast, keeping only the fields the
+  reading uses, beside each scheduled workflow's cron tables as `main` carried
+  them version by version. Every run is placed at the slot its run name's cron
+  names (or, for a name without one, the nearest preceding slot of the table
+  in force). The reading writes the minutes from slot to creation -- the
+  scheduler's own delay, before any step of ours runs -- per workflow, cron and
+  week; every expected slot with no run; and the first run more than an hour
+  late, with the last prompt one before it. It writes
+  `docs/input-truthfulness/2026-10-13-schedule-reliability-evidence/schedule-reliability.{json,md}`
+  beside the snapshot `runs.json`, and `--check` holds both to the snapshot with
+  no network. It decides nothing; the dated report beside it lists the options
+  for the morning's delivery without adopting one.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1761,6 +1775,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
+                schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
 .github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```

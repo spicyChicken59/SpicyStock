@@ -202,6 +202,16 @@ def table_versions(path: str, ref: str) -> list[dict]:
     return out
 
 
+def scheduled_at(commit: str) -> set[str]:
+    """The workflow files that carry a schedule at ``commit``: a workflow whose
+    cron has never produced a run is still read, so its slots are named."""
+    out = set()
+    for path in _git("ls-tree", "--name-only", commit, ".github/workflows/").split("\n"):
+        if path.endswith((".yml", ".yaml")) and FILE_CRON.search(_git("show", f"{commit}:{path}")):
+            out.add(path)
+    return out
+
+
 def _get(url: str) -> dict:
     headers = {"Accept": "application/vnd.github+json", "User-Agent": "spicystock-schedule-reliability",
                "X-GitHub-Api-Version": "2022-11-28"}
@@ -248,7 +258,7 @@ def fetch(*, repository: str = REPOSITORY, ref: str = "origin/main", get=_get, n
     runs, total = _listing(get, repository, "event=schedule", lambda r: {k: r.get(k) for k in RUN_FIELDS})
     pushes, push_total = _listing(get, repository, "event=push&branch=main", _push)
     head = _git("rev-parse", "--verify", f"{ref}^{{commit}}").strip()
-    paths = sorted({r["path"] for r in runs if isinstance(r.get("path"), str)})
+    paths = sorted({r["path"] for r in runs if isinstance(r.get("path"), str)} | scheduled_at(head))
     snapshot = {"version": VERSION, "repository": repository, "fetched_at": iso(fetched_at),
                 "source": f"GET {API}/repos/{repository}/actions/runs?event=schedule and ?event=push&branch=main "
                           f"(public API, paged by {PER_PAGE})",
@@ -368,12 +378,10 @@ def _week(at: datetime) -> str:
 
 
 def workflow_reading(path: str, runs: list[dict], versions: list[dict], fetched: datetime) -> dict:
+    """One workflow's runs against every slot its tables named from the first
+    table on -- a cron that never fired is named, not skipped."""
     mine = sorted((attribute(r, versions) for r in runs if r["path"] == path), key=lambda a: (a["slot"], a["created_at"], a["id"]))
-    if not mine:
-        return {"path": path, "runs": [], "expected": 0, "no_run": [], "not_started": [], "unexpected": [],
-                "delay_minutes": None, "weeks": [], "beyond": {str(m): 0 for m in DELAY_MARKS}, "by_cron": {}}
-    first = parse_instant(mine[0]["slot"])
-    due = expected(versions, first, fetched)
+    due = expected(versions, parse_instant(versions[0]["effective_at"]), fetched)
     started = {(a["cron"], a["slot"]) for a in mine}
     no_run, not_started = [], []
     for text, at in due:
