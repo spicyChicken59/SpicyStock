@@ -820,6 +820,35 @@ test('completed reported result uses actual quantities and fees, preserving the 
   }
 });
 
+test('an average exit under the frozen protective stop names what was lost past it; at or over the stop says nothing', async () => {
+  // COIL's published stop is $109.50. A gap at the open fills the stop under it.
+  const cases = [
+    [{ average_exit_price: '108.75' }, ['750000', '1500000', '$0.75', '$1.50', 2]],
+    [{ filled_quantity: '1', exited_quantity: '1', cancelled_quantity: '1', average_exit_price: '109.499999' }, ['1', '1', '<$0.01', '<$0.01', 1]],
+    [{ average_exit_price: '109.50' }, null],
+    [{ average_exit_price: '115' }, null]
+  ];
+  for (const [patch, expected] of cases) {
+    const env = environment(), { item } = await env.prepare();
+    const saved = await env.handoff.report(item.id, completedFields(patch), 1); assert.equal(saved.ok, true, saved.error);
+    const beyond = env.handoff.summary(saved.item).beyond_stop;
+    if (expected === null) { assert.equal(beyond, null, JSON.stringify(patch)); continue; }
+    assert.equal(beyond.stop_microusd, '109500000');
+    assert.deepEqual([beyond.per_share_microusd, beyond.total_microusd, beyond.per_share_display, beyond.total_display, beyond.quantity], expected);
+  }
+  // An incomplete result (a partial exit) names nothing, whatever its average.
+  const env = environment(), { item } = await env.prepare();
+  const saved = await env.handoff.report(item.id, completedFields({ exited_quantity: '1', average_exit_price: '100' }), 1); assert.equal(saved.ok, true, saved.error);
+  assert.equal(env.handoff.summary(saved.item).beyond_stop, null);
+});
+
+test('an independent report has no frozen stop and so no beyond-stop fact', async () => {
+  const env = researchEnvironment();
+  const saved = await env.create({ submitted_quantity: '1', filled_quantity: '1', cancelled_quantity: '0', exited_quantity: '1', average_price: '30', average_exit_price: '1', filled_at: '2026-10-12T13:35:00Z', exited_at: '2026-10-12T13:40:00Z', entry_fees: '0', exit_fees: '0' });
+  assert.equal(saved.ok, true, saved.error);
+  assert.equal(env.handoff.summary(saved.item).completed_result.state, 'complete'); assert.equal(env.handoff.summary(saved.item).beyond_stop, null);
+});
+
 test('every missing result input remains unknown and exposes no numerical result', async () => {
   for (const field of ['filled_quantity', 'exited_quantity', 'submitted_quantity', 'cancelled_quantity', 'average_price', 'average_exit_price', 'entry_fees', 'exit_fees', 'filled_at', 'exited_at']) {
     const env = environment(), { item } = await env.prepare(), input = completedFields({ [field]: '' });
