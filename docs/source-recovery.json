@@ -1,0 +1,404 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-10-14T13:03:20.831721+00:00",
+  "generated_at": "2026-10-14T13:03:22.443316+00:00",
+  "observation_run_id": "38568565120",
+  "previous_observation_sha256": null,
+  "dry_run": false,
+  "publication": {
+    "data_sha256": "696c736413afcafdcdfd5d90bd552f7b676f490fc4f88407b1f32723c03f7fdc",
+    "context_sha256": "70f4dea30916806db2c5aa6cb4f0d7261938cd1cb143ade0ecc4c7b00f730792",
+    "run_id": "38494353799",
+    "rules_version": "e5bec6a7e3fd",
+    "measured_session": "2026-10-13",
+    "applicable_session": "2026-10-14",
+    "published_at": "2026-10-14T01:12:11.678353+00:00",
+    "reader_projection_version": 1,
+    "reader_sha256": "44508d5dd63ac43e222a62fee0f66c6420f95dfccc35f461d3ffb3b46742c463"
+  },
+  "frozen": {
+    "session": "2026-10-13",
+    "expected_session": "2026-10-13",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Day",
+    "lookback_days": 260,
+    "stale_names_max": 100,
+    "universe_identity": "ef156a6d084d1932",
+    "universe_snapshot_sha256": "dedbf74d6667ab19bc6f7ec8f7800b5d096c7d28dcc20c9c2e9cfad8ecfc3c45",
+    "universe_size": 4776,
+    "intended_identity": "859406d7c4402c7f",
+    "coverage_sha256": "f69140ba8ab8263e00536a0531cfa26d512c2eb4d74ff13fed96f7183732d6f6",
+    "rules_version": "e5bec6a7e3fd"
+  },
+  "window": {
+    "next_session": "2026-10-14",
+    "next_open_at": "2026-10-14T09:30:00-04:00",
+    "before_next_open": true
+  },
+  "original": {
+    "acceptance_status": "degraded",
+    "intended_stocks": 4776,
+    "ready_stocks": 4760,
+    "fraction": 0.9966499162479062,
+    "complete_intended": false,
+    "capacity_excluded": 0,
+    "stale": 16,
+    "stale_stocks": 16,
+    "tolerance_verdict": "not_tolerated",
+    "tolerance_reasons": [
+      "behind_more"
+    ],
+    "gaps": {
+      "stale": 16,
+      "no_bars": 0,
+      "dropped": 0,
+      "unfetched_budget": 0,
+      "unfetched_failure": 0,
+      "gapped": 0,
+      "unreadable": 0
+    },
+    "run_status": "degraded",
+    "problem_kinds": [
+      "claude_unavailable",
+      "coverage_thin"
+    ],
+    "gate_read_run_status": false
+  },
+  "deficits": {
+    "categories": {
+      "stale": {
+        "count": 16,
+        "identity": "a1208729088d634c",
+        "named": true,
+        "source": "record",
+        "names": [
+          "APLM",
+          "BEBE",
+          "BUDA",
+          "CPHC",
+          "CURX",
+          "EBON",
+          "HBNB",
+          "HFBL",
+          "IOR",
+          "LEGO",
+          "MAYS",
+          "MDRR",
+          "NCEW",
+          "SENEB",
+          "WBD",
+          "WLYB"
+        ],
+        "benchmark_in_population": false
+      },
+      "no_bars": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "dropped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unfetched_budget": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unfetched_failure": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "gapped": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      },
+      "unreadable": {
+        "count": 0,
+        "identity": "e3b0c44298fc1c14",
+        "named": true,
+        "source": null,
+        "names": [],
+        "benchmark_in_population": false
+      }
+    },
+    "named_stocks": 16,
+    "unnamed_frames": 0,
+    "ledger": {
+      "path": "quality-ledger/v1/696c736413afcafdcdfd5d90bd552f7b676f490fc4f88407b1f32723c03f7fdc.json.gz",
+      "sha256": "3723d59eb1fa2ead6c366cc3da1871c237622732c7a8b09c63cdb13cc67fd0ff",
+      "used": false
+    }
+  },
+  "policy": {
+    "version": 1,
+    "max_batches": 1,
+    "max_batch_attempts": 2,
+    "max_names": 100,
+    "max_collection_seconds": 300,
+    "fetch_reserve_seconds": 10,
+    "max_future_skew_seconds": 5,
+    "recovery_until": "next_session_open",
+    "categories": [
+      "stale",
+      "no_bars",
+      "dropped",
+      "unfetched_budget",
+      "unfetched_failure",
+      "gapped",
+      "unreadable"
+    ],
+    "selection": "named_missing_or_stale_stocks_of_the_bound_publication",
+    "benchmark_requested": false,
+    "basis": "the publication's own feed, adjustment, session and lookback"
+  },
+  "status": "partial",
+  "reason": null,
+  "requested": [
+    "APLM",
+    "BEBE",
+    "BUDA",
+    "CPHC",
+    "CURX",
+    "EBON",
+    "HBNB",
+    "HFBL",
+    "IOR",
+    "LEGO",
+    "MAYS",
+    "MDRR",
+    "NCEW",
+    "SENEB",
+    "WBD",
+    "WLYB"
+  ],
+  "source": {
+    "provider": "Alpaca",
+    "feed": "sip",
+    "adjustment": "split",
+    "timeframe": "1Day",
+    "status": "ok",
+    "error_kind": null,
+    "checked_at": "2026-10-14T13:03:22.414849+00:00",
+    "batch_attempts": 1,
+    "symbols_requested": 16,
+    "window": {
+      "basis": "reconstructed_from_application_arguments_not_observed_wire_request",
+      "start": "2025-08-23T00:00:00+00:00",
+      "end": "2026-10-13T23:59:59+00:00"
+    }
+  },
+  "rows": [
+    {
+      "ticker": "APLM",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "BEBE",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "BUDA",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "CPHC",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "CURX",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "EBON",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "HBNB",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "HFBL",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "IOR",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "LEGO",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "MAYS",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "MDRR",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "NCEW",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "SENEB",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "WBD",
+      "category": "stale",
+      "original_ending": "2026-10-05",
+      "outcome": "still_stale",
+      "ending": "2026-10-05",
+      "ready_fault": null,
+      "volume": null,
+      "flat": null
+    },
+    {
+      "ticker": "WLYB",
+      "category": "stale",
+      "original_ending": "2026-10-12",
+      "outcome": "recovered",
+      "ending": "2026-10-13",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    }
+  ],
+  "recovered": {
+    "requested": 16,
+    "arrived": 15,
+    "session_ready": 15,
+    "arrived_not_ready": 0,
+    "still_stale": 1,
+    "still_missing": 0,
+    "not_returned": 0,
+    "zero_volume": 15,
+    "flat": 15
+  },
+  "coverage": {
+    "scan": "not_run",
+    "grades": "unchanged",
+    "plans": "unchanged",
+    "tickets": "unchanged",
+    "scorecard": "unchanged",
+    "cause_of_absence": "not_established"
+  },
+  "limits": [
+    "original_publication_immutable",
+    "no_combined_coverage_figure",
+    "not_a_fixed_cohort_improvement",
+    "ready_names_not_refetched",
+    "arrival_time_unknown",
+    "sdk_retries_and_pages_not_counted",
+    "one_bounded_attempt_per_publication",
+    "second_slot_may_spend_once_more_after_a_refused_persist",
+    "scheduled_dispatch_is_best_effort",
+    "prior_session_followup_is_separate"
+  ],
+  "sentence": "Source recovery for the 2026-10-13 publication: its 16 stocks without a usable 2026-10-13 bar, named in full, were asked for again at 9:03 AM ET on Wed 14 Oct, before the 2026-10-14 open, in 1 call to the bars endpoint; 15 now carry a 2026-10-13 bar that passes the session rules (15 with zero volume); 1 still ends before it (WBD). The publication stays 4760 of 4776 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
+}
