@@ -210,7 +210,7 @@ def test_the_envelope_bounds():
 
 
 @pytest.mark.parametrize("raw", [b'{"version": NaN, "items": []}', b'{"version": 3, "items": [], "x": Infinity}',
-                                 b"[" * 200_000 + b"]" * 200_000])
+                                 b"[" * 200_000 + b"]" * 200_000], ids=["NaN", "Infinity", "deep nesting"])
 def test_what_json_parse_cannot_read_is_refused_at_the_parse(raw):
     # The page's JSON.parse throws on NaN and Infinity; Python's would read
     # them, and a deep enough nesting raises RecursionError. Each is refused as
