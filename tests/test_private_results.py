@@ -101,6 +101,23 @@ def test_the_figures_by_hand():
     assert aapl["draft"]["commitment"] == "$64.22" and aapl["draft"]["risk_to_stop"] == "$2.52"
 
 
+@pytest.mark.parametrize("exit_price, expected", [
+    ("108.75", ("0.750000", "1.500000", "$0.75", "$1.50")),
+    ("109.499999", ("0.000001", "0.000002", "<$0.01", "<$0.01")),
+    ("109.5", None), ("109.500001", None),
+])
+def test_what_was_lost_past_the_stop_is_counted_on_every_reported_share(exit_price, expected):
+    # COIL's two filled shares, both out under its $109.50 stop: a gap on both.
+    def gapped(store):
+        item_of(store, "COIL")["report"]["average_exit_price"] = exit_price
+    beyond = record(pr.read(backup_with(gapped)), "COIL")["reported"]["beyond_stop"]
+    if expected is None:
+        assert beyond is None
+    else:
+        assert (beyond["per_share"], beyond["total"], beyond["display"]["per_share"], beyond["display"]["total"]) == expected
+        assert beyond["quantity"] == 2 and beyond["stop"] == "109.500000"
+
+
 def test_the_display_rounds_as_the_page_does():
     assert pr.display(0) == "$0.00" and pr.display(5_000) == "$0.01" and pr.display(4_999) == "<$0.01"
     assert pr.display(-1) == "-<$0.01" and pr.display(-5_000) == "-$0.01"
@@ -152,6 +169,7 @@ def _set(ticker, **fields):
 
 @pytest.mark.parametrize("mutate, named", [
     (_set("COIL", filled_quantity=4), "filled plus cancelled exceeds submitted"),
+    (_set("COIL", cancelled_quantity=2), "filled plus cancelled exceeds submitted"),
     (_set("COIL", exited_quantity=3), "exited exceeds filled"),
     (_set("COIL", average_price="111.050"), "average_price"),
     (_set("COIL", average_price="111.0500001"), "average_price"),
@@ -350,7 +368,8 @@ def test_the_history_of_docs_data_json_is_searched(tmp_path):
     git(repo, "add", "docs/other.txt")
     git(repo, "commit", "-q", "-m", "unrelated")
     history = pr.from_git(repo)
-    assert len(history) == 2 and [pub.position for pub in history] == [0, 1]
+    # Oldest first, so a later position is a newer commit.
+    assert [(pub.position, pub.session) for pub in history] == [(0, "2026-09-10"), (1, "2026-09-11")]
     row = pr.read(aapl_backup(), history)["records"][0]
     assert row["trace"]["status"] == "traced" and row["model"]["status"] == "observed"
     assert len(pr.from_git(repo, limit=1)) == 1

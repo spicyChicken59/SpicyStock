@@ -168,6 +168,11 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     await set(page, { average_exit_price: '109.50' }); await save(page);
     eq('exit correction recomputes gross and net loss', [(await resultAmounts(page))['Reported gross result'], (await resultAmounts(page))['Reported net result']], ['-$3.46', '-$3.58']);
     check('loss is labelled only as user-reported', /User-reported net loss/.test(await page.locator('[data-handoff-result-status]').textContent()));
+    // COIL's published stop is $109.50: an exit there names nothing past it, one
+    // under it names the gap on both reported shares.
+    eq('an exit at the stop names nothing past it', 'Average exit below the published stop' in await resultAmounts(page), false);
+    await set(page, { average_exit_price: '108.75' }); await save(page);
+    eq('an exit under the stop names what was lost past it on the reported shares', (await resultAmounts(page))['Average exit below the published stop'], '$0.75 a share · $1.50 on 2 reported shares past the stop (a gap or slippage)');
     for (const [name, patch] of [
       ['partial exit', { exited_quantity: '1' }], ['unknown cancellation', { cancelled_quantity: '' }],
       ['unknown entry price', { average_price: '' }], ['unknown exit price', { average_exit_price: '' }],
