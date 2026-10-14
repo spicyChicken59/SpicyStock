@@ -172,7 +172,7 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     // under it names the gap on both reported shares.
     eq('an exit at the stop names nothing past it', 'Average exit below the published stop' in await resultAmounts(page), false);
     await set(page, { average_exit_price: '108.75' }); await save(page);
-    eq('an exit under the stop names what was lost past it on the reported shares', (await resultAmounts(page))['Average exit below the published stop'], '$0.75 a share · $1.50 on 2 reported shares past the stop (a gap or slippage)');
+    eq('an exit under the stop names what was lost past it on the reported shares', (await resultAmounts(page))['Average exit below the published stop'], '$0.75 a share on average · the 2 reported shares exited for $1.50 less than at the stop (a gap or slippage)');
     for (const [name, patch] of [
       ['partial exit', { exited_quantity: '1' }], ['unknown cancellation', { cancelled_quantity: '' }],
       ['unknown entry price', { average_price: '' }], ['unknown exit price', { average_exit_price: '' }],

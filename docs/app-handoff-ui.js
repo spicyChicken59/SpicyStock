@@ -404,7 +404,9 @@
       ['Reported gross result', result.gross_display],
       ['Reported actual costs', result.fees_display + ' (entry $' + item.report.entry_fees + ' + exit $' + item.report.exit_fees + ')'],
       ['Reported net result', result.net_display],
-      ...(summary.beyond_stop ? [['Average exit below the published stop', summary.beyond_stop.per_share_display + ' a share · ' + summary.beyond_stop.total_display + ' on ' + summary.beyond_stop.quantity + ' reported ' + (summary.beyond_stop.quantity === 1 ? 'share' : 'shares') + ' past the stop (a gap or slippage)']] : [])
+      // From averages: how far under the stop the average exit was, and how
+      // much less the shares fetched than at the stop -- never which shares.
+      ...(summary.beyond_stop ? [['Average exit below the published stop', summary.beyond_stop.per_share_display + ' a share on average · the ' + summary.beyond_stop.quantity + ' reported ' + (summary.beyond_stop.quantity === 1 ? 'share' : 'shares') + ' exited for ' + summary.beyond_stop.total_display + ' less than at the stop (a gap or slippage)']] : [])
     ] : []);
     const protection = { unknown: 'Protection is unknown. Check your remaining holdings and active protective orders at your broker.', matched: 'Reported protective quantity matches reported remaining holdings. SpicyStock does not verify an active stop.', under: 'Reported protective quantity is below remaining reported holdings. Reconcile protection at your broker.', over: 'Reported protective quantity exceeds remaining reported holdings. Reconcile the sell quantity at your broker.' };
     host.querySelector('[data-handoff-protection]').textContent = protection[summary.protection] || 'Protection needs reconciliation at your broker.';

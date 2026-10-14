@@ -184,6 +184,7 @@ jobs:
           npx playwright install --with-deps chromium
           set -o pipefail
           node tools/handoff_model_cases.mjs
+          node tools/private_results_parity.mjs --check
           node tools/continuity_check.mjs
           node tools/chart_check.mjs
           node tools/page_smoke.mjs --shots /tmp/shots

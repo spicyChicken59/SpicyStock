@@ -30,6 +30,7 @@ which nothing here verifies.
 Exit 0: every record re-derived and, where a publication source was given,
 traced. Exit 1: a record whose publication was not found, or whose frozen plan
 is not the publication's. Exit 2: the backup is not one the page would accept.
+Exit 3: a file or the checkout's history could not be read, named in one line.
 """
 from __future__ import annotations
 
@@ -39,7 +40,6 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,7 +52,9 @@ STORE_VERSIONS = {1, 2, 3}
 MAX_ITEMS = 100
 MAX_BYTES = 1048576
 MAX_SHARES = 1000000
-MAX_CENTS = 2**53 - 1
+MAX_SAFE = 2**53 - 1   # Number.MAX_SAFE_INTEGER: the page's integers stop here
+MAX_CENTS = MAX_SAFE
+MAX_INSTRUCTION = 2000  # UTF-16 units, as JavaScript counts a string's length
 GIT_LIMIT = 256
 
 LEGACY_FIELDS = ("submitted_quantity", "submitted_at", "filled_quantity", "average_price", "filled_at",
@@ -69,13 +71,18 @@ KINDS = ("planned_handoff", "independent_research")
 
 HEX = re.compile(r"[a-f0-9]{64}")
 RULES = re.compile(r"[a-f0-9]{12}")
-DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
+DAY = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.-]{0,14}")
 PRICE = re.compile(r"(\d{1,10})(?:\.(\d{1,6}))?")
 FEE = re.compile(r"(\d+)\.(\d{2})")
-STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z")
-# Source clocks keep their upstream spelling (microseconds, offsets).
-SOURCE_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,6})?)?(?:Z|[+-](?:0\d|1[0-4]):[0-5]\d)")
+# The page's timestamp(): a calendar date, hours 00-23, optional seconds with at
+# most three fractional digits, Z or an offset.
+TIMESTAMP = re.compile(r"(\d{4})-(\d{2})-(\d{2})T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.(\d{1,3}))?)?(Z|([+-])(0\d|1[0-4]):([0-5]\d))")
+# What the page stores for a reported broker event: Date.toISOString().
+STORED_TIME = re.compile(r"\d{4}-\d{2}-\d{2}T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z")
+# The page's sourceTime(): an upstream clock's fourth to sixth fractional digit
+# is cut before timestamp() reads it.
+MICROSECONDS = re.compile(r"(\.\d{3})\d{1,3}(?=Z|[+-])")
 RUN_ID = re.compile(r"[A-Za-z0-9_-]{1,100}")
 SCHEDULE_KEY = re.compile(r"[a-z0-9_]{1,80}")
 
@@ -91,28 +98,59 @@ def _keys(value, keys) -> bool:
 
 
 def _int(value) -> bool:
-    return isinstance(value, int) and not isinstance(value, bool)
+    """A JavaScript safe integer: never a bool, which Python counts as 1 or 0."""
+    return type(value) is int and -MAX_SAFE <= value <= MAX_SAFE
+
+
+def _is(value, expected: int) -> bool:
+    """The page's `value === expected` for an integer."""
+    return _int(value) and value == expected
+
+
+def _leap(year: int) -> bool:
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 
 def _date(value) -> bool:
-    if not isinstance(value, str) or not DAY.fullmatch(value):
+    """The page's validDate(): a real proleptic Gregorian date, year 0000 included."""
+    match = DAY.fullmatch(value) if isinstance(value, str) else None
+    if not match:
         return False
-    try:
-        return date.fromisoformat(value).isoformat() == value
-    except ValueError:
+    year, month, day = (int(part) for part in match.groups())
+    if not 1 <= month <= 12:
         return False
+    length = [31, 29 if _leap(year) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]
+    return 1 <= day <= length
 
 
-def _instant(value, pattern=STORED_TIME):
-    """A stored clock as an aware datetime, or None."""
-    if not isinstance(value, str) or not pattern.fullmatch(value) or not _date(value[:10]):
+def _days(year: int, month: int, day: int) -> int:
+    """Days from 1970-01-01 (Hinnant's days_from_civil), which year 0000 needs."""
+    year -= month <= 2
+    era = year // 400
+    yoe = year - era * 400
+    doy = (153 * (month + (-3 if month > 2 else 9)) + 2) // 5 + day - 1
+    return era * 146097 + yoe * 365 + yoe // 4 - yoe // 100 + doy - 719468
+
+
+def _ms(value, *, stored=False, source=False):
+    """A clock as epoch milliseconds the way the page reads it, or None.
+
+    stored: a reported event's clock, which must be the toISOString() spelling
+    the page writes. source: an upstream clock, cut to milliseconds first."""
+    if not isinstance(value, str):
         return None
-    text = value.replace("Z", "+00:00")
-    text = re.sub(r"(\.\d{3})\d{1,3}(?=[+-])", r"\1", text)
-    try:
-        return datetime.fromisoformat(text)
-    except ValueError:
+    if source:
+        value = MICROSECONDS.sub(r"\1", value)
+    if stored and not STORED_TIME.fullmatch(value):
         return None
+    match = TIMESTAMP.fullmatch(value)
+    if not match or not _date(value[:10]):
+        return None
+    year, month, day, hour, minute = (int(match.group(i)) for i in range(1, 6))
+    second, fraction = int(match.group(6) or 0), match.group(7) or ""
+    offset = 0 if match.group(8) == "Z" else (1 if match.group(9) == "+" else -1) * (int(match.group(10)) * 60 + int(match.group(11)))
+    minutes = (_days(year, month, day) * 24 + hour) * 60 + minute - offset
+    return minutes * 60_000 + second * 1000 + int(fraction.ljust(3, "0") or "0")
 
 
 def micros(price: str) -> int:
@@ -173,7 +211,7 @@ def report_problem(report, version: int) -> str | None:
     times = {}
     for key in TIMES:
         if report[key] is not None:
-            times[key] = _instant(report[key])
+            times[key] = _ms(report[key], stored=True)
             if times[key] is None:
                 return key
     submitted, filled = report["submitted_quantity"], report["filled_quantity"]
@@ -217,7 +255,7 @@ def _order_problem(order, ticker) -> str | None:
             or order["action"] != "buy" or order["order_type"] != "stop_limit" or order["time_in_force"] != "day"
             or order["conditional"] != "one_triggers_the_other" or then["action"] != "sell" or then["order_type"] != "stop"
             or then["time_in_force"] != "gtc" or not _int(order["quantity"]) or not 1 <= order["quantity"] <= MAX_SHARES
-            or then["quantity"] != order["quantity"] or None in (trigger, limit, stop) or not stop < trigger <= limit):
+            or not _is(then["quantity"], order["quantity"]) or None in (trigger, limit, stop) or not stop < trigger <= limit):
         return "plan.order"
     return None
 
@@ -225,13 +263,13 @@ def _order_problem(order, ticker) -> str | None:
 def _planned_problem(item) -> str | None:
     pub, plan, draft = item["publication"], item["plan"], item["draft"]
     if (not _keys(pub, ("sha256", "session", "published_at", "rules_version")) or not isinstance(pub["sha256"], str)
-            or not HEX.fullmatch(pub["sha256"]) or not _date(pub["session"]) or _instant(pub["published_at"], SOURCE_TIME) is None
+            or not HEX.fullmatch(pub["sha256"]) or not _date(pub["session"]) or _ms(pub["published_at"], source=True) is None
             or not isinstance(pub["rules_version"], str) or not RULES.fullmatch(pub["rules_version"])):
         return "publication"
     if not _keys(plan, ("reference", "ticker", "stage", "order", "timing", "exit_schedule")):
         return "plan"
     ref = plan["reference"]
-    if not _keys(ref, REFERENCE_KEYS) or ref["version"] != 1 or not all(isinstance(ref[k], str) and HEX.fullmatch(ref[k]) for k in REFERENCE_KEYS[1:]):
+    if not _keys(ref, REFERENCE_KEYS) or not _is(ref["version"], 1) or not all(isinstance(ref[k], str) and HEX.fullmatch(ref[k]) for k in REFERENCE_KEYS[1:]):
         return "plan.reference"
     if plan["stage"] not in ("bursts", "setting-up") or not isinstance(plan["ticker"], str):
         return "plan.stage"
@@ -241,14 +279,15 @@ def _planned_problem(item) -> str | None:
     timing = plan["timing"]
     if not _keys(timing, TIMING_KEYS) or not _date(timing["applicable_session"]):
         return "plan.timing"
-    clocks = [_instant(timing[key], SOURCE_TIME) for key in TIMING_KEYS[1:]]
+    clocks = [_ms(timing[key]) for key in TIMING_KEYS[1:]]
     if None in clocks or not clocks[0] < clocks[1] <= clocks[2]:
         return "plan.timing"
     rows = plan["exit_schedule"]
     if not isinstance(rows, list) or not 1 <= len(rows) <= 20 or not all(
             _keys(row, ("day", "date", "key", "instruction")) and _int(row["day"]) and 0 < row["day"] <= 30 and _date(row["date"])
             and row["date"] >= timing["applicable_session"] and isinstance(row["key"], str) and SCHEDULE_KEY.fullmatch(row["key"])
-            and isinstance(row["instruction"], str) and 0 < len(row["instruction"]) <= 2000 for row in rows):
+            and isinstance(row["instruction"], str)
+            and 0 < len(row["instruction"].encode("utf-16-le", "surrogatepass")) // 2 <= MAX_INSTRUCTION for row in rows):
         return "plan.exit_schedule"
     if item["id"] != pub["sha256"] + ":" + ref["id"]:
         return "id"
@@ -272,12 +311,12 @@ def _independent_problem(item) -> str | None:
             or not isinstance(pub["run_id"], str) or not RUN_ID.fullmatch(pub["run_id"])
             or not isinstance(pub["rules_version"], str) or not RULES.fullmatch(pub["rules_version"])
             or not _date(pub["measured_session"]) or not _date(pub["applicable_session"])
-            or _instant(pub["published_at"], SOURCE_TIME) is None or pub["reader_projection_version"] != 1):
+            or _ms(pub["published_at"], source=True) is None or not _is(pub["reader_projection_version"], 1)):
         return "source.publication"
     cohort, evidence = source["cohort"], source["evidence"]
     if (not _keys(cohort, ("sha256", "bytes", "generated_at", "policy_id")) or not isinstance(cohort["sha256"], str)
             or not HEX.fullmatch(cohort["sha256"]) or not _int(cohort["bytes"]) or not 0 < cohort["bytes"] <= 128 * 1024
-            or _instant(cohort["generated_at"], SOURCE_TIME) is None or cohort["policy_id"] != "anticipation_stop_width_4_to_5_v1"):
+            or _ms(cohort["generated_at"], source=True) is None or cohort["policy_id"] != "anticipation_stop_width_4_to_5_v1"):
         return "source.cohort"
     if not _keys(evidence, ("id", "plan_sha256", "source_sha256", "inputs_sha256")) or not all(
             isinstance(v, str) and HEX.fullmatch(v) for v in evidence.values()):
@@ -301,9 +340,9 @@ def item_problem(item, version: int) -> str | None:
     fields |= {"kind"} if version == 3 else set()
     if set(item) != fields:
         return "record fields"
-    if item["version"] != version or not _int(item["revision"]) or item["revision"] < 1 or not isinstance(item["id"], str):
+    if not _is(item["version"], version) or not _int(item["revision"]) or item["revision"] < 1 or not isinstance(item["id"], str):
         return "record identity"
-    created, updated = _instant(item["created_at"]), _instant(item["updated_at"])
+    created, updated = _ms(item["created_at"]), _ms(item["updated_at"])
     if created is None or updated is None or created > updated:
         return "record clocks"
     problem = report_problem(item["report"], version)
@@ -313,10 +352,20 @@ def item_problem(item, version: int) -> str | None:
         if reported(item):
             return "reported facts without a report clock"
     else:
-        at = _instant(item["report_updated_at"])
+        at = _ms(item["report_updated_at"])
         if at is None or at > updated:
             return "report clock"
     return _independent_problem(item) if kind == "independent_research" else _planned_problem(item)
+
+
+def _number(text: str):
+    """JSON.parse reads 2.0 and 1e3 as the integers 2 and 1000."""
+    value = float(text)
+    return int(value) if value.is_integer() else value
+
+
+def _constant(text: str):
+    raise ValueError(f"{text} is not JSON")
 
 
 def load_backup(raw: bytes) -> dict:
@@ -326,10 +375,11 @@ def load_backup(raw: bytes) -> dict:
     if raw.startswith(b"\xef\xbb\xbf"):
         raise Refused("the file begins with a byte-order mark the page does not write")
     try:
-        store = json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError) as error:
-        raise Refused("the file is not UTF-8 JSON: " + str(error)[:80]) from None
-    if not _keys(store, ("version", "items")) or store["version"] not in STORE_VERSIONS or not isinstance(store["items"], list):
+        store = json.loads(raw.decode("utf-8"), parse_float=_number, parse_constant=_constant)
+    except (UnicodeDecodeError, ValueError, RecursionError) as error:
+        raise Refused("the file is not UTF-8 JSON the page reads: " + str(error)[:80]) from None
+    if (not _keys(store, ("version", "items")) or not _int(store["version"]) or store["version"] not in STORE_VERSIONS
+            or not isinstance(store["items"], list)):
         raise Refused("not a private-backup envelope of a version the page writes (1, 2 or 3)")
     if len(store["items"]) > MAX_ITEMS:
         raise Refused(f"more than {MAX_ITEMS} records")
@@ -415,6 +465,7 @@ def beyond_stop(item, result) -> dict | None:
     per_share = stop - exit_price
     total = per_share * result["quantity"]
     return {"stop": exact(stop), "per_share": exact(per_share), "total": exact(total), "quantity": result["quantity"],
+            "stop_microusd": stop, "per_share_microusd": per_share, "total_microusd": total,
             "display": {"per_share": display(per_share), "total": display(total)}}
 
 
@@ -495,6 +546,18 @@ def from_git(repo: Path, ref: str = "HEAD", limit: int = GIT_LIMIT) -> list[Publ
     return publications
 
 
+# What a trace does not compare, named in every trace. A planned handoff's
+# draft is the owner's own choice, which no publication carries. An independent
+# report also names the compact reader (a second file), the research cohort
+# (beside the record, not in it) and the cohort row's inputs digest and baseline
+# admission, none of them in docs/data.json.
+UNCHECKED = {
+    "planned_handoff": ("draft",),
+    "independent_research": ("source.publication.reader_projection_version", "source.publication.reader_sha256",
+                             "source.cohort", "source.evidence.inputs_sha256", "source.baseline_admitted"),
+}
+
+
 def _row(data, stage, ticker):
     if stage == "bursts":
         rows = data.get("bursts") or []
@@ -506,14 +569,15 @@ def _row(data, stage, ticker):
 
 def trace(item, publications) -> dict:
     """Is this record's frozen plan the one its publication carries?"""
+    unchecked = list(UNCHECKED[item["kind"]])
     if publications is None:
-        return {"status": "not_checked", "publication": None, "mismatches": []}
+        return {"status": "not_checked", "publication": None, "mismatches": [], "unchecked": unchecked}
     planned = item["kind"] == "planned_handoff"
     sha = item["publication"]["sha256"] if planned else item["source"]["publication"]["data_sha256"]
     match = next((pub for pub in publications if pub.sha256 == sha), None)
     if match is None:
         return {"status": "publication_not_found", "publication": None, "mismatches": [],
-                "searched": len(publications)}
+                "searched": len(publications), "unchecked": unchecked}
     data = match.data
     run, mismatches = data.get("run") or {}, []
     if planned:
@@ -538,6 +602,8 @@ def trace(item, publications) -> dict:
         source = item["source"]
         pub = source["publication"]
         for name, ours, theirs in (("source.publication.measured_session", pub["measured_session"], run.get("session")),
+                                   ("source.publication.applicable_session", pub["applicable_session"], (run.get("timing") or {}).get("applicable_session")),
+                                   ("source.publication.context_sha256", pub["context_sha256"], (run.get("evidence") or {}).get("context_sha256")),
                                    ("source.publication.run_id", pub["run_id"], str(run.get("run_id"))),
                                    ("source.publication.published_at", pub["published_at"], run.get("published_at")),
                                    ("source.publication.rules_version", pub["rules_version"], (data.get("app") or {}).get("rules_version"))):
@@ -554,7 +620,7 @@ def trace(item, publications) -> dict:
                 if ours != theirs:
                     mismatches.append(name)
     return {"status": "mismatch" if mismatches else "traced", "publication": match.label, "sha256": match.sha256,
-            "session": match.session, "mismatches": mismatches}
+            "session": match.session, "mismatches": mismatches, "unchecked": unchecked}
 
 
 def model_outcome(item, publications) -> dict:
@@ -629,15 +695,19 @@ def text(reading: dict) -> str:
             lines.append(f"    reported: {result['outcome']} on {shares}; gross {result['display']['gross']}, "
                          f"costs {result['display']['costs']}, net {result['display']['net']} (exact {result['net']})")
             if result["beyond_stop"]:
-                lines.append(f"    average exit {result['beyond_stop']['display']['per_share']} a share under the published stop: "
-                             f"{result['beyond_stop']['display']['total']} past it (a gap or slippage)")
+                beyond = result["beyond_stop"]
+                # The page's row, label and value: averages, never which shares.
+                lines.append(f"    average exit below the published stop: {beyond['display']['per_share']} a share on average; "
+                             f"the {'1 reported share' if beyond['quantity'] == 1 else str(beyond['quantity']) + ' reported shares'} "
+                             f"exited for {beyond['display']['total']} less than at the stop (a gap or slippage)")
         else:
             lines.append("    reported: no completed result -- " + "; ".join(result["reasons"]))
         model = record["model"]
         if model["status"] == "observed":
             plan = model["plan"]
+            result_words = "no result yet" if plan["result_pct"] is None else f"result {plan['result_pct']}%"
             lines.append(f"    model (kept apart, {plan['shares']} published shares on daily bars) in {model['publication']}: "
-                         f"{plan['status']}; {plan['fill']}; result {plan['result_pct']}%")
+                         f"{plan['status']}; {plan['fill']}; {result_words}")
         else:
             lines.append(f"    model (kept apart): {model['status']} -- {model['reason']}")
     totals = reading["reported_totals"]
@@ -646,33 +716,56 @@ def text(reading: dict) -> str:
     return "\n".join(lines)
 
 
+def _positive(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return number
+
+
+def _unreadable(error) -> str:
+    """One line: the path and the reason, or the git command that failed."""
+    if isinstance(error, subprocess.CalledProcessError):
+        detail = (error.stderr or b"").decode("utf-8", "replace").strip().splitlines() if isinstance(error.stderr, bytes) else (error.stderr or "").strip().splitlines()
+        return "git " + " ".join(str(part) for part in error.cmd[3:5]) + (": " + detail[-1] if detail else "")
+    return f"{error.filename}: {error.strerror}" if error.filename else str(error)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("backup", type=Path, help="the file *Download private backup* wrote")
     parser.add_argument("--publication", type=Path, action="append", default=[], help="a published data.json (repeatable)")
     parser.add_argument("--git", nargs="?", const="HEAD", default=None, metavar="REF",
                         help="search this checkout's history of docs/data.json up to REF (default HEAD)")
-    parser.add_argument("--limit", type=int, default=GIT_LIMIT, help=f"commits --git reads (default {GIT_LIMIT})")
+    parser.add_argument("--limit", type=_positive, default=GIT_LIMIT, help=f"commits --git reads, at least 1 (default {GIT_LIMIT})")
     parser.add_argument("--json", type=Path, help="write the reading here")
     args = parser.parse_args(argv)
-    publications = None
-    if args.publication or args.git is not None:
-        publications = from_files(args.publication)
-        if args.git is not None:
-            # History first, then the files: a file named on the command line
-            # is read as newer than anything committed.
-            history = from_git(ROOT, args.git, args.limit)
-            for pub in publications:
-                pub.position += len(history)
-            publications = history + publications
     try:
-        reading = read(args.backup.read_bytes(), publications)
+        raw = args.backup.read_bytes()
+        publications = None
+        if args.publication or args.git is not None:
+            publications = from_files(args.publication)
+            if args.git is not None:
+                # History first, then the files: a file named on the command line
+                # is read as newer than anything committed.
+                history = from_git(ROOT, args.git, args.limit)
+                for pub in publications:
+                    pub.position += len(history)
+                publications = history + publications
+        reading = read(raw, publications)
     except Refused as error:
         print(f"Refused: {error}. Nothing was re-derived.", file=sys.stderr)
         return 2
+    except (OSError, subprocess.CalledProcessError) as error:
+        print(f"Unreadable: {_unreadable(error)}. Nothing was re-derived.", file=sys.stderr)
+        return 3
     print(text(reading))
     if args.json:
-        args.json.write_text(json.dumps(reading, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        try:
+            args.json.write_text(json.dumps(reading, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        except OSError as error:
+            print(f"Unreadable: {_unreadable(error)}. The reading above was not written.", file=sys.stderr)
+            return 3
     unresolved = [r for r in reading["records"] if r["trace"]["status"] in ("publication_not_found", "mismatch")]
     return 1 if unresolved else 0
 

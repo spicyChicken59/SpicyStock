@@ -29,6 +29,9 @@
   const cents = value => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
   const dollars = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
   const cashText = value => String(BigInt(value) / 100n) + '.' + String(BigInt(value) % 100n).padStart(2, '0');
+  // A pattern test of a stored field. RegExp.test() turns its argument into a
+  // string, so an array of one matching string would pass it; only a string can.
+  const matches = (pattern, value) => typeof value === 'string' && pattern.test(value);
   function exactKeys(value, keys) { return object(value) && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key)); }
   function validDate(value) {
     if (typeof value !== 'string' || !DATE.test(value)) return false;
@@ -91,9 +94,9 @@
     if (exited > 0 && exited === filled && out.exited_at && out.filled_at && out.exited_at < out.filled_at) return fail('A complete exit cannot precede the latest reported entry fill.');
     return { ok: true, report: out };
   }
-  function validReference(ref) { return exactKeys(ref, ['version', ...REF]) && ref.version === 1 && REF.every(key => HEX.test(ref[key])); }
+  function validReference(ref) { return exactKeys(ref, ['version', ...REF]) && ref.version === 1 && REF.every(key => matches(HEX, ref[key])); }
   function orderValid(order) {
-    if (!exactKeys(order, ['symbol', 'action', 'quantity', 'order_type', 'stop_price', 'limit_price', 'time_in_force', 'conditional', 'then']) || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(order.symbol) ||
+    if (!exactKeys(order, ['symbol', 'action', 'quantity', 'order_type', 'stop_price', 'limit_price', 'time_in_force', 'conditional', 'then']) || !matches(/^[A-Z][A-Z0-9.-]{0,14}$/, order.symbol) ||
         !exactKeys(order.then, ['action', 'quantity', 'order_type', 'stop_price', 'time_in_force'])) return false;
     return api.cashPreview.calculate({ cash: '90071992547409.91', fees: '0', quantity: '1', order }).state === 'calculated';
   }
@@ -119,14 +122,14 @@
   function researchPublicationValid(pub) {
     return exactKeys(pub, ['data_sha256', 'context_sha256', 'run_id', 'rules_version', 'measured_session', 'applicable_session', 'published_at', 'reader_projection_version', 'reader_sha256']) &&
       ['data_sha256', 'context_sha256', 'reader_sha256'].every(key => typeof pub[key] === 'string' && HEX.test(pub[key])) &&
-      typeof pub.run_id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(pub.run_id) && /^[a-f0-9]{12}$/.test(pub.rules_version) &&
+      matches(/^[A-Za-z0-9_-]{1,100}$/, pub.run_id) && matches(/^[a-f0-9]{12}$/, pub.rules_version) &&
       validDate(pub.measured_session) && validDate(pub.applicable_session) && sourceTime(pub.published_at) && pub.reader_projection_version === 1;
   }
   function researchValid(source) {
-    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'cohort', 'evidence', 'baseline_admitted']) || !/^[A-Z][A-Z0-9.-]{0,14}$/.test(source.ticker) || source.stage !== 'setting-up' || typeof source.baseline_admitted !== 'boolean') return false;
+    if (!exactKeys(source, ['ticker', 'stage', 'publication', 'cohort', 'evidence', 'baseline_admitted']) || !matches(/^[A-Z][A-Z0-9.-]{0,14}$/, source.ticker) || source.stage !== 'setting-up' || typeof source.baseline_admitted !== 'boolean') return false;
     const cohort = source.cohort, evidence = source.evidence;
     return researchPublicationValid(source.publication) &&
-      exactKeys(cohort, ['sha256', 'bytes', 'generated_at', 'policy_id']) && HEX.test(cohort.sha256) && Number.isSafeInteger(cohort.bytes) && cohort.bytes > 0 && cohort.bytes <= 128 * 1024 &&
+      exactKeys(cohort, ['sha256', 'bytes', 'generated_at', 'policy_id']) && matches(HEX, cohort.sha256) && Number.isSafeInteger(cohort.bytes) && cohort.bytes > 0 && cohort.bytes <= 128 * 1024 &&
       sourceTime(cohort.generated_at) && cohort.policy_id === 'anticipation_stop_width_4_to_5_v1' &&
       exactKeys(evidence, ['id', 'plan_sha256', 'source_sha256', 'inputs_sha256']) && Object.values(evidence).every(value => typeof value === 'string' && HEX.test(value));
   }
@@ -141,7 +144,7 @@
     } else {
       if (!planValid(item.plan)) return false;
       const pub = item.publication, draft = item.draft;
-      if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !HEX.test(pub.sha256) || !validDate(pub.session) || !sourceTime(pub.published_at) || !/^[a-f0-9]{12}$/.test(pub.rules_version) ||
+      if (!exactKeys(pub, ['sha256', 'session', 'published_at', 'rules_version']) || !matches(HEX, pub.sha256) || !validDate(pub.session) || !sourceTime(pub.published_at) || !matches(/^[a-f0-9]{12}$/, pub.rules_version) ||
           item.id !== pub.sha256 + ':' + item.plan.reference.id || !exactKeys(draft, ['quantity', 'cash_cents', 'fee_cents']) || !Number.isInteger(draft.quantity) || draft.quantity < 1 || draft.quantity > MAX_SHARES || !cents(draft.cash_cents) || !cents(draft.fee_cents) || calculation(item).state !== 'calculated') return false;
     }
     const report = normalizeReport(item.report, null, version);
@@ -370,8 +373,10 @@
       gross_display: displayMicros(gross), fees_display: displayMicros(fees), net_display: displayMicros(net), outcome: net > 0n ? 'gain' : net < 0n ? 'loss' : 'breakeven' };
   }
   // A complete result whose average exit is under the frozen protective stop
-  // lost more than the stop allowed: a gap or slippage past it. Reported
-  // averages only; a gap on part of a position can hide inside an average.
+  // fetched less than the stop would have: a gap or slippage past it. Read
+  // from averages, so it says how far under on average and how much less in
+  // all, never which shares; a gap on part of a position can hide inside an
+  // average at or over the stop.
   function beyondStop(item, result) {
     if (independent(item) || !result || result.state !== 'complete') return null;
     const stop = BigInt(api.cashPreview.cents(String(item.plan.order.then.stop_price))) * 10000n, exit = priceMicros(item.report.average_exit_price);

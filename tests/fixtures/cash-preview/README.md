@@ -41,7 +41,10 @@ three. A preview never changes the original order, reserves cash, establishes
 an actual fill or releases cash from a partial model sale.
 
 Regenerate with `python tests/fixtures/cash-preview/generate.py`; verify with
-the same command and `--check`. The generator writes only the six JSON controls
+the same command and `--check`. The first-trade rehearsal is built over
+`publication-multiple.json`, so regenerate `tests/fixtures/first-trade/` after
+it (that directory's README names the two commands);
+`tests/test_private_results.py` fails first and names them. The generator writes only the six JSON controls
 in this directory. Derive reader/sidecar transport controls with
 `src.reader.derive(publication_bytes)` when a browser test needs the projected
 load path.

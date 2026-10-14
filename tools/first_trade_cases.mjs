@@ -30,21 +30,26 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
   const runs = [];
   for (const [width, theme] of [[390, 'light'], [1280, 'dark']]) {
     const requests = [];
-    const tab = await open(browser, base, '/' + SOURCE + '/publication-multiple.json', START, width, {
+    const tab = await open(browser, base, '/' + SOURCE + '/publication-multiple.json', null, width, {
       theme, hash: '#/explore/setting-up/COIL', reducedMotion: 'reduce', beforeLoad: async (page, context) => {
         await context.addInitScript(start => {
           const Native = Date; window.__rehearsalClock = Native.parse(start);
           window.Date = class extends Native { constructor(...args) { super(...(args.length ? args : [window.__rehearsalClock])); } static now() { return window.__rehearsalClock; } };
         }, START);
-        page.on('request', request => requests.push([new URL(request.url()).pathname, request.method(), request.postData()]));
+        page.on('request', request => { const url = new URL(request.url()); requests.push([url.pathname, request.method(), request.postData(), url.search]); });
         await page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: sidecar }));
       }
     });
     const { page, context, errors } = tab;
     const name = width + '/' + theme;
-    // The page's own clock (SCStock.now) and the Date the private store stamps
-    // move together, as they would on a real morning and the days after it.
-    const at = async iso => page.evaluate(iso => { window.__rehearsalClock = Date.parse(iso); SCStock.now = iso; SCStock.reclock(); }, iso);
+    // One clock moves for the page and the private store alike: the page is
+    // opened unpinned (no SCStock.now), so availability(), the store's stamps
+    // and the desk all read the same replaced Date, as on a real morning and
+    // the days after it. A pinned page clock would hold the desk at 8:35.
+    const at = async iso => {
+      await page.evaluate(iso => { window.__rehearsalClock = Date.parse(iso); SCStock.reclock(); }, iso);
+      eq(name + ': the page reads ' + iso, await page.evaluate(() => SCStock.avail && SCStock.avail.at && new Date(SCStock.avail.at).toISOString()), iso);
+    };
     const set = async fields => { for (const [key, value] of Object.entries(fields)) await field(page, key).fill(value); };
     const save = async () => {
       const before = await page.evaluate(() => JSON.stringify(SCStock.handoff.list().map(item => item.revision)));
@@ -85,7 +90,9 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       await page.locator('[data-handoff-prepare]').click(); await page.waitForFunction(() => SCStock.handoff.list().length === 2);
       eq(name + ': two drafts, each its own quantity beside the published one', (await saved(page)).map(item => [item.plan.ticker, item.draft.quantity, item.plan.order.quantity, item.report_updated_at]), [['COIL', 3, 4, null], ['AAPL', 1, 1, null]]);
       await page.locator('[data-handoff-readback] > summary').click();
+      await page.evaluate(() => navigator.clipboard.writeText('rehearsal sentinel'));
       await page.locator('[data-handoff-copy]').click();
+      await page.waitForFunction(async () => (await navigator.clipboard.readText()) !== 'rehearsal sentinel');
       check(name + ': the readback copied names the draft and submits nothing', await page.evaluate(async () => { const text = await navigator.clipboard.readText(); return /BUY 1 AAPL · STOP LIMIT · trigger \$62\.10 · limit \$63\.22/.test(text) && /STOP \$60\.70/.test(text) && /places no order/.test(text); }));
       await page.locator('[data-handoff-report] > summary').click();
       const reporting = requests.length;
@@ -108,6 +115,8 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       // at 9:00 is still recordable.
       await at('2026-09-11T14:02:00.000Z');
       eq(name + ': no new draft after the entry window', await page.locator('[data-handoff-prepare]').isDisabled(), true);
+      eq(name + ': the cash preview offers nothing after the entry window', [await page.locator('[data-cash-preview]').getAttribute('data-preview-state'), await page.locator('[data-cash-preview-result]').evaluate(node => node.children.length)], ['unavailable', 0]);
+      check(name + ': the preview says why: the entry window ended', /window/i.test(await page.locator('[data-cash-preview-status]').textContent()));
       await set({ cancelled_quantity: '1', cancelled_at: '2026-09-11T09:00:00-05:00' }); await save();
       eq(name + ': the remainder cancelled at the cutoff', [(await status())['Unfilled shares cancelled'], (await status())['Entry remainder not reported cancelled']], ['1', '0']);
 
@@ -120,7 +129,7 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       const aaplResult = await facts(page, '[data-handoff-result-amounts]');
       eq(name + ': AAPL loss and the part of it past the stop', aaplResult, {
         'Reported gross result': '-$2.55', 'Reported actual costs': '$0.01 (entry $0.00 + exit $0.01)', 'Reported net result': '-$2.56',
-        'Average exit below the published stop': '$0.85 a share · $0.85 on 1 reported share past the stop (a gap or slippage)'
+        'Average exit below the published stop': '$0.85 a share on average · the 1 reported share exited for $0.85 less than at the stop (a gap or slippage)'
       });
       eq(name + ': the loss is the owner’s, reported', [await page.locator('[data-handoff-completed]').getAttribute('data-result-outcome'), /User-reported net loss/.test(await page.locator('[data-handoff-result-status]').textContent())], ['loss', true]);
       if (shotsDir) { await mkdir(shotsDir, { recursive: true }); await page.locator('[data-handoff-completed]').scrollIntoViewIfNeeded(); await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'first-trade-gap-' + width + '-' + theme + '.png') }); }
@@ -161,7 +170,7 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       }
       // From the first report on, the page asked for nothing but the published
       // morning file, and nothing it asked for carried a body.
-      eq(name + ': no reported fact left the page', requests.slice(reporting).filter(([pathname, method, body]) => pathname !== '/docs/morning.json' || method !== 'GET' || body), []);
+      eq(name + ': no reported fact left the page', requests.slice(reporting).filter(([pathname, method, body, search]) => pathname !== '/docs/morning.json' || method !== 'GET' || body || search), []);
       check(name + ': no request carried a body', requests.every(([, method, body]) => method === 'GET' && !body));
       check(name + ': the desk fits the screen', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
       eq(name + ': no browser error', [...errors], []);

@@ -19,7 +19,7 @@
         "Reported gross result": "-$2.55",
         "Reported actual costs": "$0.01 (entry $0.00 + exit $0.01)",
         "Reported net result": "-$2.56",
-        "Average exit below the published stop": "$0.85 a share · $0.85 on 1 reported share past the stop (a gap or slippage)"
+        "Average exit below the published stop": "$0.85 a share on average · the 1 reported share exited for $0.85 less than at the stop (a gap or slippage)"
       }
     }
   }
