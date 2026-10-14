@@ -446,20 +446,45 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('Play from the last night starts over', restarted, 1);
   await p.waitForFunction((sel) => Number(document.querySelector(sel).getAttribute('data-step')) >= 2, ROOTSEL);
   check('restarted playback advances', (await stepOf(p)) >= 2);
-  // scrolling the replay off the screen stops it: the stepping is for a reader who is watching
+  // scrolling the replay off the screen stops it: the stepping is for a reader who is watching.
+  // The stop arrives through an IntersectionObserver, which a loaded runner can deliver
+  // late, so each stop is waited for (bounded) before the night it holds is read.
+  const stopped = () => p.waitForFunction(() => !window.SCStock.findingsHandle.playing(), null, { timeout: 5000 }).catch(() => {});
   await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
   await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
-  await p.evaluate(() => window.scrollTo(0, 0)); await settle(p, 900);
+  const [atScroll, playingAtScroll] = await p.evaluate((sel) => {
+    const playing = window.SCStock.findingsHandle.playing();
+    window.scrollTo(0, 0);
+    return [Number(document.querySelector(sel).getAttribute('data-step')), playing];
+  }, ROOTSEL);
+  check('Play was running when the replay was scrolled away', playingAtScroll, atScroll);
+  await stopped();
   const scrolled = await stepOf(p); await settle(p, 700);
   eq('scrolled off the screen Play has stopped and the night holds', [await stepOf(p), await playWord(p)], [scrolled, 'Play']);
-  await p.locator('#historical-evidence .ss-find__stage').scrollIntoViewIfNeeded(); await settle(p, 150);
+  // the scroll stopped it, not the last night: the observer reports at the next rendering
+  // update, so at most a tick or two can land after the scroll and before it
+  check('it stopped within two steps of the scroll, short of the last night', scrolled <= Math.min(atScroll + 2, N - 1), 'scrolled away at ' + atScroll + ', stopped at ' + scrolled);
+  await p.locator('#historical-evidence .ss-find__stage').scrollIntoViewIfNeeded();
+  // the page's own observer is told in the same intersection update as this one, and first
+  await p.evaluate((sel) => new Promise((done) => new IntersectionObserver((es, o) => {
+    if (es.some((e) => e.isIntersecting)) { o.disconnect(); done(); }
+  }).observe(document.querySelector(sel))), '#historical-evidence .ss-find__stage');
+  // leaving the view stops it too. From night 1, so Play cannot reach the last night and
+  // stop on its own; the bound is the night it left at, read in the same task as the hash
+  // change, never an absolute count that a late stop earlier in the journey could move.
+  await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
   await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
-  // leaving the view stops it too
-  await p.evaluate(() => { location.hash = '#/method'; }); await settle(p, 900);
+  const [left, wasPlaying] = await p.evaluate((sel) => {
+    const playing = window.SCStock.findingsHandle.playing();
+    location.hash = '#/method';
+    return [Number(document.querySelector(sel).getAttribute('data-step')), playing];
+  }, ROOTSEL);
+  check('Play was running when the view was left', wasPlaying, left);
+  await stopped();
   const away = await stepOf(p);
   await settle(p, 700);
   eq('off the view Play has stopped and the night holds', [await stepOf(p), await playWord(p)], [away, 'Play']);
-  check('it stopped within a step of leaving', away <= 3, away);
+  check('it stopped within a step of leaving, short of the last night', away <= Math.min(left + 1, N - 1), 'left at ' + left + ', stopped at ' + away);
   await p.evaluate(() => { location.hash = '#/record'; }); await settle(p, 300);
 
   // ---- 8. the blocks under the replay: the backtest, run 6, the reading
