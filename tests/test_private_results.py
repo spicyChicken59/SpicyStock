@@ -209,6 +209,16 @@ def test_the_envelope_bounds():
         pr.read(backup_with(lambda s: s["items"].extend([s["items"][0]] * pr.MAX_ITEMS)))
 
 
+@pytest.mark.parametrize("raw", [b'{"version": NaN, "items": []}', b'{"version": 3, "items": [], "x": Infinity}',
+                                 b"[" * 200_000 + b"]" * 200_000])
+def test_what_json_parse_cannot_read_is_refused_at_the_parse(raw):
+    # The page's JSON.parse throws on NaN and Infinity; Python's would read
+    # them, and a deep enough nesting raises RecursionError. Each is refused as
+    # unreadable JSON, never later by a field rule and never as a traceback.
+    with pytest.raises(pr.Refused, match="^the file is not UTF-8 JSON the page reads"):
+        pr.read(raw)
+
+
 def test_a_legacy_store_is_read_as_the_page_normalizes_it():
     def legacy(store):
         store["version"] = 1
@@ -231,6 +241,7 @@ def test_a_legacy_store_is_read_as_the_page_normalizes_it():
     (lambda s: item_of(s, "COIL")["plan"]["timing"].update(cutoff_at="2026-09-11T10:30:00-04:00"), "plan.timing"),
     (lambda s: item_of(s, "COIL")["publication"].update(rules_version="0" * 12), "publication.rules_version"),
     (lambda s: item_of(s, "COIL")["publication"].update(session="2026-09-09"), "publication.session"),
+    (lambda s: item_of(s, "COIL")["publication"].update(published_at="2026-09-10T23:59:00Z"), "publication.published_at"),
 ])
 def test_a_frozen_plan_the_publication_does_not_carry_is_named(mutate, named):
     reading = pr.read(backup_with(mutate), pr.from_files([PUBLICATION]))
@@ -560,6 +571,14 @@ def test_the_history_limit_is_at_least_one(tmp_path, limit, capsys):
     with pytest.raises(SystemExit) as stopped:
         pr.main([str(backup), "--git", "--limit", limit])
     assert stopped.value.code == 2 and "must be at least 1" in capsys.readouterr().err
+
+
+def test_the_text_counts_what_was_lost_past_the_stop_on_every_reported_share():
+    def gap(store):
+        item_of(store, "COIL")["report"].update(average_exit_price="108.75")
+    printed = pr.text(pr.read(backup_with(gap)))
+    assert ("average exit below the published stop: $0.75 a share on average; the 2 reported shares exited for $1.50 "
+            "less than at the stop (a gap or slippage)") in printed
 
 
 def test_the_text_says_a_model_without_a_result_has_none_yet():
