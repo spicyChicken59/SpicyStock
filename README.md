@@ -185,6 +185,15 @@ gain or loss is named explicitly. Corrections recompute this personal result.
 It is not broker-verified, tax accounting, settlement confirmation, model
 performance or evidence of a strategy's future returns.
 
+When a planned handoff's completed result has an average exit under the
+protective stop its published plan froze, one more line names the gap: how far
+under the stop the average exit was, and how much less the reported shares
+exited for than they would have at the stop (a gap or slippage). It is read
+from reported averages, so it cannot say which shares went past the stop or how
+far each did, and a gap on part of a position can sit inside an average at or
+above the stop, which names nothing. An independent research report has no
+frozen stop and no such line.
+
 Existing version-1 and version-2 private records remain readable. Missing
 version-1 result fields stay unknown; recorded version-2 prices and costs retain
 their validation and values. Reading adapts them in memory without rewriting
@@ -214,6 +223,50 @@ independent reports remain report-only, and planned handoffs retain all ordinary
 current-publication checks. The shared 100-record / 1 MiB limit, Web Lock,
 readback and failure recovery still apply. There is no cloud backup or sync,
 and public data need not be available to access this local recovery path.
+
+**Reproducing a reported result from the backup.** `tools/private_results.py`
+reads the downloaded file on the owner's own machine (it is never committed)
+and, for each record, re-derives the completed result by the page's own rules in
+exact integer millionths of a dollar; refuses, by name, a record the page's own
+validation would refuse; traces the record to the publication it was prepared
+from -- the record whose bytes hash to the SHA-256 it froze, among
+`--publication` files or this checkout's history of `docs/data.json` (`--git`),
+and in it the plan whose evidence reference, order, entry window and exit
+schedule are the frozen ones (an independent report: the setting-up row whose
+evidence it names); and prints the model's own daily-bar replay of the same plan
+beside it, read off the newest supplied publication after the plan's session,
+never added to the reported figure. Each trace names what it did not compare:
+a planned handoff's draft (the owner's own choice), and an independent report's
+reader digest, cohort, inputs digest and baseline admission, none of which
+`docs/data.json` carries. It writes nothing but an explicit `--json` and makes
+no network request. Exit 0 when every record re-derived and, where a
+publication source was given, traced; 1 when a publication was not found or a
+frozen plan is not the one it carries; 2 when the backup is refused; 3 when a
+file or the checkout's history cannot be read, named in one line.
+`tests/fixtures/first-trade/parity.json.gz` is the page's own verdict on 109
+backups -- `tools/private_results_parity.mjs` runs `app-handoff.js` over each,
+and CI holds the file to the page with `--check` -- and
+`tests/test_private_results.py` holds the tool to every one: the same accept or
+refuse, and for an accepted store the same figures and displays. A stored field
+the page checks by pattern must be a string: an array holding one matching
+string, which `RegExp.test()` would read as that string, is refused (the page
+never writes one).
+
+**The first-trade rehearsal.** `tools/first_trade_cases.mjs` (the page smoke's
+`firsttrade` suite) drives the real page over the run_evening-produced $2,000
+cash fixture, on one clock it moves for the page and the private store alike
+(the page is opened unpinned, so the desk's window and the store's stamps read
+the same instant): unconfirmed, unreadable, zero and short cash each refused; two
+drafts prepared; after the cutoff no draft and no cash preview; a partial fill,
+the remainder cancelled at the cutoff, a partial
+exit and then the last share, and a gap through a protective stop, each
+reported; the backup downloaded. Run at 390 and 1280 px, the two journeys must
+write the same bytes. `tests/fixtures/first-trade/` holds the backup and the
+amounts the page printed, and `tests/test_private_results.py` holds the tool to
+both. Every broker fact in it is synthetic. When the cash-preview publication
+moves, `SCSTOCK_FIRST_TRADE_WRITE=1 node tools/page_smoke.mjs --only firsttrade`
+writes it again, and then `node tools/private_results_parity.mjs` the corpus
+built from it.
 
 The next-action message counts the same published reaction and anticipation
 tickets as the desk, including tickets retained for inspection after cutoff.
@@ -1842,6 +1895,9 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
+                first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
+                private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
+                private_results.py (a reader of the owner's private backup: each reported result re-derived by the page's rules, traced to its publication by SHA-256 and frozen plan, the model's replay beside it and never added; writes nothing but an explicit --json)
 .github/        evening.yml · intraday.yml · morning.yml · source-recovery.yml · issuer-evidence.yml · tests.yml · publish-dashboard.yml · secret-scan.yml · historical-input-proof.yml
 ```
 

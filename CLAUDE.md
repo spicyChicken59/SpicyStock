@@ -340,7 +340,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4419 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4608 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -8376,3 +8376,188 @@ fresh required checks for the reconciled head. Independent final review,
 normal hosted gates, merge and actual public verification remain required.
 The combined research-quote reload/owner-workflow preparation must then be
 rebased onto this accepted release before publication.
+
+## Checkpoint, 14 Oct 2026 — PR #169 accepted; the first trade rehearsed end to end, its reported result reproduced offline (#110)
+
+**PR #169, accepted.** Merged as `bf266a6e` on `main` with a merge commit over
+`7e40716e`, closing #163. The code head `9e1e6afb` passed all seven checks
+(the stress case 22:49–23:25 UTC); the final head `174f47c0` (CLAUDE.md alone
+over it) passed pytest, page, the gate's docs-only decision and both gitleaks
+runs. Publisher 38485532089 printed *Verified: every one of the 41 public files
+matches committed main* at 23:39:28 UTC; Pages 38485556648 deployed
+(38485531013 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 38485532024 passed and its Tests run 38485532032 passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `bf266a6e`, pushed as **PR #171**. #110's acceptance line:
+"end-to-end rehearsal covering partial fill, cancellation, gaps and unconfirmed
+cash; traceable evidence throughout; reproducible user-reported P&L". The
+private pieces (#116, #120, #124, #144, #146, #149) each had their own suite;
+nothing traced one trade from the publication to a P&L figure, and nothing
+reproduced that figure outside the browser. `docs/data.json`, `docs/picks.json`,
+the history, the evidence objects, the workflows and the vendored design system
+are untouched; nothing under `src/` changed; no run, mail, dispatch, provider
+call or credential.
+
+**The page.** `beyondStop()` in `app-handoff.js`: a planned handoff's completed
+result whose average exit is under the protective stop its plan froze names how
+far under, per share and on the reported shares, as one more result row (a gap
+or slippage past the stop). Reported averages only, so a gap on part of a
+position can sit inside an average at or above the stop; an independent report
+has no frozen stop and no row.
+
+**The rehearsal.** `tools/first_trade_cases.mjs` (the smoke's `firsttrade`
+suite, lane A) drives the real page over the cash-preview `publication-multiple`
+fixture ($2,000 / 0.5%; AAPL one burst share, COIL four anticipation shares) on
+one clock it moves for the page and the private store alike: blank, unreadable, $0 and $300 cash
+each refused for three COIL; $2,000 drafts three COIL and one AAPL; the readback
+copied; AAPL filled at $62.40, COIL two of three at $111.05; after the cutoff no
+new draft, no cash preview, and COIL's third share cancelled at 9:00; on 14 September AAPL's stop
+fills at $59.85 on a gap ($0.85 past the $60.70 stop, net −$2.56) and COIL
+sells one; on 15 September COIL's last (average $113.60, net $5.08); the backup
+downloaded. Run at 390 and 1280 px, the two journeys must write the same bytes;
+`tests/fixtures/first-trade/` holds them and what the page printed
+(`SCSTOCK_FIRST_TRADE_WRITE=1` regenerates). **The cascade grows by one:** when
+`tests/fixtures/cash-preview/` is regenerated, regenerate this after it, and
+then the parity corpus built from its backup; `tests/test_private_results.py`
+fails first and names the commands.
+
+**The reproducer.** `tools/private_results.py`, stdlib only, reads the backup on
+the owner's machine: the page's `validItem()`/`normalizeReport()` rules ported,
+so a record the page would refuse is refused by name; each completed result
+re-derived by `completedResult()`/`beyondStop()` in integer micro-dollars; each
+record traced to its publication by the SHA-256 it froze (among `--publication`
+files or `--git`, the checkout's history of `docs/data.json`) and to the plan
+whose reference, order, entry window and exit schedule it froze (an independent
+report: the setting-up row whose evidence id, plan and source digests it
+names); and the model's own daily-bar replay of that plan beside it, read off
+the newest later publication's `open_plans` by evidence reference, never added
+(#111's "settled model observations beside separately reported owner results",
+task #58). `--git` reads the 65 retained publications in about 6 s, holding
+only a small index of each.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): before the review, the full suite at `5bc0c83f` 4438 passed with 34
+environment-gated skips, the full smoke with `--shots` 15208/15208. On
+`ad592da7`, after it: 4608 collected, 4574 passed and 34 environment-gated
+skips in 18 m 25 s; `tests/test_private_results.py` 189 (the parity corpus
+109 of them); the JS model cases 78; the parity corpus current, 109 cases, 32
+accepted by the page; continuity 137; the chart check 378/378; the full smoke
+with `--shots` 15224/15224, the rehearsal 78 of them; gitleaks 8.24.3 over the
+branch's five commits: no leaks. CI on `ad592da7` passed pytest, page and both
+secret scans before the native cases finished. The reworded gap row at 390
+light and 1280 dark was looked at.
+
+**Mutation pass.** 33 mutants plus two controls, the tree never written (Python
+in the mutation worktree, judged by the whole test file; page through the
+smoke's routed module copies, judged by the model cases and the browser suites).
+27 died first. **Six survived, five of them holes**, each a missing case:
+filled plus cancelled over submitted with each alone within it (the first shape
+this file names: a different clause refused the only case); an exit exactly at
+the stop; a gap on more than one share, in the reproducer and on the page (the
+rehearsal's gap is on one share, the second shape); and the history's
+oldest-first order, held only by positions that were 0 and 1 either way. All
+five die now. The sixth, the model read from the plan's own session, is
+equivalent on records the pipeline writes: tonight's picks never sit in that
+session's `open_plans`. Both controls survive.
+
+**The review, worked.** A reviewer by execution over `5bf2bd4b` returned nine
+findings, each reproduced here before it was touched. The tool and the page
+disagreed at their edges, both ways: the tool accepted a boolean where the page
+wants an integer (Python counts `True` as 1), a revision of 2^60 past
+JavaScript's safe integers, entry-window clocks with six fractional digits and
+an exit instruction of 1,500 astral characters (3,000 UTF-16 units to the
+page); it refused `2.0` where `JSON.parse` reads 2, a record clock without
+milliseconds or with an offset, and year 0000. One mechanism closes both
+directions: `tools/private_results_parity.mjs` runs the page's own
+`app-handoff.js` in a vm over 109 private backups and writes its verdicts
+(`tests/fixtures/first-trade/parity.json.gz`), `tests/test_private_results.py`
+holds the tool to every one -- the same accept or refuse, and for an accepted
+store every record's figures and displays -- and CI's page job holds the file
+to the page with `--check`. **The corpus found a page defect of the class this
+file names most:** six of the store validator's pattern tests called
+`RegExp.test()` on a stored field without asking its type, so an array holding
+one matching string passed by coercion (a reference digest, a publication
+digest and rules version, a ticker, a cohort digest). The page never writes
+one; it tests the type first now (`matches()`), and the pre-fix page fails
+`--check`. The independent trace compares the applicable session and context
+digest too, and every trace names what it did not compare (a planned handoff's
+draft; an independent report's reader digest, cohort, inputs digest and
+baseline admission). The beyond-stop row said "past the stop", which read as the
+stop's own price; it reads "$0.85 a share on average · the 1 reported share
+exited for $0.85 less than at the stop". A RecursionError, a missing file and a
+bad ref were tracebacks: refused at the parse, and exit 3 in one line;
+`--limit` is at least 1; "result None%" is "no result yet".
+
+**The rehearsal's cutoff had passed on the wrong rule**, the first shape this
+file names. The page was opened with a pinned clock (`SCStock.now`), and a
+pinned page never reclocks, so the desk sat at 8:35 through every later step
+while only the private store's `Date` moved; "no new draft after the entry
+window" held because AAPL already had its draft. The page is opened unpinned
+now, one replaced `Date` read by the desk, `availability()` and the store, each
+step asserts the page read its instant, and after the cutoff the cash preview
+is checked `unavailable` with the window named (pinned, it said `calculated`).
+The clipboard check writes a sentinel first (Chromium shares the clipboard
+between contexts), and the request check requires no query string. The
+reviewer's 21 surviving mutants are each closed by a named test: the model's
+order by session and by clock whatever the files' order, a publication of the
+plan's own session, a mismatch's exit code, each field an independent trace
+compares, the refusal messages matched exactly, the write check over the
+checkout as well as the temporary directory.
+
+**Second mutation pass.** Python, in the mutation worktree at `7a1910eb`, each
+mutant judged by the whole `tests/test_private_results.py`: 55 (the first
+pass's 25 that still apply and 30 over this round's rules); 51 died at once and
+**four survived, each a missing case** -- NaN and Infinity refused by a field
+rule rather than at the parse (the refusal pinned by its message now), a
+RecursionError-deep nesting never tried, a planned report's `published_at`
+mismatch, and the text's beyond-stop line held on one share, where per share
+equals total. All four die at `ad592da7`; two controls survive. Page, through
+routed copies: three guard removals die on the parity `--check`, a copy button
+that does nothing dies on the readback check, a save that leaks a reported
+quantity in a morning-file query dies on the request check; the control
+survives. A query on the page's own morning fetch survives and cannot reach
+the rule: the journey fetches no morning file after the first report.
+
+**Keep / fix / defer / omit.** Keep: the reported result and the model replay
+are two columns and never one figure; the reproducer refuses what the page
+refuses. Fix if it bites: the beyond-stop line reads averages, so a gap on part
+of a position can hide in an average above the stop; the cash-preview cascade
+now includes the rehearsal. Defer: #110's actual first trade, which is Mo's.
+Omit: any broker connection, a cloud copy of the backup, a P&L the reports do
+not support.
+
+**Not claimable:** a real trade or a real backup -- every broker fact here is
+synthetic -- and any trading edge.
+
+
+## Stock finder reconciled with private-report release — 15 October 2026
+
+PR #170 is reconciled over `c7a3566e`, including the merged #171 private-result
+reproducer and reported gap behavior. Finder runtime remains byte-identical to
+reviewed `71d5fc5c`; new private-report runtime, fixtures, workflows, configuration,
+canonical publications and historical evidence remain current main's exact bytes.
+Both append-only checkpoint histories survive the CLAUDE conflict. The combined
+smoke driver invokes both finder and first-trade suites. README was reviewed with
+both feature descriptions retained; `.env.example` is exact current main.
+
+[Reconciliation evidence](release-evidence/2026-10-15-stock-finder/prepared.json):
+229 affected Python/documentation checks, 476 reading/inspection/first-trade browser
+checks, 166 separately executed finder checks, 78 handoff model cases and a current
+109-case parity corpus pass. Two root captures were inspected. Independent review
+passed 18 provenance checks over 20,324 files and 92 browser checks on the actual
+October 14/15 publication, inspecting five captures and preserving an unsaved
+private correction. Harness-scope corrections and the unknown-selector diagnostic
+are recorded, without changing product assertions or claiming omitted execution.
+Python 3.12.14, Node 24.19.0, Playwright 1.56.1 and Chromium 141 were used.
+
+All seven prior `71d5fc5c` remote checks completed successfully; the dated receipt
+retains that historical evidence and its tested base. This reconciliation still
+requires final committed-head review, fresh required gates, ordinary merge and
+actual public acceptance. Current production remains the October 14 scan for
+October 15, degraded/behind_more, red market, zero tickets. Its source-recovery
+receipt binds the previous publication; research quotes remain unavailable. No
+current morning coverage, personal trade or trading edge is inferred. The next
+prepared milestone pairs research quote reload with the static owner handoff;
+the subsequent policy/window preparation must include #171's first-trade fixture
+cascade before fresh verification.

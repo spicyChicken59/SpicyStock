@@ -1,0 +1,506 @@
+{
+  "schema": "spicystock.oct15-independent-reconciliation-review.v1",
+  "recorded_at": "2026-10-15T07:13:26.477870+00:00",
+  "status": "PASS_BOUNDED_LOCAL_RECONCILIATION_REVIEW",
+  "repo": "/workspace/SpicyStock-stock-finder-oct15",
+  "parents": [
+    "71d5fc5c165e430dab54b316eb019157a683f240",
+    "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+  ],
+  "scope": "Independent source provenance plus executed current-data navigation/private-store compatibility. Uncommitted runtime frozen; final exact commit and fresh remote gates still required.",
+  "findings": [],
+  "provenance": {
+    "receipt": {
+      "path": "/tmp/oct15-pr170-provenance-review.json",
+      "bytes": 8643,
+      "sha256": "1cdf0cb075433663f54d201badf8ba9e8c4e3e2eb13e54af1b772758e78f04b7"
+    },
+    "checks": 18,
+    "files": 20324,
+    "source_bytes": 233166671
+  },
+  "browser": {
+    "receipt": {
+      "path": "/tmp/oct15-pr170-independent-browser-captured/review.json",
+      "bytes": 155688,
+      "sha256": "127a2ceb3e472e1ecbe36a67d5778fa57e442a352276f4fc85b4ccc6f1a134f3"
+    },
+    "harness": {
+      "path": "/tmp/oct15-pr170-independent-browser.mjs",
+      "bytes": 12575,
+      "sha256": "de09826794a19424a165d21d838a69d1266f5f383d77afb8bfa43a9b68d7a54d"
+    },
+    "passed": 92,
+    "total": 92,
+    "pins": {
+      "app.js": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "app.css": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586",
+      "index.html": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+      "app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "app-handoff-ui.js": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f",
+      "data.json": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+      "reader.json": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4"
+    },
+    "measured": "2026-10-14",
+    "applicable": "2026-10-15",
+    "viewports": [
+      390,
+      1280
+    ],
+    "tablet_widths": [
+      721,
+      768,
+      820
+    ],
+    "tablet_themes": [
+      "dark",
+      "light"
+    ],
+    "default_clock": true,
+    "actual_external_fonts": true,
+    "route_interception": false,
+    "local_assets_per_viewport": [
+      30,
+      30
+    ],
+    "private_scope": "Existing first-trade backup seeded in disposable contexts, entirely synthetic. Marker UNSAVED-OCT15-REVIEW never saved; navigation preserved it and stored backup; only explicit Load saved report discarded marker. No broker action.",
+    "captures_inspected": [
+      {
+        "path": "/tmp/oct15-pr170-independent-browser-captured/current-INNV-chart-1280.png",
+        "bytes": 109693,
+        "sha256": "b032f12536ce5349860307075394f2e301ed7021c73156bb3fb201bb22abfe6e"
+      },
+      {
+        "path": "/tmp/oct15-pr170-independent-browser-captured/current-INNV-chart-390.png",
+        "bytes": 50457,
+        "sha256": "01e766ca644461a285a3f030d9a1379584265ae641e3fb8551e907753c560df1"
+      },
+      {
+        "path": "/tmp/oct15-pr170-independent-browser-captured/private-unsaved-retained-1280.png",
+        "bytes": 129770,
+        "sha256": "3fbac50805c2a2e44c67b7b29d7747ad0a3a06531486b860d0994f4bae958299"
+      },
+      {
+        "path": "/tmp/oct15-pr170-independent-browser-captured/private-unsaved-retained-390.png",
+        "bytes": 52897,
+        "sha256": "c5d30f8cc4689aeff9b32e02ec44fafa06540643620f806034a430f4061230cd"
+      },
+      {
+        "path": "/tmp/oct15-pr170-independent-browser-captured/tablet-light-820.png",
+        "bytes": 92844,
+        "sha256": "05c99d6b75e2abceb031181b8f0e66d7d9dbc27fd93436387f3fcd607ad75a6f"
+      }
+    ],
+    "checks": [
+      {
+        "name": "390 normal reader consumes current exact publication",
+        "pass": true
+      },
+      {
+        "name": "390 original synthetic backup remains readable beside newer publication",
+        "pass": true
+      },
+      {
+        "name": "390 actual intended sessions are Oct14/Oct15",
+        "pass": true
+      },
+      {
+        "name": "390 real external font families loaded",
+        "pass": true
+      },
+      {
+        "name": "721/dark Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "721/dark Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "721/dark Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "721/dark Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "721/dark Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "721/light Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "721/light Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "721/light Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "721/light Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "721/light Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "768/dark Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "768/dark Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "768/dark Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "768/dark Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "768/dark Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "768/light Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "768/light Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "768/light Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "768/light Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "768/light Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "820/dark Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "820/dark Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "820/dark Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "820/dark Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "820/dark Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "820/light Oct15 independent current data orientation remains strictly below 90px",
+        "pass": true
+      },
+      {
+        "name": "820/light Oct15 independent current data full guidance stays visible without clipping",
+        "pass": true
+      },
+      {
+        "name": "820/light Oct15 independent current data finder retains accessible 44px first-screen target",
+        "pass": true
+      },
+      {
+        "name": "820/light Oct15 independent current data guidance has no overlap or horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "820/light Oct15 independent current data requested theme and readable type remain intact",
+        "pass": true
+      },
+      {
+        "name": "Oct15 independent current data tablet pass restores original viewport and theme",
+        "pass": true
+      },
+      {
+        "name": "Oct15 independent current data tablet pass preserves original selection and scroll",
+        "pass": true
+      },
+      {
+        "name": "Oct15 independent current data tablet pass preserves publication, model and private state",
+        "pass": true
+      },
+      {
+        "name": "390 current exact ticker chooses WAY",
+        "pass": true
+      },
+      {
+        "name": "390 WAY chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "390 WAY detail focused",
+        "pass": true
+      },
+      {
+        "name": "390 outside-A stock revealed without saved lens change",
+        "pass": true
+      },
+      {
+        "name": "390 initial INNV chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "390 initial INNV detail focused",
+        "pass": true
+      },
+      {
+        "name": "390 incompatible query hides current cards",
+        "pass": true
+      },
+      {
+        "name": "390 same-stock choice clears query",
+        "pass": true
+      },
+      {
+        "name": "390 same-stock INNV chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "390 same-stock INNV detail focused",
+        "pass": true
+      },
+      {
+        "name": "390 Method records return task",
+        "pass": true
+      },
+      {
+        "name": "390 current research Inspect chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "390 current research Inspect detail focused",
+        "pass": true
+      },
+      {
+        "name": "390 explicit Inspect clears obsolete Method return",
+        "pass": true
+      },
+      {
+        "name": "390 chart Home reads current archived bar",
+        "pass": true
+      },
+      {
+        "name": "390 chart End reads current archived bar",
+        "pass": true
+      },
+      {
+        "name": "390 unsaved private correction survives finder and Inspect",
+        "pass": true
+      },
+      {
+        "name": "390 saved synthetic backup remains byte-exact",
+        "pass": true
+      },
+      {
+        "name": "390 only explicit Load saved report discards correction",
+        "pass": true
+      },
+      {
+        "name": "390 publication model unknown cash and private store unchanged",
+        "pass": true
+      },
+      {
+        "name": "390 storage events are only existing paired availability probes",
+        "pass": true
+      },
+      {
+        "name": "390 all loaded local assets match frozen source bytes",
+        "pass": true
+      },
+      {
+        "name": "390 all requests are GET without bodies and private marker absent",
+        "pass": true
+      },
+      {
+        "name": "390 no page or unexpected HTTP errors",
+        "pass": true
+      },
+      {
+        "name": "390 no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "1280 normal reader consumes current exact publication",
+        "pass": true
+      },
+      {
+        "name": "1280 original synthetic backup remains readable beside newer publication",
+        "pass": true
+      },
+      {
+        "name": "1280 actual intended sessions are Oct14/Oct15",
+        "pass": true
+      },
+      {
+        "name": "1280 real external font families loaded",
+        "pass": true
+      },
+      {
+        "name": "1280 current exact ticker chooses WAY",
+        "pass": true
+      },
+      {
+        "name": "1280 WAY chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "1280 WAY detail focused",
+        "pass": true
+      },
+      {
+        "name": "1280 outside-A stock revealed without saved lens change",
+        "pass": true
+      },
+      {
+        "name": "1280 initial INNV chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "1280 initial INNV detail focused",
+        "pass": true
+      },
+      {
+        "name": "1280 incompatible query hides current cards",
+        "pass": true
+      },
+      {
+        "name": "1280 same-stock choice clears query",
+        "pass": true
+      },
+      {
+        "name": "1280 same-stock INNV chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "1280 same-stock INNV detail focused",
+        "pass": true
+      },
+      {
+        "name": "1280 Method records return task",
+        "pass": true
+      },
+      {
+        "name": "1280 current research Inspect chart visible and pane reset",
+        "pass": true
+      },
+      {
+        "name": "1280 current research Inspect detail focused",
+        "pass": true
+      },
+      {
+        "name": "1280 explicit Inspect clears obsolete Method return",
+        "pass": true
+      },
+      {
+        "name": "1280 chart Home reads current archived bar",
+        "pass": true
+      },
+      {
+        "name": "1280 chart End reads current archived bar",
+        "pass": true
+      },
+      {
+        "name": "1280 unsaved private correction survives finder and Inspect",
+        "pass": true
+      },
+      {
+        "name": "1280 saved synthetic backup remains byte-exact",
+        "pass": true
+      },
+      {
+        "name": "1280 only explicit Load saved report discards correction",
+        "pass": true
+      },
+      {
+        "name": "1280 publication model unknown cash and private store unchanged",
+        "pass": true
+      },
+      {
+        "name": "1280 storage events are only existing paired availability probes",
+        "pass": true
+      },
+      {
+        "name": "1280 all loaded local assets match frozen source bytes",
+        "pass": true
+      },
+      {
+        "name": "1280 all requests are GET without bodies and private marker absent",
+        "pass": true
+      },
+      {
+        "name": "1280 no page or unexpected HTTP errors",
+        "pass": true
+      },
+      {
+        "name": "1280 no horizontal overflow",
+        "pass": true
+      },
+      {
+        "name": "runtime and current records unchanged during independent execution",
+        "pass": true
+      }
+    ]
+  },
+  "harness_corrections": {
+    "retained_runs": [
+      {
+        "receipt": {
+          "path": "/tmp/oct15-pr170-independent-browser-first/review.json",
+          "bytes": 95894,
+          "sha256": "6257a6327fc61da31c0998cda6d0b6f9889e5843286fe51da2c7d679dcc3b3d0"
+        },
+        "status": "FAIL_LOCAL_RECONCILIATION_BROWSER",
+        "checks": 39,
+        "failure": "390 WAY chart visible and pane reset {\"pane\":0,\"page\":1501,\"header\":28.59375,\"chart\":43.34375,\"focus\":true}"
+      },
+      {
+        "receipt": {
+          "path": "/tmp/oct15-pr170-independent-browser-current/review.json",
+          "bytes": 95994,
+          "sha256": "675588c01ec60a296cce52b587cfb0e64a61bb041457ccb1adcdbe8eb77de7b0"
+        },
+        "status": "FAIL_LOCAL_RECONCILIATION_BROWSER",
+        "checks": 39,
+        "failure": "390 WAY chart visible and pane reset {\"pane\":0,\"page\":1501,\"header\":28.59375,\"chart\":43.34375,\"chartCard\":43.34375,\"focus\":true}"
+      },
+      {
+        "receipt": {
+          "path": "/tmp/oct15-pr170-independent-browser-final/review.json",
+          "bytes": 155621,
+          "sha256": "00073e5d4aeefa729168a33de8741ad1bc65cd064027cb33ba499597ac4411f1"
+        },
+        "status": "PASS_LOCAL_RECONCILIATION_BROWSER",
+        "checks": 92,
+        "failure": null
+      }
+    ],
+    "explanation": "First run incorrectly applied the setup-chart >=100px SVG requirement to a Burst whose pre-existing action card precedes its chart. Screenshot showed correct heading, pane reset and43.34px of recorded chart visible. Second attempted card measurement used the same inner-chart node and was likewise not a product failure. Final assertion keeps >=100px for setup navigation and positive chart visibility with heading/pane/focus for WAY. A subsequent capture-only rerun scrolls the actual unsaved field into view; runtime and assertions unchanged. No committed assertion or production source weakened."
+  },
+  "limitations": [
+    "Not production HTTP/browser acceptance, not final exact-commit or remote gate evidence.",
+    "Existing Burst action-first layout may place much of its chart below phone fold; finder reaches heading and beginning of chart.",
+    "Historical mutation evidence transfers only for verified byte-identical implementation/test files; no new mutations executed in this review.",
+    "Only five final captures visually inspected; all capture hashes retained."
+  ]
+}

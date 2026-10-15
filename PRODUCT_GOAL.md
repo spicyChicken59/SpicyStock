@@ -499,3 +499,15 @@ records 110 affected Python/documentation tests, 307 browser checks and a
 fresh service-history replay. Completed checks from the previous head are
 retained separately; the reconciled head still needs final review, fresh
 required gates and actual public acceptance.
+
+
+## Current reconciliation — 15 October 2026
+
+The existing finder PR #170 now incorporates merged #171 and the latest published
+October 14/15 record. Its [current preparation](release-evidence/2026-10-15-stock-finder/prepared.json)
+retains completed prior-head checks separately from fresh local and independent
+review. Final commit review, fresh hosted gates and public acceptance remain
+pending. The actual publication still has zero tickets and a red market; the
+available source-recovery receipt belongs to the previous publication. No current
+morning quote coverage or actual personal trade is recorded. The next bounded
+deliverable remains research quote reload and the repository-owner handoff.

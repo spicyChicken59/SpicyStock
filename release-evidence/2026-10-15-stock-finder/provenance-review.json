@@ -1,0 +1,241 @@
+{
+  "schema": 1,
+  "scope": "Read-only exhaustive staged merge provenance review; no browser or application test execution claimed",
+  "reviewed_at_utc": "2026-10-15T07:10:40.221960+00:00",
+  "repo": "/workspace/SpicyStock-stock-finder-oct15",
+  "parents": [
+    "71d5fc5c165e430dab54b316eb019157a683f240",
+    "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+  ],
+  "index_manifest_sha256": "ad5d2588a84585e91a03c21f06e40f7f71e306e46bc7841269a5c91630b80f61",
+  "worktree_manifest_sha256": "ad5d2588a84585e91a03c21f06e40f7f71e306e46bc7841269a5c91630b80f61",
+  "checks": [
+    {
+      "name": "merge parents match delegated source",
+      "passed": true,
+      "detail": {
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "merge_head": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+      }
+    },
+    {
+      "name": "no unresolved merge index stages",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "all staged files equal worktree bytes and executable/symlink modes",
+      "passed": true,
+      "detail": {
+        "files": 20324,
+        "bytes": 233166671,
+        "mismatches": []
+      }
+    },
+    {
+      "name": "current canonical and reader data exact current main",
+      "passed": true,
+      "detail": {
+        "files": 3,
+        "manifest_sha256": "6bf62a2cf2515eb935648c15b6ed50131a535084e01743ed9df7c6a34e3921ed",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "immutable evidence and history exact current main",
+      "passed": true,
+      "detail": {
+        "files": 19208,
+        "manifest_sha256": "1174a6b191ecb6ae1f2943802cbc53a15106d52a880b91780a8022a37026d7da",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "all existing release evidence exact current main",
+      "passed": true,
+      "detail": {
+        "files": 27,
+        "manifest_sha256": "0a9120e7884e11326862a2273207dd04e431bd2344b3fec1b507f7b529451005",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "all strategy and provider source exact current main",
+      "passed": true,
+      "detail": {
+        "files": 38,
+        "manifest_sha256": "145ab151f1cf4e986866e7f552ef668baf9e5cc35372aac4f44e947b2f17f824",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "all workflows exact current main",
+      "passed": true,
+      "detail": {
+        "files": 9,
+        "manifest_sha256": "c63f2730de39762a3cdc2268e3e7c30e3d5d6bcbba230212ce4453be4234ed53",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "all committed fixtures exact current main",
+      "passed": true,
+      "detail": {
+        "files": 291,
+        "manifest_sha256": "b93eb51d5e9d8e7a63ba0423e69788aafc56a1c49b6fa4ae7ab8120c2334e579",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "first trade support exact current main",
+      "passed": true,
+      "detail": {
+        "files": 6,
+        "manifest_sha256": "6da68fda37d35d90b59b789856e125cbe7a8613b7e333d40885ba5479e0c62c7",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "configuration example exact current main",
+      "passed": true,
+      "detail": {
+        "files": 1,
+        "manifest_sha256": "caf556f4df2da78774ee0e57666f69953cc2bbbb7cc6b13c8a89a39717c3dad4",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "pinned design system exact current main",
+      "passed": true,
+      "detail": {
+        "files": 23,
+        "manifest_sha256": "db736c6a510a882580a6bca8ea08636bdf6417d7d95bd5f5a94de282bb218c71",
+        "mismatches": []
+      }
+    },
+    {
+      "name": "finder implementation and targeted browser cases exact reviewed parent",
+      "passed": true,
+      "detail": {
+        "files": {
+          "docs/app.js": {
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f6eed514d24ebcdc8efa51334d25eed6279a3798"
+          },
+          "docs/app.css": {
+            "mode": "100644",
+            "type": "blob",
+            "sha": "f8d980af2cf139cae5c0669333efc4685c91c9df"
+          },
+          "docs/index.html": {
+            "mode": "100644",
+            "type": "blob",
+            "sha": "13680df30cf1e123828f9926d55dab6c8c14bcb3"
+          },
+          "tools/stock_finder_cases.mjs": {
+            "mode": "100644",
+            "type": "blob",
+            "sha": "980e6dd0df1467cf489d3138acb0f8b4c3f4b502"
+          },
+          "tools/check_decision_inspection.mjs": {
+            "mode": "100644",
+            "type": "blob",
+            "sha": "607a0ed71cd2e8a670a48c02d158af8aa4f6e290"
+          }
+        },
+        "mismatches": []
+      }
+    },
+    {
+      "name": "all other current-main tracked files preserved",
+      "passed": true,
+      "detail": {
+        "current_main_files": 20315,
+        "identical_files": 20306,
+        "changed_existing_paths": [
+          "CLAUDE.md",
+          "PRODUCT_GOAL.md",
+          "README.md",
+          "docs/app.css",
+          "docs/app.js",
+          "docs/index.html",
+          "docs/input-truthfulness/2026-10-13-service-health.md",
+          "tools/check_decision_inspection.mjs",
+          "tools/page_smoke.mjs"
+        ],
+        "unexpected_changes": []
+      }
+    },
+    {
+      "name": "smoke equals finder parent plus exactly first-trade import and invocation",
+      "passed": true,
+      "detail": {
+        "first_trade_lane": "A",
+        "smoke_sha256": "630d84d998be37faacb7618037621b8235c2d790566539a0efa378d43bb11769"
+      }
+    },
+    {
+      "name": "smoke equals current main plus exactly finder import invocation and suite comment",
+      "passed": true,
+      "detail": {
+        "stock_finder_lane": "B",
+        "default_selection": "runs(name) is true when --only absent; lanes awaited through Promise.allSettled"
+      }
+    },
+    {
+      "name": "all finder-parent CLAUDE retained except correct current test count",
+      "passed": true,
+      "detail": {
+        "allowed_replacement": "4419 \u2192 4608 collected; count itself not executed by this identity review",
+        "diff": [
+          {
+            "operation": "replace",
+            "removed": "The suite now collects 4419 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke\n",
+            "added_lines": 1,
+            "added_sha256": "cee8f3e7f0374053352a42e42e2bd23337c45b5bea71bf2977ed6ef174a6157e",
+            "added_prefix": "The suite now collects 4608 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke\n"
+          },
+          {
+            "operation": "insert",
+            "removed": "",
+            "added_lines": 153,
+            "added_sha256": "6a81e2e6db93ff519ea2b1701d6b6d566d570bf3c241e041abbd21a658cf6d6a",
+            "added_prefix": "\n## Checkpoint, 14 Oct 2026 \u2014 PR #169 accepted; the first trade rehearsed end to end, its reported result reproduced offline (#110)\n\n"
+          }
+        ]
+      }
+    },
+    {
+      "name": "entire current-main first-trade checkpoint retained verbatim",
+      "passed": true,
+      "detail": {
+        "checkpoint_bytes": 10449,
+        "sha256": "9a88e5ea657b2e65dd337ae64dd62f4dc3e8da68c548ef1acd32951185e98ef6",
+        "diff": [
+          {
+            "operation": "replace",
+            "removed": "block beside rules that archive no rule, are set aside by name, the session\nthen reading unpublished; a record from before the rule is read against the\ncurrent policy's slots and says so. Each publication's `timing` names\n",
+            "added_lines": 4,
+            "added_sha256": "2e48e09556244b6bd67aa38664566bf73d2acc0d24b40d3ec8a7b193016e6d70",
+            "added_prefix": "block beside rules that archive no rule, are set aside by name and do not\ncount as publications. A session reads unpublished only when no other\nreadable publication exists for it; a record from before the rule is read\n"
+          },
+          {
+            "operation": "insert",
+            "removed": "",
+            "added_lines": 138,
+            "added_sha256": "a1d8e35d9020495b7361914996183da3ef1c22567738ffed86c227211f74dbab",
+            "added_prefix": "\n\n## Continuation, 13 Oct 2026 \u2014 #162 verified; the intended stock within reach (#164)\n"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": true,
+  "findings": [],
+  "limitations": [
+    "Uncommitted snapshot: later root documentation/evidence additions require final exact-head transfer verification.",
+    "Runtime behavior and current-data browser acceptance delegated to parent; these are identity checks only."
+  ],
+  "unexpected_untracked": []
+}

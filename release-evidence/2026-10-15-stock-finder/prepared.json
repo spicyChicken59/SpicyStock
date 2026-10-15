@@ -1,0 +1,117 @@
+{
+  "schema": "spicystock.stock-finder-oct15-reconciliation.v1",
+  "recorded_at": "2026-10-15T07:15:59.550863+00:00",
+  "status": "LOCAL_RECONCILIATION_REVIEWED_REMOTE_GATES_AND_PUBLIC_ACCEPTANCE_PENDING",
+  "pr": "https://github.com/spicyChicken59/SpicyStock/pull/170",
+  "parents": [
+    "71d5fc5c165e430dab54b316eb019157a683f240",
+    "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+  ],
+  "changes": "Merge current main into the existing finder branch. Preserve both append-only CLAUDE histories; smoke runner invokes both finder and new first-trade suites. Finder runtime remains exact prior reviewed head; private report runtime, fixtures, workflows, configuration and published data remain exact current main.",
+  "runtime": {
+    "python": "3.12.14",
+    "node": "24.19.0",
+    "playwright": "1.56.1",
+    "chromium": "141"
+  },
+  "root_execution": [
+    {
+      "scope": "affected Python and docs",
+      "passed": 229,
+      "evidence": {
+        "path": "/tmp/oct15-stock-finder-python.log",
+        "bytes": 878,
+        "sha256": "25d3ebf9afad3e50d0e625b27b969d85ba5304db0a2ee49fd635e02d4137f8b0"
+      }
+    },
+    {
+      "scope": "reading, decision inspection and first-trade browser",
+      "passed": 476,
+      "evidence": {
+        "path": "/tmp/oct15-stock-finder-browser.log",
+        "bytes": 274,
+        "sha256": "7ff645650cc2c9e1a2d6347274939ac3f78bfae9f29485fb23821593bedf33c7"
+      }
+    },
+    {
+      "scope": "stock finder browser",
+      "passed": 166,
+      "evidence": {
+        "path": "/tmp/oct15-stock-finder-only.log",
+        "bytes": 149,
+        "sha256": "1ea6efb7c4e021cc28260eeff1b2dd2961fa36e1573b4d505e855d30389333bd"
+      }
+    },
+    {
+      "scope": "handoff model",
+      "passed": 78,
+      "evidence": {
+        "path": "/tmp/oct15-stock-finder-handoff-model.log",
+        "bytes": 8715,
+        "sha256": "4f2f5f8d799b57a2ec9bc0c5078b5d71ca172d6883cc994e081722bf753d387e"
+      }
+    },
+    {
+      "scope": "private results parity corpus",
+      "passed": 109,
+      "evidence": {
+        "path": "/tmp/oct15-stock-finder-parity.log",
+        "bytes": 58,
+        "sha256": "ed1a3b12a43326414b9b9eff02b77fcf3d4ac9804876df78f24c4452c13d160a"
+      }
+    }
+  ],
+  "screenshots_inspected": [
+    {
+      "path": "/tmp/oct15-stock-finder-shots/first-trade-gap-390-light.png",
+      "bytes": 67380,
+      "sha256": "895e243c30b33c254453b3caf94132d376c9521d51cbfa677583b921da53c402"
+    },
+    {
+      "path": "/tmp/oct15-stock-finder-shots/reading-first-721-dark.png",
+      "bytes": 131567,
+      "sha256": "d7b8b96d3324b6eeab4e079678bf22fdd16fdef110647f975c2792bc062cc2e2"
+    }
+  ],
+  "independent": {
+    "provenance_checks": 18,
+    "current_data_browser_checks": 92,
+    "captures_inspected": 5,
+    "findings": []
+  },
+  "preserved_evidence": [
+    {
+      "path": "historical-head-checks.json",
+      "bytes": 27354,
+      "sha256": "08b929df0259826cf83ef4f03c7ffa70039b416596a1f399d87d8f6d52eb8b55"
+    },
+    {
+      "path": "production-before-release.json",
+      "bytes": 55825,
+      "sha256": "a8a5a3a62f7b9b86fe9f25cdd8be1b645c2a5280ff366fbc8693c3d2a12b4091"
+    },
+    {
+      "path": "independent-review.json",
+      "bytes": 17036,
+      "sha256": "bcdd60d2bae17b821334ba566bece6432cd7ccaeb06c48870942da5076f2fd8c"
+    },
+    {
+      "path": "provenance-review.json",
+      "bytes": 8643,
+      "sha256": "1cdf0cb075433663f54d201badf8ba9e8c4e3e2eb13e54af1b772758e78f04b7"
+    },
+    {
+      "path": "source-transfer.json",
+      "bytes": 4292,
+      "sha256": "495a9e6a7cdd50d2ee41752b2721de4454ce1ecdc4af49b492748c6e50028508"
+    }
+  ],
+  "limitations": [
+    "The first combined browser command used unknown stockfinder selector; only its 476 named executed cases are counted. The correct stock-finder selector subsequently passed 166 cases separately.",
+    "Old 71d5 remote checks all passed but tested the previous base; they do not replace fresh checks for this reconciliation.",
+    "Current production HTTP audit predates this release and verifies current main only; local fixture/private-report captures are synthetic.",
+    "The independent browser harness first applied a setup chart-visibility threshold to an action-first burst; retained diagnostic evidence and corrected scope are recorded in independent-review.json.",
+    "No new strategy/account/provider rules, broker facts or trading results. No workflow dispatch or external messaging."
+  ],
+  "next": "Commit the exact frozen source; independently verify final commit and remote transfer; require all current-head checks; merge normally; wait for successful Pages deployment and execute the reviewed current-publication helper against actual public bytes. Then publish the prepared research reload/owner-handoff milestone on the accepted base."
+}
