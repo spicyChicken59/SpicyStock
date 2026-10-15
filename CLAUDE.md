@@ -8168,9 +8168,10 @@ archive the delivery rule and that carries no block was read without a word.
 delivery rule against THOSE slots, once its `run.delivery` re-derives from
 them (`delivery.faults()`, the validator's own check, now asked in one
 place); rules that archive the rule beside a record without its block, and a
-block beside rules that archive no rule, are set aside by name, the session
-then reading unpublished; a record from before the rule is read against the
-current policy's slots and says so. Each publication's `timing` names
+block beside rules that archive no rule, are set aside by name and do not
+count as publications. A session reads unpublished only when no other
+readable publication exists for it; a record from before the rule is read
+against the current policy's slots and says so. Each publication's `timing` names
 `slot_basis` and `slots_et`; a session row carries its FIRST publication's
 basis; the summary counts each; the markdown prints one line. The dated
 reading moves to `2026-10-13-service-health-evidence/`, pinned at `7e40716e`
@@ -8237,6 +8238,144 @@ the guard or `src/delivery.py` on these numbers.
 
 **Not claimable:** Pages serving a publication at the instant its commit
 landed; a live morning, research or recovery observation; any trading edge.
+
+
+## Continuation, 13 Oct 2026 — #162 verified; the intended stock within reach (#164)
+
+PR #162 was merged normally as `289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147`
+over reviewed head `1381d0da553af7fdfde4a77eab2c4f2cc20107da`; its merge
+tree equals reviewed tree `930321fc0195f2a121f679e4ebe85a7e42e2b94d`.
+All seven premerge checks passed: 4143 Python tests, 15007 page checks, 378
+chart checks, 137 continuity checks, 76 handoff-model checks, current producer
+fixtures, clean tree and both secret scans. Native central/stress benchmarks
+and memory supervisors passed; upload/API artifact digests matched, while
+binary artifact payloads were not downloaded. Its publisher `38369500620`
+matched 41 core files and Pages `38369524784` deployed the merge.
+
+Actual public verification at 08:31:26–08:32:20 UTC passed 129 checks, matched
+46 files and inspected all 16 desktop/mobile captures, with no unexpected
+browser errors or private-storage changes. The quote receipt remained 404;
+positive at-collection labels had local fixture coverage and deployed-byte
+identity, but no actual current quote row on which to display them. The
+scoped proof is `release-evidence/2026-10-13-observation-fidelity/acceptance.json`.
+Its snapshot predates the completed main Tests run; the later passing outcome
+is retained separately in `release-evidence/2026-10-13-observation-fidelity/postmerge.json`.
+No timely quote, personal fill or return is inferred.
+
+Main subsequently advanced through PRs #165–#168 to `7e40716e`. The 22:26 UTC
+HTTP-only audit matched 41 core files plus 11 dated artifacts to that commit;
+both optional research and recovery receipts were still 404. Its canonical
+October 12 publication for October 13 has zero tickets and no new minute-bar
+result. The reconciliation evidence is
+`release-evidence/2026-10-13-evening-reconciliation/acceptance.json`; its later
+`main-checks-final.json` records completed main Tests: 4416 Python, 15144 page,
+378 chart, 137 continuity and 76 handoff checks, with all seven producer fixture
+generators current. This HTTP audit is not a new public browser acceptance.
+
+Issue #164 now gives the opening guidance a 44px **Find a stock** control and
+prioritizes an exact ticker over company-name matches on Enter. Choosing a
+stock or using a validated research Inspect action clears an incompatible
+query and temporarily reveals a hidden candidate, preserving the saved lens.
+Desktop review reproduced a second obstacle: the detail pane could retain its
+lower scroll position or remain below the document viewport. Explicit choices
+now begin at the stock and chart. An independent sweep then reproduced a Method
+help return restoring that old lower position; explicit choices clear that
+return target while ordinary Method Return keeps its reading position.
+Validation and history refusal precede the research inspection changes.
+
+Final local source checks pass 669 browser assertions (139 finder, 149 existing
+mobile/lens/reach, 257 inspection including 102 new scroll/Method controls,
+124 source recovery), 137 DOM/store continuity and 24 recovery/minute-bar
+interaction checks. Independent review passes 131 controls, including actual
+archived LW/CNI ambiguity, QUAD/GTE, real cross-tab unfollow, desktop/phone and
+reduced/smooth motion; eight independent captures were inspected. Six targeted
+scroll/restoration mutations fail, and an unrelated timeout control passes all
+102. Pre-fix and intermediate failures are distinguished in
+`release-evidence/2026-10-13-stock-finder/prepared.json`. Producer code and
+fixtures retain their base bytes; this local verifier did not rerun generators.
+Hosted fixture checks remain required. README describes the explicit navigation
+exception; `.env.example` needs no configuration change. The design-system pin,
+strategy, market data, provider architecture and account facts are unchanged.
+Exact-head review, hosted checks, merge and actual public acceptance are still
+pending for this stock-finder change.
+
+Concurrent PR #169 owns the service-policy work. Our earlier local #163
+preparations remain unpublished and must not replace it. Independent read-only
+review of `4082d51c` reproduced an unversioned-delivery validation gap and an
+index denominator mismatch; passing CI alone does not clear those findings.
+Recheck its current head and reviewed evidence before any merge decision.
+
+The next independent deliverable repairs visible reload controls that currently
+leave same-cohort research quotes unavailable after a new receipt is published.
+A local producer-fixture reproduction confirms that the existing internal
+research reload API fetches them correctly. Implementation is isolated pending
+this release. The owner manual-morning workflow handoff is a subsequent option;
+manual startup latency, timely quotes, broader issuer access, broker facts and
+an actual personal trade remain unestablished. No workflow dispatch or new
+provider access is part of either UI change.
+
+
+## Repair preparation, 13 Oct 2026 — compact stock finder at tablet widths
+
+PR #170's original head `0e2a681a` failed its hosted page job in Tests
+`38480748216`: 15426 of 15432 page checks passed. The six failures were the
+existing compact-orientation requirement at 820, 768 and 721 pixels in dark
+and light themes; 378 chart checks passed. This is a real layout regression,
+not an accepted flaky check. Local execution reproduces all six failures:
+the guidance is 94px tall against the existing strict 90px limit.
+
+The existing two-row layout below 1001px now removes its inherited 8px row gap.
+The six failing cases render at 86px, with all words, font sizes and the 44px
+Find a stock target preserved. The finder geometry suite now includes those
+three intermediate widths. No existing assertion was loosened. Local reading
+and finder checks pass 307 of 307. The original CSS fails the unchanged reading
+rule in six cases; an unrelated chart-reading margin mutation passes all 141
+reading checks and was restored before recording final source hashes.
+Independent exact-base browser diagnosis confirms the same repair in eight
+cases; root and independent reviewers inspected the before/after captures.
+`release-evidence/2026-10-13-stock-finder/compact-repair.json` retains the failed
+CI identity, local results, measured geometry and source identities.
+
+README's finder description remains accurate; `.env.example` needs no change.
+Source and fixture bytes unrelated to the CSS and added viewport coverage are
+unchanged. The previous exact-head evidence belongs to the original head; the
+corrected head needs fresh independent review and normal hosted gates before
+merge, deployment and actual public acceptance. Research quote reload plus its
+owner-workflow handoff are prepared separately for a subsequent coherent
+milestone and must reconcile this correction after #170 releases.
+
+## Main reconciliation, 13 Oct 2026 — retain the reviewed finder over #169
+
+The concurrent service-policy PR #169 merged as `bf266a6e` while #170's
+required checks were finishing. Its tree equals reviewed `174f47c0`.
+The existing #170 branch is reconciled over that main without changing either
+the six reviewed stock-finder runtime/test files from `05794ffe` or the merged
+service-health runtime/tests. Both appended CLAUDE checkpoints are preserved.
+
+Independent execution found one remaining prose error in #169: a later
+malformed revision is skipped, while an earlier readable publication still
+keeps that session published. README, the current dated service report and
+the corresponding checkpoint now say that the offending commit does not
+count; the session is unpublished only if no other readable publication
+exists. Current-main freshness is a separate result. Generated service-report
+evidence and all published record/history bytes retain their existing values.
+
+The reconciliation passes 110 service/delivery/documentation tests, 307
+reading/finder browser checks and the full pinned service-history replay.
+Two synthetic phone/tablet captures were inspected. The design-system pin and
+`.env.example` are unchanged. The exact repair review and
+`release-evidence/2026-10-13-stock-finder/main-reconciliation.json` retain the
+source comparisons, executed checks, prior service finding and deployment
+provenance.
+
+All seven checks ultimately passed at the preceding head `05794ffe`: 4416
+Python tests, current producer fixtures, 15459 page checks, 378 chart checks,
+both native benchmarks and memory supervisors, gate and secret scans. That
+completed evidence belongs to its old `7e40716e` base; it does not replace
+fresh required checks for the reconciled head. Independent final review,
+normal hosted gates, merge and actual public verification remain required.
+The combined research-quote reload/owner-workflow preparation must then be
+rebased onto this accepted release before publication.
 
 ## Checkpoint, 14 Oct 2026 — PR #169 accepted; the first trade rehearsed end to end, its reported result reproduced offline (#110)
 
@@ -8390,3 +8529,35 @@ not support.
 
 **Not claimable:** a real trade or a real backup -- every broker fact here is
 synthetic -- and any trading edge.
+
+
+## Stock finder reconciled with private-report release — 15 October 2026
+
+PR #170 is reconciled over `c7a3566e`, including the merged #171 private-result
+reproducer and reported gap behavior. Finder runtime remains byte-identical to
+reviewed `71d5fc5c`; new private-report runtime, fixtures, workflows, configuration,
+canonical publications and historical evidence remain current main's exact bytes.
+Both append-only checkpoint histories survive the CLAUDE conflict. The combined
+smoke driver invokes both finder and first-trade suites. README was reviewed with
+both feature descriptions retained; `.env.example` is exact current main.
+
+[Reconciliation evidence](release-evidence/2026-10-15-stock-finder/prepared.json):
+229 affected Python/documentation checks, 476 reading/inspection/first-trade browser
+checks, 166 separately executed finder checks, 78 handoff model cases and a current
+109-case parity corpus pass. Two root captures were inspected. Independent review
+passed 18 provenance checks over 20,324 files and 92 browser checks on the actual
+October 14/15 publication, inspecting five captures and preserving an unsaved
+private correction. Harness-scope corrections and the unknown-selector diagnostic
+are recorded, without changing product assertions or claiming omitted execution.
+Python 3.12.14, Node 24.19.0, Playwright 1.56.1 and Chromium 141 were used.
+
+All seven prior `71d5fc5c` remote checks completed successfully; the dated receipt
+retains that historical evidence and its tested base. This reconciliation still
+requires final committed-head review, fresh required gates, ordinary merge and
+actual public acceptance. Current production remains the October 14 scan for
+October 15, degraded/behind_more, red market, zero tickets. Its source-recovery
+receipt binds the previous publication; research quotes remain unavailable. No
+current morning coverage, personal trade or trading edge is inferred. The next
+prepared milestone pairs research quote reload with the static owner handoff;
+the subsequent policy/window preparation must include #171's first-trade fixture
+cascade before fresh verification.

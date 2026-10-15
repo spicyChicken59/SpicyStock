@@ -1,0 +1,186 @@
+{
+  "schema": "spicystock-post168-main-checks-v1",
+  "evidence_name": "Completed main checks after PR168 merge",
+  "observed_at": "2026-10-13T22:41:03.530Z",
+  "head": "7e40716ee3bc9460854d649be249fde5e5de021f",
+  "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/commits/7e40716ee3bc9460854d649be249fde5e5de021f/check-runs?per_page=100",
+  "checks": [
+    {
+      "id": 115568136346,
+      "name": "report-build-status",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568136346",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:14:38Z",
+      "completed_at": "2026-10-13T22:14:41Z"
+    },
+    {
+      "id": 115568136137,
+      "name": "deploy",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568136137",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:14:39Z",
+      "completed_at": "2026-10-13T22:14:56Z"
+    },
+    {
+      "id": 115568001275,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568001275",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:14:17Z",
+      "completed_at": "2026-10-13T22:14:34Z"
+    },
+    {
+      "id": 115568000608,
+      "name": "deploy",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115568000608",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:14:14Z",
+      "completed_at": "2026-10-13T22:14:13Z"
+    },
+    {
+      "id": 115567999810,
+      "name": "report-build-status",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115567999810",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:14:14Z",
+      "completed_at": "2026-10-13T22:14:13Z"
+    },
+    {
+      "id": 115567886471,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115567886471",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:59Z",
+      "completed_at": "2026-10-13T22:14:13Z"
+    },
+    {
+      "id": 115567885198,
+      "name": "historical-runtime (${{ matrix.case }})",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567885198",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:56Z",
+      "completed_at": "2026-10-13T22:13:56Z"
+    },
+    {
+      "id": 115567885014,
+      "name": "historical-runtime-gate",
+      "status": "completed",
+      "conclusion": "skipped",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567885014",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:56Z",
+      "completed_at": "2026-10-13T22:13:55Z"
+    },
+    {
+      "id": 115567883126,
+      "name": "publish",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351986/job/115567883126",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:59Z",
+      "completed_at": "2026-10-13T22:14:59Z"
+    },
+    {
+      "id": 115567882980,
+      "name": "page",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882980",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:58Z",
+      "completed_at": "2026-10-13T22:28:59Z"
+    },
+    {
+      "id": 115567882581,
+      "name": "pytest",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882581",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:58Z",
+      "completed_at": "2026-10-13T22:40:30Z"
+    },
+    {
+      "id": 115567882419,
+      "name": "gitleaks",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351921/job/115567882419",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "started_at": "2026-10-13T22:13:59Z",
+      "completed_at": "2026-10-13T22:14:15Z"
+    }
+  ],
+  "scope": "Adds completion evidence to the earlier read-only reconciliation. It does not change that earlier observation time or claim browser acceptance.",
+  "logs": [
+    {
+      "evidence_name": "pytest and fixture generation",
+      "job_id": 115567882581,
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882581",
+      "raw_log": {
+        "path": "/tmp/oct13-evening-main-job-115567882581.log",
+        "bytes": 56190,
+        "sha256": "1f95f122041a69072d5c661f464201c5831957ef9e533007641d78aeca9ed46b"
+      },
+      "evidence_lines": [
+        "2026-10-13T22:36:24.7168198Z 4416 passed, 1 warning in 1311.08s (0:21:51)",
+        "2026-10-13T22:36:59.6115934Z 13 fixtures current",
+        "2026-10-13T22:37:04.4239146Z 21 morning fixture files current",
+        "2026-10-13T22:37:11.3154819Z 30 issuer producer fixtures current",
+        "2026-10-13T22:37:50.2994597Z 22 stop-research fixture files current",
+        "2026-10-13T22:38:37.5157058Z 40 research-outcomes fixture files current",
+        "2026-10-13T22:39:44.3491073Z 24 research observation fixture files current",
+        "2026-10-13T22:40:28.0998490Z 20 source recovery fixture files current"
+      ]
+    },
+    {
+      "evidence_name": "page, chart and continuity checks",
+      "job_id": 115567882980,
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882980",
+      "raw_log": {
+        "path": "/tmp/oct13-evening-main-job-115567882980.log",
+        "bytes": 81211,
+        "sha256": "4c82ec9fc6deadc01fc28e91a9f317fd90303210375bda60fcc5c135e403802f"
+      },
+      "evidence_lines": [
+        "2026-10-13T22:14:50.3997667Z # tests 76",
+        "2026-10-13T22:14:50.3998185Z # pass 76",
+        "2026-10-13T22:14:50.3998421Z # fail 0",
+        "2026-10-13T22:15:02.5284490Z {\"status\":\"PASS: offline DOM/store checks; not browser/layout acceptance\",\"checks\":137,\"requests\":[\"history/index.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/record.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/burst-ATEC.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/record.json\",\"history/2c5ec387654d2cea9d85b1230e91b4c7c0efb534/burst-VICR.json\"]}",
+        "2026-10-13T22:15:33.3485362Z 378/378 chart checks passed; screenshots in /tmp/claude-0/-home-user/edc6f11d-ce23-5094-b116-41a165a13e91/scratchpad/chart/shots",
+        "2026-10-13T22:28:52.9241875Z 15144/15144 page checks passed; screenshots in /tmp/shots"
+      ]
+    }
+  ],
+  "measured_counts": {
+    "pytest": 4416,
+    "page": 15144,
+    "chart": 378,
+    "continuity": 137,
+    "fixtures": {
+      "page": 13,
+      "morning": 21,
+      "issuer_evidence": 30,
+      "stop_research": 22,
+      "research_outcomes": 40,
+      "research_observations": 24,
+      "source_recovery": 20
+    }
+  },
+  "log_scope_note": "Fixture fault messages in the full raw logs come from offline producer doubles; they are not new live provider failures. Hosted screenshot locations are recorded in logs, but this agent did not inspect those hosted artifacts."
+}

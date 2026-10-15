@@ -1,0 +1,1802 @@
+{
+  "schema": "spicystock-readonly-evening-resume-audit-v1",
+  "completed_at": "2026-10-13T22:28:08.969938+00:00",
+  "main_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+  "main_tree": "55f270baa570987cacf18211e277bbad73605b12",
+  "prior_verified_release": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+  "instructions_read": [
+    "PRODUCT_GOAL.md current main: continuation remains authorized; release text still incorrectly says PR162 hosted/public pending.",
+    "CLAUDE.md current main: standing rules, latest PR165\u2013168 checkpoints."
+  ],
+  "stop_and_concurrency": {
+    "open_prs": [],
+    "recent_issue_comments_since_0800": [],
+    "branch_count": 98,
+    "branch_page2": [],
+    "active_builder_branch": "claude/spicystock-historical-workflow-i53ud1",
+    "active_builder_branch_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77",
+    "active_builder_visible_evidence": "Four recent PRs came from the same Claude session/branch. Branch is precisely already-merged PR168 head in both initial and final reads; no visible unpublished advance or open PR. This does not prove no external worktree is active.",
+    "final_reads": [
+      {
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/pulls?state=open&per_page=100",
+        "observed_at": "2026-10-13T22:28:06.066Z",
+        "result": []
+      },
+      {
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/issues/comments?since=2026-10-13T22:00:00Z&per_page=100",
+        "observed_at": "2026-10-13T22:28:06.075Z",
+        "result": []
+      },
+      {
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/commits/main",
+        "observed_at": "2026-10-13T22:28:06.482Z",
+        "result": {
+          "sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+          "commit_date": "2026-10-13T22:13:52Z",
+          "tree_sha": "55f270baa570987cacf18211e277bbad73605b12"
+        }
+      },
+      {
+        "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/branches?per_page=100",
+        "observed_at": "2026-10-13T22:28:20.259Z",
+        "branch_count": 98,
+        "active_branch": {
+          "name": "claude/spicystock-historical-workflow-i53ud1",
+          "commit": {
+            "sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77",
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/commits/36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+          },
+          "protected": false
+        },
+        "main": {
+          "name": "main",
+          "commit": {
+            "sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+            "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/commits/7e40716ee3bc9460854d649be249fde5e5de021f"
+          },
+          "protected": false
+        }
+      }
+    ],
+    "stop_instruction_found": false,
+    "scope": "No comment or explicit user stop observed; repository instructions retain ongoing authorization.",
+    "branch_endpoint_note": "A single encoded-slash branch endpoint could not be parsed; both successful full branch listings independently show the merged branch head."
+  },
+  "pull_requests": [
+    {
+      "number": 165,
+      "title": "Ask the provider once more for the publication's own missing stocks, before the next open (#111)",
+      "url": "https://github.com/spicyChicken59/SpicyStock/pull/165",
+      "head": "849fd51068434e127d0a7ebfbda888bf71a210ae",
+      "head_ref": "claude/spicystock-historical-workflow-i53ud1",
+      "base": "289ab4a1b886feb3ddcd3e6099d59ea4bf8b8147",
+      "merge": "279ec5a311ce8da698a5244a46232f79a8ae9f69",
+      "merged_at": "2026-10-13T16:14:07Z",
+      "updated_at": "2026-10-13T16:14:07Z",
+      "comments": [],
+      "reviews": [],
+      "head_tree": "75e02e492a6a1e342b9f699f44c7c49f1e61bae7",
+      "merge_tree": "75e02e492a6a1e342b9f699f44c7c49f1e61bae7",
+      "tree_equal": true,
+      "checks": [
+        {
+          "id": 115392191137,
+          "name": "historical-runtime (${{ matrix.case }})",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425035651/job/115392191137",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        },
+        {
+          "id": 115392073610,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425035651/job/115392073610",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        },
+        {
+          "id": 115392073546,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425035651/job/115392073546",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        },
+        {
+          "id": 115392073191,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425035651/job/115392073191",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        },
+        {
+          "id": 115392072725,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425035617/job/115392072725",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        },
+        {
+          "id": 115392035433,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38425024525/job/115392035433",
+          "head_sha": "849fd51068434e127d0a7ebfbda888bf71a210ae"
+        }
+      ],
+      "commit_count": 12
+    },
+    {
+      "number": 166,
+      "title": "Read the service's delivery off the commit that landed it, in the history's order (#111)",
+      "url": "https://github.com/spicyChicken59/SpicyStock/pull/166",
+      "head": "ee644c638ec98df7431bc7afb5bf93440deab485",
+      "head_ref": "claude/spicystock-historical-workflow-i53ud1",
+      "base": "279ec5a311ce8da698a5244a46232f79a8ae9f69",
+      "merge": "3a972ad7a08e2846c86069bf7d212c8c3d392f13",
+      "merged_at": "2026-10-13T18:02:15Z",
+      "updated_at": "2026-10-13T18:02:15Z",
+      "comments": [],
+      "reviews": [],
+      "head_tree": "f20d7c33ac3ee9b5e495187b0680d76809cd30de",
+      "merge_tree": "f20d7c33ac3ee9b5e495187b0680d76809cd30de",
+      "tree_equal": true,
+      "checks": [
+        {
+          "id": 115432323852,
+          "name": "historical-runtime (stress)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632272/job/115432323852",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432323655,
+          "name": "historical-runtime (central)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632272/job/115432323655",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432199582,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632272/job/115432199582",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432199159,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632272/job/115432199159",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432199038,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632305/job/115432199038",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432198806,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436632272/job/115432198806",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        },
+        {
+          "id": 115432005344,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38436575840/job/115432005344",
+          "head_sha": "ee644c638ec98df7431bc7afb5bf93440deab485"
+        }
+      ],
+      "commit_count": 7
+    },
+    {
+      "number": 167,
+      "title": "Read when GitHub starts the scheduled runs, and write down the morning's options (#111)",
+      "url": "https://github.com/spicyChicken59/SpicyStock/pull/167",
+      "head": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc",
+      "head_ref": "claude/spicystock-historical-workflow-i53ud1",
+      "base": "3a972ad7a08e2846c86069bf7d212c8c3d392f13",
+      "merge": "c83ce0f2035c78272c968c370b6690e7a948b3a3",
+      "merged_at": "2026-10-13T19:26:17Z",
+      "updated_at": "2026-10-13T19:26:17Z",
+      "comments": [],
+      "reviews": [],
+      "head_tree": "8d762efea99b1c043959423a33a531d79e481be8",
+      "merge_tree": "8d762efea99b1c043959423a33a531d79e481be8",
+      "tree_equal": true,
+      "checks": [
+        {
+          "id": 115482843328,
+          "name": "historical-runtime (${{ matrix.case }})",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451315934/job/115482843328",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        },
+        {
+          "id": 115482660351,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451316009/job/115482660351",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        },
+        {
+          "id": 115482659928,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451315934/job/115482659928",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        },
+        {
+          "id": 115482659833,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451315934/job/115482659833",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        },
+        {
+          "id": 115482659631,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451315934/job/115482659631",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        },
+        {
+          "id": 115482640441,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38451310011/job/115482640441",
+          "head_sha": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc"
+        }
+      ],
+      "commit_count": 7
+    },
+    {
+      "number": 168,
+      "title": "Read a first day the daily bar cannot place from its minute bars (#111, #109)",
+      "url": "https://github.com/spicyChicken59/SpicyStock/pull/168",
+      "head": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77",
+      "head_ref": "claude/spicystock-historical-workflow-i53ud1",
+      "base": "c83ce0f2035c78272c968c370b6690e7a948b3a3",
+      "merge": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "merged_at": "2026-10-13T22:13:52Z",
+      "updated_at": "2026-10-13T22:13:53Z",
+      "comments": [],
+      "reviews": [],
+      "head_tree": "55f270baa570987cacf18211e277bbad73605b12",
+      "merge_tree": "55f270baa570987cacf18211e277bbad73605b12",
+      "tree_equal": true,
+      "checks": [
+        {
+          "id": 115561723824,
+          "name": "historical-runtime (${{ matrix.case }})",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474461453/job/115561723824",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        },
+        {
+          "id": 115561615275,
+          "name": "historical-runtime-gate",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474461453/job/115561615275",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        },
+        {
+          "id": 115561615113,
+          "name": "pytest",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474461453/job/115561615113",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        },
+        {
+          "id": 115561614863,
+          "name": "page",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474461453/job/115561614863",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        },
+        {
+          "id": 115561614029,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474461354/job/115561614029",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        },
+        {
+          "id": 115561596485,
+          "name": "gitleaks",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38474456120/job/115561596485",
+          "head_sha": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77"
+        }
+      ],
+      "commit_count": 10
+    }
+  ],
+  "native_skip_source_equivalence": [
+    {
+      "native_executed_head": "aed055c73ed887f67ad73612cd8615714e3fa012",
+      "final_merged_head": "849fd51068434e127d0a7ebfbda888bf71a210ae",
+      "changed_paths": [
+        "CLAUDE.md"
+      ],
+      "checks": [
+        {
+          "name": "historical-runtime (central)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767071/job/115366786159"
+        },
+        {
+          "name": "historical-runtime (stress)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767071/job/115366785766"
+        },
+        {
+          "name": "historical-runtime-gate",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767071/job/115366664974"
+        },
+        {
+          "name": "page",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767071/job/115366664968"
+        },
+        {
+          "name": "pytest",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767071/job/115366664738"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417767097/job/115366664651"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38417758819/job/115366637441"
+        }
+      ],
+      "scope_note": "Prior native run is source-equivalent because only CLAUDE.md changed; final-head pytest/page and secret scans are separate fresh checks. PR167 predecessor pytest failed; final head passed."
+    },
+    {
+      "native_executed_head": "0dfb9fb3a80c5c43df29afe815a3a7e58cb5d910",
+      "final_merged_head": "abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc",
+      "changed_paths": [
+        "CLAUDE.md"
+      ],
+      "checks": [
+        {
+          "name": "historical-runtime (central)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786144/job/115474151356"
+        },
+        {
+          "name": "historical-runtime (stress)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786144/job/115474150936"
+        },
+        {
+          "name": "historical-runtime-gate",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786144/job/115474021701"
+        },
+        {
+          "name": "page",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786144/job/115474021380"
+        },
+        {
+          "name": "pytest",
+          "conclusion": "failure",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786144/job/115474020875"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448786189/job/115474020665"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38448779887/job/115473998465"
+        }
+      ],
+      "scope_note": "Prior native run is source-equivalent because only CLAUDE.md changed; final-head pytest/page and secret scans are separate fresh checks. PR167 predecessor pytest failed; final head passed."
+    },
+    {
+      "native_executed_head": "fb42ac0f25ff491ddb190e8daae91362786179a1",
+      "final_merged_head": "36c11cc1545f6bcb2e16bd77e856966ea2a6fb77",
+      "changed_paths": [
+        "CLAUDE.md"
+      ],
+      "checks": [
+        {
+          "name": "historical-runtime (central)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073418/job/115539950272"
+        },
+        {
+          "name": "historical-runtime (stress)",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073418/job/115539950185"
+        },
+        {
+          "name": "historical-runtime-gate",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073418/job/115539829003"
+        },
+        {
+          "name": "pytest",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073418/job/115539828738"
+        },
+        {
+          "name": "page",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073418/job/115539828418"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468073473/job/115539828265"
+        },
+        {
+          "name": "gitleaks",
+          "conclusion": "success",
+          "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38468066425/job/115539805512"
+        }
+      ],
+      "scope_note": "Prior native run is source-equivalent because only CLAUDE.md changed; final-head pytest/page and secret scans are separate fresh checks. PR167 predecessor pytest failed; final head passed."
+    }
+  ],
+  "latest_main_runs": [
+    {
+      "id": 38476380614,
+      "name": "pages build and deployment",
+      "event": "dynamic",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-13T22:14:10Z",
+      "updated_at": "2026-10-13T22:14:58Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614"
+    },
+    {
+      "id": 38476351986,
+      "name": "Publish committed dashboard",
+      "event": "push",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-13T22:13:55Z",
+      "updated_at": "2026-10-13T22:15:00Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351986"
+    },
+    {
+      "id": 38476351925,
+      "name": "Tests",
+      "event": "push",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "status": "in_progress",
+      "conclusion": null,
+      "created_at": "2026-10-13T22:13:55Z",
+      "updated_at": "2026-10-13T22:14:00Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925"
+    },
+    {
+      "id": 38476351921,
+      "name": "Secret scan",
+      "event": "push",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-13T22:13:55Z",
+      "updated_at": "2026-10-13T22:14:16Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351921"
+    },
+    {
+      "id": 38476350936,
+      "name": "pages build and deployment",
+      "event": "dynamic",
+      "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-13T22:13:55Z",
+      "updated_at": "2026-10-13T22:14:14Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936"
+    }
+  ],
+  "log_evidence": [
+    {
+      "job_id": 115567883126,
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/115567883126/logs",
+      "sha256_utf8": "b39bfd1bc0cf2c398a0bd61b4d6689c6966595975182a545bb5ef2f33e2780e0",
+      "evidence_lines": [
+        "2026-10-13T22:14:57.9649787Z Verified: every one of the 41 public files matches committed main."
+      ]
+    },
+    {
+      "job_id": 115561615275,
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/115561615275/logs",
+      "sha256_utf8": "b2c095b8700957ff7c8f8bff8b5bdd270762ff114b39b7eff46efe2405ef7c45",
+      "evidence_lines": [
+        "2026-10-13T21:58:17.0360129Z {\"changed_file_count\": 1, \"claim\": \"This decision is not a benchmark result or execution release.\", \"observed_before\": \"fb42ac0f25ff491ddb190e8daae91362786179a1\", \"observed_head\": \"36c11cc1545f6bcb2e16bd77e856966ea2a6fb77\", \"reason\": \"observed_docs_only_push_no_runtime_change\", \"relevant_changed_paths\": [], \"run_required\": false, \"schema\": \"historical-runtime-pr-gate-v1\", \"status\": \"NOT RUN\"}"
+      ]
+    },
+    {
+      "job_id": 115392073546,
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/115392073546/logs",
+      "sha256_utf8": "a22911fdd1b45177b9190a9428b829e84c6abe1b77e32fc66e42944e0bef167d",
+      "evidence_lines": [
+        "2026-10-13T15:47:27.5391027Z {\"changed_file_count\": 1, \"claim\": \"This decision is not a benchmark result or execution release.\", \"observed_before\": \"aed055c73ed887f67ad73612cd8615714e3fa012\", \"observed_head\": \"849fd51068434e127d0a7ebfbda888bf71a210ae\", \"reason\": \"observed_docs_only_push_no_runtime_change\", \"relevant_changed_paths\": [], \"run_required\": false, \"schema\": \"historical-runtime-pr-gate-v1\", \"status\": \"NOT RUN\"}"
+      ]
+    },
+    {
+      "job_id": 115482659833,
+      "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/actions/jobs/115482659833/logs",
+      "sha256_utf8": "b36413f431197684d946b697a22dfba4572eaeadcab6abacee2cf9683fc3580a",
+      "evidence_lines": [
+        "2026-10-13T19:00:18.1798814Z {\"changed_file_count\": 1, \"claim\": \"This decision is not a benchmark result or execution release.\", \"observed_before\": \"0dfb9fb3a80c5c43df29afe815a3a7e58cb5d910\", \"observed_head\": \"abe7c2f7e7afdadfa1ff96d38093c4cc8eea36fc\", \"reason\": \"observed_docs_only_push_no_runtime_change\", \"relevant_changed_paths\": [], \"run_required\": false, \"schema\": \"historical-runtime-pr-gate-v1\", \"status\": \"NOT RUN\"}"
+      ]
+    }
+  ],
+  "production": {
+    "receipt": {
+      "path": "/tmp/oct13-evening-public-audit/acceptance.json",
+      "bytes": 89277,
+      "sha256": "ee6f6d27465481fc396449824cf5d07ea5ba2689fc4fc7452cacaaed0239cdec"
+    },
+    "core_files": 41,
+    "additional_dated_artifacts": 11,
+    "optional_absences": 2,
+    "all_matched": true,
+    "default_clock": "actual UTC wall clock; no clock override or injected data",
+    "observed_at": [
+      "2026-10-13T22:26:18.484957+00:00",
+      "2026-10-13T22:26:20.552125+00:00"
+    ],
+    "canonical_sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+    "session": "2026-10-12",
+    "published_at": "2026-10-13T03:02:09.473058+00:00",
+    "trade_count": 0,
+    "intraday_block_present": false,
+    "optional_404": [
+      "research-observations.json",
+      "source-recovery.json"
+    ],
+    "source_and_file_checks": [
+      {
+        "path": "index.html",
+        "url": "https://spicychicken59.github.io/SpicyStock/index.html",
+        "observed_at": "2026-10-13T22:26:18.485543+00:00",
+        "status": 200,
+        "bytes": 17065,
+        "sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944",
+        "expected_sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944",
+        "pass": true,
+        "headers": {
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-42a9\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "data.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/data.json",
+        "observed_at": "2026-10-13T22:26:18.548693+00:00",
+        "status": 200,
+        "bytes": 11874754,
+        "sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+        "expected_sha256": "a6aa44d239a36d10c8def714e16fb6438f4fb41af7929f7d9ba4335546f3a27c",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-b531c2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "reader.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+        "observed_at": "2026-10-13T22:26:18.510428+00:00",
+        "status": 200,
+        "bytes": 3147742,
+        "sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581",
+        "expected_sha256": "67bca127b767e0b50769a26f9b73629a74c27e3beb6de0f0f857264d093a9581",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-3007de\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "picks.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/picks.json",
+        "observed_at": "2026-10-13T22:26:18.485834+00:00",
+        "status": 200,
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "expected_sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-f51\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "historical-validation.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/historical-validation.json",
+        "observed_at": "2026-10-13T22:26:18.484957+00:00",
+        "status": 200,
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "expected_sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-13b8\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "historical-findings.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/historical-findings.json",
+        "observed_at": "2026-10-13T22:26:18.495926+00:00",
+        "status": 200,
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "expected_sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-2b621\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "morning.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+        "observed_at": "2026-10-13T22:26:18.714030+00:00",
+        "status": 200,
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "expected_sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-10bc\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/favicon.ico",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/favicon.ico",
+        "observed_at": "2026-10-13T22:26:18.730778+00:00",
+        "status": 200,
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "expected_sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "pass": true,
+        "headers": {
+          "content-type": "image/vnd.microsoft.icon",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-13c1\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-avatar-tile.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-avatar-tile.svg",
+        "observed_at": "2026-10-13T22:26:18.752981+00:00",
+        "status": 200,
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "expected_sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-243a\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/apple-touch-icon.png",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/apple-touch-icon.png",
+        "observed_at": "2026-10-13T22:26:18.794949+00:00",
+        "status": 200,
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "expected_sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "pass": true,
+        "headers": {
+          "content-type": "image/png",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-2c14\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc.css",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+        "observed_at": "2026-10-13T22:26:18.880387+00:00",
+        "status": 200,
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "expected_sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "pass": true,
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-1ffab\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-theme.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+        "observed_at": "2026-10-13T22:26:18.894752+00:00",
+        "status": 200,
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "expected_sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-81d\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-charts.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+        "observed_at": "2026-10-13T22:26:18.914965+00:00",
+        "status": 200,
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "expected_sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-6afe\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-motion.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+        "observed_at": "2026-10-13T22:26:18.942364+00:00",
+        "status": 200,
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "expected_sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-28da\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app.css",
+        "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+        "observed_at": "2026-10-13T22:26:19.046587+00:00",
+        "status": 200,
+        "bytes": 89323,
+        "sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea",
+        "expected_sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea",
+        "pass": true,
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-15ceb\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-chart.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+        "observed_at": "2026-10-13T22:26:19.080326+00:00",
+        "status": 200,
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "expected_sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-11f53\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-map.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+        "observed_at": "2026-10-13T22:26:19.108951+00:00",
+        "status": 200,
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "expected_sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-7352\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-follow.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+        "observed_at": "2026-10-13T22:26:19.112755+00:00",
+        "status": 200,
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "expected_sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-7ec2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-reading.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+        "observed_at": "2026-10-13T22:26:19.153173+00:00",
+        "status": 200,
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "expected_sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-5c99\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-method.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+        "observed_at": "2026-10-13T22:26:19.240561+00:00",
+        "status": 200,
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "expected_sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-ac7c\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-findings.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+        "observed_at": "2026-10-13T22:26:19.288251+00:00",
+        "status": 200,
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a",
+        "expected_sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-10a13\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-reader.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+        "observed_at": "2026-10-13T22:26:19.320296+00:00",
+        "status": 200,
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "expected_sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-2523\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-observations.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+        "observed_at": "2026-10-13T22:26:19.344216+00:00",
+        "status": 200,
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4",
+        "expected_sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-ada4\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-cash-preview.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+        "observed_at": "2026-10-13T22:26:19.372951+00:00",
+        "status": 200,
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "expected_sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-efc\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-handoff.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+        "observed_at": "2026-10-13T22:26:19.403716+00:00",
+        "status": 200,
+        "bytes": 39560,
+        "sha256": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+        "expected_sha256": "0e859402106552530bd879f6edfb62604637d36dd81c08a689841c9efbc96938",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-9a88\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-handoff-ui.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+        "observed_at": "2026-10-13T22:26:19.453096+00:00",
+        "status": 200,
+        "bytes": 40586,
+        "sha256": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+        "expected_sha256": "a898271bc29ccb79dbe32cb47b3ed6fc8b6225878fe08e1251ce4ef9d457f09c",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-9e8a\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-issuer-evidence.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+        "observed_at": "2026-10-13T22:26:19.460834+00:00",
+        "status": 200,
+        "bytes": 42047,
+        "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07",
+        "expected_sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-a43f\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-research-observations.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-research-observations.js",
+        "observed_at": "2026-10-13T22:26:19.487274+00:00",
+        "status": 200,
+        "bytes": 29167,
+        "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e",
+        "expected_sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-71ef\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-stop-research.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-stop-research.js",
+        "observed_at": "2026-10-13T22:26:19.494950+00:00",
+        "status": 200,
+        "bytes": 38946,
+        "sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af",
+        "expected_sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-9822\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-research-outcomes.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js",
+        "observed_at": "2026-10-13T22:26:19.547002+00:00",
+        "status": 200,
+        "bytes": 43372,
+        "sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "expected_sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-a96c\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app-morning.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+        "observed_at": "2026-10-13T22:26:19.549989+00:00",
+        "status": 200,
+        "bytes": 26098,
+        "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "expected_sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-65f2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "app.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+        "observed_at": "2026-10-13T22:26:19.581903+00:00",
+        "status": 200,
+        "bytes": 427754,
+        "sha256": "dfccd4f4c5f5e9f3747b1e9f527128086b1d79581b1b5f9298a079798281f259",
+        "expected_sha256": "dfccd4f4c5f5e9f3747b1e9f527128086b1d79581b1b5f9298a079798281f259",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-686ea\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-mark-color-dark.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+        "observed_at": "2026-10-13T22:26:19.674055+00:00",
+        "status": 200,
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "expected_sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-1a2d\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-mark-mono-cream.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+        "observed_at": "2026-10-13T22:26:19.706812+00:00",
+        "status": 200,
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "expected_sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-1325\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/reader-observations/eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be.json",
+        "observed_at": "2026-10-13T22:26:19.724376+00:00",
+        "status": 200,
+        "bytes": 5192350,
+        "sha256": "eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be",
+        "expected_sha256": "eb51784e3e49d1228cb83e7407958424ac82f8dda92cad42126bfe96c0b4a6be",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-4f3a9e\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "issuer-evidence.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json",
+        "observed_at": "2026-10-13T22:26:19.741724+00:00",
+        "status": 200,
+        "bytes": 1762,
+        "sha256": "8093c3526f8dd7af445ec5ae0bcdd643345668cac2f128fa1008431c804b8352",
+        "expected_sha256": "8093c3526f8dd7af445ec5ae0bcdd643345668cac2f128fa1008431c804b8352",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-6e2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9.json",
+        "observed_at": "2026-10-13T22:26:19.751414+00:00",
+        "status": 200,
+        "bytes": 2811,
+        "sha256": "d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9",
+        "expected_sha256": "d4a6bf71ac86a4dfb709701232152fc378b8f4a89d4300bc5cf412095a9be2d9",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-afb\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "stop-research.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+        "observed_at": "2026-10-13T22:26:19.756544+00:00",
+        "status": 200,
+        "bytes": 1650,
+        "sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8",
+        "expected_sha256": "ec86f565327d8683a06a6b391f8561b9f0e0910ee021cc96378a8f006653f4c8",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-672\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/stop-research/4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a.json",
+        "observed_at": "2026-10-13T22:26:19.793961+00:00",
+        "status": 200,
+        "bytes": 8805,
+        "sha256": "4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a",
+        "expected_sha256": "4e7a4e248703450f8039344c71aa9929d6ff06094ae6e391267dff521079845a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-2265\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:19 GMT"
+        }
+      },
+      {
+        "path": "research-outcomes.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes.json",
+        "observed_at": "2026-10-13T22:26:19.892282+00:00",
+        "status": 200,
+        "bytes": 2133,
+        "sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e",
+        "expected_sha256": "febb9d0b1cedfcfc71d116f79f23a214ba50f4ee530ae0010fefb9e9124b8c9e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-855\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes/3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189.json",
+        "observed_at": "2026-10-13T22:26:19.917967+00:00",
+        "status": 200,
+        "bytes": 32204,
+        "sha256": "3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189",
+        "expected_sha256": "3c7bbbaff4124f5b14ec316e02fd51f2daa2c68fd66a59add29c6598c692f189",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-7dcc\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-source-recovery.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-source-recovery.md",
+        "observed_at": "2026-10-13T22:26:19.936508+00:00",
+        "status": 200,
+        "bytes": 11650,
+        "sha256": "42a05f2b38ef14d3fb3b057d9992b4ed4e76c2f581b68ff84198d234c77bda4c",
+        "expected_sha256": "42a05f2b38ef14d3fb3b057d9992b4ed4e76c2f581b68ff84198d234c77bda4c",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-2d82\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-service-health.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-service-health.md",
+        "observed_at": "2026-10-13T22:26:19.947665+00:00",
+        "status": 200,
+        "bytes": 8847,
+        "sha256": "ca97e8d502adea3db6c046583eb3eeb6421df6bccbf2e0dcb635d0a76e080e77",
+        "expected_sha256": "ca97e8d502adea3db6c046583eb3eeb6421df6bccbf2e0dcb635d0a76e080e77",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-228f\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-service-health-evidence/service-health.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-service-health-evidence/service-health.json",
+        "observed_at": "2026-10-13T22:26:19.979761+00:00",
+        "status": 200,
+        "bytes": 93056,
+        "sha256": "5568d40e9f2f33a7f3f33db855dc0456d01f4a95502fa08123991150b412ce6b",
+        "expected_sha256": "5568d40e9f2f33a7f3f33db855dc0456d01f4a95502fa08123991150b412ce6b",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-16b80\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-service-health-evidence/service-health.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-service-health-evidence/service-health.md",
+        "observed_at": "2026-10-13T22:26:20.022720+00:00",
+        "status": 200,
+        "bytes": 5598,
+        "sha256": "647931be6e66bb09d7479d5e7526da54874680d68d31ab02d8fbd5299e15594b",
+        "expected_sha256": "647931be6e66bb09d7479d5e7526da54874680d68d31ab02d8fbd5299e15594b",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-15de\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-schedule-reliability.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-schedule-reliability.md",
+        "observed_at": "2026-10-13T22:26:20.059606+00:00",
+        "status": 200,
+        "bytes": 9296,
+        "sha256": "a74bcf437e1211043f265d82a5273968807e80669488d9d97dab7ab16c891df3",
+        "expected_sha256": "a74bcf437e1211043f265d82a5273968807e80669488d9d97dab7ab16c891df3",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-2450\"",
+          "cache-control": "max-age=600",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT",
+          "age": "0"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-schedule-reliability-evidence/runs.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-schedule-reliability-evidence/runs.json",
+        "observed_at": "2026-10-13T22:26:20.068488+00:00",
+        "status": 200,
+        "bytes": 126027,
+        "sha256": "135864202f518a624b0b1278ad6cf89d8ba7debcc1dd42c88eb064328a3649e6",
+        "expected_sha256": "135864202f518a624b0b1278ad6cf89d8ba7debcc1dd42c88eb064328a3649e6",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-1ec4b\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-schedule-reliability-evidence/schedule-reliability.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-schedule-reliability-evidence/schedule-reliability.json",
+        "observed_at": "2026-10-13T22:26:20.094774+00:00",
+        "status": 200,
+        "bytes": 54987,
+        "sha256": "bfcecc13edba0f39b4b95186322e634826006c460be97e836a9fc9d5df40cb25",
+        "expected_sha256": "bfcecc13edba0f39b4b95186322e634826006c460be97e836a9fc9d5df40cb25",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-d6cb\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-schedule-reliability-evidence/schedule-reliability.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-schedule-reliability-evidence/schedule-reliability.md",
+        "observed_at": "2026-10-13T22:26:20.109577+00:00",
+        "status": 200,
+        "bytes": 4017,
+        "sha256": "4a1180a88868365e1ddfdea1a78103b585c037abe0ec519b249f986b58dd2a3b",
+        "expected_sha256": "4a1180a88868365e1ddfdea1a78103b585c037abe0ec519b249f986b58dd2a3b",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-fb1\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-recovery-rehearsal.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-recovery-rehearsal.md",
+        "observed_at": "2026-10-13T22:26:20.117951+00:00",
+        "status": 200,
+        "bytes": 5427,
+        "sha256": "5baf772fbfd37281a1508cf1e89149f56dcd8026f094bf2cae4a57b811060923",
+        "expected_sha256": "5baf772fbfd37281a1508cf1e89149f56dcd8026f094bf2cae4a57b811060923",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:47 GMT",
+          "etag": "\"6acead57-1533\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.json",
+        "observed_at": "2026-10-13T22:26:20.238561+00:00",
+        "status": 200,
+        "bytes": 28949,
+        "sha256": "e3050adbb11941311607b384154109450bd64f202b34ad41b4d3724a461e9feb",
+        "expected_sha256": "e3050adbb11941311607b384154109450bd64f202b34ad41b4d3724a461e9feb",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-7115\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.md",
+        "observed_at": "2026-10-13T22:26:20.259983+00:00",
+        "status": 200,
+        "bytes": 10756,
+        "sha256": "567290fb435473861d14b6d31d6b39ae9a2ad428d2b9faac82340e98a2459221",
+        "expected_sha256": "567290fb435473861d14b6d31d6b39ae9a2ad428d2b9faac82340e98a2459221",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Tue, 13 Oct 2026 22:14:48 GMT",
+          "etag": "\"6acead58-2a04\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "research-observations.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+        "observed_at": "2026-10-13T22:26:20.259514+00:00",
+        "status": 404,
+        "bytes": 9379,
+        "sha256": "b620507312c5e97566a3c6cfaf99144fefc18a0da7d941401dfa0f5f58fb0368",
+        "expected_sha256": null,
+        "pass": true,
+        "headers": {
+          "content-type": "text/html; charset=utf-8",
+          "etag": "\"6abcf5c5-24a3\"",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      },
+      {
+        "path": "source-recovery.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/source-recovery.json",
+        "observed_at": "2026-10-13T22:26:20.276104+00:00",
+        "status": 404,
+        "bytes": 9379,
+        "sha256": "b620507312c5e97566a3c6cfaf99144fefc18a0da7d941401dfa0f5f58fb0368",
+        "expected_sha256": null,
+        "pass": true,
+        "headers": {
+          "content-type": "text/html; charset=utf-8",
+          "etag": "\"6abcf5c5-24a3\"",
+          "age": "0",
+          "date": "Tue, 13 Oct 2026 22:26:20 GMT"
+        }
+      }
+    ],
+    "limits": [
+      "This is a byte/source/data reconciliation, not a new browser acceptance run.",
+      "No provider requests, workflow dispatches, broker orders or browser private-state writes.",
+      "CI and Pages outcomes are recorded separately; public matching bytes do not establish fresh morning coverage or a trade outcome."
+    ]
+  },
+  "milestone_reconciliation": {
+    "163": {
+      "state": "Still open; PR166 has shipped overlapping core fixes. Narrow further work to remaining reproduced gaps and preserve latest changes.",
+      "existing_main_improvements": [
+        "Commit committer time rather than generation time for delivery; generation kept separately.",
+        "Topological Git-history sequence selects first/latest rather than embedded or commit-clock sort.",
+        "Explicit unreadable JSON and git failure handling; main_carries keeps newest unreadable record from appearing fresh.",
+        "Source recovery companion included since PR165."
+      ],
+      "executed_residuals": {
+        "main_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "executed_at": "2026-10-13T22:27:13.321044+00:00",
+        "tool_sha256": "c8dcc251a9e9f91f5206ac5a21d31d6941ee69f76efc0f8607d6d29847dff349",
+        "source_scope": "exact archived main src plus latest main test record helper; no repository edits, provider requests, or market data used",
+        "cases": [
+          {
+            "name": "validated alternate archived schedule still compared to current slots",
+            "expected": {
+              "primary_slot_at": "2026-10-09T23:16:00+00:00",
+              "retry_slot_at": "2026-10-10T01:16:00+00:00",
+              "after_primary_minutes": 75.0,
+              "after_retry_slot": false
+            },
+            "actual": {
+              "primary_slot_at": "2026-10-09T22:16:00+00:00",
+              "retry_slot_at": "2026-10-10T00:16:00+00:00",
+              "after_primary_minutes": 135.0,
+              "after_retry_slot": true
+            },
+            "defect_reproduced": true
+          },
+          {
+            "name": "declared archived rules with absent/malformed delivery block",
+            "input": null,
+            "expected": "refuse",
+            "actual": "absent",
+            "defect_reproduced": true
+          },
+          {
+            "name": "declared archived rules with absent/malformed delivery block",
+            "input": [],
+            "expected": "refuse",
+            "actual": "absent",
+            "defect_reproduced": true
+          },
+          {
+            "name": "declared archived rules with absent/malformed delivery block",
+            "input": 7,
+            "expected": "refuse",
+            "actual": "absent",
+            "defect_reproduced": true
+          },
+          {
+            "name": "declared archived rules with absent/malformed delivery block",
+            "input": "broken",
+            "expected": "refuse",
+            "actual": "absent",
+            "defect_reproduced": true
+          },
+          {
+            "name": "declared archived rules with absent/malformed delivery block",
+            "input": "absent",
+            "expected": "refuse",
+            "actual": "absent",
+            "defect_reproduced": true
+          }
+        ]
+      },
+      "historical_artifact_change": {
+        "path": "docs/input-truthfulness/2026-10-12-service-health-evidence/service-health.json",
+        "version": 2,
+        "policy": "service_health_v2",
+        "through": "c759a1e671227717cae8d0bf1d50a4121d167396",
+        "publications": 26,
+        "sessions": 21,
+        "latency": {
+          "max": 367.0,
+          "median": 266.7,
+          "min": 55.8
+        },
+        "note": "PR166 overwrote the original dated v1 location with v2. The planned October13 report must not silently relabel this as unchanged v1 evidence."
+      }
+    },
+    "164": {
+      "state": "Still open; no equivalent finder fix found in subsequent main app.js diff.",
+      "integration_need": "Keep source-recovery digest/Method rendering/refresh additions, minute-bar Method line, and recovery/page-smoke fixture additions when integrating finder and explicit-inspection corrections.",
+      "changed_relevant_files": [
+        "docs/app.js",
+        "tools/page_smoke.mjs",
+        "README.md",
+        "CLAUDE.md",
+        "tests/test_docs.py"
+      ]
+    },
+    "165": "Bound same-publication source recovery and optional Method receipt, own 07:37/09:37 UTC schedules; no live source recovery receipt published yet.",
+    "167": "Historical schedule-delay study, options only; does not fix scheduler delay or authorize an outside scheduler.",
+    "168": "First-window minute-bar model resolution now implemented; public canonical still predates it, so no live minute outcome is evidenced."
+  },
+  "limits": [
+    "No merge, PR, branch, issue, provider request, workflow dispatch, broker order, external message, or repository edit performed.",
+    "No new browser acceptance or screenshot inspection in this audit; public byte/data verification only.",
+    "Formal GitHub review submissions/comments on PR165\u2013168 are empty; independent reviews described by their authors were not independently rerun here.",
+    "Latest post-merge main pytest/page were in progress at 2026-10-13T22:28Z; exact PR168 head had successful applicable checks.",
+    "Archived alternate schedule/malformed-block residuals are synthetic exact-source regressions, not actual malformed production records."
+  ],
+  "raw_evidence": [
+    {
+      "path": "/tmp/oct13-evening-remote-raw.json",
+      "bytes": 2529712,
+      "sha256": "5aa2aee59857a15f4ed3f7b57799cc3b414268bcfd7281638460ecba75a1e821"
+    },
+    {
+      "path": "/tmp/oct13-evening-remote-compact.json",
+      "bytes": 7904,
+      "sha256": "8e99c62faffe6ee7b68a04b9ad13c7868055e1d901bfe387902cf09a99afc82a"
+    },
+    {
+      "path": "/tmp/oct13-evening-final-remote.json",
+      "bytes": 1245258,
+      "sha256": "29034b2c6c791935e536d848ea09e9bb25f1385316e6d6069fa9e45bd3f49e82"
+    },
+    {
+      "path": "/tmp/oct13-evening-service-residuals.json",
+      "bytes": 1905,
+      "sha256": "c1775c31a3bdb92c213244fc552e17df3d88b5616678ec7e1f9f911371d5f92d"
+    }
+  ],
+  "latest_main_checks": {
+    "evidence_name": "latest main check runs",
+    "url": "https://api.github.com/repos/spicyChicken59/SpicyStock/commits/7e40716ee3bc9460854d649be249fde5e5de021f/check-runs?per_page=100",
+    "observed_at": "2026-10-13T22:28:35.543Z",
+    "checks": [
+      {
+        "id": 115568136346,
+        "name": "report-build-status",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568136346"
+      },
+      {
+        "id": 115568136137,
+        "name": "deploy",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568136137"
+      },
+      {
+        "id": 115568001275,
+        "name": "build",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476380614/job/115568001275"
+      },
+      {
+        "id": 115568000608,
+        "name": "deploy",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115568000608"
+      },
+      {
+        "id": 115567999810,
+        "name": "report-build-status",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115567999810"
+      },
+      {
+        "id": 115567886471,
+        "name": "build",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "cancelled",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476350936/job/115567886471"
+      },
+      {
+        "id": 115567885198,
+        "name": "historical-runtime (${{ matrix.case }})",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567885198"
+      },
+      {
+        "id": 115567885014,
+        "name": "historical-runtime-gate",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567885014"
+      },
+      {
+        "id": 115567883126,
+        "name": "publish",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351986/job/115567883126"
+      },
+      {
+        "id": 115567882980,
+        "name": "page",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882980"
+      },
+      {
+        "id": 115567882581,
+        "name": "pytest",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "in_progress",
+        "conclusion": null,
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351925/job/115567882581"
+      },
+      {
+        "id": 115567882419,
+        "name": "gitleaks",
+        "head_sha": "7e40716ee3bc9460854d649be249fde5e5de021f",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38476351921/job/115567882419"
+      }
+    ]
+  },
+  "evidence_name": "Read-only reconciliation after PR168 deployment"
+}

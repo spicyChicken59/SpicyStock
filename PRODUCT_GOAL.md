@@ -450,3 +450,64 @@ results and verdicts are unchanged. Local replay, mutation and independent
 checks pass; hosted checks and actual release verification remain pending.
 The isolated next deliverables are truthful service-arrival reporting (#163)
 and a reliable first-screen stock finder (#164). Neither is claimed released.
+
+
+## Verified release and current navigation milestone — 13 October 2026
+
+[PR #162](https://github.com/spicyChicken59/SpicyStock/pull/162) is merged and
+publicly verified. Its [release receipt](release-evidence/2026-10-13-observation-fidelity/acceptance.json)
+records seven passing checks at the reviewed head, 129 actual public checks,
+46 matching files and 16 inspected phone/desktop captures. The research quote
+receipt was still unavailable; no timely quote or actual personal trade is
+inferred. The later main test outcome is retained in the adjacent postmerge
+receipt. These results supersede the pending #162 descriptions above.
+
+Subsequent releases #165–#168 add bounded source recovery, corrected service
+history, a measured schedule-reliability report and minute evidence for model
+first-day ambiguity. The [current reconciliation](release-evidence/2026-10-13-evening-reconciliation/acceptance.json)
+matched 52 actual public files to `7e40716e`; its separate completed-main check
+receipt preserves the later passing tests. Both optional research and recovery
+receipts still returned 404. No new public browser acceptance or timely morning
+collection is claimed by that HTTP audit.
+
+Issue #164 is locally verified: first-screen stock finding, exact-ticker Enter,
+recovery from incompatible search/lens state, and explicit chart navigation on
+phone and desktop, including from Method help. Its
+[preparation evidence](release-evidence/2026-10-13-stock-finder/prepared.json)
+records current-source tests, independent review and mutation controls. Hosted
+checks and actual public acceptance remain pending. Service-policy PR #169 is
+owned by a concurrent builder; local #163 preparations stay unpublished.
+The next bounded UI milestone refreshes newly published research quotes through
+the visible reload controls. Actual delivery reliability and the first personal
+trade remain open under #108, #110 and #111.
+
+
+PR #170 remains unreleased after its first hosted browser run found six
+compact-layout failures at tablet widths. A reproduced CSS correction keeps
+the first-screen stock finder and all guidance within the existing height
+limit, with 307 local reading/finder checks passing. Its
+[repair evidence](release-evidence/2026-10-13-stock-finder/compact-repair.json)
+preserves the original failed checks separately. Fresh review, hosted gates
+and actual public verification are still required. The following milestone
+will pair research quote reload with the repository-owner workflow handoff.
+
+PR #169 subsequently merged as `bf266a6e`. The existing stock-finder PR #170
+is reconciled over it, preserving its reviewed behavior and correcting the
+service report's description of a skipped malformed revision. Its
+[reconciliation evidence](release-evidence/2026-10-13-stock-finder/main-reconciliation.json)
+records 110 affected Python/documentation tests, 307 browser checks and a
+fresh service-history replay. Completed checks from the previous head are
+retained separately; the reconciled head still needs final review, fresh
+required gates and actual public acceptance.
+
+
+## Current reconciliation — 15 October 2026
+
+The existing finder PR #170 now incorporates merged #171 and the latest published
+October 14/15 record. Its [current preparation](release-evidence/2026-10-15-stock-finder/prepared.json)
+retains completed prior-head checks separately from fresh local and independent
+review. Final commit review, fresh hosted gates and public acceptance remain
+pending. The actual publication still has zero tickets and a red market; the
+available source-recovery receipt belongs to the previous publication. No current
+morning quote coverage or actual personal trade is recorded. The next bounded
+deliverable remains research quote reload and the repository-owner handoff.

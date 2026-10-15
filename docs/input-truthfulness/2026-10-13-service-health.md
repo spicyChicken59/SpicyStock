@@ -11,8 +11,9 @@ publication fell. The archived slots are used only once the record's own
 `run.delivery` re-derives from them (`delivery.faults()`, the validator's own
 check). Rules that archive the delivery rule beside a record without its block,
 and a block beside rules that archive no delivery rule, are a record the
-reading cannot place: the commit is set aside by name and its session reads
-unpublished. A record from before the rule archived
+reading cannot place: the commit is set aside by name and does not count as
+a publication. Its session reads unpublished only when no other readable
+publication exists for it. A record from before the rule archived
 no slots and is read against the current policy's, 6:16 and 8:16 PM ET. Each
 publication's timing names which (`slot_basis`: `archived` or
 `current_policy`) and the wall-clock slots it was read against (`slots_et`);

@@ -1043,3 +1043,12 @@
 @media (max-width: 480px) { .ss-find__stats { --sc-stat-size: 24px; } }
 @media (pointer: coarse) { .ss-find__controls .sc-btn, .ss-find__index .sc-tab, .ss-find__filter .sc-tab { min-height: 36px; } }
 @media (prefers-reduced-motion: reduce) { .ss-find.is-animated .ss-find__night, .ss-find.is-animated .ss-find__cursor { transition: none; } }
+
+/* Reach the existing stock chooser from the opening guidance. */
+.ss-orientation { grid-template-columns: minmax(0, 1.7fr) minmax(230px, 1fr) auto; align-items: center; }
+.ss-orientation .ss-stock-finder { min-height: 44px; justify-self: start; }
+@media (max-width: 1000px) {
+  .ss-orientation { grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--sc-s1); }
+  .ss-orientation > p:first-child { grid-column: 1 / -1; }
+  .ss-orientation .ss-stock-finder { align-self: center; }
+}

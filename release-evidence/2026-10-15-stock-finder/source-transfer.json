@@ -1,0 +1,116 @@
+{
+  "scope": "Root source merge comparison; no new execution inferred",
+  "parents": [
+    "71d5fc5c165e430dab54b316eb019157a683f240",
+    "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+  ],
+  "exact_files": [
+    {
+      "path": "docs/app.js",
+      "commit": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "bytes": 429093,
+      "sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f"
+    },
+    {
+      "path": "docs/app.css",
+      "commit": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "bytes": 89808,
+      "sha256": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586"
+    },
+    {
+      "path": "docs/index.html",
+      "commit": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "bytes": 17247,
+      "sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1"
+    },
+    {
+      "path": "tools/stock_finder_cases.mjs",
+      "commit": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "bytes": 21800,
+      "sha256": "1bc33659e56fa54c8f57e7cd8d4bfa7bc68509d799b8ef32d0ef0b7760184091"
+    },
+    {
+      "path": "tools/check_decision_inspection.mjs",
+      "commit": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "bytes": 44579,
+      "sha256": "53a02c6cb5a394b0f9605825bae04ef99b884cb27b7565abede63797f011b068"
+    },
+    {
+      "path": "docs/app-handoff.js",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 40838,
+      "sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "path": "docs/app-handoff-ui.js",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 41101,
+      "sha256": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f"
+    },
+    {
+      "path": "tools/first_trade_cases.mjs",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 17360,
+      "sha256": "6936d049dee937e4d355239d25c577bf4cdbaf6759d168a70c8bd66135c1a256"
+    },
+    {
+      "path": "tools/private_results.py",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 41312,
+      "sha256": "0424ece41d05de6de451add5b987d5fe3f392be05ae661ae1825760a8cb29af5"
+    },
+    {
+      "path": "tools/private_results_parity.mjs",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 19339,
+      "sha256": "2cfb5b09fe3c4f0262745e77fd8de6285ab93e13b6dcf8d891737457df24086d"
+    },
+    {
+      "path": "tests/test_private_results.py",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 32839,
+      "sha256": "7092fd61de64aa90a2484a89a75f2fa0c15f829651bf5a8d9ac7187f0736bac3"
+    },
+    {
+      "path": ".github/workflows/tests.yml",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 8924,
+      "sha256": "a179f3e65370405be395810facfd28906467d08c205137b0d2cbb7038ace27a7"
+    },
+    {
+      "path": ".env.example",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 15714,
+      "sha256": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac"
+    },
+    {
+      "path": "docs/data.json",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 11705655,
+      "sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719"
+    },
+    {
+      "path": "docs/reader.json",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 3133173,
+      "sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4"
+    },
+    {
+      "path": "docs/issuer-evidence.json",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 1762,
+      "sha256": "fb6d1b91a28bae10e4fb1cdb424725ebf665ad8f74d9b8ca03748de71f97d212"
+    },
+    {
+      "path": "docs/source-recovery.json",
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "bytes": 10486,
+      "sha256": "874e49e16441690b2c98df82bdb99d0a6a55368bee2e7b2e17e71cb753ef7d9a"
+    }
+  ],
+  "protected_main_blob_entries": 19537,
+  "protected_inventory_sha256": "57403eeebd25a2a3a9bc5c1168a52b610dd9403cb86a431d489bb873371c613d",
+  "protected_mismatches": [],
+  "test_driver": "Auto-merged page_smoke includes both stock-finder and firsttrade calls; inspected diff against both parents",
+  "conflict": "One CLAUDE append conflict; both sides retained in full."
+}

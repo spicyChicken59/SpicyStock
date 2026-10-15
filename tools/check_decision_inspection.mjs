@@ -88,7 +88,7 @@ async function launch(browser, base, fixture, { width = 1280, theme = 'dark', ca
   page.setDefaultTimeout(5000);
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
-  await page.route('**/*', async route => {
+  await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin !== base) {
       // Fonts and optional run-log calls cannot contact the network in this suite.
@@ -173,6 +173,235 @@ async function actualCases(browser, base) {
   }
 }
 const SCStockState = status => status.state;
+
+async function revealCases(browser, base) {
+  const fixture = await producer('current'), data = JSON.parse(fixture.canonical), cohort = JSON.parse(fixture.bundle);
+  const target = topRows(data).find(row => row.series?.length && cohort.rows.some(candidate => candidate.ticker === row.ticker && candidate.research.allocation_fit));
+  check('explicit research reveal: producer retains an allocation-fit chart', !!target);
+  if (!target) return;
+  const ticker = target.ticker, route = '#/explore/setting-up/' + ticker;
+  const view = page => page.evaluate(() => ({
+    hash: location.hash, query: document.querySelector('#search').value,
+    detail: document.querySelector('#detail-h2')?.textContent || null,
+    lens: document.querySelector('#lens [aria-pressed="true"]')?.dataset.lens,
+    cards: [...document.querySelectorAll('#pick-list .ss-pick')].map(node => node.dataset.id),
+    status: document.querySelector('#picks-status').textContent,
+    savedLens: localStorage.getItem('spicystock:lens:v1'),
+    open: document.querySelector('#morning-desk').open, focus: document.activeElement.id,
+  }));
+  for (const width of [390, 1280]) {
+    const label = 'explicit research reveal ' + width, tab = await launch(browser, base, fixture, { width }), { page, context } = tab;
+    const secondErrors = [];
+    try {
+      await page.locator('#find-stock').click();
+      await page.locator('#chooser-search').fill(ticker); await page.locator('#chooser-search').press('Enter');
+      await page.waitForFunction(ticker => document.querySelector('#detail-h2')?.textContent === ticker && !document.querySelector('#chooser').open, ticker);
+      const refs = identity(fixture, target, await page.evaluate(() => SCStock.observations.facts()));
+      const refused = async phase => {
+        for (const [name, edit] of [
+          ['publication', request => { request.publication.data_sha256 = '0'.repeat(64); }],
+          ['evidence', request => { request.evidence.id = '0'.repeat(64); }],
+        ]) {
+          const request = structuredClone(refs); edit(request);
+          const before = { view: await view(page), authority: await authority(page) };
+          const result = await page.evaluate(request => SCStock.inspectRecordedChart(request), request);
+          check(label + ': ' + phase + ' invalid ' + name + ' is refused', result.ok === false && !!result.reason);
+          eq(label + ': ' + phase + ' refusal preserves query, lens, route, focus and authority', { view: await view(page), authority: await authority(page) }, before);
+        }
+      };
+      await page.locator('#search').fill('ZZZZ_NO_MATCH');
+      eq(label + ': incompatible query hides the remembered stock card', (await view(page)).cards, []);
+      await reveal(page); await refused('query');
+      const queryAuthority = await authority(page);
+      await page.locator('[data-stop-inspect="' + ticker + '"]').click();
+      await page.waitForFunction(() => !document.querySelector('#morning-desk').open);
+      const queryRecovered = await view(page);
+      eq(label + ': explicit inspection clears incompatible query for the same stock', queryRecovered.query, '');
+      eq(label + ': explicit inspection restores the same stock route, card and detail', [queryRecovered.hash, queryRecovered.detail, queryRecovered.cards.includes('setting-up:' + ticker)], [route, ticker, true]);
+      eq(label + ': query recovery preserves source, model, storage and observations', await authority(page), queryAuthority);
+      check(label + ': query recovery shows a recorded chart', await page.locator('#detail .sc-chart--stock svg').count() > 0);
+      await capture(page, 'decision-recovered-query-' + width);
+
+      // A real second browser tab removes the saved fixture setup. The first
+      // tab keeps its remembered selection until an explicit inspection.
+      await page.locator('#detail [data-follow-action="add"]').click();
+      await page.waitForFunction(ticker => SCStock.follow.list().some(row => row.ticker === ticker), ticker);
+      await page.locator('#lens [data-lens="following"]').click();
+      const following = await view(page);
+      await page.locator('#morning-open').click();
+      await page.waitForSelector('[data-stop-inspect="' + ticker + '"]');
+      await page.evaluate(() => {
+        window.__inspectionStorage = [];
+        addEventListener('storage', event => {
+          if ([SCStock.follow.KEY, SCStock.follow.DEMO_KEY].includes(event.key)) window.__inspectionStorage.push(event.key);
+        });
+      });
+      const second = await context.newPage();
+      second.on('pageerror', error => secondErrors.push(error.message));
+      await second.addInitScript(now => { window.SCStock = { now }; }, fixture.now);
+      await second.goto(base + '/docs/index.html' + route, { waitUntil: 'load' });
+      await second.waitForFunction(() => window.SCStock?.model && SCStock.observations.facts().recordHash && !SCStock.observations.facts().pending);
+      const removed = await second.evaluate(ticker => {
+        const saved = SCStock.follow.list().find(row => row.ticker === ticker);
+        return saved ? SCStock.follow.remove(saved.id) : { ok: false, error: 'Producer setup missing from shared Following store.' };
+      }, ticker);
+      check(label + ': second tab removes the real saved producer setup', removed.ok, removed);
+      await page.waitForFunction(() => window.__inspectionStorage.length > 0 && SCStock.follow.list().length === 0 && !document.querySelector('#pick-list .ss-pick'));
+      const background = await view(page);
+      eq(label + ': background unfollow preserves runtime and stored Following lens', [background.lens, background.savedLens], ['following', following.savedLens]);
+      eq(label + ': background unfollow preserves remembered detail with no Following card', [background.detail, background.cards], [ticker, []]);
+      await refused('following');
+      const hiddenAuthority = await authority(page);
+      await page.bringToFront(); await page.locator('[data-stop-inspect="' + ticker + '"]').click();
+      await page.waitForFunction(() => !document.querySelector('#morning-desk').open);
+      const recovered = await view(page);
+      eq(label + ': explicit inspection reveals the stock hidden by background unfollow', [recovered.hash, recovered.detail, recovered.cards.includes('setting-up:' + ticker), recovered.lens], [route, ticker, true, 'all']);
+      eq(label + ': transient reveal preserves the saved Following preference', recovered.savedLens, following.savedLens);
+      check(label + ': temporary widening is explained', recovered.status.includes(ticker + ' is outside the following lens; showing every setup so it can be inspected.'), recovered.status);
+      eq(label + ': lens recovery preserves source, model, storage and observations', await authority(page), hiddenAuthority);
+      check(label + ': recovered recorded chart is visible and receives focus', await page.locator('#detail .sc-chart--stock svg').count() > 0 && await page.locator('#detail').evaluate(node => node === document.activeElement));
+      eq(label + ': explicit inspections create no private draft or copy', await page.evaluate(() => [SCStock.handoff.list().length, window.__inspectionCopies]), [0, 0]);
+      eq(label + ': both tabs remain free of page exceptions', [tab.errors, secondErrors], [[], []]);
+      await capture(page, 'decision-recovered-following-' + width);
+    } finally { await context.close(); }
+  }
+}
+
+// Explicit stock inspection starts at the stock/chart, even when its detail
+// pane was already scrolled. Generic routes and rejected requests keep position.
+async function scrollCases(browser, base) {
+  const fixture = await producer('current'), data = JSON.parse(fixture.canonical);
+  const rows = topRows(data).filter(row => row.series?.length).slice(0, 2);
+  check('explicit scroll: retained producer supplies two recorded charts', rows.length === 2);
+  if (rows.length !== 2) return;
+  const scroll = page => page.evaluate(() => ({ page: scrollY, detail: document.querySelector('#detail').scrollTop,
+    list: document.querySelector('#pick-list').scrollTop, desk: document.querySelector('#morning-desk').scrollTop }));
+  const bury = async page => {
+    await page.evaluate(() => { document.querySelector('#detail').scrollTop = document.querySelector('#detail').scrollHeight; window.scrollTo(0, 0); });
+    return scroll(page);
+  };
+  const visibleChart = page => page.evaluate(() => {
+    const box = document.querySelector('#detail'), host = box.getBoundingClientRect();
+    const visible = node => {
+      if (!node) return 0;
+      const r = node.getBoundingClientRect();
+      return Math.max(0, Math.min(innerHeight, host.bottom, r.bottom) - Math.max(0, host.top, r.top));
+    };
+    return { pane: box.scrollTop, header: visible(document.querySelector('#detail-h2')),
+      chart: visible(box.querySelector('.sc-chart--stock svg')), focus: document.activeElement === box };
+  });
+  for (const width of [390, 1280]) {
+    const tab = await launch(browser, base, fixture, { width }), { page } = tab;
+    const label = 'explicit scroll ' + width;
+    try {
+      const pick = async ticker => {
+        await page.locator('#find-stock').click();
+        await page.locator('#chooser-search').fill(ticker); await page.locator('#chooser-search').press('Enter');
+        await page.waitForFunction(ticker => document.querySelector('#detail-h2')?.textContent === ticker && !document.querySelector('#chooser').open, ticker);
+      };
+      const seen = async name => {
+        const got = await visibleChart(page);
+        check(label + ': ' + name + ' starts the detail pane at its top', got.pane === 0, got);
+        check(label + ': ' + name + ' brings stock heading and chart into the viewport', got.header >= 15 && got.chart >= 100, got);
+        check(label + ': ' + name + ' focuses the selected stock', got.focus, got);
+      };
+      await pick(rows[0].ticker);
+      await seen('initial choice');
+      const buried = await bury(page);
+      if (width >= 1000) check(label + ': starting pane is genuinely scrolled', buried.detail > 300, buried);
+      await page.evaluate(() => SCStock.navigate(location.hash));
+      eq(label + ': ordinary same-stock route preserves page and pane scroll', await scroll(page), buried);
+      await pick(rows[0].ticker); await seen('same-stock chooser');
+      await bury(page); await pick(rows[1].ticker); await seen('different-stock chooser');
+      for (const [phase, row] of [['same-stock inspection', rows[1]], ['different-stock inspection', rows[0]]]) {
+        await page.locator('#morning-open').click();
+        if (!(await page.locator('[data-stop-research]').evaluate(node => node.open))) await page.locator('[data-stop-research] > summary').click();
+        await page.waitForFunction(() => SCStock.stopResearch.status().state === 'loaded');
+        await bury(page);
+        const refs = identity(fixture, row, await page.evaluate(() => SCStock.observations.facts()));
+        for (const name of ['publication', 'evidence', 'history']) {
+          const request = structuredClone(refs);
+          if (name === 'publication') request.publication.data_sha256 = '0'.repeat(64);
+          if (name === 'evidence') request.evidence.id = '0'.repeat(64);
+          // A different fragment makes successful inspection exercise pushState.
+          if (name === 'history') await page.evaluate(() => history.replaceState(null, '', '#/explore'));
+          const before = { scroll: await scroll(page), authority: await authority(page), hash: await page.evaluate(() => location.hash) };
+          const result = await page.evaluate(({ request, fail }) => {
+            const push = history.pushState;
+            if (fail) history.pushState = () => { throw Error('Controlled unavailable history'); };
+            try { return SCStock.inspectRecordedChart(request); } finally { history.pushState = push; }
+          }, { request, fail: name === 'history' });
+          check(label + ': ' + phase + ' invalid ' + name + ' refuses before scrolling', result.ok === false && !!result.reason, result);
+          eq(label + ': ' + phase + ' invalid ' + name + ' preserves all scroll and authority',
+            { scroll: await scroll(page), authority: await authority(page), hash: await page.evaluate(() => location.hash) }, before);
+        }
+        await page.locator('[data-stop-inspect="' + row.ticker + '"]').click();
+        await page.waitForFunction(ticker => !document.querySelector('#morning-desk').open && document.querySelector('#detail-h2')?.textContent === ticker, row.ticker);
+        await seen(phase);
+        await capture(page, 'decision-scroll-' + phase.replaceAll(' ', '-') + '-' + width);
+      }
+      // Reading help intentionally remembers its prior task position. A new
+      // explicit inspection supersedes that return, while Return/invalid
+      // inspection must still preserve it.
+      const helpReturn = async () => {
+        if (!(await page.locator('#disc-plan').evaluate(node => node.open))) await page.locator('#disc-plan > summary').click();
+        await page.locator('#detail [data-help-topic="size"]').click();
+        await page.locator('#ss-reading-help a').click();
+        await page.waitForFunction(() => location.hash === '#/method/size' && document.documentElement.dataset.ssView === 'method');
+
+      };
+      const atReading = async () => {
+        const position = await scroll(page);
+        const helpVisible = await page.locator('#detail [data-help-topic="size"]').evaluate(node => {
+          const r = node.getBoundingClientRect(), box = document.querySelector('#detail').getBoundingClientRect();
+          return Math.min(innerHeight, box.bottom, r.bottom) - Math.max(0, box.top, r.top) >= 10;
+        });
+        return helpVisible && (width >= 1000 ? position.detail > 300 : position.page > 300);
+      };
+      await helpReturn();
+      await page.locator('#method-return').click();
+      await page.waitForFunction(() => document.documentElement.dataset.ssView === 'explore');
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      check(label + ': ordinary Method Return restores the scrolled reading position', await atReading());
+      check(label + ': ordinary Method Return focuses its original help', await page.locator('#detail [data-help-topic="size"]').evaluate(node => node === document.activeElement));
+      for (const failure of ['publication', 'history']) {
+        await helpReturn();
+        const methodScroll = await scroll(page);
+        const request = identity(fixture, rows[0], await page.evaluate(() => SCStock.observations.facts()));
+        if (failure === 'publication') request.publication.data_sha256 = '0'.repeat(64);
+        const result = await page.evaluate(({ request, failure }) => {
+          const push = history.pushState;
+          if (failure === 'history') history.pushState = () => { throw Error('Controlled unavailable history'); };
+          try { return SCStock.inspectRecordedChart(request); } finally { history.pushState = push; }
+        }, { request, failure });
+        check(label + ': invalid Method ' + failure + ' inspection is refused', !result.ok);
+        eq(label + ': invalid Method ' + failure + ' inspection preserves current scroll', await scroll(page), methodScroll);
+        check(label + ': invalid Method ' + failure + ' inspection keeps its Return action', await page.locator('#method-return').isVisible());
+        await page.locator('#method-return').click();
+        await page.waitForFunction(() => document.documentElement.dataset.ssView === 'explore');
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        check(label + ': invalid Method ' + failure + ' inspection retains the scrolled reading return', await atReading());
+        check(label + ': invalid Method ' + failure + ' inspection retains return focus', await page.locator('#detail [data-help-topic="size"]').evaluate(node => node === document.activeElement));
+      }
+      await helpReturn();
+      await page.locator('#morning-open').click();
+      if (!(await page.locator('[data-stop-research]').evaluate(node => node.open))) await page.locator('[data-stop-research] > summary').click();
+      await page.locator('[data-stop-inspect="' + rows[0].ticker + '"]').click();
+      await page.waitForFunction(() => !document.querySelector('#morning-desk').open && document.documentElement.dataset.ssView === 'explore');
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await seen('inspection from Method');
+      check(label + ': explicit Method inspection clears the obsolete Return action', await page.locator('#method-return').isHidden());
+      await capture(page, 'decision-scroll-method-inspection-' + width);
+      await helpReturn();
+      await page.evaluate(ticker => SCStock.navigate('#/explore/setting-up/' + ticker), rows[1].ticker);
+      await page.waitForFunction(ticker => document.documentElement.dataset.ssView === 'explore' && document.querySelector('#detail-h2')?.textContent === ticker, rows[1].ticker);
+      check(label + ': another route leaves the earlier Method return remembered', !(await page.locator('#method-return').evaluate(node => node.hidden)));
+      await pick(rows[0].ticker); await seen('chooser after Method help');
+      check(label + ': explicit chooser clears the obsolete Method Return', await page.locator('#method-return').evaluate(node => node.hidden));
+      eq(label + ': explicit scroll controls cause no page exceptions', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
+}
 
 async function replacementCases(browser, base) {
   const fixture = await producer('priority'), tab = await launch(browser, base, fixture), { page } = tab;
@@ -297,7 +526,7 @@ export async function checkDecisionInspection({ browser, base, check: sharedChec
   if (sharedCheck) check = sharedCheck;
   if (sharedShots) shotsDir = sharedShots;
   try {
-    for (const [name, suite] of [['actual', actualCases], ['replacement', replacementCases], ['unknown', missingCases], ['private', privateCases]]) {
+    for (const [name, suite] of [['actual', actualCases], ['reveal', revealCases], ['scroll', scrollCases], ['replacement', replacementCases], ['unknown', missingCases], ['private', privateCases]]) {
       try { await suite(browser, base); } catch (error) { check('decision inspection ' + name + ': suite completes', false, error.stack); }
     }
   } finally { check = localCheck; shotsDir = localShots; }
@@ -309,7 +538,7 @@ async function main() {
   try {
     const { chromium } = await playwright();
     browser = await chromium.launch({ headless: true });
-    for (const [name, suite] of [['actual', actualCases], ['replacement', replacementCases], ['unknown', missingCases], ['private', privateCases]]) {
+    for (const [name, suite] of [['actual', actualCases], ['reveal', revealCases], ['scroll', scrollCases], ['replacement', replacementCases], ['unknown', missingCases], ['private', privateCases]]) {
       if (!run(name)) continue;
       const begin = results.length;
       try { await suite(browser, base); } catch (error) { check(name + ': suite completes', false, error.stack); }

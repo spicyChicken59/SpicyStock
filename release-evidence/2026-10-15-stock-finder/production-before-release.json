@@ -1,0 +1,1388 @@
+{
+  "schema": "spicystock-readonly-production-audit-v1",
+  "started_at": "2026-10-15T07:07:17.543705+00:00",
+  "completed_at": "2026-10-15T07:09:53.770694+00:00",
+  "main_sha": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+  "main_unchanged_after": true,
+  "main_after": {
+    "observed_at": "2026-10-15T07:09:52.244Z",
+    "source": "https://api.github.com/repos/spicyChicken59/SpicyStock/git/ref/heads/main",
+    "sha": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb"
+  },
+  "latest_successful_pages_run": {
+    "id": 38689584825,
+    "name": "pages build and deployment",
+    "path": "dynamic/pages/pages-build-deployment",
+    "event": "dynamic",
+    "head_sha": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38689584825",
+    "created_at": "2026-10-15T05:57:07Z",
+    "updated_at": "2026-10-15T05:57:42Z",
+    "run_started_at": "2026-10-15T05:57:07Z"
+  },
+  "http_bytes": {
+    "pass": true,
+    "core_count": 42,
+    "additional_count": 2,
+    "optional_absence_count": 1,
+    "files": [
+      {
+        "path": "index.html",
+        "url": "https://spicychicken59.github.io/SpicyStock/index.html",
+        "observed_at": "2026-10-15T07:07:17.543705+00:00",
+        "status": 200,
+        "bytes": 17065,
+        "sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944",
+        "expected_sha256": "6cd2cee9ff3c79156ab747df7b7496feb10c616c0a5ab6956165971076f3f944",
+        "pass": true,
+        "headers": {
+          "content-type": "text/html; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-42a9\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:17 GMT"
+        }
+      },
+      {
+        "path": "data.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/data.json",
+        "observed_at": "2026-10-15T07:07:17.648147+00:00",
+        "status": 200,
+        "bytes": 11705655,
+        "sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+        "expected_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:42 GMT",
+          "etag": "\"6ad06b56-b29d37\"",
+          "cache-control": "max-age=600",
+          "age": "1",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "reader.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/reader.json",
+        "observed_at": "2026-10-15T07:07:17.567059+00:00",
+        "status": 200,
+        "bytes": 3133173,
+        "sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4",
+        "expected_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-2fcef5\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "picks.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/picks.json",
+        "observed_at": "2026-10-15T07:07:17.547292+00:00",
+        "status": 200,
+        "bytes": 3921,
+        "sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "expected_sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:42 GMT",
+          "etag": "\"6ad06b56-f51\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:17 GMT"
+        }
+      },
+      {
+        "path": "historical-validation.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/historical-validation.json",
+        "observed_at": "2026-10-15T07:07:17.546265+00:00",
+        "status": 200,
+        "bytes": 5048,
+        "sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "expected_sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-13b8\"",
+          "cache-control": "max-age=600",
+          "date": "Thu, 15 Oct 2026 07:07:17 GMT",
+          "age": "0"
+        }
+      },
+      {
+        "path": "historical-findings.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/historical-findings.json",
+        "observed_at": "2026-10-15T07:07:17.552192+00:00",
+        "status": 200,
+        "bytes": 177697,
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "expected_sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-2b621\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "morning.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/morning.json",
+        "observed_at": "2026-10-15T07:07:17.834882+00:00",
+        "status": 200,
+        "bytes": 4284,
+        "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "expected_sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-10bc\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "source-recovery.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/source-recovery.json",
+        "observed_at": "2026-10-15T07:07:17.835094+00:00",
+        "status": 200,
+        "bytes": 10486,
+        "sha256": "874e49e16441690b2c98df82bdb99d0a6a55368bee2e7b2e17e71cb753ef7d9a",
+        "expected_sha256": "874e49e16441690b2c98df82bdb99d0a6a55368bee2e7b2e17e71cb753ef7d9a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:42 GMT",
+          "etag": "\"6ad06b56-28f6\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/favicon.ico",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/favicon.ico",
+        "observed_at": "2026-10-15T07:07:17.835620+00:00",
+        "status": 200,
+        "bytes": 5057,
+        "sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "expected_sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "pass": true,
+        "headers": {
+          "content-type": "image/vnd.microsoft.icon",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-13c1\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-avatar-tile.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-avatar-tile.svg",
+        "observed_at": "2026-10-15T07:07:18.058341+00:00",
+        "status": 200,
+        "bytes": 9274,
+        "sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "expected_sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-243a\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/apple-touch-icon.png",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/apple-touch-icon.png",
+        "observed_at": "2026-10-15T07:07:18.059771+00:00",
+        "status": 200,
+        "bytes": 11284,
+        "sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "expected_sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "pass": true,
+        "headers": {
+          "content-type": "image/png",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-2c14\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc.css",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc.css",
+        "observed_at": "2026-10-15T07:07:18.259415+00:00",
+        "status": 200,
+        "bytes": 130987,
+        "sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "expected_sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "pass": true,
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-1ffab\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-theme.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-theme.js",
+        "observed_at": "2026-10-15T07:07:18.268626+00:00",
+        "status": 200,
+        "bytes": 2077,
+        "sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "expected_sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-81d\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-charts.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-charts.js",
+        "observed_at": "2026-10-15T07:07:18.286933+00:00",
+        "status": 200,
+        "bytes": 27390,
+        "sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "expected_sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-6afe\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "design-system/sc-motion.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/sc-motion.js",
+        "observed_at": "2026-10-15T07:07:18.321919+00:00",
+        "status": 200,
+        "bytes": 10458,
+        "sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "expected_sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-28da\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app.css",
+        "url": "https://spicychicken59.github.io/SpicyStock/app.css",
+        "observed_at": "2026-10-15T07:07:18.476587+00:00",
+        "status": 200,
+        "bytes": 89323,
+        "sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea",
+        "expected_sha256": "ab93b9330f5f8e6c1b99b082d9a589c92469ae84d5407f8c6874e7c1be7104ea",
+        "pass": true,
+        "headers": {
+          "content-type": "text/css; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-15ceb\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-chart.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-chart.js",
+        "observed_at": "2026-10-15T07:07:18.491475+00:00",
+        "status": 200,
+        "bytes": 73555,
+        "sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "expected_sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-11f53\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-map.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-map.js",
+        "observed_at": "2026-10-15T07:07:18.511042+00:00",
+        "status": 200,
+        "bytes": 29522,
+        "sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "expected_sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-7352\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-follow.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-follow.js",
+        "observed_at": "2026-10-15T07:07:18.559618+00:00",
+        "status": 200,
+        "bytes": 32450,
+        "sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "expected_sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-7ec2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-reading.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-reading.js",
+        "observed_at": "2026-10-15T07:07:18.597983+00:00",
+        "status": 200,
+        "bytes": 23705,
+        "sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "expected_sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-5c99\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-method.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-method.js",
+        "observed_at": "2026-10-15T07:07:18.626682+00:00",
+        "status": 200,
+        "bytes": 44156,
+        "sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "expected_sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-ac7c\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-findings.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-findings.js",
+        "observed_at": "2026-10-15T07:07:18.708280+00:00",
+        "status": 200,
+        "bytes": 68115,
+        "sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a",
+        "expected_sha256": "60b75bc6a4155de3a391c77adc6005c194ee630573234de3e584f73e7b0eb10a",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-10a13\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-reader.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-reader.js",
+        "observed_at": "2026-10-15T07:07:18.712741+00:00",
+        "status": 200,
+        "bytes": 9507,
+        "sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "expected_sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:42 GMT",
+          "etag": "\"6ad06b56-2523\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-observations.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-observations.js",
+        "observed_at": "2026-10-15T07:07:18.714845+00:00",
+        "status": 200,
+        "bytes": 44452,
+        "sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4",
+        "expected_sha256": "3162b58fc41debd916238e74e20bece05d51f3b6ddfdd6f8ed5f8580476a5fa4",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-ada4\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-cash-preview.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-cash-preview.js",
+        "observed_at": "2026-10-15T07:07:18.734886+00:00",
+        "status": 200,
+        "bytes": 3836,
+        "sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "expected_sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-efc\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-handoff.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-handoff.js",
+        "observed_at": "2026-10-15T07:07:18.804541+00:00",
+        "status": 200,
+        "bytes": 40838,
+        "sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+        "expected_sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-9f86\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-handoff-ui.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-handoff-ui.js",
+        "observed_at": "2026-10-15T07:07:18.843584+00:00",
+        "status": 200,
+        "bytes": 41101,
+        "sha256": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f",
+        "expected_sha256": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-a08d\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:18 GMT"
+        }
+      },
+      {
+        "path": "app-issuer-evidence.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-issuer-evidence.js",
+        "observed_at": "2026-10-15T07:07:18.854076+00:00",
+        "status": 200,
+        "bytes": 42047,
+        "sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07",
+        "expected_sha256": "66ea63b883a3cc2706c0a696d56eee7ed0272a8776f5bf5048fbcfb288714d07",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-a43f\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "app-research-observations.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-research-observations.js",
+        "observed_at": "2026-10-15T07:07:18.866788+00:00",
+        "status": 200,
+        "bytes": 29167,
+        "sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e",
+        "expected_sha256": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-71ef\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "app-stop-research.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-stop-research.js",
+        "observed_at": "2026-10-15T07:07:18.920641+00:00",
+        "status": 200,
+        "bytes": 38946,
+        "sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af",
+        "expected_sha256": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-9822\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "app-research-outcomes.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-research-outcomes.js",
+        "observed_at": "2026-10-15T07:07:18.944118+00:00",
+        "status": 200,
+        "bytes": 43372,
+        "sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "expected_sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-a96c\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "app-morning.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app-morning.js",
+        "observed_at": "2026-10-15T07:07:18.958873+00:00",
+        "status": 200,
+        "bytes": 26098,
+        "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "expected_sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-65f2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "app.js",
+        "url": "https://spicychicken59.github.io/SpicyStock/app.js",
+        "observed_at": "2026-10-15T07:07:19.003210+00:00",
+        "status": 200,
+        "bytes": 427754,
+        "sha256": "dfccd4f4c5f5e9f3747b1e9f527128086b1d79581b1b5f9298a079798281f259",
+        "expected_sha256": "dfccd4f4c5f5e9f3747b1e9f527128086b1d79581b1b5f9298a079798281f259",
+        "pass": true,
+        "headers": {
+          "content-type": "application/javascript; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-686ea\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-mark-color-dark.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-color-dark.svg",
+        "observed_at": "2026-10-15T07:07:19.079377+00:00",
+        "status": 200,
+        "bytes": 6701,
+        "sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "expected_sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-1a2d\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "design-system/assets/sc-mark-mono-cream.svg",
+        "url": "https://spicychicken59.github.io/SpicyStock/design-system/assets/sc-mark-mono-cream.svg",
+        "observed_at": "2026-10-15T07:07:19.082719+00:00",
+        "status": 200,
+        "bytes": 4901,
+        "sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "expected_sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "pass": true,
+        "headers": {
+          "content-type": "image/svg+xml",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-1325\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "reader-observations/6b6b19de50bcb18e0889436b73ced15bc277281ea8e5c8cd3a6c5b1c1818945b.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/reader-observations/6b6b19de50bcb18e0889436b73ced15bc277281ea8e5c8cd3a6c5b1c1818945b.json",
+        "observed_at": "2026-10-15T07:07:19.101441+00:00",
+        "status": 200,
+        "bytes": 5098485,
+        "sha256": "6b6b19de50bcb18e0889436b73ced15bc277281ea8e5c8cd3a6c5b1c1818945b",
+        "expected_sha256": "6b6b19de50bcb18e0889436b73ced15bc277281ea8e5c8cd3a6c5b1c1818945b",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-4dcbf5\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "issuer-evidence.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence.json",
+        "observed_at": "2026-10-15T07:07:19.094041+00:00",
+        "status": 200,
+        "bytes": 1762,
+        "sha256": "fb6d1b91a28bae10e4fb1cdb424725ebf665ad8f74d9b8ca03748de71f97d212",
+        "expected_sha256": "fb6d1b91a28bae10e4fb1cdb424725ebf665ad8f74d9b8ca03748de71f97d212",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-6e2\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "issuer-evidence/9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/issuer-evidence/9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801.json",
+        "observed_at": "2026-10-15T07:07:19.117000+00:00",
+        "status": 200,
+        "bytes": 2811,
+        "sha256": "9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801",
+        "expected_sha256": "9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-afb\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "stop-research.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/stop-research.json",
+        "observed_at": "2026-10-15T07:07:19.173398+00:00",
+        "status": 200,
+        "bytes": 1650,
+        "sha256": "1448bce6928437931fc11b90b91ad811205002628925b8beeea680181e7b7dab",
+        "expected_sha256": "1448bce6928437931fc11b90b91ad811205002628925b8beeea680181e7b7dab",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:41 GMT",
+          "etag": "\"6ad06b55-672\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "stop-research/37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/stop-research/37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f.json",
+        "observed_at": "2026-10-15T07:07:19.193304+00:00",
+        "status": 200,
+        "bytes": 6133,
+        "sha256": "37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f",
+        "expected_sha256": "37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:38 GMT",
+          "etag": "\"6ad06b52-17f5\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "research-outcomes.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes.json",
+        "observed_at": "2026-10-15T07:07:19.210784+00:00",
+        "status": 200,
+        "bytes": 2134,
+        "sha256": "8c7b6af76e795f02c093d77aff9dec931c0666018d50f17025da4acd60cc5537",
+        "expected_sha256": "8c7b6af76e795f02c093d77aff9dec931c0666018d50f17025da4acd60cc5537",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-856\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "research-outcomes/3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-outcomes/3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6.json",
+        "observed_at": "2026-10-15T07:07:19.234020+00:00",
+        "status": 200,
+        "bytes": 55151,
+        "sha256": "3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6",
+        "expected_sha256": "3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-d76f\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-service-health-evidence/service-health.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-service-health-evidence/service-health.json",
+        "observed_at": "2026-10-15T07:07:19.248165+00:00",
+        "status": 200,
+        "bytes": 102120,
+        "sha256": "57e6ebd25d224cedf38cbcc8bc8bd8152ce27ce2523a5d6e62044b327fcf95fe",
+        "expected_sha256": "57e6ebd25d224cedf38cbcc8bc8bd8152ce27ce2523a5d6e62044b327fcf95fe",
+        "pass": true,
+        "headers": {
+          "content-type": "application/json; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:42 GMT",
+          "etag": "\"6ad06b56-18ee8\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "input-truthfulness/2026-10-13-service-health.md",
+        "url": "https://spicychicken59.github.io/SpicyStock/input-truthfulness/2026-10-13-service-health.md",
+        "observed_at": "2026-10-15T07:07:19.307405+00:00",
+        "status": 200,
+        "bytes": 6825,
+        "sha256": "adb0632618eb2a1c318aa6951825447992b6ca4987434e948044d6cf42a5a4b8",
+        "expected_sha256": "adb0632618eb2a1c318aa6951825447992b6ca4987434e948044d6cf42a5a4b8",
+        "pass": true,
+        "headers": {
+          "content-type": "text/markdown; charset=utf-8",
+          "last-modified": "Thu, 15 Oct 2026 05:57:39 GMT",
+          "etag": "\"6ad06b53-1aa9\"",
+          "cache-control": "max-age=600",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      },
+      {
+        "path": "research-observations.json",
+        "url": "https://spicychicken59.github.io/SpicyStock/research-observations.json",
+        "observed_at": "2026-10-15T07:07:19.352543+00:00",
+        "status": 404,
+        "bytes": 9379,
+        "sha256": "b620507312c5e97566a3c6cfaf99144fefc18a0da7d941401dfa0f5f58fb0368",
+        "expected_sha256": null,
+        "pass": true,
+        "headers": {
+          "content-type": "text/html; charset=utf-8",
+          "etag": "\"6abcf5c5-24a3\"",
+          "age": "0",
+          "date": "Thu, 15 Oct 2026 07:07:19 GMT"
+        }
+      }
+    ]
+  },
+  "public_record": {
+    "canonical_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+    "reader_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4",
+    "run_id": "38660383665",
+    "measured_session": "2026-10-14",
+    "applicable_session": "2026-10-15",
+    "published_at": "2026-10-15T00:30:48.981013+00:00",
+    "status": "degraded",
+    "problems": [
+      {
+        "stage": "session",
+        "kind": "coverage_thin",
+        "message": "stale tolerance not met (behind_more): Incomplete input coverage: 4759 of 4778 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks\u2026"
+      }
+    ],
+    "rules_version": "d62af3f20bfd",
+    "context_sha256": "fc1eca221f47325f6c41d0d347825f7953f779ae6309491c1c5841d2ef73ed97",
+    "trade_count": 0,
+    "model_account": {
+      "equity": 2000.0,
+      "risk_pct": 0.5,
+      "max_position_pct": 25.0,
+      "max_open_positions": 4,
+      "notes": [
+        "Risk per trade: $10.00 (0.5% of $2,000.00; his band is 0.25-1%).",
+        "Position cap: $500.00 (25% of equity) in any one name.",
+        "Max 4 open positions (100% of equity if all are at the cap).",
+        "Cash reuse: US stock trades generally settle T+1; a sale does not establish immediately spendable cash. Check availability and any cash-account restrictions with your broker.",
+        "Cash-account planning reference: no leverage is assumed. The site does not read your broker's settled cash or buying power; confirm available settled cash before each buy.",
+        "Plan a protective stop-market order as soon as the buy fills; verify your broker supports the intended entry and linked stop orders. Gaps and slippage can make the loss exceed planned risk."
+      ]
+    },
+    "timing": {
+      "applicable_session": "2026-10-15",
+      "measured_session": "2026-10-14",
+      "closed_session": null,
+      "timezone": "America/New_York",
+      "opens_at": "2026-10-15T09:30:00-04:00",
+      "cutoff_at": "2026-10-15T10:00:00-04:00",
+      "prepare_by": "2026-10-15T09:28:00-04:00",
+      "closes_at": "2026-10-15T16:00:00-04:00",
+      "shortened": false,
+      "calendar": {
+        "version": 1,
+        "exchange": "XNYS",
+        "exchange_name": "New York Stock Exchange",
+        "library": "exchange_calendars",
+        "library_version": "4.13.2",
+        "timezone": "America/New_York",
+        "supported_start": "1990-01-01",
+        "supported_end": "2035-12-31",
+        "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+        "completion_buffer_minutes": 15,
+        "limits": [
+          "exchange_schedule_may_change"
+        ]
+      },
+      "opens_et": "09:30",
+      "cutoff_et": "10:00",
+      "prepare_by_et": "09:28",
+      "window": "first 30 minutes",
+      "window_minutes": 30,
+      "basis": "exchange_session_after",
+      "limits": [
+        "exchange_schedule_may_change"
+      ]
+    },
+    "delivery": {
+      "version": 1,
+      "session": "2026-10-14",
+      "completion_at": "2026-10-14T16:15:00-04:00",
+      "published_at": "2026-10-15T00:30:48.981013+00:00",
+      "latency_minutes": 255.8,
+      "primary_slot_at": "2026-10-14T18:16:00-04:00",
+      "retry_slot_at": "2026-10-14T20:16:00-04:00",
+      "after_primary_minutes": 134.8,
+      "slot": "after_retry",
+      "next_session": "2026-10-15",
+      "next_open_at": "2026-10-15T09:30:00-04:00",
+      "before_next_open": true,
+      "policy": {
+        "timezone": "America/New_York",
+        "primary_et": "18:16",
+        "retry_et": "20:16",
+        "recovery_until": "next_session_open"
+      },
+      "sentence": "Published 8:30 PM ET on Wed 14 Oct, 255.8 minutes after the measured session's completion (4:15 PM ET); after both scheduled slots (6:16 PM and 8:16 PM ET); before the next session's open (Thu 15 Oct, 9:30 AM ET)."
+    },
+    "calendar": {
+      "version": 1,
+      "exchange": "XNYS",
+      "exchange_name": "New York Stock Exchange",
+      "library": "exchange_calendars",
+      "library_version": "4.13.2",
+      "timezone": "America/New_York",
+      "supported_start": "1990-01-01",
+      "supported_end": "2035-12-31",
+      "completion_policy": "scheduled close plus buffer; daily extended-hours fields may still change",
+      "completion_buffer_minutes": 15,
+      "limits": [
+        "exchange_schedule_may_change"
+      ],
+      "measured_session": "2026-10-14",
+      "previous_session": "2026-10-13",
+      "applicable_session": "2026-10-15",
+      "measured": {
+        "session": "2026-10-14",
+        "opens_at": "2026-10-14T09:30:00-04:00",
+        "closes_at": "2026-10-14T16:00:00-04:00",
+        "completion_at": "2026-10-14T16:15:00-04:00",
+        "shortened": false
+      },
+      "applicable": {
+        "session": "2026-10-15",
+        "opens_at": "2026-10-15T09:30:00-04:00",
+        "closes_at": "2026-10-15T16:00:00-04:00",
+        "completion_at": "2026-10-15T16:15:00-04:00",
+        "shortened": false
+      }
+    },
+    "coverage_acceptance": {
+      "status": "degraded",
+      "denominator": "intended stocks, excluding benchmark",
+      "intended_stocks": 4778,
+      "ready_stocks": 4759,
+      "fraction": 0.9960234407701968,
+      "minimum_fraction": 0.5,
+      "complete_evaluation": true,
+      "complete_intended": false,
+      "capacity_excluded": 0
+    },
+    "stale_tolerance": {
+      "version": 2,
+      "verdict": "not_tolerated",
+      "reasons": [
+        "behind_more"
+      ],
+      "stale": 19,
+      "stale_stocks": 19,
+      "limit": 47,
+      "sessions_max": 5,
+      "sentence": "Incomplete input coverage: 4759 of 4778 intended stocks had usable session bars. 0 fetch names were never attempted (fetch counts include the benchmark); stocks excluded by capacity: 0; 0 scan/quality errors occurred. Results describe only the evaluated subset. 19 returned frames had no bar for 2026-10-14, ending 1 on 2026-10-05, 18 on 2026-10-13. Their 2026-10-14 inputs are unknown, not measured non-matches. Outside this run's stale tolerance (47 stocks, 1%, within 5 sessions): not every stale frame ends within the 5 sessions before 2026-10-14 on a readable date."
+    },
+    "breadth_regime": {
+      "verdict": "red",
+      "size_multiplier": 0.0,
+      "reasons": [
+        "down 4%: 504 >= the scaled alarm of 389.2 (700 of 6,500): major deterioration",
+        "10-session ratio 0.63 (1023 up, 1636 down) < 1.0: more breakdowns than breakouts",
+        "5-session ratio 0.35 (392 up, 1106 down) < 0.5 with 504 down vs 40 up today: a fast selling phase"
+      ],
+      "oversold_extreme": false,
+      "thresholds": {
+        "universe": 3614,
+        "reference_universe": 6500,
+        "down4_alarm": 389.2,
+        "up50_month_hot": 11.1,
+        "down25_quarter_oversold": 111.2,
+        "ratio_10d_red": 1.0,
+        "ratio_5d_red": 0.5,
+        "ratio_10d_yellow": 2.0
+      },
+      "inputs": {
+        "date": "2026-10-14",
+        "ratio_10d": 0.63,
+        "ratio_5d": 0.35,
+        "up4_10d": 1023,
+        "down4_10d": 1636,
+        "up4_5d": 392,
+        "down4_5d": 1106,
+        "up4": 40,
+        "down4": 504,
+        "up50_month": 13,
+        "down25_quarter": 943
+      }
+    },
+    "intraday": {
+      "version": 1,
+      "policy": "first_window_minute_v1",
+      "basis": {
+        "provider": "Alpaca",
+        "feed": "sip",
+        "adjustment": "split",
+        "timeframe": "1Min"
+      },
+      "status": "gathered",
+      "wanted": 0,
+      "set_aside": 0,
+      "asked": 0,
+      "fetched": 0,
+      "stored": 0,
+      "retained": 2,
+      "waiting": 0,
+      "beyond_cap": 0,
+      "failures": [],
+      "problems": [],
+      "sentence": "No plan's first day needed its minute bars tonight; minute bars are retained for 2 plans' first days."
+    },
+    "review_selection": {
+      "version": 1,
+      "policy": "account_feasible_first_research_v1",
+      "session": "2026-10-14",
+      "max_reads": 12,
+      "research_max": 2,
+      "discovered": 365,
+      "feasible": 0,
+      "blockers": {
+        "grade_not_admitted": 365,
+        "quality_veto": 167,
+        "preview_unavailable": 0,
+        "known_event": 0,
+        "plan_withheld": 0,
+        "no_whole_share": 0,
+        "no_order": 0
+      },
+      "research_pool": 85,
+      "selected": [
+        {
+          "ticker": "SRCE",
+          "purpose": "research_ranked"
+        },
+        {
+          "ticker": "MSM",
+          "purpose": "research_rotating"
+        }
+      ],
+      "requested": 2,
+      "by_purpose": {
+        "opportunity": {
+          "requested": 0,
+          "accepted": 0,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 0
+        },
+        "research_ranked": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        },
+        "research_rotating": {
+          "requested": 1,
+          "accepted": 1,
+          "unaccepted": 0,
+          "refused": 0,
+          "attempts": 1
+        }
+      },
+      "feasible_unselected": 0,
+      "unused_capacity": 10,
+      "attempts": 2
+    }
+  },
+  "receipts": {
+    "morning.json": {
+      "sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+      "status": "inapplicable",
+      "reason": "wrong_session",
+      "generated_at": "2026-10-10T08:56:34.636611+00:00",
+      "expires_at": "2026-10-10T09:01:34.636611+00:00",
+      "publication": {
+        "data_sha256": "f5cbe38eaa38647364f4994bb867bbb7da4354e6a8f7f28315fb96e9b650ef0d",
+        "context_sha256": "8cf42c3a3eaef264d2824d61b5d63de3e8b340b6f0194b3e1e904881b05e47fb",
+        "run_id": "38034610157",
+        "rules_version": "c9dc7d6d1d87",
+        "measured_session": "2026-10-09",
+        "applicable_session": "2026-10-12",
+        "published_at": "2026-10-10T07:30:15.553690+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "f9282e9017559c7f0124ff72f30f831f2b622684be16b872a0da4b81941e24b3"
+      },
+      "matches_current_data": false,
+      "matches_current_reader": false,
+      "bundle": null
+    },
+    "source-recovery.json": {
+      "sha256": "874e49e16441690b2c98df82bdb99d0a6a55368bee2e7b2e17e71cb753ef7d9a",
+      "status": "partial",
+      "reason": null,
+      "generated_at": "2026-10-14T13:03:22.443316+00:00",
+      "expires_at": null,
+      "publication": {
+        "data_sha256": "696c736413afcafdcdfd5d90bd552f7b676f490fc4f88407b1f32723c03f7fdc",
+        "context_sha256": "70f4dea30916806db2c5aa6cb4f0d7261938cd1cb143ade0ecc4c7b00f730792",
+        "run_id": "38494353799",
+        "rules_version": "e5bec6a7e3fd",
+        "measured_session": "2026-10-13",
+        "applicable_session": "2026-10-14",
+        "published_at": "2026-10-14T01:12:11.678353+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "44508d5dd63ac43e222a62fee0f66c6420f95dfccc35f461d3ffb3b46742c463"
+      },
+      "matches_current_data": false,
+      "matches_current_reader": false,
+      "bundle": null
+    },
+    "issuer-evidence.json": {
+      "sha256": "fb6d1b91a28bae10e4fb1cdb424725ebf665ad8f74d9b8ca03748de71f97d212",
+      "status": "unavailable",
+      "reason": null,
+      "generated_at": "2026-10-15T00:35:36.704203+00:00",
+      "expires_at": "2026-10-16T00:35:36.704203+00:00",
+      "publication": {
+        "data_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+        "context_sha256": "fc1eca221f47325f6c41d0d347825f7953f779ae6309491c1c5841d2ef73ed97",
+        "run_id": "38660383665",
+        "rules_version": "d62af3f20bfd",
+        "measured_session": "2026-10-14",
+        "applicable_session": "2026-10-15",
+        "published_at": "2026-10-15T00:30:48.981013+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4"
+      },
+      "matches_current_data": true,
+      "matches_current_reader": true,
+      "bundle": {
+        "sha256": "9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801",
+        "bytes": 2811,
+        "path": "issuer-evidence/9354bdc16bdc2d1418558e7a1aa7632647887f28eb735acc03f592d6a7f8a801.json"
+      }
+    },
+    "stop-research.json": {
+      "sha256": "1448bce6928437931fc11b90b91ad811205002628925b8beeea680181e7b7dab",
+      "status": "recorded",
+      "reason": null,
+      "generated_at": null,
+      "expires_at": null,
+      "publication": {
+        "applicable_session": "2026-10-15",
+        "context_sha256": "fc1eca221f47325f6c41d0d347825f7953f779ae6309491c1c5841d2ef73ed97",
+        "data_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+        "measured_session": "2026-10-14",
+        "published_at": "2026-10-15T00:30:48.981013+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4",
+        "rules_version": "d62af3f20bfd",
+        "run_id": "38660383665"
+      },
+      "matches_current_data": true,
+      "matches_current_reader": true,
+      "bundle": {
+        "bytes": 6133,
+        "path": "stop-research/37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f.json",
+        "sha256": "37f0839821aacd0bd6ef238b6431f089e28b6afe055a37461ebceee70b83ec2f"
+      }
+    },
+    "research-outcomes.json": {
+      "sha256": "8c7b6af76e795f02c093d77aff9dec931c0666018d50f17025da4acd60cc5537",
+      "status": null,
+      "reason": null,
+      "generated_at": "2026-10-15T00:34:03.921909+00:00",
+      "expires_at": null,
+      "publication": {
+        "applicable_session": "2026-10-15",
+        "context_sha256": "fc1eca221f47325f6c41d0d347825f7953f779ae6309491c1c5841d2ef73ed97",
+        "data_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
+        "measured_session": "2026-10-14",
+        "published_at": "2026-10-15T00:30:48.981013+00:00",
+        "reader_projection_version": 1,
+        "reader_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4",
+        "rules_version": "d62af3f20bfd",
+        "run_id": "38660383665"
+      },
+      "matches_current_data": true,
+      "matches_current_reader": true,
+      "bundle": {
+        "bytes": 55151,
+        "path": "research-outcomes/3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6.json",
+        "sha256": "3617205465f546d5a568c7bc74313d8746d897d1ca51b31a79a0e1c62dfb99a6"
+      }
+    }
+  },
+  "issuer_actual_status": {
+    "status": "unavailable",
+    "issuers": [
+      {
+        "ticker": "MG",
+        "status": "unavailable",
+        "reason": "SEC source retrieval is unavailable.",
+        "identity": {
+          "status": "unverified",
+          "cik": null,
+          "name": null,
+          "mapping_source": null,
+          "submissions_source": null
+        },
+        "index": {
+          "window_start": "2025-10-15",
+          "window_end": "2026-10-15",
+          "coverage_status": "unknown",
+          "reason": "SEC index coverage has not been established.",
+          "range_start": null,
+          "range_end": null,
+          "metadata_count": 0,
+          "eligible_current_report_count": 0,
+          "not_selected_count": 0,
+          "history_files_advertised": 0,
+          "history_files_fetched": 0,
+          "history_sources": [],
+          "selected_accessions": [],
+          "listed_filings": [],
+          "exhibit_links_observed": 0,
+          "exhibit_links_not_fetched": 0
+        },
+        "documents": [],
+        "errors": [
+          {
+            "code": "http_error",
+            "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+            "http_status": 403,
+            "source_phase": "mapping"
+          }
+        ]
+      }
+    ],
+    "stats": {
+      "request_count": 1,
+      "downloaded_bytes": 0,
+      "capture_bytes": 0,
+      "budget_stop": null
+    },
+    "coverage": {
+      "issuer_news": {
+        "status": "not_cleared",
+        "reason": "Bounded SEC documents are not comprehensive issuer news or event clearance."
+      },
+      "earnings": {
+        "status": "not_checked",
+        "reason": "The future earnings calendar has not been checked."
+      }
+    }
+  },
+  "actual_finder_acceptance_scope": {
+    "measured_session": "2026-10-14",
+    "applicable_session": "2026-10-15",
+    "exact_ticker": "ROST",
+    "earlier_name_match": "CFR",
+    "collision": [
+      {
+        "ticker": "CFR",
+        "name": "Cullen/Frost Bankers Inc. Common Stock",
+        "grade": "A"
+      },
+      {
+        "ticker": "ROST",
+        "name": "Ross Stores Inc. Common Stock",
+        "grade": "A"
+      }
+    ],
+    "outside_default_lens": {
+      "ticker": "MSM",
+      "grade": "B"
+    },
+    "charts": [
+      {
+        "ticker": "INNV",
+        "name": "InnovAge Holding Corp. Common Stock",
+        "recorded_bars": 120,
+        "first_date": "2026-04-24",
+        "last_date": "2026-10-14",
+        "hypothetical_shares": 0,
+        "baseline": {
+          "action": "refused",
+          "admitted": false,
+          "eligible": false,
+          "reason": "ticket withheld: at the $9.38 limit, the highest fill the ticket permits, the stop $8.94 is 4.69% away, past his 4% line; the setup stands, the ticket does not",
+          "shares": 0
+        },
+        "research_blockers": [
+          "market_gate",
+          "no_whole_share"
+        ]
+      },
+      {
+        "ticker": "TRGP",
+        "name": "Targa Resources Inc. Common Stock",
+        "recorded_bars": 120,
+        "first_date": "2026-04-24",
+        "last_date": "2026-10-14",
+        "hypothetical_shares": 0,
+        "baseline": {
+          "action": "no_new_longs",
+          "admitted": false,
+          "eligible": true,
+          "reason": null,
+          "shares": 0
+        },
+        "research_blockers": [
+          "outside_band",
+          "market_gate",
+          "no_whole_share"
+        ]
+      }
+    ],
+    "research_rows": [
+      {
+        "ticker": "MG",
+        "hypothetical_shares": 0,
+        "blockers": [
+          "outside_band",
+          "market_gate",
+          "known_event",
+          "no_whole_share"
+        ]
+      },
+      {
+        "ticker": "INNV",
+        "hypothetical_shares": 0,
+        "blockers": [
+          "market_gate",
+          "no_whole_share"
+        ]
+      },
+      {
+        "ticker": "TRGP",
+        "hypothetical_shares": 0,
+        "blockers": [
+          "outside_band",
+          "market_gate",
+          "no_whole_share"
+        ]
+      }
+    ],
+    "optional_absent": [
+      "research-observations.json"
+    ],
+    "optional_present": [
+      "source-recovery.json"
+    ],
+    "source_recovery_public_binding": "Actual 200 receipt is for the previous Oct13 measured/Oct14 applicable publication, not current record. Must show inapplicable receipt, never claim recovered current coverage.",
+    "limitations": [
+      "The current research cohort has zero hypothetical shares for every row; positive hypothetical sizing remains local fixture evidence only.",
+      "These values describe actual committed and fetched data; they are not a claim that PR170 finder is currently deployed."
+    ]
+  },
+  "limits": [
+    "GET-only public byte/source/data reconciliation, not browser visual acceptance.",
+    "No market-data providers, workflow dispatches, broker operations, messages, or browser/private storage writes.",
+    "At audit time Oct15 morning entry window is upcoming; current data remains degraded and market red with zero tickets. This is no entry permission.",
+    "Current morning receipt is from Oct10 and binds Oct9 measured/Oct12 applicable publication, not the current record.",
+    "Source-recovery received bytes are current static asset but their receipt binds the prior publication; current recovery not established.",
+    "Research quote endpoint returned actual404.",
+    "A standalone Node VM probe was attempted but initialization failed at missing browser/module dependencies before a complete execution. No browser status/rendering claim is based on that probe.",
+    "Successful Pages conclusion plus matching public core bytes establish the audited deployment scope, not strategy performance or a personal trade."
+  ]
+}

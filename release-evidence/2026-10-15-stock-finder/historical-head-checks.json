@@ -1,0 +1,795 @@
+{
+  "schema": "spicystock-current-release-audit-v1",
+  "observed_at": "2026-10-15T07:07:54.814Z",
+  "scope": "Read-only GitHub API audit. No source edits, remote mutations, merge, dispatch, new local test execution or public browser acceptance.",
+  "pr": {
+    "number": 170,
+    "url": "https://github.com/spicyChicken59/SpicyStock/pull/170",
+    "state": "open",
+    "merged": false,
+    "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+    "reported_base": "bf266a6e8dfa026ee60ca729c59573d497547b83",
+    "mergeable": false,
+    "mergeable_state": "dirty",
+    "current_merge_commit_sha": null
+  },
+  "source": {
+    "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+    "tree": "8dc632c31bab5380ed872a1cc17d8d3bffc606bc",
+    "parents": [
+      "05794ffe7dcffe5f2a8f02f2d596072366678551",
+      "bf266a6e8dfa026ee60ca729c59573d497547b83"
+    ],
+    "matches_expected_reviewed_tree": true
+  },
+  "completed_ci": {
+    "run": {
+      "id": 38486675739,
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739",
+      "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+      "event": "pull_request",
+      "status": "completed",
+      "conclusion": "success",
+      "attempt": 1,
+      "base": "bf266a6e8dfa026ee60ca729c59573d497547b83"
+    },
+    "historical_test_merge": {
+      "sha": "8806c04476c7b626348ce91a27b490646ce1c9c0",
+      "tree": "8dc632c31bab5380ed872a1cc17d8d3bffc606bc",
+      "parents": [
+        "bf266a6e8dfa026ee60ca729c59573d497547b83",
+        "71d5fc5c165e430dab54b316eb019157a683f240"
+      ],
+      "tree_equals_head": true
+    },
+    "checks": [
+      {
+        "id": 115601962326,
+        "name": "historical-runtime (stress)",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739/job/115601962326",
+        "started_at": "2026-10-13T23:50:56Z",
+        "completed_at": "2026-10-14T00:41:18Z"
+      },
+      {
+        "id": 115601962304,
+        "name": "historical-runtime (central)",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739/job/115601962304",
+        "started_at": "2026-10-13T23:50:56Z",
+        "completed_at": "2026-10-14T00:39:44Z"
+      },
+      {
+        "id": 115601879904,
+        "name": "pytest",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739/job/115601879904",
+        "started_at": "2026-10-13T23:50:41Z",
+        "completed_at": "2026-10-14T00:16:41Z"
+      },
+      {
+        "id": 115601879848,
+        "name": "historical-runtime-gate",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739/job/115601879848",
+        "started_at": "2026-10-13T23:50:41Z",
+        "completed_at": "2026-10-13T23:50:53Z"
+      },
+      {
+        "id": 115601879617,
+        "name": "page",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675739/job/115601879617",
+        "started_at": "2026-10-13T23:50:41Z",
+        "completed_at": "2026-10-14T00:07:35Z"
+      },
+      {
+        "id": 115601879299,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486675737/job/115601879299",
+        "started_at": "2026-10-13T23:50:40Z",
+        "completed_at": "2026-10-13T23:50:53Z"
+      },
+      {
+        "id": 115601863627,
+        "name": "gitleaks",
+        "status": "completed",
+        "conclusion": "success",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38486670843/job/115601863627",
+        "started_at": "2026-10-13T23:50:37Z",
+        "completed_at": "2026-10-13T23:50:49Z"
+      }
+    ],
+    "all_seven_success": true,
+    "jobs": [
+      {
+        "id": 115601879617,
+        "name": "page",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "conclusion": "success",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Open the page against every fixture and read it back",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Run actions/upload-artifact@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Post Run actions/setup-node@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 11,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 115601879848,
+        "name": "historical-runtime-gate",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "conclusion": "success",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Decide from the observed complete push range",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 115601879904,
+        "name": "pytest",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "conclusion": "success",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Install dependencies",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install pinned workflow semantic validator",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Validate changed workflow contexts and syntax",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Install verified age for offline historical transport controls",
+            "conclusion": "success"
+          },
+          {
+            "number": 8,
+            "name": "Run tests",
+            "conclusion": "success"
+          },
+          {
+            "number": 9,
+            "name": "The fixtures are what the pipeline writes",
+            "conclusion": "success"
+          },
+          {
+            "number": 10,
+            "name": "Fail if the suite dirtied the working tree",
+            "conclusion": "success"
+          },
+          {
+            "number": 19,
+            "name": "Post Run actions/setup-python@v5",
+            "conclusion": "success"
+          },
+          {
+            "number": 20,
+            "name": "Post Run actions/checkout@v4",
+            "conclusion": "success"
+          },
+          {
+            "number": 21,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 115601962304,
+        "name": "historical-runtime (central)",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "conclusion": "success",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize isolated synthetic scratch and setup clock",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install the exact historical runtime and verified test encryption",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Enforce 12 GiB, profile the fixed case, recover, and reproduce offline",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Preserve only compact synthetic measurements",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "conclusion": "success"
+          },
+          {
+            "number": 14,
+            "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 15,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "id": 115601962326,
+        "name": "historical-runtime (stress)",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "conclusion": "success",
+        "steps": [
+          {
+            "number": 1,
+            "name": "Set up job",
+            "conclusion": "success"
+          },
+          {
+            "number": 2,
+            "name": "Initialize isolated synthetic scratch and setup clock",
+            "conclusion": "success"
+          },
+          {
+            "number": 3,
+            "name": "Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 4,
+            "name": "Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "conclusion": "success"
+          },
+          {
+            "number": 5,
+            "name": "Install the exact historical runtime and verified test encryption",
+            "conclusion": "success"
+          },
+          {
+            "number": 6,
+            "name": "Enforce 12 GiB, profile the fixed case, recover, and reproduce offline",
+            "conclusion": "success"
+          },
+          {
+            "number": 7,
+            "name": "Preserve only compact synthetic measurements",
+            "conclusion": "success"
+          },
+          {
+            "number": 13,
+            "name": "Post Run actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "conclusion": "success"
+          },
+          {
+            "number": 14,
+            "name": "Post Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+            "conclusion": "success"
+          },
+          {
+            "number": 15,
+            "name": "Complete job",
+            "conclusion": "success"
+          }
+        ]
+      }
+    ],
+    "logs": [
+      {
+        "job_id": 115601879904,
+        "path": "/tmp/oct15-pr170-115601879904.log",
+        "decisive_lines": [
+          "2026-10-14T00:12:45.7216887Z 4419 passed, 1 warning in 1293.58s (0:21:33)",
+          "2026-10-14T00:13:19.1653693Z 13 fixtures current",
+          "2026-10-14T00:13:23.8671022Z 21 morning fixture files current",
+          "2026-10-14T00:13:30.3249556Z 30 issuer producer fixtures current",
+          "2026-10-14T00:14:07.4109834Z 22 stop-research fixture files current",
+          "2026-10-14T00:14:51.6080480Z 40 research-outcomes fixture files current",
+          "2026-10-14T00:15:56.3402736Z 24 research observation fixture files current",
+          "2026-10-14T00:16:39.1696690Z 20 source recovery fixture files current"
+        ],
+        "bytes": 57261,
+        "sha256": "fc4aa93e9f51a5f14af89120ace85f7a9146d98788945317e7d366372c2bd944"
+      },
+      {
+        "job_id": 115601879617,
+        "path": "/tmp/oct15-pr170-115601879617.log",
+        "decisive_lines": [
+          "2026-10-13T23:52:05.8360969Z 378/378 chart checks passed; screenshots in /tmp/claude-0/-home-user/edc6f11d-ce23-5094-b116-41a165a13e91/scratchpad/chart/shots",
+          "2026-10-14T00:07:29.0755436Z 15459/15459 page checks passed; screenshots in /tmp/shots",
+          "2026-10-14T00:07:33.3681333Z SHA256 digest of uploaded artifact zip is 75e7151ace32bda13ba01054827d960f04c51c2955092967309f0ff5cf21ea84",
+          "2026-10-14T00:07:33.5955754Z Artifact page-shots.zip successfully finalized. Artifact ID 11861090558",
+          "2026-10-14T00:07:33.5957288Z Artifact page-shots has been successfully uploaded! Final size is 90466742 bytes. Artifact ID is 11861090558"
+        ],
+        "bytes": 83658,
+        "sha256": "013b2e46ff60c3a9579a1a815dd68247a5f8b6aac478bb7d6c0978db488d6ddf"
+      },
+      {
+        "job_id": 115601962304,
+        "path": "/tmp/oct15-pr170-115601962304.log",
+        "decisive_lines": [
+          "2026-10-14T00:39:41.3856548Z {\"memory_supervisor_status\": \"PASS\", \"case\": \"central\"}",
+          "2026-10-14T00:39:41.8169192Z SHA256 digest of uploaded artifact is 8f311fefbf1b49cea56adc83f3b5360261ca147bf2ed78c93aecf83cde2ebece",
+          "2026-10-14T00:39:42.0679524Z Artifact historical-runtime-central-38486675739-1 successfully finalized. Artifact ID 11861238670",
+          "2026-10-14T00:39:42.0681435Z Artifact historical-runtime-central-38486675739-1 has been successfully uploaded! Final size is 26657 bytes. Artifact ID is 11861238670"
+        ],
+        "bytes": 51011,
+        "sha256": "21b072e6ca08aa1d38cc5a3044f5cb867ceba9a9c0980aa3ceadec9198ce5653"
+      },
+      {
+        "job_id": 115601962326,
+        "path": "/tmp/oct15-pr170-115601962326.log",
+        "decisive_lines": [
+          "2026-10-14T00:41:13.7848739Z {\"memory_supervisor_status\": \"PASS\", \"case\": \"stress\"}",
+          "2026-10-14T00:41:14.8275816Z SHA256 digest of uploaded artifact is 28bf15a036bbc760afa513ef1e8f70d6f1bd63a5773b2cb2baf2576043afb7eb",
+          "2026-10-14T00:41:15.2341306Z Artifact historical-runtime-stress-38486675739-1 successfully finalized. Artifact ID 11861548574",
+          "2026-10-14T00:41:15.2342437Z Artifact historical-runtime-stress-38486675739-1 has been successfully uploaded! Final size is 26555 bytes. Artifact ID is 11861548574"
+        ],
+        "bytes": 51038,
+        "sha256": "413450a7fb45d49360ab42adec851a5aa9e9b44c7b485dbaca3f0a799d2ee800"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 11861548574,
+        "name": "historical-runtime-stress-38486675739-1",
+        "size_in_bytes": 26555,
+        "digest": "sha256:28bf15a036bbc760afa513ef1e8f70d6f1bd63a5773b2cb2baf2576043afb7eb",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "expired": false
+      },
+      {
+        "id": 11861238670,
+        "name": "historical-runtime-central-38486675739-1",
+        "size_in_bytes": 26657,
+        "digest": "sha256:8f311fefbf1b49cea56adc83f3b5360261ca147bf2ed78c93aecf83cde2ebece",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "expired": false
+      },
+      {
+        "id": 11861090558,
+        "name": "page-shots",
+        "size_in_bytes": 90466742,
+        "digest": "sha256:75e7151ace32bda13ba01054827d960f04c51c2955092967309f0ff5cf21ea84",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "expired": false
+      },
+      {
+        "id": 11859843021,
+        "name": "historical-runtime-gate-38486675739-1",
+        "size_in_bytes": 628,
+        "digest": "sha256:6c5064598d2fe004613d80f4a2ccf25e0530ffb14a804dc22449432418b55603",
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "expired": false
+      }
+    ],
+    "artifact_binary_downloaded": false
+  },
+  "current_main": {
+    "head": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+    "tree": "688a67fce673396288be67b55e725d43a73a94e9",
+    "parents": [
+      "16032f05e13536cac5c4e0995ff0f16053dcd0b3"
+    ],
+    "message": "Publish bound issuer evidence",
+    "committed_at": "2026-10-15T00:36:12Z",
+    "drift_since_ci_base": true,
+    "compare": {
+      "ahead_by": 13,
+      "behind_by": 0,
+      "total_commits": 13,
+      "api_file_count": 300,
+      "file_list_truncated_by_api_limit": true
+    },
+    "commits_since_old_base": [
+      {
+        "sha": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+        "message": "Publish bound issuer evidence",
+        "parents": [
+          "16032f05e13536cac5c4e0995ff0f16053dcd0b3"
+        ],
+        "date": "2026-10-15T00:36:12Z"
+      },
+      {
+        "sha": "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+        "message": "run 2026-10-14",
+        "parents": [
+          "c5dad9a9ba11c7cfe3cd7ff553b6d2c8dfe10dd0"
+        ],
+        "date": "2026-10-15T00:34:26Z"
+      },
+      {
+        "sha": "c5dad9a9ba11c7cfe3cd7ff553b6d2c8dfe10dd0",
+        "message": "Publish bound source recovery",
+        "parents": [
+          "59eeca2a5d29977a9e94c77aae9c13380f2c80db"
+        ],
+        "date": "2026-10-14T13:04:07Z"
+      },
+      {
+        "sha": "59eeca2a5d29977a9e94c77aae9c13380f2c80db",
+        "message": "Merge pull request #171: rehearse the first trade end to end and reproduce its reported result offline (#110)",
+        "parents": [
+          "64481f2f5deeeec63a03a8d424df3df54b79659f",
+          "e6d49c2da3011765ea67a52e35cb7afcd3292244"
+        ],
+        "date": "2026-10-14T02:38:42Z"
+      },
+      {
+        "sha": "e6d49c2da3011765ea67a52e35cb7afcd3292244",
+        "message": "Read the findings replay's Play stops against the step they left at",
+        "parents": [
+          "27ad3a1025974800b6e20c8b206167221cbc13fd"
+        ],
+        "date": "2026-10-14T01:48:42Z"
+      },
+      {
+        "sha": "64481f2f5deeeec63a03a8d424df3df54b79659f",
+        "message": "Publish bound issuer evidence",
+        "parents": [
+          "8772006f5a82e21d3a22c6551fc2f0a6b38b6134"
+        ],
+        "date": "2026-10-14T01:17:24Z"
+      },
+      {
+        "sha": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+        "message": "run 2026-10-13",
+        "parents": [
+          "bf266a6e8dfa026ee60ca729c59573d497547b83"
+        ],
+        "date": "2026-10-14T01:15:38Z"
+      },
+      {
+        "sha": "27ad3a1025974800b6e20c8b206167221cbc13fd",
+        "message": "Checkpoint: PR #169 accepted; the first trade rehearsed and its reported result reproduced (#110)",
+        "parents": [
+          "ad592da7ec04a591aff2416fa5b48cd4ae646541"
+        ],
+        "date": "2026-10-14T01:15:32Z"
+      },
+      {
+        "sha": "ad592da7ec04a591aff2416fa5b48cd4ae646541",
+        "message": "Name the parse-refusal cases, so a deep nesting is not a 400,000-character test id",
+        "parents": [
+          "85dc6bcdc3bb91aa7451adc0d6a42a52f3ec93ea"
+        ],
+        "date": "2026-10-14T00:54:05Z"
+      },
+      {
+        "sha": "85dc6bcdc3bb91aa7451adc0d6a42a52f3ec93ea",
+        "message": "Close the second mutation pass's four holes in the reproducer's tests",
+        "parents": [
+          "7a1910ebdc27d98abdc9634e77137924c0a7ad3e"
+        ],
+        "date": "2026-10-14T00:52:25Z"
+      },
+      {
+        "sha": "7a1910ebdc27d98abdc9634e77137924c0a7ad3e",
+        "message": "Hold the result reproducer to the page's own verdicts; rehearse on one moving clock",
+        "parents": [
+          "5bf2bd4bc42e27965e9416a6666c37fae7bb2719"
+        ],
+        "date": "2026-10-14T00:48:30Z"
+      },
+      {
+        "sha": "5bf2bd4bc42e27965e9416a6666c37fae7bb2719",
+        "message": "Close the mutation pass's five holes in the rehearsal's tests",
+        "parents": [
+          "5bc0c83f81b5fc27f230e166b713f509baeba77b"
+        ],
+        "date": "2026-10-14T00:16:29Z"
+      },
+      {
+        "sha": "5bc0c83f81b5fc27f230e166b713f509baeba77b",
+        "message": "Rehearse the first trade end to end and reproduce its reported result offline (#110)",
+        "parents": [
+          "bf266a6e8dfa026ee60ca729c59573d497547b83"
+        ],
+        "date": "2026-10-13T23:56:02Z"
+      }
+    ],
+    "external_pr171": {
+      "number": 171,
+      "url": "https://github.com/spicyChicken59/SpicyStock/pull/171",
+      "head": "e6d49c2da3011765ea67a52e35cb7afcd3292244",
+      "merge": "59eeca2a5d29977a9e94c77aae9c13380f2c80db",
+      "merged_at": "2026-10-14T02:38:42Z",
+      "files": [
+        {
+          "path": ".env.example",
+          "status": "modified",
+          "additions": 3,
+          "deletions": 0
+        },
+        {
+          "path": ".github/workflows/tests.yml",
+          "status": "modified",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "CLAUDE.md",
+          "status": "modified",
+          "additions": 154,
+          "deletions": 1
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "additions": 56,
+          "deletions": 0
+        },
+        {
+          "path": "docs/app-handoff-ui.js",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "docs/app-handoff.js",
+          "status": "modified",
+          "additions": 24,
+          "deletions": 7
+        },
+        {
+          "path": "tests/fixtures/cash-preview/README.md",
+          "status": "modified",
+          "additions": 4,
+          "deletions": 1
+        },
+        {
+          "path": "tests/fixtures/first-trade/README.md",
+          "status": "added",
+          "additions": 41,
+          "deletions": 0
+        },
+        {
+          "path": "tests/fixtures/first-trade/backup.json",
+          "status": "added",
+          "additions": 1,
+          "deletions": 0
+        },
+        {
+          "path": "tests/fixtures/first-trade/page-results.json",
+          "status": "added",
+          "additions": 26,
+          "deletions": 0
+        },
+        {
+          "path": "tests/fixtures/first-trade/parity.json.gz",
+          "status": "added",
+          "additions": 0,
+          "deletions": 0
+        },
+        {
+          "path": "tests/test_private_results.py",
+          "status": "added",
+          "additions": 588,
+          "deletions": 0
+        },
+        {
+          "path": "tests/test_workflows.py",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "tools/findings_cases.mjs",
+          "status": "modified",
+          "additions": 31,
+          "deletions": 6
+        },
+        {
+          "path": "tools/first_trade_cases.mjs",
+          "status": "added",
+          "additions": 197,
+          "deletions": 0
+        },
+        {
+          "path": "tools/handoff_cases.mjs",
+          "status": "modified",
+          "additions": 5,
+          "deletions": 0
+        },
+        {
+          "path": "tools/handoff_model_cases.mjs",
+          "status": "modified",
+          "additions": 29,
+          "deletions": 0
+        },
+        {
+          "path": "tools/page_smoke.mjs",
+          "status": "modified",
+          "additions": 2,
+          "deletions": 0
+        },
+        {
+          "path": "tools/private_results.py",
+          "status": "added",
+          "additions": 774,
+          "deletions": 0
+        },
+        {
+          "path": "tools/private_results_parity.mjs",
+          "status": "added",
+          "additions": 214,
+          "deletions": 0
+        }
+      ]
+    },
+    "latest_successful_pages": {
+      "id": 38689584825,
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38689584825",
+      "head": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-10-15T05:57:42Z"
+    },
+    "latest_successful_publisher": {
+      "id": 38689555776,
+      "url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/38689555776",
+      "head": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "status": "completed",
+      "conclusion": "success",
+      "updated_at": "2026-10-15T05:57:17Z"
+    }
+  },
+  "coordination": {
+    "open_prs": [
+      {
+        "number": 170,
+        "head": "71d5fc5c165e430dab54b316eb019157a683f240",
+        "title": "Find the intended stock and reveal its recorded chart",
+        "updated_at": "2026-10-13T23:50:53Z"
+      }
+    ],
+    "open_issues": [
+      {
+        "number": 164,
+        "title": "Open the intended ticker reliably from the first screen",
+        "updated_at": "2026-10-13T22:35:05Z"
+      },
+      {
+        "number": 111,
+        "title": "Milestone 5: prove dependable daily publication and morning operations",
+        "updated_at": "2026-10-09T17:20:59Z"
+      },
+      {
+        "number": 108,
+        "title": "Milestone 2: verify morning quotes and event coverage for exact published plans",
+        "updated_at": "2026-10-09T17:20:57Z"
+      }
+    ],
+    "issue_comments_since": "2026-10-13T23:50:00Z",
+    "issue_comments": [],
+    "pr170_reviews": [],
+    "pr170_review_comments": [],
+    "observed_stop_instruction": false
+  },
+  "limitations": [
+    "Existing71d5 check evidence is valid for its exact reviewed tree and historical base bf266a6e; it cannot establish a new reconciled head passes.",
+    "PR170 is dirty against actual current main; no merge should occur before reconciliation, independent exact-head review and normal required checks.",
+    "Real newer publications invalidate the old fixed Oct12/Oct13 public-verification fixture scope; inspect current publication before acceptance.",
+    "Artifact metadata/digests and decoded logs inspected, artifact binaries and peak-memory measurements not downloaded.",
+    "Branch rules endpoint fetch was not available through this connector; no gate bypass inferred or performed.",
+    "No actual public HTTP/browser verification in this audit."
+  ]
+}

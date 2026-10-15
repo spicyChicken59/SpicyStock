@@ -1932,7 +1932,8 @@
     try { if (w.location.hash !== route) w.history.pushState(null, '', route); }
     catch (_) { return refuse('The recorded chart could not be opened in this browser.'); }
     SCStock.morning.closeForInspection();
-    pendingFocus = 'detail'; state.gesture = true;
+    revealExplicitCandidate(candidate);
+    pendingFocus = 'explicit-detail'; state.gesture = true;
     applyRoute(parseHash(route));
     return { ok: true, reason: '' };
   }
@@ -4694,10 +4695,15 @@
     if (tools && c) tools.parentNode.replaceChild(detailTools(c), tools);
     syncPins();
     if (heldStep) { const back = box.querySelector('[data-step="' + heldStep + '"]:not(:disabled)') || box; back.focus({ preventScroll: true }); }
-    if (pendingFocus === 'detail') {
-      pendingFocus = ''; box.focus({ preventScroll: true });
+    if (pendingFocus === 'detail' || pendingFocus === 'explicit-detail') {
+      // An explicit stock/chart request starts at the stock, even when its
+      // remembered pane was scrolled; ordinary routes keep their position.
+      const explicit = pendingFocus === 'explicit-detail';
+      pendingFocus = '';
+      if (explicit) box.scrollTop = 0;
+      box.focus({ preventScroll: true });
       const rect = box.getBoundingClientRect();
-      if (!desktopCards() || rect.top < 0 || rect.top >= w.innerHeight) scrollTo(box);
+      if (explicit || !desktopCards() || rect.top < 0 || rect.top >= w.innerHeight) scrollTo(box);
     }
     else if (state.gesture && narrow() && c) scrollTo(box);
     else if (changed && state.gesture && desktopCards() && box.getBoundingClientRect().top < 0) scrollTo(box);
@@ -5083,7 +5089,7 @@
   // lens for that stock: saying so afterwards, once the page has already
   // moved, is telling the reader what happened rather than what will.
   function fillChooser(q) {
-    const list = clear($('chooser-list')); let n = 0, away = 0, first = null;
+    const list = clear($('chooser-list')); let n = 0, away = 0, first = null, exact = null;
     STAGES.forEach((s) => {
       const items = model.stages[s].filter((c) => matches(c, q));
       if (!items.length) return;
@@ -5103,6 +5109,7 @@
           ]);
           b.addEventListener('click', (e) => { e.preventDefault(); choose(c); });
           if (!first) first = b;
+          if (c.ticker === q && (!exact || c.stage === state.stage)) exact = b;
           list.appendChild(b);
         });
       };
@@ -5114,9 +5121,9 @@
       }
     });
     $('chooser-status').textContent = n ? n + ' stock' + (n === 1 ? '' : 's') + (q ? ' match ‘' + q + '’' : ' in tonight’s record')
-      + (away ? ', ' + away + ' of them outside the lens you are reading' : '') + '; Enter chooses the first.'
+      + (away ? ', ' + away + ' of them outside the lens you are reading' : '') + (exact ? '; Enter opens ' + q + '.' : '; Enter chooses the first.')
       : 'No stock matching ‘' + q + '’ in tonight’s record.';
-    return first;
+    return exact || first;
   }
   function openChooser() {
     const dlg = $('chooser');
@@ -5128,10 +5135,22 @@
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
     $('chooser-search').focus();
   }
+  // Explicit inspection can reselect the remembered stock after a query or
+  // background unfollow hides it. Ordinary route/store updates keep their lens.
+  function revealExplicitCandidate(c) {
+    readingReturn = null; $('method-return').hidden = true;
+    const lens = lensOf(c.stage);
+    if (!lensPass(c, lens)) {
+      setLens(c.stage, 'all', false);
+      pendingNotice = c.ticker + ' is outside the ' + LENS_WORDS[lens] + ' lens; showing every ' + (c.stage === 'bursts' ? 'burst' : 'setup') + ' so it can be inspected.';
+    }
+    setQuery('');
+  }
   function choose(c) {
     const dlg = $('chooser');
     if (dlg.close) dlg.close('chosen'); else dlg.removeAttribute('open');
-    pendingFocus = 'detail'; state.gesture = true;
+    revealExplicitCandidate(c);
+    pendingFocus = 'explicit-detail'; state.gesture = true;
     navigate(routeHash(c.stage, c.id));
   }
 
@@ -5184,9 +5203,11 @@
       if (desktopCards() && e.target !== $('detail')) revealWithin(e.target, $('detail'), false);
     });
     $('choose-open').addEventListener('click', openChooser);
+    const finder = $('find-stock');
+    if (finder) finder.addEventListener('click', openChooser);
     const dlg = $('chooser'), cs = $('chooser-search');
     cs.addEventListener('input', () => { fillChooser(cs.value.trim().toUpperCase()); });
-    cs.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const first = $('chooser-list').querySelector('.ss-chooser__item'); if (first) first.click(); } });
+    cs.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); const first = fillChooser(cs.value.trim().toUpperCase()); if (first) first.click(); } });
     dlg.addEventListener('close', () => { if (dlg.returnValue !== 'chosen') { const back = chooserOpener && chooserOpener.focus ? chooserOpener : $('choose-open'); back.focus(); } chooserOpener = null; });
     dlg.addEventListener('click', (e) => { if (e.target === dlg && dlg.close) dlg.close('backdrop'); });
     // CSS owns pane sizing. Clear the old axis and reveal the chosen card once
@@ -5582,6 +5603,8 @@
     if (keep) { restoreSizeForm(keep.sizeForm); if (keep.scroll) w.scrollTo(0, keep.scroll); }
     watchClock();
     liveRunLog();
+    const finder = $('find-stock');
+    if (finder) finder.disabled = false;
     return st;
   }
   SCStock.render = render;
@@ -5594,6 +5617,8 @@
     // chart -- has the shape it indexes into.
     current = { run: {}, app: {} };
     model = null; av = null; st = null;
+    const finder = $('find-stock');
+    if (finder) finder.disabled = true;
     SCStock.data = null; SCStock.avail = null; SCStock.model = null; SCStock.state = null;
     SCStock.reader.attach(current);
     SCStock.observations.reset(current);
