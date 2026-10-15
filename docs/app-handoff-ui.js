@@ -22,7 +22,7 @@
   const money = value => '$' + (BigInt(value) / 100n).toLocaleString('en-US') + '.' + String(BigInt(value) % 100n).padStart(2, '0');
   const clock = value => value ? new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'long' }).format(new Date(value)) : 'Not reported';
   const amount = value => value === null || value === undefined ? 'Unknown' : String(value);
-  let host = null, selected = null, editing = null, research = null, dirty = false, busy = false;
+  let host = null, selected = null, editing = null, research = null, dirty = false, busy = false, timeHelper = null;
   let backupPreview = null, backupReading = false, backupGeneration = 0;
   const independent = item => item && item.kind === 'independent_research';
   const ticker = item => independent(item) ? item.source.ticker : item.plan.ticker;
@@ -39,7 +39,108 @@
   function facts(target, rows) {
     target.replaceChildren(...rows.map(([label, value]) => { const row = node('div'); row.append(node('dt', {}, label), node('dd', {}, String(value))); return row; }));
   }
+  // Resolve only this explicitly named zone. The device's local zone never
+  // interprets an owner's wall-clock input. Round-trip every possible nearby
+  // offset so a DST gap is refused and a repeated hour keeps both instants.
+  function chicagoTimes(date, time) {
+    if (!date || !time) return { choices: [], message: 'Enter an event date and time in America/Chicago. Blank fields remain unknown.' };
+    const parts = /^(\d{2}):(\d{2})(?::(\d{2})(\.\d{1,3})?)?$/.exec(time);
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(date) && Date.parse(date + 'T00:00:00Z');
+    if (!Number.isFinite(day) || new Date(day).toISOString().slice(0, 10) !== date || !parts || Number(parts[1]) > 23 || Number(parts[2]) > 59 || Number(parts[3] || 0) > 59) {
+      return { choices: [], message: 'Enter a valid calendar date and time, with at most three fractional second digits.' };
+    }
+    const wall = date + 'T' + parts[1] + ':' + parts[2] + ':' + (parts[3] || '00') + (parts[4] || ''), naive = Date.parse(wall + 'Z');
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', calendar: 'iso8601', numberingSystem: 'latn', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+      const local = instant => Object.fromEntries(formatter.formatToParts(new Date(instant)).map(part => [part.type, part.value]));
+      const offsets = new Set();
+      for (const delta of [-86400000, 0, 86400000]) {
+        const probe = Math.floor((naive + delta) / 1000) * 1000, p = local(probe), at = new Date(0);
+        at.setUTCFullYear(Number(p.year), Number(p.month) - 1, Number(p.day));
+        at.setUTCHours(Number(p.hour), Number(p.minute), Number(p.second), 0);
+        const offset = (at.getTime() - probe) / 60000;
+        if (Number.isInteger(offset) && Math.abs(offset) <= 840) offsets.add(offset);
+      }
+      const choices = [];
+      for (const offset of offsets) {
+        const instant = naive - offset * 60000, p = local(instant);
+        if (String(p.year).padStart(4, '0') + '-' + p.month + '-' + p.day !== date || p.hour !== parts[1] || p.minute !== parts[2] || p.second !== (parts[3] || '00')) continue;
+        const zone = (offset < 0 ? '-' : '+') + String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0') + ':' + String(Math.abs(offset) % 60).padStart(2, '0');
+        choices.push({ explicit: wall + zone, utc: new Date(instant).toISOString(), zone });
+      }
+      choices.sort((a, b) => a.utc.localeCompare(b.utc));
+      return { choices, message: choices.length ? '' : 'This local time does not occur in America/Chicago, or cannot be resolved here. Check the clock change and use the explicit-offset field if needed.' };
+    } catch (_) {
+      return { choices: [], message: 'Chicago time conversion is unavailable in this browser. Use the existing date/time field with an explicit offset.' };
+    }
+  }
+  function closeTimeHelper(focus) {
+    if (!host || !timeHelper) return;
+    const previous = timeHelper; timeHelper = null;
+    host.querySelector('[data-handoff-time-helper]').hidden = true;
+    previous.opener.setAttribute('aria-expanded', 'false');
+    if (focus) focus.focus();
+  }
+  function paintTimeHelper() {
+    if (!timeHelper) return null;
+    const date = host.querySelector('#handoff-time-date'), time = host.querySelector('#handoff-time-clock');
+    const resolved = chicagoTimes(date.value, time.value), occurrence = host.querySelector('#handoff-time-occurrence');
+    const before = occurrence.value, signature = JSON.stringify(resolved.choices);
+    if (occurrence.dataset.choices !== signature) {
+      occurrence.replaceChildren(node('option', { value: '' }, 'Choose the reported occurrence'), ...resolved.choices.map((choice, index) =>
+        node('option', { value: choice.explicit }, (index === 0 ? 'First' : 'Second') + ' occurrence · UTC' + choice.zone)));
+      occurrence.dataset.choices = signature;
+      if (resolved.choices.some(choice => choice.explicit === before)) occurrence.value = before;
+    }
+    host.querySelector('[data-handoff-time-fold]').hidden = resolved.choices.length < 2;
+    const choice = resolved.choices.length === 1 ? resolved.choices[0] : resolved.choices.find(value => value.explicit === occurrence.value);
+    host.querySelector('[data-handoff-time-preview]').textContent = choice ? 'Preview: ' + choice.explicit + ' · UTC ' + choice.utc + '. Apply adds this time to the unsaved ' + labels[timeHelper.key].toLowerCase() + ' field.'
+      : resolved.choices.length > 1 ? 'This Chicago time occurs twice when clocks go back. Choose the occurrence shown by your broker; no occurrence has been assumed.' : resolved.message;
+    host.querySelector('[data-handoff-time-apply]').disabled = busy || !choice;
+    return choice;
+  }
+  function openTimeHelper(key, opener) {
+    if (busy || !editing && !research) return;
+    if (timeHelper && timeHelper.key !== key) { message('Apply or cancel the open Chicago time helper before choosing another event field. Your entries have been kept.'); return; }
+    const helper = host.querySelector('[data-handoff-time-helper]');
+    if (!timeHelper) {
+      timeHelper = { key, opener };
+      host.querySelector('#handoff-time-date').value = '';
+      host.querySelector('#handoff-time-clock').value = '';
+      host.querySelector('#handoff-time-occurrence').value = '';
+      host.querySelector('#handoff-time-title').textContent = labels[key] + ' · Chicago time';
+      helper.hidden = false; opener.setAttribute('aria-expanded', 'true'); paintTimeHelper(); refreshEditorStatus();
+    }
+    helper.scrollIntoView({ block: 'nearest' }); host.querySelector('#handoff-time-date').focus({ preventScroll: true });
+  }
+  function mountTimeHelper(report) {
+    const helper = node('section', { id: 'handoff-time-helper', class: 'ss-handoff__time sc-card', 'data-handoff-time-helper': '', 'aria-labelledby': 'handoff-time-title', hidden: '' });
+    helper.append(node('h4', { id: 'handoff-time-title' }), node('p', { class: 'sc-hint' }, 'Enter a time you know in America/Chicago. If your broker shows another time zone, use the explicit-offset field instead. Applying changes one unsaved field; it does not save a report or observe an execution.'));
+    const controls = node('div', { class: 'ss-handoff__fields' });
+    for (const [id, label, type] of [['handoff-time-date', 'Event date in Chicago', 'date'], ['handoff-time-clock', 'Event time in Chicago', 'time']]) {
+      const field = node('div', { class: 'ss-handoff__field' }), input = node('input', { id, type, class: 'sc-input', autocomplete: 'off', ...(type === 'time' ? { step: '0.001' } : {}), 'aria-describedby': 'handoff-time-preview' });
+      input.addEventListener('input', () => { host.querySelector('#handoff-time-occurrence').value = ''; paintTimeHelper(); });
+      field.append(node('label', { for: id }, label), input); controls.append(field);
+    }
+    const fold = node('div', { class: 'ss-handoff__field', 'data-handoff-time-fold': '', hidden: '' }), occurrence = node('select', { id: 'handoff-time-occurrence', class: 'sc-select', 'aria-describedby': 'handoff-time-preview' });
+    occurrence.addEventListener('change', paintTimeHelper);
+    fold.append(node('label', { for: occurrence.id }, 'Repeated Chicago hour'), occurrence); controls.append(fold);
+    const apply = button('Apply to unsaved event time', { 'data-handoff-time-apply': '' }), cancel = button('Cancel time entry', { 'data-handoff-time-cancel': '' });
+    apply.addEventListener('click', () => {
+      if (!timeHelper || busy) return;
+      const choice = paintTimeHelper(); if (!choice) return;
+      const input = host.querySelector('[data-handoff-field="' + timeHelper.key + '"]');
+      input.value = choice.explicit; dirty = true; closeTimeHelper(input); refreshEditorStatus();
+      message('Chicago time added to one unsaved event field. Review the broker facts, then save explicitly.');
+    });
+    const dismiss = () => { if (!timeHelper || busy) return; const opener = timeHelper.opener; closeTimeHelper(opener); refreshEditorStatus(); };
+    cancel.addEventListener('click', dismiss);
+    helper.addEventListener('keydown', event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dismiss(); } });
+    const actions = node('div', { class: 'ss-handoff__actions' }); actions.append(apply, cancel);
+    helper.append(controls, node('p', { id: 'handoff-time-preview', class: 'sc-hint', role: 'status', 'data-handoff-time-preview': '' }), actions); report.append(helper);
+  }
   function loadEditor(item) {
+    closeTimeHelper();
     editing = item; research = null; dirty = false;
     api.handoff.FIELDS.forEach(key => { host.querySelector('[data-handoff-field="' + key + '"]').value = item && item.report[key] !== null ? String(item.report[key]) : ''; });
     host.querySelector('[data-handoff-delete-confirm]').checked = false;
@@ -51,7 +152,7 @@
     selected = id; loadEditor(item); message(''); update();
   }
   async function saveReport() {
-    if (busy || !editing && !research) return;
+    if (busy || timeHelper || !editing && !research) return;
     const id = editing && editing.id, revision = editing && editing.revision, pending = research;
     const fields = Object.fromEntries(api.handoff.FIELDS.map(key => [key, host.querySelector('[data-handoff-field="' + key + '"]').value]));
     busy = true; update();
@@ -82,7 +183,7 @@
       research.request = JSON.parse(JSON.stringify(request));
       revealEditor(); return { ok: true };
     }
-    if (dirty || busy) return fail('Your current broker report has unsaved entries. Save or explicitly discard them before opening another report; those entries have been kept.');
+    if (dirty || busy || timeHelper) return fail('Your current broker report has unsaved entries. Apply or cancel an open time helper, then save or explicitly discard the report before opening another; those entries have been kept.');
     const id = checked.source.publication.data_sha256 + ':' + checked.source.evidence.id;
     const existing = api.handoff.find(id);
     if (existing) { choose(id); message('This source already has a private record. Correct its broker facts here; nothing was replaced.'); revealEditor(); return { ok: true }; }
@@ -108,7 +209,7 @@
     update();
   }
   async function removeSelected() {
-    if (busy || !editing || !host.querySelector('[data-handoff-delete-confirm]').checked) return;
+    if (busy || timeHelper || !editing || !host.querySelector('[data-handoff-delete-confirm]').checked) return;
     busy = true; update();
     const result = await api.handoff.remove(editing.id, editing.revision);
     busy = false;
@@ -134,7 +235,7 @@
     host.querySelector('[data-handoff-backup-confirm]').disabled = busy || backupReading || !backupPreview;
     host.querySelector('[data-handoff-backup-cancel]').disabled = busy;
     host.querySelector('[data-handoff-backup-preview]').hidden = !backupPreview;
-    host.querySelector('[data-handoff-backup-warning]').textContent = backupPreview && (dirty || research)
+    host.querySelector('[data-handoff-backup-warning]').textContent = backupPreview && (dirty || research || timeHelper)
       ? 'Your report has unsaved entries. Save or explicitly discard that report before restoring; selecting this file has kept those entries.' : '';
   }
   function clearBackupPreview() {
@@ -193,7 +294,7 @@
   }
   async function restoreBackup() {
     if (busy || backupReading || !backupPreview) return;
-    if (dirty || research) {
+    if (dirty || research || timeHelper) {
       backupMessage('Restore refused: your report has unsaved entries. Save or explicitly discard that report first; your entries were kept.', 'blocked');
       return;
     }
@@ -243,7 +344,7 @@
     const select = node('select', { class: 'sc-select', id: 'handoff-select' });
     select.addEventListener('change', () => {
       const id = select.value;
-      if (dirty || busy) { select.value = selected; message('Save your correction or use Load saved report to discard it before switching handoffs.'); return; }
+      if (dirty || busy || timeHelper) { select.value = selected; message('Apply or cancel an open time helper, then save your correction or use Load saved report to discard it before switching handoffs.'); return; }
       choose(id);
     });
     body.append(node('label', { for: select.id }, 'Saved personal handoff'), select,
@@ -276,7 +377,8 @@
     const report = node('details', { class: 'sc-disclosure', 'data-handoff-report': '' });
     report.append(node('summary', {}, 'Enter or correct broker facts'),
       node('p', { class: 'sc-hint' }, 'Enter cumulative totals from your broker, not an additional fill. Blank means unknown; 0 means you explicitly reported none. Corrections replace the previous report. Entry fills remain history after an exit.'),
-      node('p', { class: 'sc-hint' }, 'Dates need an explicit offset, for example 2026-09-11T08:35:00-05:00. Use current time only enters this device’s time; it does not observe a broker event. Saved times below are displayed in Chicago.'));
+      node('p', { class: 'sc-hint' }, 'Dates need an explicit offset, for example 2026-09-11T08:35:00-05:00. Enter Chicago time can prepare that offset for one unsaved event field. Use current time only enters this device’s time; it does not observe a broker event. Saved times below are displayed in Chicago.'));
+    mountTimeHelper(report);
     groups.forEach(([legend, keys]) => {
       const group = node('fieldset', { class: 'ss-handoff__fields' }); group.append(node('legend', {}, legend));
       if (legend === 'Exits after entry') group.append(node('p', { class: 'sc-hint' }, 'Explicit 0 exits is needed to calculate remaining reported holdings. Leave blank if you have not checked.'));
@@ -291,7 +393,9 @@
         if (time) {
           const now = button('Use current time', { 'data-handoff-now': key });
           now.addEventListener('click', () => { input.value = new Date().toISOString(); dirty = true; refreshEditorStatus(); input.focus(); });
-          field.append(now);
+          const chicago = button('Enter Chicago time', { 'data-handoff-chicago': key, 'aria-controls': 'handoff-time-helper', 'aria-expanded': 'false', 'aria-label': 'Enter Chicago time for ' + labels[key].toLowerCase() });
+          chicago.addEventListener('click', () => openTimeHelper(key, chicago));
+          const timeActions = node('div', { class: 'ss-handoff__actions' }); timeActions.append(now, chicago); field.append(timeActions);
         }
         group.append(field);
       });
@@ -315,15 +419,15 @@
     if (!host) return;
     refreshBackup();
     const current = api.handoff.find(selected || research && research.existingId), status = api.handoff.status(), conflict = editing && (!current || current.revision !== editing.revision);
-    host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : research
+    host.querySelector('[data-handoff-editor-status]').textContent = busy ? 'Saving on this device…' : conflict ? 'The saved handoff changed in another view. Your edits were kept. Load its saved report before making a new correction.' : timeHelper ? 'Apply or cancel the Chicago time entry before saving. The event field and saved report are unchanged until you apply and save explicitly.' : research
       ? 'Unsaved independent trade report. Saving requires a positive actual fill and the corresponding submitted quantity. Blank costs, prices, times and exits remain unknown; research values are never filled in for you.'
       : dirty ? 'Unsaved correction — changes are not yet in your private record.' : 'Blank fields remain unknown. Reports stay editable after the entry window or an event restriction.';
-    host.querySelector('[data-handoff-save]').disabled = busy || !editing && !research || !status.available;
+    host.querySelector('[data-handoff-save]').disabled = busy || !!timeHelper || !editing && !research || !status.available;
     host.querySelector('[data-handoff-reload]').disabled = busy || !current;
-    host.querySelector('[data-handoff-delete]').disabled = busy || !current || !status.available || !host.querySelector('[data-handoff-delete-confirm]').checked;
+    host.querySelector('[data-handoff-delete]').disabled = busy || !!timeHelper || !current || !status.available || !host.querySelector('[data-handoff-delete-confirm]').checked;
     host.querySelector('[data-handoff-cancel]').hidden = !research;
     host.querySelector('[data-handoff-cancel]').disabled = busy;
-    host.querySelectorAll('[data-handoff-field], [data-handoff-now]').forEach(input => { input.disabled = busy; });
+    host.querySelectorAll('[data-handoff-field], [data-handoff-now], [data-handoff-chicago]').forEach(input => { input.disabled = busy; });
   }
   function renderResearchIdentity(source) {
     host.querySelector('[data-handoff-research-source]').textContent = 'Independent execution report only. Original production baseline: ' +
@@ -365,8 +469,8 @@
     }
     if (!selected && items.length) { selected = items[items.length - 1].id; loadEditor(selectedItem(items)); }
     const current = selectedItem(items);
-    if (current && (!editing || !dirty && !busy && current.revision !== editing.revision)) loadEditor(current);
-    if (!current && !dirty && !busy && editing && status.available) { selected = items.length ? items[items.length - 1].id : null; loadEditor(selectedItem(items)); }
+    if (current && (!editing || !dirty && !busy && !timeHelper && current.revision !== editing.revision)) loadEditor(current);
+    if (!current && !dirty && !busy && !timeHelper && editing && status.available) { selected = items.length ? items[items.length - 1].id : null; loadEditor(selectedItem(items)); }
     select.value = selected || ''; select.disabled = !items.length || busy;
     host.querySelector('[data-handoff-selected]').hidden = !editing;
     if (!editing) return;
@@ -428,7 +532,7 @@
       prepare.addEventListener('click', async () => {
         const input = prepare._intent;
         if (!input || prepare._busy) return;
-        if (dirty || busy || research) {
+        if (dirty || busy || research || timeHelper) {
           section.querySelector('[data-handoff-prepare-status]').textContent = 'Save your current broker report or use Load saved report to discard its edits before preparing a draft.';
           return;
         }
@@ -438,7 +542,7 @@
         prepare._busy = false;
         section.querySelector('[data-handoff-prepare-status]').textContent = result.ok ? 'Private draft saved. It creates no broker order or confirmed protective stop.' : result.error;
         if (result.ok && host) {
-          if (!dirty && !busy && (selected === priorSelection || selected === result.item.id)) { choose(result.item.id); host.open = true; host.querySelector('#handoff-title').focus(); }
+          if (!dirty && !busy && !timeHelper && (selected === priorSelection || selected === result.item.id)) { choose(result.item.id); host.open = true; host.querySelector('#handoff-title').focus(); }
           else message('Private draft saved. Your current report and unsaved entries were kept; save or discard them before choosing another handoff.');
         }
         if (api.morning.refreshPersonal) api.morning.refreshPersonal();

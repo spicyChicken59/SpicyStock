@@ -1,0 +1,2051 @@
+{
+  "schema": "spicystock-broker-time-mutation-summary-v1",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "runtime_sha256": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+  "suite_sha256": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+  "tree_frozen": true,
+  "changed_during_harness": [],
+  "results": [
+    {
+      "name": "fixed-zone",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "5c1d70807e588c6dd70f29c16ba4f00ff09eb2c15551a748131aea7b44c7cce5",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 272,
+      "failures": 82,
+      "target": "independently fixed instant",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: Submission time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Submission time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "9a7abd29d8f220d1fff3379c30fbc5147957ea95ef22e841f10f39023a7c3aea",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Submission time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "cc8a98a6fcfee0300d26d3a3b4eb96923c4f7e27e784078d86429a03016b2e9c",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 29,
+            "sha256": "538ed14d92a55156331c0381623d9d4c67bbae44ae458b4a3317b22c5082f021",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "22d4756d8dc8d8e87c589c29716192a761a54753797ebdb82fe1e01d814ef1b2",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "41427db5228a3e98c65ec4fba53b0fab5b6802b568a014ab1fa1a95c0d21d978",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "28b962c6dd4e451bdfb2899c2e8fa19093c36669c6b7cc08fc222f53c36084fc",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "ca504956a0d00f9b28e39ca43325d3ed6df93cce64eabe3b28efa6b00af57e5b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "ec7e78951523e7fa9b44522095caefd047cab4da1712336e4caaf14472efb123",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "1dc327156bef59a2bd5e40dce0126c82c1155e141e3688de62f7a596b98f38d6",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bda365d58568d3d4bbef631eb46d2bfe810a35037ee0794b08b187956eec78e0",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 283,
+            "sha256": "48b94bfbd7e38135c51e6021b09fa982540be7b265eb57df7925e3277ad77296",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: nonexistent spring-forward Chicago time is refused",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: nonexistent Chicago time offers no selectable instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 42,
+            "sha256": "023fb58defdc1bd333d3db1487ef23036ea01bdab5d7dc215acf9de457d67507",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: spring-forward refusal explains the missing local time",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: last millisecond before spring jump carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 29,
+            "sha256": "c1d1b375841c0eeddc15aef65c60dc43c731d6a29a6f883d5876bc355168998b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: last millisecond before spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bd4dbe4af5d9adbde617c7d9e77e1e9f7e12455a01c37a8ee8dfa51285438235",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: first time after spring jump carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "20e1472676104b80d0bea2f36fcc858dc8ec387e481f1a6e3f98a5cf122e6e88",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: first time after spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "4db2b40608ddab374c3e793be8e5099051a76e10225edd99379403cf9ff71c3a",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: winter Chicago time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "594843809c93032d72f079568540e86298b585e728fb21b904490b4dd8c3ecec",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: winter Chicago time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "e945d7d6746511c2300b266b899a5259ed57d022e97376ea64562471826ec98b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 94,
+            "sha256": "c186989c76b9ed8d204cadacd722ebfbc2855327f9c5280eac1ec8054a25b6e7",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: expected occurrence -05:00 exists",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "470b59b2b82688da4867aa923bb408f9eee58b6c72851a7f0383a75c88d360a9",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "b0412eaec8ef1e5912358c5288cdeae4572ef957e47db18c4260d88572aa9333",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 94,
+            "sha256": "c186989c76b9ed8d204cadacd722ebfbc2855327f9c5280eac1ec8054a25b6e7",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: expected occurrence -06:00 exists",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "470b59b2b82688da4867aa923bb408f9eee58b6c72851a7f0383a75c88d360a9",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bbfee945638e3a67ee1b4f527ef0eefa1d100ec312c2340d6af5b7439b9111ff",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1234,
+            "sha256": "22e3ca876c24bef7d3db78ef59861fdf22391bc6672d50005819b06268477b07",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Submission time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Submission time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "9a7abd29d8f220d1fff3379c30fbc5147957ea95ef22e841f10f39023a7c3aea",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Submission time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "cc8a98a6fcfee0300d26d3a3b4eb96923c4f7e27e784078d86429a03016b2e9c",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 29,
+            "sha256": "538ed14d92a55156331c0381623d9d4c67bbae44ae458b4a3317b22c5082f021",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "22d4756d8dc8d8e87c589c29716192a761a54753797ebdb82fe1e01d814ef1b2",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "41427db5228a3e98c65ec4fba53b0fab5b6802b568a014ab1fa1a95c0d21d978",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "28b962c6dd4e451bdfb2899c2e8fa19093c36669c6b7cc08fc222f53c36084fc",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "ca504956a0d00f9b28e39ca43325d3ed6df93cce64eabe3b28efa6b00af57e5b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "ec7e78951523e7fa9b44522095caefd047cab4da1712336e4caaf14472efb123",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at preview exposes both offset and UTC",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "1dc327156bef59a2bd5e40dce0126c82c1155e141e3688de62f7a596b98f38d6",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bda365d58568d3d4bbef631eb46d2bfe810a35037ee0794b08b187956eec78e0",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 283,
+            "sha256": "48b94bfbd7e38135c51e6021b09fa982540be7b265eb57df7925e3277ad77296",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: nonexistent spring-forward Chicago time is refused",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time offers no selectable instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 42,
+            "sha256": "023fb58defdc1bd333d3db1487ef23036ea01bdab5d7dc215acf9de457d67507",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: spring-forward refusal explains the missing local time",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 29,
+            "sha256": "c1d1b375841c0eeddc15aef65c60dc43c731d6a29a6f883d5876bc355168998b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bd4dbe4af5d9adbde617c7d9e77e1e9f7e12455a01c37a8ee8dfa51285438235",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: first time after spring jump carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "20e1472676104b80d0bea2f36fcc858dc8ec387e481f1a6e3f98a5cf122e6e88",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: first time after spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "4db2b40608ddab374c3e793be8e5099051a76e10225edd99379403cf9ff71c3a",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: winter Chicago time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "594843809c93032d72f079568540e86298b585e728fb21b904490b4dd8c3ecec",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: winter Chicago time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "e945d7d6746511c2300b266b899a5259ed57d022e97376ea64562471826ec98b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 94,
+            "sha256": "c186989c76b9ed8d204cadacd722ebfbc2855327f9c5280eac1ec8054a25b6e7",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: expected occurrence -05:00 exists",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "470b59b2b82688da4867aa923bb408f9eee58b6c72851a7f0383a75c88d360a9",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "b0412eaec8ef1e5912358c5288cdeae4572ef957e47db18c4260d88572aa9333",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 94,
+            "sha256": "c186989c76b9ed8d204cadacd722ebfbc2855327f9c5280eac1ec8054a25b6e7",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: expected occurrence -06:00 exists",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "470b59b2b82688da4867aa923bb408f9eee58b6c72851a7f0383a75c88d360a9",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "bbfee945638e3a67ee1b4f527ef0eefa1d100ec312c2340d6af5b7439b9111ff",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1234,
+            "sha256": "22e3ca876c24bef7d3db78ef59861fdf22391bc6672d50005819b06268477b07",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/fixed-zone/output.log",
+      "log_sha256": "2b784bfa2a9d5d83a962d49a56a0b7a82385f87e52f122016c376d31d290b487",
+      "results_sha256": "e3314b4e2e38a2d404a1f112ef8af37bbd2870218d0a46fd2b1ad008855ebdd9",
+      "elapsed_seconds": 66.02
+    },
+    {
+      "name": "gap-roundtrip",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "4d48c365afee24796c7d9a1f93594eef31d4805124464d54c47e7357ecd61b7b",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 224,
+      "failures": 8,
+      "target": "nonexistent Chicago time offers no selectable instant",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: nonexistent Chicago time offers no selectable instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 70,
+            "sha256": "0d39e6f0117c12e747eaabeee765530f2cb32c4b93b6a01ec0b26f7692467f1a",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: nonexistent Chicago time cannot masquerade as a repeated hour",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "3390d120c113f7158574dd666a6ff094b84ff7b995214e7169c9fca028126634",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: spring-forward refusal explains the missing local time",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1144,
+            "sha256": "e4ef290904de9d429da0cfffa2a85f813ef29ff42122a17cbf738b029b79dca4",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time offers no selectable instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 70,
+            "sha256": "0d39e6f0117c12e747eaabeee765530f2cb32c4b93b6a01ec0b26f7692467f1a",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time cannot masquerade as a repeated hour",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "3390d120c113f7158574dd666a6ff094b84ff7b995214e7169c9fca028126634",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: spring-forward refusal explains the missing local time",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1144,
+            "sha256": "e4ef290904de9d429da0cfffa2a85f813ef29ff42122a17cbf738b029b79dca4",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/gap-roundtrip/output.log",
+      "log_sha256": "d9910ffcefcad5dc49491ca2bf8b5af2fac1e400f608ddf2b6aac8d2ddfd32af",
+      "results_sha256": "b9985d6a4fa43a519fc8f6138aa688b5166d8f1dccf2bddcf759e3761591371c",
+      "elapsed_seconds": 65.13
+    },
+    {
+      "name": "fold-choice",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "7f916851b66df377737be5f8803a69680b5544ae6047c419f789bba12b87f7e1",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 354,
+      "failures": 10,
+      "target": "ambiguous time cannot apply",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "41a2bf5e455f20d14e9a62c49b74c69b703feac7c21180569ed58c26833d7f79",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "9c3c5f4b210c57e4b2828cd2a3d75a26952a459af97a9a39a2bf05dd6b03e231",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: stale occurrence cannot apply after a clock edit",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 25,
+            "sha256": "41a2bf5e455f20d14e9a62c49b74c69b703feac7c21180569ed58c26833d7f79",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "9c3c5f4b210c57e4b2828cd2a3d75a26952a459af97a9a39a2bf05dd6b03e231",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: stale occurrence cannot apply after a clock edit",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/fold-choice/output.log",
+      "log_sha256": "457f340e4d4869b3f1cf0f625dc339005236909e5b759227a40cba18c4196571",
+      "results_sha256": "0f80e43aa9c69f79264c12709e69e156327b8522ed6b8730f9d11520eb58f7c2",
+      "elapsed_seconds": 9.56
+    },
+    {
+      "name": "fractional-seconds",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "d531f94a2c1278c975a984edbdcc61e0f62566b19d30d973d4eddb4b8fdc5718",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 354,
+      "failures": 10,
+      "target": "Latest entry fill time resolves",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "21ab55822a998754983f2eb8c2533bbabc87f7898d96e592f5bd501571e1ba07",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 283,
+            "sha256": "3f0efd6fef050ea3c1f60b3a9dab0f09160916b503cae13ffb805962ea5595de",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: last millisecond before spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "fde18c9f70044da5db73dac09af2824d48023af46664f5e9cb6b19f7e6cc6a1e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: applied time on the stale editor resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "6d60688b6b74dce35abb01c2a2e86a261609e1d6b1b28170f67892c432a96be0",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "21ab55822a998754983f2eb8c2533bbabc87f7898d96e592f5bd501571e1ba07",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 283,
+            "sha256": "3f0efd6fef050ea3c1f60b3a9dab0f09160916b503cae13ffb805962ea5595de",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "fde18c9f70044da5db73dac09af2824d48023af46664f5e9cb6b19f7e6cc6a1e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: applied time on the stale editor resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 63,
+            "sha256": "6d60688b6b74dce35abb01c2a2e86a261609e1d6b1b28170f67892c432a96be0",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/fractional-seconds/output.log",
+      "log_sha256": "1933e68a6bc8e2b9ea2ca3a6c722ff7ef3d4f5a8caa5f2cdffb1cf4cc8ca073e",
+      "results_sha256": "e94d414785671edf7b390d3bac85d33d65a4b192c48a66d730ccc8c0d31954ac",
+      "elapsed_seconds": 9.76
+    },
+    {
+      "name": "apply-one-field",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "03d76bc5b14728f0fbb12c89b656d7f829393ce7962c2559a0078cae49ec5855",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 354,
+      "failures": 50,
+      "target": "application changes only its selected raw field",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "37e811c8af2c14ecdda093dba7a6c5cf356e8de435fbed3b364657ce021c9b4b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 633,
+            "sha256": "d0aaa01d49219a964e3a740de31f164656612292a3a127c2707c2c31a98b3918",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest entry fill time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "045cebd11f179e26f09e1c84559a45b8a820398bed7af608c4b322aaf6fc2f24",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 633,
+            "sha256": "c40b7d8458265b691b666cef53d3b031fdeb55041e2bf2abac1e447c2dce3aa5",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Remainder cancellation time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "1f696714daa9bda581522229ad119d0bf62464ffc12cd8cbbc1247731be7d4de",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 629,
+            "sha256": "b644a47386b65e173b508d635b3bc419b2b5b1ed2e14eaaf9381d66e01e6b385",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Latest exit time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "40c16e087d503b4266288ee7c0cde7f315b74cb0091b4a7e48a6833b1fa7481d",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 629,
+            "sha256": "6ad95223b23b4410caa6cd9f63bce12d31e05842ad740429cb89ae9078fea4fa",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: Protection checked by you at application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 195,
+            "sha256": "60c8b66f39c6664108eb3aebb6ede0c5c3b5ab679b5238efcdb25ef4f681fe0f",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: converted fill before submission cannot overwrite saved facts",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "cccde50f922c85bdc56cd9790ff15c433bf43c511118aacbd0c2f81165f41546",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: chronology keeps the existing model refusal",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: converted cancellation before the latest fill cannot overwrite",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "85d0e6fcce5cbf0f1203575c23752a1cb2d90a60c95e9f576f2362daf77d2d41",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: cancellation chronology remains enforced",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: converted complete exit before the latest fill cannot overwrite",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "24271c94d5ed7f923876ddf66ba5ca129e4f2f280221733ef13def2362b6f06f",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: complete-exit chronology remains enforced",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: saved reload with a helper restores all raw fields",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 671,
+            "sha256": "34a92a46dc3b097a86552af637613c608e1a65de1623106862f5266fa847905d",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "37e811c8af2c14ecdda093dba7a6c5cf356e8de435fbed3b364657ce021c9b4b",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 633,
+            "sha256": "d0aaa01d49219a964e3a740de31f164656612292a3a127c2707c2c31a98b3918",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest entry fill time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "045cebd11f179e26f09e1c84559a45b8a820398bed7af608c4b322aaf6fc2f24",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 633,
+            "sha256": "c40b7d8458265b691b666cef53d3b031fdeb55041e2bf2abac1e447c2dce3aa5",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "1f696714daa9bda581522229ad119d0bf62464ffc12cd8cbbc1247731be7d4de",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 629,
+            "sha256": "b644a47386b65e173b508d635b3bc419b2b5b1ed2e14eaaf9381d66e01e6b385",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Latest exit time application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at carries the explicit Chicago offset",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at resolves to its independently fixed instant",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 41,
+            "sha256": "40c16e087d503b4266288ee7c0cde7f315b74cb0091b4a7e48a6833b1fa7481d",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at application changes only its selected raw field",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 629,
+            "sha256": "6ad95223b23b4410caa6cd9f63bce12d31e05842ad740429cb89ae9078fea4fa",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: Protection checked by you at application returns keyboard focus to raw input",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: entry milliseconds survive conversion",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: explicit save uses the unchanged UTC storage format",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 195,
+            "sha256": "60c8b66f39c6664108eb3aebb6ede0c5c3b5ab679b5238efcdb25ef4f681fe0f",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: converted fill before submission cannot overwrite saved facts",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "cccde50f922c85bdc56cd9790ff15c433bf43c511118aacbd0c2f81165f41546",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: chronology keeps the existing model refusal",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: converted cancellation before the latest fill cannot overwrite",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "85d0e6fcce5cbf0f1203575c23752a1cb2d90a60c95e9f576f2362daf77d2d41",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: cancellation chronology remains enforced",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: converted complete exit before the latest fill cannot overwrite",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 6603,
+            "sha256": "24271c94d5ed7f923876ddf66ba5ca129e4f2f280221733ef13def2362b6f06f",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: complete-exit chronology remains enforced",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: saved reload with a helper restores all raw fields",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 671,
+            "sha256": "34a92a46dc3b097a86552af637613c608e1a65de1623106862f5266fa847905d",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/apply-one-field/output.log",
+      "log_sha256": "44eaa491fd27288852af3d9a7b0786b719dad0cdc79131a1da7430ea457cea24",
+      "results_sha256": "b90301e058aad328141b2460e127be4f4a9a7ea96f6133f8ab5314169bbf8a8c",
+      "elapsed_seconds": 9.52
+    },
+    {
+      "name": "unfinished-save",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "1a481c69f902b2d4ba72565ec29646763471a3a924dd92c4e61912f96f34352e",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 354,
+      "failures": 14,
+      "target": "unfinished helper prevents accidental report saving",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: open conflicted helper still blocks report save",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: open conflicted helper still blocks report save",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/unfinished-save/output.log",
+      "log_sha256": "e36fae3482627a386258247a40e300f333663de28ac9e319cc5e56093aff6414",
+      "results_sha256": "6f1f53f1fcc3193a70cdf72cdb164db98f86e304c2cbb1f899e2b13969d0d794",
+      "elapsed_seconds": 9.62
+    },
+    {
+      "name": "revision-adoption",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "a02f1a1061cf3dd81fbf74437dfae21f780dcfcd8557fe05eacaf332b89ace9e",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 26,
+      "failures": 10,
+      "target": "pending replacement keeps exact helper nodes",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement keeps the helper visible",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 100,
+            "sha256": "306fb552c9fba5cad7c6dd81d0646e3baaf7ad8ab9efaaee7f6e158e69d0c21e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement announces the stale editor revision",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1018,
+            "sha256": "f3db2a69aa414fac6c7dad07428e9a7735ec4012bf513c028f46202aac5076a8",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement keeps the helper visible",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 100,
+            "sha256": "306fb552c9fba5cad7c6dd81d0646e3baaf7ad8ab9efaaee7f6e158e69d0c21e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement announces the stale editor revision",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1009,
+            "sha256": "31bb5b18354065724e3abfcf4ebc314c6965f12484d2703a026d1119f8ec0670",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/revision-adoption/output.log",
+      "log_sha256": "05b2f5b8c8f46e6b0d8788aec1b2c940502bd2267b7c755a696221da6d8ff7bb",
+      "results_sha256": "ac73e2835126f91d6d4d367a53765f2f2d09135727d30eddc1373f6368b99b13",
+      "elapsed_seconds": 62.36
+    },
+    {
+      "name": "pending-prepare",
+      "override": "SCSTOCK_HANDOFF_UI",
+      "source_sha256": "e4574ae619567d0db12e14779211ff9725b7db43d13aa69d317358cb1713839e",
+      "expected_green": false,
+      "exit_code": 1,
+      "checks": 26,
+      "failures": 10,
+      "target": "pending",
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement keeps the helper visible",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 100,
+            "sha256": "306fb552c9fba5cad7c6dd81d0646e3baaf7ad8ab9efaaee7f6e158e69d0c21e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement announces the stale editor revision",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "390/light/Asia/Tokyo: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1009,
+            "sha256": "6bc7756c38230c9c8b332a911cc9947135b36aabbfcc5e08e32eb1f30d19c4df",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement keeps the helper visible",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 100,
+            "sha256": "306fb552c9fba5cad7c6dd81d0646e3baaf7ad8ab9efaaee7f6e158e69d0c21e",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement announces the stale editor revision",
+          "status": "FAIL",
+          "lane": "A"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 20,
+            "sha256": "857b56cf9bd00b28d63567cf7e9db2ed8bf16beaf3d46ed65391d837521003bb",
+            "omitted": true
+          }
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: broker-time journey completes",
+          "status": "FAIL",
+          "lane": "A",
+          "detail_summary": {
+            "encoding": "UTF-8 string bytes",
+            "bytes": 1009,
+            "sha256": "a98715e1efb83091cd4896d149f8636c0e817a0f68efd56ddf56aea8055076c1",
+            "omitted": true
+          }
+        }
+      ],
+      "log": "/tmp/oct15-broker-time-mutations-v2/pending-prepare/output.log",
+      "log_sha256": "afbfa706a691a770a3d03004f2d01db042b4e6fa148469fdc9c814b776d4108b",
+      "results_sha256": "552410816a032d37e60c691cdcf3db5a46ad323ea587569eaae72008c48cb7a9",
+      "elapsed_seconds": 62.22
+    },
+    {
+      "name": "unrelated-store-cap",
+      "override": "SCSTOCK_HANDOFF",
+      "source_sha256": "a960698d17ded96638f65b25c0334e738b51c42bf815affc8037dbd3bb0555f2",
+      "expected_green": true,
+      "exit_code": 0,
+      "checks": 354,
+      "failures": 0,
+      "target": "unrelated capacity rule",
+      "failed_assertions": [],
+      "log": "/tmp/oct15-broker-time-mutations-v2/unrelated-store-cap/output.log",
+      "log_sha256": "9e821bccf52aa1e38a91f2915090999eee9c38aa6e6291cc033cdd0a146de0e2",
+      "results_sha256": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98",
+      "elapsed_seconds": 9.01
+    }
+  ],
+  "original_schema": "spicystock-broker-time-mutations-v1",
+  "evidence_minimization": {
+    "purpose": "Preserve verification outcomes and content digests without publishing raw assertion payloads.",
+    "original_receipt": {
+      "local_path": "/tmp/oct15-broker-time-original-mutation-receipts/mutation-results.json",
+      "original_repository_path": "release-evidence/2026-10-15-broker-time/mutation-results.json",
+      "source_commit": "19dcb98c19de19b728bef0e906b3e70a24308394",
+      "bytes": 114971,
+      "sha256": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e"
+    },
+    "transformation": "Every assertion detail string is replaced by its original UTF-8 byte count and SHA-256; the summary schema and minimization provenance are explicit, while all remaining original fields and array order are unchanged.",
+    "detail_fields_omitted": 152,
+    "detail_utf8_bytes_omitted": 60869,
+    "rerun_performed": false,
+    "scope": "Historical synthetic local test evidence only; no personal trade, broker order or production result."
+  }
+}

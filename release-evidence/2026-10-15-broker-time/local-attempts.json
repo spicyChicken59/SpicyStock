@@ -1,0 +1,118 @@
+{
+  "schema": "spicystock-broker-time-local-attempts-v1",
+  "attempts": [
+    {
+      "name": "preliminary existing handoff/firsttrade compatibility",
+      "passed": 349,
+      "failed": 0,
+      "scope": "Before final post-await helper guard and permanent test additions; superseded by final compatibility run.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-compatibility.log",
+        "bytes": 319,
+        "sha256": "e78a99b1723784d2f056b0673bf84a80661d1f4603a77a9f1f25180b06dac0b1"
+      }
+    },
+    {
+      "name": "focused v1",
+      "passed": 292,
+      "failed": 0,
+      "scope": "Before real second-tab and delayed replacement regression additions.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-focused.log",
+        "bytes": 196,
+        "sha256": "86238a4ab9418180725432a7ab83a230b4b07cfa08bc0847bcd0bb91c68b5a71"
+      }
+    },
+    {
+      "name": "focused v2",
+      "passed": 326,
+      "failed": 2,
+      "scope": "Harness object-key-order mismatch only; identical field values. Corrected expected-object ordering, no runtime change.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-focused-v2.log",
+        "bytes": 2028,
+        "sha256": "822db9cdc2d35f3e0f69083c1297eaf8ee6ba2d46ae73b63b4f8cda63b34f1fb"
+      },
+      "results": {
+        "path": "/tmp/oct15-broker-time-focused-v2-shots/page-results.json",
+        "bytes": 51866,
+        "sha256": "5425342d25886670684cd7fb9626e1bcb43f6b87ad62985eb6f842d205165850"
+      },
+      "failed_assertions": [
+        {
+          "name": "390/light/Asia/Tokyo: explicit reload adopts all facts from the newer revision",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": "got {\"submitted_quantity\":\"2\",\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":\"1\",\"average_price\":\"111.24\",\"filled_at\":\"2026-09-11T13:32:03.123Z\",\"cancelled_quantity\":\"1\",\"cancelled_at\":\"2026-09-11T13:33:00.000Z\",\"exited_quantity\":\"1\",\"average_exit_price\":\"115\",\"exited_at\":\"2026-09-11T13:34:00.000Z\",\"entry_fees\":\"0.05\",\"exit_fees\":\"0.07\",\"protected_quantity\":\"0\",\"protection_confirmed_at\":\"\"}, want {\"submitted_quantity\":\"2\",\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":\"1\",\"average_price\":\"111.24\",\"filled_at\":\"2026-09-11T13:32:03.123Z\",\"cancelled_quantity\":\"1\",\"cancelled_at\":\"2026-09-11T13:33:00.000Z\",\"exited_quantity\":\"1\",\"exited_at\":\"2026-09-11T13:34:00.000Z\",\"protected_quantity\":\"0\",\"protection_confirmed_at\":\"\",\"average_exit_price\":\"115\",\"entry_fees\":\"0.05\",\"exit_fees\":\"0.07\"}"
+        },
+        {
+          "name": "1280/dark/America/Los_Angeles: explicit reload adopts all facts from the newer revision",
+          "status": "FAIL",
+          "lane": "A",
+          "detail": "got {\"submitted_quantity\":\"2\",\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":\"1\",\"average_price\":\"111.24\",\"filled_at\":\"2026-09-11T13:32:03.123Z\",\"cancelled_quantity\":\"1\",\"cancelled_at\":\"2026-09-11T13:33:00.000Z\",\"exited_quantity\":\"1\",\"average_exit_price\":\"115\",\"exited_at\":\"2026-09-11T13:34:00.000Z\",\"entry_fees\":\"0.05\",\"exit_fees\":\"0.07\",\"protected_quantity\":\"0\",\"protection_confirmed_at\":\"\"}, want {\"submitted_quantity\":\"2\",\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":\"1\",\"average_price\":\"111.24\",\"filled_at\":\"2026-09-11T13:32:03.123Z\",\"cancelled_quantity\":\"1\",\"cancelled_at\":\"2026-09-11T13:33:00.000Z\",\"exited_quantity\":\"1\",\"exited_at\":\"2026-09-11T13:34:00.000Z\",\"protected_quantity\":\"0\",\"protection_confirmed_at\":\"\",\"average_exit_price\":\"115\",\"entry_fees\":\"0.05\",\"exit_fees\":\"0.07\"}"
+        }
+      ]
+    },
+    {
+      "name": "focused v4",
+      "passed": 350,
+      "failed": 0,
+      "scope": "Permanent delayed replacement regression; superseded by two stronger semantic spring-gap assertions per context.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-focused-v4.log",
+        "bytes": 199,
+        "sha256": "bc875174fb981ba2210f38d69b4a65cf2517280b2ca7aab543bbfba06e741776"
+      }
+    },
+    {
+      "name": "focused v3",
+      "passed": 328,
+      "failed": 0,
+      "scope": "Corrected comparison order and genuine cross-tab coverage; before permanent delayed replacement regression.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-focused-v3.log",
+        "bytes": 199,
+        "sha256": "f6940c1f24978dfedc25da7c4769da77eb109c2e834803d6bb2e791f13573a80"
+      }
+    },
+    {
+      "name": "independent initial environment diagnostic",
+      "scope": "spawnSync git EPERM before browser launch on default restricted execution; retry through permitted route. No approval rejection or product change.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-independent-attempt1.log",
+        "bytes": 734,
+        "sha256": "36b134e1e9d1abb3693e30cbfde671168741833f156c9540eceddd785c494405"
+      }
+    },
+    {
+      "name": "independent broad attempt2",
+      "passed": 148,
+      "failed": 2,
+      "scope": "Temporary harness failed to open outer disclosure in second tab; corrected only harness, then broad attempt3 passed.",
+      "results": {
+        "path": "/tmp/oct15-broker-time-independent-attempt2/review.json",
+        "bytes": 118322,
+        "sha256": "cefc1562d8c1f96e79307d1f8d89cbec6e45dd17927979c90563baafd49cfcf6"
+      },
+      "failed_assertions": [
+        {
+          "name": "390/Pacific/Honolulu browser journey",
+          "pass": false,
+          "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-handoff-field=\"submitted_quantity\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"text\" class=\"sc-input\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"numeric\" placeholder=\"Unknown\" id=\"handoff-submitted_quantity\" data-handoff-field=\"submitted_quantity\"/>\u001b[22m\n\u001b[2m    - fill(\"1\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    60 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /tmp/oct15-broker-time-independent-review.mjs:103:162"
+        },
+        {
+          "name": "1280/Europe/Berlin browser journey",
+          "pass": false,
+          "error": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-handoff-field=\"submitted_quantity\"]')\u001b[22m\n\u001b[2m    - locator resolved to <input type=\"text\" class=\"sc-input\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"numeric\" placeholder=\"Unknown\" id=\"handoff-submitted_quantity\" data-handoff-field=\"submitted_quantity\"/>\u001b[22m\n\u001b[2m    - fill(\"1\")\u001b[22m\n\u001b[2m  - attempting fill action\u001b[22m\n\u001b[2m    2 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m      - element is not visible\u001b[22m\n\u001b[2m    - retrying fill action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    60 \u00d7 waiting for element to be visible, enabled and editable\u001b[22m\n\u001b[2m       - element is not visible\u001b[22m\n\u001b[2m     - retrying fill action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /tmp/oct15-broker-time-independent-review.mjs:103:162"
+        }
+      ]
+    },
+    {
+      "name": "independent real-lock original defect",
+      "passed": 23,
+      "failed": 1,
+      "scope": "Actual async replacement completion hid helper; post-await !timeHelper correction independently rerun and permanently covered.",
+      "durable_receipt": "original-race-failure.json"
+    }
+  ]
+}

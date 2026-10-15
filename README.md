@@ -129,6 +129,20 @@ the draft as a new entry to copy. Corrections are explicit; stale revisions
 cannot overwrite a newer report. Dates require an explicit time-zone offset
 and are displayed in Chicago time.
 
+Each event-time field also offers **Enter Chicago time**. This optional helper
+converts an explicitly entered date and time in America/Chicago to a preview
+with its UTC offset and UTC instant, independent of the device's time zone.
+It starts blank, refuses a time skipped by the spring clock change, and asks
+which occurrence the broker reported when the autumn hour repeats. Applying
+changes only that unsaved event field; the report still needs an explicit save.
+Cancel keeps the event field and other entries. Apply or cancel the open helper
+before saving or switching reports; **Load saved report** explicitly discards
+it along with other unsaved corrections. The existing explicit-offset field
+remains available for a broker time shown in another zone. **Use current time**
+still supplies only the device's current instant, never an observed broker event.
+The helper makes no request, saves no private record and changes no timestamp,
+quantity, chronology or account validation rule.
+
 The private store holds at most 100 records and 1 MiB, never silently evicts
 records, and serializes writes with browser Web Locks. Unavailable, unreadable
 or future-version storage is preserved and reported; it does not imply no

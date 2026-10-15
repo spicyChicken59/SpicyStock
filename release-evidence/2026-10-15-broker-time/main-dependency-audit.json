@@ -1,0 +1,272 @@
+{
+  "schema": "spicystock-broker-time-main-dependency-independent-audit-v1",
+  "reviewed_at": "2026-10-15T20:00:36.433542+00:00",
+  "scope": "Read-only structural dependency and preserved-source audit before checkpoint/freeze. This is not final exact-head acceptance and does not claim browser reruns.",
+  "base": "145716b71882a373efd585035eb5761ffb78c3f7",
+  "prior_source": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+  "prior_base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "passed": 41,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Actual-main target HEAD",
+      "pass": true,
+      "actual": "145716b71882a373efd585035eb5761ffb78c3f7",
+      "expected": "145716b71882a373efd585035eb5761ffb78c3f7"
+    },
+    {
+      "name": "Existing broker dependency identical across bases: docs/app-handoff-ui.js",
+      "pass": true,
+      "actual": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f",
+      "expected": "d7fd08bc2d6b32081b7437c765aa9f79c97eee2ba71051202a342cc89dafc82f"
+    },
+    {
+      "name": "Existing broker dependency identical across bases: docs/app-handoff.js",
+      "pass": true,
+      "actual": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "expected": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "Existing broker dependency identical across bases: docs/app.css",
+      "pass": true,
+      "actual": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586",
+      "expected": "d870f13cfdbbb940784ee95fc155adecefb73d0947c48ad1d9bbdccdfe7f9586"
+    },
+    {
+      "name": "Existing broker dependency identical across bases: tools/page_smoke.mjs",
+      "pass": true,
+      "actual": "630d84d998be37faacb7618037621b8235c2d790566539a0efa378d43bb11769",
+      "expected": "630d84d998be37faacb7618037621b8235c2d790566539a0efa378d43bb11769"
+    },
+    {
+      "name": "New broker source retained exactly: docs/app-handoff-ui.js",
+      "pass": true,
+      "actual": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "expected": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "New broker source retained exactly: docs/app.css",
+      "pass": true,
+      "actual": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+      "expected": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    {
+      "name": "New broker source retained exactly: tools/page_smoke.mjs",
+      "pass": true,
+      "actual": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+      "expected": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e"
+    },
+    {
+      "name": "New broker source retained exactly: tools/broker_time_cases.mjs",
+      "pass": true,
+      "actual": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+      "expected": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/app-handoff.js",
+      "pass": true,
+      "actual": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "expected": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/app-morning.js",
+      "pass": true,
+      "actual": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+      "expected": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/app-research-observations.js",
+      "pass": true,
+      "actual": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e",
+      "expected": "9afb7ec98f9658e10d6b7c9f2f6b7e9c0838eccf7854375bfc239de4a7da586e"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/app-stop-research.js",
+      "pass": true,
+      "actual": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af",
+      "expected": "28b7e017926a3c89129a90e9ffccc7b9c3220be86c0381c74163657ae46575af"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/app.js",
+      "pass": true,
+      "actual": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f",
+      "expected": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: .env.example",
+      "pass": true,
+      "actual": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac",
+      "expected": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac"
+    },
+    {
+      "name": "Actual-main unrelated runtime/config retained: docs/source-recovery.json",
+      "pass": true,
+      "actual": "c6a7578584bf9b73280eb62d5bb4d3289f762aec29fa4460838f95323c56393e",
+      "expected": "c6a7578584bf9b73280eb62d5bb4d3289f762aec29fa4460838f95323c56393e"
+    },
+    {
+      "name": "Fixture is actual-main bytes: tests/fixtures/cash-preview/publication.json",
+      "pass": true,
+      "actual": "978118a96059c97a71e3df2129f4f27b845f479f92ef4d883bbe5fe22f1b8686",
+      "expected": "978118a96059c97a71e3df2129f4f27b845f479f92ef4d883bbe5fe22f1b8686"
+    },
+    {
+      "name": "Fixture does not import rejected combined variant: tests/fixtures/cash-preview/publication.json",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Fixture is actual-main bytes: tests/fixtures/cash-preview/observed.json",
+      "pass": true,
+      "actual": "eef39e40522fe9f570bad3f84c444079d2c41767f8414f0368ed1cd96c08f377",
+      "expected": "eef39e40522fe9f570bad3f84c444079d2c41767f8414f0368ed1cd96c08f377"
+    },
+    {
+      "name": "Fixture does not import rejected combined variant: tests/fixtures/cash-preview/observed.json",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Original broker delta contains 17 paths",
+      "pass": true,
+      "actual": 17,
+      "expected": 17
+    },
+    {
+      "name": "Original broker delta contains no fixture modification",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "name": "New target fixtures have no tracked delta",
+      "pass": true,
+      "actual": "",
+      "expected": ""
+    },
+    {
+      "name": "Original exact review commit",
+      "pass": true,
+      "actual": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+      "expected": "600fb0985d25f69fd7dc41a9399ba6a619277a79"
+    },
+    {
+      "name": "Original exact review result",
+      "pass": true,
+      "actual": [
+        112,
+        0,
+        112
+      ],
+      "expected": [
+        112,
+        0,
+        112
+      ]
+    },
+    {
+      "name": "Original review has no failed checks",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    },
+    {
+      "name": "Original review source pin: docs/app-handoff-ui.js",
+      "pass": true,
+      "actual": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "expected": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "Original review source pin: docs/app.css",
+      "pass": true,
+      "actual": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+      "expected": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    {
+      "name": "Original review source pin: docs/app-handoff.js",
+      "pass": true,
+      "actual": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "expected": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "Original reviewed permanent broker suite pin",
+      "pass": true,
+      "actual": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+      "expected": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/compatibility-page-results.json",
+      "pass": true,
+      "actual": "26f1139719deb93381a05503df9ae9a5c4ab47098e3c8c6500c178826b538aa2",
+      "expected": "26f1139719deb93381a05503df9ae9a5c4ab47098e3c8c6500c178826b538aa2"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/focused-page-results.json",
+      "pass": true,
+      "actual": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98",
+      "expected": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/independent-browser-results.json",
+      "pass": true,
+      "actual": "849b0d2367b12837d95a09405d5f3c269d4a8269dd51048a1615e6d6ce8b2635",
+      "expected": "849b0d2367b12837d95a09405d5f3c269d4a8269dd51048a1615e6d6ce8b2635"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/independent-race-results.json",
+      "pass": true,
+      "actual": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3",
+      "expected": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/independent-review.json",
+      "pass": true,
+      "actual": "a786a16d863ea6c0e6a7bcc081a0d94ca0d8a785e0f1e81300ab3e615d8669bb",
+      "expected": "a786a16d863ea6c0e6a7bcc081a0d94ca0d8a785e0f1e81300ab3e615d8669bb"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/local-attempts.json",
+      "pass": true,
+      "actual": "13e8756b4eb0370296336a3795522e841d50f6a2b3e43867eb92b6efb114fa25",
+      "expected": "13e8756b4eb0370296336a3795522e841d50f6a2b3e43867eb92b6efb114fa25"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/mutation-results.json",
+      "pass": true,
+      "actual": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e",
+      "expected": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/original-race-failure.json",
+      "pass": true,
+      "actual": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471",
+      "expected": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/prepared.json",
+      "pass": true,
+      "actual": "fffbd88f77da00859e686359305b0d4d4f2094ebb57128f15be19ff9ef9d7d9b",
+      "expected": "fffbd88f77da00859e686359305b0d4d4f2094ebb57128f15be19ff9ef9d7d9b"
+    },
+    {
+      "name": "Historical evidence retained exactly: release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+      "pass": true,
+      "actual": "e0a4c4e8336bcfce46b197023b139bfc095163b0d529e2b8f915c23d9d6627f2",
+      "expected": "e0a4c4e8336bcfce46b197023b139bfc095163b0d529e2b8f915c23d9d6627f2"
+    },
+    {
+      "name": "Broker additions introduce no network/observation fetch",
+      "pass": true,
+      "actual": false,
+      "expected": false
+    }
+  ],
+  "original_exact_review": {
+    "path": "/tmp/oct15-broker-time-exact-review.json",
+    "bytes": 33348,
+    "sha256": "b24892c28b48b358ce58b43910ba4e6d2c36f5721913fadb54a7e67e1ef02e01"
+  },
+  "conclusion": "The executable broker patch targets files identical on actual main and the old combined base. Existing handoff model is identical. New helper only resolves explicitly entered America/Chicago wall times and feeds existing unsaved timestamp fields; no combined policy, provider or fixture is imported. The suite reads unchanged actual-main cash-preview fixtures, so fresh actual-main executions are required and remain separately recorded."
+}

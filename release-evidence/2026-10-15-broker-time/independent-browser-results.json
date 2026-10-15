@@ -1,0 +1,1540 @@
+{
+  "schema": 1,
+  "scope": "Independent local source execution and real browser review; synthetic broker events, no remote/provider calls or product edits",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "pins": {
+    "docs/app-handoff-ui.js": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+    "docs/app.css": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+    "docs/app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+    "README.md": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880",
+    "tools/page_smoke.mjs": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+    "tools/broker_time_cases.mjs": "882fefb36ee6644f974cf91f4f188868a667f341a951949065e7b9b7327bcef1",
+    "tests/fixtures/cash-preview/publication.json": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a",
+    "tests/fixtures/cash-preview/observed.json": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a"
+  },
+  "results": [
+    {
+      "name": "unchanged private model bytes",
+      "pass": true,
+      "got": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "want": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "source-executed boundary 2026-01-02 00:00",
+      "pass": true,
+      "got": [
+        "2026-01-02T06:00:00.000Z"
+      ],
+      "want": [
+        "2026-01-02T06:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-07-01 23:59:59.009",
+      "pass": true,
+      "got": [
+        "2026-07-02T04:59:59.009Z"
+      ],
+      "want": [
+        "2026-07-02T04:59:59.009Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 01:59:59.999",
+      "pass": true,
+      "got": [
+        "2026-03-08T07:59:59.999Z"
+      ],
+      "want": [
+        "2026-03-08T07:59:59.999Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 02:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 02:59:59.999",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 03:00",
+      "pass": true,
+      "got": [
+        "2026-03-08T08:00:00.000Z"
+      ],
+      "want": [
+        "2026-03-08T08:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-11-01 01:59:59.007",
+      "pass": true,
+      "got": [
+        "2026-11-01T06:59:59.007Z",
+        "2026-11-01T07:59:59.007Z"
+      ],
+      "want": [
+        "2026-11-01T06:59:59.007Z",
+        "2026-11-01T07:59:59.007Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-11-01 02:00",
+      "pass": true,
+      "got": [
+        "2026-11-01T08:00:00.000Z"
+      ],
+      "want": [
+        "2026-11-01T08:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2024-02-29 11:22:33.5",
+      "pass": true,
+      "got": [
+        "2024-02-29T17:22:33.500Z"
+      ],
+      "want": [
+        "2024-02-29T17:22:33.500Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2006-03-15 08:00",
+      "pass": true,
+      "got": [
+        "2006-03-15T14:00:00.000Z"
+      ],
+      "want": [
+        "2006-03-15T14:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2007-03-15 08:00",
+      "pass": true,
+      "got": [
+        "2007-03-15T13:00:00.000Z"
+      ],
+      "want": [
+        "2007-03-15T13:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-02-29 08:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 24:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 23:59:60",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 10:00:00.0001",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary  08:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 ",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed unavailable conversion has no choices",
+      "pass": true,
+      "got": 0,
+      "want": 0
+    },
+    {
+      "name": "source-executed unavailable conversion names raw offset fallback",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu actual browser zone",
+      "pass": true,
+      "got": "Pacific/Honolulu",
+      "want": "Pacific/Honolulu"
+    },
+    {
+      "name": "390/Pacific/Honolulu five helper targets",
+      "pass": true,
+      "got": [
+        "submitted_at",
+        "filled_at",
+        "cancelled_at",
+        "exited_at",
+        "protection_confirmed_at"
+      ],
+      "want": [
+        "submitted_at",
+        "filled_at",
+        "cancelled_at",
+        "exited_at",
+        "protection_confirmed_at"
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu submitted_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu filled_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu cancelled_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu exited_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": "2026-09-11T08:31:42.007-05:00"
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": "2026-09-11T08:31:42.007-05:00"
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu protection_confirmed_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu spring gap refused",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu fold is explicit",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "390/Pacific/Honolulu fold not assumed",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu two fold choices",
+      "pass": true,
+      "got": [
+        "2026-11-01T01:15:20.009-05:00",
+        "2026-11-01T01:15:20.009-06:00"
+      ],
+      "want": [
+        "2026-11-01T01:15:20.009-05:00",
+        "2026-11-01T01:15:20.009-06:00"
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu edited fold clears prior choice",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "390/Pacific/Honolulu edited fold requires fresh choice",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu escape closes helper",
+      "pass": true,
+      "got": false,
+      "want": false
+    },
+    {
+      "name": "390/Pacific/Honolulu escape preserves unknown event",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "390/Pacific/Honolulu reclock preserves input identity/focus",
+      "pass": true,
+      "got": [
+        true,
+        true,
+        "00:00"
+      ],
+      "want": [
+        true,
+        true,
+        "00:00"
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu cancel keeps unrelated unsaved entry",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "",
+        "filled_quantity": "",
+        "average_price": "110.23",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "",
+        "filled_quantity": "",
+        "average_price": "110.23",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "390/Pacific/Honolulu helper interaction has no requests",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "390/Pacific/Honolulu helper interaction no storage write",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu raw other-zone offset saves same instant",
+      "pass": true,
+      "got": "2026-09-11T13:31:00.000Z",
+      "want": "2026-09-11T13:31:00.000Z"
+    },
+    {
+      "name": "390/Pacific/Honolulu cross-tab helper input preserved",
+      "pass": true,
+      "got": [
+        "2026-01-02",
+        "00:00"
+      ],
+      "want": [
+        "2026-01-02",
+        "00:00"
+      ]
+    },
+    {
+      "name": "390/Pacific/Honolulu cross-tab raw edit preserved",
+      "pass": true,
+      "got": "2",
+      "want": "2"
+    },
+    {
+      "name": "390/Pacific/Honolulu cross-tab saved revision really changed",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu stale revision cannot overwrite newer save",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":3,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":1,\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":\"2026-09-11T13:35:00.000Z\"}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":3,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":1,\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":\"2026-09-11T13:35:00.000Z\"}]}"
+    },
+    {
+      "name": "390/Pacific/Honolulu stale revision refusal visible",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu explicit reload gets newer quantity",
+      "pass": true,
+      "got": "1",
+      "want": "1"
+    },
+    {
+      "name": "390/Pacific/Honolulu helper fits viewport",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "390/Pacific/Honolulu browser page errors",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "1280/Europe/Berlin actual browser zone",
+      "pass": true,
+      "got": "Europe/Berlin",
+      "want": "Europe/Berlin"
+    },
+    {
+      "name": "1280/Europe/Berlin five helper targets",
+      "pass": true,
+      "got": [
+        "submitted_at",
+        "filled_at",
+        "cancelled_at",
+        "exited_at",
+        "protection_confirmed_at"
+      ],
+      "want": [
+        "submitted_at",
+        "filled_at",
+        "cancelled_at",
+        "exited_at",
+        "protection_confirmed_at"
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin submitted_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin filled_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin cancelled_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin exited_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at initially blank",
+      "pass": true,
+      "got": [
+        "",
+        ""
+      ],
+      "want": [
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at opener expanded",
+      "pass": true,
+      "got": "true",
+      "want": "true"
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at focused date",
+      "pass": true,
+      "got": "handoff-time-date",
+      "want": "handoff-time-date"
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at blank cannot apply",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at helper prevents save",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at fixed Chicago preview",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at only target changes",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": "2026-09-11T08:31:42.007-05:00"
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "2026-09-11T08:31:42.007-05:00",
+        "filled_quantity": "",
+        "average_price": "",
+        "filled_at": "2026-09-11T08:31:42.007-05:00",
+        "cancelled_quantity": "",
+        "cancelled_at": "2026-09-11T08:31:42.007-05:00",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "2026-09-11T08:31:42.007-05:00",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": "2026-09-11T08:31:42.007-05:00"
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at focus raw",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin protection_confirmed_at remains unsaved",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin spring gap refused",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin fold is explicit",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "1280/Europe/Berlin fold not assumed",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin two fold choices",
+      "pass": true,
+      "got": [
+        "2026-11-01T01:15:20.009-05:00",
+        "2026-11-01T01:15:20.009-06:00"
+      ],
+      "want": [
+        "2026-11-01T01:15:20.009-05:00",
+        "2026-11-01T01:15:20.009-06:00"
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin edited fold clears prior choice",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "1280/Europe/Berlin edited fold requires fresh choice",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin escape closes helper",
+      "pass": true,
+      "got": false,
+      "want": false
+    },
+    {
+      "name": "1280/Europe/Berlin escape preserves unknown event",
+      "pass": true,
+      "got": "",
+      "want": ""
+    },
+    {
+      "name": "1280/Europe/Berlin reclock preserves input identity/focus",
+      "pass": true,
+      "got": [
+        true,
+        true,
+        "00:00"
+      ],
+      "want": [
+        true,
+        true,
+        "00:00"
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin cancel keeps unrelated unsaved entry",
+      "pass": true,
+      "got": {
+        "submitted_quantity": "",
+        "submitted_at": "",
+        "filled_quantity": "",
+        "average_price": "110.23",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      },
+      "want": {
+        "submitted_quantity": "",
+        "submitted_at": "",
+        "filled_quantity": "",
+        "average_price": "110.23",
+        "filled_at": "",
+        "cancelled_quantity": "",
+        "cancelled_at": "",
+        "exited_quantity": "",
+        "average_exit_price": "",
+        "exited_at": "",
+        "entry_fees": "",
+        "exit_fees": "",
+        "protected_quantity": "",
+        "protection_confirmed_at": ""
+      }
+    },
+    {
+      "name": "1280/Europe/Berlin helper interaction has no requests",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "1280/Europe/Berlin helper interaction no storage write",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":1,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":null,\"submitted_at\":null,\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":null}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin raw other-zone offset saves same instant",
+      "pass": true,
+      "got": "2026-09-11T13:31:00.000Z",
+      "want": "2026-09-11T13:31:00.000Z"
+    },
+    {
+      "name": "1280/Europe/Berlin cross-tab helper input preserved",
+      "pass": true,
+      "got": [
+        "2026-01-02",
+        "00:00"
+      ],
+      "want": [
+        "2026-01-02",
+        "00:00"
+      ]
+    },
+    {
+      "name": "1280/Europe/Berlin cross-tab raw edit preserved",
+      "pass": true,
+      "got": "2",
+      "want": "2"
+    },
+    {
+      "name": "1280/Europe/Berlin cross-tab saved revision really changed",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin stale revision cannot overwrite newer save",
+      "pass": true,
+      "got": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":3,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":1,\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":\"2026-09-11T13:35:00.000Z\"}]}",
+      "want": "{\"version\":3,\"items\":[{\"version\":3,\"kind\":\"planned_handoff\",\"id\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a:1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"revision\":3,\"created_at\":\"2026-09-11T13:35:00.000Z\",\"updated_at\":\"2026-09-11T13:35:00.000Z\",\"publication\":{\"sha256\":\"d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a\",\"session\":\"2026-09-10\",\"published_at\":\"2026-09-10T22:30:00+00:00\",\"rules_version\":\"318378b39001\"},\"plan\":{\"reference\":{\"version\":1,\"id\":\"1d4a51b31d0dbed43219c9455dfd6bf4c7d3e25e029763fb2f77c235987bd96d\",\"context_sha256\":\"cbcd4f8a83f635e5b96204af06ec78e23c0bd0caa859255b7529e39449cd2292\",\"plan_sha256\":\"7ff63ac52be72aeb9b4e8d2b72516f692c57de3435f1b4c1153f51c479a4dab7\",\"pick_sha256\":\"52e839012fd40c9391900ff3bcb7465eaea23772e2a7c8e995d14ec8967ae98a\"},\"ticker\":\"COIL\",\"stage\":\"setting-up\",\"order\":{\"symbol\":\"COIL\",\"action\":\"buy\",\"quantity\":4,\"order_type\":\"stop_limit\",\"stop_price\":110.61,\"limit_price\":111.72,\"time_in_force\":\"day\",\"conditional\":\"one_triggers_the_other\",\"then\":{\"action\":\"sell\",\"quantity\":4,\"order_type\":\"stop\",\"stop_price\":109.5,\"time_in_force\":\"gtc\"}},\"timing\":{\"applicable_session\":\"2026-09-11\",\"opens_at\":\"2026-09-11T09:30:00-04:00\",\"cutoff_at\":\"2026-09-11T10:00:00-04:00\",\"closes_at\":\"2026-09-11T16:00:00-04:00\"},\"exit_schedule\":[{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry\",\"instruction\":\"buy only if it trades through $110.61 (limit $111.72) in the first 30 minutes; the sell stop at $109.50 is live from the fill; cancel the day order yourself if it has not filled by the end of the first 30 minutes.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"sell_half_8pct\",\"instruction\":\"if same or next day, the price reaches $119.46 (+8% from $110.61): sell half and move the stop to 25-50 cents under that day's high.\"},{\"day\":1,\"date\":\"2026-09-11\",\"key\":\"entry_day_low\",\"instruction\":\"at the close of day 1: the stop rises to the entry day's low if that is above $109.50.\"},{\"day\":2,\"date\":\"2026-09-14\",\"key\":\"no_breakeven\",\"instruction\":\"if day 2 is green: do not move the stop to break-even before day 5 just because it is green.\"},{\"day\":3,\"date\":\"2026-09-15\",\"key\":\"day3\",\"instruction\":\"at the day 3 close: sell at least half at the close. If day 3 closes at or below $110.61: exit: no follow-through.\"},{\"day\":4,\"date\":\"2026-09-16\",\"key\":\"trail\",\"instruction\":\"raise the stop to each day's low (it never moves down); sell the rest into strength.\"},{\"day\":5,\"date\":\"2026-09-17\",\"key\":\"day5_exit\",\"instruction\":\"at the day 5 close: exit the remainder into strength.\"}]},\"draft\":{\"quantity\":2,\"cash_cents\":200000,\"fee_cents\":100},\"report\":{\"submitted_quantity\":1,\"submitted_at\":\"2026-09-11T13:31:00.000Z\",\"filled_quantity\":null,\"average_price\":null,\"filled_at\":null,\"cancelled_quantity\":null,\"cancelled_at\":null,\"exited_quantity\":null,\"exited_at\":null,\"protected_quantity\":null,\"protection_confirmed_at\":null,\"average_exit_price\":null,\"entry_fees\":null,\"exit_fees\":null},\"report_updated_at\":\"2026-09-11T13:35:00.000Z\"}]}"
+    },
+    {
+      "name": "1280/Europe/Berlin stale revision refusal visible",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin explicit reload gets newer quantity",
+      "pass": true,
+      "got": "1",
+      "want": "1"
+    },
+    {
+      "name": "1280/Europe/Berlin helper fits viewport",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "1280/Europe/Berlin browser page errors",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source pin preserved docs/app-handoff-ui.js",
+      "pass": true,
+      "got": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "want": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "source pin preserved docs/app.css",
+      "pass": true,
+      "got": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+      "want": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    {
+      "name": "source pin preserved docs/app-handoff.js",
+      "pass": true,
+      "got": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "want": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "source pin preserved README.md",
+      "pass": true,
+      "got": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880",
+      "want": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880"
+    },
+    {
+      "name": "source pin preserved tools/page_smoke.mjs",
+      "pass": true,
+      "got": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+      "want": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e"
+    },
+    {
+      "name": "source pin preserved tools/broker_time_cases.mjs",
+      "pass": true,
+      "got": "882fefb36ee6644f974cf91f4f188868a667f341a951949065e7b9b7327bcef1",
+      "want": "882fefb36ee6644f974cf91f4f188868a667f341a951949065e7b9b7327bcef1"
+    },
+    {
+      "name": "source pin preserved tests/fixtures/cash-preview/publication.json",
+      "pass": true,
+      "got": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a",
+      "want": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a"
+    },
+    {
+      "name": "source pin preserved tests/fixtures/cash-preview/observed.json",
+      "pass": true,
+      "got": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a",
+      "want": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a"
+    }
+  ],
+  "passed": 164,
+  "failed": 0,
+  "captures": [
+    "/tmp/oct15-broker-time-independent-attempt3/390-gap.png",
+    "/tmp/oct15-broker-time-independent-attempt3/390-fold.png",
+    "/tmp/oct15-broker-time-independent-attempt3/390-preview.png",
+    "/tmp/oct15-broker-time-independent-attempt3/1280-gap.png",
+    "/tmp/oct15-broker-time-independent-attempt3/1280-fold.png",
+    "/tmp/oct15-broker-time-independent-attempt3/1280-preview.png"
+  ],
+  "findings": [],
+  "assurance_limits": [
+    "Not actual public deployment acceptance",
+    "No personal broker execution inferred",
+    "No full suite rerun; focused independent controls only",
+    "Screenshots require separate visual inspection"
+  ]
+}
