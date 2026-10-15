@@ -1,0 +1,21 @@
+{
+  "reviewed_at": "2026-10-15T20:01:45.731361+00:00",
+  "scope": "Root directly viewed fresh local browser screenshots on direct-main broker candidate; source is not yet a deployed release",
+  "captures": [
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-preview-390-light.png",
+      "sha256": "28adea2ebadb2da588595c599d59d73ddb767eea0be44145eadf360f17e3137f"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-fall-choice-1280-dark.png",
+      "sha256": "1a4e2f55956d13c3a7434bda943dbf742c60b0640b45c13d53b4031be0284ba1"
+    }
+  ],
+  "findings": [],
+  "observations": [
+    "Phone date/time labels and offset/UTC preview are readable with Apply/Cancel visible.",
+    "Desktop repeated-hour choice and second-occurrence -06:00 preview are explicit; original unsaved -05:00 field remains unchanged before Apply.",
+    "No visible horizontal clipping or overlay obstruction in inspected helper controls."
+  ],
+  "actual_public_acceptance": false
+}

@@ -1,0 +1,170 @@
+{
+  "schema": 1,
+  "reviewed_at": "2026-10-15T08:36:31.817386+00:00",
+  "scope": "Independent local source and executed browser review of optional Chicago broker-event time entry. No product edits, remote mutations, live provider access, actual personal trade or deployment acceptance.",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "runtime_source_pins": {
+    "docs/app-handoff-ui.js": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+    "docs/app.css": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+    "docs/app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+  },
+  "disposition": "No unresolved source findings at the reviewed runtime pins. One reproduced asynchronous draft-replacement continuity defect was corrected by the author and independently re-executed.",
+  "finding": {
+    "severity": "medium",
+    "function": "handoffUI.preview prepare click completion",
+    "trigger": "Hold the actual private-store Web Lock; click Replace private broker draft; open and enter a Chicago time while replacement waits; release the lock.",
+    "before": "Replacement incremented revision 1 to 2, then choose() hid the open helper; next open would reset the draft while raw event stayed blank.",
+    "correction": "Add !timeHelper to the existing final post-await guard before choose(result.item.id). No parser/model/storage change.",
+    "original_evidence": {
+      "path": "/tmp/oct15-broker-time-independent-race-attempt1/review.json",
+      "bytes": 5731,
+      "sha256": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471"
+    },
+    "corrected_evidence": {
+      "path": "/tmp/oct15-broker-time-independent-race-attempt2/review.json",
+      "bytes": 5728,
+      "sha256": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3"
+    }
+  },
+  "execution": [
+    {
+      "name": "Independent source boundary and real browser journey",
+      "passed": 164,
+      "failed": 0,
+      "receipt": {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/review.json",
+        "bytes": 131349,
+        "sha256": "849b0d2367b12837d95a09405d5f3c269d4a8269dd51048a1615e6d6ce8b2635"
+      },
+      "harness": {
+        "path": "/tmp/oct15-broker-time-independent-review-v2.mjs",
+        "bytes": 13272,
+        "sha256": "a809614a28446d931f112ba9ffdcc968c221a1091fbe298af149fe2c2eaf466a"
+      },
+      "cases": [
+        "Exact fixed Chicago instants in Honolulu/Berlin browser time zones",
+        "All five fields; unknown/open/apply/cancel/focus; only target input changes",
+        "Spring gap, autumn fold choice and choice invalidation, winter, midnight, leap day, milliseconds, 2006/2007 US rule transition",
+        "Invalid calendar/time precision and unavailable Intl conversion refuse with explicit-offset fallback",
+        "Real second-tab save preserves open helper and unsaved fields; stale revision save refuses overwrite; explicit reload accepts newer facts",
+        "No helper-triggered requests or private storage writes before explicit report save",
+        "Raw non-Chicago explicit offset path preserves the instant",
+        "Source pin checks and unchanged private model"
+      ]
+    },
+    {
+      "name": "Independent real-Web-Lock race regression",
+      "passed": 24,
+      "failed": 0,
+      "receipt": {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt2/review.json",
+        "bytes": 5728,
+        "sha256": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3"
+      },
+      "harness": {
+        "path": "/tmp/oct15-broker-time-independent-race.mjs",
+        "bytes": 8509,
+        "sha256": "311b4a05952577b5ab158ddbe21b946c73f5ece02f8f988f720f720041ac7246"
+      },
+      "note": "Contains repeated pure boundary controls; do not treat the sum as unique independent cases."
+    }
+  ],
+  "historical_attempts": [
+    {
+      "path": "/tmp/oct15-broker-time-independent-attempt1.log",
+      "outcome": "Environment diagnostic before browser launch: spawnSync git returned EPERM under default restricted command route. Retried with the permitted additional-network execution route; no approval rejection and no product change."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/oct15-broker-time-independent-attempt2/review.json",
+        "bytes": 118322,
+        "sha256": "cefc1562d8c1f96e79307d1f8d89cbec6e45dd17927979c90563baafd49cfcf6"
+      },
+      "passed": 148,
+      "failed": 2,
+      "outcome": "Two harness timeouts filling the second tab because its outer Private broker handoffs disclosure remained collapsed. Corrected only the temporary harness to open ancestors; rerun passed."
+    },
+    {
+      "receipt": {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt1/review.json",
+        "bytes": 5731,
+        "sha256": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471"
+      },
+      "passed": 23,
+      "failed": 1,
+      "outcome": "Actual product finding reproduced before author fix; retained separately."
+    }
+  ],
+  "visual_review": {
+    "inspected_count": 10,
+    "captures": [
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/390-gap.png",
+        "bytes": 73934,
+        "sha256": "16b005f7551281f87dd386cd07d840411459b1117111492961b0b188baf5e195"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/390-fold.png",
+        "bytes": 69615,
+        "sha256": "4b7e10deb03a6e4bffa07a13de3416bf3bc6183f61ea5c0f5d15ea3cc8a83d20"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/390-preview.png",
+        "bytes": 72754,
+        "sha256": "5152cc93d6403da3d66fc5ce513c4e7c5b2258b4122085a3a8df067d509e8fe0"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/1280-gap.png",
+        "bytes": 161226,
+        "sha256": "1f899863a50a6fd1f2de6871a403dba1512a71a50a3d4820d67ad149a006fe5a"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/1280-fold.png",
+        "bytes": 161344,
+        "sha256": "5dfb62491d58676fa63f1aa51149432460a9ee786dd82772f3fce2562d38e506"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-attempt3/1280-preview.png",
+        "bytes": 160425,
+        "sha256": "42e0c56aa05ce90911422d5eba057aaf9a755c8c10e31b7896778253de9db500"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt2/race-before-unlock.png",
+        "bytes": 72051,
+        "sha256": "bc8e34604e23c75f2bf7e5791a71366406c5cecc8a9ccd17a7eb8ddea55058ba"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt2/race-after-unlock.png",
+        "bytes": 72080,
+        "sha256": "3af75711da11f1790df2ea0f748b8cc098f1fbaec7c5e26758c2eec0c17d5e9a"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt1/race-before-unlock.png",
+        "bytes": 72051,
+        "sha256": "bc8e34604e23c75f2bf7e5791a71366406c5cecc8a9ccd17a7eb8ddea55058ba"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-independent-race-attempt1/race-after-unlock.png",
+        "bytes": 77401,
+        "sha256": "9c8457cd78de0a9a07cd1f55305dd051720fea2eb263cf533e6d255beaede732"
+      }
+    ],
+    "observations": "All six current 390px light / 1280px dark gap, fold and preview captures inspected; four before/after race captures inspected. Input focus, labels, offset/UTC preview and disabled gap apply are visible. At phone width the native selected-option label is shortened, but the complete selected offset and UTC instant remain in the visible wrapping preview. No horizontal overflow or obscured apply/cancel action found."
+  },
+  "source_protection": {
+    "git_diff_check_exit": 0,
+    "changed_tracked_paths": [
+      "README.md",
+      "docs/app-handoff-ui.js",
+      "docs/app.css",
+      "tools/page_smoke.mjs"
+    ],
+    "note": "Model/parser/storage/account/time safeguards docs/app-handoff.js remains byte-identical to base. Source review and browser pins apply to runtime only; tester may still add the permanent race regression."
+  },
+  "limits": [
+    "Synthetic broker facts only, using the actual producer-created cash-preview publication and observed fixture.",
+    "No public deployment proof, real broker execution, timely market observation or successful-trade inference.",
+    "Chromium only; native date/time widgets and supported Intl timezone data are browser capabilities.",
+    "Did not rerun all product suites or mutation harness; author-owned coverage must be reported separately."
+  ]
+}

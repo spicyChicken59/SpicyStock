@@ -1,0 +1,223 @@
+{
+  "schema": 1,
+  "scope": "Independent local race reproduction; real navigator Web Lock and actual produced cash fixture. Synthetic broker facts only.",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "pins": {
+    "docs/app-handoff-ui.js": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+    "docs/app.css": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+    "docs/app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+    "README.md": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880",
+    "tools/page_smoke.mjs": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+    "tools/broker_time_cases.mjs": "882fefb36ee6644f974cf91f4f188868a667f341a951949065e7b9b7327bcef1",
+    "tests/fixtures/cash-preview/publication.json": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a",
+    "tests/fixtures/cash-preview/observed.json": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a"
+  },
+  "results": [
+    {
+      "name": "unchanged private model bytes",
+      "pass": true,
+      "got": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "want": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "source-executed boundary 2026-01-02 00:00",
+      "pass": true,
+      "got": [
+        "2026-01-02T06:00:00.000Z"
+      ],
+      "want": [
+        "2026-01-02T06:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-07-01 23:59:59.009",
+      "pass": true,
+      "got": [
+        "2026-07-02T04:59:59.009Z"
+      ],
+      "want": [
+        "2026-07-02T04:59:59.009Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 01:59:59.999",
+      "pass": true,
+      "got": [
+        "2026-03-08T07:59:59.999Z"
+      ],
+      "want": [
+        "2026-03-08T07:59:59.999Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 02:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 02:59:59.999",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-03-08 03:00",
+      "pass": true,
+      "got": [
+        "2026-03-08T08:00:00.000Z"
+      ],
+      "want": [
+        "2026-03-08T08:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-11-01 01:59:59.007",
+      "pass": true,
+      "got": [
+        "2026-11-01T06:59:59.007Z",
+        "2026-11-01T07:59:59.007Z"
+      ],
+      "want": [
+        "2026-11-01T06:59:59.007Z",
+        "2026-11-01T07:59:59.007Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-11-01 02:00",
+      "pass": true,
+      "got": [
+        "2026-11-01T08:00:00.000Z"
+      ],
+      "want": [
+        "2026-11-01T08:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2024-02-29 11:22:33.5",
+      "pass": true,
+      "got": [
+        "2024-02-29T17:22:33.500Z"
+      ],
+      "want": [
+        "2024-02-29T17:22:33.500Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2006-03-15 08:00",
+      "pass": true,
+      "got": [
+        "2006-03-15T14:00:00.000Z"
+      ],
+      "want": [
+        "2006-03-15T14:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2007-03-15 08:00",
+      "pass": true,
+      "got": [
+        "2007-03-15T13:00:00.000Z"
+      ],
+      "want": [
+        "2007-03-15T13:00:00.000Z"
+      ]
+    },
+    {
+      "name": "source-executed boundary 2026-02-29 08:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 24:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 23:59:60",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 10:00:00.0001",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary  08:00",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed boundary 2026-01-01 ",
+      "pass": true,
+      "got": [],
+      "want": []
+    },
+    {
+      "name": "source-executed unavailable conversion has no choices",
+      "pass": true,
+      "got": 0,
+      "want": 0
+    },
+    {
+      "name": "source-executed unavailable conversion names raw offset fallback",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "pending replacement completion preserves open helper",
+      "pass": true,
+      "got": true,
+      "want": true
+    },
+    {
+      "name": "pending replacement completion preserves draft date",
+      "pass": true,
+      "got": "2026-01-02",
+      "want": "2026-01-02"
+    },
+    {
+      "name": "pending replacement completion preserves draft time",
+      "pass": true,
+      "got": "08:12:00.123",
+      "want": "08:12:00.123"
+    },
+    {
+      "name": "pending replacement actually committed",
+      "pass": true,
+      "got": true,
+      "want": true
+    }
+  ],
+  "passed": 24,
+  "failed": 0,
+  "captures": [
+    "/tmp/oct15-broker-time-independent-race-attempt2/race-before-unlock.png",
+    "/tmp/oct15-broker-time-independent-race-attempt2/race-after-unlock.png"
+  ],
+  "findings": [
+    {
+      "case": "pending replacement",
+      "before": {
+        "visible": true,
+        "date": "2026-01-02",
+        "time": "08:12:00.123",
+        "revision": 1
+      },
+      "after": {
+        "visible": true,
+        "date": "2026-01-02",
+        "time": "08:12:00.123",
+        "revision": 2,
+        "raw": ""
+      }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "spicystock-broker-time-evidence-minimization-v1",
+  "recorded_at": "2026-10-15T20:11:17.309947+00:00",
+  "source_before_minimization": "19dcb98c19de19b728bef0e906b3e70a24308394",
+  "preserved_local_branch": "codex/broker-time-oct15-main-full-evidence",
+  "release_base": "145716b71882a373efd585035eb5761ffb78c3f7",
+  "reason": "Automatic approval review rejected the full mutation-results.json upload because its assertion detail payloads contained extensive synthetic broker/order records. The rejected artifact is not retried. This replacement contains outcome metadata and digests instead of raw assertion payloads.",
+  "rejection_scope": "durably publishes extensive synthetic broker/order and trade-like records, including executable-looking COIL plan ... lacks specific approval for uploading this artifact.",
+  "receipts": [
+    {
+      "path": "release-evidence/2026-10-15-broker-time/mutation-results.json",
+      "original": {
+        "local_path": "/tmp/oct15-broker-time-original-mutation-receipts/mutation-results.json",
+        "bytes": 114971,
+        "sha256": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e"
+      },
+      "minimized": {
+        "bytes": 77046,
+        "sha256": "1b2cc255fdcdd64d2d3863960a997993b8ae2f1269966f4cc26c60131e3225a9"
+      },
+      "assertion_detail_fields_omitted": 152,
+      "assertion_detail_utf8_bytes_omitted": 60869,
+      "result_rows": 9,
+      "failed_assertions": 194
+    },
+    {
+      "path": "release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+      "original": {
+        "local_path": "/tmp/oct15-broker-time-original-mutation-receipts/prior-mutation-results.json",
+        "bytes": 113439,
+        "sha256": "e0a4c4e8336bcfce46b197023b139bfc095163b0d529e2b8f915c23d9d6627f2"
+      },
+      "minimized": {
+        "bytes": 74554,
+        "sha256": "a52dfd3bcd8b24dc488e4fae402c275546b249ac0cdf2866e493a1346697b490"
+      },
+      "assertion_detail_fields_omitted": 146,
+      "assertion_detail_utf8_bytes_omitted": 60605,
+      "result_rows": 9,
+      "failed_assertions": 188
+    }
+  ],
+  "retained": "Every mutant/control name, source/log/results hash, expected outcome, exit code, check/failure count, named target, elapsed time, assertion name/status/lane and original order is retained unchanged.",
+  "removed": "Only raw assertion detail strings; content is retained locally under original hashes.",
+  "runtime_tests_fixtures_changed": false,
+  "reruns_claimed": false,
+  "prior_checks": "The 1389 browser checks, 189 private-result tests, prior mutation controls and prior source reviews retain their original exact-source scope. Only documentation and committed-range secret checks will be rerun for this evidence-only change; fresh exact-head review and hosted/public release gates remain required.",
+  "separate_blocker": "The combined morning candidate regenerated-fixture upload remains blocked separately; no fixture is added or modified by this broker milestone.",
+  "remote_write_by_minimization_task": false,
+  "remaining": "Review minimized receipt field equivalence and each detail digest, fresh docs/secret checks, exact new committed head review; root may then request ordinary publication of this minimized evidence, without retrying rejected originals."
+}

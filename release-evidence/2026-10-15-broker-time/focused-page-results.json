@@ -1,0 +1,1776 @@
+{
+  "checks": 354,
+  "failures": 0,
+  "results": [
+    {
+      "name": "390/light/Asia/Tokyo: the browser actually uses the deliberately different timezone",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: every broker time remains unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: there is one reusable helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the helper is initially closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: exactly the five time fields offer Chicago entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement has not committed while the real lock is held",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement actually commits its next revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps the helper visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps every raw report field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement announces the stale editor revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement resolves through explicit saved reload",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload restores known saved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload clears the revision warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload preserves the new private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: reopening the active helper preserves its draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: another target cannot silently discard the active helper draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: refused target switch still names submission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: target switch keeps all raw inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: entry milliseconds survive conversion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: time conversion cannot bypass missing corresponding quantities",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the existing quantity guard explains its refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit save uses the unchanged UTC storage format",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the report changes only after explicit save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: a date without a clock remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: clock refresh preserves the helper node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: clock refresh keeps unrelated unsaved report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling restores opener focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling preserves raw and unrelated unsaved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling preserves saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent spring-forward Chicago time is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent Chicago time offers no selectable instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent Chicago time cannot masquerade as a repeated hour",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: spring-forward refusal explains the missing local time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: spring gap leaves the original timestamp untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: last millisecond before spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: last millisecond before spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: first time after spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: first time after spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: winter Chicago time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: winter Chicago time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: expected occurrence -05:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: expected occurrence -06:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: editing an ambiguous wall time requires a fresh occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale occurrence cannot apply after a clock edit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: impossible native calendar input is empty",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an invalid calendar input cannot use a previous resolved choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: all DST and invalid-input exercises remain unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit saved reload restores all known fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted future event cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: future event keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted fill before submission cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: chronology keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted cancellation before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancellation chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted complete exit before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: complete-exit chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit saved reload may discard an open helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: saved reload with a helper restores all raw fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: manually supplied non-Chicago offset keeps the same instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: current time still enters the actual fixed device instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: current time remains unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit blank still saves unknown rather than invented time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second tab explicitly saves a different valid report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab write changes actual saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the original receives a real trusted local-storage event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab conflict retains exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab conflict retains every original raw report input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the conflict is announced while the helper remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: open conflicted helper still blocks report save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applied time on the stale editor carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applied time on the stale editor resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applying during a conflict keeps all other stale inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applying does not overwrite the other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale explicit save cannot overwrite the second tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale save names the revision conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload adopts all facts from the newer revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload leaves the helper closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload preserves the newer saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload resolves the editor conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second tab made its separate public startup reads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: original-page private editing sends no additional request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: published record and Following remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: all report controls fit the viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the browser actually uses the deliberately different timezone",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: every broker time remains unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: there is one reusable helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the helper is initially closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: exactly the five time fields offer Chicago entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement has not committed while the real lock is held",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement actually commits its next revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps the helper visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps every raw report field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement announces the stale editor revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement resolves through explicit saved reload",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload restores known saved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload clears the revision warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload preserves the new private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: reopening the active helper preserves its draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: another target cannot silently discard the active helper draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: refused target switch still names submission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: target switch keeps all raw inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: entry milliseconds survive conversion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: time conversion cannot bypass missing corresponding quantities",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the existing quantity guard explains its refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit save uses the unchanged UTC storage format",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the report changes only after explicit save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: a date without a clock remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: clock refresh preserves the helper node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: clock refresh keeps unrelated unsaved report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling restores opener focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling preserves raw and unrelated unsaved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling preserves saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent spring-forward Chicago time is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time offers no selectable instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time cannot masquerade as a repeated hour",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: spring-forward refusal explains the missing local time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: spring gap leaves the original timestamp untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: first time after spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: first time after spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: winter Chicago time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: winter Chicago time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: expected occurrence -05:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: expected occurrence -06:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: editing an ambiguous wall time requires a fresh occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale occurrence cannot apply after a clock edit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: impossible native calendar input is empty",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an invalid calendar input cannot use a previous resolved choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: all DST and invalid-input exercises remain unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit saved reload restores all known fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted future event cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: future event keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted fill before submission cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: chronology keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted cancellation before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancellation chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted complete exit before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: complete-exit chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit saved reload may discard an open helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: saved reload with a helper restores all raw fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: manually supplied non-Chicago offset keeps the same instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: current time still enters the actual fixed device instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: current time remains unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit blank still saves unknown rather than invented time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second tab explicitly saves a different valid report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab write changes actual saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the original receives a real trusted local-storage event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab conflict retains exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab conflict retains every original raw report input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the conflict is announced while the helper remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: open conflicted helper still blocks report save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applied time on the stale editor carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applied time on the stale editor resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applying during a conflict keeps all other stale inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applying does not overwrite the other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale explicit save cannot overwrite the second tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale save names the revision conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload adopts all facts from the newer revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload leaves the helper closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload preserves the newer saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload resolves the editor conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second tab made its separate public startup reads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: original-page private editing sends no additional request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: published record and Following remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: all report controls fit the viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    }
+  ]
+}

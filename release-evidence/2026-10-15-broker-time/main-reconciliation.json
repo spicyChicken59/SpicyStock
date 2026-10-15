@@ -1,0 +1,226 @@
+{
+  "schema": "spicystock-broker-time-direct-main-reconciliation-v1",
+  "recorded_at": "2026-10-15T20:03:53.198352+00:00",
+  "repository": "spicyChicken59/SpicyStock",
+  "base": "145716b71882a373efd585035eb5761ffb78c3f7",
+  "base_tree": "2fc5de701d11861352905771305ebaaf17fb8677",
+  "original_reviewed_candidate": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+  "original_candidate_base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "scope": "Independent broker-only release preparation directly on actual main; no combined morning policy, reload, owner tools or regenerated fixture changes included.",
+  "source_transfer": {
+    "original_delta_paths": [
+      "CLAUDE.md",
+      "PRODUCT_GOAL.md",
+      "README.md",
+      "docs/app-handoff-ui.js",
+      "docs/app.css",
+      "release-evidence/2026-10-15-broker-time/compatibility-page-results.json",
+      "release-evidence/2026-10-15-broker-time/focused-page-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-browser-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-race-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-review.json",
+      "release-evidence/2026-10-15-broker-time/local-attempts.json",
+      "release-evidence/2026-10-15-broker-time/mutation-results.json",
+      "release-evidence/2026-10-15-broker-time/original-race-failure.json",
+      "release-evidence/2026-10-15-broker-time/prepared.json",
+      "release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+      "tools/broker_time_cases.mjs",
+      "tools/page_smoke.mjs"
+    ],
+    "exact_non_documentation_paths_from_old_candidate": 12,
+    "readme": "Only the original 14-line broker paragraph addition applied to main; other main prose unchanged.",
+    "checkpoints": "Both current-main files retained as exact prefixes, followed by direct-main preparation checkpoint. Original 2c evidence remains historical.",
+    "protected_base_entries_exact": 20324,
+    "protected_fixture_entries_exact": 291,
+    "all_main_fixtures_unchanged": true,
+    "fixture_generation_performed": false,
+    "public_inventory": "No new public asset; existing 58-file public scope expected.",
+    "evidence_minimization": "The two historical mutation receipts now retain outcome metadata and per-detail digests instead of raw assertion payloads; all other original broker files retain the described bytes. See evidence-minimization.json."
+  },
+  "protected_pins": {
+    "docs/app-handoff.js": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/app-handoff.js",
+      "bytes": 40838,
+      "sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    "docs/app-morning.js": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/app-morning.js",
+      "bytes": 26098,
+      "sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4"
+    },
+    "docs/app.js": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/app.js",
+      "bytes": 429093,
+      "sha256": "3e12fab42a80a50d830d165e97a04dd2b339af62c550e67794c87e5ce36e7e1f"
+    },
+    "docs/data.json": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/data.json",
+      "bytes": 11705655,
+      "sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719"
+    },
+    "docs/source-recovery.json": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/source-recovery.json",
+      "bytes": 11285,
+      "sha256": "c6a7578584bf9b73280eb62d5bb4d3289f762aec29fa4460838f95323c56393e"
+    },
+    ".env.example": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/.env.example",
+      "bytes": 15714,
+      "sha256": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac"
+    },
+    "tests/fixtures/cash-preview/publication.json": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tests/fixtures/cash-preview/publication.json",
+      "bytes": 325001,
+      "sha256": "978118a96059c97a71e3df2129f4f27b845f479f92ef4d883bbe5fe22f1b8686"
+    },
+    "tests/fixtures/cash-preview/observed.json": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tests/fixtures/cash-preview/observed.json",
+      "bytes": 6843,
+      "sha256": "eef39e40522fe9f570bad3f84c444079d2c41767f8414f0368ed1cd96c08f377"
+    },
+    "tests/fixtures/first-trade/backup.json": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tests/fixtures/first-trade/backup.json",
+      "bytes": 6155,
+      "sha256": "738a4d2d16c37e0aeaecbaa2f502c4454a5d50042d4291c1bf3734e102072ee0"
+    },
+    "tests/fixtures/first-trade/parity.json.gz": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tests/fixtures/first-trade/parity.json.gz",
+      "bytes": 14025,
+      "sha256": "725cf92e713612465275f21c3bf618ee445434765f619436b57fb6b1da03bd7d"
+    }
+  },
+  "source_pins": {
+    "docs/app-handoff-ui.js": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/app-handoff-ui.js",
+      "bytes": 50673,
+      "sha256": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    "docs/app.css": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/docs/app.css",
+      "bytes": 89943,
+      "sha256": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    "tools/broker_time_cases.mjs": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tools/broker_time_cases.mjs",
+      "bytes": 30180,
+      "sha256": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2"
+    },
+    "tools/page_smoke.mjs": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/tools/page_smoke.mjs",
+      "bytes": 333415,
+      "sha256": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e"
+    },
+    "README.md": {
+      "path": "/workspace/SpicyStock-broker-time-oct15-main/README.md",
+      "bytes": 146052,
+      "sha256": "5bba1d55779787794db43977c59dcec5dd7a64092d9e3fb94ad0146ba8a9aa41"
+    }
+  },
+  "fresh_verification": {
+    "browser": {
+      "passed": 1389,
+      "failed": 0,
+      "broker_named_checks": 354,
+      "compatibility_checks": 1035,
+      "suites": [
+        "broker-time",
+        "cashpreview",
+        "handoff",
+        "firsttrade",
+        "independentreports",
+        "privatebackup",
+        "journalreports"
+      ],
+      "receipt": "main-page-results.json",
+      "log": {
+        "path": "/tmp/oct15-broker-time-main-browser.log",
+        "bytes": 805,
+        "sha256": "aaee1f4d315c081e9640f1e3c7215dd475fe3e8cfd808d4398d506e0cf327faf"
+      },
+      "first_trade_fixture": "Existing actual-main backup reproduced by real browser journey without writing fixtures."
+    },
+    "private_results_python": {
+      "passed": 189,
+      "failed": 0,
+      "seconds": 4.4,
+      "command": "python -m pytest -q tests/test_private_results.py",
+      "log": {
+        "path": "/tmp/oct15-broker-time-main-private-python.log",
+        "bytes": 260,
+        "sha256": "0575795066f08b5b572e770ab59e7ff3426db4d7d7a30e233e8625f4055835e4"
+      }
+    },
+    "documentation": "Final docs test result and committed-range secret scan recorded by exact-head reviewer after this receipt; no result preclaimed."
+  },
+  "visual_review": {
+    "inspected": [
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-fall-choice-1280-dark.png",
+        "bytes": 137151,
+        "sha256": "1a4e2f55956d13c3a7434bda943dbf742c60b0640b45c13d53b4031be0284ba1"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-fall-choice-390-light.png",
+        "bytes": 66828,
+        "sha256": "6b9369044d4945e54c052e3610d0d0d90495a01309bcad8447d7cf4cc4fe9938"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-pending-replacement-1280-dark.png",
+        "bytes": 137714,
+        "sha256": "4487d6226bff517be178263fee784603d302b5158d6de41cc98d183089aa086e"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-pending-replacement-390-light.png",
+        "bytes": 67730,
+        "sha256": "8f4b47c5faa67005b7c1fc98524f2d68701c4f1716cff5743498155e06c6e902"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-preview-1280-dark.png",
+        "bytes": 129508,
+        "sha256": "3dcc8b68dbe9f8feb3098c154141d7bcf8d1811014b30eafb9a474052beab134"
+      },
+      {
+        "path": "/tmp/oct15-broker-time-main-shots/broker-time-preview-390-light.png",
+        "bytes": 65257,
+        "sha256": "28adea2ebadb2da588595c599d59d73ddb767eea0be44145eadf360f17e3137f"
+      }
+    ],
+    "result": "All six fresh phone/desktop broker helper captures directly inspected; no findings. Prior PNG bytes were not reused as these new captures differ. Broader compatibility captures are execution outputs; not all are visually reviewed here."
+  },
+  "independent_review": {
+    "structural_dependency_receipt": "main-dependency-audit.json",
+    "passed": 41,
+    "scope": "Pre-freeze source/dependency/fixture comparison; exact committed head review still required."
+  },
+  "preserved_evidence": {
+    "original_exact_review": "original-exact-review.json",
+    "original_exact_review_passed": 112,
+    "original_receipts": "Eight original broker receipts remain byte-identical to 600fb098; mutation-results.json and prior-mutation-results.json use an explicitly labelled minimized representation with original receipt hashes/paths and per-detail digests. Their names, counts, results, assertion identities and source/log/results hashes remain unchanged. The original full receipts remain local under the preserved 19dcb98c reference. No test was rerun for minimization.",
+    "prepared_66_attempt": {
+      "worktree": "/workspace/SpicyStock-broker-time-oct15-current",
+      "passed": 354,
+      "log": {
+        "path": "/tmp/oct15-broker-time-current-browser-admitted.log",
+        "bytes": 196,
+        "sha256": "c6cce70a68d6c9d8c7502ad9ded06ec1130c817fa4096f66f9025dc7bd78aee4"
+      },
+      "status": "Superseded local prepared-base check only; not this direct-main release.",
+      "initial_default_failure": {
+        "path": "/tmp/oct15-broker-time-current-browser.log",
+        "bytes": 597,
+        "sha256": "d88e327a0cbad0341c298f088993052b28781acf6129fed98c9c1a86a5a7569e"
+      },
+      "failure": "Default environment refused localhost listen before checks (EPERM); admitted local browser route succeeded. No automatic approval rejection for this local run."
+    },
+    "scope_note": "The original 600fb098 exact review and the pre-minimization main dependency audit remain immutable historical receipts. Their byte-identity statements apply to their recorded source, before this explicitly described evidence-only transformation."
+  },
+  "documentation_sweep": "README broker behavior inspected; existing .env.example remains correct because helper adds no provider, variable, secret, schedule or broker API.",
+  "approval_boundary": "Separate combined candidate synthetic-fixture publication remains blocked pending explicit user approval. This preparation neither uploads nor regenerates that fixture and makes no remote call; it is an independent change using unchanged actual-main fixtures.",
+  "status": "Local direct-main preparation only; requires exact independent review, fresh hosted gates, ordinary merge/deployment and actual public verification.",
+  "remaining": [
+    "Complete exact-commit review and fresh required hosted checks.",
+    "Verify actual public deployment using direct-main 58-file scope; no combined behavior assumed.",
+    "Timely quotes, missing issuer coverage, broker facts and an actual first successful trade remain open."
+  ],
+  "evidence_minimization": "evidence-minimization.json"
+}

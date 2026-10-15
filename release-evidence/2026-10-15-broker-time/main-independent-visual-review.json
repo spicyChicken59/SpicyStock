@@ -1,0 +1,50 @@
+{
+  "schema": "spicystock-broker-time-main-independent-visual-review-v1",
+  "reviewed_at": "2026-10-15T20:02:00.283139+00:00",
+  "scope": "Direct view_image inspection of all six newly captured actual-main local browser helper captures; synthetic fixture scenarios only, not actual public release acceptance.",
+  "captures": [
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-fall-choice-1280-dark.png",
+      "bytes": 137151,
+      "sha256": "1a4e2f55956d13c3a7434bda943dbf742c60b0640b45c13d53b4031be0284ba1",
+      "directly_viewed": true
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-fall-choice-390-light.png",
+      "bytes": 66828,
+      "sha256": "6b9369044d4945e54c052e3610d0d0d90495a01309bcad8447d7cf4cc4fe9938",
+      "directly_viewed": true
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-pending-replacement-1280-dark.png",
+      "bytes": 137714,
+      "sha256": "4487d6226bff517be178263fee784603d302b5158d6de41cc98d183089aa086e",
+      "directly_viewed": true
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-pending-replacement-390-light.png",
+      "bytes": 67730,
+      "sha256": "8f4b47c5faa67005b7c1fc98524f2d68701c4f1716cff5743498155e06c6e902",
+      "directly_viewed": true
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-preview-1280-dark.png",
+      "bytes": 129508,
+      "sha256": "3dcc8b68dbe9f8feb3098c154141d7bcf8d1811014b30eafb9a474052beab134",
+      "directly_viewed": true
+    },
+    {
+      "path": "/tmp/oct15-broker-time-main-shots/broker-time-preview-390-light.png",
+      "bytes": 65257,
+      "sha256": "28adea2ebadb2da588595c599d59d73ddb767eea0be44145eadf360f17e3137f",
+      "directly_viewed": true
+    }
+  ],
+  "observations": [
+    "Phone and desktop helper labels, date/time controls, offset and UTC preview, apply and cancel actions are visible and readable.",
+    "Spring/fall and pending-replacement behavior is established by separate executed browser assertions; screenshots show the reported helper state, not timing proof.",
+    "The phone native closed occurrence select truncates its long option after the occurrence label; the full offset is repeated in the readable preview beneath it. This does not prevent identifying and reviewing the chosen instant.",
+    "No overlapping or clipped action buttons were observed. Main panel remains scrollable."
+  ],
+  "findings": []
+}

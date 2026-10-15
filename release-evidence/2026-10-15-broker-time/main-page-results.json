@@ -1,0 +1,6951 @@
+{
+  "checks": 1389,
+  "failures": 0,
+  "results": [
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "721/dark: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive control has producer-sized COIL order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash starts unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees start unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "blank fees never mean zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "four-share principal/fees/risk are exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent below fees-inclusive boundary buys only three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "owner may choose a smaller whole quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cannot exceed published shares even with ample cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "less than one share remains unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact one-share boundary fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one cent fee can make one share unfunded",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 12.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash refuses 90071992547409.92",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses -1",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees refuses 0.001",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 1.5",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quantity refuses 0",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid input clears prior result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "largest accepted cents display exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "settled-cash display uses the same exact parser",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "calculator leaves record, saved private data and published copy unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash edits make no requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview contains no executable copy/submit controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "independent cash and original quantity are explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "721/light: preview fits dialog and document",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry preserves independent calculation draft/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated quote cannot create strategy price gating",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion withdraws cash calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion leaves no personal result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate exclusion is explained beside preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash preview browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "synthetic two-share cent thresholds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fees consume cash before quantity division",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "backend-supported equal trigger and limit accepted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "malformed protective/order geometry refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "safe exact parser boundaries and unknowns",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fixture cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fixture removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "account mismatch cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "account mismatch removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "model slot mismatch cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "model slot mismatch removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no ticket cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no ticket removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "withheld cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "withheld removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "symbol mismatch cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "symbol mismatch removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan/order quantity mismatch cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan/order quantity mismatch removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan/order level mismatch cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan/order level mismatch removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stale cannot show personal quantity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stale removes prior amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unbound current record initially awaits observation binding",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-session revision keeps cash but clears plan-specific drafts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unbound revised order does not keep old result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "before deadline calculation remains available",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "input at exact cutoff checks clock immediately",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "deadline preserves focused draft while withdrawing calculation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload clears all unverified personal inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cash boundary browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "multiple-plan control is a genuine combined producer allocation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "first independent plan fits exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "switching plan keeps entered cash but clears its fee/quantity estimates",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "second plan is its own calculation, not a reserved basket",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "returning to first plan never implies second plan consumed/reserved cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no combined affordability claim accompanies independent results",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "multiple-plan browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "private disclosure begins closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cash cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown fees cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preparation creates exactly one explicit private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "draft does not infer held, filled or submitted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback focuses its heading after explicit preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated exit schedule is labelled archived and not resized",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "two-share draft has explicit whole-share reference",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback labels personal two and original four separately",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clipboard contains chosen two and no submission claim",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copy does not invent a report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry fill alone leaves remaining holdings unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exits cannot apply draft sizing to holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit no exits gives one held and one unfilled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one remaining reported share cannot be partly exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reported facts disable new-entry readback copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown protection stays explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cancelled remainder is not an exit of held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "saved time shows Chicago",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "matching manual protection never claims verified stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible filled-plus-cancelled correction does not overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid correction preserves entered value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid cumulative totals are explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit reload discards bad correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "event refresh preserves exact unsaved field and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt withdraws preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual facts stay recordable after expiry and halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exit preserves entry history while reducing held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fully exited reported position leaves archived schedule as history",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "remaining protective sell needs reconciliation after exit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing actual exit price and costs never borrow draft buffer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one filled share plus explicitly cancelled remainder gives reported net3.65",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed gain remains expressly user-reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry draft and published record remain separate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no private report data reached a request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: handoff fits phone and page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload retains private entry and exit facts exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload does not silently evict closed reported position",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "delete requires an explicit confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "deletion explains broker positions unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "private disclosure begins closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cash cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown fees cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preparation creates exactly one explicit private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "draft does not infer held, filled or submitted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback focuses its heading after explicit preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated exit schedule is labelled archived and not resized",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "two-share draft has explicit whole-share reference",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback labels personal two and original four separately",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clipboard contains chosen two and no submission claim",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copy does not invent a report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry fill alone leaves remaining holdings unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exits cannot apply draft sizing to holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit no exits gives one held and one unfilled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one remaining reported share cannot be partly exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reported facts disable new-entry readback copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown protection stays explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cancelled remainder is not an exit of held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "saved time shows Chicago",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "matching manual protection never claims verified stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible filled-plus-cancelled correction does not overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid correction preserves entered value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid cumulative totals are explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit reload discards bad correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "event refresh preserves exact unsaved field and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt withdraws preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual facts stay recordable after expiry and halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exit preserves entry history while reducing held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fully exited reported position leaves archived schedule as history",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "remaining protective sell needs reconciliation after exit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing actual exit price and costs never borrow draft buffer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one filled share plus explicitly cancelled remainder gives reported net3.65",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed gain remains expressly user-reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry draft and published record remain separate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no private report data reached a request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: handoff fits phone and page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload retains private entry and exit facts exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload does not silently evict closed reported position",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "delete requires an explicit confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "deletion explains broker positions unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "private disclosure begins closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cash cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown fees cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preparation creates exactly one explicit private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "draft does not infer held, filled or submitted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback focuses its heading after explicit preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated exit schedule is labelled archived and not resized",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "two-share draft has explicit whole-share reference",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback labels personal two and original four separately",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clipboard contains chosen two and no submission claim",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copy does not invent a report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry fill alone leaves remaining holdings unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exits cannot apply draft sizing to holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit no exits gives one held and one unfilled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one remaining reported share cannot be partly exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reported facts disable new-entry readback copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown protection stays explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cancelled remainder is not an exit of held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "saved time shows Chicago",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "matching manual protection never claims verified stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible filled-plus-cancelled correction does not overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid correction preserves entered value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid cumulative totals are explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit reload discards bad correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "event refresh preserves exact unsaved field and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt withdraws preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual facts stay recordable after expiry and halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exit preserves entry history while reducing held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fully exited reported position leaves archived schedule as history",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "remaining protective sell needs reconciliation after exit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing actual exit price and costs never borrow draft buffer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one filled share plus explicitly cancelled remainder gives reported net3.65",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed gain remains expressly user-reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry draft and published record remain separate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no private report data reached a request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: handoff fits phone and page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload retains private entry and exit facts exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload does not silently evict closed reported position",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "delete requires an explicit confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "deletion explains broker positions unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "private disclosure begins closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cash cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown fees cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preparation creates exactly one explicit private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "draft does not infer held, filled or submitted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback focuses its heading after explicit preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dated exit schedule is labelled archived and not resized",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "two-share draft has explicit whole-share reference",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback labels personal two and original four separately",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clipboard contains chosen two and no submission claim",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copy does not invent a report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry fill alone leaves remaining holdings unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exits cannot apply draft sizing to holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit no exits gives one held and one unfilled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one remaining reported share cannot be partly exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reported facts disable new-entry readback copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown protection stays explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cancelled remainder is not an exit of held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "saved time shows Chicago",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "matching manual protection never claims verified stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible filled-plus-cancelled correction does not overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid correction preserves entered value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid cumulative totals are explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit reload discards bad correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "event refresh preserves exact unsaved field and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt withdraws preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual facts stay recordable after expiry and halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exit preserves entry history while reducing held shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fully exited reported position leaves archived schedule as history",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "remaining protective sell needs reconciliation after exit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing actual exit price and costs never borrow draft buffer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one filled share plus explicitly cancelled remainder gives reported net3.65",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed gain remains expressly user-reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entry draft and published record remain separate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no private report data reached a request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: handoff fits phone and page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload retains private entry and exit facts exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload does not silently evict closed reported position",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "delete requires an explicit confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "deletion explains broker positions unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cross-tab change is announced without silently adopting revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cross-tab correction preserves unsaved value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stale correction cannot overwrite other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision conflict gives explicit recovery path",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit saved reload adopts new revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage failure keeps old saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage failure keeps correction for retry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "save failure offers private recovery without upload",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retry saves retained correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "use current time only fills the input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit correction to unknown keeps reporting history",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clearing report fields cannot revive new entry copy or preparation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown correction still remains editable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "two-share reported result uses actual fees rather than draft estimate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "result does not change draft fee buffer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exit correction recomputes gross and net loss",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loss is labelled only as user-reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "an exit at the stop names nothing past it",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "an exit under the stop names what was lost past it on the reported shares",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "partial exit withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "partial exit never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "partial exit explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cancellation withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cancellation never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown cancellation explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry price withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry price never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry price explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit price withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit price never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit price explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry fees withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry fees never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown entry fees explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit fees withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit fees never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown exit fees explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated entry fill withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated entry fill never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated entry fill explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated exit withholds every completed amount",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated exit never retains a stale gain/loss marker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "undated exit explains an incomplete result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit zero actual fees is accepted as zero, not unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact zero net is the only break-even result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "sub-cent gain retains exact sign without false zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "sub-cent loss retains exact sign without false zero",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "new cost correction keeps its node, draft and focus across expiry/event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsaved fee edit does not alter saved completed result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual result correction remains available after entry expiry/event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "result calculation does not mutate publication or following snapshots",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "private actual costs never reach a request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reading legacy store performs no write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy report fields survive with new fields unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy report does not acquire a fabricated result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid new fees do not migrate or overwrite legacy bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid actual fee correction remains editable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit valid report save advances store version",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit legacy completion computes the known reported net",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed result and form still fit phone",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "completed-result browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preparing another plan cannot discard a dirty report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "other-plan preparation gives explicit save/discard path",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "report begun during pending preparation survives completion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "pending preparation preserves editor focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "published independent quantities stay unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "Web Locks unavailable refuses preparation without breaking cash preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "Web Locks unavailable explains read-only/unreadable state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future storage version refuses preparation without breaking cash preview",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future storage version explains read-only/unreadable state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown store left byte-exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft 1 shows actual whole-share model convention",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft review is conditional and broker support remains unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "single-share draft explicitly cannot be partially exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copied readback keeps whole-share explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft leaves original model and all report fields unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share review sends no network requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share text fits phone and desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share reference raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft 3 shows actual whole-share model convention",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft review is conditional and broker support remains unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copied readback keeps whole-share explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft leaves original model and all report fields unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share review sends no network requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share text fits phone and desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share reference raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft 1 shows actual whole-share model convention",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft review is conditional and broker support remains unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "single-share draft explicitly cannot be partially exited",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copied readback keeps whole-share explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft leaves original model and all report fields unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share review sends no network requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share text fits phone and desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share reference raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft 3 shows actual whole-share model convention",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft review is conditional and broker support remains unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "copied readback keeps whole-share explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "odd draft leaves original model and all report fields unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share review sends no network requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share text fits phone and desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "whole-share reference raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff.js absence leaves cash and morning usable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff.js fallback names unavailable private function",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff.js absence raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff-ui.js absence leaves cash and morning usable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff-ui.js fallback names unavailable private function",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "app-handoff-ui.js absence raises no page errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the browser actually uses the deliberately different timezone",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: every broker time remains unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: there is one reusable helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the helper is initially closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: exactly the five time fields offer Chicago entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement has not committed while the real lock is held",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement actually commits its next revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps the helper visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement keeps every raw report field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement announces the stale editor revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement resolves through explicit saved reload",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload restores known saved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload clears the revision warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: pending replacement explicit reload preserves the new private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: reopening the active helper preserves its draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: another target cannot silently discard the active helper draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: refused target switch still names submission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: target switch keeps all raw inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Submission time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest entry fill time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Remainder cancellation time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Latest exit time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: Protection checked by you at application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: entry milliseconds survive conversion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: time conversion cannot bypass missing corresponding quantities",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the existing quantity guard explains its refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit save uses the unchanged UTC storage format",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the report changes only after explicit save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: a date without a clock remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: clock refresh preserves the helper node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: clock refresh keeps unrelated unsaved report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling restores opener focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling preserves raw and unrelated unsaved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancelling preserves saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent spring-forward Chicago time is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent Chicago time offers no selectable instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: nonexistent Chicago time cannot masquerade as a repeated hour",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: spring-forward refusal explains the missing local time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: spring gap leaves the original timestamp untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: last millisecond before spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: last millisecond before spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: first time after spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: first time after spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: winter Chicago time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: winter Chicago time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: expected occurrence -05:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: expected occurrence -06:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: editing an ambiguous wall time requires a fresh occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale occurrence cannot apply after a clock edit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: impossible native calendar input is empty",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: an invalid calendar input cannot use a previous resolved choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: all DST and invalid-input exercises remain unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit saved reload restores all known fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted future event cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: future event keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted fill before submission cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: chronology keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted cancellation before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: cancellation chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: converted complete exit before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: complete-exit chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit saved reload may discard an open helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: saved reload with a helper restores all raw fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: manually supplied non-Chicago offset keeps the same instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: current time still enters the actual fixed device instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: current time remains unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit blank still saves unknown rather than invented time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second tab explicitly saves a different valid report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab write changes actual saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the original receives a real trusted local-storage event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab conflict retains exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second-tab conflict retains every original raw report input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: the conflict is announced while the helper remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: open conflicted helper still blocks report save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applied time on the stale editor carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applied time on the stale editor resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applying during a conflict keeps all other stale inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: applying does not overwrite the other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale explicit save cannot overwrite the second tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: stale save names the revision conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload adopts all facts from the newer revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload leaves the helper closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload preserves the newer saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: explicit reload resolves the editor conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: second tab made its separate public startup reads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: original-page private editing sends no additional request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: published record and Following remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: all report controls fit the viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light/Asia/Tokyo: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the browser actually uses the deliberately different timezone",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: every broker time remains unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: there is one reusable helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the helper is initially closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: exactly the five time fields offer Chicago entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement has not committed while the real lock is held",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement actually commits its next revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps the helper visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement keeps every raw report field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement announces the stale editor revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement resolves through explicit saved reload",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload restores known saved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload clears the revision warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: pending replacement explicit reload preserves the new private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: reopening the active helper preserves its draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: another target cannot silently discard the active helper draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: refused target switch still names submission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: target switch keeps all raw inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Submission time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest entry fill time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Remainder cancellation time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Latest exit time application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at opens a labelled Chicago helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at starts with no guessed date or time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at opening preserves all raw report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: opening focuses the date input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper cannot apply",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the disabled save has an apply/cancel explanation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at valid wall time can be applied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at preview exposes both offset and UTC",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application changes only its selected raw field",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application closes the helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application returns keyboard focus to raw input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: Protection checked by you at application does not save private bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: entry milliseconds survive conversion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: time conversion cannot bypass missing corresponding quantities",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the existing quantity guard explains its refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit save uses the unchanged UTC storage format",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the report changes only after explicit save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: a date without a clock remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: clock refresh preserves the helper node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: clock refresh keeps unrelated unsaved report inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling restores opener focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling preserves raw and unrelated unsaved fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancelling preserves saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent spring-forward Chicago time is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time offers no selectable instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: nonexistent Chicago time cannot masquerade as a repeated hour",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: spring-forward refusal explains the missing local time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: spring gap leaves the original timestamp untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: last millisecond before spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: first time after spring jump carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: first time after spring jump resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: winter Chicago time carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: winter Chicago time resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: expected occurrence -05:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back time offers an explicit occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no ambiguous occurrence is guessed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: fall-back choices represent the two distinct known instants",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: both fall-back offsets are visible to the owner",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: expected occurrence -06:00 exists",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an explicit fold choice allows applying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: editing an ambiguous wall time requires a fresh occurrence choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale occurrence cannot apply after a clock edit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: impossible native calendar input is empty",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: an invalid calendar input cannot use a previous resolved choice",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: all DST and invalid-input exercises remain unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit saved reload restores all known fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted future event cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: future event keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted fill before submission cannot overwrite saved facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: chronology keeps the existing model refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted cancellation before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: cancellation chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: converted complete exit before the latest fill cannot overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: complete-exit chronology remains enforced",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit saved reload may discard an open helper",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: saved reload with a helper restores all raw fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: manually supplied non-Chicago offset keeps the same instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: current time still enters the actual fixed device instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: current time remains unsaved",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit blank still saves unknown rather than invented time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second tab explicitly saves a different valid report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab write changes actual saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the original receives a real trusted local-storage event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab conflict retains exact helper nodes, values and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second-tab conflict retains every original raw report input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: the conflict is announced while the helper remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: open conflicted helper still blocks report save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applied time on the stale editor carries the explicit Chicago offset",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applied time on the stale editor resolves to its independently fixed instant",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applying during a conflict keeps all other stale inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: applying does not overwrite the other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale explicit save cannot overwrite the second tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: stale save names the revision conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload adopts all facts from the newer revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload leaves the helper closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload preserves the newer saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: explicit reload resolves the editor conflict",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: second tab made its separate public startup reads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: original-page private editing sends no additional request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: published record and Following remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: all report controls fit the viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark/America/Los_Angeles: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: unconfirmed cash gives no ready state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: unreadable cash is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: zero settled cash funds no share",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: $300 funds two shares at the limit, not three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the refusal names the most the cash funds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: $2,000 settled cash funds the chosen three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: COIL preview at the published limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: AAPL preview of its one published share",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: AAPL preview at the published limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: two drafts, each its own quantity beside the published one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the readback copied names the draft and submits nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-11T13:41:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: AAPL filled and protected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: matched protection is the owner’s word, never verified",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: COIL partly filled, its remainder not yet reported cancelled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: a reported fill withdraws the new-entry copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-11T14:02:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: no new draft after the entry window",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the cash preview offers nothing after the entry window",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the preview says why: the entry window ended",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the remainder cancelled at the cutoff",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-14T13:40:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: AAPL loss and the part of it past the stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the loss is the owner’s, reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-14T20:00:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: a partial exit has no completed result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the partial exit says why",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: one share remains by the owner’s report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-15T20:10:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: COIL gain on the two shares filled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the published records are untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the page reads 2026-09-15T21:00:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the download is the stored bytes exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: no reported fact left the page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: no request carried a body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: the desk fits the screen",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: no browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: unconfirmed cash gives no ready state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: unreadable cash is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: zero settled cash funds no share",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: $300 funds two shares at the limit, not three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the refusal names the most the cash funds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: $2,000 settled cash funds the chosen three",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: COIL preview at the published limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: AAPL preview of its one published share",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: AAPL preview at the published limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: two drafts, each its own quantity beside the published one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the readback copied names the draft and submits nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-11T13:41:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: AAPL filled and protected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: matched protection is the owner’s word, never verified",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: COIL partly filled, its remainder not yet reported cancelled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: a reported fill withdraws the new-entry copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-11T14:02:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: no new draft after the entry window",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the cash preview offers nothing after the entry window",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the preview says why: the entry window ended",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the remainder cancelled at the cutoff",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-14T13:40:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: AAPL loss and the part of it past the stop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the loss is the owner’s, reported",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-14T20:00:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: a partial exit has no completed result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the partial exit says why",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: one share remains by the owner’s report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-15T20:10:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: COIL gain on the two shares filled",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the published records are untouched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the page reads 2026-09-15T21:00:00.000Z",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the download is the stored bytes exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: no reported fact left the page",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: no request carried a body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: the desk fits the screen",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: no browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "the phone and the desktop journeys write the same backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "and print the same amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "the committed backup is what the page writes (SCSTOCK_FIRST_TRADE_WRITE=1 regenerates)",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "the committed amounts are what the page prints",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: frozen original canonical and reader bytes bind",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: actual publication has no admitted tickets",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: empty private storage has no inferred execution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: original five qualified rows offer reporting",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: settled cash remains unknown and cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: open creates only a transient blank editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: keyboard reporting focuses its heading",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: every actual field is blank including quantity, fees and prices",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: opening creates no private record",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: original not-admitted source and no entry permission remain explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: verbose source references begin as a closed disclosure",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: original canonical/cohort/evidence references remain available",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: report-only editor has no visible readback and no order copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: blank first save refuses and writes nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: zero fill never becomes an executed trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: positive fill without actual submitted total refuses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: invalid save preserves explicitly entered positive fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: modal close/reopen preserves exact unsaved input node and value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: explicit cancellation discards transient facts with no write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: explicit actual seven-share fill is saved without research sizing cap",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: report-only discriminant excludes plan/draft/order/cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: exact original source is frozen",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: actual terms and times differ from model and remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: actual partial exit conserves seven entry fills and four holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: over-protection remains a visible reconciliation fact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: independent report never inherits draft quantity or cash arithmetic",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: saved independent report keeps entry readback and archived instructions hidden",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: partial exit result remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: impossible fill plus cancellation refuses without write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: invalid actual correction stays in the editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: fully exited actual facts calculate exact gross/net without model prices",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: visible user-reported net uses actual costs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: unknown actual costs clear previous completed amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: unknown fees never borrow a draft estimate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: missing actual exit clock withdraws completed result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: unknown submitted remainder cancellation cannot imply reconciliation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: same-source action opens saved item without overwrite or duplicate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: original source remains unchanged after repeated reporting action",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: switching research rows refuses to erase dirty private fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: dirty-switch refusal is explicit on requested row",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: zero-ticket source/model/following is unchanged by report workflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: report panel fits phone without horizontal overflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: reporting adds no HTTP request or private request body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: reporting cannot copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 1280/dark: no uncaught browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: frozen original canonical and reader bytes bind",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: actual publication has no admitted tickets",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: empty private storage has no inferred execution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: original five qualified rows offer reporting",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: settled cash remains unknown and cannot prepare",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: open creates only a transient blank editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: keyboard reporting focuses its heading",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: every actual field is blank including quantity, fees and prices",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: opening creates no private record",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: original not-admitted source and no entry permission remain explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: verbose source references begin as a closed disclosure",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: original canonical/cohort/evidence references remain available",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: report-only editor has no visible readback and no order copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: blank first save refuses and writes nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: zero fill never becomes an executed trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: positive fill without actual submitted total refuses",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: invalid save preserves explicitly entered positive fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: modal close/reopen preserves exact unsaved input node and value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: explicit cancellation discards transient facts with no write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: explicit actual seven-share fill is saved without research sizing cap",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: report-only discriminant excludes plan/draft/order/cash",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: exact original source is frozen",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: actual terms and times differ from model and remain unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: actual partial exit conserves seven entry fills and four holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: over-protection remains a visible reconciliation fact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: independent report never inherits draft quantity or cash arithmetic",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: saved independent report keeps entry readback and archived instructions hidden",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: partial exit result remains incomplete",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: impossible fill plus cancellation refuses without write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: invalid actual correction stays in the editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: fully exited actual facts calculate exact gross/net without model prices",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: visible user-reported net uses actual costs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: unknown actual costs clear previous completed amounts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: unknown fees never borrow a draft estimate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: missing actual exit clock withdraws completed result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: unknown submitted remainder cancellation cannot imply reconciliation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: same-source action opens saved item without overwrite or duplicate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: original source remains unchanged after repeated reporting action",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: switching research rows refuses to erase dirty private fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: dirty-switch refusal is explicit on requested row",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: zero-ticket source/model/following is unchanged by report workflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: report panel fits phone without horizontal overflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: reporting adds no HTTP request or private request body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: reporting cannot copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "retained 390/light: no uncaught browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: research action loads existing planned item rather than blank creation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: action preserves exact legacy bytes with one original draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: existing record/correction path is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: model creation refuses shared original ID without overwrite",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: explicit correction preserves original planned terms",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "planned duplicate: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: genuine producer retains baseline admission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: original admission is visible but adds no entry permission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: even after cutoff opening stays blank",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: actual fill after cutoff remains recordable without prior draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: execution reporting never enables order copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: no personal draft fields are manufactured",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: reporting adds no HTTP request or private request body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: reporting cannot copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "admitted origin: no uncaught browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: publication update preserves unsaved exact field node/value/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: publication update preserves local settled cash node and value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: stale captured source refuses creation despite same ticker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: explicit refusal explains another/unverified publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: actual red producer still contains original same ticker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: detached old same-ticker action cannot create current editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: held old action never writes a private item",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: newly explicit report binds only exact replacement evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: later corrections retain original source after expiry and replacement",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: saved report remains report-only after original/current swap",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "replacement: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: actual second browser view saves the current revision",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: stale UI correction cannot overwrite other tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: conflict preserves exact dirty field node and entered value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: conflict explicitly offers loading saved report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: explicit reload selects winning actual report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: quota refusal preserves original bytes and input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: recovery preserves exact prior bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: recovery contains proposed actual correction without source loss",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: explicit private recovery download is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: deliberate retry saves retained actual correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "storage: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy: original model-produced synthetic v1 control is present",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: opening preserves exact original storage bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: in-memory normalization adds only planned kind/version",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: unknown actual costs remain blank",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: invalid correction does not trigger migration",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: explicit valid save writes v3 planned form",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: explicit migration preserves original terms and private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: opening preserves exact original storage bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: in-memory normalization adds only planned kind/version",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: unknown actual costs remain blank",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: invalid correction does not trigger migration",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: explicit valid save writes v3 planned form",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: explicit migration preserves original terms and private draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown version: opening never replaces or silently evicts unknown records",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown version: creation cannot write over unreadable original storage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown version: unavailable storage is not described as no holdings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown version: exact raw recovery copy remains offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown version: no uncaught errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor: opening backup does not migrate exact original v2 bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor: backup access performs zero storage writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor: explicit model writer produced planned and independent private kinds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "export: healthy backup is exact saved bytes excluding unsaved correction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "export: read/download never writes private storage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "export: dirty node/value remains unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "export: disclosure identifies private broker facts and absence of cloud backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "export: public/model/following/cash authority is unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor export: no backup, filename or report reaches HTTP",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor export: backup and restore never copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "donor export: no unexpected browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: absent store begins empty with no backup invented",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: absent store cannot invent a healthy downloaded backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: preview stores nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: preview shows both private kinds and original source dates",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: explicit preview cancellation stores nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: cancel withdraws restore authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: keyboard restore leaves focus on its persistent status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: explicit restore retains every original byte",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: exact export roundtrip retains whitespace/version/facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: both restored items preserve original terms/source/report identity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: restored independent unknown exit price/cost/time stay unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: restored independent gains no plan/draft/readback/copy authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: restored archived planned source cannot bypass current copy guard",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: restore changes no public/model/following/cash authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: disclosure fits phone/desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: no backup, filename or report reaches HTTP",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: backup and restore never copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 390/light: no unexpected browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: absent store begins empty with no backup invented",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: absent store cannot invent a healthy downloaded backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: preview stores nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: preview shows both private kinds and original source dates",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: explicit preview cancellation stores nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: cancel withdraws restore authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: keyboard restore leaves focus on its persistent status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: explicit restore retains every original byte",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: exact export roundtrip retains whitespace/version/facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: both restored items preserve original terms/source/report identity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: restored independent unknown exit price/cost/time stay unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: restored independent gains no plan/draft/readback/copy authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: restored archived planned source cannot bypass current copy guard",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: restore changes no public/model/following/cash authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: disclosure fits phone/desktop",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: no backup, filename or report reaches HTTP",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: backup and restore never copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "roundtrip 1280/dark: no unexpected browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "async restore: completed restore cannot steal a deliberate focus move",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "async restore: queued explicit action still restores exact bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: preview never writes/migrates",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: restore preserves version and all original bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: read/export remains byte-identical without migration",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: original planned terms survive restore",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: normal loading still preserves bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: no storage rewrite on read",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v1: explicit restore made exactly one write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: preview never writes/migrates",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: restore preserves version and all original bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: read/export remains byte-identical without migration",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: original planned terms survive restore",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: normal loading still preserves bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: no storage rewrite on read",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy v2: explicit restore made exactly one write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: preview preserves exact field node/value/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: actual restore cannot replace an unsaved new report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: refusal explains saving/cancelling local edits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: rejected restore preserves entered actual facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: cancelling file preview does not cancel the report editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "dirty: deliberate report discard then restore succeeds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "occupied: preview refuses overwrite and preserves exact saved bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "occupied: existing records cannot acquire restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "occupied: file rejection preserves exact dirty report node/value/focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "occupied: refusal identifies nonempty destination",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid JSON: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid JSON: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid JSON: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown future version: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown future version: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown future version: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "emergency recovery is not a healthy backup: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "emergency recovery is not a healthy backup: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "emergency recovery is not a healthy backup: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "duplicate original ID: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "duplicate original ID: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "duplicate original ID: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown envelope field: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown envelope field: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown envelope field: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "inconsistent actual fills: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "inconsistent actual fills: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "inconsistent actual fills: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "report-only cannot acquire draft fields: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "report-only cannot acquire draft fields: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "report-only cannot acquire draft fields: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "BOM-prefixed file: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "BOM-prefixed file: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "BOM-prefixed file: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 file: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 file: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 file: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 inside valid JSON string: rejected file performs zero writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 inside valid JSON string: rejected file offers no restore confirmation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid UTF8 inside valid JSON string: invalid preview cannot poison readable destination status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "101 distinct valid-shaped items: count cap refuses restore",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized otherwise valid JSON: refuses without private writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized file: known-size refusal reads no file bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized file: no local read exceeds bounded sentinel bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid then valid: healthy preview remains available without writes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: valid empty destination preview is available",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: real second browser tab restores under its lock",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "CAS: old null-destination preview cannot overwrite second tab",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quota: failed restore preserves exact original empty-envelope bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quota: recovery keeps exact prior/proposed without selecting one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quota: emergency recovery remains a separate visible download",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quota: explicit retry with healthy storage preserves exact backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback: failed restore preserves exact original empty-envelope bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback: recovery keeps exact prior/proposed without selecting one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback: emergency recovery remains a separate visible download",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "readback: explicit retry with healthy storage preserves exact backup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview identity: same count/kinds/dates cannot substitute actual fee bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "preview identity: rejected substitution keeps destination readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: public authority is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: recovery disclosure remains reachable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: healthy saved backup exports exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: restored private planned and independent cannot gain copy authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: original unknown exit facts remain unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: no backup, filename or report reaches HTTP",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: backup and restore never copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: no unexpected browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: public authority is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: recovery disclosure remains reachable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: explicit empty-only restore needs no new source fetch",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: restored private planned and independent cannot gain copy authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: original unknown exit facts remain unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: no backup, filename or report reaches HTTP",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: backup and restore never copy an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no publication: no unexpected browser error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: journal is closed and causes no lazy request at startup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: actual canonical and compact-reader bytes bind the journal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: producer resolves a model, not a personal trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: every verified original row offers reporting independently of model status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: keyboard action focuses blank private heading",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: no model quantity, price, time, exit, protection or fee defaults",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: opening creates neither storage nor write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: original publication is genuinely older than active journal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: visible source remains original not active observation publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: raw reference disclosure starts closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: blank broker facts cannot save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: explicit zero fill is not an executed trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: explicit positive fill creates one independent private report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: identity uses original publication and evidence, not active journal or ticker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: exact original source and baseline admission survive",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: hypothetical one-share model never caps actual three-share broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: actual facts remain unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: report-only item has no entry draft, cash arithmetic or readback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: actual fill plus cancellation conserves submitted total",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: result uses actual three-share prices/costs rather than model R",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: an unknown actual fee removes completed amounts without substituting model costs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: repeated original action preserves record/source with no duplicate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: another original cannot erase dirty input node/value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: dirty switch is explained beside the requested original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: ordinary close/reopen keeps exact dirty private input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: private reports cannot mutate public data/model/following",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: phone and desktop have no horizontal overflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/390: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: journal is closed and causes no lazy request at startup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: actual canonical and compact-reader bytes bind the journal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: producer resolves a model, not a personal trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: every verified original row offers reporting independently of model status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: keyboard action focuses blank private heading",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: no model quantity, price, time, exit, protection or fee defaults",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: opening creates neither storage nor write",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: original publication is genuinely older than active journal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: visible source remains original not active observation publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: raw reference disclosure starts closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: blank broker facts cannot save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: explicit zero fill is not an executed trade",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: explicit positive fill creates one independent private report",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: identity uses original publication and evidence, not active journal or ticker",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: exact original source and baseline admission survive",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: hypothetical one-share model never caps actual three-share broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: actual facts remain unknown until entered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: report-only item has no entry draft, cash arithmetic or readback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: actual fill plus cancellation conserves submitted total",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: result uses actual three-share prices/costs rather than model R",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: an unknown actual fee removes completed amounts without substituting model costs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: repeated original action preserves record/source with no duplicate",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: another original cannot erase dirty input node/value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: dirty switch is explained beside the requested original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: ordinary close/reopen keeps exact dirty private input",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: private reports cannot mutate public data/model/following",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: phone and desktop have no horizontal overflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old original/1280: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: genuine conditional model state is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: model state never infers a broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: actual independently reported fill is allowed for a verified original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: true original baseline admission is retained, without an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: genuine conditional model state is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: model state never infers a broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: actual independently reported fill is allowed for a verified original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: true original baseline admission is retained, without an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "not-filled: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: genuine conditional model state is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: model state never infers a broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: actual independently reported fill is allowed for a verified original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: true original baseline admission is retained, without an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "basis-conflict: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: genuine conditional model state is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: model state never infers a broker fill",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: actual independently reported fill is allowed for a verified original",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: true original baseline admission is retained, without an order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: genuine producer retains two distinct cohort digests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: same original from later cohort opens saved report without replacement",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: selected report keeps first original cohort rather than revision identity",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: explicit correction preserves original identity/source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "revision: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference: exact loaded journal reconstructs original source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference active publication: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference journal snapshot: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference journal clock: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference original clock: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference original evidence: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference unsupported discriminator: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference null discriminator: mismatched lookup refuses without source substitution",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference: current-comparison path never falls back to historical journal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loading: old valid source cannot authorize a report during journal revalidation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loading: visible blocked row gives explicit source-change guidance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loading: detached old callback cannot open transient broker editor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loading: callback writes no record",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "loading: completed revalidation restores only exact lookup",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference controls: no private writes or copied orders",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reference controls: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: genuine journal changes active snapshot without changing canonical",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: old snapshot request cannot silently authorize new first save",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: stale refusal keeps exact dirty broker fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: explicit current row renews only lookup, retaining dirty input node/value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: renewed verified journal reference can now save actual facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: original source did not become active journal publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: no copied order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reopen: no uncaught browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: earlier explicit synthetic private report is available",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: absent publication cannot hide original private report or auto-migrate it",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: backup preserves exact old-source report bytes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: actual correction stays possible with no active public source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: source-less historical record cannot copy or prepare an entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: actual private reporting sends no request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: no order can be copied",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: explicit startup refusal is exactly the served 503",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recovery: no error beyond the explicit status-paired startup refusal",
+      "status": "PASS",
+      "lane": "A"
+    }
+  ]
+}

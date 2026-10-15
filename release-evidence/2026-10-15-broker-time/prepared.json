@@ -1,0 +1,183 @@
+{
+  "schema": "spicystock-broker-time-local-preparation-v1",
+  "recorded_at": "2026-10-15T08:45:42.330246+00:00",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "scope": "Optional America/Chicago wall-clock entry for the five privately reported broker-event timestamps, using one reusable unsaved helper and existing design components.",
+  "behavior": [
+    "Date and time start blank; no execution, quantity, date or report is inferred.",
+    "Preview includes exact numeric UTC offset and UTC instant, independent of browser timezone; spring gap is refused and repeated autumn hour requires explicit occurrence choice.",
+    "Apply changes only the selected unsaved raw field; Cancel restores focus and preserves report inputs. Explicit save still runs the unchanged parser/model.",
+    "Open helper blocks implicit report replacement/restore/switch/save. Real second-tab updates and delayed pending draft replacement preserve its nodes, values, focus and stale revision; explicit saved reload resolves.",
+    "Existing raw Z/numeric-offset and Use current time controls remain available; no helper-only request, private write, schedule or provider configuration is added."
+  ],
+  "source_sha256": {
+    "docs/app-handoff-ui.js": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+    "docs/app.css": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+    "docs/app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+    "tools/broker_time_cases.mjs": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+    "tools/page_smoke.mjs": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+    "README.md": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880",
+    ".env.example": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac",
+    "tests/fixtures/cash-preview/publication.json": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a",
+    "tests/fixtures/cash-preview/observed.json": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a",
+    "tests/fixtures/first-trade/backup.json": "923244eeeecb3e0f46ff490cc875801c04b4a3a616f34c4bbe3b0e151b2a03f6",
+    "tests/fixtures/first-trade/parity.json.gz": "3412d2bdeb41ea8463f98d8a6afe79b71244e518a7eefd4c9dc85e1336bf6b50"
+  },
+  "verification": {
+    "focused_browser": {
+      "passed": 354,
+      "failed": 0,
+      "receipt": "focused-page-results.json",
+      "zones": [
+        "Asia/Tokyo",
+        "America/Los_Angeles"
+      ],
+      "viewports": [
+        390,
+        1280
+      ]
+    },
+    "compatibility_browser": {
+      "scope": "Final runtime; two later test-only assertions were added inside the unselected broker-time suite. Current focused/mutation results cover that test delta.",
+      "passed": 1035,
+      "failed": 0,
+      "receipt": "compatibility-page-results.json",
+      "suites": [
+        "cashpreview",
+        "handoff",
+        "firsttrade",
+        "independentreports",
+        "privatebackup",
+        "journalreports"
+      ]
+    },
+    "python": {
+      "passed": 229,
+      "failed": 0,
+      "warning_count": 1,
+      "command": "python -m pytest -q tests/test_docs.py tests/test_private_results.py",
+      "log": {
+        "path": "/tmp/oct15-broker-time-python.log",
+        "bytes": 878,
+        "sha256": "cf6c41ac52da3d57137c1735ddc3ebbdb9ebe27f11b8438c9d0d6d588336f6b5"
+      },
+      "warning": "Existing websockets.legacy deprecation"
+    },
+    "handoff_model": {
+      "passed": 78,
+      "failed": 0,
+      "log": {
+        "path": "/tmp/oct15-broker-time-model.log",
+        "bytes": 8728,
+        "sha256": "6235e22c33d64f5a3960d88e1f9c2784c18d647f5314be16e2be094122742d98"
+      }
+    },
+    "parity_producer": {
+      "cases": 109,
+      "accepted_by_page": 32,
+      "log": {
+        "path": "/tmp/oct15-broker-time-parity.log",
+        "bytes": 84,
+        "sha256": "a4fa00db434e930c197e5aada56f7df6a91b28ed5a3ca6f523e61f6d826620a2"
+      },
+      "result": "Exact committed gzip reproduced; no fixture change"
+    },
+    "first_trade_producer": "Actual page journeys at 390/1280 compare exact downloaded backup and semantic producer output to current committed fixtures; unchanged.",
+    "mutation": {
+      "named_mutants_red": 8,
+      "unrelated_control_passed": 354,
+      "receipt": "mutation-results.json",
+      "tree_frozen": true,
+      "note": "All eight intended named semantic assertions fail. Some deliberately broken UI journeys subsequently time out; the complete failures are retained. The unrelated capacity control finishes all 354 assertions with no failure."
+    },
+    "independent": {
+      "browser_boundary_passed": 164,
+      "lock_race_passed": 24,
+      "note": "Some pure source boundary cases repeat; counts are not claimed as 188 unique checks.",
+      "receipt": "independent-review.json"
+    },
+    "final_documentation": {
+      "passed": 40,
+      "failed": 0,
+      "warning_count": 1,
+      "scope": "After README and repository checkpoint/evidence additions; same existing websockets.legacy warning.",
+      "log": {
+        "path": "/tmp/oct15-broker-time-final-docs.log",
+        "bytes": 636,
+        "sha256": "92ada7ad8892c20ec5b4cb586bcc27c5ae662a5a5a5c16d70df3aceafdd6e2e8"
+      }
+    }
+  },
+  "visual_review": [
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-pending-replacement-390-light.png",
+      "bytes": 72080,
+      "sha256": "3af75711da11f1790df2ea0f748b8cc098f1fbaec7c5e26758c2eec0c17d5e9a",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-pending-replacement-1280-dark.png",
+      "bytes": 161564,
+      "sha256": "f405cbdb468b45493a74a363ac1c416e28a43ae9d2fd099e73056e172976e62d",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-preview-390-light.png",
+      "bytes": 69173,
+      "sha256": "65f85093c4cc70a04d28c0fb7d4e4c70210864558aaa7d24008b5f094e27b5a6",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-preview-1280-dark.png",
+      "bytes": 143206,
+      "sha256": "918ced78fb7be2af510d43b075bb4dbc50afcae83e1316e4ca54fe6912dbb9d8",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-fall-choice-390-light.png",
+      "bytes": 71799,
+      "sha256": "01592b7d978a44c5a01fb7d74433206726c77c2ab5ffb047ba01a3b6805338fa",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-focused-v5-shots/broker-time-fall-choice-1280-dark.png",
+      "bytes": 159959,
+      "sha256": "02dbf6de2c30203fbe5967832012955be6d5dbeb9a8761ba4cc4b9473536528a",
+      "reviewer": "test author inspected all six v4 captures; all final v5 PNG bytes exactly match those inspected captures. Implementation author also inspected all six directly or by exact matching earlier inspected image bytes"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-final-compatibility-shots/first-trade-gap-390-light.png",
+      "bytes": 67379,
+      "sha256": "3e2df4ba9e691b81a43d2d62c0abb767cb4fe2b425817a30f55d9b527f148c0c",
+      "reviewer": "implementation author inspected these three representative compatibility captures"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-final-compatibility-shots/independent-blank-1280-dark.png",
+      "bytes": 95362,
+      "sha256": "e0541129560d086811246471fd4cbb9a141b5d93a09dd2ff8d8f3aa0f108b144",
+      "reviewer": "implementation author inspected these three representative compatibility captures"
+    },
+    {
+      "path": "/tmp/oct15-broker-time-final-compatibility-shots/private-backup-restored-390-light.png",
+      "bytes": 70461,
+      "sha256": "7650d0277518c158783420d601f447480a845b01b793d2d23d5994ba3b8ac90a",
+      "reviewer": "implementation author inspected these three representative compatibility captures"
+    }
+  ],
+  "preserved_failures": "local-attempts.json and original-race-failure.json retain unsuccessful attempts and the independently reproduced fixed bug.",
+  "documentation_sweep": "README now describes optional helper, DST ambiguity, unsaved state and existing offset fallback. .env.example inspected and unchanged: no helper configuration, provider, schedule or credentials added.",
+  "protected_baseline": "app-handoff.js, backend/provider/strategy code, workflows, published data, fixtures and pinned design system remain unchanged from base. All new browser facts are explicitly synthetic; no personal execution is claimed.",
+  "runtime": {
+    "python": "3.12.14",
+    "node": "24.19.0",
+    "playwright": "1.56.1",
+    "chromium": "141"
+  },
+  "remaining": [
+    "Reconcile onto the actually accepted combined morning release, with exact source comparison and independent review.",
+    "Fresh required hosted gates, reviewed exact-head merge, existing deployment and actual public verification are pending.",
+    "Current-data and broker facts remain external: no new morning quote access, SEC/earnings coverage, broker selection or actual execution was obtained in this local task.",
+    "A first actual successful trade remains unrecorded; the synthetic rehearsal and helper tests establish no trading result."
+  ],
+  "status": "Local preparation only; not a published release or waived gate."
+}

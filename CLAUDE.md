@@ -8561,3 +8561,58 @@ current morning coverage, personal trade or trading edge is inferred. The next
 prepared milestone pairs research quote reload with the static owner handoff;
 the subsequent policy/window preparation must include #171's first-trade fixture
 cascade before fresh verification.
+
+
+## Independent Chicago broker-time helper preparation — 15 October 2026
+
+The optional **Enter Chicago time** helper is now prepared directly on published
+main `145716b7`, independently of the pending combined morning workflow. It
+starts blank for each of the five broker-event fields, previews the entered
+America/Chicago time with its UTC offset and instant, refuses the spring clock
+gap, and requires an explicit occurrence choice for the repeated autumn hour.
+Apply changes only the chosen unsaved field; Cancel preserves entries. Existing
+explicit-offset entry, save validation, chronology, quantity and private-storage
+rules remain intact. The helper infers no broker execution or event time.
+
+The original [local preparation](release-evidence/2026-10-15-broker-time/prepared.json)
+and its failure/review receipts retain their original `2c8c3ca8` base and scope.
+The [direct-main reconciliation](release-evidence/2026-10-15-broker-time/main-reconciliation.json)
+records current-base verification separately. The broker UI, CSS, test helper
+and smoke registration retain the exact reviewed `600fb098` bytes; README adds
+only the broker helper paragraph. Current-main fixtures, the newer recovery
+receipt, published history, provider/strategy source, workflows, configuration
+and pinned design system are unchanged. The combined morning candidate's code,
+fixture changes and collection-window behavior are not included in this release.
+
+Automatic approval review separately blocked publishing a regenerated synthetic
+fixture for that combined morning candidate; this broker-only work neither
+uploads that fixture nor retries the rejected action. Its fresh required hosted
+gates, reviewed exact-head merge, existing deployment and actual public
+acceptance remain outstanding. README describes the optional unsaved helper;
+`.env.example` remains accurate and unchanged. Timely morning observations,
+confirmed broker facts and Mo's first actual successful trade remain open.
+
+
+[Finder PR #170](https://github.com/spicyChicken59/SpicyStock/pull/170) is already
+shipped: reviewed head `b30cbdf6` passed all seven required checks and merged as
+`8c251c1f`. Its actual public verification passed 297 checks with 58 matching
+files, superseding the earlier pending finder notes. The separate local morning
+candidate `66e92a57` retains the full acceptance receipts and the blocked fixture
+publication checkpoint; no remote PR exists for that candidate. Those combined
+changes are not a dependency of this broker-only release. These implementation
+and release checks do not establish a personal execution or profitable trade.
+
+
+The broker candidate's first publication attempt was stopped by automatic
+approval review because the mutation receipt included raw synthetic broker/order
+records inside assertion diagnostics. The rejected full receipt is preserved
+locally at `19dcb98c` and is not retried. The
+[evidence minimization](release-evidence/2026-10-15-broker-time/evidence-minimization.json)
+replaces raw detail strings in both mutation receipts with byte counts and
+SHA-256 digests, retaining every control/result name, count, assertion status
+and source/log hash. Runtime, test code, fixtures and README are unchanged;
+prior checks are not claimed rerun. Original source reviews keep their original
+scope. Fresh documentation, secret-scan and independent exact-head checks are
+required before publishing this smaller receipt; hosted gates and actual public
+acceptance remain outstanding. The separate combined-morning fixture upload
+remains blocked and is not included in this independent broker release.

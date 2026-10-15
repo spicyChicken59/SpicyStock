@@ -1,0 +1,860 @@
+{
+  "schema": "spicystock-broker-time-exact-commit-independent-review-v1",
+  "reviewed_at": "2026-10-15T08:48:48.808774+00:00",
+  "commit": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+  "tree": "b01f0d0035e6535e0b252f6f15b7023616fa6de9",
+  "base": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+  "scope": "Executed read-only exact-commit, Git tree, runtime pin, durable evidence and named mutation-outcome verification; no product edits, remote calls or broad test repetition.",
+  "passed": 112,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Exact candidate head",
+      "pass": true,
+      "actual": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+      "expected": "600fb0985d25f69fd7dc41a9399ba6a619277a79"
+    },
+    {
+      "name": "Exact candidate tree",
+      "pass": true,
+      "actual": "b01f0d0035e6535e0b252f6f15b7023616fa6de9",
+      "expected": "b01f0d0035e6535e0b252f6f15b7023616fa6de9"
+    },
+    {
+      "name": "Single reviewed candidate parent",
+      "pass": true,
+      "actual": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+      "expected": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5"
+    },
+    {
+      "name": "Working tree clean at start",
+      "pass": true,
+      "actual": "",
+      "expected": ""
+    },
+    {
+      "name": "Whitespace diff check",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "Only six authorized prior paths changed",
+      "pass": true,
+      "actual": [
+        "CLAUDE.md",
+        "PRODUCT_GOAL.md",
+        "README.md",
+        "docs/app-handoff-ui.js",
+        "docs/app.css",
+        "tools/page_smoke.mjs"
+      ],
+      "expected": [
+        "CLAUDE.md",
+        "PRODUCT_GOAL.md",
+        "README.md",
+        "docs/app-handoff-ui.js",
+        "docs/app.css",
+        "tools/page_smoke.mjs"
+      ]
+    },
+    {
+      "name": "Only focused suite and ten evidence receipts added",
+      "pass": true,
+      "actual": [
+        "release-evidence/2026-10-15-broker-time/compatibility-page-results.json",
+        "release-evidence/2026-10-15-broker-time/focused-page-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-browser-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-race-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-review.json",
+        "release-evidence/2026-10-15-broker-time/local-attempts.json",
+        "release-evidence/2026-10-15-broker-time/mutation-results.json",
+        "release-evidence/2026-10-15-broker-time/original-race-failure.json",
+        "release-evidence/2026-10-15-broker-time/prepared.json",
+        "release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+        "tools/broker_time_cases.mjs"
+      ],
+      "expected": [
+        "release-evidence/2026-10-15-broker-time/compatibility-page-results.json",
+        "release-evidence/2026-10-15-broker-time/focused-page-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-browser-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-race-results.json",
+        "release-evidence/2026-10-15-broker-time/independent-review.json",
+        "release-evidence/2026-10-15-broker-time/local-attempts.json",
+        "release-evidence/2026-10-15-broker-time/mutation-results.json",
+        "release-evidence/2026-10-15-broker-time/original-race-failure.json",
+        "release-evidence/2026-10-15-broker-time/prepared.json",
+        "release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+        "tools/broker_time_cases.mjs"
+      ]
+    },
+    {
+      "name": "Every protected baseline Git object and mode unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Protected docs/design-system/ objects unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Protected src/ objects unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Protected .github/ objects unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Protected tests/fixtures/ objects unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Protected docs/data.json objects unchanged",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Prepared receipt names reviewed parent",
+      "pass": true,
+      "actual": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5",
+      "expected": "2c8c3ca81f15e5fd586e072c834c0895dbe01dc5"
+    },
+    {
+      "name": "Committed source pin docs/app-handoff-ui.js",
+      "pass": true,
+      "actual": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "expected": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "Committed source pin docs/app.css",
+      "pass": true,
+      "actual": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+      "expected": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    {
+      "name": "Committed source pin docs/app-handoff.js",
+      "pass": true,
+      "actual": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "expected": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "Committed source pin tools/broker_time_cases.mjs",
+      "pass": true,
+      "actual": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+      "expected": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2"
+    },
+    {
+      "name": "Committed source pin tools/page_smoke.mjs",
+      "pass": true,
+      "actual": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e",
+      "expected": "674e541a187d9f0d93c3c60e399b59bbda7935114f697f2cdaec5eaa1b16716e"
+    },
+    {
+      "name": "Committed source pin README.md",
+      "pass": true,
+      "actual": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880",
+      "expected": "66b66761079e59dc2d3135e57968fec9471ec119644a068828aa8f320c327880"
+    },
+    {
+      "name": "Committed source pin .env.example",
+      "pass": true,
+      "actual": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac",
+      "expected": "3df9d32cc9bb81c84d0909e4cec021cff93b462d9d85e3d16326cefe9e2e9aac"
+    },
+    {
+      "name": "Committed source pin tests/fixtures/cash-preview/publication.json",
+      "pass": true,
+      "actual": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a",
+      "expected": "d966bb538a876a0a3326eeb08ce8d659ce75c88a2054d65f1a1246ea7feeac5a"
+    },
+    {
+      "name": "Committed source pin tests/fixtures/cash-preview/observed.json",
+      "pass": true,
+      "actual": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a",
+      "expected": "5fddf5842959004f739ceb04b9385cd41b85e84d360067b28c4a8970b8c6d80a"
+    },
+    {
+      "name": "Committed source pin tests/fixtures/first-trade/backup.json",
+      "pass": true,
+      "actual": "923244eeeecb3e0f46ff490cc875801c04b4a3a616f34c4bbe3b0e151b2a03f6",
+      "expected": "923244eeeecb3e0f46ff490cc875801c04b4a3a616f34c4bbe3b0e151b2a03f6"
+    },
+    {
+      "name": "Committed source pin tests/fixtures/first-trade/parity.json.gz",
+      "pass": true,
+      "actual": "3412d2bdeb41ea8463f98d8a6afe79b71244e518a7eefd4c9dc85e1336bf6b50",
+      "expected": "3412d2bdeb41ea8463f98d8a6afe79b71244e518a7eefd4c9dc85e1336bf6b50"
+    },
+    {
+      "name": "Independently executed runtime pin docs/app-handoff-ui.js",
+      "pass": true,
+      "actual": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "expected": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "Independently executed runtime pin docs/app.css",
+      "pass": true,
+      "actual": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+      "expected": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3"
+    },
+    {
+      "name": "Independently executed runtime pin docs/app-handoff.js",
+      "pass": true,
+      "actual": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+      "expected": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+    },
+    {
+      "name": "Committed evidence matches original independent-review.json",
+      "pass": true,
+      "actual": "a786a16d863ea6c0e6a7bcc081a0d94ca0d8a785e0f1e81300ab3e615d8669bb",
+      "expected": "a786a16d863ea6c0e6a7bcc081a0d94ca0d8a785e0f1e81300ab3e615d8669bb"
+    },
+    {
+      "name": "Committed evidence matches original independent-browser-results.json",
+      "pass": true,
+      "actual": "849b0d2367b12837d95a09405d5f3c269d4a8269dd51048a1615e6d6ce8b2635",
+      "expected": "849b0d2367b12837d95a09405d5f3c269d4a8269dd51048a1615e6d6ce8b2635"
+    },
+    {
+      "name": "Committed evidence matches original independent-race-results.json",
+      "pass": true,
+      "actual": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3",
+      "expected": "a5a8d73b6f8db769225cd27d0ec3e1ba1bfc8d4daf2f2d4c4e23eefe613437b3"
+    },
+    {
+      "name": "Committed evidence matches original original-race-failure.json",
+      "pass": true,
+      "actual": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471",
+      "expected": "451f11c573136b960d2abbc61d3033ca01a32018cb8fd53bff5b217096284471"
+    },
+    {
+      "name": "Committed evidence matches original focused-page-results.json",
+      "pass": true,
+      "actual": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98",
+      "expected": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98"
+    },
+    {
+      "name": "Committed evidence matches original compatibility-page-results.json",
+      "pass": true,
+      "actual": "26f1139719deb93381a05503df9ae9a5c4ab47098e3c8c6500c178826b538aa2",
+      "expected": "26f1139719deb93381a05503df9ae9a5c4ab47098e3c8c6500c178826b538aa2"
+    },
+    {
+      "name": "Committed evidence matches original mutation-results.json",
+      "pass": true,
+      "actual": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e",
+      "expected": "4737274d1c6b8cb3d40fd66a8242829a424c4590ff118689f8da423625f2cc5e"
+    },
+    {
+      "name": "Committed evidence matches original prior-mutation-results.json",
+      "pass": true,
+      "actual": "e0a4c4e8336bcfce46b197023b139bfc095163b0d529e2b8f915c23d9d6627f2",
+      "expected": "e0a4c4e8336bcfce46b197023b139bfc095163b0d529e2b8f915c23d9d6627f2"
+    },
+    {
+      "name": "focused-page-results.json exact complete count",
+      "pass": true,
+      "actual": 354,
+      "expected": 354
+    },
+    {
+      "name": "focused-page-results.json zero failures",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "focused-page-results.json all assertion rows pass",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "compatibility-page-results.json exact complete count",
+      "pass": true,
+      "actual": 1035,
+      "expected": 1035
+    },
+    {
+      "name": "compatibility-page-results.json zero failures",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "compatibility-page-results.json all assertion rows pass",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "independent-browser-results.json exact complete count",
+      "pass": true,
+      "actual": 164,
+      "expected": 164
+    },
+    {
+      "name": "independent-browser-results.json zero failures",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "independent-browser-results.json all assertion rows pass",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "independent-race-results.json exact complete count",
+      "pass": true,
+      "actual": 24,
+      "expected": 24
+    },
+    {
+      "name": "independent-race-results.json zero failures",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "name": "independent-race-results.json all assertion rows pass",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Original reproduced race failure retained",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Final mutation tree frozen",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Final mutation runtime pin",
+      "pass": true,
+      "actual": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+      "expected": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca"
+    },
+    {
+      "name": "Final mutation suite pin",
+      "pass": true,
+      "actual": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+      "expected": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2"
+    },
+    {
+      "name": "Nine final mutation outcomes retained",
+      "pass": true,
+      "actual": 9,
+      "expected": 9
+    },
+    {
+      "name": "Mutant fixed-zone failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant fixed-zone named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin fixed-zone",
+      "pass": true,
+      "actual": "2b784bfa2a9d5d83a962d49a56a0b7a82385f87e52f122016c376d31d290b487",
+      "expected": "2b784bfa2a9d5d83a962d49a56a0b7a82385f87e52f122016c376d31d290b487"
+    },
+    {
+      "name": "Mutation assertion results pin fixed-zone",
+      "pass": true,
+      "actual": "e3314b4e2e38a2d404a1f112ef8af37bbd2870218d0a46fd2b1ad008855ebdd9",
+      "expected": "e3314b4e2e38a2d404a1f112ef8af37bbd2870218d0a46fd2b1ad008855ebdd9"
+    },
+    {
+      "name": "Mutant gap-roundtrip failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant gap-roundtrip named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin gap-roundtrip",
+      "pass": true,
+      "actual": "d9910ffcefcad5dc49491ca2bf8b5af2fac1e400f608ddf2b6aac8d2ddfd32af",
+      "expected": "d9910ffcefcad5dc49491ca2bf8b5af2fac1e400f608ddf2b6aac8d2ddfd32af"
+    },
+    {
+      "name": "Mutation assertion results pin gap-roundtrip",
+      "pass": true,
+      "actual": "b9985d6a4fa43a519fc8f6138aa688b5166d8f1dccf2bddcf759e3761591371c",
+      "expected": "b9985d6a4fa43a519fc8f6138aa688b5166d8f1dccf2bddcf759e3761591371c"
+    },
+    {
+      "name": "Mutant fold-choice failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant fold-choice named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin fold-choice",
+      "pass": true,
+      "actual": "457f340e4d4869b3f1cf0f625dc339005236909e5b759227a40cba18c4196571",
+      "expected": "457f340e4d4869b3f1cf0f625dc339005236909e5b759227a40cba18c4196571"
+    },
+    {
+      "name": "Mutation assertion results pin fold-choice",
+      "pass": true,
+      "actual": "0f80e43aa9c69f79264c12709e69e156327b8522ed6b8730f9d11520eb58f7c2",
+      "expected": "0f80e43aa9c69f79264c12709e69e156327b8522ed6b8730f9d11520eb58f7c2"
+    },
+    {
+      "name": "Mutant fractional-seconds failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant fractional-seconds named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin fractional-seconds",
+      "pass": true,
+      "actual": "1933e68a6bc8e2b9ea2ca3a6c722ff7ef3d4f5a8caa5f2cdffb1cf4cc8ca073e",
+      "expected": "1933e68a6bc8e2b9ea2ca3a6c722ff7ef3d4f5a8caa5f2cdffb1cf4cc8ca073e"
+    },
+    {
+      "name": "Mutation assertion results pin fractional-seconds",
+      "pass": true,
+      "actual": "e94d414785671edf7b390d3bac85d33d65a4b192c48a66d730ccc8c0d31954ac",
+      "expected": "e94d414785671edf7b390d3bac85d33d65a4b192c48a66d730ccc8c0d31954ac"
+    },
+    {
+      "name": "Mutant apply-one-field failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant apply-one-field named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin apply-one-field",
+      "pass": true,
+      "actual": "44eaa491fd27288852af3d9a7b0786b719dad0cdc79131a1da7430ea457cea24",
+      "expected": "44eaa491fd27288852af3d9a7b0786b719dad0cdc79131a1da7430ea457cea24"
+    },
+    {
+      "name": "Mutation assertion results pin apply-one-field",
+      "pass": true,
+      "actual": "b90301e058aad328141b2460e127be4f4a9a7ea96f6133f8ab5314169bbf8a8c",
+      "expected": "b90301e058aad328141b2460e127be4f4a9a7ea96f6133f8ab5314169bbf8a8c"
+    },
+    {
+      "name": "Mutant unfinished-save failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant unfinished-save named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin unfinished-save",
+      "pass": true,
+      "actual": "e36fae3482627a386258247a40e300f333663de28ac9e319cc5e56093aff6414",
+      "expected": "e36fae3482627a386258247a40e300f333663de28ac9e319cc5e56093aff6414"
+    },
+    {
+      "name": "Mutation assertion results pin unfinished-save",
+      "pass": true,
+      "actual": "6f1f53f1fcc3193a70cdf72cdb164db98f86e304c2cbb1f899e2b13969d0d794",
+      "expected": "6f1f53f1fcc3193a70cdf72cdb164db98f86e304c2cbb1f899e2b13969d0d794"
+    },
+    {
+      "name": "Mutant revision-adoption failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant revision-adoption named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin revision-adoption",
+      "pass": true,
+      "actual": "05b2f5b8c8f46e6b0d8788aec1b2c940502bd2267b7c755a696221da6d8ff7bb",
+      "expected": "05b2f5b8c8f46e6b0d8788aec1b2c940502bd2267b7c755a696221da6d8ff7bb"
+    },
+    {
+      "name": "Mutation assertion results pin revision-adoption",
+      "pass": true,
+      "actual": "ac73e2835126f91d6d4d367a53765f2f2d09135727d30eddc1373f6368b99b13",
+      "expected": "ac73e2835126f91d6d4d367a53765f2f2d09135727d30eddc1373f6368b99b13"
+    },
+    {
+      "name": "Mutant pending-prepare failed normally",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutant pending-prepare named semantic failure",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin pending-prepare",
+      "pass": true,
+      "actual": "afbfa706a691a770a3d03004f2d01db042b4e6fa148469fdc9c814b776d4108b",
+      "expected": "afbfa706a691a770a3d03004f2d01db042b4e6fa148469fdc9c814b776d4108b"
+    },
+    {
+      "name": "Mutation assertion results pin pending-prepare",
+      "pass": true,
+      "actual": "552410816a032d37e60c691cdcf3db5a46ad323ea587569eaae72008c48cb7a9",
+      "expected": "552410816a032d37e60c691cdcf3db5a46ad323ea587569eaae72008c48cb7a9"
+    },
+    {
+      "name": "Unrelated capacity control fully green",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Mutation output log pin unrelated-store-cap",
+      "pass": true,
+      "actual": "9e821bccf52aa1e38a91f2915090999eee9c38aa6e6291cc033cdd0a146de0e2",
+      "expected": "9e821bccf52aa1e38a91f2915090999eee9c38aa6e6291cc033cdd0a146de0e2"
+    },
+    {
+      "name": "Mutation assertion results pin unrelated-store-cap",
+      "pass": true,
+      "actual": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98",
+      "expected": "da633555b4a60ee73713dd89fa8dd545d98becc0292c983c2d1f096721169e98"
+    },
+    {
+      "name": "Earlier mutation receipt remains separate and frozen",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Author log hash python",
+      "pass": true,
+      "actual": "cf6c41ac52da3d57137c1735ddc3ebbdb9ebe27f11b8438c9d0d6d588336f6b5",
+      "expected": "cf6c41ac52da3d57137c1735ddc3ebbdb9ebe27f11b8438c9d0d6d588336f6b5"
+    },
+    {
+      "name": "Author log size python",
+      "pass": true,
+      "actual": 878,
+      "expected": 878
+    },
+    {
+      "name": "Author log hash handoff_model",
+      "pass": true,
+      "actual": "6235e22c33d64f5a3960d88e1f9c2784c18d647f5314be16e2be094122742d98",
+      "expected": "6235e22c33d64f5a3960d88e1f9c2784c18d647f5314be16e2be094122742d98"
+    },
+    {
+      "name": "Author log size handoff_model",
+      "pass": true,
+      "actual": 8728,
+      "expected": 8728
+    },
+    {
+      "name": "Author log hash parity_producer",
+      "pass": true,
+      "actual": "a4fa00db434e930c197e5aada56f7df6a91b28ed5a3ca6f523e61f6d826620a2",
+      "expected": "a4fa00db434e930c197e5aada56f7df6a91b28ed5a3ca6f523e61f6d826620a2"
+    },
+    {
+      "name": "Author log size parity_producer",
+      "pass": true,
+      "actual": 84,
+      "expected": 84
+    },
+    {
+      "name": "Author log hash final_documentation",
+      "pass": true,
+      "actual": "92ada7ad8892c20ec5b4cb586bcc27c5ae662a5a5a5c16d70df3aceafdd6e2e8",
+      "expected": "92ada7ad8892c20ec5b4cb586bcc27c5ae662a5a5a5c16d70df3aceafdd6e2e8"
+    },
+    {
+      "name": "Author log size final_documentation",
+      "pass": true,
+      "actual": 636,
+      "expected": 636
+    },
+    {
+      "name": "Author Python terminal outcome exists",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Post-checkpoint docs terminal outcome exists",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Model terminal outcome exists",
+      "pass": true,
+      "actual": {
+        "tests": 78,
+        "pass": 78,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "expected": {
+        "tests": 78,
+        "pass": 78,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    },
+    {
+      "name": "Parity terminal outcome exists",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "CLAUDE.md prior checkpoint bytes retained",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "CLAUDE.md local-only pending release stated",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "CLAUDE.md current independent count scoped",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "PRODUCT_GOAL.md prior checkpoint bytes retained",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "PRODUCT_GOAL.md local-only pending release stated",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "PRODUCT_GOAL.md current independent count scoped",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Current page driver includes focused suite",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Retained local harness sources byte-identical",
+      "pass": true,
+      "actual": true,
+      "expected": true
+    },
+    {
+      "name": "Working tree clean at finish",
+      "pass": true,
+      "actual": "",
+      "expected": ""
+    },
+    {
+      "name": "HEAD unchanged at finish",
+      "pass": true,
+      "actual": "600fb0985d25f69fd7dc41a9399ba6a619277a79",
+      "expected": "600fb0985d25f69fd7dc41a9399ba6a619277a79"
+    },
+    {
+      "name": "Exact candidate remains clean after audit parser correction",
+      "pass": true,
+      "actual": "600fb0985d25f69fd7dc41a9399ba6a619277a79 clean",
+      "expected": "600fb0985d25f69fd7dc41a9399ba6a619277a79 clean"
+    }
+  ],
+  "protected_baseline": {
+    "base_file_count": 20400,
+    "protected_file_count": 20394,
+    "candidate_file_count": 20411,
+    "modified_paths": [
+      "CLAUDE.md",
+      "PRODUCT_GOAL.md",
+      "README.md",
+      "docs/app-handoff-ui.js",
+      "docs/app.css",
+      "tools/page_smoke.mjs"
+    ],
+    "added_paths": [
+      "release-evidence/2026-10-15-broker-time/compatibility-page-results.json",
+      "release-evidence/2026-10-15-broker-time/focused-page-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-browser-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-race-results.json",
+      "release-evidence/2026-10-15-broker-time/independent-review.json",
+      "release-evidence/2026-10-15-broker-time/local-attempts.json",
+      "release-evidence/2026-10-15-broker-time/mutation-results.json",
+      "release-evidence/2026-10-15-broker-time/original-race-failure.json",
+      "release-evidence/2026-10-15-broker-time/prepared.json",
+      "release-evidence/2026-10-15-broker-time/prior-mutation-results.json",
+      "tools/broker_time_cases.mjs"
+    ],
+    "proof": "All protected paths retain identical Git object type, mode and blob SHA."
+  },
+  "runtime_pins": {
+    "docs/app-handoff-ui.js": "f4a9adfcf61e804d273641b7f255931a25f5a95db6da565cd54efbdc149c5fca",
+    "docs/app.css": "c3d6e15b46bdb8144e4e1ef0784b3a4af11626977bc90650dafdb5f23e0e07c3",
+    "docs/app-handoff.js": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e"
+  },
+  "suite_sha256": "0d0a90b99478ebd60c045b872eac5ac8b13a2f530d09ba9afd7fec480e5d97a2",
+  "mutation_named_failures": {
+    "fixed-zone": [
+      "390/light/Asia/Tokyo: Submission time resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: Remainder cancellation time resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: Latest exit time resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: Protection checked by you at resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: last millisecond before spring jump resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: first time after spring jump resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: winter Chicago time resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "390/light/Asia/Tokyo: selected fall-back occurrence -06:00 resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Submission time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Remainder cancellation time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Latest exit time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Protection checked by you at resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: last millisecond before spring jump resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: first time after spring jump resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: winter Chicago time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: selected fall-back occurrence -05:00 resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: selected fall-back occurrence -06:00 resolves to its independently fixed instant"
+    ],
+    "gap-roundtrip": [
+      "390/light/Asia/Tokyo: nonexistent Chicago time offers no selectable instant",
+      "1280/dark/America/Los_Angeles: nonexistent Chicago time offers no selectable instant"
+    ],
+    "fold-choice": [
+      "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "390/light/Asia/Tokyo: ambiguous time cannot apply until the owner chooses",
+      "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses",
+      "1280/dark/America/Los_Angeles: ambiguous time cannot apply until the owner chooses"
+    ],
+    "fractional-seconds": [
+      "390/light/Asia/Tokyo: Latest entry fill time resolves to its independently fixed instant",
+      "1280/dark/America/Los_Angeles: Latest entry fill time resolves to its independently fixed instant"
+    ],
+    "apply-one-field": [
+      "390/light/Asia/Tokyo: Latest entry fill time application changes only its selected raw field",
+      "390/light/Asia/Tokyo: Remainder cancellation time application changes only its selected raw field",
+      "390/light/Asia/Tokyo: Latest exit time application changes only its selected raw field",
+      "390/light/Asia/Tokyo: Protection checked by you at application changes only its selected raw field",
+      "1280/dark/America/Los_Angeles: Latest entry fill time application changes only its selected raw field",
+      "1280/dark/America/Los_Angeles: Remainder cancellation time application changes only its selected raw field",
+      "1280/dark/America/Los_Angeles: Latest exit time application changes only its selected raw field",
+      "1280/dark/America/Los_Angeles: Protection checked by you at application changes only its selected raw field"
+    ],
+    "unfinished-save": [
+      "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "390/light/Asia/Tokyo: an unfinished helper prevents accidental report saving",
+      "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving",
+      "1280/dark/America/Los_Angeles: an unfinished helper prevents accidental report saving"
+    ],
+    "revision-adoption": [
+      "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+      "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus"
+    ],
+    "pending-prepare": [
+      "390/light/Asia/Tokyo: pending replacement keeps the helper visible",
+      "390/light/Asia/Tokyo: pending replacement keeps exact helper nodes, values and focus",
+      "390/light/Asia/Tokyo: pending replacement announces the stale editor revision",
+      "390/light/Asia/Tokyo: pending replacement leaves report saving disabled until the helper is resolved",
+      "1280/dark/America/Los_Angeles: pending replacement keeps the helper visible",
+      "1280/dark/America/Los_Angeles: pending replacement keeps exact helper nodes, values and focus",
+      "1280/dark/America/Los_Angeles: pending replacement announces the stale editor revision",
+      "1280/dark/America/Los_Angeles: pending replacement leaves report saving disabled until the helper is resolved"
+    ]
+  },
+  "retained_harness_manifest": {
+    "path": "/tmp/oct15-broker-time-independent-sources/manifest.json",
+    "bytes": 1747,
+    "sha256": "d25848213020c71f50fada5fcf7a42df6ec45b4aec08534ff40eca540927a6ac"
+  },
+  "findings": [],
+  "limits": [
+    "This exact-commit audit verifies previously executed source pins and actual retained evidence; it did not rerun broad browser/Python suites.",
+    "The eight semantic mutation failures and unrelated control are author-executed outputs independently inspected and hash-verified here.",
+    "Earlier 164/164 and 24/24 independent executions apply to byte-identical runtime. Later permanent suite additions were read and final source pin verified; no claim they ran inside the earlier independent harness.",
+    "Final source must still reconcile on the accepted prior release and receive exact-head required hosted checks, ordinary merge and actual public acceptance.",
+    "No broker execution, current provider observation, personal trading result or deployment is inferred."
+  ],
+  "historical_audit_attempt": {
+    "path": "/tmp/oct15-broker-time-exact-review-attempt1.json",
+    "bytes": 32362,
+    "sha256": "b0e30cbe64265e60a0fbd8d7c5f2c136806bbb239cc9047d984bb68cbeb987b0",
+    "result": "110 pass / 1 audit-harness failure. The model log uses Node test-runner output \u201cpass 78\u201d, while the initial literal searched only \u201cPASS\u201d or \u201cpassed\u201d. Corrected the temporary audit parser to check exact tests/pass/fail/cancelled/skipped counts; no source or evidence changed."
+  }
+}
