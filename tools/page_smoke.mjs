@@ -3188,9 +3188,15 @@ async function checkSession(browser, base, full) {
     const chartBefore = await p2.evaluate(() => window.SCStock.liveCharts());
     await openAll(p2, '#disc-plan');
     await p2.locator('#disc-plan [data-copy]').first().focus();
-    await p2.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
-    const moved = await p2.evaluate(() => window.SCStock.reclock());
-    eq('crossing the deadline while it sits there changes the answer', [moved, await attr(p2, 'html', 'data-ss-window')], [true, 'ended']);
+    // the clock crosses the deadline and the page re-reads it in ONE task: the
+    // page's own 30 s re-reading (watchClock()) runs on real time, and landing
+    // between a move and a separate reclock() it would catch the page up first,
+    // leaving this call nothing to change
+    const [moved, phase] = await p2.evaluate((iso) => {
+      window.__fake = new Date(iso).getTime();
+      return [window.SCStock.reclock(), document.documentElement.getAttribute('data-ss-window')];
+    }, WHEN.after[0]);
+    eq('crossing the deadline while it sits there changes the answer', [moved, phase], [true, 'ended']);
     check('the left-open tab now says the window ended', (await text(p2, '#next-h3')).includes('has ended'), await text(p2, '#next-h3'));
     eq('and the copy control is gone from under the reader', await count(p2, '#disc-plan [data-copy]'), 0);
     eq('the chart was NOT torn down to say so', await p2.evaluate(() => window.SCStock.liveCharts()), chartBefore);
@@ -3218,13 +3224,19 @@ async function checkSession(browser, base, full) {
     await p3.evaluate(() => window.SCStock.reclock());
     await openAll(p3, '#disc-plan');
     eq('a reader inside the window has a copy control', await count(p3, '#disc-plan [data-copy]'), 1);
-    // the window closes while the disclosure is open, and the page is NOT told
-    await p3.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
     // Chromium's clipboard is shared across the contexts of one browser, so
     // "it is empty" is no evidence on its own: a suite that copied earlier
     // would have left its own text there. It is written first, and must be
     // exactly what is read back.
     await p3.evaluate(() => navigator.clipboard.writeText('nothing was copied').catch(() => {}));
+    // the window closes while the disclosure is open, and the page is NOT told:
+    // the clock crosses the deadline in the press's own task, as it starts, so
+    // nothing re-reads it first. The page's own 30 s re-reading (watchClock())
+    // runs on real time; landing between a separate move and the press, it
+    // would tell the page and take away the very control being pressed.
+    await p3.evaluate((iso) => window.addEventListener('click', () => {
+      window.__fake = new Date(iso).getTime();
+    }, { capture: true, once: true }), WHEN.after[0]);
     await p3.locator('#disc-plan [data-copy]').first().click();
     await p3.waitForTimeout(250);
     const clip = await p3.evaluate(() => navigator.clipboard.readText().catch(() => ''));
