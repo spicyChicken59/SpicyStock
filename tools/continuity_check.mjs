@@ -87,9 +87,14 @@ try{
  const blob='2c5ec387654d2cea9d85b1230e91b4c7c0efb534';
  for(const ticker of ['ATEC','VICR']){
  w.document.querySelector('#history-ticker').value=ticker;w.document.querySelector('#history-search').dispatchEvent(new w.Event('submit',{cancelable:true}));await pause();await pause();
- click(w,'[data-history-inspect="'+blob+'"]');await pause();await pause();
- click(w,'[data-history-source="'+blob+'"] [data-history-save]');await pause();await pause();
- const found=f.list().find(i=>i.ticker===ticker);check(found?.session==='2026-09-11'&&found.snapshot.grade==='A','recovered exact original '+ticker);check(found.provenance.record_id===blob,'recovered provenance '+ticker);check(!found.annotation,'recovery does not seed personal annotations');
+ // Inspect digests two archive reads on the thread pool before it creates Save, and Save commits
+ // through the lock and navigates to its sheet: a loaded runner takes longer than two timer turns.
+ // Wait on each control itself, bounded so a broken page still reaches the named check and fails it.
+ click(w,'[data-history-inspect="'+blob+'"]');
+ for(const until=Date.now()+5000;!w.document.querySelector('[data-history-source="'+blob+'"] [data-history-save]')&&Date.now()<until;)await pause();
+ click(w,'[data-history-source="'+blob+'"] [data-history-save]');
+ let found;for(const until=Date.now()+5000;!((found=f.list().find(i=>i.ticker===ticker))&&[...w.document.querySelectorAll('#saved [data-saved-id]')].some(n=>n.dataset.savedId===found.id)&&w.document.querySelector('#saved-close'))&&Date.now()<until;)await pause();
+ check(found?.session==='2026-09-11'&&found.snapshot.grade==='A','recovered exact original '+ticker);check(found.provenance.record_id===blob,'recovered provenance '+ticker);check(!found.annotation,'recovery does not seed personal annotations');
  click(w,'#saved-close');await pause();}
  check(f.list().length===2,'both originals saved from empty storage');
  check(shared.requests.some(u=>String(u).endsWith('history/'+blob+'/record.json'))&&!existsSync(path.join(ROOT,'docs/history',blob)),'recovery read the frozen archive, which the checkout no longer carries');

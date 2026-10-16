@@ -71,8 +71,13 @@ export async function checkFollowedPlan({browser, base, data, open, check, eq, s
   check('missing current model observation keeps its dated last evidence', /No newer exact model observation/.test(await page.locator('#following [data-plan-coverage]').innerText()));
   await route('#/followed/' + encodeURIComponent(id));
   check('saved detail explains public observation horizon', /public observation window has ended/.test(await page.locator('#saved').innerText()));
-  await page.locator('#saved [data-select-plan]').click(); await page.waitForTimeout(100);
-  eq('clearing selection retains the saved original', [(await read()).length, (await read())[0].plan_selection], [1, undefined]);
+  await page.locator('#saved [data-select-plan]').click();
+  // The click's commit waits for a Web Lock before it writes: wait on the
+  // cleared store and the re-rendered control, bounded so a clear that drops
+  // the original still reaches the named check and fails it.
+  await page.waitForFunction(() => { const l = SCStock.follow.list(); return l.length === 1 && !l[0].plan_selection
+    && document.querySelector('#saved [data-select-plan]')?.getAttribute('aria-pressed') === 'false'; }, null, {timeout:5000}).catch(() => {});
+  eq('clearing selection retains the saved original', [(await read()).length, ((await read())[0] || {}).plan_selection], [1, undefined]);
   await page.locator('#saved [data-select-plan]').click(); await page.waitForTimeout(100);
   check('missing terminal outcome stays unknown after horizon', /window ended/.test(await page.locator('#saved [data-plan-coverage]').innerText()));
   await page.locator('#saved-close').click();

@@ -117,14 +117,27 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
     // Both real socket faults start together. Neither response is fulfilled
     // by a fetch mock: the server must observe the application close it.
     await Promise.all(['headers', 'body'].map(async (kind, index) => {
-      const tab = await launch([{ kind }], { seed, width: index ? 1280 : 390 }), { page, control } = tab;
+      // Both instants of the deadline are read on the page's own clock: the
+      // publication fetch as it is issued and the timeout as it renders. The
+      // server's receipt lags the page by the route hop, which a loaded runner
+      // stretches past the allowance while the page's own deadline is exact.
+      const tab = await launch([{ kind }], { seed, width: index ? 1280 : 390, beforeLoad: (page, source) => page.addInitScript(source => {
+        const native = window.fetch;
+        window.fetch = function(url) {
+          if (window.__publicationFetchAt === undefined && String(url).startsWith(source)) window.__publicationFetchAt = performance.now();
+          return native.apply(this, arguments);
+        };
+        new MutationObserver(() => {
+          if (window.__publicationTimeoutAt === undefined && document.querySelector('#refresh-said')?.dataset.outcome === 'timeout') window.__publicationTimeoutAt = performance.now();
+        }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-outcome'] });
+      }, source) }), { page, control } = tab;
       await reports(page);
       check(kind + ': private broker facts accessible while publication loads', await field(page, 'average_price').isVisible());
       check(kind + ': pending startup cannot prepare or copy an entry', await noAuthority(page));
       await field(page, 'average_price').fill('111.');
       await page.evaluate(() => { window.__heldReport = document.querySelector('[data-handoff-field="average_price"]'); window.__heldReport.setSelectionRange(2, 2); });
       await waitOutcome(page, 'timeout');
-      const elapsed = performance.now() - control.requests[0].at;
+      const elapsed = await page.evaluate(() => window.__publicationTimeoutAt - window.__publicationFetchAt);
       check(kind + ': timeout covers headers and entire body within deadline allowance', elapsed >= DEADLINE - 300 && elapsed <= DEADLINE + 5000, elapsed);
       check(kind + ': timeout closes the actual server connection', await closed(control.requests[0]));
       check(kind + ': timed-out startup has no entry authority', await noAuthority(page));
@@ -190,7 +203,12 @@ export async function checkPublicationRecovery({ browser, check, eq, shotsDir })
     check('refresh timeout closes its stalled body', await closed(refresh.control.requests[1]));
     eq('refresh timeout preserves record, selection, dirty node/value/focus and entered cash', await p.evaluate(() => [SCStock.data === window.__oldData, document.querySelector('#detail').dataset.selected === window.__selected, document.querySelector('[data-handoff-field="average_price"]') === window.__refreshReport, window.__refreshReport.value, document.activeElement === window.__refreshReport, document.querySelector('#morning-cash').value]), [true, true, true, '111.', true, '123.']);
     await p.evaluate(() => SCStock.checkUpdates());
-    await p.waitForTimeout(150); await p.evaluate(() => SCStock.checkUpdates()); await waitOutcome(p, 'unchanged');
+    // The server must be holding this request on its 'headers' step before the
+    // next press supersedes it: a press that lands first aborts a request the
+    // server never saw, and the stall falls to the replacement instead. Wait on
+    // the server's own receipt, bounded by the page's deadline.
+    for (const until = Date.now() + DEADLINE; refresh.control.requests.length < 3 && Date.now() < until;) await new Promise(resolve => setTimeout(resolve, 10));
+    await p.evaluate(() => SCStock.checkUpdates()); await waitOutcome(p, 'unchanged');
     check('new refresh aborts the superseded headers request', await closed(refresh.control.requests[2]));
     await unchanged(p, seed);
     await p.evaluate(() => SCStock.checkUpdates()); await waitOutcome(p, 'revised');

@@ -1333,7 +1333,20 @@ const obsOf = (page, ticker) => page.evaluate(([k, t]) => {
   const it = JSON.parse(localStorage.getItem(k)).items.find((x) => x.ticker === t);
   return it ? (it.observations || []).map((o) => [o.date, o.c, o.from_session, !!o.revised, o.basis]) : null;
 }, [FOLLOW_KEY, ticker]);
-const rerender = async (page, data, now) => { await page.evaluate(([d, n]) => { SCStock.render(d, new Date(n)); }, [data, now]); await page.waitForTimeout(320); };
+// A render starts recoverEvidence -> recordObservations -> refreshResearchViews
+// without waiting for it, and the observe commit inside it is a Web Lock grant.
+// The shelf the render draws synchronously is marked here, in the render's own
+// task; the pass ends by redrawing the shelf without the mark, which is what is
+// waited on. Bounded, so a page whose pass never ends still reaches the checks
+// after it and fails them by name.
+const rerender = async (page, data, now) => {
+  await page.evaluate(([d, n]) => {
+    SCStock.render(d, new Date(n));
+    const list = document.getElementById('following-list');
+    Array.from(list ? list.children : []).forEach((c) => c.setAttribute('data-ss-before-pass', ''));
+  }, [data, now]);
+  await page.waitForFunction(() => !document.querySelector('#following-list [data-ss-before-pass]'), null, { timeout: 5000 }).catch(() => {});
+};
 const followFrom = async (page, ticker) => {
   await go(page, `#/explore/bursts/${ticker}`);
   const add = page.locator('#detail .ss-follow button[data-follow-action="add"]');
@@ -1364,7 +1377,13 @@ async function checkFollowThrough(browser, base, full) {
   // ---- a store written by the previous version of this page
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await seedStore(page, LEGACY);
-  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+  // the upgrade is a locked commit the render queues, and the sentence is painted
+  // by the listener after it: wait on both, bounded, so a page that never
+  // upgrades still reaches the checks below and fails them by name
+  await page.waitForFunction((k) => {
+    try { return JSON.parse(localStorage.getItem(k)).version === 4 && ((document.getElementById('following-status') || {}).textContent || '').includes('carried over'); } catch (e) { return false; }
+  }, FOLLOW_KEY, { timeout: 5000 }).catch(() => {});
   eq('a v1 store is upgraded in place', (await readStore(page)).version, 4);
   eq('and the payload it replaced is kept beside it', await storeKeys(page), [FOLLOW_KEY, FOLLOW_KEY + '.previous']);
   eq('verbatim', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.previous')), FOLLOW_KEY), LEGACY);
@@ -1383,7 +1402,9 @@ async function checkFollowThrough(browser, base, full) {
       Storage.prototype.setItem = function (key, v) { if (key === k + '.previous') return; return real.call(this, key, v); };
     }, FOLLOW_KEY);
     await p3.evaluate(() => { SCStock.render(SCStock.data, new Date('2026-09-10T22:31:00Z')); });
-    await p3.waitForTimeout(300);
+    // the migration is a locked commit queued by that render; its refusal is
+    // painted by the listener after it, so that is what is waited on, bounded
+    await p3.waitForFunction(() => ((document.getElementById('following-status') || {}).textContent || '').includes('left as it was'), null, { timeout: 5000 }).catch(() => {});
     eq('a copy that does not take leaves the old payload exactly as it was', await readStore(p3), LEGACY);
     check('and says the list was left as it was', (await text(p3, '#following-status')).includes('left as it was'), await text(p3, '#following-status'));
     eq('while the setups still read', await count(p3, '#following .ss-followed'), 1);
@@ -1405,13 +1426,19 @@ async function checkFollowThrough(browser, base, full) {
       snapshot: Object.assign({}, LEGACY.items[0].snapshot, { close: tradeRow.close, close_date: full.run.session }) });
     const newerTicker = Object.assign({}, LEGACY.items[0], { id: `burst:${trade}:2026-08-14:${full.app.rules_version}`, ticker: trade });
     await seedStore(p4, { version: 1, items: [sameSignal, newerTicker] });
-    await p4.reload(); await p4.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await p4.waitForTimeout(320);
+    await p4.reload(); await p4.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+    // the recovery is a locked attachEvidence commit the render starts: wait for
+    // the store to carry it, bounded, so a page that never attaches still
+    // reaches the checks below and fails them by name
+    await p4.waitForFunction(([k, id]) => {
+      try { const it = JSON.parse(localStorage.getItem(k)).items.find((x) => x.id === id); return !!(it && it.evidence && it.evidence.series && it.evidence.series.length); } catch (e) { return false; }
+    }, [FOLLOW_KEY, sameSignal.id], { timeout: 5000 }).catch(() => {});
     const back = (await readStore(p4)).items;
     const recovered = back.find((x) => x.id === sameSignal.id), other = back.find((x) => x.id === newerTicker.id);
     eq('a v1 follow gets its chart back from the record that IS its signal',
       [!!(recovered.evidence && recovered.evidence.series.length), recovered.evidence && recovered.evidence.recovered], [true, true]);
     check('bounded at the signal session, like one saved then',
-      recovered.evidence.series.every((b) => b.date <= full.run.session), 'a bar after the signal was recovered');
+      !!(recovered.evidence && recovered.evidence.series.every((b) => b.date <= full.run.session)), 'a bar after the signal was recovered');
     eq('and a v1 follow for the same TICKER under another session gets none', other.evidence, null);
     await openSavedById(p4, sameSignal.id, 'the recovered setup opens by its own identity');
     check('the sheet says the chart was recovered rather than saved then',
@@ -1429,7 +1456,9 @@ async function checkFollowThrough(browser, base, full) {
   // checking its save refusal; a hidden/absent detail is not that protection.
   await go(page, `#/explore/bursts/${trade}`);
   await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
-  await page.waitForTimeout(200);
+  // the refusal is written by the handler after its locked commit resolves:
+  // wait for the sentence the check reads, bounded
+  await page.waitForFunction(() => ((document.querySelector('#detail .ss-follow') || {}).innerText || '').includes('newer version'), null, { timeout: 5000 }).catch(() => {});
   eq('a follow attempted over it writes nothing', (await readStore(page)).version, 99);
   check('and says so', (await text(page, '#detail .ss-follow')).includes('newer version'), await text(page, '#detail .ss-follow'));
 
@@ -1745,15 +1774,22 @@ async function checkFollowStates(browser, base, full, next) {
     await p.goto(base + `/docs/index.html#/explore/bursts/${trade}`, { waitUntil: 'load' });
     await p.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
   }
-  await a.click('#detail .ss-follow button[data-follow-action="add"]'); await a.waitForTimeout(250);
-  await b.waitForTimeout(400);
+  await a.click('#detail .ss-follow button[data-follow-action="add"]');
+  // a's save is a locked commit, and b learns of it only through the storage
+  // event and its repaint: wait on b's shelf, bounded, rather than on sleeps
+  await b.waitForFunction(() => document.querySelectorAll('#following .ss-followed').length === 1, null, { timeout: 5000 }).catch(() => {});
   eq('a follow in one tab shows in the other without a reload', await count(b, '#following .ss-followed'), 1);
   // the second tab follows something else; the first must not write its stale list back
   await go(b, `#/explore/bursts/${other}`);
-  await b.click('#detail .ss-follow button[data-follow-action="add"]'); await b.waitForTimeout(300);
+  await b.click('#detail .ss-follow button[data-follow-action="add"]');
+  // a repaints its detail block when b's write reaches it; the edit below must
+  // not race that repaint, so wait for a to have read b's save first
+  await a.waitForFunction(() => document.querySelectorAll('#following .ss-followed').length === 2, null, { timeout: 5000 }).catch(() => {});
   await a.click('#detail .ss-follow button[data-follow-action="edit"]');
   await a.fill('#detail .ss-follow__form input', '9');
-  await a.click('#detail .ss-follow__form button[type="submit"]'); await a.waitForTimeout(300);
+  await a.click('#detail .ss-follow__form button[type="submit"]');
+  // both writes are locked commits: wait for the store to carry both, bounded
+  await a.waitForFunction(([k, t]) => { try { const items = JSON.parse(localStorage.getItem(k)).items; return items.length === 2 && (items.find((x) => x.ticker === t) || {}).reference_shares === 9; } catch (e) { return false; } }, [FOLLOW_KEY, trade], { timeout: 5000 }).catch(() => {});
   const both = await a.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => [x.ticker, x.reference_shares]), FOLLOW_KEY);
   eq('an edit in one tab keeps the other tab’s follow', both.length, 2);
   eq('and applies to its own', both.find((r) => r[0] === trade)[1], 9);
@@ -1782,10 +1818,11 @@ async function checkFollowStates(browser, base, full, next) {
     }, FOLLOW_KEY);
     check('quota admits setup and refuses its chart', capacity.withoutChart < capacity.quota && capacity.quota < capacity.withChart);
     await page.click('#detail .ss-follow button[data-follow-action="remove"]');
-    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(300);
+    await page.click('#detail .ss-follow button[data-follow-action="add"]');
+    await page.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'following', null, { timeout: 5000 }).catch(() => {});
     eq('a store with no room still saves the setup', await attr(page, '#detail .ss-follow', 'data-follow'), 'following');
-    eq('without its chart', await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].evidence, FOLLOW_KEY), null);
-    eq('quota fallback keeps the full snapshot and receipt', await page.evaluate(k => JSON.parse(localStorage.getItem(k)).items[0].snapshot, FOLLOW_KEY), capacity.snapshot);
+    eq('without its chart', await page.evaluate((k) => (JSON.parse(localStorage.getItem(k)).items[0] || {}).evidence, FOLLOW_KEY), null);
+    eq('quota fallback keeps the full snapshot and receipt', await page.evaluate(k => (JSON.parse(localStorage.getItem(k)).items[0] || {}).snapshot, FOLLOW_KEY), capacity.snapshot);
     await openSaved(page, trade);
     check('and the sheet says so rather than drawing one from tonight',
       (await said(page, '#saved [data-chart="unsaved"]')).includes('Original chart was not saved'), await said(page, '#saved [data-chart="unsaved"]'));
@@ -1797,7 +1834,8 @@ async function checkFollowStates(browser, base, full, next) {
   // --- the keyboard alone, and the phone --------------------------------
   {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { lens: 'all', height: 844, hash: `#/explore/bursts/${trade}` });
-    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(250);
+    await page.click('#detail .ss-follow button[data-follow-action="add"]');
+    await page.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'following', null, { timeout: 5000 }).catch(() => {});
     await rerender(page, next, '2026-09-11T22:31:00Z');
     await go(page, '#/setups');
     eq('the phone stacks the shelf full-width', await page.locator('#following .ss-followed').first().evaluate((n) => Math.round(n.getBoundingClientRect().width) > window.innerWidth * 0.75), true);

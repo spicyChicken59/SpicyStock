@@ -73,6 +73,10 @@ export async function checkReading({ browser, base, data, open, check, eq, shots
   eq('help link uses the hash router', await p.evaluate(() => location.hash), '#/method/chart');
   check('the relevant Method definition opens', await p.locator('#read-chart').getAttribute('open') !== null);
   await p.locator('#method-return').click(); await settle(p);
+  // restoreReading() restores both positions inside one animation frame and
+  // then focuses the help trigger: wait on that observable effect, bounded so
+  // a restore that never runs still reaches the named check and fails it.
+  await p.waitForFunction(() => document.activeElement && document.activeElement.matches('[data-help-topic="chart"]'), null, { timeout: 5000 }).catch(() => {});
   const back = await box(p); eq('Method returns to the same stock route', back.hash, before.hash);
   check('Method restores page and detail reading position', Math.abs(back.page - before.page) < 2 && Math.abs(back.detail - before.detail) < 2, { before, back });
   eq('return does not reopen stale help', await p.locator('#ss-reading-help').count(), 0);
