@@ -324,3 +324,107 @@ def test_public_byte_verification_fetches_optional_stop_receipt_and_exact_cohort
     monkeypatch.setattr(publisher, 'public_bytes', fetch)
     publisher.publish('owner/repository', root)
     assert requested.count('stop-research.json') == requested.count(ref) == 1
+
+
+# -- the validation study's frozen case files ----------------------------------
+
+FROZEN_RECORD = 'c' * 40
+
+
+def write_frozen_study(docs: Path, commit_copies: bool = True) -> tuple[str, ...]:
+    """A two-case study over one record and its frozen copies, written as the
+    freeze tool writes them (byte for byte, under the study's own digests)."""
+    import hashlib
+    context = b'{"run": {"session": "2026-09-24"}, "app": {"rules_version": "0123456789ab"}}'
+    evidence = {'CRL': b'{"source": "' + FROZEN_RECORD.encode() + b'", "row": {"ticker": "CRL"}}',
+                'IQV': b'{"source": "' + FROZEN_RECORD.encode() + b'", "row": {"ticker": "IQV"}}'}
+    cases = [{'ticker': t, 'session': '2026-09-24',
+              'entry': {'ticker': t, 'kind': 'burst', 'source': FROZEN_RECORD, 'path': f'{FROZEN_RECORD}/burst-{t}.json',
+                        'sha256': hashlib.sha256(raw).hexdigest()},
+              'source': {'record_id': FROZEN_RECORD, 'commit': None, 'rules_version': '0123456789ab',
+                         'context_sha256': hashlib.sha256(context).hexdigest()}} for t, raw in evidence.items()]
+    (docs / 'historical-validation.json').write_bytes(json.dumps({'version': 'historical-validation-v1', 'cases': cases}).encode())
+    files = {f'{FROZEN_RECORD}/record.json': context, **{f'{FROZEN_RECORD}/burst-{t}.json': raw for t, raw in evidence.items()}}
+    if commit_copies:
+        for rel, raw in files.items():
+            target = docs / 'historical-validation' / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+    return tuple(f'historical-validation/{rel}' for rel in sorted(files))
+
+
+@pytest.fixture
+def study_publication(publication):
+    root, sidecar = publication
+    return root, sidecar, write_frozen_study(root / 'docs')
+
+
+def test_public_byte_inventory_includes_every_frozen_case_file_the_study_names(study_publication):
+    root, sidecar, frozen = study_publication
+    files = publisher.public_files(root)
+    assert files == ('index.html', *publisher.RECORD_FILES, 'app.js', sidecar, *frozen)
+    assert publisher.study_case_files(root) == frozen
+
+
+@pytest.mark.parametrize('study', [b'{}', b'{"version": "historical-validation-v1", "cases": []}',
+                                   b'{"version": "historical-validation-v1", "cases": null}'])
+def test_a_study_without_cases_names_no_frozen_files(publication, study):
+    root, sidecar = publication  # write_reader_records leaves the study as {}
+    (root / 'docs' / 'historical-validation.json').write_bytes(study)
+    assert publisher.study_case_files(root) == ()
+    assert publisher.public_files(root) == ('index.html', *publisher.RECORD_FILES, 'app.js', sidecar)
+
+
+@pytest.mark.parametrize('fault,message', [
+    ('missing', 'burst-CRL.json: the frozen case file the study names is missing or unreadable'),
+    ('drifted', "burst-IQV.json: the frozen case file is not the study's bytes"),
+    ('symlink', 'record.json: the frozen case file the study names is missing or unreadable'),
+    ('unservable', 'names a case the publication cannot serve'),
+    ('unreadable study', 'validation study file is missing or unreadable'),
+])
+def test_a_frozen_case_file_the_page_could_not_read_fails_publication_by_name(study_publication, fault, message):
+    root, _, frozen = study_publication
+    docs = root / 'docs'
+    if fault == 'missing':
+        (docs / f'historical-validation/{FROZEN_RECORD}/burst-CRL.json').unlink()
+    elif fault == 'drifted':
+        path = docs / f'historical-validation/{FROZEN_RECORD}/burst-IQV.json'
+        path.write_bytes(path.read_bytes() + b' ')
+    elif fault == 'symlink':
+        path = docs / f'historical-validation/{FROZEN_RECORD}/record.json'
+        moved = root / 'elsewhere.json'
+        moved.write_bytes(path.read_bytes())
+        path.unlink()
+        path.symlink_to(moved)
+    elif fault == 'unservable':
+        study = json.loads((docs / 'historical-validation.json').read_bytes())
+        study['cases'][0]['entry']['path'] = 'd' * 40 + '/burst-CRL.json'
+        (docs / 'historical-validation.json').write_bytes(json.dumps(study).encode())
+    else:
+        (docs / 'historical-validation.json').write_bytes(b'{"version": ')
+    with pytest.raises(RuntimeError, match=message):
+        publisher.public_files(root)
+
+
+def test_frozen_case_inventory_needs_only_standard_library(study_publication):
+    root, _, frozen = study_publication
+    source = Path(__file__).resolve().parent.parent
+    code = ('import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); '
+            'from tools.publish_dashboard import public_files; print(public_files(Path(sys.argv[2])))')
+    result = subprocess.run([sys.executable, '-I', '-S', '-c', code, str(source), str(root)],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert all(name in result.stdout for name in frozen)
+
+
+def test_the_publication_gate_fetches_the_committed_frozen_cases():
+    """Every case file the committed study names is a public file the gate
+    verifies on the served site -- the Record view reads nothing else for a
+    case once the rolling archive has dropped the record."""
+    from tools import freeze_validation_cases as fz
+    root = Path(__file__).resolve().parent.parent
+    files = publisher.public_files(root)
+    expected = tuple(f'historical-validation/{rel}' for rel in sorted(fz.case_files(json.loads((root / 'docs' / fz.STUDY).read_bytes()))))
+    assert len(expected) == 5
+    assert publisher.study_case_files(root) == expected
+    assert all(name in files for name in expected)

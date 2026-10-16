@@ -216,3 +216,31 @@ def test_historical_context_disposition_is_exact_value_and_exact_path_only():
         assert not allowed("unrelated.txt", value)
     for value in ("another_rule_name", "down25_quarter_extra", "pct_above_40ma_extra", "NOT_A_RULE"):
         assert not allowed(path, value)
+
+
+def test_frozen_validation_case_disposition_is_the_archive_rule_at_the_frozen_path_only():
+    """docs/historical-validation/<record>/ holds byte copies of archive
+    originals, so the same rule-key disposition applies there and nowhere
+    beside it: not a sibling file in the case directory, not a lookalike
+    directory, not a path prefix or suffix, and never a value that is not a
+    lowercase underscored rule key."""
+    config = tomllib.loads((ROOT / ".gitleaks.toml").read_text())
+    dispositions = next(r for r in config["rules"] if r["id"] == "generic-api-key")["allowlists"]
+    def allowed(path, value):
+        return any(a["condition"] == "AND" and a["regexTarget"] == "secret" and
+                   any(re.search(p, path) for p in a["paths"]) and
+                   any(re.search(p, value) for p in a["regexes"]) for a in dispositions)
+    record = "332b99ffac36b3b723de58197ce853e1ecd96b20"
+    for path in (f"docs/historical-validation/{record}/record.json", f"docs/historical-validation/{record}/burst-CRL.json",
+                 f"docs/historical-validation/{record}/burst-BRK.B.json"):
+        for value in ("abnormal_10pct", "down25_quarter", "pct_above_40ma"):
+            assert allowed(path, value), (path, value)
+        for value in ("NOT_A_RULE", hashlib.sha256(b"invented frozen-case canary").hexdigest(), "abnormal_10pct-extra", "Abnormal_10pct"):
+            assert not allowed(path, value), (path, value)
+    for path in (f"docs/historical-validation/{record}/notes.json", f"docs/historical-validation/{record}/anticipation-CRL.json",
+                 f"docs/historical-validation/{record}/record.json.backup", f"copied/docs/historical-validation/{record}/record.json",
+                 f"docs/history-validation/{record}/record.json", "docs/historical-validation/record.json",
+                 f"docs/historical-validation/{record[:39]}/record.json", f"docs/historical-validation/{record}0/record.json",
+                 f"docs/historical-validation/{record.upper()}/record.json", f"docs/historical-validation/{record}/burst-crl.json",
+                 f"docs/historical-validation/{record}/burst-ABCDEFGHIJKLMNOPQ.json"):
+        assert not allowed(path, "abnormal_10pct"), path

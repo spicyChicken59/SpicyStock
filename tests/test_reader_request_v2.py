@@ -1,4 +1,5 @@
 """Offline request compatibility; never claims a measured API success rate."""
+import hashlib
 import inspect
 import gzip
 import json
@@ -50,7 +51,12 @@ def test_original_retained_authority_decisions_are_not_repaired(ticker,accepted)
     if ticker=='MSFT':
         study=json.loads((root/'docs/historical-validation.json').read_bytes())
         case=next(c for c in study['cases'] if c['ticker']==ticker)
-        b=json.loads((root/'docs/history'/case['entry']['path']).read_bytes())['row']
+        # The study's frozen copy under docs/historical-validation/, held to the
+        # digest the study recorded; never docs/history, whose 21-day window
+        # drops the 25 September record with the 19 October publication.
+        frozen=(root/'docs/historical-validation'/case['entry']['path']).read_bytes()
+        assert hashlib.sha256(frozen).hexdigest()==case['entry']['sha256']
+        b=json.loads(frozen)['row']
     else:
         data=json.loads(gzip.decompress((root/'tests/fixtures/chart-keyboard/2026-09-24.json.gz').read_bytes()))
         b=next(b for b in data['bursts'] if b['ticker']==ticker)
