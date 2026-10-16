@@ -457,7 +457,9 @@ def faults(run: dict, pipeline_rules) -> list[str]:
         return ["stale follow-up block is malformed"]
     if found:
         return found
-    kinds = {p.get("kind") for p in run.get("problems") or [] if isinstance(p, dict)}
+    # run.problems that is not a list is named by validate(); it is not read here
+    problems = run.get("problems")
+    kinds = {p.get("kind") for p in (problems if isinstance(problems, list) else []) if isinstance(p, dict)}
     if block["matched"] and "coverage_thin" not in kinds:
         return ["a late bar that would have been listed is not named coverage_thin"]
     return []

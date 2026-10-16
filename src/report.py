@@ -668,7 +668,13 @@ def validate(data: dict) -> None:
                 faults.append(f"run.problems[{i}].message is not plain text of at most {MESSAGE_MAX_CHARS} chars")
     faults.extend(timing_faults(run.get("timing")))
     faults.extend(inputs.record_faults(run))
-    faults.extend(sessions.record_faults(run))
+    if run.get("calendar") is not None and not isinstance(run.get("timing"), dict):
+        # sessions.record_faults() reads the timing block beside a calendar as an
+        # object; src/sessions.py is a pinned source of the delivery proof, so the
+        # shape is named here and that module is not asked
+        faults.append("run timing is not an object beside its calendar")
+    else:
+        faults.extend(sessions.record_faults(run))
     from src import followup, reader_coverage, record   # lazy: each sits under the pipeline, which imports this module
     rules_pipeline = _get(data, "rules", "pipeline")
     # the unfinished open model plans, on an open night; a closed night carries the previous plans
@@ -744,7 +750,8 @@ def validate(data: dict) -> None:
             faults.append("observations.signals is not an object")
         if obs.get("history_max") != history.OBSERVATIONS_MAX:
             faults.append("observations.history_max is not the supported bound")
-        for sym, row in obs.get("symbols", {}).items():
+        symbols = obs.get("symbols")  # a symbols value that is not an object is named above
+        for sym, row in (symbols.items() if isinstance(symbols, dict) else []):
             bars = row.get("history", []) if isinstance(row, dict) else []
             if (not isinstance(bars, list) or len(bars) > history.OBSERVATIONS_MAX
                     or any(not history.valid_bar(b) for b in bars)):

@@ -155,9 +155,15 @@ def record_faults(run):
         errors.append('bar request basis is missing or inconsistent')
     if basis.get('expected_session') != run.get('expected_session') or basis.get('evaluated_session') != run.get('session'):
         errors.append('bar session basis is inconsistent')
-    if cov.get('acceptance', {}).get('status') == 'fail' or cov.get('scan_unattempted'):
+    acceptance = cov.get('acceptance')
+    if not isinstance(acceptance, dict):
+        errors.append('coverage acceptance is not an object')
+    elif acceptance.get('status') == 'fail' or cov.get('scan_unattempted'):
         errors.append('unaccepted coverage cannot be published')
-    if cov.get('intended') != uni.get('size', 0) + cov.get('benchmark_added', 0):
+    size, added = uni.get('size', 0), cov.get('benchmark_added', 0)
+    if type(size) is not int or type(added) is not int:
+        errors.append('universe size or benchmark count is not an integer')
+    elif cov.get('intended') != size + added:
         errors.append('universe and fetch populations disagree')
     selection = uni.get('selection')
     if selection and isinstance(selection, dict) and selection.get('intended') != uni.get('size'):
