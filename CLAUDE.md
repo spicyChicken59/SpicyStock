@@ -8886,3 +8886,147 @@ morning check that has run; a reading of the recovery receipts across nights.
 Omit: any change to the page to make a test pass; a wider tolerance.
 
 **Not claimable:** a morning or research observation; any trading edge.
+
+## Checkpoint, 16 Oct 2026 — PR #173 accepted; the seed stops asking for a stock that stopped trading
+
+**PR #173, accepted.** Merged as `348cd710` on `main` with a merge commit over
+`55a458ad`. The head `df5c06ba` passed all seven checks (Tests run 38859329915:
+pytest, page, the gate, both native cases; Secret scans 38859329305 and
+38859254475). Publisher 38864236322 printed *Verified: every one of the 42
+public files matches committed main* at 06:59:16 UTC; Pages 38864262643
+deployed (38864235631 cancelled as superseded, as every merge does); the merge
+commit's own Secret scan 38864236349 passed and its Tests run 38864236254
+passed (06:57–07:25 UTC).
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `348cd710`, pushed as **PR #174**. Nine files move:
+`data/symbols.txt`, `README.md`, `.env.example`, `tests/test_docs.py`,
+`tools/check_blank_check_universe.py`, `tests/test_historical_input_proof.py`,
+the two frozen-fixture files under `tests/fixtures/historical-input-proof/`
+and this file. Nothing under `src/` changed and no rule
+moved: the seed is membership, not a rule, and the 13 page fixtures reproduce
+byte for byte, `rules_version` among them. `docs/data.json`, `docs/picks.json`,
+the compact reader, every receipt, the history, the evidence objects, the
+quality ledger, the workflows and the vendored design system are untouched; no
+run, mail, dispatch, provider call or credential.
+
+**What the record said.** The 13, 14 and 15 October publications are each
+`degraded`, each with `behind_more` as the tolerance's one reason (13 and 15
+October carry a reader problem beside it, below), and each names ONE frame
+ending past the five-session bound: WBD, last bar 5 October, in
+`run.input_tolerance.endings` on all three nights (every other stale frame --
+15, 18 and 19 of them -- ends on the previous session, within the limit of 47,
+`held` empty). The 15 October
+follow-up read WBD `still_missing` at every session from 8 to 14 October; the
+14 and 15 October source-recovery receipts asked for it again and found it
+`still_stale`. `run.universe.selection.seed_added` is `1` with the sample
+`['WBD']` on all three nights: the live Nasdaq directory no longer lists it,
+and the hand-written seed alone was adding it to the selection, so the
+tolerance named a stock the market had stopped quoting. What the sandbox
+could read of why: a web search, which put the close of Paramount Skydance's
+all-cash acquisition at 6 October 2026 in press reports, with the common
+stock's Nasdaq delisting requested, and listed a 2026 definitive merger proxy
+(DEFM14A) at sec.gov for the issuer. sec.gov itself does not resolve from this
+sandbox, so neither that proxy nor a closing filing was read, and the seed
+note says exactly that and no more.
+
+**The change.** WBD leaves the seed's Communication services block and enters
+its RETIRED section with a dated note in the file's own convention (EA, FI and
+BK before it), citing the blocks it was read off; the header's three mentions
+of `get_universe()` in `src/scanner.py`, a reader the 11 September cut
+deleted, name `universe.read_seed()` now. README, `.env.example` and
+`tests/test_docs.py` say 227 where they said 228, the test holding the file
+and both documents to that one literal, so a drift in any of the three fails
+it. `tools/check_blank_check_universe.py`,
+the dated 22 September classifier sweep, asserted the working seed equal to
+its pinned base's; it reads the seed AT that base now, so a later retirement
+cannot move a dated reading, and run again it gives the same 13 snapshots, the
+same 16 new exclusions and conservation PASS. One defect of mine, found by
+running it: the first edit dropped the `seed_raw` name the tool's
+`seed_sha256` field still reads, a NameError on its first run, fixed before
+anything was committed. Swept for the next instance: the 18 September
+stale-input diagnostic (`tools/investigate_stale_inputs.py`) pins four
+working-tree files to their blobs of that day -- the seed, `src/inputs.py`,
+`src/market_data.py` and `src/universe.py` -- and refused the tree before this
+change on `src/inputs.py` and `src/universe.py`, which moved in #84 and again
+in #104 and #105; after it the first refusal is the seed's. It is a read-only
+reading of one retained artifact at one revision, left as it is, and its tests
+never ask it to read the tree.
+
+**What retiring it does, and does not.** The next evening's selection no
+longer asks for WBD: `seed_added` falls to 0, the universe membership identity
+moves, and the stale list loses the one frame past the bound. Read off the
+three publications' own blocks rather than run: with WBD out of the selection,
+every remaining stale frame ends on the previous session, so coverage would
+have been tolerated on all three nights; 14 October would have been green
+(`run.reads` 2 of 2), and 13 and 15 October degraded on the reader alone
+(0 of 2 accepted; 1 of 2, JAKK refused). The historical publications keep WBD
+as they recorded it, and the follow-up and recovery rows it occupies are
+theirs. The burst scan, the tolerance, the follow-up and the recovery are
+unchanged: a stock that stops printing is still named every night until a
+human retires it, which is the convention the seed file states.
+
+**The review, worked.** A workflow by execution over the pushed tip
+`3c3a022b`, three lenses (the facts against the publications, the tests and
+the sweep, the documents) and two skeptics per finding, returned nine
+findings, seven distinct. Two, each raised by two lenses, were upheld by both
+skeptics: the Revision
+paragraph said seven files where the diff moves nine, and the sweep sentence
+named three of the stale diagnostic's four pins and described its refusal as it
+stood before this change. Four were split one skeptic each way, and each was
+a sentence saying more than was read: the seed note had the merger proxy
+"describing the deal" when only a search listing of it was seen; "each
+degraded on `behind_more`" left out the reader problems two of the nights
+also carry; "the file's own count" glossed a test that holds the file and both
+documents to one literal; and the seed header still named `get_universe()` in
+`src/scanner.py`, deleted at the 11 September cut (pre-existing, but prose this
+change edits). One was refuted by both: the commit trailer names the model,
+which the session's attribution rule requires. Nothing in the code, the frozen
+fixture or the tests was found wrong; every fix above is to a sentence, in
+the seed note, the seed header and this checkpoint.
+
+**The owner's question, recorded and not decided.** `READER_REFUSAL_FRACTION`
+is a quarter, floored: at two reads the refusal limit is zero, so one refused
+reply degrades the night, as on 13 and 15 October. Whether two reads should
+tolerate one refusal is a policy choice (the #104 checkpoint records the
+quarter as the owner's), and nothing here changes it.
+
+**The full suite found the reader the greps had not.** At `632e2d2e` (the
+retirement alone) 4573 passed, 34 environment-gated skips and ONE failed in
+29 m 50 s: `tests/test_historical_input_proof.py`'s offline boundary, which
+stands in for `git_bytes()` on a shallow checkout, served the CHECKOUT's own
+`data/symbols.txt` for the seed at the 24 and 25 September execution
+revisions and held it to the frozen manifest's digest -- the second shape
+this file names, passing only while nobody retired a name. The seed at both
+revisions (blob `61fa0d91…`, SHA-256 `ff905018…`, the same bytes at each) is
+a frozen copy under `tests/fixtures/historical-input-proof/` now, served in
+its place and held to the same digest, and a new test puts a different seed in
+a temporary checkout and shows the boundary serves the frozen bytes and refuses
+a changed frozen byte. Proved in the mutation worktree at `632e2d2e`: the old
+boundary beside the new test fails that test and the manifest test (2 failed,
+15 passed); the fixed boundary passes 17; one byte appended to the frozen
+fixture fails the same two. The production tool itself was never wrong: it
+reads the blob from git at the execution revision.
+
+**Measured** (this sandbox, Python 3.11.15): the full suite at `632e2d2e` as
+above, then `tests/test_historical_input_proof.py` 17/17 and
+`tests/test_docs.py` 40/40 on the fix, the collection 4609 with the one test
+added (this file's count line moves with it); `tests/test_docs.py
+tests/test_universe.py tests/test_inputs.py tests/test_market_data.py` 368
+passed; `python tools/make_fixture.py --check` 13 fixtures current;
+`python tools/check_blank_check_universe.py` 13 snapshots, 16 exclusions,
+conservation PASS; `git diff --check` clean; gitleaks 8.24.3 over the changed
+and new files with the repository's config: no leaks. No page file moved, so
+the chart check and the smoke are CI's, recorded on the PR.
+
+**Keep / fix / defer / omit.** Keep: the seed is a hand-written list whose
+retirements are dated and reasoned in the file itself; the nightly blocks are
+what found this one. Fix if it bites: a seed name that stops trading degrades
+every night until it is retired by hand, and the record says only that it is
+stale. Defer: the refusal floor at two reads (the owner's); #111's ten-session
+acceptance, which still needs a morning check that has run. Omit: a seed that
+edits itself; suppressing a stale stock in code; a wider tolerance.
+
+**Not claimable:** the first evening under the retired seed -- read its
+`run.universe.selection.seed_added`, its stale count and its chip, and record
+them here; a morning or research observation; any trading edge.
