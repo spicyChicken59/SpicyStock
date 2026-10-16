@@ -154,7 +154,10 @@ and the previous publication's stale stocks read again from this run's frames
 the minute bars of earlier plans' first days a daily bar could not place
 (`run.intraday`, `src/intraday.py`; every walk below reads them) →
 charts and Claude (down-only; `run.reads` by cause) → plans and the cash
-budget → the record (`picks.json`, open plans, scorecard) → `report.build()`
+budget → the record (`picks.json`, open plans, scorecard, and the stale
+frames joined to the universe's seed-only additions: `run.seed_stale`,
+`inputs.seed_stale()`, the names on the seed alone or the one reason the join
+could not be made) → `report.build()`
 and validate → email. Exit codes 0/1/2/3; seven problem words; `run.status`
 closed on a closed night. `run.status` ok beside a degraded acceptance means
 exactly one thing: the only gap was a stale tail the record's own archived
@@ -340,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4655 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4681 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9237,3 +9240,171 @@ fallback from the frozen files to the archive.
 prints its count on the merge, and the first publication after it is the
 first the Record view inspects over an archive that no longer carries the
 record; a morning or research observation; any trading edge.
+
+## Checkpoint, 16 Oct 2026 — the stale stocks the seed alone asked for
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted from
+`main` at `1e66929c` (the merge of #175), pushed as **PR #176**. `docs/data.json`,
+`docs/picks.json`, the compact reader, every retained receipt, the history, the
+evidence objects, the quality ledger, the workflows and the vendored design
+system are untouched; no run, mail, dispatch, provider call or credential.
+
+**PR #175, accepted.** Merged as `1e66929c` (merge tree `c11e23c4`, the PR head
+`1131d4a9`'s tree to the byte). Tests `38900948089` on the merge commit itself
+green (12:30 to 12:56 UTC); Secret scan `38900948429` passed; publisher
+`38900948063` printed *Verified: every one of the 47 public files matches
+committed main* at 12:32:03 UTC; Pages `38900991213` deployed (`38900947004`
+cancelled as superseded). The three frozen cases are served under the study's
+digests, and tonight's prune can no longer take them off the Record view.
+
+**What the record showed, and what it took to read.** The 15 Oct publication
+(run `38829043191`, published 00:22 UTC on 16 Oct) is `degraded` on `behind_more`:
+twenty stale stocks, nineteen ending 14 Oct and WBD ending 5 Oct. Its universe
+ledger says `selection.kind` directory, `seed_added.count` 1, sample `["WBD"]`.
+Both facts were in the record and nothing joined them: that WBD was stale every
+night BECAUSE the seed alone asked for it, a name the directory had dropped,
+was read by hand off two blocks, and the retirement (`632e2d2e`, 07:20 UTC, a
+`RETIRED` note in `data/symbols.txt`) was done by hand. A stock the directory
+still lists goes stale and comes back; a stock only the seed lists stays stale
+until someone edits a file, and the record should say which is which.
+
+**The rule.** `inputs.seed_stale(tol, selection)` writes `run.seed_stale`
+(version 1, archived as `pipeline.seed_stale_version`, so `rules_version` moves
+and older records are asked for no block). It reads two lists the record already
+carries and nothing else: the tolerance's stale `names` and the selection's
+`seed_added` sample. `membership` is `complete` when the sample IS the
+membership (`count == len(sample)`), `sampled` when the ledger's bound
+(`universe.SAMPLE_LIMIT`, 8) cut it, `unavailable` when the universe was not a
+directory selection (a seed or explicit universe: there is no directory to be
+"not in"). `names` is the sorted stale-and-seed intersection, the benchmark
+excluded, only when membership is complete and the stale names are carried;
+every other case is `None` with one `reason` (`no_directory_selection`,
+`seed_universe`, `explicit_universe`, `seed_additions_sampled`,
+`stale_names_not_carried`). `seed_stale_sentence()` says only what the lists
+show: nothing on a night with nothing stale; "is not recorded: <why>" when the
+join could not be made; "None of the N stale stocks is on the seed alone; each
+is in the directory this run selected from." when it was made and found none;
+and "k of the N stale stocks are on the seed alone, not in the directory this
+run selected from: <names>. A seed name that has stopped trading stays stale
+every night until it is retired from data/symbols.txt by hand." when it found
+some. `report.validate()` asks for the block only under rules that write it
+(`inputs.seed_stale_faults`: missing, version unknown, malformed, or not what
+the record's own tolerance and selection re-derive) and refuses a forgery one
+level in. The mail prints the sentence in the inputs block right after the
+"Without a <session> bar: …" line; the page prints it on the cover between the
+stale names and the follow-up sentence and under Method as *Seed check:*; a
+missing or half-written block prints nothing, and the page adds no words.
+
+**Projected over the 15 Oct record** (read-only, the module over the published
+blocks): membership complete, 1 of 1 seed additions named, `names` `["WBD"]`,
+and the sentence "1 of the 20 stale stocks is on the seed alone, not in the
+directory this run selected from: WBD. A seed name that has stopped trading
+stays stale every night until it is retired from data/symbols.txt by hand." —
+the sentence that would have named the retirement before anyone read two blocks
+by hand. Over the `thin` fixture, whose universe is an explicit list, the block
+is `unavailable` / `explicit_universe` and says so; the seed-only case is driven
+through `run_evening()` over a directory universe in `tests/test_inputs.py`
+(two stale stocks, one on the seed alone: block, validation, mail and trades
+all read) and through a routed browser variant in the `inputs` suite.
+
+**16 Oct service observations.** The source-recovery cron `37 7 * * *` fired at
+12:41 UTC (run `38902285071`, 5 h 4 min after its slot), asked for the 15 Oct
+publication's twenty stale stocks in one bars call, and published `00cd2d2a` at
+12:42:44 UTC: nineteen now carry a 15 Oct bar that passes the session rules
+(seventeen with zero volume, eighteen flat) and WBD still ends 5 Oct; the
+publication stays 4757 of 4777 intended stocks ready and nothing downstream
+moved. Publisher `38902464259` verified the commit. WBD left the seed at
+07:20 UTC, after that publication ran, so tonight's evening is the first under
+the retired seed.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through
+Playwright 1.56.1): 4681 tests collected, 4647 passed and 34 environment-gated skips in 27 m 19 s in a
+worktree copy whose diff hashes equal to this tree's, one test-case edit before
+the final tree (that case's file was then run in full here: 245 passed); docs tests 40/40 with the count line at 4681;
+fixtures current through their generators (13 page, 21 morning pinned, 30
+issuer, 22 stop-research, 40 research-outcomes, 24 research-observations, 20
+source-recovery, 6 cash-preview, the first-trade backup and its 109-case parity
+corpus, 5 frozen validation copies); the `inputs` suite 266/266 at 1280 and 390
+in both themes; the full smoke with `--shots` 15963/15963 (15957 before the review's
+fixes), the screenshots at 1280 and 390 in both themes looked at: Method's
+*Seed check:* line sits above the follow-up on the phone, the cover's first
+screen measures what it did before; gitleaks 8.24.3 over the 122 changed files from
+inside a scratch root with the repository's config: no leaks.
+
+**Mutation passes**, each mutant in its own copy of the tree, the working tree
+never written, judged by the full test files naming its rule (no `-k` filter).
+Python, in a
+worktree copy of the tree: sixteen over the first tree, thirteen dead in the
+test naming their rule, the docstring control green, and **two survived, each
+a hole**: `names_unsorted` lived because no case had two seed-only stale names
+(one does now, in reverse symbol order), and `validator_gate_dropped` lived on
+the first shape this file names -- the gating test popped every block and
+every rules key together, so with the gate gone the tolerance's absence
+short-circuited the check before the gate could be reached; a record made
+between the tolerance's second version and this rule (every publication from
+8 to 15 Oct) is the case now, and it also kills the reviewer's two wrong-key
+gates. Then twenty-five over the final tree, the review's own validator mutants among
+them (a gate on another rules key, the rules half of the version check
+dropped, the coverage guard dropped, `is None` for the shape check, Python
+equality for the canonical bytes, the record guard dropped, the sample bound
+not archived, the mail's order swapped, the closing sentence dropped):
+twenty-four dead in the test naming their rule, the control green, and **two
+survived on the first pass, each a hole closed with its case**: the shape
+check's case used `None`, which `is None` handles the same way (a bare list of
+names now, the shape the ledger's own reconciliation refuses); and nothing
+held `universe.sample_limit` to the archived rules (the run test does now).
+Both die re-judged. The final pass caught a regression of mine
+before anything was committed: its CONTROL died in six seconds, because the
+`record_faults` guard had turned an older archive's empty selection into a
+size fault, in a test the focused selection I had run had filtered out. Fixed,
+pinned by a case, and the pass re-run. The page, through routed copies of
+`app.js` against the `inputs` suite: six mutants (the cover's seed sentence
+dropped, Method's dropped, Method's order against the follow-up swapped, the
+page adding a word of its own, a half-written block printing `undefined`, the
+cover's order swapped) all die in the check naming them, and an equivalent
+control stays green.
+
+**The review, worked.** A workflow by execution over the first tree: six finders
+(the join, the validator, the two surfaces, the tests, the docs, the fixtures),
+each reproducing what it reported, returned sixteen findings; the skeptic
+stage was stopped before it had judged one, because every finding was checked
+here by execution instead, the tree being about to change under it. Two
+were medium and both were test holes: the validator's gate key was pinned by
+no test (a gate on `delivery_version` passed the whole selection while it
+refused the live 15 Oct record), and the mail's order of the seed sentence
+against the follow-up was pinned by nothing. The rest were low, and most are
+fixed: the closing sentence claimed what the two lists cannot show ("stays
+stale every night", when a name the fetch window has passed goes to `no_bars`
+instead), so it says what the seed does, "is asked for again every night until
+it is retired from data/symbols.txt by hand"; the re-derivation compared Python
+values, so a JSON `true` or `1.0` where the run writes `1` was the same block,
+and it compares canonical JSON bytes now (`_canonical`, a NaN refused);
+Method listed the seed check after the follow-up where the cover and the mail
+put it before; the sample bound that decides `complete` against `sampled` was
+in no document and not archived (`universe.sample_limit`, 8, is in the rules
+now, so `rules_version` moved again and the fixtures with it); `record_faults`
+raised through `validate()` on a `run.universe` or selection that was not an
+object, byte-identical since before this branch and the class this file names
+most, and names it now; the guard's comment misattributed what names a missing
+coverage ledger; README named Method and the mail and not the cover; CLAUDE.md
+placed the join before breadth where the code makes it at the record; the
+inputs.py literal guard did not scope the three new functions. Two are
+recorded and not fixed: a seed-only name that returns no bars at all is under
+`coverage.no_bars`, not stale, and the block says nothing about it (the join
+over that list is the next step if it bites); and without provenance the
+selection's `kind` is not held to `run.universe.source_kind`, a reconciliation
+that belongs to the selection ledger, not this block. One was the count line,
+right for the tree it read and moved again by the cases added since.
+
+**Keep / fix / defer / omit.** Keep: the block reads two lists the record already
+carries and says nothing they do not show; the ledger's sample bound is the
+ledger's, so nine or more seed additions make the join `sampled` and named, not
+guessed. Fix if it bites: the block names a seed-only stale stock every night
+until the file is edited, which is the point, and nothing counts how many nights
+that has been. Defer: retiring a seed name automatically, which the seed exists
+to refuse. Omit: suppressing a stale stock, re-fetching it, or treating its late
+bar as a signal.
+
+**Not claimable:** a live night. The first evening after the merge writes the
+first `run.seed_stale`; read its `membership`, `names` and sentence beside the
+chip, and record them here.

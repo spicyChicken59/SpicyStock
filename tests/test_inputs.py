@@ -823,7 +823,8 @@ def test_the_tolerance_functions_spell_no_bare_number():
     root = Path(__file__).resolve().parents[1] / 'src'
     scope = {'followup.py': None, 'reader_coverage.py': None,
              'inputs.py': {'stale_limit', 'allowed_endings', 'stale_tolerance', '_count', '_percent', '_ending', '_why',
-                           '_tolerance_clause', 'coverage_sentence', '_benchmark_stale', 'tolerance_faults'}}
+                           '_tolerance_clause', 'coverage_sentence', '_benchmark_stale', 'tolerance_faults',
+                           'seed_stale', 'seed_stale_sentence', 'seed_stale_faults', '_canonical'}}
     literals, seen = {}, set()
     for name, functions in scope.items():
         for node in ast.walk(ast.parse((root / name).read_text())):
@@ -836,3 +837,134 @@ def test_the_tolerance_functions_spell_no_bare_number():
     assert {('inputs.py', f) for f in scope['inputs.py']} <= seen, 'a named function was renamed away from the guard'
     assert sum(1 for n, _ in seen if n == 'followup.py') >= 8 and sum(1 for n, _ in seen if n == 'reader_coverage.py') >= 8
     assert not literals, literals
+
+
+# --- the stale stocks the seed alone asked for ---------------------------------
+RETIRE = ' A seed name is asked for again every night until it is retired from data/symbols.txt by hand.'
+
+
+def _tol(names, benchmark='SPY', stale_stocks=None):
+    if stale_stocks is None:
+        stale_stocks = None if names is None else len([n for n in names if n != benchmark])
+    return {'names': names, 'stale_stocks': stale_stocks, 'benchmark': benchmark}
+
+
+def _selection(added, kind='directory'):
+    return {'kind': kind, 'seed_added': universe.population(added)}
+
+
+@pytest.mark.parametrize('tol,selection,expect', [
+    (_tol(['QAAA', 'QAAB']), _selection(['QAAA']),
+     dict(membership='complete', seed_added=1, seed_named=1, names=['QAAA'], reason=None)),
+    (_tol(['QAAA', 'QAAB']), _selection([]),
+     dict(membership='complete', seed_added=0, seed_named=0, names=[], reason=None)),
+    (_tol(['SPY', 'QAAA']), _selection(['QAAA', 'SPY']),
+     dict(membership='complete', seed_added=2, seed_named=2, names=['QAAA'], reason=None)),
+    (_tol(['QAAC', 'QAAB', 'QAAA']), _selection(['QAAC', 'QAAA']),
+     dict(membership='complete', seed_added=2, seed_named=2, names=['QAAA', 'QAAC'], reason=None)),
+    (_tol(['QAAA']), _selection([f'Q{i:03d}' for i in range(universe.SAMPLE_LIMIT + 1)]),
+     dict(membership='sampled', seed_added=universe.SAMPLE_LIMIT + 1, seed_named=universe.SAMPLE_LIMIT,
+          names=None, reason='seed_additions_sampled')),
+    (_tol(None, stale_stocks=150), _selection(['QAAA']),
+     dict(membership='complete', seed_added=1, seed_named=1, names=None, reason='stale_names_not_carried')),
+    (_tol(['QAAA']), {},
+     dict(membership='unavailable', seed_added=None, seed_named=None, names=None, reason='no_directory_selection')),
+    # a directory selection whose seed list is not a population (a bare list of names) is
+    # one the ledger's own reconciliation refuses (universe.selection_faults); the join
+    # still says it could not be made rather than indexing into it
+    (_tol(['QAAA']), {'kind': 'directory', 'seed_added': ['QAAA']},
+     dict(membership='unavailable', seed_added=None, seed_named=None, names=None, reason='no_directory_selection')),
+    (_tol(['QAAA']), universe.manual_selection(['QAAA', 'QAAB'], 'seed'),
+     dict(membership='unavailable', seed_added=None, seed_named=None, names=None, reason='seed_universe')),
+    (_tol(['QAAA']), universe.manual_selection(['QAAA', 'QAAB'], 'explicit'),
+     dict(membership='unavailable', seed_added=None, seed_named=None, names=None, reason='explicit_universe')),
+], ids=['one-seed-only', 'none-seed-only', 'the-benchmark-is-never-a-stock', 'two-seed-only-in-symbol-order', 'seed-list-sampled',
+        'stale-names-not-carried', 'no-directory-selection', 'a-directory-selection-without-its-seed-list',
+        'the-seed-alone', 'an-explicit-list'])
+def test_seed_stale_joins_the_records_own_lists_only_when_both_are_complete(tol, selection, expect):
+    from src import inputs
+    block = inputs.seed_stale(tol, selection)
+    assert {k: block[k] for k in expect} == expect
+    assert block['version'] == inputs.SEED_STALE_VERSION and block['stale_stocks'] == tol['stale_stocks']
+    assert block['sentence'] == inputs.seed_stale_sentence(block)
+    assert block['membership'] in inputs.SEED_STALE_MEMBERSHIPS
+    assert block['reason'] is None or block['reason'] in inputs.SEED_STALE_REASONS
+
+
+@pytest.mark.parametrize('block,says', [
+    (dict(stale_stocks=0, names=[], reason=None), ''),
+    (dict(stale_stocks=0, names=None, reason='no_directory_selection'), ''),
+    (dict(stale_stocks=1, names=['WBD'], reason=None),
+     'The stale stock is on the seed alone, not in the directory this run selected from: WBD.' + RETIRE),
+    (dict(stale_stocks=20, names=['WBD'], reason=None),
+     '1 of the 20 stale stocks is on the seed alone, not in the directory this run selected from: WBD.' + RETIRE),
+    (dict(stale_stocks=3, names=['AAA', 'BBB'], reason=None),
+     '2 of the 3 stale stocks are on the seed alone, not in the directory this run selected from: AAA, BBB.' + RETIRE),
+    (dict(stale_stocks=1, names=[], reason=None),
+     'The stale stock is in the directory this run selected from, not on the seed alone.'),
+    (dict(stale_stocks=2, names=[], reason=None),
+     'None of the 2 stale stocks is on the seed alone; each is in the directory this run selected from.'),
+    (dict(stale_stocks=2, names=None, reason='no_directory_selection'),
+     'Whether a stale stock is on the seed alone is not recorded: this run recorded no directory selection.'),
+    (dict(stale_stocks=2, names=None, reason='seed_universe'),
+     "Whether a stale stock is on the seed alone is not recorded: this run's universe was the seed file alone, "
+     'so whether the directory still lists a stale stock was not read.'),
+    (dict(stale_stocks=2, names=None, reason='explicit_universe'),
+     "Whether a stale stock is on the seed alone is not recorded: this run's universe was an explicit list, "
+     'not a directory selection.'),
+    (dict(stale_stocks=2, names=None, reason='seed_additions_sampled', seed_added=9, seed_named=8),
+     'Whether a stale stock is on the seed alone is not recorded: the selection names 8 of its 9 seed additions.'),
+    (dict(stale_stocks=2, names=None, reason='stale_names_not_carried'),
+     'Whether a stale stock is on the seed alone is not recorded: the record does not name its stale stocks.'),
+], ids=['nothing-stale', 'nothing-stale-unknown', 'the-one-stale-stock', 'one-of-twenty', 'two-of-three',
+        'the-one-is-listed', 'none-of-two', 'no-directory', 'the-seed-alone', 'an-explicit-list', 'sampled', 'not-carried'])
+def test_the_seed_stale_sentence_says_only_what_the_lists_show(block, says):
+    from src import inputs
+    assert inputs.seed_stale_sentence({'seed_added': None, 'seed_named': None, **block}) == says
+
+
+def _directory_universe(symbols, seeds):
+    """A directory that lists every symbol but the seeds, so the seeds are seed-only additions."""
+    rows = [company(s) for s in symbols if s not in seeds]
+    ledger = {}
+    admitted, names, flags, counts = universe.admit(rows, list(seeds), ledger=ledger)
+    assert sorted(admitted) == sorted(symbols) and universe.selection_faults(ledger) == []
+    return universe.Universe(admitted, names, flags, universe.SOURCE_LIVE, '2026-09-10T22:00:00+00:00', counts,
+                             'test directory', selection=ledger, price_exempt=tuple(seeds))
+
+
+def test_a_seed_only_stale_stock_is_named_through_the_run(wide, claude, fake_resend, fake_alpaca, tmp_path, monkeypatch):
+    """Over a directory selection whose one seed addition is a stale frame, the
+    run names it as the seed's own, the mail prints the sentence beside the
+    stale names, and the validator re-derives the block from the record."""
+    from src import inputs, report
+    from tests.test_report import _mail_text
+    uni = _directory_universe(wide, ['QAAA'])
+    assert uni.selection['seed_added'] == universe.population(['QAAA'])
+    monkeypatch.setattr(universe, 'build', lambda *a, **k: uni)
+    behind(fake_alpaca, ['QAAA', 'QAAB'])
+    rep, data, _ = evening(tmp_path, wide)
+    assert rep.exit_code() == 0, rep.problems
+    run = data['run']
+    assert run['universe']['selection']['seed_added'] == universe.population(['QAAA'])
+    assert run['input_tolerance']['names'] == ['QAAA', 'QAAB']
+    assert run['seed_stale'] == {
+        'version': inputs.SEED_STALE_VERSION, 'membership': 'complete', 'seed_added': 1, 'seed_named': 1,
+        'stale_stocks': 2, 'names': ['QAAA'], 'reason': None,
+        'sentence': '1 of the 2 stale stocks is on the seed alone, not in the directory this run selected from: QAAA.' + RETIRE}
+    assert data['rules']['pipeline']['seed_stale_version'] == inputs.SEED_STALE_VERSION
+    # the ledger's sample bound decides complete against sampled, so the record archives it
+    assert data['rules']['universe']['sample_limit'] == universe.SAMPLE_LIMIT == len(universe.population([f'Q{i:03d}' for i in range(universe.SAMPLE_LIMIT + 1)])['sample'])
+    report.validate(data)
+    assert 'Without a 2026-09-10 bar: QAAA, QAAB. ' + run['seed_stale']['sentence'] in _mail_text(data)
+    # the block moved no decision: the night is the same night as without a seed addition
+    assert run['status'] == 'ok' and run['input_tolerance']['verdict'] == 'tolerated' and data['trades'] == ['AAA']
+
+
+def test_a_night_with_nothing_stale_has_a_seed_block_with_nothing_to_say(wide, claude, fake_resend, fake_alpaca, tmp_path):
+    from src import inputs
+    rep, data, _ = evening(tmp_path, wide)
+    block = data['run']['seed_stale']
+    assert rep.exit_code() == 0 and block['stale_stocks'] == 0 and block['sentence'] == ''
+    assert block['membership'] == 'unavailable' and block['names'] is None and block['reason'] == 'explicit_universe'
+    assert inputs.seed_stale_faults(data['run'], data['rules']['pipeline']) == []

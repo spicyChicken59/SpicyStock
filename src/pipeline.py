@@ -83,6 +83,7 @@ RULES = {
     "pipeline.stale_tolerance_fraction": STALE_TOLERANCE_FRACTION,
     "pipeline.stale_sessions_max": STALE_SESSIONS_MAX,
     "pipeline.stale_names_max": STALE_NAMES_MAX,
+    "pipeline.seed_stale_version": inputs.SEED_STALE_VERSION,
     "pipeline.max_error_fraction": MAX_ERROR_FRACTION,
     "pipeline.trade_grades": list(TRADE_GRADES),
     "pipeline.yellow_grades": list(YELLOW_GRADES),
@@ -670,7 +671,8 @@ def build_rules(uni: universe.Universe) -> dict:
     flat.update({"universe.session_min_price": universe.MIN_PRICE,
                  "universe.price_exempt": "seed and explicit", "universe.directory_quote_filter": False,
                  "inputs.version": inputs.VERSION,
-                 "universe.max_discovery": universe.MAX_DISCOVERY, "universe.identity": uni.identity})
+                 "universe.max_discovery": universe.MAX_DISCOVERY, "universe.sample_limit": universe.SAMPLE_LIMIT,
+                 "universe.identity": uni.identity})
     nested: dict = {}
     for key, value in flat.items():
         family, _, name = key.partition(".")
@@ -877,6 +879,11 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                                            held=held_stale, names_max=STALE_NAMES_MAX, endings=stale_endings(stats),
                                            sessions_max=STALE_SESSIONS_MAX)
         tolerance["sentence"] = inputs.coverage_sentence({"coverage": coverage, "input_tolerance": tolerance})
+        # which of the stale stocks the seed alone asked for, off the record's own lists:
+        # a seed name that stopped trading stays stale until a human retires it
+        seed_stale = inputs.seed_stale(tolerance, uni.selection)
+        if seed_stale["names"]:
+            log.warning("Stale stocks on the seed alone: %s", ", ".join(seed_stale["names"]))
         elapsed = round(time.monotonic() - started, 1)
         run_block = {
             "session": session.isoformat(), "session_state": "closed" if closed else "open",
@@ -889,6 +896,7 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
                             "timeframe": "1Day", "expected_session": expected.isoformat(),
                             "evaluated_session": session.isoformat()},
             "coverage": coverage, "input_tolerance": tolerance, "stale_followup": followed,
+            "seed_stale": seed_stale,
             "bursts": len(bursts), "graded": graded, "reads": reads, "reader_usage": reader_usage,
             "review_selection": selection_receipt,
             "email": "skipped", "published_at": generated,
