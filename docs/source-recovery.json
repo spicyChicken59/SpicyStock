@@ -1,56 +1,56 @@
 {
   "schema_version": 1,
-  "collection_started_at": "2026-10-15T12:50:13.625267+00:00",
-  "generated_at": "2026-10-15T12:50:15.448254+00:00",
-  "observation_run_id": "38737601828",
-  "previous_observation_sha256": "874e49e16441690b2c98df82bdb99d0a6a55368bee2e7b2e17e71cb753ef7d9a",
+  "collection_started_at": "2026-10-16T12:41:57.169299+00:00",
+  "generated_at": "2026-10-16T12:42:00.656503+00:00",
+  "observation_run_id": "38902285071",
+  "previous_observation_sha256": "c6a7578584bf9b73280eb62d5bb4d3289f762aec29fa4460838f95323c56393e",
   "dry_run": false,
   "publication": {
-    "data_sha256": "1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719",
-    "context_sha256": "fc1eca221f47325f6c41d0d347825f7953f779ae6309491c1c5841d2ef73ed97",
-    "run_id": "38660383665",
-    "rules_version": "d62af3f20bfd",
-    "measured_session": "2026-10-14",
-    "applicable_session": "2026-10-15",
-    "published_at": "2026-10-15T00:30:48.981013+00:00",
+    "data_sha256": "71fbbbb7d109234f43b6e89470067c5d939a86baf0e0a61b2a2508ff3f0fa331",
+    "context_sha256": "0303396215ea31bbb9e1d8d14192efc0a422bb39bdcd5ff82b4f089fef3c4300",
+    "run_id": "38829043191",
+    "rules_version": "804351d60996",
+    "measured_session": "2026-10-15",
+    "applicable_session": "2026-10-16",
+    "published_at": "2026-10-16T00:22:17.953119+00:00",
     "reader_projection_version": 1,
-    "reader_sha256": "1a36e7f7b066bd7c6325e27d2065a903787a23be3ad68398e06b64cf2a2265a4"
+    "reader_sha256": "6b91b34c40893806c963efc3b4e9c5c97b07d3e15c3e406eaed43f01330fd6fd"
   },
   "frozen": {
-    "session": "2026-10-14",
-    "expected_session": "2026-10-14",
+    "session": "2026-10-15",
+    "expected_session": "2026-10-15",
     "feed": "sip",
     "adjustment": "split",
     "timeframe": "1Day",
     "lookback_days": 260,
     "stale_names_max": 100,
-    "universe_identity": "33c3b6ebb7a1e665",
-    "universe_snapshot_sha256": "e606a8e7308694113b0bbd56f68481c21c0fcd79058a1cc637590dca9d45fd36",
-    "universe_size": 4778,
-    "intended_identity": "01d8e0ae82be5e3e",
-    "coverage_sha256": "1e3189a8b3e6b6aaf27bfa1799b100f7ad2a17c6453bd5e2844b7bf75d552cd0",
-    "rules_version": "d62af3f20bfd"
+    "universe_identity": "3aa78627394b6879",
+    "universe_snapshot_sha256": "d382e7a43ee73f4ca127feb3a8e19b9e3e494082d1730a2a97f23233c19636b7",
+    "universe_size": 4777,
+    "intended_identity": "e50797339232d862",
+    "coverage_sha256": "9a0c936983924ce814ee9bc05864d4f3a705433449c5c722d30ff1782762df6b",
+    "rules_version": "804351d60996"
   },
   "window": {
-    "next_session": "2026-10-15",
-    "next_open_at": "2026-10-15T09:30:00-04:00",
+    "next_session": "2026-10-16",
+    "next_open_at": "2026-10-16T09:30:00-04:00",
     "before_next_open": true
   },
   "original": {
     "acceptance_status": "degraded",
-    "intended_stocks": 4778,
-    "ready_stocks": 4759,
-    "fraction": 0.9960234407701968,
+    "intended_stocks": 4777,
+    "ready_stocks": 4757,
+    "fraction": 0.9958132719279883,
     "complete_intended": false,
     "capacity_excluded": 0,
-    "stale": 19,
-    "stale_stocks": 19,
+    "stale": 20,
+    "stale_stocks": 20,
     "tolerance_verdict": "not_tolerated",
     "tolerance_reasons": [
       "behind_more"
     ],
     "gaps": {
-      "stale": 19,
+      "stale": 20,
       "no_bars": 0,
       "dropped": 0,
       "unfetched_budget": 0,
@@ -60,6 +60,7 @@
     },
     "run_status": "degraded",
     "problem_kinds": [
+      "claude_partial",
       "coverage_thin"
     ],
     "gate_read_run_status": false
@@ -67,30 +68,31 @@
   "deficits": {
     "categories": {
       "stale": {
-        "count": 19,
-        "identity": "5956bed21dfb2672",
+        "count": 20,
+        "identity": "ca38615006436633",
         "named": true,
         "source": "record",
         "names": [
-          "AZTR",
-          "BHM",
-          "CLST",
-          "CNSP",
+          "BRLS",
+          "CHNR",
+          "CVR",
+          "ELLO",
           "FKWL",
+          "GEG",
           "GYRO",
-          "HTLM",
-          "IOR",
-          "KBSX",
-          "KELYB",
-          "LEGO",
-          "LUD",
+          "LIVE",
           "MAYS",
-          "MBBC",
           "MDRR",
           "NCEW",
-          "PFX",
+          "PBHC",
+          "RDIB",
+          "SSBI",
+          "TJGC",
+          "TRAD",
+          "TRSG",
           "WBD",
-          "WLYB"
+          "WLYB",
+          "YIBO"
         ],
         "benchmark_in_population": false
       },
@@ -143,11 +145,11 @@
         "benchmark_in_population": false
       }
     },
-    "named_stocks": 19,
+    "named_stocks": 20,
     "unnamed_frames": 0,
     "ledger": {
-      "path": "quality-ledger/v1/1d279608d7177b42a0a1c3de567963324487c842e4977468e1984a3a41a67719.json.gz",
-      "sha256": "9892fa7e13292fb029858f1b4f75c9c626fe46dec384e617eb66542fbf6ffd6f",
+      "path": "quality-ledger/v1/71fbbbb7d109234f43b6e89470067c5d939a86baf0e0a61b2a2508ff3f0fa331.json.gz",
+      "sha256": "0362076d7669eae1be6be5e8a083fc4fd64edcfe912daf6269e15da52f3bb2ec",
       "used": false
     }
   },
@@ -176,25 +178,26 @@
   "status": "partial",
   "reason": null,
   "requested": [
-    "AZTR",
-    "BHM",
-    "CLST",
-    "CNSP",
+    "BRLS",
+    "CHNR",
+    "CVR",
+    "ELLO",
     "FKWL",
+    "GEG",
     "GYRO",
-    "HTLM",
-    "IOR",
-    "KBSX",
-    "KELYB",
-    "LEGO",
-    "LUD",
+    "LIVE",
     "MAYS",
-    "MBBC",
     "MDRR",
     "NCEW",
-    "PFX",
+    "PBHC",
+    "RDIB",
+    "SSBI",
+    "TJGC",
+    "TRAD",
+    "TRSG",
     "WBD",
-    "WLYB"
+    "WLYB",
+    "YIBO"
   ],
   "source": {
     "provider": "Alpaca",
@@ -203,52 +206,52 @@
     "timeframe": "1Day",
     "status": "ok",
     "error_kind": null,
-    "checked_at": "2026-10-15T12:50:15.412534+00:00",
+    "checked_at": "2026-10-16T12:42:00.597657+00:00",
     "batch_attempts": 1,
-    "symbols_requested": 19,
+    "symbols_requested": 20,
     "window": {
       "basis": "reconstructed_from_application_arguments_not_observed_wire_request",
-      "start": "2025-08-24T00:00:00+00:00",
-      "end": "2026-10-14T23:59:59+00:00"
+      "start": "2025-08-25T00:00:00+00:00",
+      "end": "2026-10-15T23:59:59+00:00"
     }
   },
   "rows": [
     {
-      "ticker": "AZTR",
+      "ticker": "BRLS",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     },
     {
-      "ticker": "BHM",
+      "ticker": "CHNR",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     },
     {
-      "ticker": "CLST",
+      "ticker": "CVR",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     },
     {
-      "ticker": "CNSP",
+      "ticker": "ELLO",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
@@ -256,79 +259,39 @@
     {
       "ticker": "FKWL",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
+    },
+    {
+      "ticker": "GEG",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 2891,
+      "flat": false
     },
     {
       "ticker": "GYRO",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     },
     {
-      "ticker": "HTLM",
+      "ticker": "LIVE",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "IOR",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "KBSX",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "KELYB",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "LEGO",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "LUD",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
@@ -336,19 +299,9 @@
     {
       "ticker": "MAYS",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
-      "ready_fault": null,
-      "volume": 0,
-      "flat": true
-    },
-    {
-      "ticker": "MBBC",
-      "category": "stale",
-      "original_ending": "2026-10-13",
-      "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
@@ -356,9 +309,9 @@
     {
       "ticker": "MDRR",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
@@ -366,19 +319,69 @@
     {
       "ticker": "NCEW",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 237,
+      "flat": true
+    },
+    {
+      "ticker": "PBHC",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     },
     {
-      "ticker": "PFX",
+      "ticker": "RDIB",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "SSBI",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TJGC",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TRAD",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "TRSG",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
@@ -396,23 +399,33 @@
     {
       "ticker": "WLYB",
       "category": "stale",
-      "original_ending": "2026-10-13",
+      "original_ending": "2026-10-14",
       "outcome": "recovered",
-      "ending": "2026-10-14",
+      "ending": "2026-10-15",
+      "ready_fault": null,
+      "volume": 0,
+      "flat": true
+    },
+    {
+      "ticker": "YIBO",
+      "category": "stale",
+      "original_ending": "2026-10-14",
+      "outcome": "recovered",
+      "ending": "2026-10-15",
       "ready_fault": null,
       "volume": 0,
       "flat": true
     }
   ],
   "recovered": {
-    "requested": 19,
-    "arrived": 18,
-    "session_ready": 18,
+    "requested": 20,
+    "arrived": 19,
+    "session_ready": 19,
     "arrived_not_ready": 0,
     "still_stale": 1,
     "still_missing": 0,
     "not_returned": 0,
-    "zero_volume": 18,
+    "zero_volume": 17,
     "flat": 18
   },
   "coverage": {
@@ -435,5 +448,5 @@
     "scheduled_dispatch_is_best_effort",
     "prior_session_followup_is_separate"
   ],
-  "sentence": "Source recovery for the 2026-10-14 publication: its 19 stocks without a usable 2026-10-14 bar, named in full, were asked for again at 8:50 AM ET on Thu 15 Oct, before the 2026-10-15 open, in 1 call to the bars endpoint; 18 now carry a 2026-10-14 bar that passes the session rules (18 with zero volume); 1 still ends before it (WBD). The publication stays 4759 of 4778 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
+  "sentence": "Source recovery for the 2026-10-15 publication: its 20 stocks without a usable 2026-10-15 bar, named in full, were asked for again at 8:41 AM ET on Fri 16 Oct, before the 2026-10-16 open, in 1 call to the bars endpoint; 19 now carry a 2026-10-15 bar that passes the session rules (17 with zero volume); 1 still ends before it (WBD). The publication stays 4757 of 4777 intended stocks ready; its measurements, grades, plans and tickets are unchanged, and why a bar was absent is not established."
 }
