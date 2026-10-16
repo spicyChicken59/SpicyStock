@@ -17,6 +17,7 @@ from tests.secret_scan_controls import (
     PUBLIC_SITE_CAPTURE, PUBLIC_SITE_CAPTURE_SHA256, public_site_capture,
     CASH_PUBLICATIONS, CASH_RULE_IDENTIFIERS, ISSUER_PUBLICATIONS,
     ISSUER_RULE_IDENTIFIERS, ISSUER_DISPOSITION, public_rule_occurrences,
+    FROZEN_CASE_DIR, FROZEN_RULE_IDENTIFIERS, frozen_context_files,
 )
 
 
@@ -243,3 +244,22 @@ def test_rule_occurrence_count_requires_each_dispositioned_value():
     raw = json.dumps({"key": ISSUER_RULE_IDENTIFIERS[0]}).encode()
     with pytest.raises(ValueError, match="not_exercised"):
         public_rule_occurrences(raw, ISSUER_RULE_IDENTIFIERS)
+
+
+def test_frozen_case_disposition_is_the_rule_key_at_the_frozen_path_only():
+    """Both frozen context files carry the record's rule keys, which the
+    archive disposition covers at docs/historical-validation/<record>/ and
+    nowhere beside it."""
+    documents = frozen_context_files()
+    assert len(documents) == 2
+    for path, raw in documents:
+        occurrences = public_rule_occurrences(raw, FROZEN_RULE_IDENTIFIERS)
+        assert all(occurrences.values())
+        for value in FROZEN_RULE_IDENTIFIERS:
+            assert allowed(path, value)
+            assert not allowed(path + ".backup", value)
+            assert not allowed("copied/" + path, value)
+            assert not allowed(path.replace(FROZEN_CASE_DIR, "docs/history-validation/"), value)
+            assert not allowed(path.rsplit("/", 1)[0] + "/notes.json", value)
+        assert not allowed(path, PUBLIC_VALUES[0])
+        assert not allowed(path, hashlib.sha256(b"unrelated invented scanner regression value").hexdigest())

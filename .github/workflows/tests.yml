@@ -156,6 +156,7 @@ jobs:
           python tests/fixtures/research-outcomes/generate.py --check
           python tests/fixtures/research-observations/generate.py --check
           python tests/fixtures/source-recovery/generate.py --check
+          python tools/freeze_validation_cases.py --check
       - name: Fail if the suite dirtied the working tree
         run: |
           set -euo pipefail

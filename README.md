@@ -612,7 +612,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    of the red reading, the "Read it as" caveats -- the exploratory reading
    pooled over the red nights only, the confirmatory split from the study's own
    figure against its minimum, the nights left out counted -- and the 28
-   September frozen cases. Every figure it prints is a field of that file at
+   September frozen cases, each inspected from its frozen copy under
+   `docs/historical-validation/` under the study's own digest, never from the
+   rolling archive. Every figure it prints is a field of that file at
    the precision the file writes it (a mean at three places, a sum at two);
    its own arithmetic is a night's place in the list, the length of a list the
    file carries, the comparisons that choose a sentence (a count against the
@@ -1904,6 +1906,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 stop-research.json · stop-research/ (registered comparison and immutable cohorts)
                 research-outcomes.json · research-outcomes/ (dated conditional follow-through snapshots)
                 historical-validation.json · historical-findings.json (read-only evidence the Record view fetches; the second built from the evidence files, not written by the run)
+                historical-validation/ (the study's case files -- each case's archive context and evidence, byte for byte, under the digests the study recorded; frozen by tools/freeze_validation_cases.py because the archive below prunes, and held by its --check)
                 history/ (recovery) · evidence/ (deduplicated source objects)
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
@@ -1916,6 +1919,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 backtest_timeline.py (offline: the owner's private backtest record read into one row per night per gate -- the night's breadth and its tickets' outcomes by scorecard bucket, uncertainty kind and settled R -- every field copied by type from a fixed list; a private key, or a ticker the record names as a whole word in any case in a key or string that is not one of the tool's own words, is a refusal, as are a night or gate whose counts do not reconcile, a malformed file and an --output over the private file)
                 signal_outcomes.py (offline: every archived signal ticketed and walked over the records' own bars; a counterfactual)
                 build_historical_findings.py (a reader: docs/historical-findings.json from the committed evidence, every number bound to its source digest; --check holds it)
+                freeze_validation_cases.py (a copier with --check: the study's case files frozen under docs/historical-validation/ from the archive while it still carries them, or from git at a commit the case names; byte for byte, held to the study's own digests, never a file the study does not name, never a rewrite of the study)
                 candidate_funnel.py (a reading: the funnel of one or many publications, from files, commits or a ref's whole retained history; changes nothing)
                 whole_share_feasibility.py (a reading: every archived reaction candidate sized again at an account under the record's regime, YELLOW and GREEN -- in band, past the stop rule, a whole share -- with the one-share price ceilings; the archived account unless overridden and labelled; changes nothing)
                 evidence_review.py (a reader: the frozen study re-derived from its rows and split by phase, month, halves and grade, each stratum's cumulative-R drawdown, the backtest, funnel, feasibility and retained October 12 research numbers copied off their files with digests and original commit/path provenance, and a ledger of the floated strategy changes under stated criteria; --check holds its two files; nothing is promoted by it)
@@ -1947,6 +1951,25 @@ record's context and ATEC/VICR rows exactly as published on 1 October, digests
 intact, because the live `docs/history` keeps a 21-day window and stopped
 carrying those originals on 2 October. The check never reads the checkout's
 rolling archive, so its answer does not depend on the date.
+
+The Record view's three frozen decisions (CRL and IQV from the 24 September
+record, MSFT from the 25 September one) are read the same way. The study
+`docs/historical-validation.json` names each case's archive context
+(`<record>/record.json`) and evidence (`<record>/burst-<ticker>.json`) with a
+SHA-256 for both, and `docs/historical-validation/` holds byte copies of those
+files, written by `python tools/freeze_validation_cases.py` while the archive
+still carried them (the 24 September record left the 21-day window with the 16
+October publication, the 25 September one with the 19 October publication) and
+held to the study's digests by `--check` in CI. The page's `studyJSON()` reads
+a case from that directory alone, verifies the digest over the served bytes and
+refuses a case file the study carries no digest for; it never asks the rolling
+archive for a case, and the historical browser suite serves the case records'
+archive directories 404 while it inspects one. The publication gate fetches the
+five frozen files like every other public file. A later `freeze` writes only a
+copy that is missing, from the archive or from git at the commit the case names
+(the current study names none, so a copy lost after the prune would need that
+commit added to the case first); an existing copy whose bytes are not the
+study's is refused and left in place, as is a source whose bytes are not.
 
 ## Retained quality evidence
 

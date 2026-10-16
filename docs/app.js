@@ -3552,17 +3552,39 @@
   // Public recovery is loaded only on request. No annotation, amount, saved
   // identity, or private selection is sent: index search happens in memory.
   let recoveryIndex = null, recoveryRequest = 0, recoveryPanel = null;
-  async function publicJSON(path, digest) {
-    if (!/^(?:index\.json|[a-f0-9]{40}\/(?:record|(?:burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json)$/.test(path)) throw new Error('Invalid archive path.');
-    const response = await fetch('history/' + path, { credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!response.ok) throw new Error('This original is unavailable in the retained public archive.');
+  // One digest-verified reader for the two read-only evidence stores the page
+  // fetches on request: the rolling public archive under history/ (publicJSON,
+  // for recovery) and the study's frozen case files under
+  // historical-validation/ (studyJSON, for the Record view's frozen decisions).
+  // The served bytes are bounded before they are hashed and the digest is
+  // SHA-256 over those bytes; each store has its own words, because a missing
+  // archive original and a missing frozen case are different facts.
+  async function verifiedJSON(url, bound, digest, words) {
+    const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error(words.unavailable);
     const bytes = await response.arrayBuffer();
-    if (bytes.byteLength > (path === 'index.json' ? 8 * 1024 * 1024 : 256 * 1024)) throw new Error('Archive exceeds the supported bound.');
+    if (bytes.byteLength > bound) throw new Error(words.oversize);
     if (digest) {
       const actual = [...new Uint8Array(await w.crypto.subtle.digest('SHA-256', bytes))].map(x => x.toString(16).padStart(2, '0')).join('');
-      if (actual !== digest) throw new Error('Archived source failed its integrity check. Nothing was saved.');
+      if (actual !== digest) throw new Error(words.corrupt);
     }
     return JSON.parse(new TextDecoder().decode(bytes));
+  }
+  const ARCHIVE_WORDS = { unavailable: 'This original is unavailable in the retained public archive.', oversize: 'Archive exceeds the supported bound.', corrupt: 'Archived source failed its integrity check. Nothing was saved.' };
+  function publicJSON(path, digest) {
+    if (!/^(?:index\.json|[a-f0-9]{40}\/(?:record|(?:burst|anticipation)-[A-Z0-9][A-Z0-9.-]{0,15})\.json)$/.test(path)) return Promise.reject(new Error('Invalid archive path.'));
+    return verifiedJSON('history/' + path, path === 'index.json' ? 8 * 1024 * 1024 : 256 * 1024, digest, ARCHIVE_WORDS);
+  }
+  // The study's cases are read from historical-validation/<record>/..., byte
+  // copies of the archive originals that the archive's 21-day window never
+  // prunes (tools/freeze_validation_cases.py writes and --check holds them),
+  // under the digests the study recorded; a case file the study carries no
+  // digest for is not read, and the rolling archive is never asked for a case.
+  const STUDY_WORDS = { unavailable: 'This frozen case is unavailable in the published study files.', oversize: 'Frozen case exceeds the supported bound.', corrupt: 'Frozen case failed its integrity check. Nothing was shown.' };
+  function studyJSON(path, digest) {
+    if (!/^[a-f0-9]{40}\/(?:record|burst-[A-Z0-9][A-Z0-9.-]{0,15})\.json$/.test(path)) return Promise.reject(new Error('Invalid study path.'));
+    if (!/^[a-f0-9]{64}$/.test(digest || '')) return Promise.reject(new Error('The study names no digest for this case file.'));
+    return verifiedJSON('historical-validation/' + path, 256 * 1024, digest, STUDY_WORDS);
   }
   // The two historical files load when the Record view is first shown, never
   // on another route: the findings are the largest file the page reads after
@@ -3664,7 +3686,7 @@
           inspect.disabled = true;
           try {
             const e = example.entry, s = example.source;
-            const [context, evidence] = await Promise.all([publicJSON(e.source + '/record.json', s.context_sha256), publicJSON(e.path, e.sha256)]);
+            const [context, evidence] = await Promise.all([studyJSON(e.source + '/record.json', s.context_sha256), studyJSON(e.path, e.sha256)]);
             if (evidence.source !== e.source || evidence.row.ticker !== example.ticker || context.run.session !== example.session || context.app.rules_version !== s.rules_version) throw new Error('Historical identity mismatch.');
             const historic = Object.assign({}, context, { bursts: [evidence.row], watchlist: { top: [], also_quiet: [] } });
             const c = buildModel(historic).byId['bursts:' + example.ticker]; c.signalSession = example.session;

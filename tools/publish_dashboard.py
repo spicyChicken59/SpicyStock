@@ -38,10 +38,13 @@ from src import reader
 # The archived history and
 # evidence objects the page also fetches (docs/history, docs/evidence) are not
 # listed: each is named by its SHA-256 and the page checks that digest itself
-# (publicJSON), so a stale served copy is refused rather than shown. Before the
-# findings files were named here, a JSON fetched only from app.js was never
-# verified, and the gate printed "Verified" over a served site that could have
-# lacked it.
+# (publicJSON), so a stale served copy is refused rather than shown. The
+# study's frozen case files under docs/historical-validation/ ARE listed
+# (``study_case_files``): the study names each one and its digest, the Record
+# view reads nothing else for a case, and a missing one is a 404 the page
+# cannot repair. Before the findings files were named here, a JSON fetched only
+# from app.js was never verified, and the gate printed "Verified" over a served
+# site that could have lacked it.
 RECORD_FILES = ("data.json", "reader.json", "picks.json", "historical-validation.json", "historical-findings.json")
 OPTIONAL_RECORD_FILES = ("morning.json", "research-observations.json", "source-recovery.json")
 WAIT_SECONDS = 480
@@ -152,6 +155,47 @@ def research_outcomes_files(root: Path) -> tuple[str, ...]:
     return ('research-outcomes.json', ref['path'])
 
 
+STUDY_FILE = "historical-validation.json"
+STUDY_CASE_DIR = "historical-validation"
+MAX_STUDY_BYTES = 1024 * 1024
+
+
+def study_case_files(root: Path) -> tuple[str, ...]:
+    """The validation study's frozen case files, each held to the digest the
+    study recorded for it.
+
+    The Record view inspects a case from docs/historical-validation/<record>/,
+    byte copies tools/freeze_validation_cases.py made of the archive originals,
+    because docs/history keeps a 21-day window and dropped the 24 September
+    record on 16 October. A study without cases (a synthetic root) names no
+    files. A case file the study names that is missing, unreadable or not the
+    study's bytes is a 404 or a refused integrity check for every reader, so it
+    is named here and raises rather than being skipped."""
+    docs = root / 'docs'
+    from tools.freeze_validation_cases import FreezeError, case_files
+    try:
+        study = json.loads(reader_asset(docs, STUDY_FILE, MAX_STUDY_BYTES))
+    except (OSError, ValueError):
+        raise RuntimeError('The validation study file is missing or unreadable.') from None
+    if not isinstance(study, dict) or 'cases' not in study:
+        return ()
+    try:
+        files = case_files(study)
+    except FreezeError as exc:
+        raise RuntimeError(f'The validation study names a case the publication cannot serve: {exc}') from None
+    names = []
+    for rel, meta in sorted(files.items()):
+        name = f'{STUDY_CASE_DIR}/{rel}'
+        try:
+            raw = reader_asset(docs, name, 256 * 1024)
+        except (OSError, ValueError):
+            raise RuntimeError(f'docs/{name}: the frozen case file the study names is missing or unreadable.') from None
+        if hashlib.sha256(raw).hexdigest() != meta['sha256']:
+            raise RuntimeError(f"docs/{name}: the frozen case file is not the study's bytes.")
+        names.append(name)
+    return tuple(names)
+
+
 def public_files(root: Path) -> tuple[str, ...]:
     """Every file a reader's browser is asked for: index.html, each local asset
     it references -- its own modules AND the vendored design system -- and the
@@ -189,6 +233,7 @@ def public_files(root: Path) -> tuple[str, ...]:
     names.extend(name for name in issuer_files(root) if name not in names)
     names.extend(name for name in stop_research_files(root) if name not in names)
     names.extend(name for name in research_outcomes_files(root) if name not in names)
+    names.extend(name for name in study_case_files(root) if name not in names)
     return tuple(names)
 
 

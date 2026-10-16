@@ -43,7 +43,37 @@ ISSUER_PUBLICATIONS = ("tests/fixtures/issuer-evidence/publication.json",
                        "tests/fixtures/issuer-evidence/reader.json")
 ISSUER_RULE_IDENTIFIERS = ("abnormal_10pct", "down25_quarter", "pct_above_40ma")
 ISSUER_DISPOSITION = "Three public rule identifiers in the generated issuer evidence publication and reader fixtures"
+# The validation study's frozen case files are byte copies of archive
+# originals (tools/freeze_validation_cases.py); the two context files carry the
+# record's rule keys, which the archive disposition already covers at the
+# archive path and now covers at the frozen path. Read off the study, so a
+# case the study stops naming stops being controlled here.
+FROZEN_STUDY = "docs/historical-validation.json"
+FROZEN_CASE_DIR = "docs/historical-validation/"
+FROZEN_RULE_IDENTIFIERS = ("down25_quarter", "pct_above_40ma")
 VERIFIED_VERSIONS = ("8.24.3", "8.30.1")
+
+
+def frozen_context_files():
+    """The frozen context file of each record the study names, with the digest
+    the study recorded for it, checked against the committed bytes."""
+    study = json.loads((ROOT / FROZEN_STUDY).read_bytes())
+    files = {}
+    for case in study["cases"]:
+        record, digest = case["source"]["record_id"], case["source"]["context_sha256"]
+        if not re.fullmatch(r"[a-f0-9]{40}", record) or files.get(record, digest) != digest:
+            raise ValueError("frozen_study_case_identity_changed")
+        files[record] = digest
+    documents = []
+    for record, digest in sorted(files.items()):
+        path = f"{FROZEN_CASE_DIR}{record}/record.json"
+        raw = (ROOT / path).read_bytes()
+        if hashlib.sha256(raw).hexdigest() != digest:
+            raise ValueError("frozen_case_bytes_changed")
+        documents.append((path, raw))
+    if not documents:
+        raise ValueError("frozen_study_names_no_case")
+    return documents
 
 
 def public_rule_occurrences(raw, identifiers):
@@ -257,6 +287,28 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
             (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
             (label + "_mutant_default_detector", issuer_without, path, default_detector, 2, ["github-pat"]),
         ])
+    frozen_documents = frozen_context_files()
+    frozen_occurrences = []
+    for index, (path, raw) in enumerate(frozen_documents):
+        occurrences = public_rule_occurrences(raw, FROZEN_RULE_IDENTIFIERS)
+        frozen_occurrences.append(occurrences)
+        detected = ["generic-api-key"] * sum(occurrences.values())
+        label = f"frozen_case_{index}"
+        altered = raw
+        for value in FROZEN_RULE_IDENTIFIERS:
+            altered = altered.replace(f'"{value}"'.encode(), f'"{value}-x"'.encode())
+        directory = path.rsplit('/', 1)[0]
+        cases.extend([
+            (label + "_defaults", baseline, path, raw, 2, detected),
+            (label + "_exact", config, path, raw, 0, []),
+            (label + "_unrelated", config, path, other_value, 2, ["generic-api-key"]),
+            (label + "_altered", config, path, altered, 2, detected),
+            (label + "_sibling", config, directory + "/notes.json", raw, 2, detected),
+            (label + "_lookalike_directory", config, path.replace(FROZEN_CASE_DIR, "docs/history-validation/"), raw, 2, detected),
+            (label + "_prefix", config, "copied/" + path, raw, 2, detected),
+            (label + "_suffix", config, path + ".backup", raw, 2, detected),
+            (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
+        ])
     results = []
     for index, (name, selected_config, path, raw, code, rules) in enumerate(cases):
         # Keep scratch prefixes short for the existing deeply nested evidence
@@ -267,7 +319,7 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
             success = success and actual["finding_paths"] == [path]
         results.append({"case": name, "status": "PASS" if success else "FAIL", "expected_exit_code": code,
                         "expected_rule_ids": rules, **actual})
-    return {"schema": "historical-exact-disposition-controls-v4", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
+    return {"schema": "historical-exact-disposition-controls-v5", "status": "PASS" if all(r["status"] == "PASS" for r in results) else "FAIL",
             "scope": f"Actual offline gitleaks {version} on isolated public evidence and invented canaries; not a credential or provider test.",
             "version": version, "binary_sha256": sha(binary.read_bytes()), "config_sha256": sha(config.read_bytes()),
             "observation_path": OBSERVATION, "observation_sha256": sha(observation), "results": results,
@@ -278,6 +330,8 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
             "cash_publications": [{"path": path, "sha256": sha(raw)} for path, raw in zip(CASH_PUBLICATIONS, cash_documents)],
             "issuer_publications": [{"path": path, "sha256": sha(raw), "public_rule_occurrences": occurrences}
                                     for path, raw, occurrences in zip(ISSUER_PUBLICATIONS, issuer_documents, issuer_occurrences)],
+            "frozen_cases": [{"path": path, "sha256": sha(raw), "public_rule_occurrences": occurrences}
+                             for (path, raw), occurrences in zip(frozen_documents, frozen_occurrences)],
             "network_requests": 0, "provider_requests": 0, "repository_writes": False}
 
 
