@@ -9113,8 +9113,8 @@ authority test reads the frozen copy under its digest.
 -- the tree before the strays' sort below, which changed one tool, its test
 file and this file -- 4620 passed and 34 environment-gated skips in 24 m 58 s
 (run in the mutation worktree, which mirrors the tree byte for byte, the mirror
-checked by the diff's digest), the final tree's run recorded below when it has
-finished;
+checked by the diff's digest), and on the final tree `d912de09` 4621 passed and
+34 environment-gated skips in 24 m 47 s, the same way;
 `tests/test_freeze_validation_cases.py` 33; the eight touched Python test files
 (`test_freeze_validation_cases`, `test_publish_dashboard`, `test_docs`,
 `test_workflows`, `test_reader_request_v2`, `test_secret_scan`,
