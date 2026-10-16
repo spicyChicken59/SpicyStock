@@ -3774,8 +3774,14 @@
     const setup = setupForSave(c), id = SCStock.follow.identity(setup), st0 = SCStock.follow.status();
     const item = SCStock.follow.find(id);
     const box = el('div', { 'class': 'sc-actionbar__more ss-follow', 'data-follow': item ? 'following' : 'not-following', 'data-follow-id': id });
-    const redraw = () => { const next = followBlock(c); box.parentNode.replaceChild(next, box); return next; };
-    const warn = (msg) => { box.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); box.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); recoveryDownload(box); };
+    // The block this closure drew can be replaced under a commit it is still
+    // waiting on: another tab's write reaches this one through the storage
+    // event, whose listener redraws the detail block before the grant comes.
+    // A redraw or a warning then lands on the block that IS in the document for
+    // this setup; a block the reader has moved on from is left as it is.
+    const live = () => (box.isConnected ? box : d.querySelector('#detail .ss-follow[data-follow-id="' + id + '"]'));
+    const redraw = () => { const next = followBlock(c), cur = live(); if (cur && cur.parentNode) cur.parentNode.replaceChild(next, cur); return next; };
+    const warn = (msg) => { const cur = live() || box; cur.querySelectorAll('.ss-follow__warn').forEach((x) => x.remove()); cur.appendChild(el('p', { 'class': 'ss-follow__warn', role: 'alert', text: msg })); recoveryDownload(cur); };
     if (!st0.available) {
       box.appendChild(chip('not saved', 'neutral'));
       warn(st0.error || 'Storage is blocked in this browser; nothing can be followed here.');

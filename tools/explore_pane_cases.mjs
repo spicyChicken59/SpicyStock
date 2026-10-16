@@ -79,6 +79,15 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     const beforeDeep = await bounds(page);
     await page.mouse.move(late.detail.left + 100, late.detail.top + 240);
     await page.mouse.wheel(0, 800); await settle(page);
+    // Native wheel scrolling lands frames later than the call returns: read
+    // `deep` once the detail's offset has left its start and held for eight
+    // frames, bounded so a pane that never scrolls still reaches the checks.
+    await page.evaluate(start => new Promise(resolve => {
+      const d = document.querySelector('#detail'); let prior = -1, stable = 0, frames = 0;
+      const frame = () => { stable = d.scrollTop === prior ? stable + 1 : 0; prior = d.scrollTop;
+        if ((d.scrollTop !== start && stable >= 8) || ++frames > 300) resolve(); else requestAnimationFrame(frame); };
+      requestAnimationFrame(frame);
+    }), beforeDeep.detail.scrollTop);
     const deep = await bounds(page);
     check(tag + ': native detail wheel exposes lower content', deep.detail.scrollTop > 300, deep);
     check(tag + ': detail scrolling preserves list and page', near(deep.list.scrollTop, beforeDeep.list.scrollTop) && near(deep.pageY, beforeDeep.pageY), deep);
@@ -187,7 +196,10 @@ export async function checkExplorePanes({ browser, base, data, open, check, eq, 
     await page.locator('#detail').focus(); await page.keyboard.press('Control+End'); await settle(page);
     // Use native scrolling to the end; the last content must remain reachable.
     await page.mouse.move(late.detail.left + 100, late.detail.top + 250);
-    await page.mouse.wheel(0, 20000); await settle(page);
+    await page.mouse.wheel(0, 20000);
+    // Both native scrolls above land frames later: wait on the condition the
+    // check reads, bounded so an unreachable bottom still fails by name.
+    await page.waitForFunction(() => { const d = document.querySelector('#detail'); return Math.abs(d.scrollTop + d.clientHeight - d.scrollHeight) <= 2; }, null, { timeout: 5000 }).catch(() => {});
     const bottom = await bounds(page);
     check(tag + ': detail bottom is reachable', near(bottom.detail.scrollTop + bottom.detail.clientHeight, bottom.detail.scrollHeight), bottom);
     await page.evaluate(() => SCStock.navigate(location.hash)); await settle(page);

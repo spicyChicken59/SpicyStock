@@ -455,7 +455,10 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   try {
     race.transport.held = 'bundle';
     await race.page.locator('[data-issuer-evidence] > summary').click();
-    for (let n = 0; n < 100 && !race.transport.release; n++) await race.page.waitForTimeout(20);
+    // The bundle is requested only after the page reads and digests the receipt,
+    // which a loaded runner stretches past any fixed count of turns. Wait on the
+    // parked handler itself, bounded like the suite's other waits.
+    for (const until = Date.now() + 30000; !race.transport.release && Date.now() < until;) await race.page.waitForTimeout(20);
     check('race control actually holds a requested old bundle', !!race.transport.release);
     const nextRaw = await readFile(path.join(ROOT, 'tests/fixtures/morning/full-publication.json'), 'utf8');
     await race.page.evaluate(async raw => {

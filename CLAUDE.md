@@ -8616,3 +8616,273 @@ scope. Fresh documentation, secret-scan and independent exact-head checks are
 required before publishing this smaller receipt; hosted gates and actual public
 acceptance remain outstanding. The separate combined-morning fixture upload
 remains blocked and is not included in this independent broker release.
+
+## Checkpoint, 16 Oct 2026 — PR #171 accepted; the first live minute bars and recovery receipts read; the browser suites held to a slow runner
+
+**PR #171, accepted.** Merged as `59eeca2a` on `main` with a merge commit over
+`64481f2f`. The code head `e6d49c2d` passed all seven checks (pytest, page, the
+gate, the native central case to 02:38 UTC and stress to 02:29, both gitleaks
+runs). Publisher 38502113793 waited for `app-handoff.js` and `app-handoff-ui.js`
+and printed *Verified: every one of the 41 public files matches committed main*
+at 02:39:57 UTC on 14 October; Pages 38502138200 deployed (38502113293 cancelled
+as superseded, as every merge does); the merge commit's own Secret scan
+38502113754 and Tests 38502113755 (pytest, page; the native cases skipped by the
+gate, as a merge's are) passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `55a458ad` (the 15 October publication and its issuer receipt,
+over #170 and #172, which another builder merged while this ran). Nothing under
+`src/` changed; the one change under `docs/` is `followBlock()` in `app.js`,
+the repair recorded below. `docs/data.json`, `docs/picks.json`, the compact
+reader, every receipt, the history, the evidence objects, the quality ledger,
+the workflows and the vendored design system are untouched; no run, mail,
+dispatch, provider call or credential.
+
+**One red on the way, read before it was touched.** The page job failed on
+`27ad3a10`, a commit that changed `CLAUDE.md` alone, at `it stopped within a step
+of leaving -- 12` in the findings replay suite (#103's), 15223 of 15224. The
+check bounded the step at an absolute 3, but Play resumed from wherever the
+scroll-off stop had left it, and on a loaded runner the wall clock between two
+Playwright calls let nights pass before that stop. Reproduced in the mutation
+worktree by adding two seconds after each Play click: exactly that assertion
+fails (stopped at 17) and every other check passes, as on the runner. Fixed in
+`e6d49c2d`: each stop starts from night 1, reads the step in the same task as the
+scroll or the hash change, waits for the stop, and is bounded relative to that
+step and short of the last night. The last-night bound closed a hole of the first
+shape this file names: with both stops removed, Play ran to the last night and
+stopped by its own rule, so "the night holds" passed.
+
+**The sweep that followed.** A read-only workflow over every browser suite
+(four readers, eight verifiers, each candidate re-run in an isolated worktree
+with a modelled slow runner) returned 36 distinct candidates of that class, and
+the verifiers reproduced five by name, two more as a thrown suite and one as a
+vacuous pass. Then one agent per family, in its own worktree, with the same
+proof demanded of each fix: the named check fails under the injection and passes
+without it; the fix passes plain and under the same injection; a page mutant
+breaking the rule the check names fails it by name; a control passes. A test
+file was the only thing any of them changed. Three of the eight could not be
+started on the first launch (the primary working directory had drifted off the
+repository, so their worktrees could not be made) and ran on a relaunch of the
+same run, the five finished ones replayed from its journal.
+
+**The session suite** (two, both the page's own 30 s `watchClock()` tick,
+`CLOCK_TICK_MS`). *Crossing the deadline while it sits there changes the
+answer* moved the clock in one call and asked `reclock()` in the next, so a
+tick inside the gap caught the page up first and the check credited the wrong
+caller (reproduced with a 31 s wait and a counter on the page's own reclocks:
+one tick, `[false, "ended"]`). The move, the reclock and the window read are
+one `evaluate` now. *Pressing it after the window closed copies nothing* was a
+crash, not a failure: the same tick repainted the plan disclosure for an ended
+window and removed the copy control, and the trusted click waited out
+Playwright's 30 s and threw before the named check ran. The clipboard sentinel
+is written first; a one-shot capturing listener moves the clock at the start
+of the press's own task; the trusted click is unchanged. Each fix passes under
+the 31 s wait; a page that never notices the window ending fails five checks by
+name, one whose `copyGuard()` trusts the drawn answer fails three; the controls
+pass 95/95.
+
+**The findings replay** (six, all `tools/findings_cases.mjs`). Play from
+night 1 reaches the last night after sixteen 250 ms ticks and stops by its
+own rule, so any driver gap over four seconds read a finished Play: *Space
+plays from the stage* read the label 650 ms later (it reads it in the
+keydown's own task now and waits for the step); *Pause holds the night* could
+pause a Play that had stopped and so restart it (Play is started and paused in
+the task of its first step, through a MutationObserver on the step, bounded
+to resolve `null` on a page that never steps); *Play stops at the last night*
+read 900 ms after the click (a 1.5 s renderer stall put the first read before
+the overdue tick: it waits for `playing()` to go false, bounded); *Play was
+running when the replay was scrolled away* and its twin for leaving the view
+clicked Play one call before the scroll or the hash change (Play starts inside
+that task now); *it stopped within two steps of the scroll* assumed when the
+IntersectionObserver would be delivered (an observer of the test's own, made
+in the scroll's task, records the night it is told the stage is off screen,
+which the page's observer is told in the same delivery, and the check holds
+the stop to that night); and the 390 px *a tap during Play stops it* was
+vacuous under a 1.5 s delay, Play having stopped at the last night before the
+tap (the tap's own capturing listener starts Play and records that it was
+running, and a page whose tap stops nothing fails four checks under the delay
+it survived before). The *in flight* check held the file on a 1,500 ms timer
+and crashed when the runner outlasted it; the route is held on a promise the
+check releases after it has read the loading line and `aria-busy` in one
+task. Every fix passes plain and under its injection; a page that never stops
+at the last night, never pauses, ignores its observer or sets no busy state
+fails by name; the controls pass 848/848.
+
+**The Following suite** (seven of eight sibling sleeps, all the store's
+origin-wide Web Lock: every save, size edit, removal and observation lands only
+after `SCStock.follow.commit()`'s grant, and the suite read each 150–250 ms
+after the click). Under a 1.5 s hold of `spicystock:following:demo:v1` placed
+before the action, *one click follows*, *an invalid size is refused with a
+sentence* (and three checks downstream of the same held lock, the reload
+dropping the still-queued size commit), *a newer observation updates the card*,
+*undo removes the setup*, *a blocked write is named* and the shots-only *the
+store works again once unblocked* all fail by name; *a second blocked write
+does not stack its sentence* was vacuous, the count being 1 before and after
+the second grant. Each read waits, bounded to five seconds, on the state it
+names (`settled()`), and the stacking check captures the first warning node and
+waits for a different one. The eighth, *the withheld reason stays beside the
+followed setup*, was not reproduced: its locator auto-waits for a card that
+exists only after the grant, so its sleep stays. A page that never flips
+`data-follow`, accepts a size of zero, never commits the observation, drops the
+refusal or lets refusals stack fails each check by name; the control passes
+30/30 (31/31 with shots).
+
+**The lens, compare and refresh suites** (five, the same lock). *Following
+counts the setup just saved* read the tab's `data-count` 250 ms after the save;
+*unfollowing empties the lens and stays in it* read the empty state 300 ms after
+the remove; *N is saved under the session it was signalled on* and *following
+from the comparison saves one setup in this browser* read `follow.list()` 250 ms
+after the save; *a setup is saved before the reload* read the store 250 ms after
+it, and every later identity check compared against that snapshot. Each waits,
+bounded, on the count, the empty state or the store itself. The five mutants
+fail by name; the controls pass 66/66, 86/86 and 47/47.
+
+**The follow-through suite** (seven, six of them the same lock through the
+render's own queued commits, read through the suite's `rerender()` helper and
+four fixed sleeps after a reload or a click). *A v1 store is upgraded in place*
+read the version 300 ms after the reload (the migration is a commit the render
+queues); *and says the list was left as it was* read the status 300 ms after
+the render whose backup copy was made to fail; *a v1 follow gets its chart back*
+read the store 320 ms after the reload and the next check indexed into the
+evidence it had not got, a TypeError that ended the lane; *and says so* read the
+refusal 200 ms after a save over a version-99 store; *one observation, dated by
+the market* and every card check after it read the shelf 320 ms after a render
+whose observe commit was still queued; *a follow in one tab shows in the other*
+gave the lock grant, the write, the storage event and the other tab's repaint
+650 ms between them; and *a store with no room still saves the setup* read the
+quota fallback 300 ms after the click, the next check indexing into an empty
+store. `rerender()` now marks the shelf the render draws synchronously, in the
+render's own task, and waits for the pass that redraws it without the mark;
+every other read waits, bounded, on the store or the sentence it names, and the
+two reads that threw fail by name. A page that never migrates, never attaches
+the recovered evidence, writes no refusal, commits no observation, never hears
+another tab's write or has no chart-less fallback fails by name; the control
+passes 143/143. **One lead outside the tests**, seen only under the injection:
+when another tab's save landed while this tab's own save still waited for its
+grant, the storage event redrew the detail block and the handler's later
+`redraw()` ran on the detached box (`Cannot read properties of null (reading
+'replaceChild')`): the save was in the store and the block stayed on *Save
+setup*. **Reproduced on the page, then fixed, in this pull request's one change
+outside the tests.** A standalone two-tab script over the `full` fixture, the
+store's lock held 1.5 s in tab a before both tabs pressed Save: tab b threw
+`Cannot read properties of null (reading 'replaceChild')`, its store held both
+setups, its block read `not-following` and its shelf showed one; without the
+hold both tabs were consistent. `followBlock()`'s `redraw()` and `warn()` now
+find the block the document holds for this setup when the one they drew has
+been replaced (`live()`), and leave a block the reader has moved on from alone.
+The through suite's two-tab block holds the lock until both saves are queued,
+releases it, and reads the second tab's block, shelf and store: on the page
+before the fix 142/144, that check and the page-errors check failing by name
+(`["not-following", 2, ...]` and the throw); after it 144/144; a comment
+control 144/144. The other `replaceChild` sites in `app.js` query the live
+node or go through `repaint()`, which already refuses a detached one.
+
+**Publication recovery, issuer evidence and continuity** (four). *New refresh
+aborts the superseded headers request* pressed again 150 ms after the first
+press, so on a runner where the first request had not yet reached the server
+the press aborted a request the server never saw, the stall fell to the
+replacement, and the suite threw at its 21 s wait; the second press waits,
+bounded by the deadline, until the server holds the first request on its
+headers step. *Timeout covers headers and entire body within deadline
+allowance* measured the deadline from the server's receipt, which the route
+hop delays; both instants are read on the page's own clock now, the fetch as
+it is issued and the timeout as it renders. *Race control actually holds a
+requested old bundle* polled for about two seconds while the page read and
+digested the receipt before asking for the bundle; it waits on the parked
+handler itself, bounded at 30 s like the suite's other waits. And the
+continuity check's archive recovery gave two 15 ms turns for two thread-pool
+digests and a re-render (reproduced with a 40 ms digest); it waits, bounded,
+on the Save control and then on the saved sheet. A page that never aborts the
+superseded request, arms its deadline a second early, never requests the
+bundle or renames the Save control fails by name; the controls pass 131/131,
+476/476 and 137.
+
+**Panes, reading, followed plan, actionability** (five fixed, two not
+reproduced). Two native scrolls were read 180 ms after the wheel (*selecting
+the same stock preserves detail scroll*, *detail bottom is reachable*: with the
+settles dropped, eight checks fail across four journeys); the first read now
+waits until the pane's offset has left its start and held for eight frames,
+the second until the pane is at its bottom, both bounded. *Clearing selection
+retains the saved original* read the store 100 ms after a click whose commit
+waits for the lock (reproduced with a 300 ms grant); it waits on the cleared
+store and the re-rendered control, and an emptied store fails by name instead
+of throwing. *Method restores page and detail reading position* read the
+positions 180 ms after the return click while `restoreReading()` restores them
+in one animation frame (reproduced with a 400 ms frame); it waits for the
+focus that frame gives the help trigger. *A disposed panel response is cached*
+held the source response on a 350 ms timer against the hash change that
+disposes the panel, and with 1.5 s between the click and the change the
+response drew the chart on the still-mounted panel and the suite threw; the
+response is held on a promise the test releases after the panel is gone. Not
+reproduced, and left as written: the map chooser's redraw after a resize (the
+rendering update that closes it runs ahead of the driver's read even under a
+50x CPU throttle with the sleep removed), and the evidence-focus `--dom` mode's
+80 ms mount wait (a 0 ms timer still observes the mounted host; nothing in
+that path waits on a timer). A page that resets the pane's scroll on a
+same-stock click, hides the pane's overflow, removes the item instead of its
+selection, never restores the page scroll or drops the cached response fails
+by name; the controls pass 548/548, 57/57, 141/141 and 200/200.
+
+
+
+
+**The first live nights under the new blocks, read off `main`.** Three
+publications since #165 and #168 merged: 13, 14 and 15 October (runs
+38494353799, 38660383665, 38829043191), RED all three, each `degraded` on
+`behind_more` with 16, 19 and 20 stale stocks within the limit of 47 -- WBD,
+ending 5 October, is past the five-session bound and degrades every night on
+its own, the cost the #105 checkpoint said nothing yet measured (three nights
+so far). `run.delivery` 297.2, 255.8 and 247.3 minutes after completion, after
+the retry slot and before the next open every time. `run.reads` 0 of 2 (ARXS,
+MSM refused), 2 of 2, and 1 of 2 (JAKK refused); at two reads a quarter floors
+to a refusal limit of zero, so one refusal degrades such a night.
+`run.reader_usage` 2 calls each: 14,649 / 1,150, 14,716 / 1,312 and 14,673 /
+837 input and output tokens. **The first live minute bars:** the 13 October run
+wanted, asked, fetched and stored 2 (SN and ZIM, the two anticipation plans
+whose first day the daily bar could not place), two objects under
+`docs/intraday/`. SN is placed: *filled at 09:33 ET, inside the first 30
+minutes, at the minute's open, $186.56*, walked to an exit at +1.2%. ZIM is
+`not_filled`: *the $30.38 trigger was not reached in the first 30 minutes (its
+high in them $30.23); the day reached it at 10:05 ET, after the plan cancels the
+day order*. The two nights after needed none and retained both. **The first
+live source-recovery receipts:** the 07:37 UTC slot was created at 13:02 UTC on
+14 October and 12:49 on the 15th, both before the open, and each published a
+receipt (`c5dad9a9`, `145716b7`): the 13 October publication's 16 stale stocks
+asked for again in one call, 15 recovered and 1 (WBD) still stale; the 14th's 19,
+18 recovered and WBD again -- every recovered bar at zero volume, the provider's
+placeholder, as #104 found for the late bars it retained. Both say the
+publication is unchanged and the cause not established. The 09:37 slots ran
+after the open and published nothing. **Still zero observed:** the morning
+checks -- the 13, 14 and 15 October morning slots were created 4.3 to 6.5 hours
+late, every collection step skipped -- and `docs/research-observations.json`
+does not exist on `main`.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1, on the final tree `5300a645`): 4608 tests collected, 4574 passed and 34 environment-gated skips in 26 m 58 s (beside the running smoke); `tests/test_docs.py` 40/40
+with the suite count unchanged at 4608 (no Python test moved); the full smoke
+with `--shots` 15897/15897 in its two lanes, 21 m 20 s, one check more than the
+tree it started from (the two-tab race); the touched suites alone, plain:
+session 95/95, findings 848/848, following 30/30 (31/31 with shots), lens 66/66,
+compare 86/86, refresh 47/47, through 144/144, publication-recovery 131/131,
+issuer 476/476, actionability 200/200, followed-plan 57/57, reading 141/141,
+panes 548/548; continuity 137; the chart check 378/378; the parity corpus
+current (109 cases, 32 accepted by the page). Injections of my own here,
+through copies in `tools/` deleted afterwards, beside the families' own: a
+1.5 s hold of the store's lock before three Following actions (30/30) and two
+lens actions (66/66), the same hold before the render inside `rerender()`
+(through 143/143), and two seconds between the load click and the hash change
+(actionability 200/200). gitleaks 8.24.3 over the branch's six commits with the
+repository's config: no leaks. The follow block after a save and the My setups
+shelf at 1280 were looked at: the page change moves no pixel. CI on the pull
+request is recorded there.
+
+**Keep / fix / defer / omit.** Keep: a check reads the page's state in the task
+of the action that changes it, or waits on the condition, never on the clock;
+the suites' fixes are to the suites alone, and the one page change repairs a
+defect the sweep exposed, not a test. Fix if it bites: WBD degrades every night until
+its bar returns or it leaves the selection, and nothing yet says that in the
+record's own words. Defer: #111's ten-session acceptance, which still needs a
+morning check that has run; a reading of the recovery receipts across nights.
+Omit: any change to the page to make a test pass; a wider tolerance.
+
+**Not claimable:** a morning or research observation; any trading edge.

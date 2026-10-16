@@ -197,12 +197,19 @@ export async function checkActionability({ browser, base, data, open, check, eq,
     else await closed(f, kind);
   }
 
+  // The source response is HELD until the test releases it, after the hash
+  // change has disposed DLLR's panel: a fixed delay racing a loaded runner
+  // could land while DLLR was still mounted and draw the chart it tests against.
+  let releaseLate = () => {};
+  const lateResponse = new Promise(resolve => { releaseLate = resolve; });
   const race = await launch(uncharted, {ticker:'DLLR'}, async route => {
-    await new Promise(resolve => setTimeout(resolve, 350)); await route.fulfill({status:200, body:bytes});
+    await lateResponse; await route.fulfill({status:200, body:bytes});
   });
   await race.page.locator('[data-load-chart]').click();
   await race.page.evaluate(ticker => { location.hash = '#/explore/bursts/' + ticker; }, ticket.ticker);
-  await race.page.waitForTimeout(500);
+  await race.page.waitForFunction(ticker => document.querySelector('#detail').dataset.selected === 'bursts:' + ticker, ticket.ticker);
+  const landed = race.page.waitForResponse(response => /\/evidence\/.*\.json\.gz/.test(response.url()));
+  releaseLate(); await landed;
   eq('a late source response cannot replace another selection', await race.page.locator('#chart-mount .sc-chart--stock').getAttribute('data-ticker'), ticket.ticker);
   await race.page.evaluate(() => { history.back(); }); await race.page.waitForSelector('[data-load-chart]');
   await race.page.locator('[data-load-chart]').click(); await race.page.waitForSelector('[data-chart-recovery="loaded"]');

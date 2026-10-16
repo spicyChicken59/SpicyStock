@@ -1092,10 +1092,15 @@ async function checkFollowing(browser, base, data) {
   console.log('-- following');
   const trade = data.bursts.find((b) => b.ticker === data.trades[0]);
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
+  // Every save, size edit, removal and observation lands only after the store's origin-wide Web Lock grant
+  // inside SCStock.follow.commit(), so a read that follows a follow action waits on the state it names,
+  // bounded: a page that never gets there still reaches the named check and fails it there.
+  const settled = (cond, arg) => page.waitForFunction(cond, arg, { timeout: 5000 }).catch(() => {});
   const publicBefore = await page.evaluate(() => JSON.stringify([SCStock.data.scorecard, SCStock.data.trades, SCStock.data.cash_budget, SCStock.data.bursts.map((b) => b.plan && b.plan.order_line)]));
   eq('nothing followed yet', await text(page, '#following-jump'), 'My setups · 0');
   check('the follow button names the suggested size', (await text(page, '#detail .ss-follow')).includes(`${trade.plan.shares} shares suggested`), await text(page, '#detail .ss-follow'));
-  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  await page.click('#detail .ss-follow button[data-follow-action="add"]');
+  await settled(() => document.querySelector('#detail .ss-follow')?.dataset.follow === 'following' && document.querySelectorAll('#following .ss-followed').length === 1);
   eq('one click follows', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following');
   eq('the shelf shows the setup', await count(page, `#following .ss-followed[data-ticker="${trade.ticker}"]`), 1);
   eq('the count control moves', await text(page, '#following-jump'), 'My setups · 1');
@@ -1110,9 +1115,11 @@ async function checkFollowing(browser, base, data) {
   await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
   eq('a second click is idempotent', await count(page, '#following .ss-followed'), 1);
   await page.click('#detail .ss-follow button[data-follow-action="edit"]');
-  await page.fill('#detail .ss-follow__form input', '0'); await page.click('#detail .ss-follow__form button[type="submit"]'); await page.waitForTimeout(150);
+  await page.fill('#detail .ss-follow__form input', '0'); await page.click('#detail .ss-follow__form button[type="submit"]');
+  await settled(() => (document.querySelector('#detail .ss-follow')?.textContent || '').includes('whole number of shares'));
   check('an invalid size is refused with a sentence', (await text(page, '#detail .ss-follow')).includes('whole number of shares'), await text(page, '#detail .ss-follow'));
-  await page.fill('#detail .ss-follow__form input', String(trade.plan.shares + 2)); await page.click('#detail .ss-follow__form button[type="submit"]'); await page.waitForTimeout(200);
+  await page.fill('#detail .ss-follow__form input', String(trade.plan.shares + 2)); await page.click('#detail .ss-follow__form button[type="submit"]');
+  await settled((n) => (document.querySelector('#detail .ss-follow')?.textContent || '').includes('your reference size ' + n + ' shares'), trade.plan.shares + 2);
   check('the reference size is labelled as the reader’s', (await text(page, '#detail .ss-follow')).includes(`your reference size ${trade.plan.shares + 2} shares (plan suggested ${trade.plan.shares})`), await text(page, '#detail .ss-follow'));
   await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(250);
   check('the edit survives a reload', (await text(page, '#detail .ss-follow')).includes(`your reference size ${trade.plan.shares + 2} shares`), await text(page, '#detail .ss-follow'));
@@ -1123,7 +1130,9 @@ async function checkFollowing(browser, base, data) {
   const newer = JSON.parse(JSON.stringify(data));
   newer.observations.symbols[trade.ticker] = { date: '2026-09-11', o: 126, h: 131, l: 125, c: 130, v: 1000, since: data.run.session };
   await page.evaluate((d) => { SCStock.render(d, new Date('2026-09-10T22:31:00Z')); }, newer);
-  await page.waitForTimeout(250);
+  // the card first redraws with the saved history; the observation reaches it only after render()'s
+  // post-render chain has committed it under the lock and refreshResearchViews() has redrawn the shelf
+  await settled((t) => (document.querySelector('#following .ss-followed[data-ticker="' + t + '"]')?.textContent || '').includes('$130.00'), trade.ticker);
   check('a newer observation updates the card', (await card()).includes('$130.00') && (await card()).includes('11 Sep') && (await card()).includes('since the signal'), await card());
   check('the saved plan is unchanged by the newer record', (await card()).includes('stop ' + usd(trade.plan.stop)) && (await card()).includes(`your reference size ${trade.plan.shares + 2} shares`), await card());
   check('the movement is labelled as price movement, not a result', (await card()).includes('not your result'), await card());
@@ -1136,21 +1145,26 @@ async function checkFollowing(browser, base, data) {
     check('the observation hint names the reason once', (hint.match(/ticket withheld/gi) || []).length === 1 && !/no ticket/i.test(hint), hint);
     await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
     check('the withheld reason stays beside the followed setup', (await text(page, '#detail .ss-action')).includes('ticket withheld') && (await text(page, `#following .ss-followed[data-ticker="${withheld.ticker}"]`)).includes('observation only, no size'), 'withheld');
-    await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(150);
+    await page.click('#detail .ss-follow button[data-follow-action="remove"]');
+    await settled((t) => !document.querySelector('#following .ss-followed[data-ticker="' + t + '"]'), withheld.ticker);
   }
   await go(page, `#/explore/bursts/${trade.ticker}`);
-  await page.click('#detail .ss-follow button[data-follow-action="remove"]'); await page.waitForTimeout(200);
+  await page.click('#detail .ss-follow button[data-follow-action="remove"]');
+  await settled(() => document.querySelector('#detail .ss-follow')?.dataset.follow === 'not-following' && !document.querySelector('#following .ss-followed'));
   eq('undo removes the setup', [await page.locator('#detail .ss-follow').getAttribute('data-follow'), await count(page, '#following .ss-followed'), await text(page, '#following-jump')], ['not-following', 0, 'My setups · 0']);
   // a blocked write says so and never shows Following
   await page.evaluate(() => { window.__setItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error('blocked'); }; });
-  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  await page.click('#detail .ss-follow button[data-follow-action="add"]');
+  await settled(() => !!document.querySelector('#detail .ss-follow .ss-follow__warn'));
   eq('a blocked write is not a follow', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'not-following');
   check('a blocked write is named', (await text(page, '#detail .ss-follow')).includes('Could not confirm the save'), await text(page, '#detail .ss-follow'));
   eq('following page errors', errors, []);
-  await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200);
+  const firstWarn = await page.evaluateHandle(() => document.querySelector('#detail .ss-follow .ss-follow__warn'));
+  await page.click('#detail .ss-follow button[data-follow-action="add"]');
+  await settled((first) => { const w = document.querySelector('#detail .ss-follow .ss-follow__warn'); return !!w && w !== first; }, firstWarn);
   eq('a second blocked write does not stack its sentence', await count(page, '#detail .ss-follow .ss-follow__warn'), 1);
   await page.evaluate(() => { Storage.prototype.setItem = window.__setItem; });
-  if (shotsDir) { await go(page, `#/explore/bursts/${trade.ticker}`); await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(200); eq('the store works again once unblocked', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following'); await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, 'follow-action-1280.png') }); await go(page, '#/setups'); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-1280.png') }); }
+  if (shotsDir) { await go(page, `#/explore/bursts/${trade.ticker}`); await page.click('#detail .ss-follow button[data-follow-action="add"]'); await settled(() => document.querySelector('#detail .ss-follow')?.dataset.follow === 'following'); eq('the store works again once unblocked', await page.locator('#detail .ss-follow').getAttribute('data-follow'), 'following'); await page.locator('#detail .ss-action').screenshot({ path: path.join(shotsDir, 'follow-action-1280.png') }); await go(page, '#/setups'); await page.locator('#following').screenshot({ path: path.join(shotsDir, 'following-1280.png') }); }
   await context.close();
   // a corrupt store is set aside, named, and starts empty
   const c2 = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${trade.ticker}` });
@@ -1319,7 +1333,20 @@ const obsOf = (page, ticker) => page.evaluate(([k, t]) => {
   const it = JSON.parse(localStorage.getItem(k)).items.find((x) => x.ticker === t);
   return it ? (it.observations || []).map((o) => [o.date, o.c, o.from_session, !!o.revised, o.basis]) : null;
 }, [FOLLOW_KEY, ticker]);
-const rerender = async (page, data, now) => { await page.evaluate(([d, n]) => { SCStock.render(d, new Date(n)); }, [data, now]); await page.waitForTimeout(320); };
+// A render starts recoverEvidence -> recordObservations -> refreshResearchViews
+// without waiting for it, and the observe commit inside it is a Web Lock grant.
+// The shelf the render draws synchronously is marked here, in the render's own
+// task; the pass ends by redrawing the shelf without the mark, which is what is
+// waited on. Bounded, so a page whose pass never ends still reaches the checks
+// after it and fails them by name.
+const rerender = async (page, data, now) => {
+  await page.evaluate(([d, n]) => {
+    SCStock.render(d, new Date(n));
+    const list = document.getElementById('following-list');
+    Array.from(list ? list.children : []).forEach((c) => c.setAttribute('data-ss-before-pass', ''));
+  }, [data, now]);
+  await page.waitForFunction(() => !document.querySelector('#following-list [data-ss-before-pass]'), null, { timeout: 5000 }).catch(() => {});
+};
 const followFrom = async (page, ticker) => {
   await go(page, `#/explore/bursts/${ticker}`);
   const add = page.locator('#detail .ss-follow button[data-follow-action="add"]');
@@ -1350,7 +1377,13 @@ async function checkFollowThrough(browser, base, full) {
   // ---- a store written by the previous version of this page
   const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${trade}` });
   await seedStore(page, LEGACY);
-  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await page.waitForTimeout(300);
+  await page.reload(); await page.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+  // the upgrade is a locked commit the render queues, and the sentence is painted
+  // by the listener after it: wait on both, bounded, so a page that never
+  // upgrades still reaches the checks below and fails them by name
+  await page.waitForFunction((k) => {
+    try { return JSON.parse(localStorage.getItem(k)).version === 4 && ((document.getElementById('following-status') || {}).textContent || '').includes('carried over'); } catch (e) { return false; }
+  }, FOLLOW_KEY, { timeout: 5000 }).catch(() => {});
   eq('a v1 store is upgraded in place', (await readStore(page)).version, 4);
   eq('and the payload it replaced is kept beside it', await storeKeys(page), [FOLLOW_KEY, FOLLOW_KEY + '.previous']);
   eq('verbatim', await page.evaluate((k) => JSON.parse(localStorage.getItem(k + '.previous')), FOLLOW_KEY), LEGACY);
@@ -1369,7 +1402,9 @@ async function checkFollowThrough(browser, base, full) {
       Storage.prototype.setItem = function (key, v) { if (key === k + '.previous') return; return real.call(this, key, v); };
     }, FOLLOW_KEY);
     await p3.evaluate(() => { SCStock.render(SCStock.data, new Date('2026-09-10T22:31:00Z')); });
-    await p3.waitForTimeout(300);
+    // the migration is a locked commit queued by that render; its refusal is
+    // painted by the listener after it, so that is what is waited on, bounded
+    await p3.waitForFunction(() => ((document.getElementById('following-status') || {}).textContent || '').includes('left as it was'), null, { timeout: 5000 }).catch(() => {});
     eq('a copy that does not take leaves the old payload exactly as it was', await readStore(p3), LEGACY);
     check('and says the list was left as it was', (await text(p3, '#following-status')).includes('left as it was'), await text(p3, '#following-status'));
     eq('while the setups still read', await count(p3, '#following .ss-followed'), 1);
@@ -1391,13 +1426,19 @@ async function checkFollowThrough(browser, base, full) {
       snapshot: Object.assign({}, LEGACY.items[0].snapshot, { close: tradeRow.close, close_date: full.run.session }) });
     const newerTicker = Object.assign({}, LEGACY.items[0], { id: `burst:${trade}:2026-08-14:${full.app.rules_version}`, ticker: trade });
     await seedStore(p4, { version: 1, items: [sameSignal, newerTicker] });
-    await p4.reload(); await p4.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered')); await p4.waitForTimeout(320);
+    await p4.reload(); await p4.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
+    // the recovery is a locked attachEvidence commit the render starts: wait for
+    // the store to carry it, bounded, so a page that never attaches still
+    // reaches the checks below and fails them by name
+    await p4.waitForFunction(([k, id]) => {
+      try { const it = JSON.parse(localStorage.getItem(k)).items.find((x) => x.id === id); return !!(it && it.evidence && it.evidence.series && it.evidence.series.length); } catch (e) { return false; }
+    }, [FOLLOW_KEY, sameSignal.id], { timeout: 5000 }).catch(() => {});
     const back = (await readStore(p4)).items;
     const recovered = back.find((x) => x.id === sameSignal.id), other = back.find((x) => x.id === newerTicker.id);
     eq('a v1 follow gets its chart back from the record that IS its signal',
       [!!(recovered.evidence && recovered.evidence.series.length), recovered.evidence && recovered.evidence.recovered], [true, true]);
     check('bounded at the signal session, like one saved then',
-      recovered.evidence.series.every((b) => b.date <= full.run.session), 'a bar after the signal was recovered');
+      !!(recovered.evidence && recovered.evidence.series.every((b) => b.date <= full.run.session)), 'a bar after the signal was recovered');
     eq('and a v1 follow for the same TICKER under another session gets none', other.evidence, null);
     await openSavedById(p4, sameSignal.id, 'the recovered setup opens by its own identity');
     check('the sheet says the chart was recovered rather than saved then',
@@ -1415,7 +1456,9 @@ async function checkFollowThrough(browser, base, full) {
   // checking its save refusal; a hidden/absent detail is not that protection.
   await go(page, `#/explore/bursts/${trade}`);
   await page.click('#detail .ss-follow button[data-follow-action="add"]').catch(() => {});
-  await page.waitForTimeout(200);
+  // the refusal is written by the handler after its locked commit resolves:
+  // wait for the sentence the check reads, bounded
+  await page.waitForFunction(() => ((document.querySelector('#detail .ss-follow') || {}).innerText || '').includes('newer version'), null, { timeout: 5000 }).catch(() => {});
   eq('a follow attempted over it writes nothing', (await readStore(page)).version, 99);
   check('and says so', (await text(page, '#detail .ss-follow')).includes('newer version'), await text(page, '#detail .ss-follow'));
 
@@ -1731,18 +1774,45 @@ async function checkFollowStates(browser, base, full, next) {
     await p.goto(base + `/docs/index.html#/explore/bursts/${trade}`, { waitUntil: 'load' });
     await p.waitForFunction(() => document.documentElement.getAttribute('data-ss-rendered'));
   }
-  await a.click('#detail .ss-follow button[data-follow-action="add"]'); await a.waitForTimeout(250);
-  await b.waitForTimeout(400);
+  await a.click('#detail .ss-follow button[data-follow-action="add"]');
+  // a's save is a locked commit, and b learns of it only through the storage
+  // event and its repaint: wait on b's shelf, bounded, rather than on sleeps
+  await b.waitForFunction(() => document.querySelectorAll('#following .ss-followed').length === 1, null, { timeout: 5000 }).catch(() => {});
   eq('a follow in one tab shows in the other without a reload', await count(b, '#following .ss-followed'), 1);
   // the second tab follows something else; the first must not write its stale list back
   await go(b, `#/explore/bursts/${other}`);
-  await b.click('#detail .ss-follow button[data-follow-action="add"]'); await b.waitForTimeout(300);
+  await b.click('#detail .ss-follow button[data-follow-action="add"]');
+  // a repaints its detail block when b's write reaches it; the edit below must
+  // not race that repaint, so wait for a to have read b's save first
+  await a.waitForFunction(() => document.querySelectorAll('#following .ss-followed').length === 2, null, { timeout: 5000 }).catch(() => {});
   await a.click('#detail .ss-follow button[data-follow-action="edit"]');
   await a.fill('#detail .ss-follow__form input', '9');
-  await a.click('#detail .ss-follow__form button[type="submit"]'); await a.waitForTimeout(300);
+  await a.click('#detail .ss-follow__form button[type="submit"]');
+  // both writes are locked commits: wait for the store to carry both, bounded
+  await a.waitForFunction(([k, t]) => { try { const items = JSON.parse(localStorage.getItem(k)).items; return items.length === 2 && (items.find((x) => x.ticker === t) || {}).reference_shares === 9; } catch (e) { return false; } }, [FOLLOW_KEY, trade], { timeout: 5000 }).catch(() => {});
   const both = await a.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => [x.ticker, x.reference_shares]), FOLLOW_KEY);
   eq('an edit in one tab keeps the other tab’s follow', both.length, 2);
   eq('and applies to its own', both.find((r) => r[0] === trade)[1], 9);
+  // a save queued in one tab while the other tab's save is granted first: the
+  // storage event redraws this tab's detail block before its own grant comes,
+  // and the handler must finish on the block that is in the document (on the
+  // page before the fix: a throw on the detached block, the block left on Save
+  // setup over a setup the store held, the shelf short by one). The lock is
+  // held by the test and released only once both saves are queued, so the
+  // order is the lock's and never the runner's.
+  const third = full.bursts.map((x) => x.ticker).find((t) => t !== trade && t !== other);
+  await go(b, `#/explore/bursts/${third}`);
+  await a.click('#detail .ss-follow button[data-follow-action="remove"]');
+  await a.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'not-following', null, { timeout: 5000 }).catch(() => {});
+  await a.evaluate((k) => { window.__release = null; navigator.locks.request(k, () => new Promise((r) => { window.__release = r; })); }, FOLLOW_KEY);
+  await a.waitForFunction(() => typeof window.__release === 'function', null, { timeout: 5000 });
+  await a.click('#detail .ss-follow button[data-follow-action="add"]');
+  await b.click('#detail .ss-follow button[data-follow-action="add"]');
+  await a.evaluate(() => { window.__release(); });
+  await b.waitForFunction(([k, t]) => { try { return JSON.parse(localStorage.getItem(k)).items.some((x) => x.ticker === t) && document.querySelector('#detail .ss-follow').dataset.follow === 'following' && document.querySelectorAll('#following .ss-followed').length === 3; } catch (e) { return false; } }, [FOLLOW_KEY, third], { timeout: 5000 }).catch(() => {});
+  eq('a save granted after another tab’s finishes on the block in the document',
+    [await attr(b, '#detail .ss-follow', 'data-follow'), await count(b, '#following .ss-followed'), (await b.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => x.ticker), FOLLOW_KEY)).sort()],
+    ['following', 3, [trade, other, third].sort()]);
   eq('two-tab page errors', twoErrors, []);
   await ctx.close();
 
@@ -1768,10 +1838,11 @@ async function checkFollowStates(browser, base, full, next) {
     }, FOLLOW_KEY);
     check('quota admits setup and refuses its chart', capacity.withoutChart < capacity.quota && capacity.quota < capacity.withChart);
     await page.click('#detail .ss-follow button[data-follow-action="remove"]');
-    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(300);
+    await page.click('#detail .ss-follow button[data-follow-action="add"]');
+    await page.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'following', null, { timeout: 5000 }).catch(() => {});
     eq('a store with no room still saves the setup', await attr(page, '#detail .ss-follow', 'data-follow'), 'following');
-    eq('without its chart', await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).items[0].evidence, FOLLOW_KEY), null);
-    eq('quota fallback keeps the full snapshot and receipt', await page.evaluate(k => JSON.parse(localStorage.getItem(k)).items[0].snapshot, FOLLOW_KEY), capacity.snapshot);
+    eq('without its chart', await page.evaluate((k) => (JSON.parse(localStorage.getItem(k)).items[0] || {}).evidence, FOLLOW_KEY), null);
+    eq('quota fallback keeps the full snapshot and receipt', await page.evaluate(k => (JSON.parse(localStorage.getItem(k)).items[0] || {}).snapshot, FOLLOW_KEY), capacity.snapshot);
     await openSaved(page, trade);
     check('and the sheet says so rather than drawing one from tonight',
       (await said(page, '#saved [data-chart="unsaved"]')).includes('Original chart was not saved'), await said(page, '#saved [data-chart="unsaved"]'));
@@ -1783,7 +1854,8 @@ async function checkFollowStates(browser, base, full, next) {
   // --- the keyboard alone, and the phone --------------------------------
   {
     const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { lens: 'all', height: 844, hash: `#/explore/bursts/${trade}` });
-    await page.click('#detail .ss-follow button[data-follow-action="add"]'); await page.waitForTimeout(250);
+    await page.click('#detail .ss-follow button[data-follow-action="add"]');
+    await page.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'following', null, { timeout: 5000 }).catch(() => {});
     await rerender(page, next, '2026-09-11T22:31:00Z');
     await go(page, '#/setups');
     eq('the phone stacks the shelf full-width', await page.locator('#following .ss-followed').first().evaluate((n) => Math.round(n.getBoundingClientRect().width) > window.innerWidth * 0.75), true);
@@ -2452,11 +2524,18 @@ async function checkLens(browser, base, data) {
   // the Following lens: this browser's shelf, and nothing else
   const f = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { hash: `#/explore/bursts/${aQuality[1]}` });
   eq('following is empty before anything is followed', await f.page.locator('#lens .sc-tab[data-lens="following"]').getAttribute('data-count'), '0');
-  await f.page.click('#detail .ss-follow button[data-follow-action="add"]'); await f.page.waitForTimeout(250);
+  await f.page.click('#detail .ss-follow button[data-follow-action="add"]');
+  // the save lands only after its Web Lock is granted, which is asynchronous:
+  // wait on the count itself, bounded, so a page that never counts it still
+  // reaches the check below and fails it
+  await f.page.waitForFunction(() => { const t = document.querySelector('#lens .sc-tab[data-lens="following"]'); return !!t && t.getAttribute('data-count') === '1'; }, null, { timeout: 5000 }).catch(() => {});
   eq('following counts the setup just saved', await f.page.locator('#lens .sc-tab[data-lens="following"]').getAttribute('data-count'), '1');
   await setLens(f.page, 'following');
   eq('the following lens shows exactly what this browser saved', await cardTickers(f.page), [aQuality[1]]);
-  await f.page.click('#detail .ss-follow button[data-follow-action="remove"]'); await f.page.waitForTimeout(300);
+  await f.page.click('#detail .ss-follow button[data-follow-action="remove"]');
+  // the remove lands after its own lock grant: wait for the lens to empty,
+  // bounded, then read the lens and the empty state exactly as before
+  await f.page.waitForFunction(() => !!document.querySelector('#pick-list [data-empty="lens"]'), null, { timeout: 5000 }).catch(() => {});
   // the reader's own action emptied the lens: the page must stay in it and say
   // so, not step out to every burst because the hash still names the stock
   eq('unfollowing empties the lens and stays in it', [await lensNow(f.page), await count(f.page, '#pick-list [data-empty="lens"]')], ['following', 1]);
@@ -2474,7 +2553,9 @@ async function checkLens(browser, base, data) {
   {
     const t = data.bursts[0].ticker;
     const o = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 1280, { lens: 'all', hash: `#/explore/bursts/${t}` });
-    await o.page.click('#detail .ss-follow button[data-follow-action="add"]'); await o.page.waitForTimeout(250);
+    await o.page.click('#detail .ss-follow button[data-follow-action="add"]');
+    // the save lands after its Web Lock grant: wait for the store to hold it, bounded
+    await o.page.waitForFunction(() => window.SCStock.follow.list().length === 1, null, { timeout: 5000 }).catch(() => {});
     const saved = await o.page.evaluate(() => window.SCStock.follow.list().map((i) => [i.ticker, i.session]));
     eq(`${t} is saved under the session it was signalled on`, saved, [[t, data.run.session]]);
     const next = '2026-09-11';
@@ -2686,7 +2767,9 @@ async function checkCompare(browser, base, data) {
   await fl.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
   await fl.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await fl.page.waitForTimeout(200);
   await fl.page.click('#compare-open'); await fl.page.waitForTimeout(500);
-  await fl.page.click('#compare [data-side="a"] .ss-follow button[data-follow-action="add"]'); await fl.page.waitForTimeout(250);
+  await fl.page.click('#compare [data-side="a"] .ss-follow button[data-follow-action="add"]');
+  // the save lands after its Web Lock grant: wait for the store to hold it, bounded
+  await fl.page.waitForFunction(() => window.SCStock.follow.list().length === 1, null, { timeout: 5000 }).catch(() => {});
   eq('following from the comparison saves one setup in this browser', await fl.page.evaluate(() => window.SCStock.follow.list().map((i) => i.ticker)), [A.ticker]);
   eq('and the published record is not touched by it', await fl.page.evaluate(() => JSON.stringify(window.SCStock.data.trades) + '|' + JSON.stringify(window.SCStock.data.scorecard)),
     JSON.stringify(data.trades) + '|' + JSON.stringify(data.scorecard));
@@ -3188,9 +3271,15 @@ async function checkSession(browser, base, full) {
     const chartBefore = await p2.evaluate(() => window.SCStock.liveCharts());
     await openAll(p2, '#disc-plan');
     await p2.locator('#disc-plan [data-copy]').first().focus();
-    await p2.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
-    const moved = await p2.evaluate(() => window.SCStock.reclock());
-    eq('crossing the deadline while it sits there changes the answer', [moved, await attr(p2, 'html', 'data-ss-window')], [true, 'ended']);
+    // the clock crosses the deadline and the page re-reads it in ONE task: the
+    // page's own 30 s re-reading (watchClock()) runs on real time, and landing
+    // between a move and a separate reclock() it would catch the page up first,
+    // leaving this call nothing to change
+    const [moved, phase] = await p2.evaluate((iso) => {
+      window.__fake = new Date(iso).getTime();
+      return [window.SCStock.reclock(), document.documentElement.getAttribute('data-ss-window')];
+    }, WHEN.after[0]);
+    eq('crossing the deadline while it sits there changes the answer', [moved, phase], [true, 'ended']);
     check('the left-open tab now says the window ended', (await text(p2, '#next-h3')).includes('has ended'), await text(p2, '#next-h3'));
     eq('and the copy control is gone from under the reader', await count(p2, '#disc-plan [data-copy]'), 0);
     eq('the chart was NOT torn down to say so', await p2.evaluate(() => window.SCStock.liveCharts()), chartBefore);
@@ -3218,13 +3307,19 @@ async function checkSession(browser, base, full) {
     await p3.evaluate(() => window.SCStock.reclock());
     await openAll(p3, '#disc-plan');
     eq('a reader inside the window has a copy control', await count(p3, '#disc-plan [data-copy]'), 1);
-    // the window closes while the disclosure is open, and the page is NOT told
-    await p3.evaluate((iso) => { window.__fake = new Date(iso).getTime(); }, WHEN.after[0]);
     // Chromium's clipboard is shared across the contexts of one browser, so
     // "it is empty" is no evidence on its own: a suite that copied earlier
     // would have left its own text there. It is written first, and must be
     // exactly what is read back.
     await p3.evaluate(() => navigator.clipboard.writeText('nothing was copied').catch(() => {}));
+    // the window closes while the disclosure is open, and the page is NOT told:
+    // the clock crosses the deadline in the press's own task, as it starts, so
+    // nothing re-reads it first. The page's own 30 s re-reading (watchClock())
+    // runs on real time; landing between a separate move and the press, it
+    // would tell the page and take away the very control being pressed.
+    await p3.evaluate((iso) => window.addEventListener('click', () => {
+      window.__fake = new Date(iso).getTime();
+    }, { capture: true, once: true }), WHEN.after[0]);
     await p3.locator('#disc-plan [data-copy]').first().click();
     await p3.waitForTimeout(250);
     const clip = await p3.evaluate(() => navigator.clipboard.readText().catch(() => ''));
@@ -3399,7 +3494,9 @@ async function checkRefresh(browser, base, full) {
   await page.click('#detail .sc-tab[data-mode="candles"]');
   await page.waitForTimeout(200);
   await page.locator('[data-follow-action="add"]').first().click();
-  await page.waitForTimeout(250);
+  // the save lands after its Web Lock grant: wait for the store to hold it,
+  // bounded, before the snapshot every later identity check compares against
+  await page.waitForFunction((k) => (((JSON.parse(localStorage.getItem(k)) || {}).items) || []).length === 1, FOLLOW_KEY, { timeout: 5000 }).catch(() => {});
   const ids = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => x.id);
   const bars = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => ((x.evidence || {}).series || []).length);
   const obsCounts = async (pg) => ((await readStore(pg)) || { items: [] }).items.map((x) => (x.observations || []).length);

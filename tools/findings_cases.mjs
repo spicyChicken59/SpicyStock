@@ -424,17 +424,45 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   eq('End goes to the last night', await stepOf(p), N);
   await p.keyboard.press('Home'); await settle(p);
   eq('Home goes to the first', await stepOf(p), 1);
-  await p.keyboard.press(' '); await settle(p, 650);
-  check('Space plays from the stage', (await playWord(p)) === 'Pause' && (await stepOf(p)) >= 2, await stepOf(p));
-  await p.locator('#historical-evidence [data-find="play"]').click();
-  const held = await stepOf(p); await settle(p, 600);
+  // Play from night 1 reaches the last night and stops itself after 16 ticks, so a runner busy
+  // that long between two calls would read a finished Play: Space's label is read in the
+  // keydown's own task, by a listener added after the page's, and the step is waited for
+  await p.locator('#historical-evidence .ss-find__stage').evaluate((stage) => {
+    stage.addEventListener('keydown', () => {
+      stage.dataset.playStarted = document.querySelector('#historical-evidence [data-find="play"]').textContent;
+    }, { once: true });
+  });
+  await p.keyboard.press(' ');
+  await p.waitForFunction((sel) => Number(document.querySelector(sel).getAttribute('data-step')) >= 2, ROOTSEL, { timeout: 5000 }).catch(() => {});
+  check('Space plays from the stage', (await attr(p, '#historical-evidence .ss-find__stage', 'data-play-started')) === 'Pause' && (await stepOf(p)) >= 2, await stepOf(p));
+  // Pause a Play that has stepped, in the page's own tasks: from night 1, Play started and then
+  // paused in the task of its first step, so neither a Play that ran on to the last night nor a
+  // Pause click that lands as a new Play can move the night. Bounded: a Play that never steps
+  // resolves with no night, and the check names it
+  const held = await p.evaluate((sel) => new Promise((done) => {
+    const root = document.querySelector(sel), play = document.querySelector('#historical-evidence [data-find="play"]');
+    document.querySelector('#historical-evidence [data-find-night]').click();
+    const mo = new MutationObserver(() => {
+      if (Number(root.getAttribute('data-step')) < 2) return;
+      mo.disconnect(); clearTimeout(limit);
+      play.click();
+      done(Number(root.getAttribute('data-step')));
+    });
+    const limit = setTimeout(() => { mo.disconnect(); done(null); }, 5000);
+    mo.observe(root, { attributes: true, attributeFilter: ['data-step'] });
+    play.click();
+  }), ROOTSEL);
+  await settle(p, 600);
   eq('Pause holds the night', await stepOf(p), held);
   eq('Pause reads Play again', await playWord(p), 'Play');
   await p.locator('#historical-evidence [data-find="next"]').focus();
   await p.keyboard.press(' '); await settle(p);
   eq('Space on the Next button steps rather than plays', [await stepOf(p), await playWord(p)], [held + 1, 'Play']);
   await p.locator(`#historical-evidence [data-find-night="${F.nights[N - 2].session}"]`).click(); await settle(p);
-  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 900);
+  await p.locator('#historical-evidence [data-find="play"]').click();
+  // one tick takes it to the last night; a starved renderer can run that tick after the reads,
+  // so the stop is waited for (bounded) and the night, the word and the state read once it came
+  await p.waitForFunction(() => !window.SCStock.findingsHandle.playing(), null, { timeout: 5000 }).catch(() => {});
   eq('Play stops at the last night and says Play again', [await stepOf(p), await playWord(p), await p.evaluate(() => window.SCStock.findingsHandle.playing())], [N, 'Play', false]);
   await p.locator('#historical-evidence [data-find-night]').last().click(); await settle(p);
   // Read the restart inside the click's own task: a loaded runner can otherwise
@@ -450,31 +478,43 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   // The stop arrives through an IntersectionObserver, which a loaded runner can deliver
   // late, so each stop is waited for (bounded) before the night it holds is read.
   const stopped = () => p.waitForFunction(() => !window.SCStock.findingsHandle.playing(), null, { timeout: 5000 }).catch(() => {});
+  // Play is started in the task that scrolls, so a runner busy for the 16 ticks Play needs from
+  // night 1 cannot let it reach the last night and stop by its own rule first. An observer of the
+  // test's own, made in that task, records the night when it is told the stage has left the screen:
+  // the page's observer is told in the same delivery, so that is the night the scroll stops Play at,
+  // however many rendering updates a loaded runner takes to deliver it
   await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
-  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
   const [atScroll, playingAtScroll] = await p.evaluate((sel) => {
+    const root = document.querySelector(sel);
+    document.querySelector('#historical-evidence [data-find="play"]').click();
     const playing = window.SCStock.findingsHandle.playing();
     window.scrollTo(0, 0);
-    return [Number(document.querySelector(sel).getAttribute('data-step')), playing];
+    new IntersectionObserver((es, o) => {
+      if (es.some((e) => e.isIntersecting)) return;
+      o.disconnect();
+      root.dataset.offScreenAt = root.getAttribute('data-step');
+    }).observe(document.querySelector('#historical-evidence .ss-find__stage'));
+    return [Number(root.getAttribute('data-step')), playing];
   }, ROOTSEL);
   check('Play was running when the replay was scrolled away', playingAtScroll, atScroll);
   await stopped();
   const scrolled = await stepOf(p); await settle(p, 700);
   eq('scrolled off the screen Play has stopped and the night holds', [await stepOf(p), await playWord(p)], [scrolled, 'Play']);
-  // the scroll stopped it, not the last night: the observer reports at the next rendering
-  // update, so at most a tick or two can land after the scroll and before it
-  check('it stopped within two steps of the scroll, short of the last night', scrolled <= Math.min(atScroll + 2, N - 1), 'scrolled away at ' + atScroll + ', stopped at ' + scrolled);
+  // the scroll stopped it, not the last night: at the night the observers were told of the scroll
+  const offScreenAt = await attr(p, ROOTSEL, 'data-off-screen-at');
+  check('it stopped at the night the observer saw the scroll, short of the last night', String(scrolled) === offScreenAt && scrolled >= atScroll && scrolled <= N - 1,
+    'scrolled away at ' + atScroll + ', the observer told at ' + offScreenAt + ', stopped at ' + scrolled);
   await p.locator('#historical-evidence .ss-find__stage').scrollIntoViewIfNeeded();
   // the page's own observer is told in the same intersection update as this one, and first
   await p.evaluate((sel) => new Promise((done) => new IntersectionObserver((es, o) => {
     if (es.some((e) => e.isIntersecting)) { o.disconnect(); done(); }
   }).observe(document.querySelector(sel))), '#historical-evidence .ss-find__stage');
-  // leaving the view stops it too. From night 1, so Play cannot reach the last night and
-  // stop on its own; the bound is the night it left at, read in the same task as the hash
-  // change, never an absolute count that a late stop earlier in the journey could move.
+  // leaving the view stops it too. From night 1, started in the task that changes the hash, so
+  // Play cannot reach the last night and stop on its own however busy the runner; the bound is
+  // the night it left at, never an absolute count that a late stop earlier could move.
   await p.locator('#historical-evidence [data-find-night]').first().click(); await settle(p);
-  await p.locator('#historical-evidence [data-find="play"]').click(); await settle(p, 120);
   const [left, wasPlaying] = await p.evaluate((sel) => {
+    document.querySelector('#historical-evidence [data-find="play"]').click();
     const playing = window.SCStock.findingsHandle.playing();
     location.hash = '#/method';
     return [Number(document.querySelector(sel).getAttribute('data-step')), playing];
@@ -587,14 +627,25 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     const second = offered[1];
     await q.locator(`#historical-evidence [data-find="pick"] [data-pick-night="${second}"]`).click(); await settle(q);
     eq(`${tag}: choosing a night takes that night and closes the chooser`, [await nightOf(q), await q.locator('#historical-evidence [data-find="pick"]').count()], [second, 0]);
-    // a tap during Play opens the chooser and stops Play, so the night cannot change under the finger
-    await q.locator('#historical-evidence [data-find="play"]').tap(); await settle(q, 60);
+    // a tap during Play opens the chooser and stops Play, so the night cannot change under the finger.
+    // Play is started by its button in the tap's own task, from a listener that runs before the
+    // page's and records whether Play was running and the night it met: a Play started a call
+    // earlier can reach the last night and stop by its own rule while a runner is busy, and a tap
+    // that then stopped nothing would pass
     await q.locator('#historical-evidence .ss-find__svg').evaluate((e) => e.scrollIntoView({ block: 'center' })); await settle(q, 60);
-    const spot2 = await q.evaluate((s) => { const c = document.querySelector('#historical-evidence .ss-find__night[data-night="' + s + '"] .ss-find__mean'); const b = c.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 }; }, night.session);
+    const spot2 = await q.evaluate((s) => {
+      const chart = document.querySelector('#historical-evidence .ss-find__chart');
+      chart.addEventListener('click', () => {
+        document.querySelector('#historical-evidence [data-find="play"]').click();
+        chart.dataset.tapMet = JSON.stringify([window.SCStock.findingsHandle.playing(), Number(document.querySelector('#historical-evidence [data-find-root]').getAttribute('data-step'))]);
+      }, { capture: true, once: true });
+      const c = document.querySelector('#historical-evidence .ss-find__night[data-night="' + s + '"] .ss-find__mean'); const b = c.getBoundingClientRect(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    }, night.session);
     await q.touchscreen.tap(spot2.x, spot2.y); await settle(q, 40);
-    const opened = [await q.locator('#historical-evidence [data-find="pick"]').count(), await stepOf(q)];
+    const met = JSON.parse(await attr(q, '#historical-evidence .ss-find__chart', 'data-tap-met')) || [null, null];
+    const opened = [await q.locator('#historical-evidence [data-find="pick"]').count(), met[1]];
     await settle(q, 700);
-    eq(`${tag}: a tap during Play stops it; the chooser stays open and the night holds past an interval`, [await playWord(q), await q.locator('#historical-evidence [data-find="pick"]').count(), await stepOf(q)], ['Play', 1, opened[1]]);
+    eq(`${tag}: a tap during Play stops it; the chooser stays open and the night holds past an interval`, [await playWord(q), await q.locator('#historical-evidence [data-find="pick"]').count(), await stepOf(q), met[0]], ['Play', 1, opened[1], true]);
     eq(`${tag}: the tap opened the chooser`, opened[0], 1);
     await q.keyboard.press('Escape'); await settle(q);
     const heldNight = await nightOf(q);
@@ -779,10 +830,17 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`the study file, ${name}: the only errors are the one this check served`, sb.errors.filter((x) => !/404/.test(x)), []);
     await sb.context.close();
   }
-  // while a file is in flight its host says so in one line and is marked busy
-  const slow = await load(FULL, 1280, { beforeLoad: async (page) => { await fast(page); await page.route('**/historical-findings.json*', async (route) => { await new Promise((r) => setTimeout(r, 1500)); await route.continue(); }); } });
-  await slow.page.waitForSelector(HOST + ' [data-evidence-loading]', { timeout: 5000 });
-  eq('in flight: the replay\'s host says it is loading and is marked busy', [await txt(slow.page, HOST + ' [data-evidence-loading]'), await attr(slow.page, HOST, 'aria-busy')], ['Loading the replay of the published nights…', 'true']);
+  // while a file is in flight its host says so in one line and is marked busy: the file is held until the
+  // check has read that state and released it, never raced against a fixed delay a slow runner can outlast
+  let releaseInFlight;
+  const inFlightFile = new Promise((r) => { releaseInFlight = r; });
+  const slow = await load(FULL, 1280, { beforeLoad: async (page) => { await fast(page); await page.route('**/historical-findings.json*', async (route) => { await inFlightFile; await route.continue(); }); } });
+  await slow.page.waitForSelector(HOST + ' [data-evidence-loading]', { timeout: 5000 }).catch(() => {});
+  eq('in flight: the replay\'s host says it is loading and is marked busy', await slow.page.evaluate((h) => {
+    const line = document.querySelector(h + ' [data-evidence-loading]'), host = document.querySelector(h);
+    return [line ? line.innerText : null, host ? host.getAttribute('aria-busy') : null];
+  }, HOST), ['Loading the replay of the published nights…', 'true']);
+  releaseInFlight();
   eq('in flight, then loaded: the line is gone and nothing is busy', [await ready(slow.page), await slow.page.locator(HOST + ' [data-evidence-loading]').count(), await attr(slow.page, HOST, 'aria-busy')], ['ready', 0, null]);
   eq('in flight page errors', slow.errors, []);
   await slow.context.close();

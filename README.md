@@ -687,8 +687,11 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    Schema v4 migrates the existing Following key with preserved backups and
    unknown fields. Page writes use Web Locks on HTTPS to serialize tabs;
    conflicts follow lock acquisition order and removed items are not resurrected
-   by stale edits. Without Web Locks the saved list is readable but writes fail
-   explicitly. No cross-device synchronization is provided.
+   by stale edits. A save granted after another tab's write has already redrawn
+   this tab's detail block finishes on the block the document holds, so the
+   block and the shelf show the save the store has. Without Web Locks the saved
+   list is readable but writes fail explicitly. No cross-device synchronization
+   is provided.
    **Find earlier setup** searches a public, source-addressed catalog on demand.
    It retains 21 calendar days, up to 84 distinct publications and 10,000 signals
    per publication, within 128 MiB. Originals load only when selected; chart
@@ -1560,6 +1563,17 @@ smoke's own scratch records under `tests/fixtures/page/` or reads the
 clipboard (Chromium shares it between contexts), one after another; lane B
 holds the self-contained modules beside them. In one line they took 14 m 54 s
 of the CI page job's fifteen minutes. `--only` still runs the suites it names.
+
+A browser check is held to a slow runner. It reads the page's state in the
+task of the action that changes it (`locator.evaluate()` clicking and reading
+in one call, a listener added for one event), or it waits on the condition it
+asserts (`waitForFunction` with a bound), never on the clock: the page moves
+on its own between two Playwright calls -- a playback tick, the 30-second
+re-reading of the clock, an observer delivery, a Web Lock granted before a
+store write, a route the test holds -- and on a loaded runner the wall clock
+between those calls is unbounded. A fixed `settle()` pause may follow a check;
+it never decides one. A check that cannot be written that way is a check that
+cannot be trusted, and is rewritten or removed.
 
 One tool is not a check but a reading. `python tools/entry_limit_study.py
 [record.json ...]` puts three readings of every burst in an already-written
