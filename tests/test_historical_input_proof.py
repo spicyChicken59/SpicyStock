@@ -21,10 +21,17 @@ def fixture_git_bytes(revision, path):
 
     Default Actions checkouts are shallow. The actual audit runner still
     requires and reads the original Git commits; this boundary is tests only.
+    The seed at each execution revision is the frozen copy under
+    tests/fixtures/historical-input-proof/, never the checkout's own
+    data/symbols.txt, which moves whenever a name is retired from the seed.
     """
     publication_fixtures = {
         "2026-09-24": "tests/fixtures/chart-keyboard/2026-09-24.json.gz",
         "2026-09-25": "tests/fixtures/wait-explanations/2026-09-25.json.gz",
+    }
+    seed_fixtures = {
+        "470c358c06bc9c997184d829c63845c4db0dc4f5": "tests/fixtures/historical-input-proof/data-symbols-61fa0d91.txt",
+        "e1359495ad267365dae9b6d03712fe7f17dc70cb": "tests/fixtures/historical-input-proof/data-symbols-61fa0d91.txt",
     }
     for day, reference in proof.REFERENCES.items():
         if path == "docs/data.json" and revision == reference["publication_commit"]:
@@ -32,7 +39,7 @@ def fixture_git_bytes(revision, path):
             return exact_fixture_bytes(raw, reference["publication_sha256"])
         if path == "data/symbols.txt" and revision == reference["execution_revision"]:
             frozen = json.loads((proof.ROOT / "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json").read_bytes())
-            raw = (proof.ROOT / path).read_bytes().replace(b"\r\n", b"\n")
+            raw = (proof.ROOT / seed_fixtures[revision]).read_bytes().replace(b"\r\n", b"\n")
             return exact_fixture_bytes(raw, frozen["populations"][day]["price_exempt_source_sha256"])
     raise ValueError("undeclared historical revision/path in offline fixture boundary")
 
@@ -53,6 +60,32 @@ def test_fixture_boundary_rejects_wrong_bytes_and_undeclared_git_objects():
         fixture_git_bytes("HEAD", "docs/data.json")
     with pytest.raises(ValueError, match="undeclared historical revision/path"):
         fixture_git_bytes(proof.REFERENCES["2026-09-24"]["execution_revision"], "src/pipeline.py")
+
+
+def test_fixture_boundary_serves_the_frozen_seed_and_never_the_checkouts(tmp_path, monkeypatch):
+    """The seed the originals read is the frozen blob at the execution revision.
+
+    A checkout whose data/symbols.txt differs (a name retired since) must not
+    change what the boundary serves or make it refuse; the digest it is held
+    to is the frozen manifest's.
+    """
+    manifest = "docs/input-truthfulness/2026-09-28-historical-input-evidence/acquisition-manifest.json"
+    frozen = "tests/fixtures/historical-input-proof/data-symbols-61fa0d91.txt"
+    for rel in (manifest, frozen):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_bytes((proof.ROOT / rel).read_bytes())
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "symbols.txt").write_bytes(b"# a seed that has moved since\nAAPL\nMSFT\n")
+    monkeypatch.setattr(proof, "ROOT", tmp_path)
+    expected = json.loads((tmp_path / manifest).read_bytes())["populations"]
+    for day, reference in proof.REFERENCES.items():
+        raw = fixture_git_bytes(reference["execution_revision"], "data/symbols.txt")
+        assert proof.sha(raw) == expected[day]["price_exempt_source_sha256"]
+        assert raw == (tmp_path / frozen).read_bytes()
+        assert b"AAPL\nMSFT\n" not in raw[-12:]
+    (tmp_path / frozen).write_bytes(b"WBD\n" + (tmp_path / frozen).read_bytes())
+    with pytest.raises(ValueError, match="byte hash mismatch"):
+        fixture_git_bytes(proof.REFERENCES["2026-09-24"]["execution_revision"], "data/symbols.txt")
 
 
 def test_sample_cannot_be_promoted_to_full_membership():

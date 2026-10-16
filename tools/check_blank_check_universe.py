@@ -2,6 +2,7 @@
 
 Offline and read-only: no refresh, bars, models or publication. Prints complete
 new exclusions, ledger deltas and byte identities; names require human review.
+The seed is read at the same base, so a name retired since does not move it.
 Run: python tools/check_blank_check_universe.py
 """
 from __future__ import annotations
@@ -13,6 +14,7 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
+import tempfile
 import types
 from unittest.mock import patch
 
@@ -69,9 +71,13 @@ def compare(before, rows, seeds):
 
 def sweep():
     before = baseline_module()
+    # The seed is read at BASE as well, so a name retired from data/symbols.txt
+    # since (WBD, Oct 2026) cannot move this dated reading.
     seed_raw = git("show", f"{BASE}:data/symbols.txt")
-    assert (ROOT / "data/symbols.txt").read_bytes() == seed_raw, "review changed seeds separately"
-    seeds = universe.read_seed()
+    with tempfile.TemporaryDirectory() as scratch:
+        seed_path = Path(scratch) / "symbols.txt"
+        seed_path.write_bytes(seed_raw)
+        seeds = universe.read_seed(seed_path)
     snapshots, seen = [], set()
     for revision in git("log", "--format=%H", BASE, "--", DIRECTORY).decode().splitlines():
         raw = git("show", f"{revision}:{DIRECTORY}")

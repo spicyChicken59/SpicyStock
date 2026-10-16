@@ -5,7 +5,7 @@
 #
 # WHAT THIS IS
 #   A deliberately small, hand-written list of liquid US common stocks, read
-#   by get_universe() in src/scanner.py in place of Alpaca's full ~11,000
+#   by read_seed() in src/universe.py in place of Alpaca's full ~11,000
 #   symbol tradable-asset list. A full-market scan took 10-20 minutes; this
 #   one takes seconds, which is the whole point — every later fix in the
 #   rebuild has to be testable in one sitting.
@@ -17,7 +17,7 @@
 #
 # WHAT IS IN IT
 #   ~230 large- and mid-cap US common stocks, grouped by sector for human
-#   reading only: get_universe() ignores the grouping and keeps file order.
+#   reading only: read_seed() ignores the grouping and keeps file order.
 #   Deliberately excluded:
 #     - ETFs, ETNs, closed-end funds, and any leveraged or inverse product.
 #       This screener rates single companies, not baskets.
@@ -45,11 +45,28 @@
 #            run 34035518295 on 6 Sep 2026, read off its log's coverage
 #            line: 228 requested, 228 answered with bars, none without a
 #            bar for the session, none with no bar at all.
+#   Found by the nightly stale tolerance in October 2026, read off
+#   run.input_tolerance.endings, run.stale_followup and the source-recovery
+#   receipt rather than assumed:
+#     WBD -- no bar after 5 Oct 2026 on the sip feed. The 13, 14 and 15 Oct
+#            2026 publications each name it as the one stale frame ending
+#            past the five-session bound (every other stale frame ended on
+#            the previous session), so it alone kept each night's coverage
+#            gap from being tolerated; the 15 Oct follow-up read it
+#            still_missing at every session from 8 to 14 Oct and the
+#            source-recovery receipt still_stale. It was absent from the
+#            live Nasdaq directory on all three nights (seed_added 1), so
+#            the seed alone was asking for it. A web search put the close of
+#            Paramount Skydance's all-cash acquisition at 6 Oct 2026 in press
+#            reports, with the common stock's Nasdaq delisting requested, and
+#            listed a 2026 definitive merger proxy (DEFM14A) at sec.gov;
+#            neither that proxy nor a closing filing was read, because
+#            sec.gov does not resolve from the sandbox.
 #
 # FORMAT
 #   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.
 #   `#` starts a comment, on its own line or trailing after a symbol.
-#   Anything else is a hard error: get_universe() raises SymbolFileError
+#   Anything else is a hard error: read_seed() raises SymbolFileError
 #   rather than skipping the line, so a typo cannot quietly shrink the
 #   universe. A duplicated symbol is an error too.
 
@@ -60,7 +77,6 @@ NFLX
 DIS
 CMCSA
 CHTR
-WBD
 TMUS
 T
 VZ

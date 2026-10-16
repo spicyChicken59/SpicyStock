@@ -772,7 +772,7 @@ archived, and a record from before the block is asked for none. The run:
   never gate discovery. Broad healthcare/category and domicile warnings remain
   flags (`biotech` / `foreign`), not verified company classifications or
   stock-specific risk assessments. The
-  seven-day cache and 228-name seed fallback remain explicit. Seeds can bypass
+  seven-day cache and 227-name seed fallback remain explicit. Seeds can bypass
   classification; overrides and additions are counted. The 8,000-name capacity
   safeguard retains seeds, ranks any remaining tail by directory dollar volume,
   and counts every cut. A capacity cut degrades coverage; it can lose a breakout
