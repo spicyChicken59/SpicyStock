@@ -7,9 +7,10 @@ import {retainedWaitPublication} from './wait_explanation_cases.mjs';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 // The study's cases are read from docs/historical-validation/, byte copies the
 // archive's 21-day window never prunes. The archive directories the cases came
-// from are served 404 here on purpose -- the 24 September record left the live
-// archive with the 16 October publication -- so a page that still asked the
-// archive for a case would fail by name rather than pass on today's checkout.
+// from are served 404 here on purpose -- the 24 September record leaves the
+// live archive with the 16 October publication -- so a page that still asked
+// the archive for a case fails by name rather than passing on a checkout that
+// still carries it.
 async function studyCases() {
   const study=JSON.parse(await readFile(path.join(ROOT,'docs','historical-validation.json'),'utf8'));
   const crl=study.cases.find(c=>c.ticker==='CRL');
@@ -106,7 +107,7 @@ export async function checkHistoricalJourneys({browser,base,open,check,shotsDir}
     // before it is hashed, in the bound's own words rather than the digest's
     ['oversize',r=>r.fulfill({status:200,contentType:'application/json',body:Buffer.concat([cases.evidence,Buffer.alloc(256*1024,' ')])}),'exceeds the supported bound'],
     ['missing',r=>r.fulfill({status:404,body:'not found'}),'unavailable in the published study files']]) {
-    const archiveRequests=[];
+    const archiveRequests=[],notFound=[];
     const {context,page,errors:pageErrors}=await open(browser,base,'/historical-frozen.json',clock,1280,{
       height:844,theme:'dark',hash:'#/record',
       beforeLoad:async page=>{
@@ -115,14 +116,14 @@ export async function checkHistoricalJourneys({browser,base,open,check,shotsDir}
         await page.route(u=>archived.test(u.pathname),r=>r.fulfill({status:404,body:'gone from the rolling archive'}));
         await page.route(u=>u.pathname.endsWith('/historical-validation/'+cases.crl.entry.path),respond);
         page.on('request',r=>{if(/\/history\/[a-f0-9]{40}\//.test(r.url())) archiveRequests.push(r.url());});
+        // The deliberate 404 is counted off the response itself, which the
+        // page's fetch sees before it refuses, so the count is final by the
+        // time the refusal sentence is on the page; Chromium's own console
+        // report of it arrives on its own schedule and is not what is asserted.
+        page.on('response',r=>{if(r.status()===404&&/\/historical-validation\//.test(r.url())) notFound.push(r.url());});
       }
     });
     await page.waitForSelector('[data-study-inspect="CRL"]');
-    // Chromium reports the deliberate 404 on the console after the page has
-    // handled the response, so the one expected report is awaited, bounded by
-    // the same 30 s every other wait in this suite has, rather than read off
-    // the list at an instant of the driver's choosing.
-    const expected404=name==='missing'?page.waitForEvent('console',{predicate:m=>m.type()==='error'&&/status of 404/.test(m.text()),timeout:30000}).then(()=>true,()=>false):Promise.resolve(false);
     await page.locator('[data-study-inspect="CRL"]').click();
     await page.waitForSelector('[data-study-case="CRL"] [data-study-original="CRL"], [data-study-case="CRL"] [role="alert"]');
     const alerts=await page.locator('[data-study-case="CRL"] [role="alert"]').allTextContents();
@@ -130,13 +131,17 @@ export async function checkHistoricalJourneys({browser,base,open,check,shotsDir}
     check(`${name} frozen evidence shows no original`,await page.locator('[data-study-original="CRL"]').count()===0);
     check(`${name} frozen evidence asks the rolling archive for nothing`,archiveRequests.length===0,archiveRequests);
     check(`${name} frozen evidence leaves Inspect available again`,await page.locator('[data-study-inspect="CRL"]').isEnabled());
-    // The missing case is served 404 on purpose, which Chromium reports on
-    // the console once; that one report is the route doing its job and is
-    // not a page exception. Any other console error still fails below.
-    const reported=await expected404;
-    const notFound=pageErrors.map((e,i)=>/status of 404/.test(String(e))?i:-1).filter(i=>i>=0);
-    check(`${name} frozen evidence produced ${name==='missing'?'exactly one':'no'} console 404`,name==='missing'?reported&&notFound.length===1:notFound.length===0,pageErrors);
-    errors.push(...pageErrors.filter((_,i)=>!(name==='missing'&&i===notFound[0])));
+    check(`${name} frozen evidence was served ${name==='missing'?'exactly one':'no'} 404`,notFound.length===(name==='missing'?1:0),notFound);
+    // a second press replaces the refusal rather than stacking a second copy of it
+    await page.locator('[data-study-inspect="CRL"]').click();
+    await page.waitForFunction(()=>!document.querySelector('[data-study-inspect="CRL"]').disabled);
+    const again=await page.locator('[data-study-case="CRL"] [role="alert"]').allTextContents();
+    check(`${name} frozen evidence pressed again shows one sentence`,again.length===1&&again[0].includes(expected),again);
+    check(`${name} frozen evidence pressed again was served ${name==='missing'?'exactly two':'no'} 404s`,notFound.length===(name==='missing'?2:0),notFound);
+    // The missing case's 404s are deliberate; Chromium reports each on the
+    // console on its own schedule, and those reports are the route doing its
+    // job, not a page exception. Any other console error still fails below.
+    errors.push(...pageErrors.filter(e=>!(name==='missing'&&/status of 404/.test(String(e)))));
     await context.close();
   }
   check('no browser exceptions',errors.length===0,errors);

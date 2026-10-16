@@ -166,8 +166,9 @@ def study_case_files(root: Path) -> tuple[str, ...]:
 
     The Record view inspects a case from docs/historical-validation/<record>/,
     byte copies tools/freeze_validation_cases.py made of the archive originals,
-    because docs/history keeps a 21-day window and dropped the 24 September
-    record on 16 October. A study without cases (a synthetic root) names no
+    because docs/history keeps a 21-day window that drops the 24 September
+    record with the 16 October publication. A study without cases -- no ``cases`` field, an
+    empty list or null, as the synthetic roots the tests build -- names no
     files. A case file the study names that is missing, unreadable or not the
     study's bytes is a 404 or a refused integrity check for every reader, so it
     is named here and raises rather than being skipped."""
@@ -177,7 +178,7 @@ def study_case_files(root: Path) -> tuple[str, ...]:
         study = json.loads(reader_asset(docs, STUDY_FILE, MAX_STUDY_BYTES))
     except (OSError, ValueError):
         raise RuntimeError('The validation study file is missing or unreadable.') from None
-    if not isinstance(study, dict) or 'cases' not in study:
+    if not isinstance(study, dict) or not study.get('cases'):
         return ()
     try:
         files = case_files(study)

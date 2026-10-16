@@ -298,6 +298,7 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
         for value in FROZEN_RULE_IDENTIFIERS:
             altered = altered.replace(f'"{value}"'.encode(), f'"{value}-x"'.encode())
         directory = path.rsplit('/', 1)[0]
+        record_id = directory.rsplit('/', 1)[1]
         cases.extend([
             (label + "_defaults", baseline, path, raw, 2, detected),
             (label + "_exact", config, path, raw, 0, []),
@@ -307,6 +308,11 @@ def run_controls(binary: Path, workspace: Path, *, expected_version="8.24.3"):
             (label + "_lookalike_directory", config, path.replace(FROZEN_CASE_DIR, "docs/history-validation/"), raw, 2, detected),
             (label + "_prefix", config, "copied/" + path, raw, 2, detected),
             (label + "_suffix", config, path + ".backup", raw, 2, detected),
+            # The path bounds themselves: a record id one character over forty,
+            # an upper-case spelling of it, and a ticker one over sixteen.
+            (label + "_record_id_too_long", config, path.replace(record_id, record_id + "0"), raw, 2, detected),
+            (label + "_record_id_upper_case", config, path.replace(record_id, record_id.upper()), raw, 2, detected),
+            (label + "_ticker_too_long", config, directory + "/burst-ABCDEFGHIJKLMNOPQ.json", raw, 2, detected),
             (label + "_default_detector", config, path, default_detector, 2, ["github-pat"]),
         ])
     results = []

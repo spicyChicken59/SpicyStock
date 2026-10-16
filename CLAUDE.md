@@ -340,7 +340,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4649 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4654 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9030,3 +9030,195 @@ edits itself; suppressing a stale stock in code; a wider tolerance.
 **Not claimable:** the first evening under the retired seed -- read its
 `run.universe.selection.seed_added`, its stale count and its chip, and record
 them here; a morning or research observation; any trading edge.
+
+## Checkpoint, 16 Oct 2026 — PR #174 accepted; the three frozen decisions outlive the archive that carried them
+
+**PR #174, accepted.** Merged as `6555538e` on `main` with a merge commit over
+`348cd710`. The head `d4f33191` passed all seven checks (Tests run 38875963604:
+pytest, page, the gate, the native stress case 08:47–09:15 UTC and central
+08:47–09:36; Secret scans 38875963680 and 38875958028). The diff touched nothing
+under `docs/`, so the publisher did not fire, correctly (as at #64); Pages
+38881709835 deployed at 09:38 UTC; the merge commit's own Secret scan 38881710484
+and Tests run 38881710698 (09:37–09:54 UTC) passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `6555538e`, pushed as **PR #175**. Nothing under `src/` changed
+and no rule moved; `docs/data.json`, `docs/picks.json`, the compact reader,
+every receipt, the history, the evidence objects, the quality ledger, the
+workflows other than the fixture step of `tests.yml`, and the vendored design
+system are untouched; no run, mail, dispatch, provider call or credential.
+
+**What tonight would have broken.** `docs/historical-validation.json` names
+three wait cases by the archive record that carried each (CRL and IQV in
+`332b99ff…`, the 24 September record; MSFT in `6fce465e…`, the 25 September
+one), and the Record view's *Inspect frozen decision* read both of a case's
+files from `docs/history/` by `publicJSON()`. `history.publish()` keeps
+`history.DAYS` (21) calendar days: the 16 October publication's cutoff is 25
+September, so it deletes the 24 September record's directory, and the 19
+October one deletes the 25 September record's. Each button would then have
+ended in *This original is unavailable in the retained public archive*, on a
+date the study never chose -- the shape this file names worst, in the product
+rather than a test -- and `tests/test_reader_request_v2.py`'s MSFT case, which
+read the same archive path, would have failed every pull request from 19
+October. Found by reading `publish()` and the index (`as_of` 2026-10-15,
+oldest sessions 24 and 25 September) the morning before, not by a red run.
+
+**What was built.** `tools/freeze_validation_cases.py` copies each case's
+context (`<record>/record.json`) and evidence (`<record>/burst-<ticker>.json`)
+byte for byte to `docs/historical-validation/<record>/...` -- the same relative
+paths, a directory nothing prunes -- from the archive while it still carries the
+record, else from git at the commit the case names, and holds every copy to the
+digest the study recorded (`entry.sha256`, `source.context_sha256`).
+`case_files()` refuses the study whole on an unknown version, no cases, a record
+id that disagrees with its source, an evidence path outside its own record or
+not naming its ticker, a malformed digest or commit, or two cases naming
+different digests for one context; `freeze()` writes only what is missing,
+atomically, never a file the study does not name, and refuses an existing copy
+whose bytes are not the study's (left in place), a source whose bytes are not
+the digest's (nothing written) and a source over the archive's 256 KiB file
+bound; `check()` names a missing copy, a drifted byte and a file the study does
+not name; the study file itself is never rewritten. Run on 16 October before the
+prune: five files written, `--check` *5 frozen case files current*, every
+digest the study's. The study's cases name no commit (`source.commit` is null),
+so a copy lost after the prune would need the publication commit written into
+its case first; `--check` needs no source. CI runs it beside the fixture checks.
+
+The page reads a case from that directory and nowhere else: `verifiedJSON()` is
+the one bounded, digest-checked reader behind `publicJSON()` (the archive, for
+the recovery search, its words unchanged) and `studyJSON()` (the frozen files:
+the same strict path regex, a required 64-hex digest, the 256 KiB bound, its own
+sentences for unavailable, oversize and corrupt). `tools/publish_dashboard.py`'s
+`study_case_files()` adds the five files to the public inventory the gate
+fetches and matches on the served site -- the study's own list through the
+tool's `case_files()`, each held to its digest, a missing or drifted file a
+refusal by name, a study without cases (no `cases` field, an empty list or
+null, as the test fixtures' synthetic roots) none -- so the count the gate
+prints moves from 42 to 47. `.gitleaks.toml`'s first
+allowlist, the rule-key disposition, covers `docs/historical-validation/
+<record>/(record|burst-<T>).json` beside the archive path and nothing beside it
+(the two frozen contexts carry `down25_quarter` and `pct_above_40ma`, which
+the engine flags: 4 findings before the change, 0 after, a sibling file and a
+lookalike directory still flagged). `tools/historical_cases.mjs` serves the case
+records' archive directories 404 while it inspects CRL and asserts the two
+files were read from `historical-validation/` and nothing from `history/`; three
+added contexts serve CRL's frozen evidence tampered (one byte appended),
+oversize and missing, and hold the page to its own sentence, no original shown, no archive
+asked, Inspect enabled again, and the deliberate 404 counted off the response
+event rather than the console (one for the missing file, none for the other
+two, two after a second press, which shows one sentence and not two). The MSFT
+authority test reads the frozen copy under its digest.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1, on the final tree): 4654 tests collected; the full suite 4620 passed and 34 environment-gated skips in 24 m 58 s (run in the mutation worktree, which mirrors the tree byte for byte, the mirror checked by the diff's digest);
+`tests/test_freeze_validation_cases.py` 32; the eight touched Python test files
+(`test_freeze_validation_cases`, `test_publish_dashboard`, `test_docs`,
+`test_workflows`, `test_reader_request_v2`, `test_secret_scan`,
+`test_discovery_grading`, `test_findings_page`) 298 with the count line at 4654;
+`python tools/freeze_validation_cases.py --check` current and under
+`python -I -S`; `python tools/make_fixture.py --check` 13 fixtures current (no
+record moved); continuity 137; the `historical` suite 124/124 with
+`--shots` at 390, 320 and 1280, both themes, the three refusal contexts at 1280
+(85 on `main`), and 124/124 again with the deliberate 404 held back 5.5 seconds,
+the injection the review used; gitleaks 8.24.3 with the repository's config
+over the frozen copies (0 findings; 4 without the allowlist, the engine's own
+view) and from inside a root holding every changed and new file (20 files, no
+leaks, after one of my own: a Stripe-shaped example value in the new allowlist
+test tripped the engine's own detector and is a hashed canary now); the 100
+real-engine controls of `tests/secret_scan_controls.py` PASS, 24 of them new
+over the frozen path (per frozen context: defaults, exact, unrelated, altered,
+sibling, lookalike directory, prefix, suffix, a record id one character over
+forty, an upper-case spelling of it, a ticker one over sixteen, another
+detector). The 390 dark frozen-case screenshot was looked at: the case renders
+as before, from the frozen bytes.
+
+**Mutation passes**, the tree never written. Python, each mutant in the
+mutation worktree and judged by the whole test files naming its rule:
+thirty-four die and one is moot -- the tool's ticker check, its
+conflicting-digest check, an existing different copy overwritten, the source
+digest unchecked, `check()` ignoring an unnamed file and comparing no bytes,
+the file bound dropped, a path outside its record admitted, the git fallback
+reading HEAD (alive until the three-commit test below), `check()` passing a
+linked copy, `freeze()` counting one as a copy, the walk ignoring a linked
+directory or following links, the frozen directory itself a link, a direct
+write in place of the temporary file, the temporary file left behind on a
+failed replace, the walk restricted to `*.json`, `check()` raising on an
+unreadable copy; the publisher skipping the digest, swallowing a missing file,
+serving a study it cannot, refusing an empty case list and not extending the
+inventory; the scanner's frozen path removed, widened to every file in the
+case directory, to a record id of forty or more characters, to upper-case hex
+and to a seventeen-character ticker (the last three dead in the allowlist test
+AND in the real-engine controls, the record-id one only once its case appended
+a hex digit rather than the `x` the review suggested, which no hex class
+absorbs); CI's freeze check dropped. The moot one, `main()` letting an
+`OSError` out, has nothing left to let out once `freeze()` and `check()` name
+every tree-shape fault themselves. The controls (a docstring word, a comment, a
+comment in the scanner's config) stay green, the publisher's once the
+worktree's suite-count line was current. Page, through routed copies of
+`app.js` judged by `--only historical`: six mutants over three passes -- the
+study loader reverted to `publicJSON` (25 checks), the study reader reading
+`history/` (24), falling back to the archive on a refusal (7), its digest
+unchecked (3), its bound dropped, and after the review the catch stacking a
+second alert (3) -- all die, each by the check naming its rule, and the control
+(a comment) stays green each time. **The bound SURVIVED the first pass**, the
+second shape this file names: no frozen file is near 256 KiB, so nothing read
+the bound; a third refusal context serves CRL's evidence padded past it and
+holds the page to the bound's own sentence rather than the digest's, and it
+dies (117/118 then).
+
+**The review, worked.** A workflow by execution over the pushed tip
+`94df35ad`, four lenses (the page and its suite; the tool and the publisher;
+the scanner and its controls; the documents), each finding meant for two
+skeptics. The finders returned sixteen. **The skeptic stage did not run**: my
+script handed `parallel()` promises where it wants thunks, so one skeptic (the
+page lens by execution) finished before the error and the rest never started.
+It upheld the console-404 finding's first half (a 404 answered 5.5 seconds
+late fails the check for a reason it does not name) and could not reproduce
+its second (a late 404 missed by the no-404 checks, in three runs); nothing
+else was judged, and an unjudged finding is not refuted, so each of the
+sixteen was reproduced here by execution before it was touched, and each is
+fixed. The page: the deliberate 404's count was read off the console at an
+instant (counted off the response event now, and 124/124 under the review's
+own 5.5-second delay), and a second Inspect press after a refusal stacked a
+second identical alert (pre-existing; the catch removes the earlier one, and
+the missing context presses twice). The tool: it took a symbolic link for a
+frozen copy -- `check()` tested presence with `is_file()`, which follows
+links, so a link into the archive's still-present original passed `--check`
+and `freeze()` reported it kept, and a dangling link or a linked directory
+under the frozen tree was named as nothing (the publisher's own reader already
+refused a linked file, so a committed one would have failed publication, not
+the tool); a link is never a copy now, named wherever `check()` finds it,
+refused by `freeze()`, and the walk never follows one. The git fallback's "at
+the case's commit" had no test that could fail (a tool reading HEAD survived
+the file; the test commits the publication, prunes the archive in a later
+commit and names the earlier one, and refuses a commit from before the
+publication). The temp-then-replace write had no test, and a failed replace
+left `<name>.tmp` behind that `--check` then named as an unnamed file (an
+`OSError` is a refusal by name now, the temporary file unlinked, and `check()`
+clean after it). `check()`'s unnamed-file rule was exercised with `.json` names
+alone (it plants a `.tmp` and a `README` now). The publisher refused a study
+with an empty or null case list with a sentence about a case it could not
+serve (such a study names no files, as the docstring said). Tree-shape faults
+-- the case directory a regular file, a frozen target a directory -- escaped
+`main()` as tracebacks (named refusals now, and an unreadable copy a `check()`
+problem rather than a raise). The scanner: the frozen path's three bounds had
+no assertion that could fail (above). And the documents: "107 on `main`" was
+false (the suite prints 85 there); "292" counted eight files where the
+sentence named seven; the draft described `94df35ad` while the branch stood at
+`36a51c8b`; four in-tree sentences (README, the publisher's docstring, the
+suite's header, the reader test's comment) stated tonight's prune as a past
+event on a tree whose archive still carries both records, and say "leaves" and
+"drops" now; and "six mutants" introduced a list of five.
+
+**Keep / fix / defer / omit.** Keep: the study's digests are the authority; a
+frozen copy is read under them or not at all, and the rolling archive is never
+asked for a case. Fix if it bites: `tools/build_historical_review.py`, the
+one-off 28 September builder of the study, still reads `docs/history/index.json`
+and would need the frozen directory to rebuild. Defer: #111's ten-session
+acceptance, which still needs a morning check that has run; the first evening
+under the retired seed, still ahead. Omit: a copy of the whole archive; a page
+fallback from the frozen files to the archive.
+
+**Not claimable:** the served site after tonight's prune -- the publisher
+prints its count on the merge, and the first publication after it is the
+first the Record view inspects over an archive that no longer carries the
+record; a morning or research observation; any trading edge.

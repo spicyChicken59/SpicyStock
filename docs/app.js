@@ -3720,7 +3720,11 @@
               afterFollowChange(); navigate(savedHash(result.item.id));
             });
             preview.appendChild(save); card.appendChild(preview); inspect.hidden = true;
-          } catch (error) { card.appendChild(el('p', { role: 'alert', text: error.message })); inspect.disabled = false; }
+          } catch (error) {
+            // one sentence per attempt: a second press replaces the last refusal rather than stacking it
+            card.querySelectorAll('[role="alert"]').forEach(n => n.remove());
+            card.appendChild(el('p', { role: 'alert', text: error.message })); inspect.disabled = false;
+          }
         });
         host.appendChild(card);
       });

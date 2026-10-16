@@ -196,33 +196,100 @@ def git(root, *args):
 
 def test_freeze_reads_git_at_the_cases_commit_once_the_archive_no_longer_carries_the_record(tmp_path):
     """The archive prunes a record after 21 days; a case whose source names the
-    publication commit is read from git at that commit, and one that names
-    none is refused rather than guessed."""
+    publication commit is read from git AT THAT COMMIT -- the history has three
+    commits here (before the publication, the publication, the prune), HEAD is
+    the prune and lacks the files, so a tool reading HEAD or the first commit
+    cannot pass -- and a case that names no commit is refused rather than
+    guessed."""
     study, archive = synthetic()
-    root = write_root(tmp_path, study, archive)
+    root = write_root(tmp_path, study)
     git(root, "init", "-q")
     git(root, "add", "-A")
+    git(root, "commit", "-q", "-m", "before the publication")
+    before = git(root, "rev-parse", "HEAD")
+    for rel, raw in archive.items():
+        target = root / "docs" / fz.ARCHIVE_DIR / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(raw)
+    git(root, "add", "-A")
     git(root, "commit", "-q", "-m", "the publication")
-    commit = git(root, "rev-parse", "HEAD")
-    for rel in archive:
-        (root / "docs" / fz.ARCHIVE_DIR / rel).unlink()
+    publication = git(root, "rev-parse", "HEAD")
+    git(root, "rm", "-q", "-r", "docs/history")
+    git(root, "commit", "-q", "-m", "pruned")
+    pruned = git(root, "rev-parse", "HEAD")
+    assert not (root / "docs" / fz.ARCHIVE_DIR).exists()
+
+    def name(commit):
+        for case in study["cases"]:
+            case["source"]["commit"] = commit
+        (root / "docs" / fz.STUDY).write_bytes(json.dumps(study).encode())
+
     with pytest.raises(fz.FreezeError, match="not in the archive and the case names no commit"):
         fz.freeze(root)
     assert frozen_bytes(root) == {}
-    for case in study["cases"]:
-        case["source"]["commit"] = commit
-    (root / "docs" / fz.STUDY).write_bytes(json.dumps(study).encode())
+    for commit in (before, pruned):  # a commit that never carried the file is refused by name
+        name(commit)
+        with pytest.raises(fz.FreezeError, match="not in the archive and not readable at " + commit[:8]):
+            fz.freeze(root)
+        assert frozen_bytes(root) == {}
+    name(publication)
     assert fz.freeze(root) == {rel: "written" for rel in archive}
     assert frozen_bytes(root) == archive
-    # a commit that never carried the file is refused by name
-    for rel in archive:
-        (root / "docs" / fz.FROZEN_DIR / rel).unlink()
-    git(root, "rm", "-q", "-r", "docs/history")
-    git(root, "commit", "-q", "-m", "pruned")
-    for case in study["cases"]:
-        case["source"]["commit"] = git(root, "rev-parse", "HEAD")
-    (root / "docs" / fz.STUDY).write_bytes(json.dumps(study).encode())
-    with pytest.raises(fz.FreezeError, match="not in the archive and not readable at"):
+    assert fz.check(root) == []
+
+
+def test_a_failed_write_is_a_refusal_that_leaves_nothing_behind(tmp_path, monkeypatch):
+    """The bytes land under a temporary name and are renamed into place. When
+    the rename fails the copy does not half-exist, the temporary file is gone,
+    the refusal names the file, and check() is clean afterwards."""
+    study, archive = synthetic()
+    root = write_root(tmp_path, study, archive)
+    original = Path.replace
+
+    def failing(self, target):
+        if self.name == "burst-CRL.tmp":
+            raise OSError(28, "No space left on device")
+        return original(self, target)
+    monkeypatch.setattr(Path, "replace", failing)
+    with pytest.raises(fz.FreezeError, match="burst-CRL.json: could not be written \\(No space left on device\\); nothing written"):
+        fz.freeze(root)
+    frozen = root / "docs" / fz.FROZEN_DIR
+    assert not (frozen / f"{RECORD}/burst-CRL.json").exists()
+    assert not list(frozen.rglob("*.tmp")), "no temporary file is left behind"
+    # the run stops at the first refusal, so nothing after CRL was written either
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}/{rel}: missing" for rel in sorted(archive)]
+    monkeypatch.setattr(Path, "replace", original)
+    assert fz.freeze(root) == {rel: "written" for rel in archive}
+    assert frozen_bytes(root) == archive
+
+
+def test_a_tree_in_the_wrong_shape_is_a_refusal_and_never_a_traceback(tmp_path, capsys):
+    """The case directory as a regular file, a copy's path as a directory, and
+    an archive entry that is a directory: each is refused by name, nothing is
+    written, and the command line exits 2 rather than raising."""
+    study, archive = synthetic()
+    root = write_root(tmp_path, study, archive)
+    frozen = root / "docs" / fz.FROZEN_DIR
+    frozen.mkdir()
+    (frozen / RECORD).write_bytes(b"a file where the record directory belongs")
+    with pytest.raises(fz.FreezeError, match="could not be written"):
+        fz.freeze(root)
+    assert fz.main(["--root", str(root)]) == 2
+    assert capsys.readouterr().err.startswith("refused: ")
+    (frozen / RECORD).unlink()
+    (frozen / RECORD / "burst-CRL.json").mkdir(parents=True)
+    with pytest.raises(fz.FreezeError, match="burst-CRL.json: not a regular file; left in place"):
+        fz.freeze(root)
+    assert (frozen / RECORD / "burst-CRL.json").is_dir()
+    (frozen / RECORD / "burst-CRL.json").rmdir()
+    source = root / "docs" / fz.ARCHIVE_DIR / f"{RECORD}/burst-IQV.json"
+    source.unlink()
+    source.mkdir()
+    with pytest.raises(fz.FreezeError, match="burst-IQV.json: the archive entry is not a regular file"):
+        fz.freeze(root)
+    source.rmdir()
+    source.symlink_to(root / "docs" / fz.ARCHIVE_DIR / f"{RECORD}/burst-CRL.json")
+    with pytest.raises(fz.FreezeError, match="burst-IQV.json: the archive entry is a symbolic link"):
         fz.freeze(root)
 
 
@@ -236,11 +303,15 @@ def test_check_names_a_missing_copy_a_drifted_copy_and_a_file_the_study_does_not
     (frozen / f"{RECORD}/burst-CRL.json").unlink()
     (frozen / f"{RECORD}/burst-IQV.json").write_bytes(b'{"row": {"ticker": "IQV"}} ')
     (frozen / f"{RECORD}/notes.json").write_bytes(b"{}")
+    (frozen / f"{RECORD}/burst-CRL.tmp").write_bytes(b"a temporary file a failed write might leave")
+    (frozen / "README").write_bytes(b"not a case file")
     (frozen / ("b" * 40)).mkdir()
     (frozen / ("b" * 40) / "record.json").write_bytes(archive[f"{RECORD}/record.json"])
     assert fz.check(root) == [
         f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.json: missing",
         f"{fz.FROZEN_DIR}/{RECORD}/burst-IQV.json: not the study's bytes",
+        f"{fz.FROZEN_DIR}/README: not named by the study",
+        f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.tmp: not named by the study",
         f"{fz.FROZEN_DIR}/{RECORD}/notes.json: not named by the study",
         f"{fz.FROZEN_DIR}/{'b' * 40}/record.json: not named by the study",
     ]
@@ -286,6 +357,23 @@ def test_a_symbolic_link_is_never_a_frozen_copy(tmp_path):
     assert fz.check(root) == [f"{fz.FROZEN_DIR}: the frozen directory is a symbolic link"]
     with pytest.raises(fz.FreezeError, match="the frozen directory is a symbolic link"):
         fz.freeze(root)
+
+
+def test_check_names_a_copy_it_cannot_read_rather_than_raising(tmp_path, monkeypatch):
+    """A copy the process cannot read is a problem by name, not a traceback,
+    so --check still prints every other problem and exits 2."""
+    study, archive = synthetic()
+    root = write_root(tmp_path, study, archive)
+    fz.freeze(root)
+    original = Path.read_bytes
+
+    def unreadable(self):
+        if self.name == "burst-IQV.json" and fz.FROZEN_DIR in self.parts:
+            raise OSError(13, "Permission denied")
+        return original(self)
+    monkeypatch.setattr(Path, "read_bytes", unreadable)
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}/{RECORD}/burst-IQV.json: unreadable (Permission denied)"]
+    assert fz.main(["--check", "--root", str(root)]) == 2
 
 
 def test_check_refuses_a_malformed_study_rather_than_passing_an_empty_directory(tmp_path):

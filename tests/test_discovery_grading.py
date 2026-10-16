@@ -240,5 +240,7 @@ def test_frozen_validation_case_disposition_is_the_archive_rule_at_the_frozen_pa
     for path in (f"docs/historical-validation/{record}/notes.json", f"docs/historical-validation/{record}/anticipation-CRL.json",
                  f"docs/historical-validation/{record}/record.json.backup", f"copied/docs/historical-validation/{record}/record.json",
                  f"docs/history-validation/{record}/record.json", "docs/historical-validation/record.json",
-                 f"docs/historical-validation/{record[:39]}/record.json", f"docs/historical-validation/{record}/burst-crl.json"):
+                 f"docs/historical-validation/{record[:39]}/record.json", f"docs/historical-validation/{record}0/record.json",
+                 f"docs/historical-validation/{record.upper()}/record.json", f"docs/historical-validation/{record}/burst-crl.json",
+                 f"docs/historical-validation/{record}/burst-ABCDEFGHIJKLMNOPQ.json"):
         assert not allowed(path, "abnormal_10pct"), path

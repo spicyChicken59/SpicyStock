@@ -1958,9 +1958,9 @@ record, MSFT from the 25 September one) are read the same way. The study
 (`<record>/record.json`) and evidence (`<record>/burst-<ticker>.json`) with a
 SHA-256 for both, and `docs/historical-validation/` holds byte copies of those
 files, written by `python tools/freeze_validation_cases.py` while the archive
-still carried them (the 24 September record left the 21-day window with the 16
-October publication, the 25 September one with the 19 October publication) and
-held to the study's digests by `--check` in CI. The page's `studyJSON()` reads
+still carried them (the 24 September record leaves the 21-day window with the
+16 October publication, the 25 September one with the 19 October publication)
+and held to the study's digests by `--check` in CI. The page's `studyJSON()` reads
 a case from that directory alone, verifies the digest over the served bytes and
 refuses a case file the study carries no digest for; it never asks the rolling
 archive for a case, and the historical browser suite serves the case records'

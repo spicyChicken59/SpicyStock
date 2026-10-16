@@ -366,8 +366,11 @@ def test_public_byte_inventory_includes_every_frozen_case_file_the_study_names(s
     assert publisher.study_case_files(root) == frozen
 
 
-def test_a_study_without_cases_names_no_frozen_files(publication):
+@pytest.mark.parametrize('study', [b'{}', b'{"version": "historical-validation-v1", "cases": []}',
+                                   b'{"version": "historical-validation-v1", "cases": null}'])
+def test_a_study_without_cases_names_no_frozen_files(publication, study):
     root, sidecar = publication  # write_reader_records leaves the study as {}
+    (root / 'docs' / 'historical-validation.json').write_bytes(study)
     assert publisher.study_case_files(root) == ()
     assert publisher.public_files(root) == ('index.html', *publisher.RECORD_FILES, 'app.js', sidecar)
 

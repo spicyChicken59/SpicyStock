@@ -53,7 +53,7 @@ def test_original_retained_authority_decisions_are_not_repaired(ticker,accepted)
         case=next(c for c in study['cases'] if c['ticker']==ticker)
         # The study's frozen copy under docs/historical-validation/, held to the
         # digest the study recorded; never docs/history, whose 21-day window
-        # dropped the 25 September record with the 19 October publication.
+        # drops the 25 September record with the 19 October publication.
         frozen=(root/'docs/historical-validation'/case['entry']['path']).read_bytes()
         assert hashlib.sha256(frozen).hexdigest()==case['entry']['sha256']
         b=json.loads(frozen)['row']

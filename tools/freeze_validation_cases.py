@@ -110,6 +110,10 @@ def source_bytes(root: Path, rel: str, commit: str | None) -> bytes:
     """The published bytes of one archive file: the checkout's archive while it
     still carries the record, else git at the case's publication commit."""
     archived = root / "docs" / ARCHIVE_DIR / rel
+    if archived.is_symlink():
+        raise FreezeError(f"{rel}: the archive entry is a symbolic link, not a file")
+    if archived.exists() and not archived.is_file():
+        raise FreezeError(f"{rel}: the archive entry is not a regular file")
     if archived.is_file():
         return archived.read_bytes()
     if commit is None:
@@ -140,6 +144,8 @@ def freeze(root: Path) -> dict[str, str]:
         if target.parent.is_symlink() or target.is_symlink():
             raise FreezeError(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy; left in place")
         if target.exists():
+            if not target.is_file():
+                raise FreezeError(f"{FROZEN_DIR}/{rel}: not a regular file; left in place")
             if sha256(target.read_bytes()) != meta["sha256"]:
                 raise FreezeError(f"{FROZEN_DIR}/{rel}: an existing copy is not the study's bytes; left in place")
             outcome[rel] = "kept"
@@ -149,10 +155,20 @@ def freeze(root: Path) -> dict[str, str]:
             raise FreezeError(f"{rel}: source exceeds the archive's file bound")
         if sha256(raw) != meta["sha256"]:
             raise FreezeError(f"{rel}: source bytes are not the study's digest; nothing written")
-        target.parent.mkdir(parents=True, exist_ok=True)
+        # The bytes land under a temporary name and are renamed into place, so
+        # a copy either exists whole or not at all; a write that fails on the
+        # way is a refusal by name and leaves no temporary file behind.
         temp = target.with_suffix(".tmp")
-        temp.write_bytes(raw)
-        temp.replace(target)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temp.write_bytes(raw)
+            temp.replace(target)
+        except OSError as exc:
+            try:
+                temp.unlink(missing_ok=True)
+            except OSError:
+                pass
+            raise FreezeError(f"{FROZEN_DIR}/{rel}: could not be written ({exc.strerror or exc}); nothing written") from exc
         outcome[rel] = "written"
     return outcome
 
@@ -171,8 +187,14 @@ def check(root: Path) -> list[str]:
             problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy")
         elif not target.is_file():
             problems.append(f"{FROZEN_DIR}/{rel}: missing")
-        elif sha256(target.read_bytes()) != meta["sha256"]:
-            problems.append(f"{FROZEN_DIR}/{rel}: not the study's bytes")
+        else:
+            try:
+                raw = target.read_bytes()
+            except OSError as exc:
+                problems.append(f"{FROZEN_DIR}/{rel}: unreadable ({exc.strerror or exc})")
+                continue
+            if sha256(raw) != meta["sha256"]:
+                problems.append(f"{FROZEN_DIR}/{rel}: not the study's bytes")
     # Everything else under the directory is named: a file the study does not
     # name, and any link at all, whether to a file, to a directory or to
     # nothing. The walk never follows a link.
