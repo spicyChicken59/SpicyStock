@@ -129,7 +129,7 @@ def faults(cov):
         for reason in ('no_bars', 'dropped', 'unfetched_budget', 'stale', 'gapped', 'unreadable', 'price_excluded', 'refused', 'unfetched_failure'):
             equations.append(cov['reasons'][reason]['count'] == cov[reason])
         return [] if all(equations) else ['input population ledger does not reconcile']
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, AttributeError):  # a block that is not an object has no .values()
         return ['incomplete input population ledger']
 
 

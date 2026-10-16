@@ -1713,9 +1713,10 @@ never be read as one. `report.validate()` names every malformed shape it
 finds one level in and never raises through its caller: a block that is not an
 object, a count that is not an integer or a list that is not a list is a fault
 by name, and `tests/test_record_shapes.py` substitutes a string, a list and an
-integer for every top-level key, every child of a top-level object and every
-grandchild under `run`, holding the validator to a named refusal or a pass and
-nothing else. `docs/picks.json` (schema 2 for new writes) is every published plan: ticker,
+integer for every top-level key, every child of a top-level object, every
+grandchild and great-grandchild under `run`, and the first item of every
+top-level list with each of its children, holding the validator to a named
+refusal or a pass and nothing else. `docs/picks.json` (schema 2 for new writes) is every published plan: ticker,
 session, kind, the entry zone or trigger, the stop, the shares, the targets,
 the ticket. It holds nothing about what anyone did with them.
 

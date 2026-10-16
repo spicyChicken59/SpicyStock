@@ -671,8 +671,10 @@ def validate(data: dict) -> None:
     if run.get("calendar") is not None and not isinstance(run.get("timing"), dict):
         # sessions.record_faults() reads the timing block beside a calendar as an
         # object; src/sessions.py is a pinned source of the delivery proof, so the
-        # shape is named here and that module is not asked
+        # shape is named here, and that module is asked over an empty timing block
+        # for its calendar faults alone, which it checks before it reads the timing
         faults.append("run timing is not an object beside its calendar")
+        faults.extend(f for f in sessions.record_faults({**run, "timing": {}}) if f.startswith("run.calendar"))
     else:
         faults.extend(sessions.record_faults(run))
     from src import followup, reader_coverage, record   # lazy: each sits under the pipeline, which imports this module
@@ -703,7 +705,10 @@ def validate(data: dict) -> None:
             if not isinstance(b, dict):
                 faults.append(f"bursts[{i}] is not an object")
                 continue
-            tickers.add(b.get("ticker"))
+            if not isinstance(b.get("ticker"), str):
+                faults.append(f"bursts[{i}].ticker is not a string")  # a set cannot hold a list or an object
+            else:
+                tickers.add(b["ticker"])
             for where, grade in (("grade", b.get("grade")),
                                  ("quality.grade_mechanical", _get(b, "quality", "grade_mechanical")),
                                  ("claude.grade", _get(b, "claude", "grade"))):
@@ -726,7 +731,9 @@ def validate(data: dict) -> None:
             faults.append(f"{key} is not a list")
         else:
             for name in names:
-                if name not in tickers:
+                if not isinstance(name, str):
+                    faults.append(f"{key} names a value that is not a ticker")  # a set cannot be asked for a list or an object
+                elif name not in tickers:
                     faults.append(f"{key} names {name!r}, which is not a burst")
     for key in ("nights", "open_plans"):
         if not isinstance(data.get(key), list):

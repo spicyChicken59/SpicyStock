@@ -468,7 +468,7 @@ def selection_faults(selection: dict) -> list[str]:
                 + selection.get("manual_admitted", 0))
             and selection["before_capacity"] == selection["intended"] + selection["capacity_excluded"]["count"])
         return [] if valid else ["universe selection does not reconcile"]
-    except (KeyError, TypeError, ValueError):
+    except (KeyError, TypeError, ValueError, AttributeError):  # an exclusions block that is not an object has no .values()
         return ["universe selection does not reconcile"]
 
 
