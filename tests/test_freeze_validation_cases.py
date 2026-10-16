@@ -246,6 +246,48 @@ def test_check_names_a_missing_copy_a_drifted_copy_and_a_file_the_study_does_not
     ]
 
 
+def test_a_symbolic_link_is_never_a_frozen_copy(tmp_path):
+    """A link into the archive passes every byte comparison today and dangles
+    the night the archive drops the record, so check() names a link wherever
+    it finds one and freeze() refuses to count one as a copy or to write
+    through one; the publisher's own reader refuses a linked file beside it."""
+    study, archive = synthetic()
+    root = write_root(tmp_path, study, archive)
+    fz.freeze(root)
+    frozen = root / "docs" / fz.FROZEN_DIR
+    linked = frozen / f"{RECORD}/burst-CRL.json"
+    linked.unlink()
+    linked.symlink_to(root / "docs" / fz.ARCHIVE_DIR / f"{RECORD}/burst-CRL.json")
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.json: a symbolic link, not a copy"]
+    with pytest.raises(fz.FreezeError, match="burst-CRL.json: a symbolic link, not a copy; left in place"):
+        fz.freeze(root)
+    assert linked.is_symlink(), "the link is named, never replaced"
+    linked.unlink()
+    linked.write_bytes(archive[f"{RECORD}/burst-CRL.json"])
+    (frozen / f"{RECORD}/dangling.json").symlink_to(root / "nowhere.json")
+    (frozen / "linked-record").symlink_to(root / "docs" / fz.ARCHIVE_DIR)
+    assert fz.check(root) == [
+        f"{fz.FROZEN_DIR}/linked-record: a symbolic link, not a directory",
+        f"{fz.FROZEN_DIR}/{RECORD}/dangling.json: a symbolic link, not a copy",
+    ]
+    assert fz.freeze(root) == {rel: "kept" for rel in archive}, "the walk never follows a link"
+    # a record directory that is a link, and the frozen directory itself
+    (frozen / f"{RECORD}/dangling.json").unlink()
+    (frozen / "linked-record").unlink()
+    import shutil
+    shutil.rmtree(frozen / RECORD)
+    (frozen / RECORD).symlink_to(root / "docs" / fz.ARCHIVE_DIR / RECORD)
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}/{RECORD}/{name}: a symbolic link, not a copy" for name in ("burst-CRL.json", "burst-IQV.json", "record.json")] + [f"{fz.FROZEN_DIR}/{RECORD}: a symbolic link, not a directory"]
+    with pytest.raises(fz.FreezeError, match="a symbolic link, not a copy"):
+        fz.freeze(root)
+    (frozen / RECORD).unlink()
+    frozen.rmdir()
+    frozen.symlink_to(root / "docs" / fz.ARCHIVE_DIR)
+    assert fz.check(root) == [f"{fz.FROZEN_DIR}: the frozen directory is a symbolic link"]
+    with pytest.raises(fz.FreezeError, match="the frozen directory is a symbolic link"):
+        fz.freeze(root)
+
+
 def test_check_refuses_a_malformed_study_rather_than_passing_an_empty_directory(tmp_path):
     study, _ = synthetic()
     study["cases"][0]["entry"]["sha256"] = "nope"

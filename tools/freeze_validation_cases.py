@@ -32,6 +32,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -128,8 +129,16 @@ def freeze(root: Path) -> dict[str, str]:
     """
     files = case_files(load_study(root))
     outcome: dict[str, str] = {}
+    frozen = root / "docs" / FROZEN_DIR
+    if frozen.is_symlink():
+        raise FreezeError(f"{FROZEN_DIR}: the frozen directory is a symbolic link; nothing written")
     for rel, meta in sorted(files.items()):
-        target = root / "docs" / FROZEN_DIR / rel
+        target = frozen / rel
+        # A copy is a regular file in a directory nothing prunes. A link into
+        # the archive would pass every byte comparison today and dangle the
+        # night the archive drops the record, so a link is never a copy.
+        if target.parent.is_symlink() or target.is_symlink():
+            raise FreezeError(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy; left in place")
         if target.exists():
             if sha256(target.read_bytes()) != meta["sha256"]:
                 raise FreezeError(f"{FROZEN_DIR}/{rel}: an existing copy is not the study's bytes; left in place")
@@ -154,17 +163,34 @@ def check(root: Path) -> list[str]:
     files = case_files(load_study(root))
     problems: list[str] = []
     frozen = root / "docs" / FROZEN_DIR
+    if frozen.is_symlink():
+        return [f"{FROZEN_DIR}: the frozen directory is a symbolic link"]
     for rel, meta in sorted(files.items()):
         target = frozen / rel
-        if not target.is_file():
+        if target.parent.is_symlink() or target.is_symlink():
+            problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy")
+        elif not target.is_file():
             problems.append(f"{FROZEN_DIR}/{rel}: missing")
         elif sha256(target.read_bytes()) != meta["sha256"]:
             problems.append(f"{FROZEN_DIR}/{rel}: not the study's bytes")
+    # Everything else under the directory is named: a file the study does not
+    # name, and any link at all, whether to a file, to a directory or to
+    # nothing. The walk never follows a link.
     if frozen.is_dir():
-        for path in sorted(p for p in frozen.rglob("*") if p.is_file()):
-            rel = path.relative_to(frozen).as_posix()
-            if rel not in files:
-                problems.append(f"{FROZEN_DIR}/{rel}: not named by the study")
+        for dirpath, dirnames, filenames in os.walk(frozen, followlinks=False):
+            here = Path(dirpath)
+            for name in sorted(dirnames):
+                if (here / name).is_symlink():
+                    rel = (here / name).relative_to(frozen).as_posix()
+                    problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a directory")
+            for name in sorted(filenames):
+                path = here / name
+                rel = path.relative_to(frozen).as_posix()
+                if path.is_symlink():
+                    if rel not in files:
+                        problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy")
+                elif rel not in files:
+                    problems.append(f"{FROZEN_DIR}/{rel}: not named by the study")
     return problems
 
 

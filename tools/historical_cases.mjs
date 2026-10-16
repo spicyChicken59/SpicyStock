@@ -119,9 +119,10 @@ export async function checkHistoricalJourneys({browser,base,open,check,shotsDir}
     });
     await page.waitForSelector('[data-study-inspect="CRL"]');
     // Chromium reports the deliberate 404 on the console after the page has
-    // handled the response, so the one expected report is awaited, bounded,
-    // rather than read off the list at an instant of the driver's choosing.
-    const expected404=name==='missing'?page.waitForEvent('console',{predicate:m=>m.type()==='error'&&/status of 404/.test(m.text()),timeout:5000}).then(()=>true,()=>false):Promise.resolve(false);
+    // handled the response, so the one expected report is awaited, bounded by
+    // the same 30 s every other wait in this suite has, rather than read off
+    // the list at an instant of the driver's choosing.
+    const expected404=name==='missing'?page.waitForEvent('console',{predicate:m=>m.type()==='error'&&/status of 404/.test(m.text()),timeout:30000}).then(()=>true,()=>false):Promise.resolve(false);
     await page.locator('[data-study-inspect="CRL"]').click();
     await page.waitForSelector('[data-study-case="CRL"] [data-study-original="CRL"], [data-study-case="CRL"] [role="alert"]');
     const alerts=await page.locator('[data-study-case="CRL"] [role="alert"]').allTextContents();
