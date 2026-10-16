@@ -677,6 +677,7 @@ def validate(data: dict) -> None:
                      and o.get("status") not in record.FINISHED}
                     if run.get("session_state") == "open" and isinstance(plans, list) else None)
     faults.extend(inputs.tolerance_faults(run, rules_pipeline, plan_tickers))
+    faults.extend(inputs.seed_stale_faults(run, rules_pipeline))
     faults.extend(followup.faults(run, rules_pipeline))
     faults.extend(delivery.faults(run, rules_pipeline))
     faults.extend(reader_coverage.reads_faults(data))
@@ -1031,6 +1032,9 @@ def _inputs_block(run: dict) -> str:
     names, stale = tol.get("names"), tol.get("stale")
     if isinstance(names, list) and names and isinstance(stale, int) and stale:
         lines.append(f"Without a {tol.get('evaluated')} bar: {', '.join(str(n) for n in names)}.")
+    seed = _text(_get(run, "seed_stale", "sentence"))
+    if seed:
+        lines.append(seed)
     follow = _text(_get(run, "stale_followup", "sentence"))
     if follow:
         lines.append(follow)

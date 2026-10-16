@@ -804,7 +804,15 @@ archived, and a record from before the block is asked for none. The run:
   extra provider call (`run.stale_followup`, `src/followup.py`), and a late bar
   that the publication for that session would have listed (a 4% or $ scan match, or a setting-up
   name) makes the night that finds it degraded and is named. A late bar is never
-  a signal, plan or ticket. A fully evaluated selection can be complete without being the
+  a signal, plan or ticket. `run.seed_stale` says which of the stale stocks the
+  seed alone asked for -- a name the directory no longer lists -- read off the
+  record's own stale names and the selection ledger's seed additions when
+  both are complete (the ledger names at most `universe.SAMPLE_LIMIT`, 8,
+  seed additions, archived as `universe.sample_limit`; past that the block
+  says they were sampled and names none) and said to be unknown otherwise,
+  because a seed name is asked for again every night until a human retires it
+  from `data/symbols.txt`; the cover's coverage line, the page's Method and the
+  mail print its sentence. A fully evaluated selection can be complete without being the
   complete listed market. The existing $3 session-close policy now reads actual
   cent-rounded bars, with seed/explicit exemptions preserved; actual scan volume
   remains the scanner's rule. Known non-session runs skip before universe/provider work and preserve the prior publication.

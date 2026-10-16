@@ -675,8 +675,11 @@
     // the coverage sentence the run stored, then the stale stocks by name, then
     // what the previous publication's stale stocks turned out to be: each the record's own words
     const follow = text((run.stale_followup || {}).sentence);
+    // and which of the stale stocks the seed alone asked for, in the record's words
+    const seedSaid = text((run.seed_stale || {}).sentence);
     $('cover-coverage').textContent = (warning || 'The record reports complete input coverage.') +
       (tol && Array.isArray(tol.names) && tol.names.length && cov.stale ? ' Without a ' + dateWords(tol.evaluated) + ' bar: ' + tol.names.join(', ') + '.' : '') +
+      (seedSaid ? ' ' + seedSaid : '') +
       (follow ? ' ' + follow : '');
     const facts = clear($('market-facts'));
     // the chip sits beside the LABEL, not after the value: it qualifies that
@@ -1170,6 +1173,9 @@
           ' — ' + num(tol.stale_stocks) + ' stale stock' + (tol.stale_stocks === 1 ? '' : 's') + ' against a limit of ' + num(tol.limit) +
           (tol.verdict === 'not_tolerated' && Array.isArray(tol.reasons) ? ' (' + tol.reasons.map((r) => toleranceWords(r, data)).join('; ') + ')' : '') + '.');
       }
+      // the seed check before the follow-up, the order the cover and the mail print them in
+      const seedLine = text((run.seed_stale || {}).sentence);
+      if (seedLine) line('Seed check: ' + seedLine);
       const follow = text((run.stale_followup || {}).sentence);
       if (follow) line('Stale follow-up: ' + follow);
       line('Fetch, including benchmark: ' + num(cov.intended) + ' intended = ' + num(cov.requested) + ' requested + ' + num(cov.unfetched_budget) +

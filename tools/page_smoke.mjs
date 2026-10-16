@@ -3839,7 +3839,10 @@ async function checkStaleTolerance(browser, base) {
       const coverage = await said(page, '#cover-coverage');
       check(tag + ': the coverage line is the sentence the run stored', coverage.startsWith(tol.sentence), coverage.slice(0, 160));
       check(tag + ': it names the stale stock', coverage.includes(' bar: ' + tol.names.join(', ') + '.'), coverage);
-      check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + follow.sentence), coverage.slice(-300));
+      // the record's own sentences follow the names in the order the mail prints them:
+      // which stale stock the seed alone asked for, then what last night's turned out to be
+      const seedBlock = thin.run.seed_stale;
+      check(tag + ': and what last night\'s stale stocks turned out to be', coverage.includes(tol.names.join(', ') + '. ' + seedBlock.sentence + ' ' + follow.sentence), coverage.slice(-400));
       const method = await said(page, '#run-meta');
       check(tag + ': Method quotes the archived tolerance', method.includes(pct), method.slice(0, 400));
       check(tag + ': Method quotes the archived session bound and reads every missed session',
@@ -3847,6 +3850,13 @@ async function checkStaleTolerance(browser, base) {
         method.includes('reads every session each of them missed again') && !method.includes('ending on the previous session'), method.slice(0, 900));
       check(tag + ': Method says the tolerance held', method.includes('Stale tolerance: tolerated — ' + tol.stale_stocks + ' stale stock against a limit of ' + tol.limit + '.'), method);
       check(tag + ': Method prints the follow-up', method.includes('Stale follow-up: ' + follow.sentence), method);
+      // which of the stale stocks the seed alone asked for: this fixture's universe is an
+      // explicit list, so the record says it cannot tell, and the page prints that verbatim
+      check(tag + ': the fixture archives the seed-only stale block', seedBlock && seedBlock.version === 1 && seedBlock.membership === 'unavailable' &&
+        seedBlock.reason === 'explicit_universe' && seedBlock.names === null && typeof seedBlock.sentence === 'string' && seedBlock.sentence.length > 0, seedBlock);
+      check(tag + ': Method prints the seed sentence verbatim', method.includes('Seed check: ' + seedBlock.sentence), method.slice(method.indexOf('Seed check'), method.indexOf('Seed check') + 300));
+      check(tag + ': Method prints the seed check before the follow-up, as the cover and the mail do',
+        method.indexOf('Seed check: ') > -1 && method.indexOf('Seed check: ') < method.indexOf('Stale follow-up: '), method.slice(method.indexOf('Seed check'), method.indexOf('Seed check') + 300));
       check(tag + ': Method keeps the reader refusal rule under bounded selection', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && reads.sentence === null, method);
       // what the reads cost, printed as the record wrote it: calls, replies and the API's
       // token classes under the model asked, no price; the page adds no figure of its own
@@ -3904,8 +3914,14 @@ async function checkStaleTolerance(browser, base) {
       delete d.rules.pipeline.stale_tolerance_fraction; delete d.rules.pipeline.reader_refusal_fraction;
       delete d.run.reader_usage; delete d.rules.pipeline.reader_usage_version;
       delete d.run.intraday; delete d.rules.intraday;
+      delete d.run.seed_stale; delete d.rules.pipeline.seed_stale_version;
     },
     'a half-written reader cost': (d) => { d.run.reader_usage = { version: 1, calls: 2 }; },
+    'a seed-only stale stock': (d) => {
+      d.run.seed_stale = { ...d.run.seed_stale, membership: 'complete', seed_added: 1, seed_named: 1, names: ['QAB'], reason: null,
+        sentence: 'The stale stock is on the seed alone, not in the directory this run selected from: QAB. A seed name that has stopped trading stays stale every night until it is retired from data/symbols.txt by hand.' };
+    },
+    'a half-written seed check': (d) => { d.run.seed_stale = { version: 1 }; },
   };
   for (const [name, change] of Object.entries(variants)) {
     const d = JSON.parse(JSON.stringify(thin));
@@ -3940,12 +3956,19 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
       } else if (name === 'a half-written reader cost') {
         check('thin ' + name + ': Method prints no cost it cannot quote', !method.includes('Chart reader cost'), method.slice(0, 600));
+      } else if (name === 'a seed-only stale stock') {
+        check('thin ' + name + ': the coverage line prints the record\'s sentence verbatim, after the stale names', coverage.includes('. ' + d.run.seed_stale.sentence + ' '), coverage.slice(-400));
+        check('thin ' + name + ': Method prints it as the seed check', method.includes('Seed check: ' + d.run.seed_stale.sentence), method.slice(method.indexOf('Seed check'), method.indexOf('Seed check') + 300));
+        check('thin ' + name + ': the page adds no words of its own about the seed', !/seed alone/.test(method.replace(d.run.seed_stale.sentence, '')) && !/seed alone/.test(coverage.replace(d.run.seed_stale.sentence, '')), [method.slice(0, 400), coverage.slice(-300)]);
+      } else if (name === 'a half-written seed check') {
+        check('thin ' + name + ': Method prints no seed check it cannot quote', !method.includes('Seed check:') && !coverage.includes('seed alone'), method.slice(0, 600));
       } else {
         check('thin ' + name + ': the dek makes no tolerance claim', !dek.includes('tolerance'), dek);
         check('thin ' + name + ': the coverage line is the composed warning', coverage.startsWith('Incomplete input coverage:') && !coverage.includes('stale tolerance'), coverage.slice(0, 200));
         check('thin ' + name + ': Method keeps the rule it was published under', method.includes('any missing stocks or capacity cuts degrade it.') && !method.includes('Stale tolerance:') && !method.includes('Chart reader: a reply refused'), method);
         check('thin ' + name + ': Method prints no reader cost a record did not archive', !method.includes('Chart reader cost'), method.slice(0, 600));
         check('thin ' + name + ': Method prints no minute-bar line a record did not archive', !method.includes('Minute bars:'), method.slice(0, 600));
+        check('thin ' + name + ': Method prints no seed check a record did not archive', !method.includes('Seed check:') && !coverage.includes('seed alone'), method.slice(0, 600));
         check('thin ' + name + ': the strip keeps its old note', !(await said(page, '#run-strip')).includes('tolerated'));
       }
       const body = await page.locator('body').innerText();

@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "12b2a4590ff1"
+  "rules_version": "c8aabcd2e38e"
  },
  "cover": {
   "h1": "Nothing qualifies. Keep cash.",
@@ -226,6 +226,16 @@
    "matched": [],
    "rows": [],
    "sentence": null
+  },
+  "seed_stale": {
+   "version": 1,
+   "membership": "unavailable",
+   "seed_added": null,
+   "seed_named": null,
+   "stale_stocks": 0,
+   "names": null,
+   "reason": "explicit_universe",
+   "sentence": ""
   },
   "bursts": 0,
   "graded": {
@@ -921,7 +931,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "12ec9d6cfe74f6fcbc8a83d45bc6d021ffc95df939c375fa941fdd4bfebfb9b6"
+   "context_sha256": "71c06bbacf86a942ce617031435ddff1caf3820c8c749dd69dab4674d69879f7"
   },
   "sanitised": {
    "replaced": 0,
@@ -1454,6 +1464,7 @@
    "stale_tolerance_fraction": 0.01,
    "stale_sessions_max": 5,
    "stale_names_max": 100,
+   "seed_stale_version": 1,
    "max_error_fraction": 0.05,
    "trade_grades": [
     "A+",
@@ -1507,6 +1518,7 @@
    "price_exempt": "seed and explicit",
    "directory_quote_filter": false,
    "max_discovery": 8000,
+   "sample_limit": 8,
    "identity": "f97bc6805de5df88"
   },
   "inputs": {
@@ -2054,7 +2066,7 @@
    "expected_session": "2026-09-10",
    "evaluated_session": "2026-09-10"
   },
-  "replay_rules_version": "12b2a4590ff1"
+  "replay_rules_version": "c8aabcd2e38e"
  },
  "observations": {
   "as_of": "2026-09-10",

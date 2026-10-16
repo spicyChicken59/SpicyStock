@@ -857,6 +857,8 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     data = _copy(stale_night)
     data['run'].pop('input_tolerance')
     _refuses(data, 'input tolerance block missing')
+    # the tolerance's own check names that; the seed block is not asked for beside it
+    assert inputs.seed_stale_faults(data['run'], data['rules']['pipeline']) == []
     data = _copy(stale_night)
     data['run'].pop('stale_followup')
     _refuses(data, 'stale follow-up block missing')
@@ -869,19 +871,33 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     data = _copy(stale_night)
     data['run'].pop('delivery')
     _refuses(data, 'run.delivery is missing')
-    # a record made under the rules before them is not asked for any of the five
+    data = _copy(stale_night)
+    data['run'].pop('seed_stale')
+    _refuses(data, 'seed-only stale block missing')
+    # a record made under the rules before them is not asked for any of the six
     from src import delivery
     data = _copy(stale_night)
-    for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage', 'delivery'):
+    for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage', 'delivery', 'seed_stale'):
         data['run'].pop(key)
     for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction',
-                'reader_usage_version', 'delivery_version', 'delivery_primary_et', 'delivery_retry_et', 'delivery_recovery_until'):
+                'reader_usage_version', 'delivery_version', 'delivery_primary_et', 'delivery_retry_et', 'delivery_recovery_until',
+                'seed_stale_version'):
         data['rules']['pipeline'].pop(key)
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
+    assert inputs.seed_stale_faults(data['run'], data['rules']['pipeline']) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
     assert reader_coverage.reads_faults(data) == []
     assert reader_coverage.usage_faults(data) == []
     assert delivery.faults(data['run'], data['rules']['pipeline']) == []
+    # a record made under the tolerance's second version but before the seed check
+    # (every publication from 8 to 15 Oct 2026) carries the tolerance and the
+    # coverage ledger and is asked for no seed block: the gate is the rules key,
+    # not the tolerance's presence
+    data = _copy(stale_night)
+    data['run'].pop('seed_stale')
+    data['rules']['pipeline'].pop('seed_stale_version')
+    assert data['run']['input_tolerance']['version'] == inputs.TOLERANCE_VERSION
+    assert inputs.seed_stale_faults(data['run'], data['rules']['pipeline']) == []
     # a record made under the tolerance's first version (a fraction but no session
     # bound, 7 Oct 2026's publication) is not asked for the second version's blocks
     data = _copy(stale_night)
@@ -890,6 +906,54 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
         data['run'][block]['version'] = 1
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []
     assert followup.faults(data['run'], data['rules']['pipeline']) == []
+
+
+def test_validate_holds_the_seed_only_stale_block_to_the_record(stale_night):
+    """An explicit-universe night cannot tell a seed-only stale stock and says
+    so; a forged name, sentence, count or version is refused by name, and a
+    record made under rules without the block is asked for none."""
+    from src import universe
+    block = stale_night['run']['seed_stale']
+    assert block == {'version': inputs.SEED_STALE_VERSION, 'membership': 'unavailable', 'seed_added': None,
+                     'seed_named': None, 'stale_stocks': 2, 'names': None, 'reason': 'explicit_universe',
+                     'sentence': "Whether a stale stock is on the seed alone is not recorded: "
+                                 "this run's universe was an explicit list, not a directory selection."}
+    validate(stale_night)
+    for forge, message in [
+        (lambda b: b.update(names=['QAAA'], reason=None, membership='complete', seed_added=1, seed_named=1,
+                            sentence='1 of the 2 stale stocks is on the seed alone, not in the directory this run '
+                                     'selected from: QAAA.'), 'does not re-derive from the record'),
+        (lambda b: b.update(sentence=b['sentence'] + ' Retire it.'), 'does not re-derive from the record'),
+        (lambda b: b.update(stale_stocks=1), 'does not re-derive from the record'),
+        (lambda b: b.update(reason='stale_names_not_carried'), 'does not re-derive from the record'),
+        (lambda b: b.pop('names'), 'does not re-derive from the record'),
+        (lambda b: b.update(version=inputs.SEED_STALE_VERSION + 1), 'version unknown'),
+        # the run writes integers; a JSON true or 1.0 where one belongs is another block
+        (lambda b: b.update(version=True), 'does not re-derive from the record'),
+        (lambda b: b.update(stale_stocks=2.0), 'does not re-derive from the record'),
+        (lambda b: b.clear(), 'malformed'),
+    ]:
+        data = _copy(stale_night)
+        forge(data['run']['seed_stale'])
+        _refuses(data, message)
+    # the archived rule's half of the version check: a block of this version under a
+    # rules version this code does not write is unknown, never re-derived by today's rule
+    data = _copy(stale_night)
+    data['rules']['pipeline']['seed_stale_version'] = inputs.SEED_STALE_VERSION + 1
+    _refuses(data, 'version unknown')
+    # the selection the block is re-derived from is the record's own: read as a
+    # directory selection (no seed addition among the stale stocks), the same
+    # night must say so, and the block written for an explicit list is refused
+    data = _copy(stale_night)
+    data['run']['universe']['selection']['kind'] = 'directory'
+    assert universe.selection_faults(data['run']['universe']['selection']) == []
+    _refuses(data, 'does not re-derive from the record')
+    data['run']['seed_stale'] = inputs.seed_stale(data['run']['input_tolerance'], data['run']['universe']['selection'])
+    assert data['run']['seed_stale']['names'] == [] and data['run']['seed_stale']['membership'] == 'complete'
+    assert data['run']['seed_stale']['sentence'] == 'None of the 2 stale stocks is on the seed alone; each is in the directory this run selected from.'
+    assert inputs.seed_stale_faults(data['run'], data['rules']['pipeline']) == []
+    # (validate() itself would refuse this edited record one layer earlier, at the
+    # provenance context the selection is sealed into; the block's own check is above)
 
 
 def test_validate_holds_the_delivery_block_to_the_runs_own_session_and_instant(stale_night):
@@ -988,7 +1052,8 @@ def test_the_mail_on_a_tolerated_night_names_the_stale_stocks_and_no_problem(sta
     text = _mail_text(stale_night)
     assert 'what went wrong' not in text
     assert "within this run's stale tolerance of 2 stocks" in text
-    assert '// inputs and reads Without a 2026-09-10 bar: QAAA, QAAB.' in text
+    assert ('// inputs and reads Without a 2026-09-10 bar: QAAA, QAAB. Whether a stale stock is on the seed alone '
+            "is not recorded: this run's universe was an explicit list, not a directory selection.") in text
 
 
 def test_the_mail_past_the_tolerance_prints_the_problem_sentence(wide, claude, fake_resend, fake_alpaca, tmp_path):
@@ -1009,6 +1074,33 @@ def test_the_mail_on_the_thin_fixture_reports_followup_without_inventing_reader_
     assert data['run']['reads']['verdict'] == 'complete' and data['run']['reads']['requested'] == 2
     assert data['run']['reads']['sentence'] is None and 'refused by reader authority' not in text
     assert data['run']['stale_followup']['sentence'] in text
+    # the inputs block reads names, then the seed check, then the follow-up, the
+    # order the page's cover prints them in
+    tol = data['run']['input_tolerance']
+    names_line = f"Without a {tol['evaluated']} bar: {', '.join(tol['names'])}."
+    seed = data['run']['seed_stale']['sentence']
+    assert text.index(names_line) < text.index(seed) < text.index(data['run']['stale_followup']['sentence'])
+
+
+def test_validate_names_a_record_whose_universe_or_selection_is_not_an_object(stale_night):
+    """A shape one level in that the ledger checks never indexed into: validate()
+    names it as a fault rather than raising through the caller."""
+    for universe_value in ('x', 5, [1]):
+        data = _copy(stale_night)
+        data['run']['universe'] = universe_value
+        _refuses(data, 'run.universe or run.input_basis is not an object')
+    data = _copy(stale_night)
+    data['run']['input_basis'] = 'sip'
+    _refuses(data, 'run.universe or run.input_basis is not an object')
+    for selection_value in ([1], 'directory', 7):
+        data = _copy(stale_night)
+        data['run']['universe']['selection'] = selection_value
+        _refuses(data, 'universe selection does not reconcile')
+    # an older archive's empty selection is held to no size, as before this guard
+    from src import inputs as inputs_module
+    run = _copy(stale_night)['run']
+    run['universe']['selection'] = {}
+    assert 'universe selection size is inconsistent' not in inputs_module.record_faults(run)
 
 
 def test_the_mail_on_an_empty_credit_balance_says_to_top_up(market, claude, fake_resend, tmp_path):

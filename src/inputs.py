@@ -7,6 +7,7 @@ An incomplete input is never counted as a measured non-match.
 from collections import Counter
 from datetime import date
 from fractions import Fraction
+import json
 import math
 
 from src import market_data, sessions, universe
@@ -146,6 +147,9 @@ def record_faults(run):
         return []  # archives predating this contract remain unknown, never backfilled
     errors = faults(cov)
     uni, basis = run.get('universe') or {}, run.get('input_basis') or {}
+    if not isinstance(uni, dict) or not isinstance(basis, dict):
+        errors.append('run.universe or run.input_basis is not an object')
+        return errors
     errors.extend(universe.selection_faults(uni.get('selection')))
     if basis.get('adjustment') != market_data.BAR_ADJUSTMENT.value or basis.get('feed') != run.get('feed'):
         errors.append('bar request basis is missing or inconsistent')
@@ -155,7 +159,8 @@ def record_faults(run):
         errors.append('unaccepted coverage cannot be published')
     if cov.get('intended') != uni.get('size', 0) + cov.get('benchmark_added', 0):
         errors.append('universe and fetch populations disagree')
-    if uni.get('selection') and uni['selection']['intended'] != uni.get('size'):
+    selection = uni.get('selection')
+    if selection and isinstance(selection, dict) and selection.get('intended') != uni.get('size'):
         errors.append('universe selection size is inconsistent')
     return errors
 
@@ -371,3 +376,108 @@ def tolerance_faults(run, pipeline_rules, plan_tickers):
         return faults
     except (KeyError, TypeError, ValueError, AttributeError):
         return ['input tolerance block is malformed']
+
+
+# -- the stale stocks the seed alone asked for -----------------------------------
+#: A seed name the directory no longer lists keeps being asked for every night,
+#: and once it stops trading it is stale every night until a human retires it
+#: from data/symbols.txt: WBD, 13-15 October 2026, three nights degraded as the
+#: one frame past the session bound while the record said only that it was
+#: stale. The block below joins the record's own two lists -- the tolerance's
+#: stale names and the selection's seed additions -- and only when both are
+#: complete; otherwise it says what it cannot say. It decides nothing.
+SEED_STALE_VERSION = 1
+SEED_STALE_MEMBERSHIPS = ('complete', 'sampled', 'unavailable')
+SEED_STALE_REASONS = ('no_directory_selection', 'seed_universe', 'explicit_universe',
+                      'seed_additions_sampled', 'stale_names_not_carried')
+
+
+def seed_stale(tol, selection):
+    """Which stale stocks the seed alone asked for, read off the record.
+
+    ``tol`` is the run's stale tolerance block (its ``names`` are every stale
+    frame's symbol, or None past the carrying bound; the benchmark among them
+    is not a stock); ``selection`` is the universe's selection ledger, whose
+    ``seed_added`` carries a count and a sample bounded by ``universe.SAMPLE_LIMIT``
+    (archived as ``universe.sample_limit``). The join is made only
+    over a directory selection whose sample IS the membership, with the stale
+    names carried; a seed or explicit universe (whose selection ledger is the
+    manual kind), a record without a selection, a sampled seed list or an
+    uncarried stale list is a named reason and no names. Pure, and re-derived
+    by ``seed_stale_faults``."""
+    kind = selection.get('kind') if isinstance(selection, dict) else None
+    added = selection.get('seed_added') if kind == 'directory' else None
+    names = tol.get('names')
+    if not isinstance(added, dict):
+        membership, count, named = 'unavailable', None, None
+    else:
+        count, sample = added['count'], list(added['sample'])
+        named = len(sample)
+        membership = 'complete' if count == named else 'sampled'
+    if membership == 'unavailable':
+        reason = {'seed': 'seed_universe', 'explicit': 'explicit_universe'}.get(kind, 'no_directory_selection')
+        found = None
+    elif membership == 'sampled':
+        reason, found = 'seed_additions_sampled', None
+    elif names is None:
+        reason, found = 'stale_names_not_carried', None
+    else:
+        reason, found = None, sorted((set(names) - {tol.get('benchmark')}) & set(sample))
+    block = {'version': SEED_STALE_VERSION, 'membership': membership, 'seed_added': count, 'seed_named': named,
+             'stale_stocks': tol['stale_stocks'], 'names': found, 'reason': reason}
+    block['sentence'] = seed_stale_sentence(block)
+    return block
+
+
+def seed_stale_sentence(block):
+    """The block in words; empty when there is no stale stock to speak of."""
+    n = block['stale_stocks']
+    if not n:
+        return ''
+    names = block['names']
+    if names is None:
+        why = {'no_directory_selection': 'this run recorded no directory selection',
+               'seed_universe': "this run's universe was the seed file alone, so whether the directory "
+                                'still lists a stale stock was not read',
+               'explicit_universe': "this run's universe was an explicit list, not a directory selection",
+               'seed_additions_sampled': f"the selection names {block['seed_named']} of its {block['seed_added']} seed additions",
+               'stale_names_not_carried': 'the record does not name its stale stocks'}[block['reason']]
+        return f'Whether a stale stock is on the seed alone is not recorded: {why}.'
+    if not names:
+        return ('The stale stock is in the directory this run selected from, not on the seed alone.' if n == 1
+                else f'None of the {n} stale stocks is on the seed alone; each is in the directory this run selected from.')
+    k = len(names)
+    lead = ('The stale stock is' if n == 1
+            else f"{k} of the {n} stale stocks {'is' if k == 1 else 'are'}")
+    return (f"{lead} on the seed alone, not in the directory this run selected from: {', '.join(names)}. "
+            'A seed name is asked for again every night until it is retired from data/symbols.txt by hand.')
+
+
+def seed_stale_faults(run, pipeline_rules):
+    """The seed-only stale block held to the record it sits in, one level in:
+    asked for only under rules that write it, and refused unless it is exactly
+    what the record's own tolerance names and selection re-derive, type for
+    type (a JSON ``true`` or ``1.0`` is not the ``1`` the run writes)."""
+    if not isinstance(pipeline_rules, dict) or 'seed_stale_version' not in pipeline_rules:
+        return []
+    cov, tol = run.get('coverage'), run.get('input_tolerance')
+    if not isinstance(cov, dict) or 'version' not in cov or not isinstance(tol, dict) or 'version' not in tol:
+        return []  # a record without a versioned coverage ledger and tolerance block predates these contracts
+    block = run.get('seed_stale')
+    if block is None:
+        return ['seed-only stale block missing']
+    try:
+        if block['version'] != SEED_STALE_VERSION or pipeline_rules['seed_stale_version'] != SEED_STALE_VERSION:
+            return ['seed-only stale block version unknown']
+        selection = (run.get('universe') or {}).get('selection') or {}
+        if _canonical(block) != _canonical(seed_stale(tol, selection)):
+            return ['seed-only stale block does not re-derive from the record']
+        return []
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return ['seed-only stale block malformed']
+
+
+def _canonical(block):
+    """The block as the JSON bytes the record carries, so a forged type is a
+    different block (``json.dumps`` refuses a NaN and an object JSON lacks)."""
+    return json.dumps(block, sort_keys=True, allow_nan=False)
