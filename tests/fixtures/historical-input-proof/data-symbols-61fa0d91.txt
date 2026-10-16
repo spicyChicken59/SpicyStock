@@ -1,0 +1,306 @@
+# SpicyStock curated seed and fallback universe.
+# Production evening scans use src/universe.py: a refreshed Nasdaq directory,
+# explicit security/industry classification and delayed SIP liquidity/momentum
+# selection. This reviewed seed remains the safe fallback and pharma exceptions.
+#
+# WHAT THIS IS
+#   A deliberately small, hand-written list of liquid US common stocks, read
+#   by get_universe() in src/scanner.py in place of Alpaca's full ~11,000
+#   symbol tradable-asset list. A full-market scan took 10-20 minutes; this
+#   one takes seconds, which is the whole point — every later fix in the
+#   rebuild has to be testable in one sitting.
+#
+# This file is deliberately retained rather than overwritten by discovery.
+# The selected production basket, source, session and membership identity are
+# recorded in docs/data.json run.universe; a refresh failure says fallback.
+# Historical backfills and non-SIP feeds use this seed, not today's directory.
+#
+# WHAT IS IN IT
+#   ~230 large- and mid-cap US common stocks, grouped by sector for human
+#   reading only: get_universe() ignores the grouping and keeps file order.
+#   Deliberately excluded:
+#     - ETFs, ETNs, closed-end funds, and any leveraged or inverse product.
+#       This screener rates single companies, not baskets.
+#     - ADRs and foreign issuers — different home session, different data
+#       quality on a free IEX feed.
+#     - Biotech. That is rule 4 of the strategy (binary FDA events are not
+#       momentum), and with fundamentals_filter() deleted, curating this
+#       file enforces it for seed scans; adaptive discovery also checks sector. The
+#       pharma/biotech line is a judgement call: large diversified pharma
+#       (JNJ, LLY, MRK, PFE, ABBV, BMY) is kept, pure-play biotech is not.
+#     - Class shares spelled with punctuation (BRK.B). Alpaca's exact
+#       spelling for those could not be checked from this sandbox, and one
+#       unrecognised symbol takes down its whole 100-name request batch.
+#
+# RETIRED
+#   Names the first live scans (6 Sep 2026) found with no bar for a month or
+#   more on the sip feed, read off run.stopped_printing rather than assumed,
+#   and taken out so they stop being asked for every night:
+#     EA  -- no bar after 4 Aug 2026 (a take-private was announced in 2025
+#            and is the likely reason; not verified from the sandbox).
+#     FI  -- no bar after 10 Nov 2025. Whatever Fiserv trades as now was not
+#            verified from the sandbox, so it is retired rather than renamed.
+#     BK  -- no bar after 20 May 2026; BNY Mellon's listing moved to BNY,
+#            which is in the list below in its place. Checked by rehearsal
+#            run 34035518295 on 6 Sep 2026, read off its log's coverage
+#            line: 228 requested, 228 answered with bars, none without a
+#            bar for the session, none with no bar at all.
+#
+# FORMAT
+#   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.
+#   `#` starts a comment, on its own line or trailing after a symbol.
+#   Anything else is a hard error: get_universe() raises SymbolFileError
+#   rather than skipping the line, so a typo cannot quietly shrink the
+#   universe. A duplicated symbol is an error too.
+
+# --- Communication services ---
+GOOGL
+META
+NFLX
+DIS
+CMCSA
+CHTR
+WBD
+TMUS
+T
+VZ
+TTWO
+
+# --- Software and IT services ---
+MSFT
+ORCL
+CRM
+ADBE
+INTU
+NOW
+WDAY
+PANW
+CRWD
+ZS
+FTNT
+NET
+DDOG
+SNOW
+MDB
+HUBS
+VEEV
+PLTR
+APP
+TTD
+RBLX
+IBM
+ADSK
+CDNS
+SNPS
+
+# --- Semiconductors, hardware and equipment ---
+AAPL
+NVDA
+AVGO
+AMD
+INTC
+QCOM
+TXN
+MU
+AMAT
+LRCX
+KLAC
+ADI
+MRVL
+ON
+MCHP
+SWKS
+TER
+ENTG
+MPWR
+SMCI
+CSCO
+ANET
+HPQ
+HPE
+DELL
+WDC
+GLW
+APH
+MSI
+FSLR
+VRT
+
+# --- Consumer discretionary ---
+AMZN
+TSLA
+HD
+LOW
+TGT
+TJX
+ROST
+DG
+ULTA
+ORLY
+AZO
+KMX
+CVNA
+F
+GM
+LEN
+DHI
+PHM
+NKE
+DECK
+LULU
+MCD
+SBUX
+CMG
+MAR
+HLT
+WYNN
+LVS
+MGM
+DKNG
+RCL
+CCL
+ABNB
+BKNG
+UBER
+DASH
+
+# --- Consumer staples ---
+COST
+WMT
+PG
+KO
+PEP
+MDLZ
+TSN
+KR
+MO
+PM
+STZ
+MNST
+CELH
+CL
+EL
+
+# --- Financials ---
+JPM
+BAC
+WFC
+C
+GS
+MS
+SCHW
+BLK
+BX
+KKR
+APO
+ALL
+PGR
+AIG
+ICE
+CME
+MCO
+SPGI
+V
+MA
+AXP
+COF
+USB
+PNC
+TFC
+ALLY
+BNY     # was BK: no bar under that symbol after 20 May 2026 on the sip feed
+PYPL
+COIN
+HOOD
+
+# --- Healthcare (biotech deliberately excluded — see header) ---
+JNJ
+LLY
+MRK
+PFE
+ABBV
+BMY
+UNH
+CVS
+CI
+ELV
+HCA
+MDT
+ABT
+SYK
+BSX
+ISRG
+DXCM
+EW
+IDXX
+MCK
+ZTS
+
+# --- Industrials and transport ---
+BA
+GE
+CAT
+DE
+HON
+MMM
+RTX
+LMT
+NOC
+GD
+LHX
+EMR
+PH
+CMI
+UNP
+ODFL
+DAL
+UAL
+FDX
+UPS
+URI
+WM
+CARR
+PWR
+
+# --- Energy ---
+XOM
+CVX
+COP
+EOG
+OXY
+VLO
+MPC
+DVN
+FANG
+SLB
+HAL
+BKR
+OKE
+EQT
+
+# --- Materials ---
+APD
+SHW
+ECL
+DOW
+LYB
+NUE
+STLD
+FCX
+NEM
+
+# --- Utilities ---
+NEE
+DUK
+SO
+AEP
+CEG
+VST
+
+# --- REITs ---
+AMT
+PLD
+EQIX
+SPG
+O
+PSA
