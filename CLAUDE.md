@@ -340,7 +340,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4654 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4655 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9109,11 +9109,16 @@ two, two after a second press, which shows one sentence and not two). The MSFT
 authority test reads the frozen copy under its digest.
 
 **Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
-1.56.1, on the final tree): 4654 tests collected; the full suite 4620 passed and 34 environment-gated skips in 24 m 58 s (run in the mutation worktree, which mirrors the tree byte for byte, the mirror checked by the diff's digest);
-`tests/test_freeze_validation_cases.py` 32; the eight touched Python test files
+1.56.1, on the final tree): 4655 tests collected; the full suite at `db1e3ac2`
+-- the tree before the strays' sort below, which changed one tool, its test
+file and this file -- 4620 passed and 34 environment-gated skips in 24 m 58 s
+(run in the mutation worktree, which mirrors the tree byte for byte, the mirror
+checked by the diff's digest), the final tree's run recorded below when it has
+finished;
+`tests/test_freeze_validation_cases.py` 33; the eight touched Python test files
 (`test_freeze_validation_cases`, `test_publish_dashboard`, `test_docs`,
 `test_workflows`, `test_reader_request_v2`, `test_secret_scan`,
-`test_discovery_grading`, `test_findings_page`) 298 with the count line at 4654;
+`test_discovery_grading`, `test_findings_page`) 299 with the count line at 4655;
 `python tools/freeze_validation_cases.py --check` current and under
 `python -I -S`; `python tools/make_fixture.py --check` 13 fixtures current (no
 record moved); continuity 137; the `historical` suite 124/124 with
@@ -9133,7 +9138,7 @@ as before, from the frozen bytes.
 
 **Mutation passes**, the tree never written. Python, each mutant in the
 mutation worktree and judged by the whole test files naming its rule:
-thirty-four die and one is moot -- the tool's ticker check, its
+thirty-five die and one is moot -- the tool's ticker check, its
 conflicting-digest check, an existing different copy overwritten, the source
 digest unchecked, `check()` ignoring an unnamed file and comparing no bytes,
 the file bound dropped, a path outside its record admitted, the git fallback
@@ -9142,7 +9147,7 @@ linked copy, `freeze()` counting one as a copy, the walk ignoring a linked
 directory or following links, the frozen directory itself a link, a direct
 write in place of the temporary file, the temporary file left behind on a
 failed replace, the walk restricted to `*.json`, `check()` raising on an
-unreadable copy; the publisher skipping the digest, swallowing a missing file,
+unreadable copy, the strays' order left to the filesystem; the publisher skipping the digest, swallowing a missing file,
 serving a study it cannot, refusing an empty case list and not extending the
 inventory; the scanner's frozen path removed, widened to every file in the
 case directory, to a record id of forty or more characters, to upper-case hex
@@ -9208,6 +9213,16 @@ sentence named seven; the draft described `94df35ad` while the branch stood at
 suite's header, the reader test's comment) stated tonight's prune as a past
 event on a tree whose archive still carries both records, and say "leaves" and
 "drops" now; and "six mutants" introduced a list of five.
+
+**CI found what the sandbox had not.** The pytest job on `36a51c8b` failed one
+test, 4648 passed: `check()` reported the files the study does not name in the
+order the filesystem listed them, and the runner listed the lookalike directory
+before the case's own, where this sandbox lists them the other way round -- the
+shape this file names worst, in a test's expected order. The strays are
+collected and reported in path order now, whatever order the walk yields; a
+test drives the walk in reverse and holds the report to that order, and the
+symbolic-link test's expectation moved to the same order. The mutant that drops
+the sort dies in both tests; the control (a comment) passes 33.
 
 **Keep / fix / defer / omit.** Keep: the study's digests are the authority; a
 frozen copy is read under them or not at all, and the rolling archive is never

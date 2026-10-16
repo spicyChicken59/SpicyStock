@@ -197,22 +197,26 @@ def check(root: Path) -> list[str]:
                 problems.append(f"{FROZEN_DIR}/{rel}: not the study's bytes")
     # Everything else under the directory is named: a file the study does not
     # name, and any link at all, whether to a file, to a directory or to
-    # nothing. The walk never follows a link.
+    # nothing. The walk never follows a link, and the strays are reported in
+    # path order whatever order the filesystem lists them in (CI's runner
+    # listed a later directory first; the sandbox did not).
+    strays: list[tuple[str, str]] = []
     if frozen.is_dir():
         for dirpath, dirnames, filenames in os.walk(frozen, followlinks=False):
             here = Path(dirpath)
-            for name in sorted(dirnames):
+            for name in dirnames:
                 if (here / name).is_symlink():
                     rel = (here / name).relative_to(frozen).as_posix()
-                    problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a directory")
-            for name in sorted(filenames):
+                    strays.append((rel, f"{FROZEN_DIR}/{rel}: a symbolic link, not a directory"))
+            for name in filenames:
                 path = here / name
                 rel = path.relative_to(frozen).as_posix()
                 if path.is_symlink():
                     if rel not in files:
-                        problems.append(f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy")
+                        strays.append((rel, f"{FROZEN_DIR}/{rel}: a symbolic link, not a copy"))
                 elif rel not in files:
-                    problems.append(f"{FROZEN_DIR}/{rel}: not named by the study")
+                    strays.append((rel, f"{FROZEN_DIR}/{rel}: not named by the study"))
+    problems.extend(problem for _, problem in sorted(strays))
     return problems
 
 

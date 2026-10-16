@@ -317,6 +317,36 @@ def test_check_names_a_missing_copy_a_drifted_copy_and_a_file_the_study_does_not
     ]
 
 
+def test_strays_are_named_in_path_order_whatever_order_the_filesystem_lists(tmp_path, monkeypatch):
+    """CI's runner listed the lookalike directory before the case's own, so the
+    order of `check()`'s strays followed the filesystem and the test above
+    failed there and passed here. The walk is driven in reverse here and the
+    report must still read in path order."""
+    study, archive = synthetic()
+    root = write_root(tmp_path, study, archive)
+    fz.freeze(root)
+    frozen = root / "docs" / fz.FROZEN_DIR
+    (frozen / f"{RECORD}/notes.json").write_bytes(b"{}")
+    (frozen / f"{RECORD}/burst-CRL.tmp").write_bytes(b"left behind")
+    (frozen / "README").write_bytes(b"not a case file")
+    (frozen / ("b" * 40)).mkdir()
+    (frozen / ("b" * 40) / "record.json").write_bytes(archive[f"{RECORD}/record.json"])
+    real_walk = fz.os.walk
+
+    def reversed_walk(top, **kwargs):
+        for dirpath, dirnames, filenames in real_walk(top, **kwargs):
+            dirnames.sort(reverse=True)
+            filenames.sort(reverse=True)
+            yield dirpath, dirnames, filenames
+
+    monkeypatch.setattr(fz.os, "walk", reversed_walk)
+    assert fz.check(root) == [
+        f"{fz.FROZEN_DIR}/README: not named by the study",
+        f"{fz.FROZEN_DIR}/{RECORD}/burst-CRL.tmp: not named by the study",
+        f"{fz.FROZEN_DIR}/{RECORD}/notes.json: not named by the study",
+        f"{fz.FROZEN_DIR}/{'b' * 40}/record.json: not named by the study",
+    ]
+
 def test_a_symbolic_link_is_never_a_frozen_copy(tmp_path):
     """A link into the archive passes every byte comparison today and dangles
     the night the archive drops the record, so check() names a link wherever
@@ -337,9 +367,9 @@ def test_a_symbolic_link_is_never_a_frozen_copy(tmp_path):
     linked.write_bytes(archive[f"{RECORD}/burst-CRL.json"])
     (frozen / f"{RECORD}/dangling.json").symlink_to(root / "nowhere.json")
     (frozen / "linked-record").symlink_to(root / "docs" / fz.ARCHIVE_DIR)
-    assert fz.check(root) == [
-        f"{fz.FROZEN_DIR}/linked-record: a symbolic link, not a directory",
+    assert fz.check(root) == [  # strays in path order, the case directory's before the top-level link
         f"{fz.FROZEN_DIR}/{RECORD}/dangling.json: a symbolic link, not a copy",
+        f"{fz.FROZEN_DIR}/linked-record: a symbolic link, not a directory",
     ]
     assert fz.freeze(root) == {rel: "kept" for rel in archive}, "the walk never follows a link"
     # a record directory that is a link, and the frozen directory itself
