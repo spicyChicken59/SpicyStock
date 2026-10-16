@@ -45,6 +45,22 @@
 #            run 34035518295 on 6 Sep 2026, read off its log's coverage
 #            line: 228 requested, 228 answered with bars, none without a
 #            bar for the session, none with no bar at all.
+#   Found by the nightly stale tolerance in October 2026, read off
+#   run.input_tolerance.endings, run.stale_followup and the source-recovery
+#   receipt rather than assumed:
+#     WBD -- no bar after 5 Oct 2026 on the sip feed. The 13, 14 and 15 Oct
+#            2026 publications each name it as the one stale frame ending
+#            past the five-session bound (every other stale frame ended on
+#            the previous session), so it alone kept each night's coverage
+#            gap from being tolerated; the 15 Oct follow-up read it
+#            still_missing at every session from 8 to 14 Oct and the
+#            source-recovery receipt still_stale. It was absent from the
+#            live Nasdaq directory on all three nights (seed_added 1), so
+#            the seed alone was asking for it. Press reports put the close
+#            of Paramount Skydance's all-cash acquisition at 6 Oct 2026 with
+#            the common stock's Nasdaq delisting requested; the SEC merger
+#            proxy (DEFM14A) describes the deal, and the closing filing
+#            itself was not read from the sandbox.
 #
 # FORMAT
 #   One ticker per line, A-Z, 1 to 5 characters. Blank lines are ignored.
@@ -60,7 +76,6 @@ NFLX
 DIS
 CMCSA
 CHTR
-WBD
 TMUS
 T
 VZ
