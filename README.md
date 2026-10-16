@@ -1561,6 +1561,17 @@ clipboard (Chromium shares it between contexts), one after another; lane B
 holds the self-contained modules beside them. In one line they took 14 m 54 s
 of the CI page job's fifteen minutes. `--only` still runs the suites it names.
 
+A browser check is held to a slow runner. It reads the page's state in the
+task of the action that changes it (`locator.evaluate()` clicking and reading
+in one call, a listener added for one event), or it waits on the condition it
+asserts (`waitForFunction` with a bound), never on the clock: the page moves
+on its own between two Playwright calls -- a playback tick, the 30-second
+re-reading of the clock, an observer delivery, a Web Lock granted before a
+store write, a route the test holds -- and on a loaded runner the wall clock
+between those calls is unbounded. A fixed `settle()` pause may follow a check;
+it never decides one. A check that cannot be written that way is a check that
+cannot be trusted, and is rewritten or removed.
+
 One tool is not a check but a reading. `python tools/entry_limit_study.py
 [record.json ...]` puts three readings of every burst in an already-written
 record beside each other: the **retired** fixed ceiling (the close +4%,
