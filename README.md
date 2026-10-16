@@ -1709,7 +1709,15 @@ fetched; missing frames retain dated real observations),
 `app`, and `_contract`, which names every top-level key in a sentence.
 `rules` is every module's constants nested by family, and `app.rules_version`
 is a digest of that block, so two records produced by different numbers can
-never be read as one. `docs/picks.json` (schema 2 for new writes) is every published plan: ticker,
+never be read as one. `report.validate()` names the malformed shapes it
+checks and raises nothing else through its caller: `tests/test_record_shapes.py`
+substitutes a string, a list and an integer for every top-level key, every
+child of a top-level object, every grandchild and great-grandchild under
+`run`, and the first item of every top-level list with each of its children,
+and holds the validator to a named refusal or a pass and nothing else. A
+substitution it does not hold is a pass (`closest_miss`, `generated`,
+`schema_version` and `scorecard` are read by the page and checked by nothing
+here), never an exception. `docs/picks.json` (schema 2 for new writes) is every published plan: ticker,
 session, kind, the entry zone or trigger, the stop, the shares, the targets,
 the ticket. It holds nothing about what anyone did with them.
 

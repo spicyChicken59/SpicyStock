@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4681 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4700 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9408,3 +9408,194 @@ bar as a signal.
 **Not claimable:** a live night. The first evening after the merge writes the
 first `run.seed_stale`; read its `membership`, `names` and sentence beside the
 chip, and record them here.
+
+## Checkpoint, 16 Oct 2026 — PR #176 accepted; the validator names a shape instead of raising
+
+**PR #176, accepted.** Merged as `3117f46a` on `main` with a merge commit over
+`1e66929c`. The head `08af3ce5` passed all seven checks (Tests run
+38922240762: pytest 4681 passed in 13 m 16 s on Python 3.12.15, page, the gate,
+the native central case 15:14–15:40 UTC and stress 15:14–16:05; Secret scans
+38922240759 and 38922186413). Publisher 38929254638 waited for `app.js` and
+printed *Verified: every one of the 47 public files matches committed main* at
+16:07:26 UTC; Pages 38929297514 deployed (38929255024 cancelled as superseded,
+as every merge does); the merge commit's own Secret scan 38929254751 passed and
+its Tests run 38929254778 is green (pytest 16:06–16:26 UTC, page 16:06–16:21;
+the native cases skipped by the gate, as a merge's are). The first `run.seed_stale` is tonight's publication's, the
+first evening under the retired seed (WBD left `data/symbols.txt` at 07:20 UTC,
+after the 15 October publication ran); read its `membership`, `names` and
+sentence beside the chip and `seed_added`, and record them in the next
+checkpoint.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `3117f46a`, pushed as **PR #177**. Four modules move by a guard
+or two (`src/inputs.py`, `src/followup.py`, `src/report.py`,
+`src/universe.py`), one test file is new, README and this file are swept; no
+rule moves, so
+`rules_version` stays and the 13 page fixtures and every cascaded generator
+are untouched. `docs/data.json`, `docs/picks.json`, the compact reader, every
+receipt, the history, the evidence objects, the quality ledger, the workflows
+and the vendored design system are untouched; no run, mail, dispatch,
+provider call or credential. `.env.example` was reviewed: nothing here is
+configuration.
+
+**What the probe found.** The #176 review had found `inputs.record_faults()`
+raising through `report.validate()` on a `run.universe` or a selection that
+was not an object, and that pull request named both. The standing rule says to
+sweep for the next instance before calling the class closed, so a probe
+substituted a string, a list and an integer at every top-level key of the
+`thin` record, every child of a top-level object and every grandchild under
+`run`, and held `validate()` to a `ValueError` or a pass. Six paths raised
+something else (fourteen substitutions, over five lines in four functions),
+each the class this file names most -- a check that names a fault, followed by
+another that indexes into the same value: `run.problems` as `5` or
+`True` (`followup.faults()` iterated it after `validate()` had named it not a
+list: `TypeError`); `run.timing` as `'x'` (`sessions.record_faults()` read
+`.get` off it beside a calendar block, an `AttributeError` its own `except`
+does not catch); `observations.symbols`
+as `'x'` (`validate()` named it not an object, then called `.items()` on it);
+`run.coverage.acceptance` as `'x'` (`inputs.record_faults()` read its status);
+`run.coverage.benchmark_added` or `run.universe.size` as `'x'` (added to an
+integer). Every retained publication and fixture carries the right shapes, so
+no record ever hit one; a half-written record would have, after every paid
+call was made, and the page's own shape check would have had no fault to
+print.
+
+**The guards.** Each site asks the type first and names the shape in its own
+words: `run.problems` that is not a list is named by `validate()` alone and
+`followup.faults()` reads no kinds off it; `run timing is not an object beside
+its calendar` is named by `validate()` itself, which then does not ask
+`sessions.record_faults()`; `observations.symbols` that is not an object is
+named once and not walked; `coverage acceptance is not an object`; `universe
+size or benchmark count is not an integer` (`type(...) is int`, so a `True` is
+refused too). A fault is appended or returned, never raised, and every other
+clause of each function is unchanged.
+
+**The full suite found what the focused runs could not.** The timing guard was
+first written where the read is, two lines in `sessions.record_faults()`, and
+the focused files passed. The full suite
+in the worktree copy then returned 5 failed, 4294 passed, 33 skipped and 362
+errors in 27 m 15 s, every error one assertion: `src/sessions.py` is one of
+the historical delivery proof's `required_source_paths`
+(`tools/historical-delivery-compatibility.json`, beside `breadth`, `quality`
+and `scans`), pinned by SHA-256 in the accepted delivery's receipt, and the
+guard's two lines moved its digest from `aea32502…` to `0fadc3b4…`; the
+benchmark gate's five failures read the same digest. This file already records
+the class for `tests.yml` (the findings checkpoint: 363 binding tests red on an
+edit). The pinned module is byte-identical to `main` again, and `validate()`
+names the shape before it asks the module; nothing of the proof's binding is
+touched, and a change to any of those four `src` modules is a change to the
+delivery proof, which this loop does not make.
+
+**The review, worked, and the three more it found one level deeper.** A
+workflow by execution over the pushed tip `de884a5f`, three lenses (a deeper
+fuzz, the guards' semantics against `main`, the words against the code), each
+finding meant for two skeptics, with each finder in its own worktree. The
+deeper fuzz walked where the committed one did not -- list items and
+great-grandchildren under `run` -- and found three more raises, each
+reproduced here before it was touched: `bursts[i].ticker` as a list or an
+object (the validator added it to a set: `TypeError`), and so a `trades[]` or
+`beyond_cap[]` element asked of that set; `run.coverage.sessions.
+latest_bar_dates` as a string (`inputs.faults()` read `.values()` inside an
+`except` that named `KeyError`, `TypeError` and `ValueError` and not
+`AttributeError`); and `run.universe.selection.exclusions` the same way in
+`universe.selection_faults()`. The semantics lens confirmed by execution that
+every committed record -- the 13 page fixtures, `docs/data.json`, the retained
+grading records -- validates identically at the tip and at `main`, that
+`run.universe.size` and `run.coverage.benchmark_added` are plain integers in
+every retained record (so `type(...) is int` refuses nothing the run writes),
+and that each guard revert dies in its named case and in the fuzz; and it
+found one regression of fault TEXT: on `main` a wrong calendar beside a
+non-object timing named the calendar (`sessions.record_faults()` checks the
+calendar before it reads the timing), and the first guard, by not asking that
+module, masked it behind the shape fault. Fixed: `validate()` names the shape
+and then asks the module over an empty timing block for its calendar faults
+alone, so a doubly malformed record names both; the ticker is held to a string
+before the set is asked and a `trades`/`beyond_cap` element to a string before
+the set is searched; the two `except` tuples name `AttributeError`, as the
+file's other two already did. `src/universe.py` is not a pinned source
+(`breadth`, `quality`, `scans`, `sessions` are), so it could be edited. The
+words lens re-derived both digests, the pinned-source list, the test counts,
+the fault strings and the unheld keys and found them right, and found three
+sentences saying more than the evidence: README's "a block that is not an
+object, a count that is not an integer or a list that is not a list is a fault
+by name" (a `scorecard` that is a string passes; it says now what the fuzz
+proves and names what passes); "six substitutions" where the probe's walk gave
+fourteen substitutions on six paths; and a fuzz bound written as "less the
+shapes a path already had" while the code subtracted a constant three, with no
+slack left on the `full` night -- the count is exact now. Two figures of the
+first draft named no files and are named or dropped above.
+
+**The guard that cannot be deleted quietly.** `tests/test_record_shapes.py`
+holds the two fixtures passing as committed; each of the eleven paths that once
+raised (the six above, #176's two, the review's three) to its named fault, the
+two list cases on the `full` night, which alone carries trades and a
+beyond-cap list; the doubly malformed record naming both faults; and the fuzz
+itself: over every top-level key, every child of a top-level object, every
+grandchild and great-grandchild under `run`, and the first item of every
+top-level list with each of its children, on the `thin` and `full` records --
+`_paths()`, held to reach a fourth key and a list -- each of `'x'`, `[1]` and
+`5` is substituted in place and restored, `validate()` is held to a named
+refusal or a pass, a raise of any other kind failing with the path and the
+shape in its message, the count of substitutions held exactly (three per path
+less the values that already were a shape), refused more than passed, and the
+record held equal to a copy taken before the walk, so the validator is shown
+to write nothing into it. Recorded, not fixed: `closest_miss`, `generated`,
+`schema_version` and `scorecard` substituted whole with a string pass
+`validate()`, which never indexes into them; the fuzz counts them among the
+passes, and a check on any of them is a change to what the record promises,
+not to this guard.
+
+**Measured** (this sandbox, Python 3.11.15): the full suite on the pushed tip
+`de884a5f`, in a worktree copy whose diff hashed equal to the tree's, 4660
+passed and 34 environment-gated skips in 28 m 07 s beside the running review
+(4694 collected), and on the final tree `9d924572` 4666 passed and 34
+environment-gated skips in 26 m 40 s (4700 collected);
+`tests/test_record_shapes.py` 19 passed in 33 s (the fuzz substitutes in
+place and restores, so its 542 and 570 paths cost under a minute);
+`tests/test_report.py`, `test_inputs.py`, `test_universe.py`,
+`test_followup.py` and `test_docs.py` 463 passed in 4 m 23 s (on the first
+tip `de884a5f`, `test_record_shapes`, `test_report`, `test_inputs`,
+`test_followup` and `test_docs` 359); `tests/test_historical_execution_guard.py`,
+`test_historical_benchmark_gate.py`, `test_historical_delivery_binding.py`,
+`test_historical_native6_recovery.py`, `test_historical_incident_recovery.py`,
+`test_historical_recovery_integration.py`, `test_historical_execution.py` and
+`test_historical_workflow.py` 584 passed and 1 skipped on the moved guard,
+where the first tree had them erroring; `tests/test_docs.py` 40/40 with the
+count line at 4700;
+`python tools/make_fixture.py --check` 13 fixtures current (`rules_version`
+unchanged); `git diff --check` clean; gitleaks 8.24.3 from inside a scratch
+root holding the changed files and the repository's config: no leaks. No
+record, rule or page file moved, so the fixture checks, the chart check and
+the smoke are CI's, recorded on the PR.
+
+**Mutation passes**, each mutant in the worktree copy, the tree never
+written, judged by the whole new test file. Over the first tree, the six
+guards reverted one at a time -- the follow-up iterating `problems or []`, the
+timing guard dropped (`if False:`), the symbols walk unguarded, the acceptance
+read unguarded, the arithmetic unguarded, and #176's universe guard dropped --
+all die, each in the case naming it AND in the fuzz on both fixtures; an
+earlier pass, over an earlier draft of the fuzz, had killed four of them in
+the named case alone, the fuzz reaching none of the four, which is why it
+walks past the top level now. Over the final tree, fifteen runs, thirteen
+mutants and two controls: those six again,
+the calendar probe dropped (dies in the doubly malformed record's test alone,
+as it should), the ticker guard dropped, the `trades`/`beyond_cap` guard
+dropped (dies on the `full` night's two list cases and its fuzz), each
+`except` narrowed back, and two mutants of the fuzz's own walk -- the
+great-grandchildren dropped, the lists skipped -- each dying in the fuzz's
+assertion that it reached a fourth key and a list. Thirteen die; the two
+controls (a word in the follow-up's comment, a word in the validator's)
+survive at 19 passed.
+
+**Keep / fix / defer / omit.** Keep: a validator names and never raises; a
+block is read after its shape is asked, one level in, and the fuzz is what
+keeps the next guard from being forgotten. Fix if it bites: the fuzz walks the
+`thin` and `full` records only, so a block those records do not carry (a
+closed night's, a legacy one's) is fuzzed only by the cases that name it.
+Defer: the four unheld top-level keys above. Omit: a fuzz over random shapes,
+or over every grandchild of every block, which would run minutes for the same
+answer.
+
+**Not claimable:** tonight's evening publication, the first under the retired
+seed and the first with a `run.seed_stale` block; a morning or research
+observation; any trading edge.
