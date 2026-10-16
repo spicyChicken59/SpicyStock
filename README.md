@@ -687,8 +687,11 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    Schema v4 migrates the existing Following key with preserved backups and
    unknown fields. Page writes use Web Locks on HTTPS to serialize tabs;
    conflicts follow lock acquisition order and removed items are not resurrected
-   by stale edits. Without Web Locks the saved list is readable but writes fail
-   explicitly. No cross-device synchronization is provided.
+   by stale edits. A save granted after another tab's write has already redrawn
+   this tab's detail block finishes on the block the document holds, so the
+   block and the shelf show the save the store has. Without Web Locks the saved
+   list is readable but writes fail explicitly. No cross-device synchronization
+   is provided.
    **Find earlier setup** searches a public, source-addressed catalog on demand.
    It retains 21 calendar days, up to 84 distinct publications and 10,000 signals
    per publication, within 128 MiB. Originals load only when selected; chart
