@@ -1793,6 +1793,26 @@ async function checkFollowStates(browser, base, full, next) {
   const both = await a.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => [x.ticker, x.reference_shares]), FOLLOW_KEY);
   eq('an edit in one tab keeps the other tab’s follow', both.length, 2);
   eq('and applies to its own', both.find((r) => r[0] === trade)[1], 9);
+  // a save queued in one tab while the other tab's save is granted first: the
+  // storage event redraws this tab's detail block before its own grant comes,
+  // and the handler must finish on the block that is in the document (on the
+  // page before the fix: a throw on the detached block, the block left on Save
+  // setup over a setup the store held, the shelf short by one). The lock is
+  // held by the test and released only once both saves are queued, so the
+  // order is the lock's and never the runner's.
+  const third = full.bursts.map((x) => x.ticker).find((t) => t !== trade && t !== other);
+  await go(b, `#/explore/bursts/${third}`);
+  await a.click('#detail .ss-follow button[data-follow-action="remove"]');
+  await a.waitForFunction(() => (document.querySelector('#detail .ss-follow') || { dataset: {} }).dataset.follow === 'not-following', null, { timeout: 5000 }).catch(() => {});
+  await a.evaluate((k) => { window.__release = null; navigator.locks.request(k, () => new Promise((r) => { window.__release = r; })); }, FOLLOW_KEY);
+  await a.waitForFunction(() => typeof window.__release === 'function', null, { timeout: 5000 });
+  await a.click('#detail .ss-follow button[data-follow-action="add"]');
+  await b.click('#detail .ss-follow button[data-follow-action="add"]');
+  await a.evaluate(() => { window.__release(); });
+  await b.waitForFunction(([k, t]) => { try { return JSON.parse(localStorage.getItem(k)).items.some((x) => x.ticker === t) && document.querySelector('#detail .ss-follow').dataset.follow === 'following' && document.querySelectorAll('#following .ss-followed').length === 3; } catch (e) { return false; } }, [FOLLOW_KEY, third], { timeout: 5000 }).catch(() => {});
+  eq('a save granted after another tab’s finishes on the block in the document',
+    [await attr(b, '#detail .ss-follow', 'data-follow'), await count(b, '#following .ss-followed'), (await b.evaluate((k) => JSON.parse(localStorage.getItem(k)).items.map((x) => x.ticker), FOLLOW_KEY)).sort()],
+    ['following', 3, [trade, other, third].sort()]);
   eq('two-tab page errors', twoErrors, []);
   await ctx.close();
 
