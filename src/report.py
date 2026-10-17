@@ -916,6 +916,20 @@ def _bursts_by_ticker(data: dict) -> dict[str, dict]:
     return {b.get("ticker"): b for b in data.get("bursts", []) if isinstance(b, dict) and b.get("ticker")}
 
 
+def _trade_order(burst: dict) -> str | None:
+    """The order line a trade card prints, or None: one rule for the card and
+    for the broker's part-fill sentence that follows the block."""
+    plan = burst.get("plan") if isinstance(burst.get("plan"), dict) else {}
+    return _text(plan.get("order_line"))
+
+
+def _alert_order(row: dict) -> str | None:
+    """The order line an alert row prints -- its own field first, then its
+    plan's -- or None; the same rule for the row and the part-fill sentence."""
+    plan = row.get("plan") if isinstance(row.get("plan"), dict) else {}
+    return _text(_first(row.get("order_line"), plan.get("order_line")))
+
+
 def _trade_block(burst: dict, breadth: dict | None) -> str:
     plan = burst.get("plan") if isinstance(burst.get("plan"), dict) else {}
     grade, score = _text(burst.get("grade")), _num(burst.get("score"))
@@ -934,7 +948,7 @@ def _trade_block(burst: dict, breadth: dict | None) -> str:
     position = _money(plan.get("position_usd"))
     if position:
         facts.append(f"Position {esc(position)}")
-    order = _text(plan.get("order_line"))
+    order = _trade_order(burst)
     reason = _text(_get(burst, "claude", "reason"))
     parts = [f'<div style="{_S_CARD}">',
              f'<div><span style="{_S_TICKER}">{esc(burst.get("ticker"))}</span> &nbsp;{chip}</div>',
@@ -975,7 +989,7 @@ def _alert_row(row: dict) -> str:
     trigger = _price(_first(row.get("trigger"), plan.get("trigger")))
     stop = _price(_first(row.get("stop"), plan.get("stop")))
     shares = _int(_first(row.get("shares"), plan.get("shares")))
-    order = _text(_first(row.get("order_line"), plan.get("order_line")))
+    order = _alert_order(row)
     facts = [f"Trigger {esc(_show(trigger))}", f"Stop {esc(_show(stop))}",
              f"Shares {esc(_show(str(shares) if shares is not None else None))}"]
     setups = row.get("setups") if isinstance(row.get("setups"), list) else []
@@ -996,14 +1010,17 @@ def _alert_row(row: dict) -> str:
 #: reader, labelled apart: Fidelity's rule, that a one-triggers-the-other sell
 #: stop is released to the market only when the buy fills in full, and
 #: SpicyStock's advice for a part fill, which no Fidelity source read here
-#: states (knowledge/broker-fidelity.md). The ticket's own terms are the plan's
-#: record and name no broker, and provenance replays them, so this is printed
-#: beside them, never inside, and says that they assume a full fill. The page
+#: states (knowledge/broker-fidelity.md). The ticket's own terms, the plan's
+#: entry instruction and its dated schedule are the plan's record, name no
+#: broker and say the stop is attached at or live from the fill; provenance
+#: replays them, so this is printed beside them, never inside, and says that
+#: they assume a full fill. The page
 #: holds the same text in ``docs/app.js`` and the private handoff in
 #: ``docs/app-handoff-ui.js`` (each ``BROKER_PART_FILL``), and
 #: ``tests/test_docs.py`` holds the three equal.
 BROKER_PART_FILL = ("Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. "
-                    "SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, "
+                    "SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop "
+                    "is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, "
                     "place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, "
                     "confirm Fidelity accepts it on shares bought that day, "
                     "and check that no second sell stop remains for shares you do not hold.")
@@ -1166,7 +1183,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(f'<h2 style="{_S_H2}">Next-session orders</h2>')
     if trades:
         out.extend(_trade_block(b, data.get("breadth")) for b in trades)
-        if any(_text(_get(b, "plan", "order_line")) for b in trades):
+        if any(_trade_order(b) for b in trades):
             out.append(_part_fill_note())
     else:
         out.append(f'<p style="margin:0 0 12px">No orders for the next session.</p>')
@@ -1195,7 +1212,7 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
                    'if you hold nothing from this screener, nothing to do.</p>')
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')
     out.extend(_alert_row(r) for r in alerts)
-    if any(_text(_first(r.get("order_line"), _get(r, "plan", "order_line"))) for r in alerts):
+    if any(_alert_order(r) for r in alerts):
         out.append(_part_fill_note())
     if not alerts:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')

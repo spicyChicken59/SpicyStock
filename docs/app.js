@@ -1512,7 +1512,7 @@
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
-    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+    wrap.appendChild(partFillNote());
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,
@@ -1532,7 +1532,7 @@
       wrap.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:10px', text: 'what the ticket enforces, and what it leaves to you' }));
       wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
     }
-    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+    wrap.appendChild(partFillNote());
     return wrap;
   }
   function stopWords(plan) {
@@ -1670,11 +1670,14 @@
   }
   // Fidelity's rule for a ticket's attached stop -- the OTO sell stop is
   // released only when the buy fills in full -- and SpicyStock's advice for a
-  // part fill, each labelled (knowledge/broker-fidelity.md). Printed beside the
-  // record's own ticket terms and never inside them or a copied order;
+  // part fill, each labelled (knowledge/broker-fidelity.md). Printed through
+  // partFillNote() beside every order the page prints -- the ticket's terms,
+  // its entry instruction and its dated schedule, which say the stop is live
+  // from the fill -- and never inside them or a copied order;
   // report.BROKER_PART_FILL and the handoff's copy are held equal to it by
   // tests/test_docs.py.
-  const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
+  const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
+  const partFillNote = (extra) => el('p', { 'class': 'sc-hint ss-order__broker' + (extra ? ' ' + extra : ''), 'data-broker-part-fill': '', text: BROKER_PART_FILL });
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -1850,7 +1853,8 @@
   function pickReason(c) {
     if (c.stage === 'bursts') {
       const s = firstSentence(text(c.row.summary).replace(/^[A-Z0-9.\-]+:\s*/, ''));
-      return s || sentence(c.reason) || 'No summary recorded.';
+      // A ticket's reason is its order line: never a card's summary.
+      return s || (c.status === 'ticket' ? '' : sentence(c.reason)) || 'No summary recorded.';
     }
     const r = c.row, box = r.box || {};
     return (r.setups && r.setups.length ? r.setups.join(', ') + ' · ' : '') + (c.quiet ? 'also quiet · ' : '') + plain(r.quiet_days) + ' narrow-range days' + (isNum(box.low) && isNum(box.high) ? ' · box ' + usd(box.low) + '–' + usd(box.high) : '');
@@ -3039,7 +3043,7 @@
     // the ticket row prints a recorded order line, so the broker's rule and the
     // advice for a part fill sit under the table whenever one is printed
     if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line)))
-      wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+      wrap.appendChild(partFillNote());
     wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'Every value is the published record’s own, for ' + dateWords(run.session) + '. A marked row is one the two records differ on — it is not a verdict, and nothing here says which setup is better. Each chart keeps its own price scale and its own dates; the two are never drawn on one axis.' }));
     dlg.appendChild(wrap);
     function sync() {
@@ -3724,7 +3728,7 @@
             const historic = Object.assign({}, context, { bursts: [evidence.row], watchlist: { top: [], also_quiet: [] } });
             const c = buildModel(historic).byId['bursts:' + example.ticker]; c.signalSession = example.session;
             const preview = el('div', { 'data-study-original': example.ticker });
-            preview.appendChild(el('p', { text: 'Original decision: ' + statusWords(c.status)[0] + '. ' + c.reason + '. Rules ' + s.rules_version + '. Historical research only; no current order.' }));
+            originalStatus('Original decision: ', c, 'Rules ' + s.rules_version + '. Historical research only; no current order.').forEach((n) => preview.appendChild(n));
             preview.appendChild(el('p', { text: discoveryReason(evidence.row) }));
             preview.appendChild(el('p', { text: readerCoverage(evidence.row).detail }));
             preview.appendChild(el('ul', null, independentWaitReasons(c, historic).map(t => el('li', { text: t }))));
@@ -3806,7 +3810,7 @@
             const previous = SCStock.follow.find(SCStock.follow.identity(setup));
             if (previous && ((previous.provenance || {}).record_id !== source.record_id) && ((previous.provenance || {}).published_at !== source.published_at)) setup.revision_id = source.record_id;
             const preview = el('div', { 'class': 'ss-history__preview' });
-            preview.appendChild(el('p', { text: 'Original status: ' + statusWords(c.status)[0] + '. ' + c.reason + '. Signal close ' + usd(c.row.close) + ' on ' + source.session + '. Historical research only.' }));
+            originalStatus('Original status: ', c, 'Signal close ' + usd(c.row.close) + ' on ' + source.session + '. Historical research only.').forEach((n) => preview.appendChild(n));
             preview.appendChild(el('p', { text: setup.snapshot.summary }));
             if (setup.snapshot.reader_reason) preview.appendChild(originalReader(setup.snapshot.reader_reason));
             if (recoveryPanel) recoveryPanel.dispose();
@@ -4123,7 +4127,8 @@
       box.appendChild(el('div', { 'class': 'ss-saved__archived', 'data-archived-order': '' }, [
         el('span', { 'class': 'sc-eyebrow', text: 'the instruction in that record' }),
         el('p', { 'class': 'ss-saved__order', text: '“' + (text(snap.instruction) || text(snap.order_line)) + '”' }),
-        el('p', { 'class': 'sc-hint', text: 'Recorded for ' + dateWords(item.session) + ' and shown as history. It is not an instruction for today, and no order can be placed from it here.' })
+        el('p', { 'class': 'sc-hint', text: 'Recorded for ' + dateWords(item.session) + ' and shown as history. It is not an instruction for today, and no order can be placed from it here.' }),
+        snap.status === 'ticket' ? partFillNote() : null
       ]));
     }
     return box;
@@ -4287,6 +4292,13 @@
     w.scrollTo(0, b.scroll);
   }
 
+  // An archived original's status sentence. A ticket's reason is its order
+  // line, so the part-fill note follows it.
+  function originalStatus(lead, c, tail) {
+    const nodes = [el('p', { 'data-original-status': '', text: lead + statusWords(c.status)[0] + '. ' + c.reason + '. ' + tail })];
+    if (c.status === 'ticket' && text(c.reason)) nodes.push(partFillNote());
+    return nodes;
+  }
   function entryInstruction(plan) {
     const s = ((plan || {}).exit_schedule || []).find((x) => x && (x.key === 'entry' || x.day === 1));
     return s && text(s.instruction) ? cap(sentence(s.instruction)) : '';
@@ -4385,6 +4397,9 @@
     ].concat(warnings.map(p => el('p', { text: p })))));
     section.querySelector('[data-item="why"]').appendChild(el('p', { id: 'candidate-guide', 'class': 'ss-reading-order' }, [
       d.createTextNode('Being listed or A-graded does not mean a ticket is available. '), help('discovery', 'Why listed?'), help('grade', 'Grade') ]));
+    // A ticket's need item prints its entry instruction, or its order line,
+    // whose sell stop is live from the fill: the part-fill note beside it.
+    if (c.status === 'ticket' && (entryInstruction(c.plan) || text((c.plan || {}).order_line))) section.querySelector('[data-item="need"]').appendChild(partFillNote());
     if (c.status !== 'ticket') {
       const reasons = independentWaitReasons(c, current);
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
@@ -4448,7 +4463,7 @@
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
       // the card's Copy order hands the ticket over, so Fidelity's rule is
       // read just above it and is never inside the copied lines
-      box.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+      box.appendChild(partFillNote());
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
@@ -4504,7 +4519,7 @@
     // the bar prints the order line itself, so Fidelity's rule and the advice
     // for a part fill follow it on a row of their own
     if (c.status === 'ticket' && offered && text(plan.order_line))
-      box.appendChild(el('p', { 'class': 'sc-hint ss-order__broker ss-action__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+      box.appendChild(partFillNote('ss-action__broker'));
     box.appendChild(followBlock(c));
     return box;
   }
@@ -4686,6 +4701,7 @@
         el('div', { 'class': 'sc-timeline__body' }, [el('p', { text: cap(s.instruction || '') })])
       ]))));
       else kids.push(el('p', { 'class': 'sc-hint', text: 'The plan carries no dated schedule.' }));
+      if (c.status === 'ticket' && entryInstruction(plan)) kids.push(partFillNote());
       const exits = (plan.exits || []).filter((x) => x && (x.when || x.rule));
       if (exits.length) {
         kids.push(el('div', { 'class': 'sc-eyebrow', text: 'the rules the schedule follows' }));
@@ -4824,7 +4840,7 @@
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
-    if (rows.length) sheet.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
+    if (rows.length) sheet.appendChild(partFillNote());
     const notes = acct.notes || [];
     if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }

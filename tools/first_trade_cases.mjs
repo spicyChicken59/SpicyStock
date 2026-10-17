@@ -94,6 +94,7 @@ export async function checkFirstTrade({ browser, base, open, check, eq, shotsDir
       await page.locator('[data-handoff-copy]').click();
       await page.waitForFunction(async () => (await navigator.clipboard.readText()) !== 'rehearsal sentinel');
       check(name + ': the readback copied names the draft and submits nothing', await page.evaluate(async () => { const text = await navigator.clipboard.readText(); return /BUY 1 AAPL · STOP LIMIT · trigger \$62\.10 · limit \$63\.22/.test(text) && /STOP \$60\.70/.test(text) && /places no order/.test(text); }));
+      check(name + ': the readback copied carries none of Fidelity\'s part-fill rule', await page.evaluate(async () => !/Fidelity’s rule|SpicyStock’s advice|part fill|fills only in part/i.test(await navigator.clipboard.readText())));
       await page.locator('[data-handoff-report] > summary').click();
       const reporting = requests.length;
 

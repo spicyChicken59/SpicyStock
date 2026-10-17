@@ -515,21 +515,26 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    beside those terms, never inside them (the plan's terms are its record,
    name no broker, and provenance replays them), two sentences, each
    labelled: Fidelity's rule, that the OTO sell stop is released only when
-   the buy fills in full, and SpicyStock's advice, that the ticket's stop
-   terms assume a full fill and a part fill needs one separate sell stop
-   for the shares that filled, once Fidelity is confirmed to accept it on
-   shares bought that day. Wherever an order is printed or copyable the
-   same text is printed beside it and never inside the copied lines: the
-   order block, a recorded ticket, the Burst's action card above its
-   **Copy order**, the setting-up action bar after its order line, the
+   the buy fills in full, and SpicyStock's advice, that wherever a ticket,
+   a plan or its dated schedule says the sell stop is attached at or live
+   from the fill it assumes a full fill, and a part fill needs one separate
+   sell stop for the shares that filled, once Fidelity is confirmed to
+   accept it on shares bought that day. Wherever an order is printed or
+   copyable the same text is printed beside it and never inside the copied
+   lines: the order block, a recorded ticket, the Burst's action card above
+   its **Copy order**, the setting-up action bar after its order line, the
    comparison under its facts when a compared ticket prints one, the
-   tickets sheet, the private handoff's readback and the mail's order and
-   alert blocks (`report.BROKER_PART_FILL`, held equal to the page's two
-   copies by `tests/test_docs.py`); before the window the next action
-   says the sell stop is part of the order and released on a full fill.
-   `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket and
-   labels each fact as Fidelity's words with its source, inferred,
-   unconfirmed or SpicyStock's advice); the
+   tickets sheet, a ticket's decision summary under its entry, the model
+   exit guidance under a ticket's dated schedule, a saved setup's archived
+   order when it was a ticket, an archived original's status when it was a
+   ticket, the private handoff's readback and the mail's order and alert
+   blocks (`report.BROKER_PART_FILL`, held equal to the page's two copies
+   by `tests/test_docs.py`); a pick card's summary never falls back to a
+   ticket's order line; before the window the next action says the sell
+   stop is part of the order and released on a full fill.
+   `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket,
+   the field names labelled unconfirmed, and labels each fact as Fidelity's
+   words with its source, inferred, unconfirmed or SpicyStock's advice); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
    line the buy row says so in the plan's own words, and a burst no limit

@@ -405,18 +405,35 @@ def test_the_page_reads_the_recovery_statuses_the_collector_writes():
 def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_as_one_text():
     """Fidelity's OTO releases the sell stop only on a full fill, so a part
     fill needs a separate stop. The text labels the two apart -- Fidelity's
-    rule, then SpicyStock's advice -- and says the ticket's stop terms assume
-    a full fill. The mail, the page's order block, recorded ticket, tickets
-    sheet, Burst card, setting-up action bar and comparison, and the private
-    handoff's readback print it, defined once in each file and used there;
-    the plan's own terms, which provenance replays, stay broker-neutral."""
+    rule, then SpicyStock's advice -- and says that wherever the record's own
+    words put the stop at the fill (the ticket's terms, the plan's entry
+    instruction, its dated schedule) they assume a full fill. The mail, the
+    page and the private handoff's readback print it, defined once in each
+    file: the page through one helper, partFillNote(), called at each of its
+    ten places (the order block, the recorded ticket, the comparison, the
+    Burst card, the setting-up action bar, the tickets sheet, the decision
+    summary's need, the model exits, the saved setup's archived order and an
+    archived original's status), the handoff at its readback. The plan's own
+    words, which provenance replays, stay broker-neutral."""
     rule, advice = report.BROKER_PART_FILL.split(" SpicyStock’s advice: ")
     assert rule.startswith("Fidelity’s rule: ") and "in full" in rule, rule
-    assert "assume a full fill" in advice and "Sell Stop Loss" in advice and "confirm Fidelity accepts it" in advice, advice
-    for name, uses in (("app.js", 6), ("app-handoff-ui.js", 1)):
+    assert "attached at or live from the fill, that assumes a full fill" in advice, advice
+    assert "Sell Stop Loss" in advice and "confirm Fidelity accepts it" in advice, advice
+    assert any("is live from the fill" in c for c in plan.dated_schedule.__code__.co_consts if isinstance(c, str))
+    assert "attached the moment the buy fills" in plan.ORDER_TERM_STOP
+    calls = re.compile(r"(?<![\w.])partFillNote\((?:'[\w-]+')?\)")
+    for name, sites in (("app.js", 10), ("app-handoff-ui.js", 1)):
         page = (ROOT / "docs" / name).read_text(encoding="utf-8")
-        assert re.findall(r"const BROKER_PART_FILL = '([^']+)';", page) == [report.BROKER_PART_FILL], name
-        assert page.count("text: BROKER_PART_FILL") + page.count("}, BROKER_PART_FILL)") == uses, name
+        code = "\n".join(line for line in page.splitlines() if not line.lstrip().startswith("//"))
+        assert len(re.findall(r"(?<![\w.])BROKER_PART_FILL\s*=", code)) == 1, name
+        assert re.findall(r"const BROKER_PART_FILL = '([^']+)';", code) == [report.BROKER_PART_FILL], name
+        # the definition and its one use, nothing else reads the name
+        assert len(re.findall(r"(?<![\w.])BROKER_PART_FILL\b", code)) == 2, name
+        if name == "app.js":
+            assert len(re.findall(r"const partFillNote = \(extra\) => el\('p', \{ [^}]*text: BROKER_PART_FILL \}\);", code)) == 1
+            assert len(calls.findall(code)) == sites, calls.findall(code)
+        else:
+            assert len(re.findall(r"\}, BROKER_PART_FILL\)", code)) == sites, name
     for term in (plan.ORDER_TERM_STOP, plan.ORDER_TERM_DAY, plan.ORDER_TERM_ABOVE_LIMIT, plan.ORDER_TERM_BELOW_SKIP):
         assert "Fidelity" not in term and "in full" not in term, term
 

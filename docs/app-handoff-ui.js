@@ -6,7 +6,7 @@
   // Fidelity's rule for the draft's attached stop and SpicyStock's advice for
   // a part fill, the text report.BROKER_PART_FILL and docs/app.js carry
   // (tests/test_docs.py holds the three equal).
-  const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
+  const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule says the sell stop is attached at or live from the fill, that assumes a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
   const labels = {
     submitted_quantity: 'Total shares submitted', submitted_at: 'Submission time',
     filled_quantity: 'Cumulative entry shares filled', average_price: 'Average entry fill price ($)', filled_at: 'Latest entry fill time',

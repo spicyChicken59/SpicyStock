@@ -23,11 +23,12 @@ screen it was read on.
 
 ## The ticket, field by field
 
-A stock's plan disclosure and the tickets sheet print a SpicyStock ticket in
-Fidelity's field order, with a copy button, and the plan disclosure reads it
-back in one line:
+A stock's plan disclosure prints a SpicyStock ticket in Fidelity's field order
+with a copy button and reads it back in one line:
 `Buy N SYM stop-limit: stop TRIGGER limit LIMIT, day · OTO sell N SYM stop-loss STOP GTC`.
-A Burst's action card carries the same ticket with its own **Copy order**. The
+The tickets sheet lists every offered ticket in the same field order, with no
+copy control; each row's ticker leads to that stock's plan. A Burst's action
+card carries the same ticket with its own **Copy order**. The
 Morning desk's private handoff is different: it copies a personal readback at
 the quantity you chose, with the protective sell listed as a separate line, and
 it is not in Fidelity's order-entry format; at Fidelity that sell is the OTO's
@@ -42,11 +43,19 @@ secondary order.
 | trigger | Stop Price | the ticket's trigger |
 | limit | Limit Price | the ticket's limit |
 | day | Time in Force | Day |
-| OTO | Conditional order | One-Triggers-the-Other (OTO) |
+| OTO | Trade Type, on the conditional trade ticket | One-Triggers-the-Other (OTO) |
 | then: sell | secondary Action | Sell, the same quantity |
-| then: stop-loss | secondary Order Type | Stop Loss (a stop-market order, never a stop limit: a gap through a limit would leave it unfilled) |
+| then: stop-loss | secondary Order Type | Stop Loss (SpicyStock's advice: a stop-market order, never a stop limit, because a gap through a limit would leave it unfilled) |
 | stop | secondary Stop Price | the ticket's stop |
 | GTC | secondary Time in Force | Good 'til Canceled |
+
+The field names are **unconfirmed**: no excerpt read here gives the current
+web or mobile ticket's field names. The values are SpicyStock's ticket. A dated
+search excerpt [7] says the conditional trade ticket defaults to a Contingent
+order and that its Trade Type drop-down selects another type, so OTO is looked
+for there; where the conditional ticket is on the current web and mobile
+screens is unconfirmed. The Day buy beside a Good 'til Canceled sell stop is
+item 6 below, on which the sources disagree.
 
 ## What Fidelity does with it
 
@@ -59,14 +68,20 @@ secondary order.
    primary order pending cancel may still fill after a delay and release the
    secondary. Inferred: a buy that fills in part leaves the shares that did fill
    with no stop, and if the rest of the buy fills later the secondary is
-   released for the whole quantity. SpicyStock's advice: the ticket's stop
-   terms assume a full fill; if the buy fills in part, place a separate Sell,
-   Stop Loss, Good 'til Canceled order for the filled shares at the ticket's
-   stop, confirm Fidelity accepts it on shares bought that day (unconfirmed,
-   below), and check that no second sell stop remains for shares you do not
-   hold (a late fill of the rest releases the OTO's own stop beside yours). The page, the private handoff and the mail
-   print this rule and this advice beside every order, each labelled as which
-   it is.
+   released for the whole quantity. SpicyStock's advice: wherever a ticket, a
+   plan or its dated schedule says the sell stop is attached at or live from
+   the fill, that assumes a full fill; if the buy fills in part, place a
+   separate Sell, Stop Loss, Good 'til Canceled order for the filled shares at
+   the ticket's stop, confirm Fidelity accepts it on shares bought that day
+   (unconfirmed, below), and check that no second sell stop remains for shares
+   you do not hold (a late fill of the rest releases the OTO's own stop beside
+   yours). The page prints this rule and this advice, each labelled, beside
+   every order it prints: the plan disclosure's ticket and its recorded copy
+   after the window, the tickets sheet, a Burst's action card, a setting-up
+   stock's action bar, the comparison, the decision summary's entry, the model
+   exits, a saved setup's archived order and an archived original's status.
+   The private handoff prints it in its readback, and the mail after each block
+   of orders.
 
 2. **A buy stop must be priced above the current market.** Fidelity's words
    [4]: buy stop loss and buy stop limit orders must be entered at a price
@@ -103,37 +118,59 @@ secondary order.
    9:30 AM ET (8:30 AM CT) open. SpicyStock's advice: if the buy has not filled
    by 9:00 AM CT, cancel it, unless its expiration was set to 10:00 AM ET.
 
-6. **Stops do nothing in extended hours.** Fidelity's words [8, 9]: limit and
+6. **A Day buy with a Good 'til Canceled sell stop: the sources disagree.**
+   A search summary of fidelity.com pages [4, 7, 18] says each order of an OTO
+   can have its own time in force (an OCO's two must match), and that a GTC
+   OTO is good for 180 days in all, so the secondary's life is shortened by the
+   time the primary took to fill. Another search summary, over mixed sites
+   [1, 3, 18], says an OTO's two orders must share one time in force.
+   Unconfirmed which holds on the current ticket. SpicyStock's advice: if the
+   ticket refuses a Day buy with a GTC sell stop, do not make the stop Day (it
+   would expire at the close and leave the shares without a stop overnight)
+   and do not make the buy GTC (it would outlive the entry window). Place the
+   buy alone, as the ticket's Day stop limit, and once it fills place a
+   separate Sell, Stop Loss, Good 'til Canceled order at the ticket's stop for
+   the shares that filled, as for a part fill (item 1).
+
+7. **Stops do nothing in extended hours.** Fidelity's words [8, 9]: limit and
    reserve orders are the only order types available in the pre-market and
    after-hours sessions, and good 'til canceled orders are not available in
    them. Inferred: neither leg of a ticket acts before the open or after the
    close.
 
-7. **Whole shares.** Fidelity's words [10]: fractional-share and dollar-amount
+8. **Whole shares.** Fidelity's words [10]: fractional-share and dollar-amount
    orders are market or limit orders, day only. Inferred: a stop limit with an
    OTO secondary needs a whole number of shares. A SpicyStock ticket is always
    a whole number of shares.
 
-8. **Settled cash.** Fidelity's words [11, 12]: a security bought without
+9. **Settled cash.** Fidelity's words [11, 12]: a security bought without
    sufficient settled funds and sold before it is fully paid for is a good faith
    violation, even if payment arrives before settlement; three good faith
-   violations in twelve months restrict the account to buying with funds on
-   hand (core balance, received deposits, settled sale proceeds) for 90 days.
-   The SEC's words [16]: US stocks settle one business day after the trade (T+1
-   since 28 May 2024). A ticket's stop can sell on the day the buy fills, so
+   violations in a 12-month period restrict the account to "purchasing
+   securities only when the customer has sufficient settled cash ... at the
+   time of purchase", for 90 calendar days [11]. Fidelity's words [19, 20]:
+   settled cash is the part of core cash that can buy and sell securities in a
+   cash account without a good faith violation, and uncollected deposits may be
+   left out "until the bank collection process clears, which is usually four
+   business days". The SEC staff's investor bulletin [16]: most US stock trades
+   settle one business day after the trade (T+1), for trades on or after
+   28 May 2024. A ticket's stop can sell on the day the buy fills, so
    SpicyStock's advice is to buy with settled cash only: the Morning desk asks
-   for settled cash and never reads it from the account. How long a new deposit
-   takes to count as funds on hand is unconfirmed.
+   for settled cash and never reads it from the account. How long a given
+   deposit takes to clear in the owner's account is unconfirmed: read the
+   account's settled-cash figure.
 
-9. **Costs.** Fidelity's words [13]: $0 online commission on US stocks; a sale
-   carries an activity assessment fee of $0.01 to $0.03 per $1,000. The SEC's
+10. **Costs.** Fidelity's words [13]: $0 online commission on US stocks.
+   Fidelity's words [10]: a sale carries an additional assessment fee of $0.01
+   to $0.03 per $1,000 of principal (read on the fractional-shares page; the
+   commissions page's own fee line was not read). The SEC's
    words [15]: the Section 31 fee on sales is $20.60 per million dollars from
    4 April 2026. FINRA's filing [17]: the trading activity fee is $0 from
    1 October to 31 December 2026 and the previous rates resume in January 2027.
    Enter the fees your confirmation shows in the private report's fee fields;
    SpicyStock never computes them.
 
-10. **Where.** Fidelity's words [14]: Active Trader Pro begins to be retired in
+11. **Where.** Fidelity's words [14]: Active Trader Pro begins to be retired in
     2027, Fidelity Trader+ replacing it. Whether the web ticket and the mobile
     app both offer a Stop Limit with an OTO secondary is unconfirmed.
 
@@ -142,6 +179,10 @@ secondary order.
 - The web ticket and the mobile app each offer Stop Limit with a conditional
   OTO secondary.
 - A Stop Limit is accepted as an OTO's primary order.
+- Where the conditional trade ticket is, and that its type selector is the
+  Trade Type drop-down.
+- An OTO accepts a Day primary with a Good 'til Canceled secondary (the
+  sources read here disagree; item 6 says what to do if it does not).
 - The price Fidelity compares a buy stop against before the open. A burst
   ticket's buy stop equals its last close, so if Fidelity compares against the
   close it refuses every burst ticket as written, and the ticket is not placed.
@@ -151,7 +192,8 @@ secondary order.
   of the day (the ticket's own terms assume so).
 - A sell stop on shares bought the same day is accepted.
 - The exact activity assessment fee on a given sale.
-- How long a new deposit takes to count as settled cash.
+- How long a given deposit takes to clear in the owner's account (Fidelity's
+  words say usually four business days).
 
 ## Sources (search-result excerpts; no page was opened)
 
@@ -170,5 +212,8 @@ secondary order.
 13. Fidelity, commissions: https://www.fidelity.com/trading/commissions-margin-rates
 14. Fidelity, Active Trader Pro transition: https://www.fidelity.com/investing/trading-platforms/active-trader-pro-transition
 15. SEC, Section 31 fee-rate advisory 2026-2: https://www.sec.gov/rules-regulations/fee-rate-advisories/2026-2
-16. SEC, T+1 settlement (press release 2024-62): https://www.sec.gov/newsroom/press-releases/2024-62
+16. SEC Office of Investor Education and Advocacy, investor bulletin "New T+1 settlement cycle – what investors need to know" (staff material, not a Commission statement): https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/new-t1-settlement-cycle-what-investors-need-know-investor-bulletin. The SEC press release https://www.sec.gov/news/press-release/2024-62 was seen as a link only; its text was not read and nothing here cites it.
 17. FINRA, rule filing SR-FINRA-2026-021: https://www.finra.org/sites/default/files/2026-09/SR-FINRA-2026-021.pdf
+18. Fidelity, conditional order types (learning center): https://www.fidelity.com/learning-center/trading-investing/trading/conditional-order-types
+19. Fidelity, account FAQ: https://www.fidelity.com/trading/faqs-about-account
+20. Fidelity, Active Trader Pro balances help: https://www.fidelity.com/products/atbt/help/ActiveTraderTools_Balances_Help.html

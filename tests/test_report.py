@@ -126,8 +126,9 @@ def test_the_mail_prints_fidelitys_part_fill_rule_once_after_each_block_of_order
     assert text.count(report.BROKER_PART_FILL) == 2, text
     first = text.index(report.BROKER_PART_FILL)
     second = text.index(report.BROKER_PART_FILL, first + 1)
-    assert text.index(ORDER_LINE) < first < text.index("Alerts — set these before the open"), text
-    assert text.index("Buy 40 WCH") < second, text
+    # directly after the trade blocks: before the budget sentence and the open plans
+    assert text.index(ORDER_LINE) < first < text.index("Model allocation") < text.index("Open model plans"), text
+    assert text.index("Alerts — set these before the open") < text.index("Buy 40 WCH") < second, text
 
 
 def test_the_mail_prints_no_part_fill_rule_where_no_order_is_printed():
@@ -171,6 +172,7 @@ def test_the_mail_prints_the_part_fill_rule_once_after_trades_whichever_of_them_
     text = _rendered(digest_html(build(**two)))
     assert text.count("Buy 69 XYZ") == 2, text            # both trades print their order line
     assert text.count(report.BROKER_PART_FILL) == 1, text
+    assert text.index(report.BROKER_PART_FILL) > text.rindex("Buy 69 XYZ"), text   # after the last of them
     # one trade with an order and one without: the one that prints an order brings the sentence
     mixed = _night(bursts=[_burst("XYZ"), _burst("DEF", plan={**_plan(), "order_line": None})],
                    trades=["XYZ", "DEF"], watchlist=quiet)
@@ -185,6 +187,7 @@ def test_the_mail_prints_the_part_fill_rule_once_after_alerts_however_many_carry
     text = _rendered(digest_html(build(**_night(trades=[], watchlist=two))))
     assert "Buy 40 WCH" in text and "Buy 40 QRS" in text, text
     assert text.count(report.BROKER_PART_FILL) == 1, text
+    assert text.index(report.BROKER_PART_FILL) > text.index("Buy 40 QRS") > text.index("Buy 40 WCH"), text
 
 
 def test_an_alert_whose_own_order_line_is_blank_prints_no_order_and_so_no_part_fill_rule():
@@ -198,6 +201,25 @@ def test_an_alert_whose_own_order_line_is_blank_prints_no_order_and_so_no_part_f
     assert report.BROKER_PART_FILL not in text, text
 
 
+def test_an_order_line_of_blank_space_or_not_text_is_no_order_and_brings_no_part_fill_rule():
+    """The card and the row print an order only when its line is text after
+    stripping, and the sentence follows the same rule (_trade_order,
+    _alert_order), so neither can print without the other."""
+    quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
+    for line in ("   ", 7):
+        plan = {**_plan(), "order_line": line}
+        text = _rendered(digest_html(build(**_night(bursts=[_burst(plan=plan), _miss()], watchlist=quiet))))
+        assert "Buy zone" in text and "Buy 69 XYZ" not in text and report.BROKER_PART_FILL not in text, (line, text)
+        own = {"top": [{"ticker": "WCH", "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 40, "order_line": line,
+                        "plan": {"order_line": "Buy 40 WCH stop 20.05 limit 20.30; OTO sell stop 18.90"}}],
+               "also_quiet": [], "counts": {"top": 1, "also_quiet": 0}}
+        text = _rendered(digest_html(build(**_night(trades=[], watchlist=own))))
+        # the row's own field is read first whatever it holds, so its plan's
+        # line is not printed and neither is the sentence
+        assert "No order" in text and "Buy 40 WCH" not in text, (line, text)
+        assert report.BROKER_PART_FILL not in text, (line, text)
+
+
 def test_a_closed_night_that_carries_the_standing_tickets_prints_the_part_fill_rule_beside_them():
     """A closed night carries the previous session's tickets verbatim, and the
     mail prints them, so the broker's rule follows them as on any night."""
@@ -208,13 +230,49 @@ def test_a_closed_night_that_carries_the_standing_tickets_prints_the_part_fill_r
     assert text.count(report.BROKER_PART_FILL) == 1 and text.index(ORDER_LINE) < text.index(report.BROKER_PART_FILL), text
 
 
+_VOID = {"area", "base", "br", "col", "hr", "img", "input", "link", "meta", "source", "wbr"}
+_HIDING = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\.0*)?\s*(?:;|$)"
+                     r"|(?:max-)?height\s*:\s*0(?:px)?\s*(?:;|$)|font-size\s*:\s*0(?:px)?\s*(?:;|$)"
+                     r"|line-height\s*:\s*0|mso-hide|clip\s*:|text-indent\s*:\s*-"
+                     r"|(?<![-\w])color\s*:\s*(?:#fff(?:fff)?|white|transparent)\b", re.I)
+
+
+class _Ancestry(HTMLParser):
+    """Each place a text is emitted, with the open elements above it."""
+
+    def __init__(self, needle: str) -> None:
+        super().__init__()
+        self.needle, self.stack, self.hits = needle, [], []
+
+    def handle_starttag(self, tag, attrs):
+        if tag not in _VOID:
+            self.stack.append((tag, dict(attrs).get("style") or ""))
+
+    def handle_endtag(self, tag):
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i][0] == tag:
+                del self.stack[i:]
+                break
+
+    def handle_data(self, data):
+        if self.needle in data:
+            self.hits.append(list(self.stack))
+
+
 def test_the_part_fill_rule_is_printed_where_a_reader_sees_it():
-    """The mail's paragraph is a plain muted one, never hidden from the reader."""
+    """The mail's paragraph is a plain muted one, and nothing above it --
+    no wrapper, no style of its own -- hides it from the reader."""
     html = digest_html(build(**_night()))
-    styles = re.findall(r'<p style="([^"]*)">' + re.escape(report.esc(report.BROKER_PART_FILL)) + "</p>", html)
-    assert len(styles) == 2, styles
-    for style in styles:
-        assert not re.search(r"display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0", style), style
+    expected = f'<p style="{report._S_MUTED}">{report.esc(report.BROKER_PART_FILL)}</p>'
+    assert html.count(expected) == 2, html
+    parser = _Ancestry(report.BROKER_PART_FILL)
+    parser.feed(html)
+    assert len(parser.hits) == 2, parser.hits
+    for stack in parser.hits:
+        assert stack[-1] == ("p", report._S_MUTED), stack
+        for tag, style in stack:
+            assert not _HIDING.search(style), (tag, style)
+    assert not _HIDING.search(report._S_MUTED), report._S_MUTED
 
 
 def test_no_ticket_lines_and_recorded_problems_bring_no_part_fill_rule():

@@ -55,15 +55,29 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       eq('readback focuses its heading after explicit preparation', await page.evaluate(() => document.activeElement.id), 'handoff-title');
       await page.locator('[data-handoff-readback] > summary').click();
       check('dated exit schedule is labelled archived and not resized', /Archived model exit schedule/.test(await page.locator('[data-handoff-readback]').textContent()) && /not resized to your personal draft or reported holdings/.test(await page.locator('[data-handoff-readback]').textContent()));
-      // counted over the whole desk and read as shown: a hidden note, or one
-      // printed anywhere in the desk but the readback, is a failure
-      eq('readback prints Fidelity\'s part-fill rule once, as the page defines it, shown, and nowhere else in the desk',
-        await page.locator('#morning-desk [data-broker-part-fill]').evaluateAll((els) => els.map((e) => [e.textContent, !!e.closest('[data-handoff-readback]'), e.checkVisibility()])),
+      // counted over the whole desk and read as a sighted reader gets it: a
+      // note hidden, transparent or clipped to a screen-reader-only box, or
+      // printed anywhere in the desk but the readback before its <pre>, fails
+      eq('readback prints Fidelity\'s part-fill rule once, as the page defines it, seen, and nowhere else in the desk',
+        await page.locator('#morning-desk [data-broker-part-fill]').evaluateAll((els) => els.map((e) => {
+          const r = e.getBoundingClientRect();
+          let seen = r.width > 2 && r.height > 2 && e.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+          for (let a = e; seen && a && a !== document.documentElement; a = a.parentElement) {
+            const cs = getComputedStyle(a); if (cs.clipPath !== 'none' || cs.clip !== 'auto' || parseFloat(cs.fontSize) < 6) seen = false;
+          }
+          let pre = e.nextElementSibling; while (pre && !pre.matches('pre[data-handoff-text]')) pre = pre.nextElementSibling;
+          return [e.textContent, e.parentElement.matches('[data-handoff-readback]') && !!pre, seen];
+        })),
         [[(await readFile(path.join(ROOT, 'docs', 'app-handoff-ui.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1], true, true]]);
       check('two-share draft has explicit whole-share reference', /personal draft is 2 whole shares.*rounds up to 1 whole share, leaving 1/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       check('readback labels personal two and original four separately', /BUY 2 COIL/.test(await page.locator('[data-handoff-text]').textContent()) && /Published quantity: 4/.test(await page.locator('[data-handoff-text]').textContent()));
+      await page.evaluate(() => navigator.clipboard.writeText('handoff sentinel').catch(() => {}));
       await page.locator('[data-handoff-copy]').click();
+      await page.waitForFunction(async () => (await navigator.clipboard.readText()) !== 'handoff sentinel');
       check('clipboard contains chosen two and no submission claim', await page.evaluate(async () => /BUY 2 COIL/.test(await navigator.clipboard.readText()) && /places no order/.test(await navigator.clipboard.readText())));
+      // the copied readback is the draft's own lines: the broker sentence is
+      // read beside it and never rides along
+      check('the copied readback carries none of Fidelity\'s part-fill rule', await page.evaluate(async () => !/Fidelity’s rule|SpicyStock’s advice|part fill|fills only in part/i.test(await navigator.clipboard.readText())));
       eq('copy does not invent a report', (await saved(page))[0].report_updated_at, null);
       await page.locator('[data-handoff-report] > summary').click();
       await set(page, { submitted_quantity: '2', submitted_at: '2026-09-11T08:33:00-05:00', filled_quantity: '1', average_price: '111.23', filled_at: '2026-09-11T08:34:00-05:00' });
