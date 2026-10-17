@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4714 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4715 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10056,5 +10056,156 @@ account change mixes two populations in one confirmatory figure, which the repor
 names and the frozen rule cannot split. Defer: the re-read after 23 October, when
 the 16 October tickets reach their fifth session. Omit: any rule, threshold or
 account change on these numbers; an edge claim.
+
+**Not claimable:** a morning or research observation; any trading edge.
+
+## Checkpoint, 17 Oct 2026 — PR #179 accepted; the owner's hand-started morning check (#108, #111)
+
+**PR #179, accepted.** Merged as `2156aaca` on `main` with a merge commit over
+`6ac9153c`. The head `4b135e3c` passed all seven checks (Tests run 39020763752,
+09:20–10:00 UTC; Secret scans 39020763677 and 39020760337). Publisher
+39023298699 waited for the two changed files, `historical-findings.json` and
+`app-findings.js`, then printed *Verified: every one of the 47 public files
+matches committed main* at 10:02:38 UTC; Pages 39023317287 deployed
+(39023298199 cancelled as superseded, as every merge does); the merge commit's
+own Tests (39023298690) and Secret scan (39023298716) passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `2156aaca`. Nothing under `src/` changed and no rule moved;
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential. `.env.example` was reviewed: the handoff reads no variable.
+
+**Why this.** The morning checks stand at zero observed, and the cause is the
+scheduler, not the guard: every scheduled morning run from 12 to 16 October
+was created after its entry window had ended (the 13 October schedule reading;
+the 16 October runs 225 to 246 minutes late), and each guard refused, as it
+should. The reading's recommendation was the owner's own hand-started run of
+`morning.yml`, which needs no credential and no host. The page said nothing
+about it: not when a run is accepted, not which input publishes, not that a
+reader who opened the desk at 8:10 could start one.
+
+**What was built.** The Morning desk's observation summary
+(`docs/app-observations.js`, `handoff()` and `offerHandoff()`) offers a link to
+this repository's `morning.yml` with the steps -- main, **dry_run** unticked --
+and what a run does: it quotes the publication's admitted plans (IEX quotes and
+delayed SIP volume) and any research rows the opened comparison names (IEX
+quotes), publishes its dated receipts, starts the SEC evidence collection
+that follows every morning run (at most three a UTC day, the evening's
+included) and places no order. It asks the collector's own questions first: on
+the applicable session's market date, from `src/morning.py`'s
+`POLICY["preopen_minutes"]` before the open until `START_MINUTES` (2) before the
+entry cutoff, because the collector reads its clock after checkout and install,
+28.8 and 31.7 seconds after the two measured dispatches were created. It offers
+only once the morning file was read and shown to hold no current check for
+this publication -- a 404, a receipt bound to another publication (every
+morning before a check), an inapplicable one, or one past its five-minute life
+-- never while the file is unread, could not be read or cannot be verified. A
+no-ticket receipt is final, since nothing it could quote appears without a new
+publication, and a publication that admits no plan says a run would quote
+nothing for one unless the opened comparison names allocation-fit rows (the
+research module's `status().fit`, which repaints the summary when a cohort
+attaches). Earlier that day it names when the window opens and offers no link.
+A withdrawn link hands the focus to the section's reload control, never the
+body behind the open dialog. It is a link and a sentence: the page dispatches
+nothing, holds no token and requests nothing from any GitHub host.
+`tests/test_workflows.py` holds the link to `app.js`'s `REPO` and the workflow
+file, the instruction to the `dry_run` input's default, both collect steps'
+`DRY_RUN_FLAG` and the persist job's condition, and the minutes to the
+collector's `POLICY`.
+
+**The reload that read nothing.** The same morning run publishes the research
+rows' dated observation, and neither button a reader presses re-read it:
+**Reload published observations** read `morning.json` alone, and **Reload
+published comparison** re-attached an unchanged cohort, which renders from the
+kept result without a request -- so an observation published after the page
+loaded stayed invisible until a full page reload. The morning reload now
+re-reads the research observation too (nothing while the comparison has never
+been opened), and the comparison reload asks it again for an unchanged cohort;
+a new cohort's re-attach already reads it, so the press adds no second request.
+Both go through `refresh()`, which keeps the verified observation until a newer
+file validates and names a failed read beside it; `reload()`, a plain read,
+stays the module's own.
+
+**Measured: how long a hand-started run takes.** Two earlier dispatches with
+`dry_run` off: run 38039598040 (10 October) went from its creation at 08:56:01
+UTC to its committed receipt `fa480f2a` in 64 seconds; the run finished at
+08:57:10, the Pages deployment that carried it at 08:58:05, and publisher
+38039664633 printed *Verified* at 08:58:11, 130 seconds after the run was
+created. Run 37964299335 (9 October) committed `2fa9773f` 75 seconds after
+creation. Neither asked a market-data provider anything (a Saturday, and after
+the cutoff); the 10 October run's completion started the SEC evidence
+collection (38039664597), which made one request. So the offer says to press
+Reload a minute or two after the run finishes, and that an earlier press reads
+the previous files. Neither measures how promptly GitHub creates a dispatched
+run, which the listing cannot show.
+
+**The review, worked.** A workflow by execution over `622e07ff` -- three finders
+(the page's semantics against the collector, whether the tests can fail, the
+prose) and a skeptic a finding -- returned 18 findings and the skeptic upheld
+every one, each reproduced. The mediums: the offer was made on a publication
+with no admitted plan and an empty cohort, where a run asks no provider
+anything, and came back every five minutes once its no-ticket receipt aged;
+either reload button dropped a verified research observation when its re-read
+failed, where `main` kept it; an unread morning file (a 5xx, no WebCrypto) was
+offered as "no current check", pointing at a reload button that was disabled;
+the page said a run "publishes one dated receipt" when the persist job commits
+two and every morning run starts an SEC collection under its daily cap; and
+four test holes -- the workflow test never read the flag that makes an
+unticked dispatch publish (inverting it passed all 54), "requested nothing from
+GitHub" filtered `github.com` and so could not see a dispatch to
+`api.github.com`, nothing observed the unread state (the checkpoint's own
+mutant line credited the practice record with it, a different rule), and the
+research quiet check counted requests before a read could start. The lows: the
+offer ran to the exact cutoff, half a minute after which a dispatched run
+starts collecting; "when the run has finished, press Reload" reads the old file
+for about a minute; focus fell to the body when the link was withdrawn; the
+later-cohort check never identified the cohort; the day-after check could only
+fail from the cutoff rule; the reload hint said "is open" where the module
+keeps reading once opened; and the README dated the scheduler's change to 21
+September when that morning's secret scan was still prompt. Each is fixed and
+held by the check it named.
+
+**Checks.** `main`'s three modules (`2156aaca`'s `app-observations.js`,
+`app-stop-research.js` and `app-research-observations.js`, routed in) fail 34
+of the `observations` suite's 216 checks and 16 of the `research-observations`
+suite's 387; the branch passes all of both. Twenty-three mutants through routed
+copies, each judged by both suites, all die on the checks naming their rules:
+the absent-file rule dropped (2), a no-ticket receipt expiring (1), every
+publication worth a run (3), no start allowance (6) or an inclusive one (4),
+the pre-open minutes dropped (19), an inapplicable receipt read as current (1),
+the session date unchecked (2), an expired receipt read as current (3), the
+focus fallback dropped (3) or the link's focus restoration (5), the
+other-publication and 404 markers dropped (1, 32), the research fits ignored
+(2), the summary not repainted when a cohort attaches (2), fits counted over
+every row (1), the morning press reading the morning file only (7) or the
+research observation destructively (2), the module's refresh made a plain read
+(4) or its kept observation lost (4), and the comparison press not asking
+again (4), asking destructively (4) or without its new-cohort guard (2: a
+second request); the control, a comment, passes both. The first pass found one
+hole of the first shape this file names: the unread-file rule died only on the
+no-WebCrypto case, because the 503 case ran in a tab whose kept fresh receipt
+suppressed the offer anyway; it runs from a fresh tab now and dies there too.
+Inverting both collect steps' `DRY_RUN_FLAG` in a copy of `morning.yml` fails
+the workflow test; an unmodified copy passes. On the final tree (`a87b8ddd`):
+4715 collected, the full suite 4681 passed and 34 environment-gated skips in
+25 m 00 s (and in 25 m 19 s at `622e07ff`); the full smoke with `--shots`
+16467/16467; continuity 137; the chart check 378/378 (no chart module
+changed); gitleaks 8.24.3 over the changed files: no leaks. The handoff at 1280
+dark and 390 light was looked at, its longer sentence read at 390.
+
+**Keep / fix / defer / omit.** Keep: the page links and explains; the owner
+dispatches; a pressed reload never loses what it verified. Fix if it bites:
+over the offer the summary's heading still reads *Morning observations
+unavailable* when the file is absent or bound to an older publication -- the
+file's own status, and true, but not the action; and the issuer guard admits a
+morning parent whatever its receipt's status, so a too-early or too-late
+hand-started run still spends one of the day's three SEC collections. Defer: a
+scheduled routine that dispatches the run (the reading's next step), which
+holds a token or a person's clock outside this repository and is Mo's call;
+#111's ten consecutive sessions with a morning check, which now depend on
+someone starting a run by 8:58 AM CT. Omit: a dispatch from the page, which
+would need a credential in the browser.
 
 **Not claimable:** a morning or research observation; any trading edge.

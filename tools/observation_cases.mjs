@@ -15,7 +15,7 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
   const wait = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.observations.facts().state));
   const facts = page => page.evaluate(() => SCStock.observations.facts());
   const setup = async (name = 'observed', options = {}) => {
-    const response = { body: JSON.stringify(records[name]), status: 200, delay: 0 };
+    const response = { body: JSON.stringify(records[name]), status: options.status || 200, delay: 0, hold: options.hold || null };
     const requests = [];
     const tab = await open(browser, base, '/tests/fixtures/morning/' + (name === 'no-tickets' ? 'red' : 'full') + '-publication.json', options.now || NOW, options.width || 1280, {
       hash: '#/explore/bursts/AAPL', theme: options.theme || 'dark', reducedMotion: 'reduce',
@@ -30,12 +30,13 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
           requests.push(route.request().url());
           const reply = { ...response };
           if (reply.delay) await new Promise(resolve => setTimeout(resolve, reply.delay));
+          if (reply.hold) await reply.hold;
           await route.fulfill({ status: reply.status, contentType: 'application/json', body: reply.body }).catch(() => {});
         });
         if (options.beforeLoad) await options.beforeLoad(page);
       }
     });
-    await wait(tab.page);
+    if (!options.hold) await wait(tab.page);
     return { ...tab, response, requests, async reload(value, status = 200) {
       response.body = typeof value === 'string' ? value : JSON.stringify(value); response.status = status;
       await tab.page.evaluate(() => SCStock.observations.reload()); await wait(tab.page);
@@ -239,4 +240,146 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
     eq('missing WebCrypto makes no unbound sidecar request', cryptoMissing.requests.length, 0);
     check('missing WebCrypto explains exact verification is unavailable', (await cryptoMissing.page.locator('#disc-observations').textContent()).includes('Exact publication verification is unavailable'));
   } finally { await cryptoMissing.context.close(); }
+
+  // The hand-started morning check. GitHub's scheduler can start the morning
+  // workflow hours late, so the summary offers the owner a link to start it:
+  // only on the applicable session, from the collector's own pre-open window to
+  // two minutes before the entry cutoff (the run reads its clock about half a
+  // minute after it is created), only while the morning file was read and holds
+  // no current check for this publication, and only when the run would quote
+  // something. The clock moves through each boundary of the full publication's
+  // window: 9:00 ET (8:00 CT) to the 10:00 ET cutoff (9:00 CT) on Fri 11 Sep.
+  const WORKFLOW = 'https://github.com/spicyChicken59/SpicyStock/actions/workflows/morning.yml';
+  const offer = page => page.locator('[data-observations="summary"] [data-observation-handoff]');
+  const offered = async page => (await offer(page).count()) ? offer(page).getAttribute('data-observation-handoff') : null;
+  const offerText = async page => (await offer(page).count()) ? offer(page).textContent() : '';
+  const workflowLink = page => page.locator('[data-observations="summary"] [data-observation-workflow]');
+  const linkFacts = async page => (await workflowLink(page).count()) ? workflowLink(page).evaluate(a => [a.getAttribute('href'), a.target, a.rel, a.textContent]) : null;
+  const at = (page, stamp) => page.evaluate(stamp => SCStock.observations.clock(new Date(stamp)), stamp);
+  const github = url => { const host = new URL(url).hostname; return host === 'github.com' || host.endsWith('.github.com'); };
+  for (const [width, theme] of [[1280, 'dark'], [390, 'light']]) {
+    const label = 'handoff ' + width + '/' + theme;
+    const tab = await setup('observed', { now: '2026-09-11T12:30:00Z', status: 404, width, theme });
+    const { page } = tab, seen = [];
+    page.on('request', request => seen.push(request.url()));
+    try {
+      await page.locator('#morning-open').click();
+      eq(label + ': a 404 morning file reads as unavailable and absent', (await facts(page)).state, 'unavailable');
+      eq(label + ': at 7:30 CT the check is offered for later, with no link', [await offered(page), await workflowLink(page).count()], ['before', 0]);
+      const early = await offerText(page);
+      check(label + ': the early line names the collector\'s own start, 8:00 CT, 30 minutes before the open', /from 8:00 AM CT, 30 minutes before the open/.test(early));
+      check(label + ': the early line says an early run publishes a too-early receipt and still starts the SEC collection', /starts collecting earlier publishes only a receipt saying it was too early/.test(early) && /SEC evidence collection, which runs at most three times a UTC day/.test(early));
+      await at(page, '2026-09-11T12:59:59Z');
+      eq(label + ': one second before the window it is still too early', await offered(page), 'before');
+      await at(page, '2026-09-11T13:00:00Z');
+      eq(label + ': at the window\'s first instant the check is due', await offered(page), 'due');
+      const due = await offerText(page);
+      check(label + ': the due line says there is no current check and how to start one', /^No current morning check for this session\./.test(due) && /choose Run workflow on the main branch, untick dry_run and run it by 8:58 AM CT\./.test(due));
+      check(label + ': it says the run reads its clock after it starts and refuses at the cutoff', /reads the time about half a minute after it is created and refuses from 9:00 AM CT, when the entry window ends\./.test(due));
+      check(label + ': it says what the run quotes, publishes, starts and does not do', /It quotes this publication's admitted plan \(IEX quotes and delayed SIP volume\), publishes its dated receipts and places no order\./.test(due) && /SEC evidence collection, which runs at most three times a UTC day/.test(due));
+      check(label + ': it says when Reload can read the new files', /Press Reload published observations a minute or two after the run finishes, once the site serves the new files; an earlier press reads the previous ones\./.test(due));
+      eq(label + ': the link is this repository\'s own morning workflow, in a new tab, without referrer or opener', await linkFacts(page), [WORKFLOW, '_blank', 'noopener noreferrer', 'Open the morning workflow on GitHub']);
+      if (await workflowLink(page).count()) await workflowLink(page).focus();
+      await at(page, '2026-09-11T13:30:00Z');
+      eq(label + ': a clock repaint keeps the focus on the workflow link', await page.evaluate(() => document.activeElement && document.activeElement.hasAttribute('data-observation-workflow')), true);
+      await at(page, '2026-09-11T13:57:59Z');
+      eq(label + ': one second before the start allowance it is still due', await offered(page), 'due');
+      await at(page, '2026-09-11T13:58:00Z');
+      eq(label + ': two minutes before the cutoff nothing is offered', [await offered(page), await workflowLink(page).count()], [null, 0]);
+      eq(label + ': the withdrawn link hands the focus to the reload control, not the body', await page.evaluate(() => document.activeElement && document.activeElement.hasAttribute('data-observation-reload')), true);
+      await at(page, '2026-09-10T13:10:00Z');
+      eq(label + ': the day before the applicable session nothing is offered', await offered(page), null);
+      await at(page, '2026-09-12T13:10:00Z');
+      eq(label + ': the day after, past its cutoff, nothing is offered', await offered(page), null);
+      eq(label + ': the offer is a link and a sentence -- the page requested nothing from any GitHub host', seen.filter(github), []);
+      eq(label + ': moving the clock read the morning file again never', seen.filter(url => url.endsWith('/morning.json')), []);
+      check(label + ': the desk fits with the offer', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+      if (shotsDir) {
+        await at(page, '2026-09-11T13:10:00Z');
+        if (await offer(page).count()) await offer(page).scrollIntoViewIfNeeded();
+        await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, `handoff-${width}-${theme}.png`) });
+      }
+      eq(label + ': no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
+  {
+    const tab = await setup('observed', { now: '2026-09-11T13:35:30Z' }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a current applicable check offers nothing', [await offered(page), await workflowLink(page).count()], [null, 0]);
+      await at(page, '2026-09-11T13:40:01Z');
+      eq('handoff: once the receipt has expired the check is offered again', await offered(page), 'expired');
+      check('handoff: the expired line says so', /^The last morning check has expired\./.test(await offerText(page)) && await workflowLink(page).count() === 1);
+      if (await workflowLink(page).count()) await workflowLink(page).focus();
+      await at(page, '2026-09-11T13:35:30Z');
+      eq('handoff: a current receipt withdraws the link, and the focus goes to the reload control', [await offered(page), await page.evaluate(() => document.activeElement && document.activeElement.hasAttribute('data-observation-reload'))], [null, true]);
+      const inapplicable = structuredClone(records.observed);
+      Object.assign(inapplicable, { status: 'inapplicable', reason: 'before_collection_window', rows: [] });
+      for (const feed of ['iex', 'delayed_sip']) Object.assign(inapplicable.sources[feed], { status: 'not_requested', entitlement: 'not_requested' });
+      await tab.reload(inapplicable);
+      eq('handoff: an inapplicable receipt (served transport copy) loads', [(await facts(page)).state, (await facts(page)).fresh], ['loaded', true]);
+      eq('handoff: an inapplicable receipt is not a current check, so one is offered', await offered(page), 'due');
+      await tab.reload(records.outage);
+      eq('handoff: a fresh provider-outage receipt is a current check', await offered(page), null);
+      await page.evaluate(() => { const data = structuredClone(SCStock.data); data.fixture = 'practice'; SCStock.render(data, new Date('2026-09-11T13:10:00Z')); });
+      eq('handoff: a practice record offers nothing', await offered(page), null);
+      eq('handoff: no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
+  {
+    // Every morning before a check, main still serves the morning file of an
+    // earlier publication: read, it holds no check for this one.
+    records.elsewhere = structuredClone(records.observed); records.elsewhere.publication.published_at = '2026-09-10T23:00:00Z';
+    const tab = await setup('elsewhere', { now: '2026-09-11T13:36:00Z' }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a morning file bound to another publication was read and holds none for this one, so one is offered', [(await facts(page)).state, (await facts(page)).headline, await offered(page)], ['unavailable', 'Morning observations unavailable', 'due']);
+      check('handoff: the file status names the other publication', /These observations belong to another publication\./.test(await page.locator('[data-observations="summary"]').textContent()));
+    } finally { await tab.context.close(); }
+  }
+  {
+    // A morning file that could not be read, in a tab that has read none:
+    // nothing kept answers for it, and the answer is unknown.
+    const tab = await setup('observed', { now: '2026-09-11T13:10:00Z', status: 503 }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a morning file that could not be read leaves the answer unknown, so nothing is offered', [(await facts(page)).state, (await facts(page)).generatedAt, await offered(page)], ['unavailable', null, null]);
+    } finally { await tab.context.close(); }
+  }
+  {
+    // While the morning file is unread the answer is unknown: nothing is offered
+    // until it has been read, and then the 404 shows the check absent.
+    let release; const hold = new Promise(resolve => { release = resolve; });
+    const tab = await setup('observed', { now: '2026-09-11T13:10:00Z', status: 404, hold }), { page } = tab;
+    try {
+      await page.waitForFunction(() => SCStock.observations.facts().state === 'loading');
+      await page.locator('#morning-open').click();
+      eq('handoff: while the morning file is being read nothing is offered', [(await facts(page)).state, await offered(page)], ['loading', null]);
+      release(); await wait(page);
+      eq('handoff: once it is read and absent the check is offered', [(await facts(page)).state, await offered(page)], ['unavailable', 'due']);
+    } finally { release(); await tab.context.close(); }
+  }
+  {
+    const tab = await setup('observed', { now: '2026-09-11T13:10:00Z', beforeLoad: page => page.addInitScript(() => { Object.defineProperty(crypto, 'subtle', { value: undefined }); }) }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a browser that cannot verify the file is offered nothing, and no disabled reload is pointed to', [(await facts(page)).state, await offered(page)], ['unavailable', null]);
+    } finally { await tab.context.close(); }
+  }
+  {
+    // A publication that admits no plan: a run would quote nothing, so none is
+    // offered, before or after its own no-ticket receipt, which stays final.
+    const tab = await setup('no-tickets', { now: '2026-09-11T13:10:00Z', status: 404 }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a publication with no admitted plan is offered no run', [await offered(page), await workflowLink(page).count()], ['none', 0]);
+      check('handoff: it says why', /none is needed for this publication\. It admits no plan, so a run would quote nothing for one\./.test(await offerText(page)));
+      await at(page, '2026-09-11T13:35:30Z');
+      await tab.reload(records['no-tickets']);
+      eq('handoff: its own no-ticket receipt offers nothing', [(await facts(page)).state, await offered(page)], ['loaded', null]);
+      await at(page, '2026-09-11T13:45:00Z');
+      eq('handoff: a no-ticket receipt past its five minutes is still final', [(await facts(page)).fresh, await offered(page)], [false, null]);
+      eq('handoff: no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
 }

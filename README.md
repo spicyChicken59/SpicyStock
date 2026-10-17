@@ -1177,6 +1177,40 @@ credentials, and no provider secret reaches the browser. No new subscription
 or environment variable is required. Timely morning delivery and comprehensive
 event coverage remain acceptance work for milestone 2.
 
+GitHub's scheduler has started every scheduled run of this repository hours
+late since the evening of 21 September (the [13 October schedule reading](docs/input-truthfulness/2026-10-13-schedule-reliability.md)),
+and each morning run from 12 to 16 October was created after its entry window
+had ended, so the Morning desk offers the owner a hand-started check, the
+reading's recommended first step. The summary offers it only where the
+collector would take it and it would quote something: on the applicable
+session, from the collector's own pre-open minutes (`src/morning.py`'s
+`POLICY`, 30) until two minutes before the entry cutoff, because the run reads
+its clock after checkout and install (28.8 and 31.7 seconds after two dispatched
+runs were created); only after the morning file was read and shown to hold no
+current check for this publication (a 404, a receipt bound to another
+publication, an inapplicable one, or one past its five-minute life), never
+while it is unread or unverifiable; and only when the publication admits a
+plan or the opened research comparison names allocation-fit rows. A no-ticket
+receipt stays final, and a publication with nothing to quote says so instead.
+Earlier that day it names when the window opens. The link goes to `morning.yml`
+on GitHub with the steps (main, **dry_run** unticked) and says what a run does:
+it publishes a dated morning receipt and a research receipt, starts the SEC
+evidence collection that follows every morning run (at most three a UTC day,
+the evening's included) and places no order. The page dispatches nothing,
+holds no token and sends nothing to any GitHub host; starting the run needs
+write access to the repository. Two earlier manual dispatches went from the
+run's creation to its committed morning receipt in 64 and 75 seconds; for the
+10 October one the Pages deployment finished 55 seconds after the run did, and
+publisher 38039664633 verified the served file 130 seconds after the run was
+created. Neither asked a market-data provider anything (one on a Saturday, one
+after the cutoff); the 10 October run's SEC collection made one request. So
+the offer says to press **Reload published observations** a minute or two
+after the run finishes. That button re-reads the morning file and, once the
+research comparison has been opened, its dated research observation; the
+comparison's own reload re-reads that observation even when its cohort is
+unchanged. A press keeps what was verified until a newer file validates, and
+a failed read names itself beside the kept observation.
+
 ### SEC issuer evidence
 
 The Morning desk includes an optional filing reader for current admitted plans

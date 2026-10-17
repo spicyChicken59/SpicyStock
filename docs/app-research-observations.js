@@ -204,9 +204,12 @@
   }
   const decode = bytes => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
 
-  async function load() {
+  // keep: a pressed reload holds the verified observation until a newer file
+  // validates, and a failed read leaves it on screen with the failure named.
+  async function load(keep) {
     if (pending) return pending;
     if (!record || !cohort || !fingerprint().recordHash) { state = 'deferred'; paint(); return false; }
+    const kept = keep && state === 'loaded' && observation ? observation : null;
     const token = epoch, target = record, mine = cohort, active = new AbortController(); controller = active;
     state = 'loading'; issue = ''; paint();
     let timer, timedOut = false;
@@ -226,7 +229,9 @@
       observation = result; state = 'loaded'; issue = ''; paint(); return true;
     }, error => {
       if (token !== epoch || target !== record || mine !== cohort) return false;
-      state = 'unavailable'; issue = timedOut ? 'The dated observation timed out after 15 seconds.' : error && error.message || 'The published dated observation is unavailable.';
+      const why = timedOut ? 'The dated observation timed out after 15 seconds.' : error && error.message || 'The published dated observation is unavailable.';
+      if (kept) { observation = kept; state = 'loaded'; issue = 'A re-read failed (' + why + ') This is the last verified observation.'; }
+      else { state = 'unavailable'; issue = why; }
       paint(); return false;
     }).finally(() => { w.clearTimeout(timer); if (token === epoch) { controller = null; pending = null; } });
     return pending;
@@ -238,9 +243,10 @@
     const fits = observation.rows.length, when = atCT(observation.generated_at), expired = now > instant(observation.expires_at);
     if (observation.reason) return 'No dated observation applies to this cohort: ' + REASON_WORDS[observation.reason] + ' (' + when + '). Zero provider requests were made.';
     if (observation.status === 'no_research_rows') return 'This cohort has no allocation-fit research row, so no price was observed (' + when + '). Zero provider requests were made.';
+    const failed = issue ? ' ' + issue : '';
     const lead = (expired ? 'Expired dated observation' : 'Dated observation') + ' · ' + when + ' · ' + ageWords(observation.generated_at, now) + ' · ' + fits + (fits === 1 ? ' research row' : ' research rows') + ' · ' + (observation.source.requests === 0 ? 'zero IEX snapshot requests' : 'one IEX snapshot request');
-    if (observation.status === 'provider_unavailable') return lead + ' · IEX unavailable: ' + (SOURCE_WORDS[observation.source.error_kind] || 'the source failed') + '. No price was observed.';
-    return lead + (observation.status === 'partial' ? ' · some prices were stale, invalid or missing' : '') + '. Single venue, not consolidated; halts, volume pace, issuer news and earnings were not checked.';
+    if (observation.status === 'provider_unavailable') return lead + ' · IEX unavailable: ' + (SOURCE_WORDS[observation.source.error_kind] || 'the source failed') + '. No price was observed.' + failed;
+    return lead + (observation.status === 'partial' ? ' · some prices were stale, invalid or missing' : '') + '. Single venue, not consolidated; halts, volume pace, issuer news and earnings were not checked.' + failed;
   }
   function renderRow(host, row, now) {
     host.replaceChildren();
@@ -303,6 +309,8 @@
       cohort = next ? { receipt: next.receipt, receiptSha: next.receiptSha, bundle: next.bundle } : null;
       identity = nextIdentity; receipt = cohort ? cohort.receipt : null; observation = null; state = 'deferred'; issue = '';
       if (cohort && record && fingerprint().recordHash) load(); else paint();
+      // The morning summary's offer counts these rows, so it is told.
+      if (api.observations && typeof api.observations.repaint === 'function') api.observations.repaint();
     } else paint();
   }
   function update(data) {
@@ -314,5 +322,10 @@
     paint();
   }
   api.researchObservations = { attach, update, reload: () => { epoch++; if (controller) controller.abort(); controller = null; pending = null; observation = null; state = 'deferred'; return load(); },
-    status: () => ({ state, issue, settled: state !== 'loading', rows: observation ? observation.rows.length : 0, status: observation ? observation.status : null, reason: observation ? observation.reason : null }) };
+    refresh: () => { epoch++; if (controller) controller.abort(); controller = null; pending = null; return load(true); },
+    status: () => ({ state, issue, settled: state !== 'loading', rows: observation ? observation.rows.length : 0, status: observation ? observation.status : null, reason: observation ? observation.reason : null,
+      // The rows a morning run would quote for the attached cohort: its
+      // allocation fits when recorded (src/research_observations.research_rows),
+      // unknown (null) until a comparison has loaded.
+      fit: cohort ? (cohort.receipt.status === 'recorded' ? cohort.bundle.rows.filter(row => row.research && row.research.allocation_fit).length : 0) : null }) };
 })(window);
