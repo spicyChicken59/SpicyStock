@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4700 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4701 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9599,3 +9599,153 @@ answer.
 **Not claimable:** tonight's evening publication, the first under the retired
 seed and the first with a `run.seed_stale` block; a morning or research
 observation; any trading edge.
+
+## Checkpoint, 17 Oct 2026 — PR #177 accepted; the first night under the retired seed, read; the service read again through it
+
+**PR #177, accepted.** Merged as `d89e4e90` on `main` with a merge commit over
+`3117f46a` at 18:31 UTC on 16 October. The code heads `de884a5f` and `9d924572`
+and the docs head `8847c8d6` each passed all seven checks; on the merge commit
+itself Tests run 38948032930 passed (page 18:31–18:48 UTC, pytest 18:31–18:55,
+the native cases skipped by the gate, as a merge's are), Secret scan
+38948032803 passed and Pages 38948031418 deployed at 18:33 UTC. The publisher
+did not fire, correctly: the diff touched nothing under `docs/` (as at #64 and
+#174), so the served site stayed the #176 merge's 47 verified files.
+
+**The review workflow starved, and the sandbox with it.** Of the #177 review's
+29 agents, 18 failed on `No space left on device`: the disk was 100% full with
+229 MB free, 17 isolation worktrees of this and an earlier review still present
+under `/home/user/SpicyStock/.claude/worktrees/` (about 300 MB each; a review
+agent's worktree is removed only when it finishes, and an agent that errors
+leaves its own behind) and about 21 GB of scratch copies from finished
+milestones. The findings that reached a skeptic were upheld; the nine that did
+not were each reproduced and fixed by execution, as the #177 checkpoint
+records, and null was not read as refuted. Cleaned the same evening: the 17
+worktrees removed through `git worktree remove --force` on literal paths and
+pruned, their 49 `worktree-wf_*` branches deleted, 38 scratch directories
+removed (the kept ones: `ft/`, `venv312`, `gitleaks`); 24 GB free after. The
+rule that follows: read `git worktree list` and `df` before launching a review
+workflow, and remove the worktrees it leaves when any agent errors.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `426d3c59` (the issuer receipt that followed the 16 October
+publication), pushed as **PR #178**. One constant moves in one tool
+(`tools/service_health.py`'s `OUT_DIR`, to the 17 October directory); the 17
+October reading and its report are new; the 12 and 13 October reports gain a
+sentence each; `tests/test_service_health.py` pins the 13 October files and
+reads the 17 October report; README and this file are swept. Nothing under
+`src/` changed and no rule moved; `docs/data.json`, `docs/picks.json`, the
+compact reader, every receipt, the history, the evidence objects, the quality
+ledger, the workflows and the vendored design system are untouched; no run,
+mail, dispatch, provider call or credential. `.env.example` was reviewed:
+nothing here is configuration.
+
+**The first night under the retired seed, read.** Session 16 October, run
+38986314620, the `16 22` primary slot created at 00:25:39 UTC on the 17th
+(129.7 minutes late), the pipeline 00:26:16–00:29:23 (`elapsed_seconds` 145.4,
+`fetch_seconds` 78.5), the record generated at 00:26:18 and landed as
+`7a1a9e49` at 00:29:26, the mail delivered. `run.status` **ok** beside a
+`degraded` acceptance -- the second live night the tolerance kept green, and
+the first with no frame past the bound: `run.universe.selection.seed_added` is
+0 with an empty sample (WBD left the seed at 07:20 UTC on the 16th; the 15
+October night's was 1, `['WBD']`), 4,759 of 4,777 intended stocks ready, and
+`run.input_tolerance` (version 2) `tolerated`: 18 stale stocks (ACVA, ATXG,
+BSBK, CVR, DIT, FKWL, GBLI, HFBL, IOR, MAYS, NCEW, NSYS, PBHC, RAND, ROMA,
+SENEB, SFWL, XBP), every one ending 15 October, `held` empty, against the limit
+of 47. **The first `run.seed_stale`** (version 1): membership `complete`,
+`seed_added` 0, `seed_named` 0, `stale_stocks` 18, `names` empty, no reason,
+and the sentence *None of the 18 stale stocks is on the seed alone; each is in
+the directory this run selected from.* The sentence the rule was built to print
+-- WBD's -- would have run on 13, 14 and 15 October; on the first night it ran
+the seed had already been retired by hand, so its first live case is the none
+case, and the record now says so on every night rather than leaving the join to
+a reader. `run.stale_followup` (version 2, `applied`) read the 15 October
+publication's 20 stale stocks at the five sessions each missed (9 and 12–15
+October), 24 readings: 13 `no_match`, 5 `price_excluded`, 6 `not_selected` (WBD
+at all five sessions, and TJGC at 15 October), 0 `match`; 16 of the late bars
+at zero volume and 17 flat, the provider's placeholder again. `run.reads` 2 of
+2, `complete` (AIG and AR, the review selection's two research reads under
+RED; the refusal limit at two reads is 0). `run.reader_usage`: 2 calls, 2
+replies, 14,667 input tokens (7,995 uncached, 3,336 written to the cache,
+3,336 read) and 1,059 output, under `claude-sonnet-4-6`. `run.delivery`: 251.3
+minutes after completion, after both slots (130.3 after the primary), before
+the next open, Monday 19 October 9:30 AM ET. `run.intraday`: `gathered`,
+wanted 0, retained 2. The signal, kept apart: RED (10-session ratio 0.63, 1,116
+up against 1,768 down; 5-session 0.45; 32 up 4% against 239 down today, "a
+fast selling phase"), `funnel` 206 reaction candidates (mechanical A+ 0, A 28,
+B 31, C 28, skip 119), all 206 at the market gate, 0 potentially usable, 0
+tickets; anticipation 707 momentum names, 162 quiet, 8 passing the coil checks,
+0 listed, 0 tickets; the closest miss AIG at B 9.0; the cover *Stand aside.*;
+`rules_version` `f6c9a7388d9c`. The `16 23` retry slot (run 38990388404,
+created 01:19:53 UTC, 63.9 minutes late) found the session published and
+skipped every step.
+
+**The publication's path to the served site.** The evening's own persist is a
+`GITHUB_TOKEN` push and triggers no workflow (this file's standing note); the
+issuer-evidence workflow, which the evening's completion triggers, collected
+`no_candidates` at 00:30:46 (the record admitted no plan and listed no setup,
+so nothing was asked of the SEC) and persisted `426d3c59` at 00:31:27, and the
+publisher that followed it (38986767616) waited for the issuer's two files and
+printed *Verified: every one of the 47 public files matches committed main* at
+00:32:38 UTC -- three minutes after the record landed, the first time this
+file records that interval. The 16 October morning slots were created at
+17:26, 17:32, 18:05 and 18:15 UTC (runs 38939668907, 38940441166,
+38944618528 and 38945895892; 246.2, 244.2, 225.3 and 227.2 minutes late), the
+guard passed each through and every collection step and the persist job
+skipped: the morning checks still stand at zero observed. The 16 October `37 9`
+source-recovery slot (run 38913623932) was created at 14:10:27 UTC, after the
+open, and published nothing; the 17 October `37 7` slot had not been created at
+02:40 UTC, and the 16 October publication's next open is Monday's, so a
+Saturday or Sunday slot may publish its receipt.
+
+**The service, read again** (`docs/input-truthfulness/2026-10-17-service-health.md`,
+the same `service_health_v3` pinned to `426d3c59`, clock 00:31 UTC on 17
+October; the 13 October reading kept as written and no longer re-derived, its
+two files held to their git blob identities beside the 12 October reading's
+four). 26 expected sessions, 26 published, 26 of 26 first publications before
+the next open; none missing, none pending; **fresh: yes** (`main` carries
+`7a1a9e49`, the newest due session's); the streak 26 and 26. 19 of 26 first
+publications after the retry slot, as 19 were generated after it; from 22
+September to 16 October every first publication landed 131.0 to 289.5 minutes
+after the primary slot, the four since the 13 October reading at 179.6, 138.4,
+131.0 and 133.4 -- the last three the promptest since 21 September, and still
+after the retry slot. Latency by the landing commit 55.8 / 264.4 / 410.5
+minutes (by the records' clocks 53.1 / 259.7 / 407.2), each commit 2.4 to 5.5
+minutes after its record. 31 publications, 22 degraded and 9 ok; 5 read
+against their own archived slots and 26 against the current policy's. Reader
+272 of 312 requested reads over 31 publications; the first five cost blocks
+(12–16 October): 10 calls, 10 replies, 73,439 input and 5,715 output tokens.
+Signal 25 RED and 6 YELLOW, 0 reaction tickets, 3 anticipation tickets, each
+superseded. Companions: two morning receipts (`inapplicable`), eight issuer
+receipts (seven `unavailable`, the newest `no_candidates`), the first three
+source-recovery receipts (all `partial`, for 14, 15 and 16 October, each landed
+before its applicable open at 13:04, 12:50 and 12:42 UTC), no research
+observation. 38 commits set aside, the same 38.
+
+**Measured** (this sandbox, Python 3.11.15): `tests/test_service_health.py`
+39 passed (one new: the 13 October report quotes its own frozen reading) after
+the 17 October report was written to carry every phrase the report test reads
+off the file -- fresh yes or no, pending or none, the slot basis in the plural,
+each companion count in words; `tests/test_docs.py` 40/40 with this file's
+count line at 4701; `python tools/service_health.py --check` current with the
+history walked again (two runs of the tool, into a scratch directory and into
+the repository, byte-identical); `git diff --check` clean; gitleaks 8.24.3 from
+inside a scratch root holding the eleven changed and new files and the
+repository's config: no leaks. The full suite's figure on the final tree is
+recorded in the paragraph after this one, as run.
+
+**Mutation pass**, each mutant in the mutation worktree (its diff hashed equal
+to this tree's before and after), judged by the whole
+`tests/test_service_health.py`: one byte appended to the frozen 13 October
+reading dies in the blob test; the 17 October report's median moved by a tenth
+dies in the report test; `OUT_DIR` set back to the 13 October directory dies
+in the frozen test and the report test (the committed-reading test alone would
+have passed it, the 13 October files being what the tool writes through their
+own commit, which is why the report is held to the directory the tool writes);
+the issuer counts off by one in words die in the report test; the committed
+JSON's median moved dies in `--check` and the report test; the 13 October
+report naming no 17 October report dies in the frozen test. Six die; the
+control, a word of the report outside every quoted phrase, passes 39.
+
+**Not claimable:** a morning or research observation; a source-recovery
+receipt for the 16 October publication; the 19 October session; any trading
+edge.

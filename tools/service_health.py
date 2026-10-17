@@ -82,7 +82,7 @@ DESK_TZ = ZoneInfo("America/Chicago")
 TRUTH = "docs/input-truthfulness"
 #: the dated reading this version writes; the 12 October one (v2, and v1 under its v1/) is
 #: kept as it was written, historical evidence the tool no longer re-derives
-OUT_DIR = ROOT / TRUTH / "2026-10-13-service-health-evidence"
+OUT_DIR = ROOT / TRUTH / "2026-10-17-service-health-evidence"
 OUTPUT_JSON = OUT_DIR / "service-health.json"
 OUTPUT_MD = OUT_DIR / "service-health.md"
 #: the fields a companion receipt is read for, by kind; a field a receipt lacks is None

@@ -1,5 +1,11 @@
 # 13 October 2026 — the service, read against each publication's own slots (#111, #163)
 
+**Superseded on 17 October by [the same `service_health_v3` reading run again](2026-10-17-service-health.md)**,
+pinned to `426d3c59`, four publications later. This report and the files under
+`2026-10-13-service-health-evidence/` are kept as they were written, each held to its git blob identity by
+`tests/test_service_health.py`; the tool no longer re-derives them, so `--check` below now holds the 17
+October files.
+
 `tools/service_health.py` is a reading of the service and not of the signal;
 the [12 October report](2026-10-12-service-health.md) says what it walks and
 how. This version, `service_health_v3`, closes the last item of #163: a

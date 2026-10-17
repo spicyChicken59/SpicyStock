@@ -1,0 +1,4671 @@
+{
+ "companions": {
+  "issuer_evidence": [
+   {
+    "applicable_open_at": "2026-10-12T13:30:00+00:00",
+    "applicable_session": "2026-10-12",
+    "before_applicable_open": true,
+    "blob": "52a29372f1dc9e419dcd73cbf8a6837ec58a685f",
+    "bound_run_id": "38034610157",
+    "collection_run_id": "38034924561",
+    "collection_started_at": "2026-10-10T07:35:35.078776+00:00",
+    "commit": "981e6792827a222c26b94da622f30d88b74d53e1",
+    "dry_run": false,
+    "generated_at": "2026-10-10T07:35:36.385307+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-10T07:36:12+00:00",
+    "measured_session": "2026-10-09",
+    "rows": null,
+    "sequence": 0,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-12T13:30:00+00:00",
+    "applicable_session": "2026-10-12",
+    "before_applicable_open": true,
+    "blob": "d431b4a098ab1a1bb4f4018a4d3076bf7000477c",
+    "bound_run_id": "38034610157",
+    "collection_run_id": "38039664597",
+    "collection_started_at": "2026-10-10T08:57:44.104709+00:00",
+    "commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+    "dry_run": false,
+    "generated_at": "2026-10-10T08:57:46.469022+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-10T08:58:21+00:00",
+    "measured_session": "2026-10-09",
+    "rows": null,
+    "sequence": 1,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-12T13:30:00+00:00",
+    "applicable_session": "2026-10-12",
+    "before_applicable_open": true,
+    "blob": "81eb91de2926821e258e1a930436b82532991afe",
+    "bound_run_id": "38034610157",
+    "collection_run_id": "38040893686",
+    "collection_started_at": "2026-10-10T09:18:37.281961+00:00",
+    "commit": "f9b91d00123281039436bcd4e8a7646992517265",
+    "dry_run": false,
+    "generated_at": "2026-10-10T09:18:39.533632+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-10T09:19:16+00:00",
+    "measured_session": "2026-10-09",
+    "rows": null,
+    "sequence": 2,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-13T13:30:00+00:00",
+    "applicable_session": "2026-10-13",
+    "before_applicable_open": true,
+    "blob": "ef23cfd671e915d10dc8a642a794471d8464f13e",
+    "bound_run_id": "38339720035",
+    "collection_run_id": "38340073617",
+    "collection_started_at": "2026-10-13T03:06:29.881367+00:00",
+    "commit": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+    "dry_run": false,
+    "generated_at": "2026-10-13T03:06:32.188646+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-13T03:07:09+00:00",
+    "measured_session": "2026-10-12",
+    "rows": null,
+    "sequence": 3,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-14T13:30:00+00:00",
+    "applicable_session": "2026-10-14",
+    "before_applicable_open": true,
+    "blob": "23a8442478e2f9ac8ffa860f449f977b3df616b4",
+    "bound_run_id": "38494353799",
+    "collection_run_id": "38494784380",
+    "collection_started_at": "2026-10-14T01:16:42.388543+00:00",
+    "commit": "64481f2f5deeeec63a03a8d424df3df54b79659f",
+    "dry_run": false,
+    "generated_at": "2026-10-14T01:16:44.348960+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-14T01:17:24+00:00",
+    "measured_session": "2026-10-13",
+    "rows": null,
+    "sequence": 4,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-15T13:30:00+00:00",
+    "applicable_session": "2026-10-15",
+    "before_applicable_open": true,
+    "blob": "93b09f49a463c6148885715e16e97e861b0561b4",
+    "bound_run_id": "38660383665",
+    "collection_run_id": "38660853906",
+    "collection_started_at": "2026-10-15T00:35:34.647918+00:00",
+    "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+    "dry_run": false,
+    "generated_at": "2026-10-15T00:35:36.704203+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-15T00:36:12+00:00",
+    "measured_session": "2026-10-14",
+    "rows": null,
+    "sequence": 5,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-16T13:30:00+00:00",
+    "applicable_session": "2026-10-16",
+    "before_applicable_open": true,
+    "blob": "a4104207fe48428c6d783b59286edc22612d7295",
+    "bound_run_id": "38829043191",
+    "collection_run_id": "38829580464",
+    "collection_started_at": "2026-10-16T00:28:07.490032+00:00",
+    "commit": "55a458ad00c92fab577b70a2fd52120e4bb73c6c",
+    "dry_run": false,
+    "generated_at": "2026-10-16T00:28:10.747991+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-16T00:28:50+00:00",
+    "measured_session": "2026-10-15",
+    "rows": null,
+    "sequence": 6,
+    "status": "unavailable"
+   },
+   {
+    "applicable_open_at": "2026-10-19T13:30:00+00:00",
+    "applicable_session": "2026-10-19",
+    "before_applicable_open": true,
+    "blob": "859620dedaa418fb26f0ec9987d8e0a3178fbcd4",
+    "bound_run_id": "38986314620",
+    "collection_run_id": "38986641878",
+    "collection_started_at": "2026-10-17T00:30:44.743329+00:00",
+    "commit": "426d3c59aa6be567c9464f17a6e573a335813e30",
+    "dry_run": false,
+    "generated_at": "2026-10-17T00:30:46.367966+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "issuer_evidence",
+    "landed_at": "2026-10-17T00:31:27+00:00",
+    "measured_session": "2026-10-16",
+    "rows": null,
+    "sequence": 7,
+    "status": "no_candidates"
+   }
+  ],
+  "morning": [
+   {
+    "applicable_open_at": "2026-10-09T13:30:00+00:00",
+    "applicable_session": "2026-10-09",
+    "before_applicable_open": false,
+    "blob": "360fcc830b73853c5aacaa5c8c6d5e8c751800b8",
+    "bound_run_id": "37928234562",
+    "collection_started_at": "2026-10-09T17:10:16.756501+00:00",
+    "commit": "2fa9773f046299de78c95d1b513c05880a3eefdb",
+    "dry_run": false,
+    "entry_phase": "ended",
+    "generated_at": "2026-10-09T17:10:18.034037+00:00",
+    "generated_before_applicable_open": false,
+    "kind": "morning",
+    "landed_at": "2026-10-09T17:11:03+00:00",
+    "measured_session": "2026-10-08",
+    "observation_run_id": "37964299335",
+    "reason": "entry_window_ended",
+    "rows": 0,
+    "sequence": 0,
+    "status": "inapplicable"
+   },
+   {
+    "applicable_open_at": "2026-10-12T13:30:00+00:00",
+    "applicable_session": "2026-10-12",
+    "before_applicable_open": true,
+    "blob": "e079383117a7272f10c8ae92e821fcdd7b01ede6",
+    "bound_run_id": "38034610157",
+    "collection_started_at": "2026-10-10T08:56:32.661180+00:00",
+    "commit": "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
+    "dry_run": false,
+    "entry_phase": "upcoming",
+    "generated_at": "2026-10-10T08:56:34.636611+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "morning",
+    "landed_at": "2026-10-10T08:57:05+00:00",
+    "measured_session": "2026-10-09",
+    "observation_run_id": "38039598040",
+    "reason": "wrong_session",
+    "rows": 0,
+    "sequence": 1,
+    "status": "inapplicable"
+   }
+  ],
+  "research_observations": [],
+  "source_recovery": [
+   {
+    "applicable_open_at": "2026-10-14T13:30:00+00:00",
+    "applicable_session": "2026-10-14",
+    "batch_attempts": 1,
+    "before_applicable_open": true,
+    "blob": "d340f921ea44fa043c7af2664b7b7ad6cf52050f",
+    "bound_run_id": "38494353799",
+    "collection_started_at": "2026-10-14T13:03:20.831721+00:00",
+    "commit": "c5dad9a9ba11c7cfe3cd7ff553b6d2c8dfe10dd0",
+    "dry_run": false,
+    "generated_at": "2026-10-14T13:03:22.443316+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "source_recovery",
+    "landed_at": "2026-10-14T13:04:07+00:00",
+    "measured_session": "2026-10-13",
+    "observation_run_id": "38568565120",
+    "reason": null,
+    "rows": 16,
+    "sequence": 0,
+    "session_ready": 15,
+    "status": "partial"
+   },
+   {
+    "applicable_open_at": "2026-10-15T13:30:00+00:00",
+    "applicable_session": "2026-10-15",
+    "batch_attempts": 1,
+    "before_applicable_open": true,
+    "blob": "0a7be83283da6c48c6b25eb73d8749bd26886ce2",
+    "bound_run_id": "38660383665",
+    "collection_started_at": "2026-10-15T12:50:13.625267+00:00",
+    "commit": "145716b71882a373efd585035eb5761ffb78c3f7",
+    "dry_run": false,
+    "generated_at": "2026-10-15T12:50:15.448254+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "source_recovery",
+    "landed_at": "2026-10-15T12:50:59+00:00",
+    "measured_session": "2026-10-14",
+    "observation_run_id": "38737601828",
+    "reason": null,
+    "rows": 19,
+    "sequence": 1,
+    "session_ready": 18,
+    "status": "partial"
+   },
+   {
+    "applicable_open_at": "2026-10-16T13:30:00+00:00",
+    "applicable_session": "2026-10-16",
+    "batch_attempts": 1,
+    "before_applicable_open": true,
+    "blob": "19c7ec30e50cacc5c448854f8478294feaad9db6",
+    "bound_run_id": "38829043191",
+    "collection_started_at": "2026-10-16T12:41:57.169299+00:00",
+    "commit": "00cd2d2a589eb29b8cf94110d3a6f8e3b1e6816a",
+    "dry_run": false,
+    "generated_at": "2026-10-16T12:42:00.656503+00:00",
+    "generated_before_applicable_open": true,
+    "kind": "source_recovery",
+    "landed_at": "2026-10-16T12:42:44+00:00",
+    "measured_session": "2026-10-15",
+    "observation_run_id": "38902285071",
+    "reason": null,
+    "rows": 20,
+    "sequence": 2,
+    "session_ready": 19,
+    "status": "partial"
+   }
+  ]
+ },
+ "policy": "service_health_v3",
+ "publications": [
+  {
+   "blob": "edc98bc7a41d07a4950ad800b341ce5a4de2bd30",
+   "commit": "7380a97605c7f16eb902421486c491a95b957cd7",
+   "dry_run": false,
+   "elapsed_seconds": 163.5,
+   "email": "skipped",
+   "fetch_seconds": 35.8,
+   "inputs": {
+    "acceptance": null,
+    "intended_stocks": null,
+    "ready_fraction": null,
+    "ready_stocks": null,
+    "stale": 1,
+    "tolerance": null,
+    "version": null
+   },
+   "landed_at": "2026-09-11T21:10:48+00:00",
+   "problems": [],
+   "published_at": "2026-09-11T21:08:04.147459+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "015229b909b7",
+   "run_id": "34647793285",
+   "sequence": 0,
+   "session": "2026-09-11",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 400,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": -65.2,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-11T20:15:00+00:00",
+    "completion_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 53.1,
+    "landed_minutes": 2.7,
+    "latency_minutes": 55.8,
+    "next_open_at": "2026-09-14T13:30:00+00:00",
+    "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-12T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "2c5ec387654d2cea9d85b1230e91b4c7c0efb534",
+   "commit": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+   "dry_run": false,
+   "elapsed_seconds": 167.2,
+   "email": "delivered",
+   "fetch_seconds": 38.0,
+   "inputs": {
+    "acceptance": null,
+    "intended_stocks": null,
+    "ready_fraction": null,
+    "ready_stocks": null,
+    "stale": 1,
+    "tolerance": null,
+    "version": null
+   },
+   "landed_at": "2026-09-11T22:25:33+00:00",
+   "problems": [],
+   "published_at": "2026-09-11T22:22:44.126296+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "2fe10c171341",
+   "run_id": "34653694658",
+   "sequence": 1,
+   "session": "2026-09-11",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 401,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 9.6,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-11T20:15:00+00:00",
+    "completion_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.7,
+    "landed_minutes": 2.8,
+    "latency_minutes": 130.6,
+    "next_open_at": "2026-09-14T13:30:00+00:00",
+    "primary_slot_at": "2026-09-11T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-12T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "a89ab122d7e0160df6a63c30957668447ace1103",
+   "commit": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+   "dry_run": false,
+   "elapsed_seconds": 169.2,
+   "email": "delivered",
+   "fetch_seconds": 32.9,
+   "inputs": {
+    "acceptance": null,
+    "intended_stocks": null,
+    "ready_fraction": null,
+    "ready_stocks": null,
+    "stale": 0,
+    "tolerance": null,
+    "version": null
+   },
+   "landed_at": "2026-09-14T22:27:41+00:00",
+   "problems": [],
+   "published_at": "2026-09-14T22:24:50.953539+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "953f37fb787a",
+   "run_id": "34903940252",
+   "sequence": 2,
+   "session": "2026-09-14",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 558,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 11.7,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-14T20:15:00+00:00",
+    "completion_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 129.8,
+    "landed_minutes": 2.8,
+    "latency_minutes": 132.7,
+    "next_open_at": "2026-09-15T13:30:00+00:00",
+    "primary_slot_at": "2026-09-14T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-15T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "abf693417b8308a68d6e1dfcbfd53ced16b6f8c4",
+   "commit": "442db489342660d7588d16dcc18e6c126187c1e6",
+   "dry_run": false,
+   "elapsed_seconds": 179.0,
+   "email": "delivered",
+   "fetch_seconds": 52.3,
+   "inputs": {
+    "acceptance": null,
+    "intended_stocks": null,
+    "ready_fraction": null,
+    "ready_stocks": null,
+    "stale": 0,
+    "tolerance": null,
+    "version": null
+   },
+   "landed_at": "2026-09-15T22:26:18+00:00",
+   "problems": [],
+   "published_at": "2026-09-15T22:23:17.742488+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "e1032aa5ee21",
+   "run_id": "35030668710",
+   "sequence": 3,
+   "session": "2026-09-15",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 342,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 10.3,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-15T20:15:00+00:00",
+    "completion_basis": "re-derived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.3,
+    "landed_minutes": 3.0,
+    "latency_minutes": 131.3,
+    "next_open_at": "2026-09-16T13:30:00+00:00",
+    "primary_slot_at": "2026-09-15T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-16T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "9dfc2d51aef7d0adf723428931c61cc83824fa71",
+   "commit": "580805487b22006c6f2fa35490c3edc8a5760d73",
+   "dry_run": false,
+   "elapsed_seconds": 189.3,
+   "email": "delivered",
+   "fetch_seconds": 55.9,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4795,
+    "ready_fraction": 0.9949947862356622,
+    "ready_stocks": 4771,
+    "stale": 24,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-16T22:26:30+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-09-16T22:23:02.757794+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "1fe2b3171634",
+   "run_id": "35157356943",
+   "sequence": 4,
+   "session": "2026-09-16",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 303,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 10.5,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-16T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.0,
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.5,
+    "next_open_at": "2026-09-17T13:30:00+00:00",
+    "primary_slot_at": "2026-09-16T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-17T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "7e65097a70affd800bace72b2d088c8197053c47",
+   "commit": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+   "dry_run": false,
+   "elapsed_seconds": 195.2,
+   "email": "delivered",
+   "fetch_seconds": 57.0,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4794,
+    "ready_fraction": 0.9960367125573634,
+    "ready_stocks": 4775,
+    "stale": 19,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-17T22:25:36+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-09-17T22:21:57.200360+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "7ca2debdce10",
+   "run_id": "35281605621",
+   "sequence": 5,
+   "session": "2026-09-17",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 420,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 9.6,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-17T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.0,
+    "landed_minutes": 3.6,
+    "latency_minutes": 130.6,
+    "next_open_at": "2026-09-18T13:30:00+00:00",
+    "primary_slot_at": "2026-09-17T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-18T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "bf36144ea45d7c74eee724d2557964e5e8e0bfc5",
+   "commit": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+   "dry_run": false,
+   "elapsed_seconds": 189.7,
+   "email": "delivered",
+   "fetch_seconds": 50.1,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4793,
+    "ready_fraction": 0.9960358856665972,
+    "ready_stocks": 4774,
+    "stale": 19,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-18T22:26:07+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-09-18T22:22:34.176134+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "e2cace0f7bc6",
+   "run_id": "35401227388",
+   "sequence": 6,
+   "session": "2026-09-18",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 360,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 10.1,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-18T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.6,
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.1,
+    "next_open_at": "2026-09-21T13:30:00+00:00",
+    "primary_slot_at": "2026-09-18T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-19T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "23cb5ab864e9e9de79fe33dabea898b9bef1e375",
+   "commit": "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+   "dry_run": false,
+   "elapsed_seconds": 202.8,
+   "email": "delivered",
+   "fetch_seconds": 46.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4796,
+    "ready_fraction": 0.9958298582151793,
+    "ready_stocks": 4776,
+    "stale": 20,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-21T23:58:13+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-09-21T23:54:25.319255+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "d5d62f525e0f",
+   "run_id": "35669619745",
+   "sequence": 7,
+   "session": "2026-09-21",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 381,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 102.2,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "completion_at": "2026-09-21T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 219.4,
+    "landed_minutes": 3.8,
+    "latency_minutes": 223.2,
+    "next_open_at": "2026-09-22T13:30:00+00:00",
+    "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-22T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "6c5bd2f713eef2a787d129d6c9ddc6f409387be7",
+   "commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+   "dry_run": false,
+   "elapsed_seconds": 196.7,
+   "email": "delivered",
+   "fetch_seconds": 54.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4796,
+    "ready_fraction": 0.9958298582151793,
+    "ready_stocks": 4776,
+    "stale": 20,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-22T00:52:24+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-09-22T00:48:42.004722+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "d5d62f525e0f",
+   "run_id": "35673429253",
+   "sequence": 8,
+   "session": "2026-09-21",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 382,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 156.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-21T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 273.7,
+    "landed_minutes": 3.7,
+    "latency_minutes": 277.4,
+    "next_open_at": "2026-09-22T13:30:00+00:00",
+    "primary_slot_at": "2026-09-21T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-22T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "d9ac3a89ca2a572128143f287180afad040f5672",
+   "commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+   "dry_run": false,
+   "elapsed_seconds": 263.7,
+   "email": "delivered",
+   "fetch_seconds": 54.4,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4778,
+    "ready_fraction": 0.9968606111343659,
+    "ready_stocks": 4763,
+    "stale": 15,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-23T00:33:41+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_unavailable"
+   ],
+   "published_at": "2026-09-23T00:28:52.357015+00:00",
+   "reader": {
+    "done": 0,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "b2da771252f8",
+   "run_id": "35802203679",
+   "sequence": 9,
+   "session": "2026-09-22",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 513,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 137.7,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-22T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 253.9,
+    "landed_minutes": 4.8,
+    "latency_minutes": 258.7,
+    "next_open_at": "2026-09-23T13:30:00+00:00",
+    "primary_slot_at": "2026-09-22T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-23T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "97c89e46546e42aff4b07a5dade1ef551f4d4e4f",
+   "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+   "dry_run": false,
+   "elapsed_seconds": 238.5,
+   "email": "delivered",
+   "fetch_seconds": 43.2,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4781,
+    "ready_fraction": 0.9968625810499896,
+    "ready_stocks": 4766,
+    "stale": 15,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-24T00:33:15+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-09-24T00:29:00.615148+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "f70560c58f76",
+   "run_id": "35938584554",
+   "sequence": 10,
+   "session": "2026-09-23",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 282,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 137.2,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-23T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 254.0,
+    "landed_minutes": 4.2,
+    "latency_minutes": 258.2,
+    "next_open_at": "2026-09-24T13:30:00+00:00",
+    "primary_slot_at": "2026-09-23T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-24T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "332b99ffac36b3b723de58197ce853e1ecd96b20",
+   "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "dry_run": false,
+   "elapsed_seconds": 243.9,
+   "email": "delivered",
+   "fetch_seconds": 55.0,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4779,
+    "ready_fraction": 0.9966520192508893,
+    "ready_stocks": 4763,
+    "stale": 16,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-25T00:37:01+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-09-25T00:32:29.515829+00:00",
+   "reader": {
+    "done": 9,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "7c02ee92cb05",
+   "run_id": "36077970591",
+   "sequence": 11,
+   "session": "2026-09-24",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 418,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 141.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-24T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 257.5,
+    "landed_minutes": 4.5,
+    "latency_minutes": 262.0,
+    "next_open_at": "2026-09-25T13:30:00+00:00",
+    "primary_slot_at": "2026-09-24T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-25T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "6fce465edd51badead8ad0c38b111819ee69c884",
+   "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
+   "dry_run": false,
+   "elapsed_seconds": 259.3,
+   "email": "delivered",
+   "fetch_seconds": 58.3,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4780,
+    "ready_fraction": 0.9953974895397489,
+    "ready_stocks": 4758,
+    "stale": 22,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-26T00:41:44+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-09-26T00:36:55.145085+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "81ed3b38d571",
+   "run_id": "36205470985",
+   "sequence": 12,
+   "session": "2026-09-25",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 455,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 145.7,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-25T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 261.9,
+    "landed_minutes": 4.8,
+    "latency_minutes": 266.7,
+    "next_open_at": "2026-09-28T13:30:00+00:00",
+    "primary_slot_at": "2026-09-25T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-26T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "8d569933ebab8838699faff339bc1a18dde0dfa8",
+   "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
+   "dry_run": false,
+   "elapsed_seconds": 246.6,
+   "email": "delivered",
+   "fetch_seconds": 54.1,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4780,
+    "ready_fraction": 0.9960251046025105,
+    "ready_stocks": 4761,
+    "stale": 19,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-29T01:58:52+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-09-29T01:54:23.545923+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "3978da99f5c0",
+   "run_id": "36510040469",
+   "sequence": 13,
+   "session": "2026-09-28",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 406,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 222.9,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-28T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.4,
+    "landed_minutes": 4.5,
+    "latency_minutes": 343.9,
+    "next_open_at": "2026-09-29T13:30:00+00:00",
+    "primary_slot_at": "2026-09-28T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-29T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "39ec172c5fb049f3cd55b7be794d06ad5c7ccbdd",
+   "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+   "dry_run": false,
+   "elapsed_seconds": 242.8,
+   "email": "delivered",
+   "fetch_seconds": 43.6,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4781,
+    "ready_fraction": 0.9970717423133236,
+    "ready_stocks": 4767,
+    "stale": 14,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-09-30T01:21:22+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-09-30T01:17:04.438845+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "009babeb3f65",
+   "run_id": "36654325015",
+   "sequence": 14,
+   "session": "2026-09-29",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 364,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 185.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-29T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 302.1,
+    "landed_minutes": 4.3,
+    "latency_minutes": 306.4,
+    "next_open_at": "2026-09-30T13:30:00+00:00",
+    "primary_slot_at": "2026-09-29T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-09-30T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "e31cfe5fd388a2b054a8afb16dfbe4f8da8ac93d",
+   "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+   "dry_run": false,
+   "elapsed_seconds": 255.8,
+   "email": "delivered",
+   "fetch_seconds": 59.0,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4779,
+    "ready_fraction": 0.997489014438167,
+    "ready_stocks": 4767,
+    "stale": 12,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-10-01T01:21:22+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-10-01T01:16:51.463947+00:00",
+   "reader": {
+    "done": 10,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "db2828fd59da",
+   "run_id": "36800284304",
+   "sequence": 15,
+   "session": "2026-09-30",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 228,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 185.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-09-30T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 301.9,
+    "landed_minutes": 4.5,
+    "latency_minutes": 306.4,
+    "next_open_at": "2026-10-01T13:30:00+00:00",
+    "primary_slot_at": "2026-09-30T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-01T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "d6095ca5d92ed5a056eab820bb73323fb04f5b67",
+   "commit": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+   "dry_run": false,
+   "elapsed_seconds": 246.1,
+   "email": "delivered",
+   "fetch_seconds": 50.0,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4781,
+    "ready_fraction": 0.9968625810499896,
+    "ready_stocks": 4766,
+    "stale": 15,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-10-02T01:44:57+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-10-02T01:40:08.024617+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "4219629da532",
+   "run_id": "36951987679",
+   "sequence": 16,
+   "session": "2026-10-01",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 634,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 208.9,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-01T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 325.1,
+    "landed_minutes": 4.8,
+    "latency_minutes": 329.9,
+    "next_open_at": "2026-10-02T13:30:00+00:00",
+    "primary_slot_at": "2026-10-01T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-02T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "bb2edad5522c137030ec93d286c1aebfedde73de",
+   "commit": "58e0f38430ae82249db435ff397477bd2221106e",
+   "dry_run": false,
+   "elapsed_seconds": 248.3,
+   "email": "delivered",
+   "fetch_seconds": 50.7,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4781,
+    "ready_fraction": 0.9970717423133236,
+    "ready_stocks": 4767,
+    "stale": 14,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-10-03T01:15:05+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-10-03T01:10:25.044083+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "efad1dbdba5a",
+   "run_id": "37085032782",
+   "sequence": 17,
+   "session": "2026-10-02",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 457,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 179.1,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-02T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 295.4,
+    "landed_minutes": 4.7,
+    "latency_minutes": 300.1,
+    "next_open_at": "2026-10-05T13:30:00+00:00",
+    "primary_slot_at": "2026-10-02T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-03T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "1064e69b27bf3f6fceed1594a1a1b0387eb021bb",
+   "commit": "178956b46bc50d8998636e9b4bc785ce3687c84a",
+   "dry_run": false,
+   "elapsed_seconds": 253.3,
+   "email": "delivered",
+   "fetch_seconds": 52.6,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4778,
+    "ready_fraction": 0.9979070740895772,
+    "ready_stocks": 4768,
+    "stale": 10,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-10-06T02:22:00+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-10-06T02:17:03.294319+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "9d480ae7f6fb",
+   "run_id": "37403330047",
+   "sequence": 18,
+   "session": "2026-10-05",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 607,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 246.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-05T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 362.1,
+    "landed_minutes": 4.9,
+    "latency_minutes": 367.0,
+    "next_open_at": "2026-10-06T13:30:00+00:00",
+    "primary_slot_at": "2026-10-05T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-06T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "8eca61e4ef1582feace6e915538b7f8009b1194c",
+   "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+   "dry_run": false,
+   "elapsed_seconds": 194.9,
+   "email": "delivered",
+   "fetch_seconds": 64.0,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4778,
+    "ready_fraction": 0.9960234407701968,
+    "ready_stocks": 4759,
+    "stale": 19,
+    "tolerance": null,
+    "version": 1
+   },
+   "landed_at": "2026-10-07T01:34:51+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-10-07T01:31:04.894157+00:00",
+   "reader": {
+    "done": 4,
+    "requested": 12,
+    "usage": null,
+    "verdict": null
+   },
+   "rules_version": "7f2ec51c1970",
+   "run_id": "37557449315",
+   "sequence": 19,
+   "session": "2026-10-06",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 396,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 198.8,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-06T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 316.1,
+    "landed_minutes": 3.8,
+    "latency_minutes": 319.9,
+    "next_open_at": "2026-10-07T13:30:00+00:00",
+    "primary_slot_at": "2026-10-06T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-07T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "b4f6f615f35a1eef22fc73d8ab9ae961c71c9068",
+   "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "dry_run": false,
+   "elapsed_seconds": 305.0,
+   "email": "delivered",
+   "fetch_seconds": 56.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4775,
+    "ready_fraction": 0.9966492146596858,
+    "ready_stocks": 4759,
+    "stale": 16,
+    "tolerance": "not_tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-08T02:00:02+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-10-08T01:54:31.922070+00:00",
+   "reader": {
+    "done": 9,
+    "requested": 12,
+    "usage": null,
+    "verdict": "tolerated"
+   },
+   "rules_version": "ec0230c4307e",
+   "run_id": "37715183976",
+   "sequence": 20,
+   "session": "2026-10-07",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 311,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 224.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-07T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.5,
+    "landed_minutes": 5.5,
+    "latency_minutes": 345.0,
+    "next_open_at": "2026-10-08T13:30:00+00:00",
+    "primary_slot_at": "2026-10-07T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-08T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "7b6bd909b9ef9a8efd459433a4e4db0fd01cb897",
+   "commit": "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+   "dry_run": false,
+   "elapsed_seconds": 261.8,
+   "email": "delivered",
+   "fetch_seconds": 60.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4777,
+    "ready_fraction": 0.9953945991207871,
+    "ready_stocks": 4755,
+    "stale": 22,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-09T02:12:06+00:00",
+   "problems": [
+    "claude_partial"
+   ],
+   "published_at": "2026-10-09T02:06:55.130264+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": "partial"
+   },
+   "rules_version": "669435d895d7",
+   "run_id": "37872972790",
+   "sequence": 21,
+   "session": "2026-10-08",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 2,
+    "discovered": 730,
+    "listed": 4,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 236.1,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-08T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 351.9,
+    "landed_minutes": 5.2,
+    "latency_minutes": 357.1,
+    "next_open_at": "2026-10-09T13:30:00+00:00",
+    "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-09T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "687e44d07e833de860edf0338db8dee09a1b195e",
+   "commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
+   "dry_run": false,
+   "elapsed_seconds": 258.4,
+   "email": "skipped",
+   "fetch_seconds": 51.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4775,
+    "ready_fraction": 0.9997905759162303,
+    "ready_stocks": 4774,
+    "stale": 1,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-09T12:15:26+00:00",
+   "problems": [
+    "claude_partial"
+   ],
+   "published_at": "2026-10-09T12:10:20.678352+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": "partial"
+   },
+   "rules_version": "8e9ea8528b31",
+   "run_id": "37928234562",
+   "sequence": 22,
+   "session": "2026-10-08",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 728,
+    "listed": 4,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 839.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-08T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 955.3,
+    "landed_minutes": 5.1,
+    "latency_minutes": 960.4,
+    "next_open_at": "2026-10-09T13:30:00+00:00",
+    "primary_slot_at": "2026-10-08T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-09T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "353088402c6588916d0c9a87ae0f08c7d401f605",
+   "commit": "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+   "dry_run": false,
+   "elapsed_seconds": 233.0,
+   "email": "delivered",
+   "fetch_seconds": 51.9,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4775,
+    "ready_fraction": 0.9953926701570681,
+    "ready_stocks": 4753,
+    "stale": 22,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-10T01:49:14+00:00",
+   "problems": [],
+   "published_at": "2026-10-10T01:44:58.778069+00:00",
+   "reader": {
+    "done": 11,
+    "requested": 12,
+    "usage": null,
+    "verdict": "tolerated"
+   },
+   "rules_version": "8e9ea8528b31",
+   "run_id": "38014333381",
+   "sequence": 23,
+   "session": "2026-10-09",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 1,
+    "discovered": 479,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 213.2,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-09T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 330.0,
+    "landed_minutes": 4.3,
+    "latency_minutes": 334.2,
+    "next_open_at": "2026-10-12T13:30:00+00:00",
+    "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-10T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "476344ac8c7b47d9d2f674edc93b0722cf09d9ee",
+   "commit": "dcb12a0b20f2d41900c4235c30efa76a40285c0b",
+   "dry_run": false,
+   "elapsed_seconds": 239.6,
+   "email": "skipped",
+   "fetch_seconds": 47.7,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4775,
+    "ready_fraction": 0.9997905759162303,
+    "ready_stocks": 4774,
+    "stale": 1,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-10T07:17:23+00:00",
+   "problems": [],
+   "published_at": "2026-10-10T07:12:55.687883+00:00",
+   "reader": {
+    "done": 12,
+    "requested": 12,
+    "usage": null,
+    "verdict": "complete"
+   },
+   "rules_version": "4f69dc967d7a",
+   "run_id": "38033614291",
+   "sequence": 24,
+   "session": "2026-10-09",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 479,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 541.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-09T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 657.9,
+    "landed_minutes": 4.5,
+    "latency_minutes": 662.4,
+    "next_open_at": "2026-10-12T13:30:00+00:00",
+    "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-10T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "58211b2d32343a2caf811d2d1af906acbef942ca",
+   "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+   "dry_run": false,
+   "elapsed_seconds": 112.7,
+   "email": "skipped",
+   "fetch_seconds": 59.2,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4775,
+    "ready_fraction": 0.9997905759162303,
+    "ready_stocks": 4774,
+    "stale": 1,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-10T07:32:39+00:00",
+   "problems": [],
+   "published_at": "2026-10-10T07:30:15.553690+00:00",
+   "reader": {
+    "done": 2,
+    "requested": 2,
+    "usage": null,
+    "verdict": "complete"
+   },
+   "rules_version": "c9dc7d6d1d87",
+   "run_id": "38034610157",
+   "sequence": 25,
+   "session": "2026-10-09",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 479,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 556.6,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-09T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 675.3,
+    "landed_minutes": 2.4,
+    "latency_minutes": 677.6,
+    "next_open_at": "2026-10-12T13:30:00+00:00",
+    "primary_slot_at": "2026-10-09T22:16:00+00:00",
+    "record_delivery_block": "absent",
+    "retry_slot_at": "2026-10-10T00:16:00+00:00",
+    "slot_basis": "current_policy",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "e3fc4bfecc1c559bc70b70d39cd0f7aedb214dec",
+   "commit": "9936e971394e5165b3f0e7ad26a439fd16961c59",
+   "dry_run": false,
+   "elapsed_seconds": 135.0,
+   "email": "delivered",
+   "fetch_seconds": 56.4,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4778,
+    "ready_fraction": 0.9976977814985349,
+    "ready_stocks": 4767,
+    "stale": 11,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-13T03:05:28+00:00",
+   "problems": [],
+   "published_at": "2026-10-13T03:02:09.473058+00:00",
+   "reader": {
+    "done": 2,
+    "requested": 2,
+    "usage": {
+     "calls": 2,
+     "input_tokens": 14734,
+     "model": "claude-sonnet-4-6",
+     "output_tokens": 1357,
+     "responses": 2
+    },
+    "verdict": "complete"
+   },
+   "rules_version": "990399a6dd1c",
+   "run_id": "38339720035",
+   "sequence": 26,
+   "session": "2026-10-12",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 362,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 289.5,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-12T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 407.2,
+    "landed_minutes": 3.3,
+    "latency_minutes": 410.5,
+    "next_open_at": "2026-10-13T13:30:00+00:00",
+    "primary_slot_at": "2026-10-12T22:16:00+00:00",
+    "record_delivery_block": "held",
+    "retry_slot_at": "2026-10-13T00:16:00+00:00",
+    "slot_basis": "archived",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "e284b1932e60b768a711675206ee37caa2f5d189",
+   "commit": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+   "dry_run": false,
+   "elapsed_seconds": 138.4,
+   "email": "delivered",
+   "fetch_seconds": 66.4,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4776,
+    "ready_fraction": 0.9966499162479062,
+    "ready_stocks": 4760,
+    "stale": 16,
+    "tolerance": "not_tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-14T01:15:38+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_unavailable"
+   ],
+   "published_at": "2026-10-14T01:12:11.678353+00:00",
+   "reader": {
+    "done": 0,
+    "requested": 2,
+    "usage": {
+     "calls": 2,
+     "input_tokens": 14649,
+     "model": "claude-sonnet-4-6",
+     "output_tokens": 1150,
+     "responses": 2
+    },
+    "verdict": "unavailable"
+   },
+   "rules_version": "e5bec6a7e3fd",
+   "run_id": "38494353799",
+   "sequence": 27,
+   "session": "2026-10-13",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 398,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 179.6,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-13T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 297.2,
+    "landed_minutes": 3.4,
+    "latency_minutes": 300.6,
+    "next_open_at": "2026-10-14T13:30:00+00:00",
+    "primary_slot_at": "2026-10-13T22:16:00+00:00",
+    "record_delivery_block": "held",
+    "retry_slot_at": "2026-10-14T00:16:00+00:00",
+    "slot_basis": "archived",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "0c0d28383470e464fffd73846d67a69e7f0716a9",
+   "commit": "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+   "dry_run": false,
+   "elapsed_seconds": 152.4,
+   "email": "delivered",
+   "fetch_seconds": 84.8,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4778,
+    "ready_fraction": 0.9960234407701968,
+    "ready_stocks": 4759,
+    "stale": 19,
+    "tolerance": "not_tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-15T00:34:26+00:00",
+   "problems": [
+    "coverage_thin"
+   ],
+   "published_at": "2026-10-15T00:30:48.981013+00:00",
+   "reader": {
+    "done": 2,
+    "requested": 2,
+    "usage": {
+     "calls": 2,
+     "input_tokens": 14716,
+     "model": "claude-sonnet-4-6",
+     "output_tokens": 1312,
+     "responses": 2
+    },
+    "verdict": "complete"
+   },
+   "rules_version": "d62af3f20bfd",
+   "run_id": "38660383665",
+   "sequence": 28,
+   "session": "2026-10-14",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 365,
+    "listed": 3,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 138.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-14T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 255.8,
+    "landed_minutes": 3.6,
+    "latency_minutes": 259.4,
+    "next_open_at": "2026-10-15T13:30:00+00:00",
+    "primary_slot_at": "2026-10-14T22:16:00+00:00",
+    "record_delivery_block": "held",
+    "retry_slot_at": "2026-10-15T00:16:00+00:00",
+    "slot_basis": "archived",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "9ee84836b071fa90ba0f0f13b8e4fa42c83bdb49",
+   "commit": "0f95141450c579e86f4de657c23849217dc57cc4",
+   "dry_run": false,
+   "elapsed_seconds": 139.8,
+   "email": "delivered",
+   "fetch_seconds": 62.1,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4777,
+    "ready_fraction": 0.9958132719279883,
+    "ready_stocks": 4757,
+    "stale": 20,
+    "tolerance": "not_tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-16T00:26:58+00:00",
+   "problems": [
+    "coverage_thin",
+    "claude_partial"
+   ],
+   "published_at": "2026-10-16T00:22:17.953119+00:00",
+   "reader": {
+    "done": 1,
+    "requested": 2,
+    "usage": {
+     "calls": 2,
+     "input_tokens": 14673,
+     "model": "claude-sonnet-4-6",
+     "output_tokens": 837,
+     "responses": 2
+    },
+    "verdict": "partial"
+   },
+   "rules_version": "804351d60996",
+   "run_id": "38829043191",
+   "sequence": 29,
+   "session": "2026-10-15",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 948,
+    "listed": 3,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "degraded",
+   "timing": {
+    "after_primary_minutes": 131.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-15T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 247.3,
+    "landed_minutes": 4.7,
+    "latency_minutes": 252.0,
+    "next_open_at": "2026-10-16T13:30:00+00:00",
+    "primary_slot_at": "2026-10-15T22:16:00+00:00",
+    "record_delivery_block": "held",
+    "retry_slot_at": "2026-10-16T00:16:00+00:00",
+    "slot_basis": "archived",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  },
+  {
+   "blob": "58dda9fa6095ece69995e96e9ec8117f11096c78",
+   "commit": "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+   "dry_run": false,
+   "elapsed_seconds": 145.4,
+   "email": "delivered",
+   "fetch_seconds": 78.5,
+   "inputs": {
+    "acceptance": "degraded",
+    "intended_stocks": 4777,
+    "ready_fraction": 0.9962319447351895,
+    "ready_stocks": 4759,
+    "stale": 18,
+    "tolerance": "tolerated",
+    "version": 1
+   },
+   "landed_at": "2026-10-17T00:29:26+00:00",
+   "problems": [],
+   "published_at": "2026-10-17T00:26:18.077702+00:00",
+   "reader": {
+    "done": 2,
+    "requested": 2,
+    "usage": {
+     "calls": 2,
+     "input_tokens": 14667,
+     "model": "claude-sonnet-4-6",
+     "output_tokens": 1059,
+     "responses": 2
+    },
+    "verdict": "complete"
+   },
+   "rules_version": "f6c9a7388d9c",
+   "run_id": "38986314620",
+   "sequence": 30,
+   "session": "2026-10-16",
+   "session_state": "open",
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 206,
+    "listed": 0,
+    "reaction_tickets": 0,
+    "regime": "red"
+   },
+   "status": "ok",
+   "timing": {
+    "after_primary_minutes": 133.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "completion_at": "2026-10-16T20:15:00+00:00",
+    "completion_basis": "archived",
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 251.3,
+    "landed_minutes": 3.1,
+    "latency_minutes": 254.4,
+    "next_open_at": "2026-10-19T13:30:00+00:00",
+    "primary_slot_at": "2026-10-16T22:16:00+00:00",
+    "record_delivery_block": "held",
+    "retry_slot_at": "2026-10-17T00:16:00+00:00",
+    "slot_basis": "archived",
+    "slots_et": {
+     "primary": "18:16",
+     "retry": "20:16"
+    }
+   }
+  }
+ ],
+ "sessions": [
+  {
+   "applicable_session": "2026-09-14",
+   "completion_at": "2026-09-11T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+    "email": "delivered",
+    "landed_at": "2026-09-11T22:25:33+00:00",
+    "published_at": "2026-09-11T22:22:44.126296+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 401,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-09-14T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "7380a97605c7f16eb902421486c491a95b957cd7",
+    "ece47f1e34ab4b795a79be7674355409ce5aaf8e"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 2,
+   "service": {
+    "after_primary_minutes": -65.2,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 163.5,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 53.1,
+    "inputs": {
+     "acceptance": null,
+     "intended_stocks": null,
+     "ready_fraction": null,
+     "ready_stocks": null,
+     "stale": 1,
+     "tolerance": null,
+     "version": null
+    },
+    "landed_at": "2026-09-11T21:10:48+00:00",
+    "landed_minutes": 2.7,
+    "latency_minutes": 55.8,
+    "problems": [],
+    "published_at": "2026-09-11T21:08:04.147459+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "34647793285",
+    "slot_basis": "current_policy",
+    "status": "ok"
+   },
+   "session": "2026-09-11",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 400,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-15",
+   "completion_at": "2026-09-14T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+    "email": "delivered",
+    "landed_at": "2026-09-14T22:27:41+00:00",
+    "published_at": "2026-09-14T22:24:50.953539+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 558,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-09-15T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "fbaed5cdc43a84755f61840ba9e1fc74379c797d"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 11.7,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 169.2,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 129.8,
+    "inputs": {
+     "acceptance": null,
+     "intended_stocks": null,
+     "ready_fraction": null,
+     "ready_stocks": null,
+     "stale": 0,
+     "tolerance": null,
+     "version": null
+    },
+    "landed_at": "2026-09-14T22:27:41+00:00",
+    "landed_minutes": 2.8,
+    "latency_minutes": 132.7,
+    "problems": [],
+    "published_at": "2026-09-14T22:24:50.953539+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "34903940252",
+    "slot_basis": "current_policy",
+    "status": "ok"
+   },
+   "session": "2026-09-14",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 558,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-16",
+   "completion_at": "2026-09-15T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "442db489342660d7588d16dcc18e6c126187c1e6",
+    "email": "delivered",
+    "landed_at": "2026-09-15T22:26:18+00:00",
+    "published_at": "2026-09-15T22:23:17.742488+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 342,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-09-16T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "442db489342660d7588d16dcc18e6c126187c1e6"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 10.3,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 179.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.3,
+    "inputs": {
+     "acceptance": null,
+     "intended_stocks": null,
+     "ready_fraction": null,
+     "ready_stocks": null,
+     "stale": 0,
+     "tolerance": null,
+     "version": null
+    },
+    "landed_at": "2026-09-15T22:26:18+00:00",
+    "landed_minutes": 3.0,
+    "latency_minutes": 131.3,
+    "problems": [],
+    "published_at": "2026-09-15T22:23:17.742488+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35030668710",
+    "slot_basis": "current_policy",
+    "status": "ok"
+   },
+   "session": "2026-09-15",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 342,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-17",
+   "completion_at": "2026-09-16T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "580805487b22006c6f2fa35490c3edc8a5760d73",
+    "email": "delivered",
+    "landed_at": "2026-09-16T22:26:30+00:00",
+    "published_at": "2026-09-16T22:23:02.757794+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 303,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-17T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "580805487b22006c6f2fa35490c3edc8a5760d73"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 10.5,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 189.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 128.0,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4795,
+     "ready_fraction": 0.9949947862356622,
+     "ready_stocks": 4771,
+     "stale": 24,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-16T22:26:30+00:00",
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.5,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-09-16T22:23:02.757794+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35157356943",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-16",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 303,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-18",
+   "completion_at": "2026-09-17T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "ebcdea34464b9090e7734ca543be8733d39fc20a",
+    "email": "delivered",
+    "landed_at": "2026-09-17T22:25:36+00:00",
+    "published_at": "2026-09-17T22:21:57.200360+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 420,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-18T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "ebcdea34464b9090e7734ca543be8733d39fc20a"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 9.6,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 195.2,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.0,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4794,
+     "ready_fraction": 0.9960367125573634,
+     "ready_stocks": 4775,
+     "stale": 19,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-17T22:25:36+00:00",
+    "landed_minutes": 3.6,
+    "latency_minutes": 130.6,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-09-17T22:21:57.200360+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35281605621",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-17",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 420,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-21",
+   "completion_at": "2026-09-18T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+    "email": "delivered",
+    "landed_at": "2026-09-18T22:26:07+00:00",
+    "published_at": "2026-09-18T22:22:34.176134+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 360,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-21T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 10.1,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 189.7,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 127.6,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4793,
+     "ready_fraction": 0.9960358856665972,
+     "ready_stocks": 4774,
+     "stale": 19,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-18T22:26:07+00:00",
+    "landed_minutes": 3.5,
+    "latency_minutes": 131.1,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-09-18T22:22:34.176134+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35401227388",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-18",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 360,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-22",
+   "completion_at": "2026-09-21T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "49e2724c94b60963d914d55a2bf98598ac6507ad",
+    "email": "delivered",
+    "landed_at": "2026-09-22T00:52:24+00:00",
+    "published_at": "2026-09-22T00:48:42.004722+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 382,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-22T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+    "49e2724c94b60963d914d55a2bf98598ac6507ad"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 2,
+   "service": {
+    "after_primary_minutes": 102.2,
+    "after_retry_slot": false,
+    "before_next_open": true,
+    "elapsed_seconds": 202.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 219.4,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4796,
+     "ready_fraction": 0.9958298582151793,
+     "ready_stocks": 4776,
+     "stale": 20,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-21T23:58:13+00:00",
+    "landed_minutes": 3.8,
+    "latency_minutes": 223.2,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-09-21T23:54:25.319255+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35669619745",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-21",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 381,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-23",
+   "completion_at": "2026-09-22T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "e2dee988ad5d36876b7c73090502720e995c65f4",
+    "email": "delivered",
+    "landed_at": "2026-09-23T00:33:41+00:00",
+    "published_at": "2026-09-23T00:28:52.357015+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 513,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-23T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "e2dee988ad5d36876b7c73090502720e995c65f4"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 137.7,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 263.7,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 253.9,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4778,
+     "ready_fraction": 0.9968606111343659,
+     "ready_stocks": 4763,
+     "stale": 15,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-23T00:33:41+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 258.7,
+    "problems": [
+     "coverage_thin",
+     "claude_unavailable"
+    ],
+    "published_at": "2026-09-23T00:28:52.357015+00:00",
+    "reader": {
+     "done": 0,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35802203679",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-22",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 513,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-24",
+   "completion_at": "2026-09-23T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+    "email": "delivered",
+    "landed_at": "2026-09-24T00:33:15+00:00",
+    "published_at": "2026-09-24T00:29:00.615148+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 282,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-24T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "6ff292d7971570d809a2bdd4d476a1f88d3c4234"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 137.2,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 238.5,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 254.0,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4781,
+     "ready_fraction": 0.9968625810499896,
+     "ready_stocks": 4766,
+     "stale": 15,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-24T00:33:15+00:00",
+    "landed_minutes": 4.2,
+    "latency_minutes": 258.2,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-09-24T00:29:00.615148+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "35938584554",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-23",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 282,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-25",
+   "completion_at": "2026-09-24T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "6822dddd14d0a541083e7caaecca9c945b451af2",
+    "email": "delivered",
+    "landed_at": "2026-09-25T00:37:01+00:00",
+    "published_at": "2026-09-25T00:32:29.515829+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 418,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-25T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "6822dddd14d0a541083e7caaecca9c945b451af2"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 141.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 243.9,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 257.5,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4779,
+     "ready_fraction": 0.9966520192508893,
+     "ready_stocks": 4763,
+     "stale": 16,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-25T00:37:01+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 262.0,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-09-25T00:32:29.515829+00:00",
+    "reader": {
+     "done": 9,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36077970591",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-24",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 418,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-28",
+   "completion_at": "2026-09-25T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "8be007f68deaa417b85a512d2e16a37899d27011",
+    "email": "delivered",
+    "landed_at": "2026-09-26T00:41:44+00:00",
+    "published_at": "2026-09-26T00:36:55.145085+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 455,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-28T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "8be007f68deaa417b85a512d2e16a37899d27011"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 145.7,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 259.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 261.9,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4780,
+     "ready_fraction": 0.9953974895397489,
+     "ready_stocks": 4758,
+     "stale": 22,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-26T00:41:44+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 266.7,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-09-26T00:36:55.145085+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36205470985",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-25",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 455,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-29",
+   "completion_at": "2026-09-28T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "786ade7013a0c55d172d89118322b19a056fa8a6",
+    "email": "delivered",
+    "landed_at": "2026-09-29T01:58:52+00:00",
+    "published_at": "2026-09-29T01:54:23.545923+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 406,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-29T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "786ade7013a0c55d172d89118322b19a056fa8a6"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 222.9,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 246.6,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.4,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4780,
+     "ready_fraction": 0.9960251046025105,
+     "ready_stocks": 4761,
+     "stale": 19,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-29T01:58:52+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 343.9,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-09-29T01:54:23.545923+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36510040469",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-28",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 406,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-09-30",
+   "completion_at": "2026-09-29T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+    "email": "delivered",
+    "landed_at": "2026-09-30T01:21:22+00:00",
+    "published_at": "2026-09-30T01:17:04.438845+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 364,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-09-30T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "6284cb9787c11929eaedf1a263cf463ab4ae4928"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 185.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 242.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 302.1,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4781,
+     "ready_fraction": 0.9970717423133236,
+     "ready_stocks": 4767,
+     "stale": 14,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-09-30T01:21:22+00:00",
+    "landed_minutes": 4.3,
+    "latency_minutes": 306.4,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-09-30T01:17:04.438845+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36654325015",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-29",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 364,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-01",
+   "completion_at": "2026-09-30T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "a900236900be6e531cc3c0c0e9b0547269861ec8",
+    "email": "delivered",
+    "landed_at": "2026-10-01T01:21:22+00:00",
+    "published_at": "2026-10-01T01:16:51.463947+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 228,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-01T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "a900236900be6e531cc3c0c0e9b0547269861ec8"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 185.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 255.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 301.9,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4779,
+     "ready_fraction": 0.997489014438167,
+     "ready_stocks": 4767,
+     "stale": 12,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-10-01T01:21:22+00:00",
+    "landed_minutes": 4.5,
+    "latency_minutes": 306.4,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-10-01T01:16:51.463947+00:00",
+    "reader": {
+     "done": 10,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36800284304",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-09-30",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 228,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-02",
+   "completion_at": "2026-10-01T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+    "email": "delivered",
+    "landed_at": "2026-10-02T01:44:57+00:00",
+    "published_at": "2026-10-02T01:40:08.024617+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 634,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-02T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "a930ca0fb9d4e283253cf79dd32097a2dec89e8c"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 208.9,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 246.1,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 325.1,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4781,
+     "ready_fraction": 0.9968625810499896,
+     "ready_stocks": 4766,
+     "stale": 15,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-10-02T01:44:57+00:00",
+    "landed_minutes": 4.8,
+    "latency_minutes": 329.9,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-10-02T01:40:08.024617+00:00",
+    "reader": {
+     "done": 12,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "36951987679",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-01",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 634,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-05",
+   "completion_at": "2026-10-02T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "58e0f38430ae82249db435ff397477bd2221106e",
+    "email": "delivered",
+    "landed_at": "2026-10-03T01:15:05+00:00",
+    "published_at": "2026-10-03T01:10:25.044083+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 457,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-05T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "58e0f38430ae82249db435ff397477bd2221106e"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 179.1,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 248.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 295.4,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4781,
+     "ready_fraction": 0.9970717423133236,
+     "ready_stocks": 4767,
+     "stale": 14,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-10-03T01:15:05+00:00",
+    "landed_minutes": 4.7,
+    "latency_minutes": 300.1,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-10-03T01:10:25.044083+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "37085032782",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-02",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 457,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-06",
+   "completion_at": "2026-10-05T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "178956b46bc50d8998636e9b4bc785ce3687c84a",
+    "email": "delivered",
+    "landed_at": "2026-10-06T02:22:00+00:00",
+    "published_at": "2026-10-06T02:17:03.294319+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 607,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-06T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "178956b46bc50d8998636e9b4bc785ce3687c84a"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 246.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 253.3,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 362.1,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4778,
+     "ready_fraction": 0.9979070740895772,
+     "ready_stocks": 4768,
+     "stale": 10,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-10-06T02:22:00+00:00",
+    "landed_minutes": 4.9,
+    "latency_minutes": 367.0,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-10-06T02:17:03.294319+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "37403330047",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-05",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 607,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-07",
+   "completion_at": "2026-10-06T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+    "email": "delivered",
+    "landed_at": "2026-10-07T01:34:51+00:00",
+    "published_at": "2026-10-07T01:31:04.894157+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 396,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-07T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 198.8,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 194.9,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 316.1,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4778,
+     "ready_fraction": 0.9960234407701968,
+     "ready_stocks": 4759,
+     "stale": 19,
+     "tolerance": null,
+     "version": 1
+    },
+    "landed_at": "2026-10-07T01:34:51+00:00",
+    "landed_minutes": 3.8,
+    "latency_minutes": 319.9,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-10-07T01:31:04.894157+00:00",
+    "reader": {
+     "done": 4,
+     "requested": 12,
+     "usage": null,
+     "verdict": null
+    },
+    "run_id": "37557449315",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-06",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 396,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-08",
+   "completion_at": "2026-10-07T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+    "email": "delivered",
+    "landed_at": "2026-10-08T02:00:02+00:00",
+    "published_at": "2026-10-08T01:54:31.922070+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 311,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-08T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 224.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 305.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 339.5,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4775,
+     "ready_fraction": 0.9966492146596858,
+     "ready_stocks": 4759,
+     "stale": 16,
+     "tolerance": "not_tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-08T02:00:02+00:00",
+    "landed_minutes": 5.5,
+    "latency_minutes": 345.0,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-10-08T01:54:31.922070+00:00",
+    "reader": {
+     "done": 9,
+     "requested": 12,
+     "usage": null,
+     "verdict": "tolerated"
+    },
+    "run_id": "37715183976",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-07",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 311,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-09",
+   "completion_at": "2026-10-08T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "e67f8cba8774789b8deb0c106b21537b66f37a35",
+    "email": "skipped",
+    "landed_at": "2026-10-09T12:15:26+00:00",
+    "published_at": "2026-10-09T12:10:20.678352+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 728,
+     "listed": 4,
+     "reaction_tickets": 0,
+     "regime": "yellow"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-09T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+    "e67f8cba8774789b8deb0c106b21537b66f37a35"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [],
+    "morning": [
+     {
+      "before_applicable_open": false,
+      "commit": "2fa9773f046299de78c95d1b513c05880a3eefdb",
+      "generated_at": "2026-10-09T17:10:18.034037+00:00",
+      "landed_at": "2026-10-09T17:11:03+00:00",
+      "reason": "entry_window_ended",
+      "rows": 0,
+      "status": "inapplicable"
+     }
+    ],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 2,
+   "service": {
+    "after_primary_minutes": 236.1,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 261.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 351.9,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4777,
+     "ready_fraction": 0.9953945991207871,
+     "ready_stocks": 4755,
+     "stale": 22,
+     "tolerance": "tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-09T02:12:06+00:00",
+    "landed_minutes": 5.2,
+    "latency_minutes": 357.1,
+    "problems": [
+     "claude_partial"
+    ],
+    "published_at": "2026-10-09T02:06:55.130264+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": "partial"
+    },
+    "run_id": "37872972790",
+    "slot_basis": "current_policy",
+    "status": "degraded"
+   },
+   "session": "2026-10-08",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 2,
+    "discovered": 730,
+    "listed": 4,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   }
+  },
+  {
+   "applicable_session": "2026-10-12",
+   "completion_at": "2026-10-09T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+    "email": "skipped",
+    "landed_at": "2026-10-10T07:32:39+00:00",
+    "published_at": "2026-10-10T07:30:15.553690+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 479,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "yellow"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-10-12T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+    "dcb12a0b20f2d41900c4235c30efa76a40285c0b",
+    "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "981e6792827a222c26b94da622f30d88b74d53e1",
+      "generated_at": "2026-10-10T07:35:36.385307+00:00",
+      "landed_at": "2026-10-10T07:36:12+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     },
+     {
+      "before_applicable_open": true,
+      "commit": "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+      "generated_at": "2026-10-10T08:57:46.469022+00:00",
+      "landed_at": "2026-10-10T08:58:21+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     },
+     {
+      "before_applicable_open": true,
+      "commit": "f9b91d00123281039436bcd4e8a7646992517265",
+      "generated_at": "2026-10-10T09:18:39.533632+00:00",
+      "landed_at": "2026-10-10T09:19:16+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     }
+    ],
+    "morning": [
+     {
+      "before_applicable_open": true,
+      "commit": "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
+      "generated_at": "2026-10-10T08:56:34.636611+00:00",
+      "landed_at": "2026-10-10T08:57:05+00:00",
+      "reason": "wrong_session",
+      "rows": 0,
+      "status": "inapplicable"
+     }
+    ],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 3,
+   "service": {
+    "after_primary_minutes": 213.2,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 233.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 330.0,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4775,
+     "ready_fraction": 0.9953926701570681,
+     "ready_stocks": 4753,
+     "stale": 22,
+     "tolerance": "tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-10T01:49:14+00:00",
+    "landed_minutes": 4.3,
+    "latency_minutes": 334.2,
+    "problems": [],
+    "published_at": "2026-10-10T01:44:58.778069+00:00",
+    "reader": {
+     "done": 11,
+     "requested": 12,
+     "usage": null,
+     "verdict": "tolerated"
+    },
+    "run_id": "38014333381",
+    "slot_basis": "current_policy",
+    "status": "ok"
+   },
+   "session": "2026-10-09",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 1,
+    "discovered": 479,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   }
+  },
+  {
+   "applicable_session": "2026-10-13",
+   "completion_at": "2026-10-12T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "9936e971394e5165b3f0e7ad26a439fd16961c59",
+    "email": "delivered",
+    "landed_at": "2026-10-13T03:05:28+00:00",
+    "published_at": "2026-10-13T03:02:09.473058+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 362,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "yellow"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-10-13T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "9936e971394e5165b3f0e7ad26a439fd16961c59"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+      "generated_at": "2026-10-13T03:06:32.188646+00:00",
+      "landed_at": "2026-10-13T03:07:09+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     }
+    ],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 289.5,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 135.0,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 407.2,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4778,
+     "ready_fraction": 0.9976977814985349,
+     "ready_stocks": 4767,
+     "stale": 11,
+     "tolerance": "tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-13T03:05:28+00:00",
+    "landed_minutes": 3.3,
+    "latency_minutes": 410.5,
+    "problems": [],
+    "published_at": "2026-10-13T03:02:09.473058+00:00",
+    "reader": {
+     "done": 2,
+     "requested": 2,
+     "usage": {
+      "calls": 2,
+      "input_tokens": 14734,
+      "model": "claude-sonnet-4-6",
+      "output_tokens": 1357,
+      "responses": 2
+     },
+     "verdict": "complete"
+    },
+    "run_id": "38339720035",
+    "slot_basis": "archived",
+    "status": "ok"
+   },
+   "session": "2026-10-12",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 362,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "yellow"
+   }
+  },
+  {
+   "applicable_session": "2026-10-14",
+   "completion_at": "2026-10-13T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+    "email": "delivered",
+    "landed_at": "2026-10-14T01:15:38+00:00",
+    "published_at": "2026-10-14T01:12:11.678353+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 398,
+     "listed": 5,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-14T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "8772006f5a82e21d3a22c6551fc2f0a6b38b6134"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "64481f2f5deeeec63a03a8d424df3df54b79659f",
+      "generated_at": "2026-10-14T01:16:44.348960+00:00",
+      "landed_at": "2026-10-14T01:17:24+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     }
+    ],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": [
+     {
+      "before_applicable_open": true,
+      "commit": "c5dad9a9ba11c7cfe3cd7ff553b6d2c8dfe10dd0",
+      "generated_at": "2026-10-14T13:03:22.443316+00:00",
+      "landed_at": "2026-10-14T13:04:07+00:00",
+      "reason": null,
+      "rows": 16,
+      "status": "partial"
+     }
+    ]
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 179.6,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 138.4,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 297.2,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4776,
+     "ready_fraction": 0.9966499162479062,
+     "ready_stocks": 4760,
+     "stale": 16,
+     "tolerance": "not_tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-14T01:15:38+00:00",
+    "landed_minutes": 3.4,
+    "latency_minutes": 300.6,
+    "problems": [
+     "coverage_thin",
+     "claude_unavailable"
+    ],
+    "published_at": "2026-10-14T01:12:11.678353+00:00",
+    "reader": {
+     "done": 0,
+     "requested": 2,
+     "usage": {
+      "calls": 2,
+      "input_tokens": 14649,
+      "model": "claude-sonnet-4-6",
+      "output_tokens": 1150,
+      "responses": 2
+     },
+     "verdict": "unavailable"
+    },
+    "run_id": "38494353799",
+    "slot_basis": "archived",
+    "status": "degraded"
+   },
+   "session": "2026-10-13",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 398,
+    "listed": 5,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-15",
+   "completion_at": "2026-10-14T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+    "email": "delivered",
+    "landed_at": "2026-10-15T00:34:26+00:00",
+    "published_at": "2026-10-15T00:30:48.981013+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 365,
+     "listed": 3,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-15T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "16032f05e13536cac5c4e0995ff0f16053dcd0b3"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+      "generated_at": "2026-10-15T00:35:36.704203+00:00",
+      "landed_at": "2026-10-15T00:36:12+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     }
+    ],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": [
+     {
+      "before_applicable_open": true,
+      "commit": "145716b71882a373efd585035eb5761ffb78c3f7",
+      "generated_at": "2026-10-15T12:50:15.448254+00:00",
+      "landed_at": "2026-10-15T12:50:59+00:00",
+      "reason": null,
+      "rows": 19,
+      "status": "partial"
+     }
+    ]
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 138.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 152.4,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 255.8,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4778,
+     "ready_fraction": 0.9960234407701968,
+     "ready_stocks": 4759,
+     "stale": 19,
+     "tolerance": "not_tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-15T00:34:26+00:00",
+    "landed_minutes": 3.6,
+    "latency_minutes": 259.4,
+    "problems": [
+     "coverage_thin"
+    ],
+    "published_at": "2026-10-15T00:30:48.981013+00:00",
+    "reader": {
+     "done": 2,
+     "requested": 2,
+     "usage": {
+      "calls": 2,
+      "input_tokens": 14716,
+      "model": "claude-sonnet-4-6",
+      "output_tokens": 1312,
+      "responses": 2
+     },
+     "verdict": "complete"
+    },
+    "run_id": "38660383665",
+    "slot_basis": "archived",
+    "status": "degraded"
+   },
+   "session": "2026-10-14",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 365,
+    "listed": 3,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-16",
+   "completion_at": "2026-10-15T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "0f95141450c579e86f4de657c23849217dc57cc4",
+    "email": "delivered",
+    "landed_at": "2026-10-16T00:26:58+00:00",
+    "published_at": "2026-10-16T00:22:17.953119+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 948,
+     "listed": 3,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "degraded"
+   },
+   "next_open_at": "2026-10-16T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "0f95141450c579e86f4de657c23849217dc57cc4"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "55a458ad00c92fab577b70a2fd52120e4bb73c6c",
+      "generated_at": "2026-10-16T00:28:10.747991+00:00",
+      "landed_at": "2026-10-16T00:28:50+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "unavailable"
+     }
+    ],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": [
+     {
+      "before_applicable_open": true,
+      "commit": "00cd2d2a589eb29b8cf94110d3a6f8e3b1e6816a",
+      "generated_at": "2026-10-16T12:42:00.656503+00:00",
+      "landed_at": "2026-10-16T12:42:44+00:00",
+      "reason": null,
+      "rows": 20,
+      "status": "partial"
+     }
+    ]
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 131.0,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 139.8,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 247.3,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4777,
+     "ready_fraction": 0.9958132719279883,
+     "ready_stocks": 4757,
+     "stale": 20,
+     "tolerance": "not_tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-16T00:26:58+00:00",
+    "landed_minutes": 4.7,
+    "latency_minutes": 252.0,
+    "problems": [
+     "coverage_thin",
+     "claude_partial"
+    ],
+    "published_at": "2026-10-16T00:22:17.953119+00:00",
+    "reader": {
+     "done": 1,
+     "requested": 2,
+     "usage": {
+      "calls": 2,
+      "input_tokens": 14673,
+      "model": "claude-sonnet-4-6",
+      "output_tokens": 837,
+      "responses": 2
+     },
+     "verdict": "partial"
+    },
+    "run_id": "38829043191",
+    "slot_basis": "archived",
+    "status": "degraded"
+   },
+   "session": "2026-10-15",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 948,
+    "listed": 3,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  },
+  {
+   "applicable_session": "2026-10-19",
+   "completion_at": "2026-10-16T20:15:00+00:00",
+   "due": true,
+   "latest": {
+    "commit": "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+    "email": "delivered",
+    "landed_at": "2026-10-17T00:29:26+00:00",
+    "published_at": "2026-10-17T00:26:18.077702+00:00",
+    "signal": {
+     "anticipation_tickets": 0,
+     "discovered": 206,
+     "listed": 0,
+     "reaction_tickets": 0,
+     "regime": "red"
+    },
+    "status": "ok"
+   },
+   "next_open_at": "2026-10-19T13:30:00+00:00",
+   "overdue": false,
+   "pending": false,
+   "publications": [
+    "7a1a9e49822578d71d2bd960bbe2aace06af63f1"
+   ],
+   "published": true,
+   "receipts": {
+    "issuer_evidence": [
+     {
+      "before_applicable_open": true,
+      "commit": "426d3c59aa6be567c9464f17a6e573a335813e30",
+      "generated_at": "2026-10-17T00:30:46.367966+00:00",
+      "landed_at": "2026-10-17T00:31:27+00:00",
+      "reason": null,
+      "rows": null,
+      "status": "no_candidates"
+     }
+    ],
+    "morning": [],
+    "research_observations": [],
+    "source_recovery": []
+   },
+   "revisions": 1,
+   "service": {
+    "after_primary_minutes": 133.4,
+    "after_retry_slot": true,
+    "before_next_open": true,
+    "elapsed_seconds": 145.4,
+    "generated_before_next_open": true,
+    "generated_latency_minutes": 251.3,
+    "inputs": {
+     "acceptance": "degraded",
+     "intended_stocks": 4777,
+     "ready_fraction": 0.9962319447351895,
+     "ready_stocks": 4759,
+     "stale": 18,
+     "tolerance": "tolerated",
+     "version": 1
+    },
+    "landed_at": "2026-10-17T00:29:26+00:00",
+    "landed_minutes": 3.1,
+    "latency_minutes": 254.4,
+    "problems": [],
+    "published_at": "2026-10-17T00:26:18.077702+00:00",
+    "reader": {
+     "done": 2,
+     "requested": 2,
+     "usage": {
+      "calls": 2,
+      "input_tokens": 14667,
+      "model": "claude-sonnet-4-6",
+      "output_tokens": 1059,
+      "responses": 2
+     },
+     "verdict": "complete"
+    },
+    "run_id": "38986314620",
+    "slot_basis": "archived",
+    "status": "ok"
+   },
+   "session": "2026-10-16",
+   "shortened": false,
+   "signal": {
+    "anticipation_tickets": 0,
+    "discovered": 206,
+    "listed": 0,
+    "reaction_tickets": 0,
+    "regime": "red"
+   }
+  }
+ ],
+ "skipped": [
+  {
+   "commit": "a63a6d928d13c8bb493db44dfe795560b3257d91",
+   "reason": "a63a6d92:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "47b0d0a3c33f9fb30d138a9386b8b11a4f46699b",
+   "reason": "47b0d0a3:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "d6b0b954493d753cb3b47193c2a3f660c85001bc",
+   "reason": "d6b0b954:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "38f666e9680e7c25a0f3611f6d221148e010b546",
+   "reason": "38f666e9:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "01c000d12a7cfd218bd0309b3528a5e2ef1225d3",
+   "reason": "01c000d1:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e6bbab7153d3abfb7c31d1ca91edd0888e6b53f4",
+   "reason": "e6bbab71:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "a7474d5b6731c7d833e34035e9244556901c3e2b",
+   "reason": "a7474d5b:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "76783a17561f6864f7e09ced8abf0366d830494d",
+   "reason": "76783a17:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "5e6bbb22107fae02ba1574316035db2c4723c3ad",
+   "reason": "5e6bbb22:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "38d37b4fb23aaca8284abbd5669d074b035f5fa0",
+   "reason": "38d37b4f:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "151b1af36da9e5b4db28c630752fb4a27158e8b8",
+   "reason": "151b1af3:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "91a910b90b552a011f78af4907f4ed5f2a54dbe0",
+   "reason": "91a910b9:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e81f3c72748e83d709156f4341e1b46b16bb6fcf",
+   "reason": "e81f3c72:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "e95d6d57d5b2ad0cce963b233dbdc53523fc2958",
+   "reason": "e95d6d57:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "369c69520e7a697f050b35990f8691d8b8665dff",
+   "reason": "369c6952:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "932ec586daad4f9b3c42ab2a09be0eff2ccb3847",
+   "reason": "932ec586:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f0780c725e750be427cf275d497ed5e51781002b",
+   "reason": "f0780c72:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "ace137ad3a0eba63411adf526754d825fec9cfb8",
+   "reason": "ace137ad:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "71856115dd6d3d33704fa2ba8447a1b04f9f78ce",
+   "reason": "71856115:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "665ba95481cf3738920d1f5fe432b5994ccce92b",
+   "reason": "665ba954:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f65984eee8307ac19796b92c6adb2a59a11b6c28",
+   "reason": "f65984ee:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "760eb3896dc32c2a2e8f91e6518cd206b748505b",
+   "reason": "760eb389:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "30acad0cb257f92f063909b7abdd109c792cad94",
+   "reason": "30acad0c:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "53f6c94e594c3261bc6cb7d52d69304b2e7e9d24",
+   "reason": "53f6c94e:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "74f9aff2122deb4e462efbdbcb94c41fe831b55c",
+   "reason": "74f9aff2:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "257089e0da6756a2b3bd26a1e4b6efe4dde29cd1",
+   "reason": "257089e0:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "fdadeea4319bb6b3d4c1813142a034e424fc3278",
+   "reason": "fdadeea4:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "21956d58ab488264638750c9abc7955c2da674f4",
+   "reason": "21956d58:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "0d11e7e1d08c8ce00d109690d00efe57f19eb38c",
+   "reason": "0d11e7e1:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "4bc5245f163a69a8b3c60a34b13a93a1f9bebcdc",
+   "reason": "4bc5245f:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f81e5d662951d088a45a197f271c5f3f75f7fe1d",
+   "reason": "f81e5d66:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "184256d7f42d4a77aee459b17155a98e70180943",
+   "reason": "184256d7:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "1d0422f8404d991b3e7faf527ff6472894b12ddb",
+   "reason": "1d0422f8:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "b0113588f28d53c147edf23ecc32e25ba3132263",
+   "reason": "b0113588:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "eb53e02a37893abe6d013b1056097756ebe68483",
+   "reason": "eb53e02a:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "f984f474e2ffd1821a4c19fa8d9eab1ebd9846f1",
+   "reason": "f984f474:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "6fd0c3a086bd0d449a3e080a1397077635917be6",
+   "reason": "6fd0c3a0:docs/data.json: not a real schema-2 publication"
+  },
+  {
+   "commit": "4f4f1c174b8b99e1fb20d79127129039c7e43790",
+   "reason": "4f4f1c17:docs/data.json: not a real schema-2 publication"
+  }
+ ],
+ "slots": {
+  "basis": "the workflows' cron tables read in the exchange's and the desk's zones, the current policy's; a publication whose rules archive its own evening slots is read against those (timing.slot_basis); a session's instants are the pinned XNYS calendar's",
+  "completion_buffer_minutes": 15,
+  "evening_primary_et": "18:16",
+  "evening_retry_et": "20:16",
+  "morning_chicago": [
+   "08:20",
+   "08:28"
+  ]
+ },
+ "source": {
+  "clock": "2026-10-17T00:31:27+00:00",
+  "companion_commits": {
+   "issuer_evidence": [
+    "426d3c59aa6be567c9464f17a6e573a335813e30",
+    "55a458ad00c92fab577b70a2fd52120e4bb73c6c",
+    "c7a3566e61217fa0dad891d3bb44898e69b1fdcb",
+    "64481f2f5deeeec63a03a8d424df3df54b79659f",
+    "0cbeada9ea25236e97e79eb19b1c5ee05b6b03a3",
+    "f9b91d00123281039436bcd4e8a7646992517265",
+    "3e1dfed6d1a207a40ec350ce493fe62c65a05184",
+    "981e6792827a222c26b94da622f30d88b74d53e1"
+   ],
+   "morning": [
+    "fa480f2a0f1dd1582e681b73398040e8342c4a8d",
+    "2fa9773f046299de78c95d1b513c05880a3eefdb"
+   ],
+   "research_observations": [],
+   "source_recovery": [
+    "00cd2d2a589eb29b8cf94110d3a6f8e3b1e6816a",
+    "145716b71882a373efd585035eb5761ffb78c3f7",
+    "c5dad9a9ba11c7cfe3cd7ff553b6d2c8dfe10dd0"
+   ]
+  },
+  "companion_paths": {
+   "issuer_evidence": "docs/issuer-evidence.json",
+   "morning": "docs/morning.json",
+   "research_observations": "docs/research-observations.json",
+   "source_recovery": "docs/source-recovery.json"
+  },
+  "limit": 128,
+  "publication_commits": [
+   "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+   "0f95141450c579e86f4de657c23849217dc57cc4",
+   "16032f05e13536cac5c4e0995ff0f16053dcd0b3",
+   "8772006f5a82e21d3a22c6551fc2f0a6b38b6134",
+   "9936e971394e5165b3f0e7ad26a439fd16961c59",
+   "43dcb8d7c6eb0d63c1825198aa161fc4d4caec80",
+   "dcb12a0b20f2d41900c4235c30efa76a40285c0b",
+   "62bce72ddf45596d735f72b2ea20808a25cd3f0b",
+   "e67f8cba8774789b8deb0c106b21537b66f37a35",
+   "1e1ffe9ca890913d4c5502e44c824f851be149dc",
+   "a8f9a36f8c07b12e82b55de943cc3fbea2f80bad",
+   "b0c6b60e5fb3415a81781e59c0d4f3e16ed16ff6",
+   "178956b46bc50d8998636e9b4bc785ce3687c84a",
+   "58e0f38430ae82249db435ff397477bd2221106e",
+   "a930ca0fb9d4e283253cf79dd32097a2dec89e8c",
+   "a900236900be6e531cc3c0c0e9b0547269861ec8",
+   "6284cb9787c11929eaedf1a263cf463ab4ae4928",
+   "786ade7013a0c55d172d89118322b19a056fa8a6",
+   "8be007f68deaa417b85a512d2e16a37899d27011",
+   "6822dddd14d0a541083e7caaecca9c945b451af2",
+   "6ff292d7971570d809a2bdd4d476a1f88d3c4234",
+   "e2dee988ad5d36876b7c73090502720e995c65f4",
+   "49e2724c94b60963d914d55a2bf98598ac6507ad",
+   "25eb5b2688a3ba1ceecc01083a7cb6046cc62aea",
+   "8387ccedae22fbf30ddebdb6f52e1e42326a7ec5",
+   "ebcdea34464b9090e7734ca543be8733d39fc20a",
+   "580805487b22006c6f2fa35490c3edc8a5760d73",
+   "442db489342660d7588d16dcc18e6c126187c1e6",
+   "fbaed5cdc43a84755f61840ba9e1fc74379c797d",
+   "ece47f1e34ab4b795a79be7674355409ce5aaf8e",
+   "7380a97605c7f16eb902421486c491a95b957cd7"
+  ],
+  "record_head": "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+  "record_path": "docs/data.json",
+  "ref": "origin/main",
+  "through": "426d3c59aa6be567c9464f17a6e573a335813e30"
+ },
+ "summary": {
+  "after_retry_slot": 19,
+  "before_next_open": 26,
+  "clock": "2026-10-17T00:31:27+00:00",
+  "companions": {
+   "issuer_evidence": {
+    "applicable_sessions": [
+     "2026-10-12",
+     "2026-10-13",
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16",
+     "2026-10-19"
+    ],
+    "before_applicable_open": 8,
+    "generated_before_applicable_open": 8,
+    "receipts": 8,
+    "statuses": {
+     "no_candidates": 1,
+     "unavailable": 7
+    }
+   },
+   "morning": {
+    "applicable_sessions": [
+     "2026-10-09",
+     "2026-10-12"
+    ],
+    "before_applicable_open": 1,
+    "generated_before_applicable_open": 1,
+    "receipts": 2,
+    "statuses": {
+     "inapplicable": 2
+    }
+   },
+   "research_observations": {
+    "applicable_sessions": [],
+    "before_applicable_open": 0,
+    "generated_before_applicable_open": 0,
+    "receipts": 0,
+    "statuses": {}
+   },
+   "source_recovery": {
+    "applicable_sessions": [
+     "2026-10-14",
+     "2026-10-15",
+     "2026-10-16"
+    ],
+    "before_applicable_open": 3,
+    "generated_before_applicable_open": 3,
+    "receipts": 3,
+    "statuses": {
+     "partial": 3
+    }
+   }
+  },
+  "due_sessions": 26,
+  "elapsed_seconds": 6467.3,
+  "expected_sessions": 26,
+  "fetch_seconds": 1683.4,
+  "fresh": {
+   "fresh": true,
+   "main_carries": {
+    "commit": "7a1a9e49822578d71d2bd960bbe2aace06af63f1",
+    "readable": true,
+    "reason": null,
+    "session": "2026-10-16"
+   },
+   "newest_due_session": "2026-10-16",
+   "newest_published_session": "2026-10-16"
+  },
+  "generated_before_next_open": 26,
+  "generated_latency_minutes": {
+   "max": 407.2,
+   "median": 259.7,
+   "min": 53.1
+  },
+  "latency_minutes": {
+   "max": 410.5,
+   "median": 264.4,
+   "min": 55.8
+  },
+  "missing_sessions": [],
+  "not_yet_due": [],
+  "pending_sessions": [],
+  "publications": 31,
+  "published_sessions": 26,
+  "reader_usage": {
+   "calls": 10,
+   "input_tokens": 73439,
+   "output_tokens": 5715,
+   "publications_with_block": 5,
+   "responses": 10
+  },
+  "reads": {
+   "done": 272,
+   "publications_with_block": 31,
+   "requested": 312
+  },
+  "republished_sessions": [
+   "2026-09-11",
+   "2026-09-21",
+   "2026-10-08",
+   "2026-10-09"
+  ],
+  "revisions": 5,
+  "signal": {
+   "anticipation_tickets": 3,
+   "reaction_tickets": 0,
+   "regimes": {
+    "red": 25,
+    "yellow": 6
+   }
+  },
+  "slot_basis": {
+   "archived": 5,
+   "current_policy": 26
+  },
+  "statuses": {
+   "degraded": 22,
+   "ok": 9
+  },
+  "streak": {
+   "current": 26,
+   "longest": 26
+  }
+ },
+ "version": 3,
+ "words": {
+  "before_next_open": "its first publication landed before the next session's open",
+  "due": "the session's close plus the completion buffer is at or before the reading's clock",
+  "fresh": "the newest publication is for the newest due session",
+  "overdue": "due, unpublished, and the next session has already opened",
+  "published": "a real publication for this session reached main"
+ }
+}
