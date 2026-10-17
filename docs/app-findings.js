@@ -33,6 +33,7 @@
   const VERDICTS = ['red', 'yellow', 'green'];
   const VERDICT_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
   const CHAR = 6.5;         // px per glyph of the 10.5px mono the chart text wears
+  const DATE_GAP = 4;       // px between two drawn dates, at the least
   const GOLDEN = 0.6180339887;
   const TAP_RADIUS = 22;    // half the 44px finger the sheet's touch targets are sized for
   const REPORT_PATH = /^docs\/input-truthfulness\/[\w.-]+\.md$/;
@@ -160,6 +161,21 @@
       const len = measure(pn.text);
       if (!len || pn.x + len <= W - 2) return;
     }
+  }
+  // the dates the drawing chose are thinned again by their measured widths, first to last: a date
+  // stays when it clears the one kept before it and the last date, which is always drawn, by
+  // DATE_GAP; one that does not is left out, so a wider font drops dates and never crowds them
+  function datesFit(ds, G) {
+    const last = ds.find((d) => d.last);
+    if (!last || !measure(last.text)) return;
+    const lastLeft = G.left + G.plotW - measure(last.text);
+    let right = -Infinity;
+    ds.forEach((d) => {
+      if (d.last || !d.text.isConnected) return;
+      const half = measure(d.text) / 2, x = G.x(d.i);
+      if (x - half >= right + DATE_GAP && x + half + DATE_GAP <= lastLeft) right = x + half;
+      else d.text.remove();
+    });
   }
   // the note keeps the first wording whose measured length fits the sessions before the first
   // published night, its ground sized to that length; where none fits it is left out
@@ -341,11 +357,13 @@
     // the last date ends at the plot's edge, never past the chart, and a thinned date
     // that would reach into it is dropped rather than drawn against it
     const lastAt = model.sessions.length - 1, lastLeft = plotRight - short(model.sessions[lastAt].date).length * CHAR;
+    const dates = [];
     model.sessions.forEach((s, i) => {
       const last = i === lastAt, label = short(s.date);
       if (!last && (i % G.dateEvery !== 0 || G.x(i) + label.length * CHAR / 2 + 8 > lastLeft)) return;
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, label));
+      dates.push({ i, last, text: axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, label)) });
     });
+    svg.setAttribute('data-dates-drawn', dates.length);   // the dates the estimate chose, before any measure thins them
     const wFrom = model.index[model.window.from], wTo = model.index[model.window.through];
     let bracketLabel = null;
     if (isNum(wFrom) && isNum(wTo)) {
@@ -393,7 +411,7 @@
       return model.nights.map((nt, k) => ({ k, d: Math.abs(G.x(nt.i) - xs) / scale }))
         .filter((c) => c.d <= TAP_RADIUS).sort((a, b) => a.d - b.d);
     }
-    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels, edge, note: noteDrawn };
+    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels, edge, note: noteDrawn, dates };
   }
   // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
   function pillText_(b, min) {
@@ -741,7 +759,7 @@
     }
     // the estimate is a glyph width and the browser's font may be wider, so every label the
     // drawing placed by it is placed again by the length the browser measures: the bracket's,
-    // the panel names, the note, the axis labels and the pill. It runs after every draw and
+    // the panel names, the dates, the note, the axis labels and the pill. It runs after every draw and
     // again whenever the page's fonts finish loading, since a web font that arrives after the
     // draw changes every length; it moves labels and never rebuilds the chart
     function fit() {
@@ -753,6 +771,7 @@
       }
       view.panels.forEach((pn) => panelFit(pn, G.W));
       view.edge.forEach((t) => squeeze(t, G.left - 8));
+      datesFit(view.dates, G);
       if (view.note) noteFit(view.note);
       view.place(step);
     }

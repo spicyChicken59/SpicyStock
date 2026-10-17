@@ -80,6 +80,11 @@ const labelsFit = (p) => p.evaluate(() => {
   const touching = dates.filter((r, i) => i > 0 && r.left < dates[i - 1].right + 2).length;
   return { out, touching };
 });
+// every date the drawing chose is still drawn: the measure thins only dates that would touch
+const datesKept = (p) => p.evaluate(() => {
+  const svg = document.querySelector('#historical-evidence .ss-find__svg');
+  return svg.querySelectorAll('text.ss-find__date').length === +svg.getAttribute('data-dates-drawn');
+});
 // the pill's text inside its frame, and the frame inside the chart
 const pillFits = (p) => p.evaluate(() => {
   const svg = document.querySelector('#historical-evidence .ss-find__svg'), pill = svg && svg.querySelector('[data-pill]');
@@ -242,6 +247,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     return r('.ss-find__side').left >= r('.ss-find__stage').right - 1 && r('.ss-find__caption').top >= r('.ss-find__stage').bottom - 1;
   }));
   eq('on a desktop every chart label stays inside the chart and no two dates touch', await labelsFit(p), { out: [], touching: 0 });
+  eq('on a desktop no date is thinned out where none would touch', await datesKept(p), true);
   const lead = await txt(p, HOST + ' p[data-find="lead"]');
   check('the lead counts the nights, the verdicts, the tickets and the bursts from the file', lead.includes('Over the ' + plural(ns.nights, 'published night') + ' from ' + dayWords(ns.from) + ' to ' + dayWords(ns.through))
     && lead.includes('the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'burst ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned' +
@@ -661,6 +667,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`${tag}: the note before the first night is on its own ground and over no mark, or left out`, await noteClear(q), { ground: true, under: 0 });
     eq(`${tag}: each panel keeps its phone wording where it fits`, (await panelsOf(q)).map((x) => [x.name, x.text, x.inside]),
       [['ratio', F.rules.breadth.ratio_long_sessions + '-session ratio', true], ['outcome', 'R per ticket, compressed axis', true]]);
+    eq(`${tag}: no date is thinned out where none would touch`, await datesKept(q), true);
     // a narrow chart has no room for the tooltip beside a column: none is shown, and nothing scrolls sideways
     for (const col of [Math.floor(F.market.sessions.length / 2), F.market.sessions.length - 1, 0]) {
       await q.locator(`#historical-evidence rect[data-hit="${F.market.sessions[col].date}"]`).hover({ force: true }); await settle(q, 120);
@@ -769,10 +776,9 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   }
   // a font far wider than any measured, at 320 and at 390: the phone's outcome wording runs past
   // the chart there (measured, so the step-down is not assumed), each panel name steps down to a
-  // wording the browser measures inside it, on the first draw and on every later one; the labels
-  // the page measures stay inside, the bracket's narrowed to the chart, and at 390 the note that
-  // no longer fits its sessions is left out (the dates are thinned by the estimate, held above to
-  // 1.2 px)
+  // wording the browser measures inside it, on the first draw and on every later one; every label
+  // stays inside, the bracket's narrowed to the chart, the dates thinned by their measured width
+  // so no two touch, and at 390 the note that no longer fits its sessions is left out
   for (const width of [320, 390]) {
     const widest = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => { await fast(page); await widen(page, 3); } });
     const xp = widest.page, tag = `${width}, letters 3px wider`;
@@ -790,7 +796,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
       const wo = (wp2.find((x) => x.name === 'outcome') || {}).text;
       if (narrowest) check(`${tag}, ${how}: the outcome panel steps down to a shorter wording`, typeof wo === 'string' && wo !== 'R per ticket, compressed axis' && 'R per ticket, compressed axis'.startsWith(wo), wo);
     }
-    eq(`${tag}: every label the page measures is inside the chart and the screen`, (await labelsFit(xp)).out, []);
+    eq(`${tag}: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(xp), { out: [], touching: 0 });
     if (narrowest) check(`${tag}: the bracket's label is narrowed to the chart`, await xp.evaluate(() => document.querySelector('#historical-evidence [data-bracket-label]').hasAttribute('textLength')));
     eq(`${tag}: the pill's text is inside its frame, the frame inside the chart`, await pillFits(xp), { pill: true, framed: true, inside: true });
     // the first night's A-quality pill is the longest wording: at 320 it is longer than the plot

@@ -9983,13 +9983,26 @@ face, and holds the labels fitted and the chart not rebuilt; drives 3 px at 320
 (the phone wording measured past the chart first, the step-down held on the first
 draw, after a stratum change and after a redraw, the bracket narrowed) and at 390
 (the note left out); and 700 px, where every burst's desktop name steps to its
-middle wording. 1258/1258 here, and the real font served late (1.5 s, 320 and 390,
-0 and 0.8 px) leaves nothing out in every repeat. Ten mutants through routed
+middle wording. That page job failed once more, on `c7b0b159`, 16371/16373: at
+390 px with the letters 1.2 px wider five pairs of dates touched -- the dates were
+the last label the estimate still placed, fine with this sandbox's fallback at
+1.2 px and not with CI's font. `datesFit()` now walks the dates the drawing
+chose and keeps one only where its measured width clears the one kept before it
+and the last date by `DATE_GAP` (4 px), so a wider font drops dates and never
+crowds them; the real font at normal spacing keeps every date (4, 6 and 14 at
+320, 390 and 1280), and the drawing's count is archived on the chart
+(`data-dates-drawn`) so the suite holds that nothing is thinned where nothing
+would touch. The real font reproduces CI's 5 touching pairs on `c7b0b159` and
+leaves none now. 1263/1263 here, and the real font served late (1.5 s, 320 and
+390, 0, 0.8 and 1.2 px) leaves nothing out and no dates touching in every
+repeat. Ten mutants through routed
 copies: the font listener dropped (5 checks), the note's fit dropped (8) and its
 removal dropped (8), the pill unmeasured (10) and its text unnarrowed (2), the
 axis labels unnarrowed (4), the bracket uncapped (2), the panels unfitted (11),
 the fit on the first draw only (13), a desktop list jumping to its shortest
-wording (1) all die on the checks naming them, and `0a6e163b` itself fails 24.
+wording (1) all die on the checks naming them, and `0a6e163b` itself fails 24;
+so do four over the dates -- the thinning dropped (2), its gap unchecked (2), the
+last date's clearance unchecked (1), the gap at 40 px, which over-thins (5).
 A cap on the pill's frame survived as equivalent -- the measured text is already
 narrowed to the plot -- and is removed. The control (a comment) passes.
 
