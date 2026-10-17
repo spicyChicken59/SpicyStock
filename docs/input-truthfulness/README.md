@@ -1,5 +1,17 @@
 # Input truthfulness milestone
 
+[17 October 2026: the stale stocks, read again](2026-10-17-stale-inputs.md)
+joins, with `tools/stale_inputs.py`, the stocks each night's newest publication
+could not measure to every later reading of them: from 7 to 16 October, 103
+stale stock-sessions (58 stocks) over 8 nights. 64 were scanned again by a
+follow-up on their late bar and would not have been listed, 11 fell under the
+$3 policy, 20 carry a later bar read only for its volume, under the floor of
+the 4%, breakdown and $ scans (18 of them the 16 October night's, which
+Monday's follow-up reads), and 8 -- every one WBD -- have no later bar. No
+follow-up reading found a late bar that would have been listed; 93 of the 95
+later bars carry zero volume. Why a bar was absent is not established.
+`--check` holds the reading to the commits it names.
+
 [13 October 2026: when GitHub starts the scheduled runs](2026-10-13-schedule-reliability.md)
 reads #111's late mornings at their source: `tools/schedule_reliability.py`
 snapshots the public Actions listing and places every scheduled run at its cron

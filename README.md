@@ -1010,6 +1010,22 @@ archived, and a record from before the block is asked for none. The run:
   beside the snapshot `runs.json`, and `--check` holds both to the snapshot with
   no network. It decides nothing; the dated report beside it lists the options
   for the morning's delivery without adopting one.
+  `tools/stale_inputs.py` reads what became of the stocks a publication could
+  not measure: each session's newest publication names its stale
+  stock-sessions (`run.input_tolerance`, every session a named stock missed as
+  `followup.missed_sessions()` counts them), and the reading joins them to
+  every later follow-up reading (`run.stale_followup`, which ran the evening's
+  scans on the late bar) and every source-recovery receipt's row, then puts
+  each stock-session in one class: a late bar a follow-up would have listed,
+  one it scanned and would not have, one under the $3 session-close policy,
+  one read only for its volume (under or at the 100,000-share floor the 4%,
+  breakdown and $ scans read on the session itself, `scans.MIN_VOLUME`; the
+  setting-up scans read the three sessions before, so volume alone does not
+  settle them), or no later bar at all. It writes
+  `docs/input-truthfulness/2026-10-17-stale-inputs-evidence/stale-inputs.{json,md}`
+  pinned to one commit; `--check` re-reads the commits the file names and holds
+  both files. It establishes no cause for a missing bar, changes no record and
+  asks no provider anything.
   Visual findings require a supplied chart; recorded FAIL/PARTIAL findings can
   use measurements. Subjective chart truth and free commentary remain unverified.
   Every model receives the same nested findings schema in text; supported models
@@ -1989,6 +2005,7 @@ tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_
                 service_health.py (a reading of the service, not the signal: every retained publication and companion receipt by the commit that landed it, each expected XNYS session, latency against completion and the evening cron's slots (the ones each record's rules archived, else the current policy's) by the landing commit's time with the record's own clock beside it, before-next-open, revisions, inputs, reads and cost, with the regime and tickets in their own column; --check holds its two files; changes nothing)
                 recovery_rehearsal.py (a rehearsal, not a reading: run_evening() through the suite's doubles over one synthetic market, one injected failure a night -- the bars endpoint, every frame stale, the reader's credit, the reader's transport, the mail -- with the evening workflow's own guard executed before and after each night under a frozen clock; the exit codes, what was published, whether the previous publication's bytes survived, how often each boundary was asked and what the guard decided; --check runs it again and holds its two files; calls no provider and changes nothing)
                 schedule_reliability.py (a reading of GitHub's scheduler, not the service: the public Actions listing of scheduled runs, each placed at its cron slot, the minutes from slot to creation per workflow, cron and week, expected slots with no run, the first run more than an hour late, and push runs on main as the contrast; --fetch is its only network path and --check holds its two files to the committed snapshot; changes nothing)
+                stale_inputs.py (a reading of the stale stocks across nights: each session's newest publication's named stock-sessions joined to every later follow-up reading and source-recovery row, each in one class -- would have been listed, scanned and not listed, under the $3 policy, a later bar read for its volume only against the 4%, breakdown and $ scans' floor, no later bar; --check holds its two files; establishes no cause, changes nothing)
                 findings_cases.mjs (the page smoke's findings suite: the Record view's replay over the committed findings)
                 first_trade_cases.mjs (the page smoke's first-trade rehearsal: one journey from refused cash to a downloaded private backup; SCSTOCK_FIRST_TRADE_WRITE=1 writes tests/fixtures/first-trade/)
                 private_results_parity.mjs (the page's own verdicts, from app-handoff.js run in a vm, on a corpus of private backups, written gzipped beside the rehearsal's backup; --check in CI)
