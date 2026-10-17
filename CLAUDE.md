@@ -10167,7 +10167,33 @@ keeps reading once opened; and the README dated the scheduler's change to 21
 September when that morning's secret scan was still prompt. Each is fixed and
 held by the check it named.
 
-**Checks.** <CHECKS>
+**Checks.** `main`'s three modules (`2156aaca`'s `app-observations.js`,
+`app-stop-research.js` and `app-research-observations.js`, routed in) fail 34
+of the `observations` suite's 216 checks and 16 of the `research-observations`
+suite's 387; the branch passes all of both. Twenty-three mutants through routed
+copies, each judged by both suites, all die on the checks naming their rules:
+the absent-file rule dropped (2), a no-ticket receipt expiring (1), every
+publication worth a run (3), no start allowance (6) or an inclusive one (4),
+the pre-open minutes dropped (19), an inapplicable receipt read as current (1),
+the session date unchecked (2), an expired receipt read as current (3), the
+focus fallback dropped (3) or the link's focus restoration (5), the
+other-publication and 404 markers dropped (1, 32), the research fits ignored
+(2), the summary not repainted when a cohort attaches (2), fits counted over
+every row (1), the morning press reading the morning file only (7) or the
+research observation destructively (2), the module's refresh made a plain read
+(4) or its kept observation lost (4), and the comparison press not asking
+again (4), asking destructively (4) or without its new-cohort guard (2: a
+second request); the control, a comment, passes both. The first pass found one
+hole of the first shape this file names: the unread-file rule died only on the
+no-WebCrypto case, because the 503 case ran in a tab whose kept fresh receipt
+suppressed the offer anyway; it runs from a fresh tab now and dies there too.
+Inverting both collect steps' `DRY_RUN_FLAG` in a copy of `morning.yml` fails
+the workflow test; an unmodified copy passes. On the final tree (`a87b8ddd`):
+4715 collected, the full suite 4681 passed and 34 environment-gated skips in
+25 m 00 s (and in 25 m 19 s at `622e07ff`); the full smoke with `--shots`
+16467/16467; continuity 137; the chart check 378/378 (no chart module
+changed); gitleaks 8.24.3 over the changed files: no leaks. The handoff at 1280
+dark and 390 light was looked at, its longer sentence read at 390.
 
 **Keep / fix / defer / omit.** Keep: the page links and explains; the owner
 dispatches; a pressed reload never loses what it verified. Fix if it bites:
