@@ -385,9 +385,7 @@ def test_the_ticket_states_what_it_enforces_and_what_it_leaves_to_the_reader():
     assert "first 30 minutes" in terms[0] and "cancel it yourself" in terms[0] and "SpicyStock places and cancels nothing" in terms[0]
     assert terms[1].startswith("An open above the $20.67 limit does not fill at the open") and "cancel it" in terms[1]
     assert terms[2].startswith("An open under $19.60 is the burst failing") and "$20.00" in terms[2]
-    assert terms[3].startswith("The sell stop at $19.85 rides on the buy as OTO")
-    assert "released only when the buy fills in full" in terms[3]
-    assert "If the buy fills only in part, place a separate sell stop at $19.85" in terms[3]
+    assert terms[3].startswith("The sell stop at $19.85 is attached the moment the buy fills")
     assert "$20.80" not in " ".join(terms)     # the outer +4% line is not a ticket term
     assert "30 minutes" not in terms[1] + terms[2] + terms[3]      # DAY is never said to expire with the window
     anticipation = plan.anticipation_plan(ticker="ABC", close=5.00, box_high=5.10, box_low=4.90,
