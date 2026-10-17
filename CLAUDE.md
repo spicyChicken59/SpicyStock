@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4713 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4714 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9842,11 +9842,15 @@ its night means −0.138R with a 95% night-bootstrap interval of −0.431 to
 +0.129. The interval includes zero: it establishes no sign.** Three facts the
 frozen sentences do not carry, each written into the report: three of the
 eleven confirmatory nights were YELLOW (8, 9 and 12 October), so the footer's
-"refused by the RED gate" is false of 102 of the 104 tickets settled on them
-(grade A, refused under YELLOW by its own A+-only band; the eight RED nights'
-105 settled are −0.302R a ticket); the account under the spec's own rule fell
-from $10,000 to $2,000 from the 9 October publication, and the admitted setups
-without a whole share rose from 0–6 a night to 22–59; and the 1 October night,
+"refused by the RED gate" is false of all 104 tickets settled on them: 102
+grade A, refused by YELLOW's own A+-only band, and the two A+ of 8 October
+refused by the reader (an accepted review lowered MANH to C; reader authority
+refused HAE's reply, so the accepted-review requirement withheld its ticket);
+the eight RED nights' 105 settled are −0.302R a ticket. The account under the
+spec's own rule fell from $10,000 to $2,000 at `e67f8cba`, the second 8 October
+publication, a revision, so the first signals ticketed at $2,000 are 9
+October's, and the admitted rows the study marks `no_order` rose from 0–6 a
+night to between 8 and 59; and the 1 October night,
 read whole, moved from −0.364R over 50 settled with no win to −0.087R over 81
 with 20 wins, the early-read bias measured on a full night. The exploratory
 stratum stays negative, −0.119R over 301, its interval clear of zero. 77 of the
@@ -9858,8 +9862,9 @@ review read `docs/historical-findings.json`, which this re-read rebuilds: its
 findings input is retained under its `inputs/` now (as `c759a1e6` carried it,
 SHA-256 `0d806808…`, refused on a changed byte), its study paths pinned to the 6
 October run, and its review files regenerated with only their `sources` moved.
-And the findings builder copied a night's whole `run.reads` block, which from 13
-October carries a cause named `credit` that its own credential guard refuses;
+And the findings builder copied a night's whole `run.reads` block, which from 7
+October (`a8f9a36f`) carries a cause named `credit` that its own credential
+guard refuses;
 `reads_of()` copies the two counts the page prints and refuses a block without
 them.
 
@@ -9868,7 +9873,9 @@ Record view's reading list was written when every night was red, and two of its
 sentences rendered false over the rebuilt file: the confirmatory line said the
 non-red nights were ones on which "the gate published some of their tickets",
 and the last line said the same of the nights left out -- the record published
-none on 8, 9 or 12 October. Every check passed, because the checks read each
+no burst ticket on 8, 9 or 12 October, the tickets the study walks, and three
+setting-up tickets (MG and SN on 8 October, ZIM on 9 October), which it does
+not. Every check passed, because the checks read each
 sentence's first words. The confirmatory line now prints the study's interval
 and whether it includes zero, its hold count over every confirmatory night (it
 said 4, the reading block's red-night count, where 5 of 11 are inside their
@@ -9941,6 +9948,46 @@ jsdom lacks, so the estimate stands there). `tools/findings_cases.mjs` loads the
 320 px chart with its letters 0.4 and 0.8 px wider (8 checks; the suite is
 1088). The old page, the measured placement dropped and the clamp dropped each
 fail both wider-font checks; a control (a comment) passes 1088/1088.
+
+**The review, worked.** A workflow by execution over `df0bf3e2`, three finders
+(the numbers, the page, the tests) and one skeptic a finding, returned 17
+findings, 13 distinct, and the skeptic upheld every one; each was reproduced
+here before it was touched. The high one was the class this checkpoint is about,
+one level deeper: the replay counted the burst tickets the record published and
+said the gate published none on the yellow nights, while the 8 and 9 October
+records published three setting-up tickets (MG and SN, ZIM). The builder counts
+each night's setting-up tickets now (`setup_tickets_published`, held in the test
+to the watchlist's own orders), and the page prints them beside the burst
+tickets and never adds the two. Then sentences, each now asserted from the
+study's rows or from the records read off git at the commits the spec names:
+the two A+ of 8 October were refused by the reader and not by the band, so the
+RED footer is false of all 104 yellow-night tickets and not 102 (the report, the
+README and this checkpoint said 102); the account moved at `e67f8cba`, the
+second 8 October publication, not the 9 October one; the rows without an order
+are the study's `no_order` and fell to 8 on 16 October, not "22–59"; three
+nights reach twenty settled, so "no night's mean is a rate" was false; the
+pooled −0.069R is the 205 bounded uncertain tickets' +4.27R pooled with the
+settled, not the uncertain tickets' own figure; the `credit` cause is in every
+`run.reads` from 7 October, not 13; and the last reading line said the
+confirmatory result includes every non-red night, which is false of a non-red
+night before the freeze (the committed file has none, its three yellow nights
+all confirmatory; the branch case has two), so it names the confirmatory ones
+by date now. Three were browser holes, and the suite drives each branch now through a
+routed copy of the file: every night made red, with the confirmatory split one
+short of its minimum (the unreadable sentence and the all-red last line, which
+the rebuilt file no longer reaches); an interval wholly under zero, with the red
+nights one short of a rate (the "clear of zero" side and the count side of
+`oneRate()`); and every confirmatory night made yellow (the guard that drops the
+red-night clause). The re-read test also reads the numbers it had let move: the
+no-order rows by night, the uncertain bound, the A+ refusals and the account.
+The five page mutants the review named -- the unreadable sentence saying the
+split is readable, the all-red line saying green, "clear of zero" only above
+it, `oneRate()` always a rate, the red-night clause printed with no red night
+-- each die through a routed copy on the two checks naming its rule (1158/1160);
+the control (a comment) passes 1160/1160. Measured on that tree: 4714 collected;
+the re-read, findings, findings-page, docs and evidence-review tests 95 passed;
+both `--check`s current; continuity 137; gitleaks 8.24.3 over the five files the
+round changed: no leaks.
 
 **Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
 publications only; dated readers read retained inputs, never a rolling file.

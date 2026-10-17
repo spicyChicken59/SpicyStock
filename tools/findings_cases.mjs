@@ -829,6 +829,53 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     !mRead[4].endsWith('includes them.'), mRead[4]);
   eq('mixed file errors', mm.errors, []);
   await mm.context.close();
+  // the sides of the reading the committed file no longer reaches, each its own routed copy held by
+  // the same readingHolds: every night red with the confirmatory split unreadable; a readable split
+  // whose interval is clear of zero below it, beside red nights too few to read; and confirmatory
+  // nights none of which was red
+  const readOf = async (name, G) => {
+    const g = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(G)) });
+    eq(name + ' file: the replay is ready', await ready(g.page), 'ready');
+    const read = await g.page.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
+    eq(name + ' file errors', g.errors, []);
+    await g.context.close();
+    return read;
+  };
+  const allRed = structuredClone(F);
+  const redReasons = F.nights.find((n) => n.regime.verdict === 'red').regime.reasons;
+  for (const nt of allRed.nights) if (nt.regime.verdict !== 'red') {
+    Object.assign(nt.regime, { verdict: 'red', size_multiplier: allRed.rules.breadth.size_multiplier.red, reasons: structuredClone(redReasons) });
+    allRed.nights_summary.tickets_published -= nt.tickets_published; allRed.nights_summary.setup_tickets_published -= nt.setup_tickets_published;
+    Object.assign(nt, { tickets_published: 0, setup_tickets_published: 0 });
+  }
+  allRed.nights_summary.verdicts = { red: allRed.nights.length };
+  for (const ph of ['exploratory', 'confirmatory']) allRed.reading.phases[ph].red_nights = allRed.reading.phases[ph].nights;
+  const arCo = allRed.study.summary.phases.confirmatory, arMin = arCo.scorecard.min_read, arN = arMin - 1;
+  Object.assign(arCo, { settled: Object.assign({}, arCo.settled, { n: arN }), scorecard: Object.assign({}, arCo.scorecard, { readable: false }) });
+  const arRead = await readOf('all red', allRed);
+  readingHolds(allRed, arRead, eq, check, 'all red: ');
+  check('all red: an unreadable confirmatory split prints its count against the minimum and no figure',
+    arRead[1].includes(thousands(arN) + ' of the ' + thousands(arMin) + ' have settled, so nothing confirmatory is readable yet.') && !arRead[1].includes('interval') && !arRead[1].includes(' not red'), arRead[1]);
+  check('all red: the last sentence says every published night was red', arRead[4].startsWith('Every published night here was red'), arRead[4]);
+  const below = structuredClone(F), bCo = below.reading.phases.confirmatory;
+  check('below zero: the committed file has a confirmatory night that is not red beside red ones', bCo.red_nights > 0 && bCo.nights > bCo.red_nights, [bCo.nights, bCo.red_nights]);
+  Object.assign(below.study.summary.phases.confirmatory.night_bootstrap, { ci95: [-0.4, -0.02], mean_of_night_means: -0.2 });
+  bCo.strata.admitted = Object.assign({}, bCo.strata.admitted, { n: below.rules.record.scorecard_min_plans - 1 });
+  const blRead = await readOf('below zero', below);
+  readingHolds(below, blRead, eq, check, 'below zero: ');
+  check('below zero: an interval wholly under zero is clear of zero, never said to include it', blRead[1].includes('night-bootstrap interval of ' + R3(-0.4) + ' to ' + R3(-0.02) + ', which is clear of zero.') && !blRead[1].includes('includes zero'), blRead[1]);
+  check('below zero: red nights too few to read print their count and no rate', blRead[1].endsWith(' alone the A-quality stratum is ' + thousands(bCo.strata.admitted.n) + ' settled, too few for a rate.'), blRead[1]);
+  const noRed = structuredClone(F), nCo = noRed.reading.phases.confirmatory;
+  let unred = 0;
+  for (const nt of noRed.nights) if (nt.phase === 'confirmatory' && nt.regime.verdict === 'red') {
+    Object.assign(nt.regime, { verdict: 'yellow', size_multiplier: noRed.rules.breadth.size_multiplier.yellow, reasons: ['ten-session ratio under the yellow line'] }); unred++;
+  }
+  noRed.nights_summary.verdicts = { red: noRed.nights_summary.verdicts.red - unred, yellow: (noRed.nights_summary.verdicts.yellow || 0) + unred };
+  nCo.red_nights = 0;
+  for (const s of Object.keys(nCo.strata)) nCo.strata[s] = Object.assign({}, nCo.strata[s], { n: 0, wins: 0, losses: 0, breakeven: 0, sum_r: 0, mean_r: null, median_r: null });
+  const nrRead = await readOf('no red', noRed);
+  readingHolds(noRed, nrRead, eq, check, 'no red: ');
+  check('no red: confirmatory nights none of which was red name no red-night figure', nrRead[1].endsWith(' ' + plural(nCo.nights, 'night') + ' of them were not red.') && !nrRead[1].includes('red night'), nrRead[1]);
   // a long list of nights: the caption stays under the stage on a desktop, and before the list on a phone
   const many = structuredClone(F);
   many.nights = F.market.sessions.map((s, i) => Object.assign(structuredClone(F.nights[i % N]), { session: s.date }));

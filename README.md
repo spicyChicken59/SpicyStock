@@ -1660,11 +1660,14 @@ spec is committed before any outcome is computed and names the publication
 commits and their record blobs; a commit the checkout cannot produce or a blob
 that differs is a refusal, never a smaller population. Signals published up to
 the spec's freeze are exploratory, later ones confirmatory. It is a
-counterfactual: every ticket it walks was refused by the regime -- by the RED
-gate, or on a YELLOW night by YELLOW's A+-only band, which the admitted
-stratum's A tickets do not pass -- and the reader is not run; it reads no rate
-under the scorecard's minimum and is not an edge claim. (The frozen spec's own
-sentence says the RED gate alone; the 17 October report corrects it.)
+counterfactual: the live policy published no reaction ticket on any night the
+study reads, so every ticket it walks was one the policy refused -- by the RED
+gate; on a YELLOW night by YELLOW's A+-only band, which the admitted stratum's
+A tickets do not pass, or, for an A+, by the reader, which lowered it below the
+band or had its reply refused, so the accepted-review requirement withheld the
+ticket -- and the study does not run the reader; it reads no rate under the
+scorecard's minimum and is not an edge claim. (The frozen spec's own sentence
+says the RED gate alone; the 17 October report corrects it.)
 Its confirmatory re-reads, each under a spec that differs from the frozen one
 by appended publication entries only, are
 `docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md` over
