@@ -33,12 +33,18 @@
   // can start it by hand. The summary offers that only inside the window the
   // collector itself accepts (the applicable session's market date, from
   // PREOPEN_MINUTES before the open until the entry cutoff: src/morning.py's
-  // POLICY and _reason()) and only while no current check for this publication
-  // has arrived. It is a link and a sentence: the page dispatches nothing.
+  // POLICY and _reason()), less START_MINUTES at the end: the collector reads
+  // its clock after checkout and install, 28.8 and 31.7 seconds after two
+  // dispatched runs were created, and a runner can take longer to start.
+  // It is a link and a sentence: the page dispatches nothing.
   const MORNING_WORKFLOW = 'https://github.com/spicyChicken59/SpicyStock/actions/workflows/morning.yml';
-  const PREOPEN_MINUTES = 30;
+  const PREOPEN_MINUTES = 30, START_MINUTES = 2;
   const clockCT = ms => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit' }).format(new Date(ms)) + ' CT';
   let record = null, recordHash = null, epoch = 0, sequence = 0, controller = null, state = 'unbound', receipt = null, issue = '', now = Date.now();
+  // True only when the morning file was read and holds no receipt for this
+  // publication (a 404, or a receipt bound to another publication): the one
+  // unavailable state in which the absence of a check is known, not assumed.
+  let absent = false;
   let readerBinding = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
   const sourceMemory = { halts: {}, corporate: {} };
@@ -210,7 +216,7 @@
         readerBinding && (p.reader_projection_version !== 1 || p.reader_sha256 !== recordHash) ||
         p.context_sha256 !== (run.evidence || {}).context_sha256 || p.rules_version !== (record.app || {}).rules_version ||
         String(p.run_id) !== String(run.run_id) || p.measured_session !== run.session ||
-        p.applicable_session !== timing.applicable_session || p.published_at !== run.published_at) throw Error('These observations belong to another publication.');
+        p.applicable_session !== timing.applicable_session || p.published_at !== run.published_at) throw Object.assign(Error('These observations belong to another publication.'), { elsewhere: true });
     if (!['observed', 'partial', 'provider_unavailable', 'no_tickets', 'inapplicable', 'invalid_publication'].includes(value.status)) throw Error('Unknown observation status.');
     const started = dateMs(value.collection_started_at), generated = dateMs(value.generated_at), expires = dateMs(value.expires_at);
     if (![started, generated, expires].every(Number.isFinite) || started > generated || generated > now + FUTURE_SKEW * 1000 || expires <= generated || expires - generated > RECEIPT_AGE * 1000) throw Error('Observation timestamps are invalid.');
@@ -338,6 +344,7 @@
       if (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol)) throw Error('Same-origin observations are unavailable.');
       url.hash = ''; url.search = '';
       const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: 'same-origin', redirect: 'error', signal: active.signal });
+      if (response.status === 404) throw Object.assign(Error('The published morning file could not be read.'), { elsewhere: true });
       const raw = await readBounded(response);
       if (token !== epoch || request !== sequence) return;
       if (!pinned) now = Date.now();
@@ -347,19 +354,19 @@
       const next = validate(parsed);
       if (receipt && dateMs(next.generated_at) < dateMs(receipt.generated_at)) throw Error('An older observation file was not loaded.');
       require(preservesRestrictions(next), 'A previous event exclusion was omitted without a sourced resolution; it remains withheld.');
-      receipt = next; state = 'loaded'; issue = '';
+      receipt = next; state = 'loaded'; issue = ''; absent = false;
       rememberHalts(next);
       resolveSourceMemory(next); savePublicFacts(next);
       paintAll(); if (onChange) onChange();
     } catch (e) {
       if (token !== epoch || request !== sequence) return;
-      state = 'unavailable'; issue = e && e.message || 'Observation file unavailable.'; paintAll(); if (onChange) onChange();
+      state = 'unavailable'; issue = e && e.message || 'Observation file unavailable.'; absent = !!(e && e.elsewhere); paintAll(); if (onChange) onChange();
     } finally { w.clearTimeout(timeout); }
   }
   function reset(data, at, clockPinned) {
     epoch++; sequence++;
     if (controller) controller.abort();
-    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned;
+    record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = false;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
     paintAll();
@@ -402,31 +409,45 @@
     if (receipt.rows.length && !receipt.rows.every(quotesCurrent)) return 'Quote observations are stale or incomplete';
     return ({ observed: 'Morning snapshot available', partial: 'Morning check is incomplete', provider_unavailable: 'Market provider unavailable', no_tickets: 'No admitted tickets to check', inapplicable: 'Morning check is outside its session', invalid_publication: 'Publication could not be checked' })[receipt.status] || 'Morning check unavailable';
   }
-  // A current check is an applicable receipt (no inapplicable reason) still
-  // inside its five-minute life. Before the morning file has been read the
-  // answer is unknown, so nothing is offered.
+  // A run is offered only where the collector would take it and it would quote
+  // something. A current check is an applicable receipt still inside its
+  // five-minute life; a no-ticket receipt stays true until a new publication,
+  // so it is final. An unread or unverifiable file leaves the answer unknown,
+  // so nothing is offered: only a file read and shown absent counts as none.
+  // Research rows count once the comparison has loaded and named its fits.
   function handoff() {
     const tm = record && record.run && record.run.timing;
-    if (!tm || !['loaded', 'unavailable'].includes(state)) return null;
+    if (!tm || !(state === 'loaded' || state === 'unavailable' && absent)) return null;
     const opens = dateMs(tm.opens_at), cutoff = dateMs(tm.cutoff_at);
     if (!Number.isFinite(opens) || !Number.isFinite(cutoff) || typeof tm.applicable_session !== 'string'
-        || sessionAt(now) !== tm.applicable_session || now >= cutoff) return null;
+        || sessionAt(now) !== tm.applicable_session) return null;
+    const until = cutoff - START_MINUTES * 60000;
+    if (now >= until || receipt && receipt.status === 'no_tickets') return null;
     const applicable = !!receipt && receipt.reason === null;
     if (applicable && receiptFresh()) return null;
-    const from = opens - PREOPEN_MINUTES * 60000;
-    return { due: now >= from, from, cutoff, expired: applicable };
+    const research = api.researchObservations && typeof api.researchObservations.status === 'function' ? api.researchObservations.status().fit : null;
+    const plans = candidates().length;
+    return { due: now >= opens - PREOPEN_MINUTES * 60000, from: opens - PREOPEN_MINUTES * 60000, until, cutoff, expired: applicable, plans, research: research > 0 ? research : 0 };
   }
   function offerHandoff(body) {
     const offer = handoff();
     if (!offer) return;
-    if (!offer.due) {
-      line(body, 'Morning check:', 'One can be started from ' + clockCT(offer.from) + ', ' + PREOPEN_MINUTES + ' minutes before the open. A run before then publishes only a receipt saying it was too early.', { 'data-observation-handoff': 'before' });
+    if (!offer.plans && !offer.research) {
+      line(body, 'Morning check:', 'none is needed for this publication. It admits no plan, so a run would quote nothing for one.', { 'data-observation-handoff': 'none' });
       return;
     }
+    const sec = 'Like every morning run, it also starts the SEC evidence collection, which runs at most three times a UTC day.';
+    if (!offer.due) {
+      line(body, 'Morning check:', 'one can be started from ' + clockCT(offer.from) + ', ' + PREOPEN_MINUTES + ' minutes before the open. A run that starts collecting earlier publishes only a receipt saying it was too early. ' + sec, { 'data-observation-handoff': 'before' });
+      return;
+    }
+    const quoted = [offer.plans ? 'this publication\'s ' + (offer.plans === 1 ? 'admitted plan' : offer.plans + ' admitted plans') + ' (IEX quotes and delayed SIP volume)' : '',
+      offer.research ? (offer.research === 1 ? 'the research row' : 'the ' + offer.research + ' research rows') + ' the comparison names (IEX quotes)' : ''].filter(Boolean).join(' and ');
     line(body, offer.expired ? 'The last morning check has expired.' : 'No current morning check for this session.',
-      'Scheduled runs can start hours late, so you can start one yourself: open the morning workflow, choose Run workflow on the main branch, untick dry_run and run it. ' +
-      'It reads IEX and delayed SIP data for this publication\'s admitted plans and any current research rows, publishes one dated receipt and places no order. ' +
-      'When the run has finished, press Reload published observations. Accepted until ' + clockCT(offer.cutoff) + ', the end of the entry window.',
+      'Scheduled runs can start hours late, so you can start one yourself: open the morning workflow, choose Run workflow on the main branch, untick dry_run and run it by ' + clockCT(offer.until) +
+      '. The run reads the time about half a minute after it is created and refuses from ' + clockCT(offer.cutoff) + ', when the entry window ends. ' +
+      'It quotes ' + quoted + ', publishes its dated receipts and places no order. ' + sec + ' ' +
+      'Press Reload published observations a minute or two after the run finishes, once the site serves the new files; an earlier press reads the previous ones.',
       { class: 'sc-note', 'data-observation-handoff': offer.expired ? 'expired' : 'due' });
     body.append(node('a', { href: MORNING_WORKFLOW, target: '_blank', rel: 'noopener noreferrer', 'data-observation-link': MORNING_WORKFLOW, 'data-observation-workflow': '' }, 'Open the morning workflow on GitHub'));
   }
@@ -494,8 +515,13 @@
     line(body, 'Feed limits:', 'IEX is a single venue, not the consolidated market. Delayed SIP is at least 15 minutes behind. Quote/trade observations expire after 60 seconds; a receipt expires after 5 minutes.');
     line(body, 'Still to verify:', 'Current broker quote, spread and trading status; issuer news, earnings and corporate actions. A morning snapshot is not comprehensive event clearance or permission to trade.');
     if (active) {
+      // A focused link the repaint withdrew hands the focus to the section's
+      // own control, never to the body behind an open dialog.
       const replacement = Array.from(body.querySelectorAll('[data-observation-link]')).find(n => n.getAttribute('data-observation-link') === active);
+      const reloadControl = host.querySelector('[data-observation-reload]');
       if (replacement) replacement.focus({ preventScroll: true });
+      else if (reloadControl && !(!recordHash || state === 'loading')) reloadControl.focus({ preventScroll: true });
+      else { if (title.tagName !== 'SUMMARY') title.setAttribute('tabindex', '-1'); title.focus({ preventScroll: true }); }
     }
     const reloadButton = host.querySelector('[data-observation-reload]');
     if (reloadButton) reloadButton.disabled = !recordHash || state === 'loading';
@@ -514,10 +540,10 @@
       // comparison has not been opened.
       button.addEventListener('click', () => {
         reload();
-        if (api.researchObservations && typeof api.researchObservations.reload === 'function') api.researchObservations.reload();
+        if (api.researchObservations && typeof api.researchObservations.refresh === 'function') api.researchObservations.refresh();
       });
       host.append(button);
-      host.append(node('p', { class: 'sc-hint' }, 'Reload reads the latest static morning file and, once the research comparison is open, its dated observation. It does not request a new market quote or start a provider refresh.'));
+      host.append(node('p', { class: 'sc-hint' }, 'Reload reads the latest static morning file and, once the research comparison has been opened, its dated observation, keeping what was verified when a read fails. It does not request a new market quote or start a provider refresh.'));
     } else host.id = 'disc-observations';
     const descriptor = { kind, candidate }; hosts.set(host, descriptor); paintHost(host, descriptor); return host;
   }
@@ -525,6 +551,7 @@
     reset, bind, reload, refusal, summary: () => mount('summary'), detail: c => mount('detail', c),
     validateHaltEvidence: (halt, coverage, ticker, at) => validateHalt(halt, coverage, { ticker }, dateMs(at)),
     clock: at => { now = new Date(at).getTime(); paintAll(); },
+    repaint: () => paintAll(),
     onChange: handler => { onChange = handler; },
     facts: () => ({ state, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
   };

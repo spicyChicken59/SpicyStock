@@ -10089,18 +10089,31 @@ reader who opened the desk at 8:10 could start one.
 **What was built.** The Morning desk's observation summary
 (`docs/app-observations.js`, `handoff()` and `offerHandoff()`) offers a link to
 this repository's `morning.yml` with the steps -- main, **dry_run** unticked --
-and what the run does and does not do. It asks the collector's own question
-first: on the applicable session's market date, from `src/morning.py`'s
-`POLICY["preopen_minutes"]` before the open until the entry cutoff, and only
-while no current applicable receipt for the loaded publication has arrived
-(none, an inapplicable one, or one past its five-minute life). Earlier that day
-it names when the window opens and offers no link; after the cutoff, on another
-date and on a practice record it says nothing. Before the morning file has
-been read the answer is unknown, so nothing is offered. It is a link and a
-sentence: the page dispatches nothing, holds no token and requests nothing
-from GitHub. `tests/test_workflows.py` holds the link to `app.js`'s `REPO` and
-the workflow file, the instruction to the `dry_run` input's default and the
-persist job's condition, and the minutes to the collector's `POLICY`.
+and what a run does: it quotes the publication's admitted plans (IEX quotes and
+delayed SIP volume) and any research rows the opened comparison names (IEX
+quotes), publishes its dated receipts, starts the SEC evidence collection
+that follows every morning run (at most three a UTC day, the evening's
+included) and places no order. It asks the collector's own questions first: on
+the applicable session's market date, from `src/morning.py`'s
+`POLICY["preopen_minutes"]` before the open until `START_MINUTES` (2) before the
+entry cutoff, because the collector reads its clock after checkout and install,
+28.8 and 31.7 seconds after the two measured dispatches were created. It offers
+only once the morning file was read and shown to hold no current check for
+this publication -- a 404, a receipt bound to another publication (every
+morning before a check), an inapplicable one, or one past its five-minute life
+-- never while the file is unread, could not be read or cannot be verified. A
+no-ticket receipt is final, since nothing it could quote appears without a new
+publication, and a publication that admits no plan says a run would quote
+nothing for one unless the opened comparison names allocation-fit rows (the
+research module's `status().fit`, which repaints the summary when a cohort
+attaches). Earlier that day it names when the window opens and offers no link.
+A withdrawn link hands the focus to the section's reload control, never the
+body behind the open dialog. It is a link and a sentence: the page dispatches
+nothing, holds no token and requests nothing from any GitHub host.
+`tests/test_workflows.py` holds the link to `app.js`'s `REPO` and the workflow
+file, the instruction to the `dry_run` input's default, both collect steps'
+`DRY_RUN_FLAG` and the persist job's condition, and the minutes to the
+collector's `POLICY`.
 
 **The reload that read nothing.** The same morning run publishes the research
 rows' dated observation, and neither button a reader presses re-read it:
@@ -10111,37 +10124,62 @@ loaded stayed invisible until a full page reload. The morning reload now
 re-reads the research observation too (nothing while the comparison has never
 been opened), and the comparison reload asks it again for an unchanged cohort;
 a new cohort's re-attach already reads it, so the press adds no second request.
+Both go through `refresh()`, which keeps the verified observation until a newer
+file validates and names a failed read beside it; `reload()`, a plain read,
+stays the module's own.
 
 **Measured: how long a hand-started run takes.** Two earlier dispatches with
 `dry_run` off: run 38039598040 (10 October) went from its creation at 08:56:01
-UTC to its committed receipt `fa480f2a` in 64 seconds, and publisher 38039664633
-printed *Verified* at 08:58:11, 130 seconds after the run was created; run
-37964299335 (9 October) committed `2fa9773f` 75 seconds after creation. Both
-made no provider request (a Saturday, and after the cutoff), so a collection
-that asks the providers takes longer; neither measures how promptly GitHub
-creates a dispatched run, which the listing cannot show.
+UTC to its committed receipt `fa480f2a` in 64 seconds; the run finished at
+08:57:10, the Pages deployment that carried it at 08:58:05, and publisher
+38039664633 printed *Verified* at 08:58:11, 130 seconds after the run was
+created. Run 37964299335 (9 October) committed `2fa9773f` 75 seconds after
+creation. Neither asked a market-data provider anything (a Saturday, and after
+the cutoff); the 10 October run's completion started the SEC evidence
+collection (38039664597), which made one request. So the offer says to press
+Reload a minute or two after the run finishes, and that an earlier press reads
+the previous files. Neither measures how promptly GitHub creates a dispatched
+run, which the listing cannot show.
 
-**Checks.** The base modules (`2156aaca`'s `app-observations.js` and
-`app-stop-research.js`, routed in) fail 23 of the `observations` suite's 198
-checks and 4 of the `research-observations` suite's 372; the branch passes all
-of both. Eleven mutants through routed copies, each dying on the checks naming
-its rule: the pre-open minutes dropped (14 checks), the cutoff inclusive (2),
-an inapplicable receipt read as current (1), the session date unchecked (2), an
-expired receipt read as current (2), the offer made before the morning file
-was read (1, the practice record), the link's focus restoration dropped (2),
-the handoff removed (23), the morning reload reading the morning file only (2),
-the comparison reload not asking again (2), and its new-cohort guard dropped
-(2: a second request). The control, a comment, passes 198/198. The full smoke
-with `--shots` 16434/16434; the handoff at 1280 dark and 390 light was looked
-at.
+**The review, worked.** A workflow by execution over `622e07ff` -- three finders
+(the page's semantics against the collector, whether the tests can fail, the
+prose) and a skeptic a finding -- returned 18 findings and the skeptic upheld
+every one, each reproduced. The mediums: the offer was made on a publication
+with no admitted plan and an empty cohort, where a run asks no provider
+anything, and came back every five minutes once its no-ticket receipt aged;
+either reload button dropped a verified research observation when its re-read
+failed, where `main` kept it; an unread morning file (a 5xx, no WebCrypto) was
+offered as "no current check", pointing at a reload button that was disabled;
+the page said a run "publishes one dated receipt" when the persist job commits
+two and every morning run starts an SEC collection under its daily cap; and
+four test holes -- the workflow test never read the flag that makes an
+unticked dispatch publish (inverting it passed all 54), "requested nothing from
+GitHub" filtered `github.com` and so could not see a dispatch to
+`api.github.com`, nothing observed the unread state (the checkpoint's own
+mutant line credited the practice record with it, a different rule), and the
+research quiet check counted requests before a read could start. The lows: the
+offer ran to the exact cutoff, half a minute after which a dispatched run
+starts collecting; "when the run has finished, press Reload" reads the old file
+for about a minute; focus fell to the body when the link was withdrawn; the
+later-cohort check never identified the cohort; the day-after check could only
+fail from the cutoff rule; the reload hint said "is open" where the module
+keeps reading once opened; and the README dated the scheduler's change to 21
+September when that morning's secret scan was still prompt. Each is fixed and
+held by the check it named.
+
+**Checks.** <CHECKS>
 
 **Keep / fix / defer / omit.** Keep: the page links and explains; the owner
-dispatches. Fix if it bites: over the offer the summary's heading still reads
-*Morning observations unavailable* when the file is absent or bound to an older
-publication -- the file's own status, and true, but not the action. Defer: a scheduled routine that dispatches the run (the reading's next
-step), which holds a token or a person's clock outside this repository and is
-Mo's call; #111's ten consecutive sessions with a morning check, which now
-depend on someone pressing the button before 9:00 AM CT. Omit: a dispatch from
-the page, which would need a credential in the browser.
+dispatches; a pressed reload never loses what it verified. Fix if it bites:
+over the offer the summary's heading still reads *Morning observations
+unavailable* when the file is absent or bound to an older publication -- the
+file's own status, and true, but not the action; and the issuer guard admits a
+morning parent whatever its receipt's status, so a too-early or too-late
+hand-started run still spends one of the day's three SEC collections. Defer: a
+scheduled routine that dispatches the run (the reading's next step), which
+holds a token or a person's clock outside this repository and is Mo's call;
+#111's ten consecutive sessions with a morning check, which now depend on
+someone starting a run by 8:58 AM CT. Omit: a dispatch from the page, which
+would need a credential in the browser.
 
 **Not claimable:** a morning or research observation; any trading edge.

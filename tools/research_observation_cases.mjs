@@ -111,9 +111,15 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     const { page, context, requests, errors } = tab;
     try {
       eq(label + ': a closed research panel performs zero observation requests', observationRequests(requests).length, 0);
-      await page.locator('[data-observation-reload]').click();
+      // Read in the click's own task: a research read started by the press
+      // would already have moved the comparison or the observation out of
+      // 'deferred', before any request is on the wire.
+      eq(label + ': the morning reload with the comparison never opened starts no research read', await page.evaluate(() => {
+        document.querySelector('[data-observation-reload]').click();
+        return [SCStock.stopResearch.status().state, SCStock.researchObservations.status().state];
+      }), ['deferred', 'deferred']);
       await page.waitForFunction(() => SCStock.observations.facts().state !== 'loading');
-      eq(label + ': the morning reload with the comparison never opened reads no research observation', observationRequests(requests).length, 0);
+      eq(label + ': ... and requests no research file', researchRequests(requests).length, 0);
       await page.locator('.ss-morning__prep > summary').click();
       await page.locator('#morning-cash').fill('345.67'); await page.locator('#morning-cash').focus();
       const before = await snapshot(page), requestsBefore = requests.length;
@@ -176,6 +182,15 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     eq('comparison reload: the newer observation replaces the partial one', [(await state(page)).state, (await state(page)).status], ['loaded', 'observed']);
     eq('morning reload: one press reads the research observation too', await press('[data-observation-reload]', variants.outage), 1);
     eq('morning reload: the newer observation replaces the last', [(await state(page)).state, (await state(page)).status], ['loaded', 'provider_unavailable']);
+    // A press whose read fails keeps the verified observation on screen and
+    // names the failure; the module's own reload, a plain read, would drop it.
+    for (const selector of ['[data-stop-reload]', '[data-observation-reload]']) {
+      eq(selector + ' on a failed read: one request is made', await press(selector, { status: 503, raw: 'unavailable' }, clockFor(current, variants.outage)), 1);
+      eq(selector + ' on a failed read: the last verified observation stays', [(await state(page)).state, (await state(page)).status, await section(page, 'KE').count()], ['loaded', 'provider_unavailable', 1]);
+      check(selector + ' on a failed read: the summary names the failure and the kept observation', /A re-read failed \(The published dated observation is unavailable\.\) This is the last verified observation\./.test(await summary(page)));
+    }
+    eq('a later successful press clears the failure', await press('[data-observation-reload]', variants.outage), 1);
+    check('a later successful press clears the failure: the summary no longer names it', !/re-read failed/.test(await summary(page)));
     // A comparison reload that brings a later cohort of the same publication:
     // re-attaching it already starts the observation read, so the press adds
     // no second one. Then the current cohort is put back the same way.
@@ -185,11 +200,11 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     await page.route('**/stop-research.json', lateReceipt); await page.route('**/stop-research/*.json', lateBundle);
     const lateClock = new Date(Date.parse(JSON.parse(late.receiptRaw).timing.generated_at) + 60000).toISOString();
     eq('comparison reload to a later cohort: the observation is read once, not twice', await press('[data-stop-reload]', variants.followup, lateClock), 1);
-    eq('comparison reload to a later cohort: the comparison is the later one', (await stopState(page)).state, 'loaded');
+    eq('comparison reload to a later cohort: the comparison is the later one', [(await stopState(page)).state, (await stopState(page)).bundle], ['loaded', JSON.parse(late.receiptRaw).bundle.sha256]);
     eq('comparison reload to a later cohort: the earlier cohort\'s observation cannot describe it', (await state(page)).state, 'unavailable');
     await page.unroute('**/stop-research.json', lateReceipt); await page.unroute('**/stop-research/*.json', lateBundle);
     eq('comparison reload back to the current cohort: read once', await press('[data-stop-reload]', variants.partial), 1);
-    eq('comparison reload back to the current cohort: its observation loads again', [(await state(page)).state, (await state(page)).status], ['loaded', 'partial']);
+    eq('comparison reload back to the current cohort: its observation loads again', [(await state(page)).state, (await state(page)).status, (await stopState(page)).bundle], ['loaded', 'partial', current.receipt.bundle.sha256]);
     const reloadTo = async served => {
       transport.current = served;
       await page.evaluate(now => { SCStock.now = now; SCStock.reclock(); return SCStock.researchObservations.reload(); }, clockFor(current, served));
@@ -388,4 +403,21 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     eq('a replacement publication withdraws the old cohort and its observation', [(await stopState(race.page)).state, await race.page.locator('[data-research-observation]').count()], ['unavailable', 0]);
     eq('replacement produces no page exceptions', [...race.errors], []);
   } finally { await race.context.close(); }
+
+  {
+    // The morning offer counts research rows only once the comparison has
+    // named them: this publication admits no plan and its cohort has two
+    // allocation fits. Closed, the page cannot know a run would quote them.
+    const tab = await setup(current, null, { now: '2026-10-12T13:10:00Z', beforeLoad: page => page.route('**/morning.json', route => route.fulfill({ status: 404, contentType: 'text/plain', body: 'not found' })) });
+    const { page } = tab;
+    const offer = () => page.evaluate(() => { const n = document.querySelector('[data-observations="summary"] [data-observation-handoff]'); return n ? [n.getAttribute('data-observation-handoff'), n.textContent] : [null, '']; });
+    try {
+      eq('research offer: with the comparison never opened, no plan means no run', (await offer())[0], 'none');
+      await reveal(page);
+      const [kind, text] = await offer();
+      eq('research offer: once the comparison names its two fits, a run is offered', kind, 'due');
+      check('research offer: it says the run quotes those rows with IEX, not the delayed volume', /It quotes the 2 research rows the comparison names \(IEX quotes\), publishes its dated receipts and places no order/.test(text) && !/admitted plan/.test(text));
+      eq('research offer: no browser errors', [...tab.errors], []);
+    } finally { await tab.context.close(); }
+  }
 }

@@ -376,7 +376,7 @@
     // re-attaching a new cohort has already started that read.
     button.addEventListener('click', () => load().then(ok => {
       const observations = api.researchObservations;
-      if (ok && observations && typeof observations.reload === 'function' && observations.status().state !== 'loading') observations.reload();
+      if (ok && observations && typeof observations.refresh === 'function' && observations.status().state !== 'loading') observations.refresh();
     }));
     content.append(button, node('p', { class: 'sc-hint' }, 'Reload reads the same public research files. It does not run a scan, request provider data or send your cash inputs, saved symbols or broker reports.'));
     host.append(content); mounted = host;
@@ -391,5 +391,5 @@
       paint(); if (mounted && mounted.open && record && hashes.recordHash) load();
     } else paintStatus();
   }
-  api.stopResearch = { mount, update, reload: load, reportReference, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.rows.length : 0 }) };
+  api.stopResearch = { mount, update, reload: load, reportReference, status: () => ({ state, issue, publication: receipt && receipt.publication, rows: bundle ? bundle.rows.length : 0, bundle: receipt ? receipt.bundle.sha256 : null }) };
 })(window);

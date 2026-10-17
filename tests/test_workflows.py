@@ -308,11 +308,17 @@ def test_page_handoff_names_this_workflow_its_publishing_input_and_the_collector
     dry_run = triggers(wf)['workflow_dispatch']['inputs']['dry_run']
     assert dry_run['type'] == 'boolean' and dry_run['default'] is True
     assert 'untick dry_run' in page
-    # Unticked, a dispatch on main collects and publishes; ticked, it never does.
+    # Unticked, a dispatch on main collects for real and publishes; ticked,
+    # each collector writes a rehearsal receipt, which the persist job never
+    # runs for and the publisher refuses.
+    collect = steps(wf, 'collect')
+    for name in ('Collect a bound morning observation', 'Collect a bound research observation'):
+        assert collect[name]['env']['DRY_RUN_FLAG'] == "${{ inputs.dry_run == true && '--dry-run' || '' }}"
+        assert '$DRY_RUN_FLAG' in collect[name]['run']
     assert "inputs.dry_run == false" in wf['jobs']['persist']['if']
     assert "github.ref == 'refs/heads/main'" in wf['jobs']['persist']['if']
     assert publish_morning.schedule_guard(b'', 'workflow_dispatch', '') == (True, 'manual_dispatch')
-    minutes = int(re.search(r"const PREOPEN_MINUTES = (\d+);", page).group(1))
+    minutes = int(re.search(r"const PREOPEN_MINUTES = (\d+)[,;]", page).group(1))
     assert minutes == morning.POLICY['preopen_minutes']
 
 
