@@ -9880,12 +9880,25 @@ without its interval is refused by the shape check. The builder's docstring
 claimed the same false thing about yellow nights and is corrected.
 
 **Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
-1.56.1): 4713 tests collected; `tests/test_historical_findings.py`,
-`tests/test_evidence_review.py` and the new `tests/test_signal_outcomes_reread.py`
-46 passed; `python tools/build_historical_findings.py --check` and
-`python tools/evidence_review.py --check` current; the `findings` suite
-1080/1080, the screenshots at 1280 and on the phone looked at (the reading list, the
-yellow nights in the chart and the list of nights).
+1.56.1): 4713 tests collected. **The full suite found what the focused runs had
+not:** on the first tree 4678 passed, 34 environment-gated skips and one failed
+in 22 m 07 s -- `tests/test_findings_page.py`'s literal guard, which refuses a
+number the page types itself. The new sentence said "a 95% night-bootstrap
+interval"; the 95 lives only in the study's key name (`ci95`), and neither the
+frozen spec nor the findings file carries it as a value. The page says "the
+study's night-bootstrap interval" now, the guard is unchanged, and the full
+suite on the final tree, run in the mutation worktree at the commit with its
+index hashed equal to this one's: 4679 passed and 34
+environment-gated skips in 22 m 25 s.
+`tests/test_historical_findings.py`, `tests/test_evidence_review.py` and the new
+`tests/test_signal_outcomes_reread.py` 46 passed; with `tests/test_findings_page.py`
+and `tests/test_docs.py` 94; `python tools/build_historical_findings.py --check`
+and `python tools/evidence_review.py --check` current; no record or rule moved,
+so the page fixtures and every cascaded generator are untouched; continuity 137;
+the `findings` suite 1080/1080 on the final sentence, the screenshots at 1280 and
+on the phone looked at (the reading list, the yellow nights in the chart and the
+list of nights); gitleaks 8.24.3 over the 21 changed files from inside a scratch
+root with the repository's config: no leaks.
 
 **Mutation passes**, the tree never written. The report, through copies read by
 the new test: thirteen numbers moved one at a time (a night-table sum, the
