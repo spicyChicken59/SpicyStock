@@ -3245,6 +3245,9 @@ async function checkSession(browser, base, full) {
   eq('and prints what the record published, as history', await count(page, '#disc-plan [data-recorded-ticket]'), 1);
   check('marked as history and not as an order to place',
     (await said(page, '#disc-plan [data-recorded-ticket]')).includes('History, not an order to place'), await said(page, '#disc-plan [data-recorded-ticket]'));
+  // the fixture variants open inside the window, so this is the one place a
+  // recorded ticket is drawn: its broker sentence is read here or nowhere
+  eq('with Fidelity\'s part-fill rule under it, once', await brokerNotes(page, '#disc-plan [data-recorded-ticket]'), [BROKER_PART_FILL]);
   await openAll(page, '#orders');
   check('the ticket sheet says the window ended in its own summary',
     (await text(page, '#orders-summary')).includes('window ended') && (await text(page, '#orders-summary')).startsWith(forDay), await text(page, '#orders-summary'));
