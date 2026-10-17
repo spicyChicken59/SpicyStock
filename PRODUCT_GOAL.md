@@ -51,7 +51,8 @@ Milestone **2: a verified morning check** remains in progress. Reliable on-time
 delivery and broader issuer-news/earnings coverage remain open. Two best-effort
 pre-open Actions attempts cannot supply dependable sub-minute quotes during the
 entry window. The server-side delivery proposal is recorded in #108; an existing
-hosting account has not been identified. Broker confirmation remains outstanding.
+hosting account has not been identified. Broker confirmation, outstanding on 9
+October, is closed: the broker is Fidelity (17 October 2026).
 Keep the milestone 3 candidate-funnel and sizing studies separate from evidence
 that a real-money strategy has an established edge.
 

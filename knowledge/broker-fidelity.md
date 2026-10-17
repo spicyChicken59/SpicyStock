@@ -59,11 +59,12 @@ secondary order.
    primary order pending cancel may still fill after a delay and release the
    secondary. Inferred: a buy that fills in part leaves the shares that did fill
    with no stop, and if the rest of the buy fills later the secondary is
-   released for the whole quantity. SpicyStock's advice: if the buy fills in
-   part, place a separate Sell, Stop Loss, Good 'til Canceled order for the
-   filled shares at the ticket's stop, and check that no second sell stop
-   remains for shares you do not hold (a late fill of the rest releases the
-   OTO's own stop beside yours). The page, the private handoff and the mail
+   released for the whole quantity. SpicyStock's advice: the ticket's stop
+   terms assume a full fill; if the buy fills in part, place a separate Sell,
+   Stop Loss, Good 'til Canceled order for the filled shares at the ticket's
+   stop, confirm Fidelity accepts it on shares bought that day (unconfirmed,
+   below), and check that no second sell stop remains for shares you do not
+   hold (a late fill of the rest releases the OTO's own stop beside yours). The page, the private handoff and the mail
    print this rule and this advice beside every order, each labelled as which
    it is.
 

@@ -1,6 +1,6 @@
 # SpicyStock — working notes
 
-**Active goal (updated 10 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
+**Active goal (updated 17 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
 current product direction and milestone contract. Mo uses a $2,000 cash
 account and America/Chicago time; the broker is Fidelity (17 October 2026,
 `knowledge/broker-fidelity.md`). New production
@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4779 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4785 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
