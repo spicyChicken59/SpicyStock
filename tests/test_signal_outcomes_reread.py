@@ -18,6 +18,11 @@ import json
 from pathlib import Path
 import re
 import statistics
+import subprocess
+
+import pytest
+
+from tools import signal_outcomes as so
 
 ROOT = Path(__file__).resolve().parent.parent
 TRUTH = ROOT / "docs" / "input-truthfulness"
@@ -76,6 +81,33 @@ def settled(rows: list[dict]) -> tuple:
 
 
 WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve")
+ORDINALS = ("", "first", "second", "third", "fourth")
+
+
+def day(session: str) -> int:
+    return int(session[-2:])
+
+
+def listed(days: list[int]) -> str:
+    return ", ".join(str(d) for d in days[:-1]) + f" and {days[-1]}" if len(days) > 1 else str(days[0])
+
+
+@pytest.fixture(scope="module")
+def published() -> list[dict]:
+    """Every record the spec names, read from git by commit and held to its
+    blob by the frozen study's own reader. A shallow checkout -- CI's --
+    carries only its tip, so the named commits are fetched, exactly those and
+    once; when they cannot be had the test fails with the reason."""
+    spec = so.load_spec(SPEC)
+    def present(c: str) -> bool:
+        return subprocess.run(["git", "cat-file", "-e", f"{c}^{{commit}}"], cwd=ROOT, capture_output=True).returncode == 0
+    missing = [p["commit"] for p in spec["publications"] if not present(p["commit"])]
+    if missing:
+        done = subprocess.run(["git", "fetch", "--quiet", "--no-tags", "--depth=1", "origin", *missing],
+                              cwd=ROOT, capture_output=True, text=True)
+        assert done.returncode == 0 and all(present(c) for c in missing), \
+            f"{len(missing)} publications the spec names are not in this checkout and could not be fetched: {done.stderr.strip()}"
+    return so.load_publications(spec)
 
 
 def signed(v: float, places: int) -> str:
@@ -114,6 +146,10 @@ def test_the_output_is_the_spec_s_and_the_record_names_its_run():
     summary = (EVIDENCE / "summary.txt").read_text(encoding="utf-8")
     assert f"spec {doc['spec_sha256'][:12]};" in summary and "newest session 2026-10-16" in summary
     text = report()
+    appended = doc["publications"][-len(APPENDED):]
+    firsts = sum(p["first"] for p in appended)
+    assert f"{WORDS[firsts].capitalize()} of them are the first publication of their session and contribute signals; " \
+           f"the {WORDS[len(appended) - firsts]} later ones are revisions and contribute bars" in text
     assert f"(uncompressed SHA-256 `{UNCOMPRESSED_SHA[:12]}…`)" in text
     assert f"(SHA-256 `{doc['spec_sha256'][:12]}…`)" in text and f"(blob `{STUDY_BLOB[:8]}…`" in text
 
@@ -130,6 +166,9 @@ def test_the_comparison_table_is_both_runs_own():
         bars = re.search(r"\| Bars / symbols \| ([\d,]+) / ([\d,]+) \| ([\d,]+) / ([\d,]+) \|", text).groups()
         assert (int(bars[2 * col].replace(",", "")), int(bars[2 * col + 1].replace(",", ""))) == (doc["bars"]["observations"], doc["bars"]["symbols"])
         ex = [r for r in doc["rows"] if r["stratum"] == "admitted" and r["phase"] == "exploratory"]
+        nights = re.search(r"\| Nights with a settled ticket \(all rows / exploratory admitted\) \| (\d+) / (\d+) \| (\d+) / (\d+) \|", text).groups()
+        assert (int(nights[2 * col]), int(nights[2 * col + 1])) == (len({r["session"] for r in doc["rows"] if r["bucket"] == "settled"}),
+                                                                   len({r["session"] for r in ex if r["bucket"] == "settled"}))
         n, w, l, e, total, mean, median = settled(ex)
         assert re.search(r"\| Exploratory admitted: settled \| (\d+) \| (\d+) \|", text).group(col + 1) == str(n)
         assert re.search(r"\| Exploratory admitted: wins / losses / even \| (\d+ / \d+ / \d+) \| (\d+ / \d+ / \d+) \|", text).group(col + 1) == f"{w} / {l} / {e}"
@@ -163,6 +202,8 @@ def test_what_settled_since_6_october_is_the_rows_own():
         n1, w1, _, _, _, mean1, _ = settled([r for r in doc["rows"] if r["session"] == "2026-10-01" and r["stratum"] == "admitted"])
         assert phrase.format(mean=signed(mean1, 3), n=n1, w=w1) in text
     assert settled([r for r in old["rows"] if r["session"] == "2026-10-01" and r["stratum"] == "admitted"])[1] == 0
+    lo, hi = new["summary"]["phases"]["exploratory"]["night_bootstrap"]["ci95"]
+    assert hi < 0 and "The exploratory stratum is still negative and its interval still excludes zero" in text
 
 
 def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
@@ -180,7 +221,14 @@ def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
            f"interval of **[{signed(boot['ci95'][0], 3)}, {signed(boot['ci95'][1], 3)}]**" in text
     assert boot["ci95"][0] < 0 < boot["ci95"][1] and "The interval includes zero" in text
     ub = block["uncertain_bound"]
-    assert f"{ub['uncertain']} uncertain tickets, {ub['bounded']} of them bounded, whose pooled mean would be {signed(ub['pooled_mean_r_with_bound'], 3)}R" in text
+    unc = [r for r in co if r["bucket"] == "uncertain"]
+    bounds = [r["bound_r"] for r in unc if r["bound_r"] is not None]
+    assert (len(unc), len(bounds), round(sum(bounds), 2)) == (ub["uncertain"], ub["bounded"], ub["sum_r_if_filled_at_trigger"])
+    raw = sum(r["r"] for r in co if r["bucket"] == "settled")
+    assert round((raw + sum(bounds)) / (n + len(bounds)), 3) == ub["pooled_mean_r_with_bound"]
+    assert f"{len(unc)} uncertain tickets, {len(bounds)} of them with a bound -- the R each would have reached had its uncertain " \
+           f"day filled at its trigger -- summing to {signed(sum(bounds), 2)}R, so that pooled with the {n} settled the mean " \
+           f"would be {signed(ub['pooled_mean_r_with_bound'], 3)}R, and {len(unc) - len(bounds)} with no bound" in text
     costs = block["costs_per_side_bps"]
     assert f"{signed(costs['5']['mean_r'], 3)}R at 5 basis points a side and {signed(costs['20']['mean_r'], 3)}R at 20" in text
     # the night table, row by row
@@ -193,8 +241,7 @@ def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
         k, w1, l1, e1, t1, m1, _ = settled(rows)
         still = sum(r["bucket"] in ("open", "pending") for r in rows)
         moving += still
-        day = int(s[-2:])
-        cells = (f"| {day} Oct | {regime.pop()} | {len(rows)} | {k} | " +
+        cells = (f"| {day(s)} Oct | {regime.pop()} | {len(rows)} | {k} | " +
                  (f"{w1} / {l1} / {e1} | {signed(t1, 2)} | {signed(m1, 3)} |" if k else "— | — | — |") + f" {still} |")
         assert cells in text, cells
     assert moving == block["buckets"]["open"] + block["buckets"]["pending"]
@@ -203,6 +250,26 @@ def test_the_confirmatory_figure_and_its_night_table_are_the_rows_own():
     assert f"carry {inside} of the stratum's {moving} rows still open or pending" in text
     under = sum(1 for s in sessions if settled([r for r in co if r["session"] == s])[0] < 20)
     assert f"{WORDS[under].capitalize()} of the {WORDS[len(sessions)]} nights hold fewer than twenty" in text
+    reach = [day(s) for s in sessions if settled([r for r in co if r["session"] == s])[0] >= 20]
+    assert len(reach) == len(sessions) - under and f"only {listed(reach)} October reach twenty" in text
+    # the table carries exactly the study's nights, no row more
+    assert len(re.findall(r"\| \d+ Oct \| (?:red|yellow|green) \|", text)) == len(sessions)
+    # the 15 October night's settled are its first-session stops
+    s15 = [r for r in co if r["session"] == "2026-10-15"]
+    k15 = settled(s15)[0]
+    stops = sum(1 for r in s15 if r["bucket"] == "settled" and [(e["day"], e["event"]) for e in r["events"]] == [(1, "stopped")])
+    assert stops == k15 and f"The 15 October night's {k15} settled are {stops} first-session stops beside " \
+                             f"{sum(r['bucket'] == 'open' for r in s15)} open tickets" in text
+    # each night's horizon is its own rows' fifth session
+    hz = {}
+    for s in sessions:
+        named = {r["horizon"] for r in co if r["session"] == s and r.get("horizon")}
+        assert len(named) == 1, (s, named)
+        hz[s] = named.pop()
+    tail = ["2026-10-13", "2026-10-14", "2026-10-15", "2026-10-16"]
+    assert [day(hz[s]) for s in tail] == list(range(day(hz[tail[0]]), day(hz[tail[0]]) + len(tail)))
+    assert f"{day(hz['2026-10-12'])} October for 12 October and {day(hz[tail[0]])} to {day(hz[tail[-1]])} October " \
+           f"for {day(tail[0])} to {day(tail[-1])} October" in text
 
 
 def test_the_yellow_nights_and_the_account_change_are_the_rows_own():
@@ -219,6 +286,11 @@ def test_the_yellow_nights_and_the_account_change_are_the_rows_own():
     an, *_ , atotal, _, _ = settled(aplus)
     assert f"Of the {yn} admitted tickets settled on those three nights, {an} are A+ (both 8 October, {signed(atotal, 2)}R between them); the other {yn - an} are grade A" in text
     assert {r["session"] for r in aplus if r["bucket"] == "settled"} == {"2026-10-08"}
+    # the two A+ passed the band and the reader refused them, each its own way
+    assert sorted((r["ticker"], r["reader_accepted"], r["final_grade"]) for r in aplus if r["bucket"] == "settled") == \
+        [("HAE", False, "A+"), ("MANH", True, "C")]
+    assert "an accepted review lowered MANH to C, which the band then refused, and reader authority refused HAE's reply, so the " \
+           f"accepted-review requirement withheld its ticket. None of the {yn} met a RED gate." in text
     assert f"The YELLOW nights' {yn} settled sum to {signed(ytotal, 2)}R; the eight RED nights' {rn} to {signed(rtotal, 2)}R (mean {signed(rmean, 3)}R)" in text
     assert len({r["session"] for r in red}) == 8
     # the rows without an order, admitted and every stratum, before and from the first $2,000 night
@@ -241,3 +313,33 @@ def test_the_reader_s_own_admissions_are_the_rows_own():
     assert [(r["ticker"], r["session"], r["bucket"]) for r in rows] == [("DAC", "2026-10-01", "uncertain"), ("DAC", "2026-10-02", "settled")]
     assert rows[0]["uncertainty"] == "trigger_timing"
     assert f"settled at {signed(rows[1]['r'], 2)}R" in text and "(`trigger_timing`)" in text
+
+
+def test_the_account_change_and_the_8_october_refusals_are_the_records_own(published):
+    """The account the spec tickets each signal with is the publication's own
+    block, so the boundary the report names is read off every record, and the
+    refusals of the two settled 8 October A+ tickets off that night's record."""
+    doc, text = study(), report()
+    acct = [(p["commit"], p["session"], p["data"]["account"]["equity"], p["data"]["account"]["risk_pct"]) for p in published]
+    assert [a[0] for a in acct] == [p["commit"] for p in doc["publications"]]
+    first = next(i for i, a in enumerate(acct) if a[2] != acct[0][2])
+    old, new = acct[0][2], acct[first][2]
+    assert all(a[2] == old for a in acct[:first]) and all(a[2] == new for a in acct[first:]), "the account moved once"
+    assert {a[3] for a in acct} == {0.5}
+    commit, session = acct[first][:2]
+    firsts = {p["commit"]: p["first"] for p in doc["publications"]}
+    assert not firsts[commit], "the first $2,000 publication is a revision, which contributes bars only"
+    nth = sum(1 for a in acct[:first + 1] if a[1] == session)
+    signal = next(a[1] for a in acct[first:] if firsts[a[0]])
+    assert f"Every publication from `{commit[:8]}`, the {ORDINALS[nth]} of {day(session)} October, carries ${new:,.0f} of model " \
+           f"equity at 0.5% risk, and every earlier one carried ${old:,.0f}." in text
+    assert f"so the signals ticketed at ${new:,.0f} are those of {day(signal)} October on" in text
+    # 8 October: the band admitted A+ alone, the reader was required, and the two settled A+ were refused by it
+    night = next(p["data"] for p in published if p["session"] == "2026-10-08" and firsts[p["commit"]])
+    assert night["breadth"]["regime"]["verdict"] == "yellow"
+    assert night["rules"]["pipeline"]["yellow_grades"] == ["A+"]
+    assert night["rules"]["pipeline"]["reader_policy"] == "accepted_required_v1"
+    rows = {b["ticker"]: b for b in night["bursts"] if b["ticker"] in ("HAE", "MANH")}
+    assert rows["HAE"]["reader_coverage"] == "fallback" and "ReaderAuthorityError" in rows["HAE"]["claude"]["error"]
+    assert rows["HAE"]["grade"] == "A+" and not rows["HAE"].get("plan")
+    assert rows["MANH"]["reader_coverage"] == "accepted" and rows["MANH"]["claude"]["grade"] == "C" and rows["MANH"]["grade"] == "C"

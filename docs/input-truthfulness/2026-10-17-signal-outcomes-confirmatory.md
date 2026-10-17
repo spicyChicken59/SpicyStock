@@ -57,17 +57,18 @@ still excludes zero.
 
 ## The confirmatory figure
 
-**Admitted, confirmatory: 209 settled** over ten nights (2 to 15 October),
-58 wins, 150 losses and 1 even, sum −32.72R, mean −0.157R, median −0.39R; the
-mean of the ten night means is −0.138R with a 95% night-bootstrap interval of
+**Admitted, confirmatory: 209 settled** over ten nights (2 to 15 October), 58
+wins, 150 losses and 1 even, sum −32.72R, mean −0.157R, median −0.39R; the mean
+of the ten night means is −0.138R with a 95% night-bootstrap interval of
 **[−0.431, +0.129]**. It clears the scorecard's twenty-settled minimum, so it is
 readable, and the spec's E2 makes it the one figure that can be read as
-evidence. **The interval includes zero: the confirmatory nights do not
-establish whether the mechanical admitted tickets lose or win.** Beside it, as
-the spec labels them and never pooled: 241 uncertain tickets, 205 of them
-bounded, whose pooled mean would be −0.069R if every uncertain day had filled at
-its trigger; and the cost lines, −0.195R at 5 basis points a side and −0.310R
-at 20.
+evidence. **The interval includes zero: the confirmatory nights do not establish
+whether the mechanical admitted tickets lose or win.** Beside it, as the spec
+labels them and never pooled: 241 uncertain tickets, 205 of them with a bound --
+the R each would have reached had its uncertain day filled at its trigger --
+summing to +4.27R, so that pooled with the 209 settled the mean would be
+−0.069R, and 36 with no bound; and the cost lines, −0.195R at 5 basis points a
+side and −0.310R at 20.
 
 | Session | Regime | Admitted rows | Settled | W / L / E | Sum R | Mean R | Still moving |
 | --- | --- | ---: | ---: | --- | ---: | ---: | ---: |
@@ -85,11 +86,11 @@ at 20.
 
 "Still moving" counts the rows open or pending on 16 October, the newest
 session; a night's horizon is its fifth session, 19 October for 12 October and
-20 to 23 October for 13 to 16 October. The 15 October night's 18 settled are
-18 first-session stops beside 43 open tickets: they are the early-read bias of
-the paragraph above, not a night's result. The mean and the interval above
-include them. Eight of the eleven nights hold fewer than twenty settled tickets each, so
-no night's mean is a rate.
+20 to 23 October for 13 to 16 October. The 15 October night's 18 settled are 18
+first-session stops beside 43 open tickets: they are the early-read bias of the
+paragraph above, not a night's result. The mean and the interval above include
+them. Eight of the eleven nights hold fewer than twenty settled tickets each, so
+their means are not rates; only 2, 5 and 8 October reach twenty.
 
 ## What the frozen sentences no longer say truly
 
@@ -100,19 +101,24 @@ Under YELLOW the live policy admits A+ alone (half size, an accepted review
 required); the study's admitted stratum is A+ and A, ticketed at the GREEN
 multiplier, without the reader. Of the 104 admitted tickets settled on those
 three nights, 2 are A+ (both 8 October, +2.65R between them); the other 102 are
-grade A, refused under YELLOW by the regime's own grade band rather than by a
-RED gate. The YELLOW nights' 104 settled sum to −1.00R; the eight RED nights'
-105 to −31.72R (mean −0.302R), the split the findings replay prints. The code
-and the spec stay frozen, so the footer is unchanged; this report is where the
-sentence is corrected.
+grade A, refused under YELLOW by the regime's own grade band. The two A+ passed
+the band and were refused by the reader: an accepted review lowered MANH to C,
+which the band then refused, and reader authority refused HAE's reply, so the
+accepted-review requirement withheld its ticket. None of the 104 met a RED gate.
+The YELLOW nights' 104 settled sum to −1.00R; the eight RED nights' 105 to
+−31.72R (mean −0.302R), the split the findings replay prints. The code and the
+spec stay frozen, so the footer is unchanged; this report is where the sentence
+is corrected.
 
 **The account changed under the study.** The spec tickets each signal with "the
-publication's own account block". The first publication of 9 October and every
-one after it carry $2,000 of model equity at 0.5% risk where every earlier one
-carried $10,000. At $10 of risk a ticket, halved again by the stop-risk rule
-on a stop-constrained ticket, many admitted setups size to no whole share: the
-admitted rows without an order rose from 0 to 6 a night through 8 October to 22, 26, 29, 44, 59 and 8 on 9 to 16 October
-(188 in all), and from 5 to 29 a night across every stratum to 107 to 327. The
+publication's own account block". Every publication from `e67f8cba`, the second
+of 8 October, carries $2,000 of model equity at 0.5% risk, and every earlier one
+carried $10,000. That revision contributes bars only, so the signals ticketed at
+$2,000 are those of 9 October on. At $10 of risk a ticket, halved again by the
+stop-risk rule on a stop-constrained ticket, many admitted setups size to no
+whole share: the admitted rows the study marks `no_order` rose from 0 to 6 a
+night through 8 October to 22, 26, 29, 44, 59 and 8 on 9 to 16 October (188 in
+all), and from 5 to 29 a night across every stratum to 107 to 327. The
 confirmatory nights before and after 9 October are therefore drawn from
 different populations -- after it, the setups whose price a $2,000 account can
 buy at least one share of -- and the confirmatory figure mixes the two. The
