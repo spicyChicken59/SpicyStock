@@ -98,7 +98,7 @@ most 1% of the intended stocks, each ending within the 5 sessions before the
 session evaluated, is counted and named with where each frame ends, and read
 again by the next session's run at every session it missed; refusals by reader authority or the
 discovery contract within a quarter
-of the night's reads, with every other read accepted and none on a name the
+of the night's reads, or within one if that is more, with every other read accepted (at least one) and none on a name the
 regime would have planned, are counted by cause. A stale stock is still an
 unknown input and a refused reading still leaves the checklist's grade and no
 ticket. An empty credit balance stops the calls like a refused key.

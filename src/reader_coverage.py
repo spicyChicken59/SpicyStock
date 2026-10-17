@@ -75,8 +75,15 @@ def failure_of(error):
     return "transport"
 
 
-def _limit(requested, fraction):
-    return math.floor(int(requested) * Fraction(str(fraction or 0)))
+def _limit(requested, fraction, minimum=0):
+    """The refused replies a night of ``requested`` reads tolerates: the
+    fraction of them, floored, or ``minimum`` if that is more. The minimum
+    never reaches every read (a fraction of 1 can, on a record that archived
+    one); either way a night with no accepted read is unavailable, whatever
+    refused it."""
+    requested = int(requested)
+    share = math.floor(requested * Fraction(str(fraction or 0)))
+    return max(share, min(int(minimum), max(requested - 1, 0)))
 
 
 def _verdict(requested, done, causes, limit, refused_admissible):
@@ -92,12 +99,13 @@ def _verdict(requested, done, causes, limit, refused_admissible):
     return "partial"
 
 
-def reads(rows, *, admitted_grades, refusal_fraction):
+def reads(rows, *, admitted_grades, refusal_fraction, refusal_min=0):
     """The night's reads, from the selected bursts after grading. A refusal
     is tolerated -- not a run problem -- only while every other read was
-    accepted, refusals are no more than the night's limit, and none of the
-    refused names is one the regime would otherwise have planned
-    (``admitted_grades``, None for every grade, no veto)."""
+    accepted, refusals are no more than the night's limit (``_limit()``: the
+    fraction, at least ``refusal_min``), and none of the refused names is one
+    the regime would otherwise have planned (``admitted_grades``, None for
+    every grade, no veto). ``refusal_min`` 0 is the rule before the floor."""
     requested = len(rows)
     done = sum(1 for b in rows if (b.get("claude") or {}).get("source") == grader.SOURCE_CLAUDE)
     causes = {f: 0 for f in FAILURES}
@@ -110,7 +118,7 @@ def reads(rows, *, admitted_grades, refusal_fraction):
         causes[cause] += 1
         if cause == "refused":
             refused.append(b)
-    limit = _limit(requested, refusal_fraction)
+    limit = _limit(requested, refusal_fraction, refusal_min)
     refused_admissible = sorted(b["ticker"] for b in refused if not b.get("vetoes")
                                 and (admitted_grades is None or b.get("grade") in admitted_grades))
     verdict = _verdict(requested, done, causes, limit, refused_admissible)
@@ -310,6 +318,10 @@ def reads_faults(data):
     rules = ((data.get("rules") or {}).get("pipeline") or {}) if isinstance(data.get("rules"), dict) else {}
     if not isinstance(rules, dict) or "reader_refusal_fraction" not in rules:
         return []
+    # the floor, archived beside the fraction; a record made before it has none
+    minimum = rules.get("reader_refusal_min", 0)
+    if type(minimum) is not int or minimum < 0:
+        return ["run.reads archived reader_refusal_min is not a count"]
     run = data.get("run") if isinstance(data.get("run"), dict) else {}
     r = run.get("reads")
     try:
@@ -322,15 +334,15 @@ def reads_faults(data):
             return ["run.reads counts do not reconcile"]
         if len(r["refused_names"]) != c["refused"] or not set(r["refused_admissible"]) <= set(r["refused_names"]):
             return ["run.reads refused names are not its refusals"]
-        if r["refusal_limit"] != _limit(r["requested"], rules["reader_refusal_fraction"]):
-            return ["run.reads refusal limit is not the archived reader_refusal_fraction"]
+        if r["refusal_limit"] != _limit(r["requested"], rules["reader_refusal_fraction"], minimum):
+            return ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
         if r["verdict"] != _verdict(r["requested"], r["done"], c, r["refusal_limit"], r["refused_admissible"]):
             return ["run.reads verdict does not re-derive from its counts"]
         if run.get("session_state") == "open" and isinstance(data.get("bursts"), list):
             selected = [b for b in data["bursts"] if isinstance(b, dict) and isinstance(b.get("claude"), dict)]
             reg = (((data.get("breadth") or {}).get("regime") or {}).get("verdict"))
             again = reads(selected, admitted_grades=admitted(reg, rules["trade_grades"], rules["yellow_grades"]),
-                          refusal_fraction=rules["reader_refusal_fraction"])
+                          refusal_fraction=rules["reader_refusal_fraction"], refusal_min=minimum)
             if any(again[k] != r[k] for k in ("requested", "done", "causes", "refused_names", "refused_admissible", "verdict")):
                 return ["run.reads is not the bursts' own"]
         if r.get("sentence") != reads_sentence(r):

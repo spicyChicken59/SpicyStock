@@ -907,9 +907,9 @@ archived, and a record from before the block is asked for none. The run:
   and exact citations to structured checklist evidence for any downgrade. Missing,
   unknown, contradictory or unauthorized evidence rejects the whole judgement
   without retry and leaves the mechanical grade standing; such refusals, and the
-  discovery contract's, degrade the night only past a quarter of the night's
-  reads, when none is accepted, or when the refused name would otherwise have
-  been planned. A reply that never arrived
+  discovery contract's, degrade the night only once they number more than both
+  a quarter of the night's reads and one, when none is accepted, or when the
+  refused name would otherwise have been planned. A reply that never arrived
   or could not be read always degrades it, and an empty credit balance stops the
   calls the way a refused key does. `run.reads` counts the shortfall by cause, and
   `run.reader_usage` says what the reads cost in the API's own units -- the calls

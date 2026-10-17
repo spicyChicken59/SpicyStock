@@ -106,7 +106,7 @@ def test_duplicate_symbol_cannot_consume_two_reviews():
         choose([candidate("DUP"), candidate("DUP")])
 
 
-def test_receipt_reconciles_actual_attempts_and_smaller_sample_refusal_without_relaxing_tolerance():
+def test_receipt_reconciles_actual_attempts_and_smaller_sample_refusal_under_the_archived_floor():
     rows = [candidate("AAA", grade="A"), candidate("BBB", grade="A")]
     rows[0]["claude"] = {"source": "claude", "grade": "A", "attempts": [{}, {}]}
     from src import grader, reader_authority
@@ -119,8 +119,13 @@ def test_receipt_reconciles_actual_attempts_and_smaller_sample_refusal_without_r
         "requested": 1, "accepted": 1, "unaccepted": 0, "refused": 0, "attempts": 2}
     assert receipt["by_purpose"]["research_rotating"] == {
         "requested": 1, "accepted": 0, "unaccepted": 1, "refused": 1, "attempts": 1}
-    reads = reader_coverage.reads(rows, admitted_grades=("A+",), refusal_fraction=0.25)
-    assert reads["refusal_limit"] == 0 and reads["verdict"] == "partial"
+    # the run's own rule: one refused research read of two is within the owner's floor
+    reads = reader_coverage.reads(rows, admitted_grades=("A+",), refusal_fraction=pipeline.READER_REFUSAL_FRACTION,
+                                  refusal_min=pipeline.READER_REFUSAL_MIN)
+    assert (reads["refusal_limit"], reads["verdict"]) == (1, "tolerated"), reads
+    # the fraction alone, as a record made before the floor reads it: the old partial night
+    reads = reader_coverage.reads(rows, admitted_grades=("A+",), refusal_fraction=pipeline.READER_REFUSAL_FRACTION)
+    assert (reads["refusal_limit"], reads["verdict"]) == (0, "partial"), reads
 
 
 def test_pipeline_retains_selection_counts_and_binding(market, claude, fake_resend, tmp_path):

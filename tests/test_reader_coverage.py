@@ -2,6 +2,7 @@
 from collections import Counter
 from copy import deepcopy
 import json
+from pathlib import Path
 import re
 
 import pytest
@@ -165,11 +166,11 @@ def scripted(monkeypatch, script):
     return calls
 
 
-def four_reads(tmp_path, monkeypatch, script, admitted):
-    frames = {t: a_plus_frame() for t in ("AAA", "BBB", "CCC", "DDD")}
+def four_reads(tmp_path, monkeypatch, script, admitted, tickers=("AAA", "BBB", "CCC", "DDD")):
+    frames = {t: a_plus_frame() for t in tickers}
     rows, _, _ = pipeline.scan_frames(frames, universe.build(None, explicit=list(frames)), pipeline.RunReport())
     assert [(r["ticker"], r["grade_mechanical"], r["vetoes"]) for r in rows] == \
-        [(t, "A+", []) for t in frames], "four admissible A+ bursts, or the case tests something else"
+        [(t, "A+", []) for t in frames], "admissible A+ bursts, or the case tests something else"
     calls = scripted(monkeypatch, script)
     rep = pipeline.RunReport()
     reads, _ = pipeline.read_charts_and_grade(rows, frames, rep, tmp_path, pipeline.grader_prompt(), False,
@@ -246,6 +247,116 @@ def test_reads_verdict_by_counts(fraction, refused, requested, verdict):
     assert reads["verdict"] == verdict, reads
 
 
+def _refused_rows(refused, requested):
+    return [{"ticker": f"T{i}", "grade": "B", "vetoes": [],
+             "claude": {"source": "fallback", "error": "src.ReaderAuthorityError: refused"} if i < refused
+             else {"source": "claude"}} for i in range(requested)]
+
+
+@pytest.mark.parametrize("requested,limits", [
+    # requested reads: (the fraction alone, with the floor of one)
+    (0, (0, 0)), (1, (0, 0)), (2, (0, 1)), (3, (0, 1)), (4, (1, 1)), (7, (1, 1)), (8, (2, 2)), (12, (3, 3))])
+def test_the_refusal_floor_is_at_least_one_and_never_every_read(requested, limits):
+    """The quarter floors to none at two and three reads; the floor of one
+    lifts those, leaves the quarter's own answer wherever it is larger, and
+    never reaches every read -- one read refused of one is unavailable."""
+    assert (reader_coverage._limit(requested, 0.25), reader_coverage._limit(requested, 0.25, 1)) == limits
+    assert reader_coverage._limit(requested, 0.25, 5) <= max(requested - 1, 0)
+
+
+@pytest.mark.parametrize("refusal_min,verdict,problems", [(1, "tolerated", []), (0, "partial", ["claude_partial"])])
+def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, verdict, problems, tmp_path,
+                                                                monkeypatch):
+    """15 Oct 2026: one refused reply of two degraded the night. Under
+    the owner's floor of one it is tolerated -- the other read accepted, the
+    refused name not one the regime would have planned -- and without the
+    floor it is the old partial night."""
+    reads = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=(), refusal_fraction=0.25,
+                                  refusal_min=refusal_min)
+    assert (reads["verdict"], reads["refusal_limit"]) == (verdict, refusal_min), reads
+    if verdict == "tolerated":
+        assert reads["sentence"] == ("Chart reader: 1 of 2 judgements accepted. 1 reply (T0) refused by reader "
+                                     "authority or the discovery contract, within this run's tolerance of 1; that "
+                                     "name stays research only, without a ticket.")
+    # the floor never covers a night with nothing accepted, nor a name the regime would have planned
+    both = reader_coverage.reads(_refused_rows(2, 2), admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert both["verdict"] == "unavailable", both
+    planned = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=("B",), refusal_fraction=0.25, refusal_min=1)
+    assert (planned["verdict"], planned["refused_admissible"]) == ("partial", ["T0"]), planned
+    # and the evening's own read of its charts raises the problem word the verdict names, under each floor
+    monkeypatch.setattr(pipeline, "READER_REFUSAL_MIN", refusal_min)
+    night, kinds, _, _ = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=(), tickers=("AAA", "BBB"))
+    assert (night["verdict"], night["refusal_limit"], kinds) == (verdict, refusal_min, problems), (night, kinds)
+
+
+def test_the_evenings_reads_take_the_floor(tmp_path, monkeypatch):
+    """The floor reaches the night through the evening's own read of its
+    charts, not only through reads() called by hand: two A+ bursts read, one
+    refused, is tolerated with a limit of one and raises no problem."""
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=(),
+                                           tickers=("AAA", "BBB"))
+    assert (reads["requested"], reads["refusal_limit"], reads["verdict"], kinds) == (2, 1, "tolerated", []), reads
+    assert reads["refused_names"] == ["BBB"] and rows["BBB"]["reader_coverage"] == "fallback"
+
+
+def test_the_evening_archives_the_floor(market, claude, fake_resend, tmp_path):
+    assert pipeline.READER_REFUSAL_MIN == 1
+    rep, data, _ = evening(tmp_path, market)
+    assert data["rules"]["pipeline"]["reader_refusal_min"] == pipeline.READER_REFUSAL_MIN
+    report.validate(data)
+
+
+def _reads_record(block, rules, problems):
+    return {"rules": {"pipeline": {"reader_refusal_fraction": 0.25, **rules}},
+            "run": {"reads": block, "problems": problems}}
+
+
+def test_a_record_made_before_the_floor_reads_its_limit_off_the_fraction_alone():
+    rows = _refused_rows(1, 2)
+    old = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25)
+    new = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert (old["verdict"], new["verdict"]) == ("partial", "tolerated")
+    partial = [{"kind": "claude_partial"}]
+    assert reader_coverage.reads_faults(_reads_record(old, {}, partial)) == []
+    assert reader_coverage.reads_faults(_reads_record(new, {"reader_refusal_min": 1}, [])) == []
+    # each block read under the other's rules is refused by the limit's own check
+    limit = ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
+    assert reader_coverage.reads_faults(_reads_record(new, {}, [])) == limit
+    assert reader_coverage.reads_faults(_reads_record(old, {"reader_refusal_min": 1}, partial)) == limit
+
+
+def test_an_open_night_re_derives_its_reads_from_the_bursts_under_the_archived_floor():
+    """The validator's re-derivation from the bursts reads the floor the record
+    archived: the thin night with one of its two selected reads refused is
+    tolerated, and the bursts give the same answer only under that floor."""
+    d = json.loads((Path(__file__).parent / "fixtures" / "page" / "thin.json").read_text())
+    rules = d["rules"]["pipeline"]
+    assert d["run"]["session_state"] == "open" and rules["reader_refusal_min"] == 1, "the case tests something else"
+    selected = [b for b in d["bursts"] if isinstance(b.get("claude"), dict)]
+    assert [b["ticker"] for b in selected] == ["AAPL", "TSLA"], "two selected reads, or the case tests something else"
+    tsla = selected[1]
+    tsla["claude"] = {**tsla["claude"], "source": "fallback",
+                      "error": grader._error_text(reader_authority.ReaderAuthorityError("refused"))}
+    tsla["reader_coverage"] = "fallback"
+    admitted = reader_coverage.admitted(d["breadth"]["regime"]["verdict"], rules["trade_grades"], rules["yellow_grades"])
+    d["run"]["reads"] = reader_coverage.reads(selected, admitted_grades=admitted,
+                                              refusal_fraction=rules["reader_refusal_fraction"],
+                                              refusal_min=rules["reader_refusal_min"])
+    assert (d["run"]["reads"]["refusal_limit"], d["run"]["reads"]["verdict"]) == (1, "tolerated"), d["run"]["reads"]
+    assert reader_coverage.reads_faults(d) == []
+    # the same bursts under the fraction alone are a partial night, not this record's block
+    d["rules"]["pipeline"] = {k: v for k, v in rules.items() if k != "reader_refusal_min"}
+    assert reader_coverage.reads_faults(d) == \
+        ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
+
+
+@pytest.mark.parametrize("bad", [True, -1, "1", 1.0, None])
+def test_an_archived_floor_that_is_not_a_count_is_refused(bad):
+    new = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert reader_coverage.reads_faults(_reads_record(new, {"reader_refusal_min": bad}, [])) == \
+        ["run.reads archived reader_refusal_min is not a count"]
+
+
 def test_admitted_grades_is_one_rule_for_planning_and_the_reader(market, claude, fake_resend, tmp_path, monkeypatch):
     assert pipeline.admitted_grades("green") == tuple(pipeline.TRADE_GRADES)
     assert pipeline.admitted_grades("yellow") == tuple(pipeline.YELLOW_GRADES)
@@ -285,7 +396,7 @@ def test_validate_refuses_forged_reads(market, claude, fake_resend, tmp_path):
         "a cause count": (lambda r: r["run"]["reads"]["causes"].update(refused=1),
                           "run.reads counts do not reconcile"),
         "the limit": (lambda r: r["run"]["reads"].update(refusal_limit=3),
-                      "run.reads refusal limit is not the archived reader_refusal_fraction"),
+                      "run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"),
         "the verdict": (lambda r: r["run"]["reads"].update(verdict="tolerated"),
                         "run.reads verdict does not re-derive from its counts"),
         "the sentence": (lambda r: r["run"]["reads"].update(sentence="All read."),
