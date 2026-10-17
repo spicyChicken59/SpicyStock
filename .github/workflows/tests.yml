@@ -107,8 +107,9 @@ jobs:
   pytest:
     runs-on: ubuntu-latest
     # A cap stops a hang; it does not bound the suite. Measured at 14m13s on
-    # main (a9862564) against the old 15, so one more test file would cancel it.
-    timeout-minutes: 30
+    # main (a9862564) against the old 15, and at 28m04s on #181's head
+    # (a46707ac, run 39048460273) against the 30 that replaced it.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

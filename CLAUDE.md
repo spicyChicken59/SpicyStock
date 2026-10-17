@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4756 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4774 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10347,3 +10347,105 @@ Omit: any change to the tolerance on these numbers.
 
 **Not claimable:** a morning or research observation; that SEC answers the
 named contact; any trading edge.
+
+## Checkpoint, 17 Oct 2026 — PR #181 accepted; one refused review of two is tolerated (the owner's rule)
+
+**PR #181, accepted.** Merged as `97dbf7bd` on `main` with a merge commit over
+`f714fb32`. The head `a46707ac` passed all seven checks on Tests run
+39048460273 (pytest 16:13–16:41 UTC, page 16:13–16:29, the gate, the native
+central case 16:13–16:59 and stress 16:13–17:04) and Secret scans 39048460277
+and 39048455759. Publisher 39052334531 printed *Verified: every one of the 47
+public files matches committed main* at 17:07:22 UTC; Pages 39052354549
+deployed; the merge commit's own Secret scan 39052334520 passed. **The pytest
+job took 28 of its 30 minutes** on that head, so this pull request raises its
+cap to 45 (`tests.yml`, a cap stops a hang and does not bound a suite); no
+suite, check or lane changed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `97dbf7bd`. The owner's fourth answer of 17 October: tolerate
+one refused review when a night has two reads. `docs/data.json`,
+`docs/picks.json`, the compact reader, every receipt, the history, the evidence
+objects, the quality ledger, the workflows other than the pytest cap and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential.
+
+**What the rule was.** `reader_coverage.reads()` tolerates refused replies --
+names reader authority refused, not a format, account, credit or transport
+failure -- while every other read was accepted, no refused name is one the
+regime would have planned, and the refusals are within a limit: the night's
+reads times `READER_REFUSAL_FRACTION` (a quarter), floored. Under bounded review
+selection (#121) a RED or no-feasible night asks for two research reads, and a
+quarter of two floors to zero, so one refused reply of two degraded the night:
+15 October (JAKK refused, ROKU accepted, under RED) read `partial` and
+`claude_partial`.
+
+**The rule.** `pipeline.READER_REFUSAL_MIN = 1` (P, archived as
+`pipeline.reader_refusal_min`, so `rules_version` moves): the limit is the
+fraction's floor or the minimum, whichever is greater, and never every read
+(`_limit()`: `max(floor(n × f), min(m, n − 1))`), since a night with no accepted
+read is `unavailable` whatever refused it. Every other condition stands. The
+floor reaches the night through `read_charts_and_grade()` and the empty-night
+default in `run_evening()`. `reads_faults()` holds a record's limit to the
+fraction AND the floor it archived; an archived floor that is not a
+non-negative whole number (a bool among them) is a fault by name, and a record
+made before the rule archives no floor and is read under the fraction alone.
+The page reads the limit the same way (`refusalLimit()`), reconciles the
+Morning desk's selected batch only where its own limit is the run's, and
+Method says "once they number more than both 25% of the night's reads and 1"
+under a record that archived the floor, "past 25% of the night's reads" under
+one that did not, and quotes no refusal rule over a floor it cannot read.
+README, `.env.example` and `knowledge/method.md` say the same. The rules digest
+moved, so the 13 page fixtures and every cascaded generator were regenerated
+through their own producers (issuer-evidence, stop-research, research-outcomes,
+research-observations, source-recovery, cash-preview, the first-trade backup and
+its parity corpus; morning pinned, unchanged) and `tools/recovery_rehearsal.py`'s
+evidence with them, each publication identity carrying the digest.
+
+**Projected over the record** (the new `_limit()` and `_verdict()` over each
+retained publication's own `run.reads`, read off git): 11 publications carry a
+reads block; one verdict moves -- 15 October's, `partial` to `tolerated` -- and
+that night stays degraded on coverage (WBD past the five-session bound). 13
+October stays `unavailable` (both reads refused); every twelve-read night keeps
+its limit of three.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 4774 tests collected; the full suite at `cd64070d` (the rule, before
+two test-only commits) 4738 passed, 34 environment-gated skips and the one
+failure the suite-count line this checkpoint moves, in 24 m 25 s;
+`tests/test_docs.py`, `tests/test_workflows.py` and
+`tests/test_reader_coverage.py` 186 passed on the final tree; every page fixture and cascaded generator current, their
+`--check`s run last, beside `tools/recovery_rehearsal.py`, `service_health.py`,
+`stale_inputs.py`, `evidence_review.py`, `build_historical_findings.py` and
+`freeze_validation_cases.py` (`--check` each, current); the `inputs` suite
+293/293; the full smoke with `--shots` 16488/16488 in its two lanes, 20 m 58 s.
+The Method sentence at 390 px dark was looked at. CI on the pushed head is
+recorded on the PR.
+
+**Mutation passes.** Python, each mutant in a spare worktree judged by the
+whole `tests/test_reader_coverage.py` and `tests/test_report.py`: the floor
+dropped, the every-read cap dropped, the validator ignoring the archived floor,
+the floor's count check dropped, the rules not archiving it, the floor at two,
+and the pipeline passing zero -- six died on the first pass, and **the last
+SURVIVED**: no test drove the evening's own read of its charts with two reads,
+so `read_charts_and_grade()` could pass any floor. A test drives it now (two A+
+bursts read, one refused: tolerated with a limit of one, no problem) and the
+mutant dies; the control (a docstring word) survives both passes. Page, through
+routed copies of `app.js` judged by `--only inputs`: the page's limit ignoring
+the floor, Method always saying "past", the floor's shape check dropped, Method
+quoting a floor of one whatever was archived, and the every-read cap dropped.
+Two died on the first pass and **three SURVIVED**, the second shape this file
+names: nothing in the suite read the Morning desk's reconciliation, the one
+consumer of the page's limit. The suite now reads the desk's review state on
+the thin night (reconciled at every width and theme), under another archived
+rule (reconciled: half of two reads floors to one and a floor of two is capped
+under every read) and under a floor that is not a number (unknown, and no
+refusal rule quoted); all five die and the control (a comment) passes 293/293.
+
+**Keep / fix / defer / omit.** Keep: a refusal is tolerated only beside an
+accepted read and never on a name the regime would plan. Fix if it bites: at
+twelve reads the floor changes nothing; a night of three reads tolerates one.
+Defer: the Fidelity steps (next). Omit: tolerating format, account, credit or
+transport failures under this rule.
+
+**Not claimable:** a live night under the floor (the first night with two
+reads and one refused); a morning or research observation; any trading edge.
