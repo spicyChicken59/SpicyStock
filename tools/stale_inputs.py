@@ -60,16 +60,21 @@ OUTPUT_JSON = OUT_DIR / "stale-inputs.json"
 OUTPUT_MD = OUT_DIR / "stale-inputs.md"
 #: what a stock-session ends as, in the order the summary prints them
 #: the first that holds, in this order: a follow-up match anywhere; else the
-#: last follow-up reading's own verdict on an arrived bar; else what a later
-#: bar's volume alone says; else nothing arrived
+#: verdict of the last follow-up reading that gave one (``no_match`` after the
+#: scans, ``price_excluded`` before them), whatever later readings said; else
+#: what a later bar's volume alone says; else a bar that arrived with its
+#: volume unread; else nothing arrived
 CLASSES = ("would_have_been_listed", "scanned_not_listed", "under_price_policy", "under_volume_floor_unscanned",
-           "at_or_above_volume_floor_unscanned", "no_later_bar")
+           "at_or_above_volume_floor_unscanned", "arrived_volume_unread", "no_later_bar")
+#: the follow-up outcomes that are a verdict on the late bar
+VERDICTS = ("no_match", "price_excluded")
 CLASS_WORDS = {
     "would_have_been_listed": "a follow-up ran the evening's scans on the late bar and it would have been listed",
     "scanned_not_listed": "a follow-up ran the evening's scans on the late bar, every route, and it would not have been listed",
     "under_price_policy": "the late bar's close falls under the $3 session-close policy, which keeps it out of every scan",
     "under_volume_floor_unscanned": "a later bar read for its volume only, under the floor of the 4%, breakdown and $ scans; the setting-up scans not read",
     "at_or_above_volume_floor_unscanned": "a later bar read for its volume only, at or above that floor",
+    "arrived_volume_unread": "a later bar arrived but its volume could not be read; no scan verdict",
     "no_later_bar": "no later bar read by either source",
 }
 
@@ -119,7 +124,15 @@ def publication(data, *, commit: str, sequence: int) -> dict:
     if tol is not None:
         if not isinstance(tol, dict):
             raise StaleError(f"{where}: run.input_tolerance is not an object")
-        names = [_ticker(t, f"{where} input_tolerance.names[]") for t in _list(tol.get("names"), where + " input_tolerance.names")]
+        carried = tol.get("names") is not None
+        # over the names bound the record names no frame (``names`` and
+        # ``endings`` None, as inputs.stale_tolerance writes them): the night
+        # still counts, its stale stocks unnamed
+        names = [_ticker(t, f"{where} input_tolerance.names[]") for t in _list(tol.get("names"), where + " input_tolerance.names")] \
+            if carried else []
+        # the benchmark is named beside the stocks and is not one
+        benchmark = source_recovery._benchmark(run)
+        names = [t for t in names if t != benchmark]
         endings = tol.get("endings")
         if endings is not None and not isinstance(endings, dict):
             raise StaleError(f"{where}: input_tolerance.endings is not an object")
@@ -132,7 +145,7 @@ def publication(data, *, commit: str, sequence: int) -> dict:
             ending = _day(ending, f"{where} input_tolerance.endings[{t}]") if isinstance(ending, str) else None
             missed[t] = [d.isoformat() for d in followup.missed_sessions(ending, session, bound or 1)]
         tolerance = {"version": tol.get("version"), "verdict": tol.get("verdict"), "stale_stocks": stale, "named": len(names),
-                     "endings_recorded": endings is not None, "sessions_max": bound, "missed": missed}
+                     "names_carried": carried, "endings_recorded": endings is not None, "sessions_max": bound, "missed": missed}
     fu = run.get("stale_followup")
     rows = []
     if fu is not None:
@@ -190,10 +203,11 @@ def stock_sessions(pubs: list[dict]) -> tuple[dict, list[dict]]:
         nights.append({"session": session, "commit": p["commit"], "revisions": revisions, "status": p["status"],
                        "verdict": tol["verdict"], "tolerance_version": tol["version"], "stale_stocks": tol["stale_stocks"],
                        "named": tol["named"], "unnamed": None if tol["stale_stocks"] is None else tol["stale_stocks"] - tol["named"],
-                       "endings_recorded": tol["endings_recorded"], "stock_sessions": len(pairs),
+                       "names_carried": tol["names_carried"], "endings_recorded": tol["endings_recorded"], "stock_sessions": len(pairs),
                        # names an earlier publication of the same session called stale
-                       # that the newest one, re-run on later bars, measured
-                       "measured_by_revision": len(earlier.get(session, set()) - set(tol["missed"]))})
+                       # that the newest one, re-run on later bars, measured; unknown
+                       # when the newest names no frame
+                       "measured_by_revision": len(earlier.get(session, set()) - set(tol["missed"])) if tol["names_carried"] else None})
     return named, nights
 
 
@@ -221,23 +235,33 @@ def join(pubs: list[dict], receipts: list[dict]) -> tuple[list[dict], list[dict]
             + [x["volume"] for x in recs if x["outcome"] in source_recovery.ARRIVED and x["volume"] is not None]
         arrived = any(x["outcome"] in followup.ARRIVED for x in fus) or any(x["outcome"] in source_recovery.ARRIVED for x in recs)
         final = fus[-1]["outcome"] if fus else None
+        verdicts = [x["outcome"] for x in fus if x["outcome"] in VERDICTS]
+        verdict = verdicts[-1] if verdicts else None
         if any(x["outcome"] == "match" for x in fus):
             klass = "would_have_been_listed"
-        elif final == "no_match":
+        elif verdict == "no_match":
             klass = "scanned_not_listed"
-        elif final == "price_excluded":
+        elif verdict == "price_excluded":
             klass = "under_price_policy"
         elif arrived and volumes and max(volumes) >= FLOOR:
             klass = "at_or_above_volume_floor_unscanned"
         elif arrived and volumes:
             klass = "under_volume_floor_unscanned"
         elif arrived:
-            raise StaleError(f"{key[0]} at {key[1]}: a later bar arrived with no volume read")
+            klass = "arrived_volume_unread"
         else:
             klass = "no_later_bar"
         rows.append({**item, "followup": fus, "recovery": recs, "class": klass,
                      "max_volume": max(volumes) if volumes else None, "zero_volume": bool(volumes) and max(volumes) == 0,
-                     "followup_final": final})
+                     "followup_final": final, "followup_verdict": verdict})
+    # each night's own stock-sessions by class: a stock-session two nights
+    # named counts under both
+    by_night = {n["session"]: n for n in nights}
+    for n in nights:
+        n["classes"] = {k: 0 for k in CLASSES}
+    for r in rows:
+        for night in r["named_by"]:
+            by_night[night]["classes"][r["class"]] += 1
     return rows, nights
 
 
@@ -261,10 +285,12 @@ def summary(rows: list[dict], nights: list[dict], pubs: list[dict], receipts: li
         "publications_read": len(pubs), "publications_naming": sum(1 for p in pubs if p["tolerance"] is not None),
         "stock_sessions": len(rows), "stocks": len({r["ticker"] for r in rows}),
         "unnamed_stale": sum(n["unnamed"] or 0 for n in nights),
-        "measured_by_revision": sum(n["measured_by_revision"] for n in nights),
+        "nights_names_not_carried": sum(1 for n in nights if not n["names_carried"]),
+        "measured_by_revision": sum(n["measured_by_revision"] or 0 for n in nights),
         "classes": _tally((r["class"] for r in rows), CLASSES),
-        "with_later_bar": len(later), "zero_volume": sum(1 for r in later if r["zero_volume"]),
-        "max_volume": max((r["max_volume"] for r in later), default=None), "floor": FLOOR,
+        "with_later_bar": len(later), "with_volume_read": sum(1 for r in later if r["max_volume"] is not None),
+        "zero_volume": sum(1 for r in later if r["zero_volume"]),
+        "max_volume": max((r["max_volume"] for r in later if r["max_volume"] is not None), default=None), "floor": FLOOR,
         "followup": {"readings": readings, "stock_sessions_read": sum(1 for r in rows if r["followup"]),
                      "final_outcomes": _tally((r["followup_final"] for r in rows if r["followup"]), followup.OUTCOMES),
                      "matches": sum(1 for r in rows for x in r["followup"] if x["outcome"] == "match")},
@@ -290,13 +316,22 @@ def sentence(s: dict) -> str:
                      "of the 4%, breakdown and $ scans (the setting-up scans not read)")
     if c["at_or_above_volume_floor_unscanned"]:
         parts.append(f"{c['at_or_above_volume_floor_unscanned']} carry a later bar at or above that floor, not yet scanned")
+    if c["arrived_volume_unread"]:
+        parts.append(f"{c['arrived_volume_unread']} carry a later bar whose volume could not be read")
     parts.append(f"{c['no_later_bar']} have no later bar read by either source")
     match = ("No follow-up reading found a late bar that would have been listed"
              if not c["would_have_been_listed"] else f"{c['would_have_been_listed']} would have been listed, by a follow-up")
+    read = ("" if s["with_volume_read"] == s["with_later_bar"]
+            else f", {s['with_volume_read']} with a volume read")
+    later = (f"Of the {s['with_later_bar']} later bars{read}, {s['zero_volume']} have zero volume and the largest "
+             f"{s['max_volume']:,} shares." if s["max_volume"] is not None else
+             f"Of the {s['with_later_bar']} later bars, none had a volume read." if s["with_later_bar"] else
+             "No named stock-session has a later bar yet.")
+    unnamed = (f" {s['unnamed_stale']} more stale stocks were counted but not named, so no stock-session of theirs is read here."
+               if s["unnamed_stale"] else "")
     return (f"From {s['first_session']} to {s['last_session']} the newest publication of each of {s['nights']} nights named "
             f"{s['stock_sessions']} stale stock-sessions ({s['stocks']} stocks): " + "; ".join(parts) + ". "
-            f"{match} ({s['followup']['readings']} readings). Of the {s['with_later_bar']} later bars, {s['zero_volume']} have zero "
-            f"volume and the largest {s['max_volume']:,} shares. Why a bar was absent is not established.")
+            f"{match} ({s['followup']['readings']} readings). {later}{unnamed} Why a bar was absent is not established.")
 
 
 # ------------------------------------------------------------------ walk ----
@@ -334,8 +369,13 @@ def walk(through: str, limit: int) -> tuple[list[str], list[str], list[dict]]:
 def assemble(*, ref: str | None, through: str, pub_commits: list[str], rec_commits: list[str], skipped: list[dict], limit: int) -> dict:
     pubs, set_aside = _read_all(pub_commits, RECORD_PATH, publication)
     receipts, set_aside_r = _read_all(rec_commits, RECOVERY_PATH, receipt)
-    if any(row not in skipped for row in set_aside + set_aside_r):
-        raise StaleError("a named commit was set aside and the reading does not say so: " + (set_aside + set_aside_r)[0]["reason"])
+    produced = set_aside + set_aside_r
+    unsaid = [row for row in produced if row not in skipped]
+    if unsaid:
+        raise StaleError("a named commit was set aside and the reading does not say so: " + unsaid[0]["reason"])
+    unproduced = [row for row in skipped if row not in produced]
+    if unproduced:
+        raise StaleError("the reading names a set-aside its commits do not produce: " + str(unproduced[0].get("reason")))
     rows, nights = join(pubs, receipts)
     s = summary(rows, nights, pubs, receipts)
     return {"version": VERSION, "policy": POLICY,
@@ -384,12 +424,17 @@ def markdown(result: dict) -> str:
              "| Session | Newest publication | Revisions | Run | Tolerance | Stale | Named | Stock-sessions | Measured by a revision |",
              "|---|---|---:|---|---|---:|---:|---:|---:|"]
     for n in result["nights"]:
+        measured = "-" if n["measured_by_revision"] is None else n["measured_by_revision"]
         lines.append(f"| {n['session']} | `{n['commit'][:8]}` | {n['revisions']} | {n['status']} | {n['verdict']} (v{n['tolerance_version']}) | "
-                     f"{n['stale_stocks']} | {n['named']} | {n['stock_sessions']} | {n['measured_by_revision']} |")
+                     f"{n['stale_stocks']} | {n['named']} | {n['stock_sessions']} | {measured} |")
+    lines += ["", "Each night's stock-sessions by class (one named by two nights counts under both):", "",
+              "| Session | " + " | ".join(CLASSES) + " |", "|---|" + "---:|" * len(CLASSES)]
+    for n in result["nights"]:
+        lines.append(f"| {n['session']} | " + " | ".join(str(n["classes"][k]) for k in CLASSES) + " |")
     c = s["classes"]
     lines += ["", "## Every named stock-session, by what the later readings establish", ""]
     lines += [f"- {CLASS_WORDS[k]}: {c[k]}" for k in CLASSES]
-    lines += ["", f"Later bars: {s['with_later_bar']}, {s['zero_volume']} at zero volume, the largest "
+    lines += ["", f"Later bars: {s['with_later_bar']} ({s['with_volume_read']} with a volume read), {s['zero_volume']} at zero volume, the largest "
               f"{format(s['max_volume'], ',') if s['max_volume'] is not None else '-'} shares, against the {s['floor']:,}-share floor "
               "of the 4%, breakdown and $ scans (`scans.MIN_VOLUME`, read on the session itself).", "",
               f"Follow-up: {s['followup']['readings']} readings of {s['followup']['stock_sessions_read']} stock-sessions; the last reading of each: "

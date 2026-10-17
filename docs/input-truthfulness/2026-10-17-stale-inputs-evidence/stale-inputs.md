@@ -17,6 +17,19 @@ From 2026-10-07 to 2026-10-16 the newest publication of each of 8 nights named 1
 | 2026-10-15 | `0f951414` | 1 | degraded | not_tolerated (v2) | 20 | 20 | 24 | 0 |
 | 2026-10-16 | `7a1a9e49` | 1 | ok | tolerated (v2) | 18 | 18 | 18 | 0 |
 
+Each night's stock-sessions by class (one named by two nights counts under both):
+
+| Session | would_have_been_listed | scanned_not_listed | under_price_policy | under_volume_floor_unscanned | at_or_above_volume_floor_unscanned | arrived_volume_unread | no_later_bar |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2026-10-07 | 0 | 13 | 2 | 0 | 0 | 0 | 1 |
+| 2026-10-08 | 0 | 0 | 0 | 0 | 0 | 0 | 3 |
+| 2026-10-09 | 0 | 0 | 0 | 0 | 0 | 0 | 4 |
+| 2026-10-12 | 0 | 10 | 0 | 0 | 0 | 0 | 5 |
+| 2026-10-13 | 0 | 14 | 1 | 0 | 0 | 0 | 5 |
+| 2026-10-14 | 0 | 14 | 3 | 1 | 0 | 0 | 5 |
+| 2026-10-15 | 0 | 13 | 5 | 1 | 0 | 0 | 5 |
+| 2026-10-16 | 0 | 0 | 0 | 18 | 0 | 0 | 0 |
+
 ## Every named stock-session, by what the later readings establish
 
 - a follow-up ran the evening's scans on the late bar and it would have been listed: 0
@@ -24,9 +37,10 @@ From 2026-10-07 to 2026-10-16 the newest publication of each of 8 nights named 1
 - the late bar's close falls under the $3 session-close policy, which keeps it out of every scan: 11
 - a later bar read for its volume only, under the floor of the 4%, breakdown and $ scans; the setting-up scans not read: 20
 - a later bar read for its volume only, at or above that floor: 0
+- a later bar arrived but its volume could not be read; no scan verdict: 0
 - no later bar read by either source: 8
 
-Later bars: 95, 93 at zero volume, the largest 2,891 shares, against the 100,000-share floor of the 4%, breakdown and $ scans (`scans.MIN_VOLUME`, read on the session itself).
+Later bars: 95 (95 with a volume read), 93 at zero volume, the largest 2,891 shares, against the 100,000-share floor of the 4%, breakdown and $ scans (`scans.MIN_VOLUME`, read on the session itself).
 
 Follow-up: 127 readings of 85 stock-sessions; the last reading of each: no_match 64, price_excluded 11, still_missing 3, not_selected 7; matches 0.
 
