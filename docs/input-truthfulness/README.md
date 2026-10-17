@@ -82,7 +82,8 @@ numbers off their files with digests, and reads a ledger of five floated
 strategy changes under stated criteria: trading RED nights is not supported
 (the study's RED nights establish a negative sign at 267 and 1,741 settled),
 and the other four are insufficient. No change is promoted; `--check` holds
-the two files. The retained HAE reply of 8 October is frozen under
+the two files; its findings, cohort and journal inputs are retained as they
+were read on 12 October, so a later study cannot move it. The retained HAE reply of 8 October is frozen under
 `tests/fixtures/grading/reader-hae/` and held rejected for its citation paths.
 
 [11 October 2026: whole-share feasibility over every retained publication](2026-10-11-whole-share-feasibility.md)
@@ -136,8 +137,8 @@ that did not trade); nothing more is known than the bar the provider served.
 
 [6 October 2026: the findings file the Record view replays](../historical-findings.json)
 is `docs/historical-findings.json`, built by `tools/build_historical_findings.py`
-from the evidence in this directory and nothing else -- the two signal-outcome
-study outputs of 2 and 6 October, the publication records the study's spec
+from the evidence in this directory and nothing else -- the signal-outcome
+study outputs of 2 October and of the newest re-read (17 October), the publication records the study's spec
 names (read from git by commit, held to the blob), the owner's two pasted
 backtest summaries parsed by `historical_backtest.summary_text()`'s own line
 grammar, and the pasted run-6 summary with its public receipt -- every number
@@ -154,6 +155,17 @@ policy wrote 99 A+ tickets at half size, 44 settled, a 36% win rate, +0.08R a
 ticket, net +3.72R -- the first readable rate the mechanical policy has had, the
 reader not run, its interval and costs unmeasured without the per-row files.
 Not an edge claim.
+
+[17 October 2026: the first readable confirmatory figure](2026-10-17-signal-outcomes-confirmatory.md)
+re-runs the frozen study over thirty-one publications under a
+[spec extended by fourteen appended entries only](2026-10-17-signal-outcomes-spec-extended.json):
+the confirmatory admitted stratum is 209 settled over ten nights, −0.157R a
+ticket, its night-bootstrap interval −0.431 to +0.129 -- readable, and no sign
+established. Three of its nights were YELLOW, which the frozen footer's "refused
+by the RED gate" does not describe; the account under the spec's own rule fell
+to $2,000 from 9 October, and the admitted setups without a whole share rose
+with it; and the 1 October night, read again whole, moved from −0.364R over 50
+to −0.087R over 81, the early-read bias measured.
 
 [6 October 2026: the signal-outcome study's confirmatory phase begins](2026-10-06-signal-outcomes-confirmatory.md)
 re-runs the frozen study over nineteen publications under a

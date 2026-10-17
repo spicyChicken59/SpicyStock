@@ -33,6 +33,7 @@
   const VERDICTS = ['red', 'yellow', 'green'];
   const VERDICT_TONE = { green: 'good', yellow: 'warn', red: 'danger' };
   const CHAR = 6.5;         // px per glyph of the 10.5px mono the chart text wears
+  const DATE_GAP = 4;       // px between two drawn dates, at the least
   const GOLDEN = 0.6180339887;
   const TAP_RADIUS = 22;    // half the 44px finger the sheet's touch targets are sized for
   const REPORT_PATH = /^docs\/input-truthfulness\/[\w.-]+\.md$/;
@@ -63,6 +64,8 @@
   const sentence = (parts) => parts.map((t) => /[.!?]$/.test(t) ? t : t + '.').join(' ');
   const underscores = (s) => String(s).replace(/_/g, ' ');
   const verdictCount = (v) => VERDICTS.filter((k) => v[k]).map((k) => num(v[k]) + ' ' + k).join(', ');
+  // what the gate published: the burst tickets the study's family is, and the setting-up ones beside them, never summed
+  const publishedWords = (burst, setup) => plural(burst, 'burst ticket') + (setup ? ' and ' + plural(setup, 'setting-up ticket') : '');
   const stratumOf = (nt, s) => s === 'all' ? nt.all : nt.strata[s];
 
   // ---- the shape the module indexes into, checked before anything is drawn --
@@ -90,10 +93,10 @@
           typeof nt.complete !== 'boolean' || !(str(nt.horizon) || nt.horizon === null) || (!nt.complete && !str(nt.horizon)) ||
           (nt.first_read !== undefined && !(obj(nt.first_read) && str(nt.first_read.as_of) && block(nt.first_read.admitted) && block(nt.first_read.all) &&
             nums(nt.first_read.moved, ['admitted', 'all']))) ||
-          ['bursts', 'vetoed', 'tickets_published'].some((k) => !isNum(nt[k]))) return 'A night of the findings is malformed.';
+          ['bursts', 'vetoed', 'tickets_published', 'setup_tickets_published'].some((k) => !isNum(nt[k]))) return 'A night of the findings is malformed.';
       if (!obj(nt.strata) || STRATA.slice(0, -1).some((s) => !settled(nt.strata[s]))) return 'A night of the findings has a malformed stratum.';
     }
-    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'bursts', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
+    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'setup_tickets_published', 'bursts', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
     const rd = F.reading;
     if (!obj(rd) || !str(rd.freeze) || !str(rd.as_of) || !obj(rd.phases) || ['exploratory', 'confirmatory'].some((ph) => {
       const b = rd.phases[ph];
@@ -117,9 +120,73 @@
     if (!obj(F.study) || !str(F.study.newest_session) || !obj(F.study.summary) || !obj(F.study.summary.strata) ||
         STRATA.slice(0, -1).some((s) => !obj((F.study.summary.strata[s] || {}).settled)) ||
         !obj(phases) || !obj(phases.confirmatory) || (phases.confirmatory.rows && !(block(phases.confirmatory.settled) && obj(phases.confirmatory.scorecard) &&
-          typeof phases.confirmatory.scorecard.readable === 'boolean' && isNum(phases.confirmatory.scorecard.min_read)))) return 'The findings carry no study summary.';
+          typeof phases.confirmatory.scorecard.readable === 'boolean' && isNum(phases.confirmatory.scorecard.min_read) &&
+          // a readable split is printed with its interval, so a readable one must carry it
+          (!phases.confirmatory.scorecard.readable || (obj(phases.confirmatory.night_bootstrap) && isNum(phases.confirmatory.night_bootstrap.mean_of_night_means) &&
+            isNum(phases.confirmatory.night_bootstrap.nights) && Array.isArray(phases.confirmatory.night_bootstrap.ci95) &&
+            phases.confirmatory.night_bootstrap.ci95.length === 2 && phases.confirmatory.night_bootstrap.ci95.every(isNum)))))) return 'The findings carry no study summary.';
     if (!Array.isArray(F.reports)) return 'The findings carry no reports.';
     return null;
+  }
+
+  // the bracket's label starts at the bracket's left end; ends at its right end when it would run
+  // past the chart; and when neither fits, sits inside the chart with its right end at the edge
+  function bracketPlace(x1, x2, right, W, width) {
+    if (x1 + 4 + width <= W - 2) return { x: x1 + 4, anchor: 'start' };
+    const end = Math.min(x2, right);
+    if (end - width >= 2) return { x: end, anchor: 'end' };
+    return { x: Math.max(2, W - 2 - width), anchor: 'start' };
+  }
+
+  // the length the browser measures for a drawn text, or 0 where it measures none (jsdom, or
+  // a text not on the page)
+  function measure(t) {
+    const len = typeof t.getComputedTextLength === 'function' ? t.getComputedTextLength() : 0;
+    return len > 0 ? len : 0;
+  }
+  // a text the browser measures longer than its room is drawn at that length, its glyphs
+  // narrowed, rather than past the chart; a text that fits is drawn as its font sets it
+  function squeeze(t, max) {
+    t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
+    const len = measure(t);
+    if (len > max && max > 0) { t.setAttribute('textLength', r1(max)); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); return max; }
+    return len;
+  }
+  // a panel name keeps the first of its wordings whose measured length ends inside the chart,
+  // and the shortest where none does; where the browser measures nothing the wording the
+  // drawing chose stands
+  function panelFit(pn, W) {
+    for (let k = 0; k < pn.words.length; k++) {
+      if (pn.text.textContent !== pn.words[k]) pn.text.textContent = pn.words[k];
+      const len = measure(pn.text);
+      if (!len || pn.x + len <= W - 2) return;
+    }
+  }
+  // the dates the drawing chose are thinned again by their measured widths, first to last: a date
+  // stays when it clears the one kept before it and the last date, which is always drawn, by
+  // DATE_GAP; one that does not is left out, so a wider font drops dates and never crowds them
+  function datesFit(ds, G) {
+    const last = ds.find((d) => d.last);
+    if (!last || !measure(last.text)) return;
+    const lastLeft = G.left + G.plotW - measure(last.text);
+    let right = -Infinity;
+    ds.forEach((d) => {
+      if (d.last || !d.text.isConnected) return;
+      const half = measure(d.text) / 2, x = G.x(d.i);
+      if (x - half >= right + DATE_GAP && x + half + DATE_GAP <= lastLeft) right = x + half;
+      else d.text.remove();
+    });
+  }
+  // the note keeps the first wording whose measured length fits the sessions before the first
+  // published night, its ground sized to that length; where none fits it is left out
+  function noteFit(nt) {
+    if (!nt.text.isConnected || !measure(nt.text)) return;
+    for (const words of nt.words) {
+      nt.text.textContent = words;
+      const len = measure(nt.text);
+      if (len <= nt.room) { nt.ground.setAttribute('width', r1(len + 4)); return; }
+    }
+    nt.ground.remove(); nt.text.remove();
   }
 
   // ---- geometry: pure, exported, drawn at the chart's OWN column ----------
@@ -193,9 +260,10 @@
     bands.appendChild(SC.svg('rect', { 'class': 'ss-find__wash', x: G.left, y: red, width: G.plotW, height: Math.max(0, G.aBottom - red), style: tone('danger') }));
     bands.appendChild(SC.svg('rect', { 'class': 'ss-find__wash', x: G.left, y: yellow, width: G.plotW, height: Math.max(0, red - yellow), style: tone('warn') }));
     const refs = [[red, 'red', th.ratio_10d_red], [yellow, 'yellow', th.ratio_10d_yellow]];
+    const edge = [];   // the labels end-anchored at the left axis, measured against its margin
     refs.forEach(([y, kind, value]) => {
       under.appendChild(SC.svg('line', { 'class': 'ss-find__ref', x1: G.left, x2: plotRight, y1: y, y2: y, 'data-ref': kind }));
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__ref-text', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-ref-label': kind }, fixed(value, 1)));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__ref-text', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-ref-label': kind }, fixed(value, 1))));
     });
     // panel A: the ratio, one line broken where a session has none, markers on the published nights
     let d = '', pen = false;
@@ -210,33 +278,42 @@
       const y = G.ya(t);
       under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
       if (refs.some((r) => Math.abs(r[0] - y) < 11)) return;   // the reference already names this height
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1)));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1))));
     });
-    // the panel names, short on a phone so neither leaves the chart
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.aTop - 4 }, G.narrow
-      ? plain(rules.ratio_long_sessions) + '-session ratio'
-      : plain(rules.ratio_long_sessions) + '-session ratio, up ' + plain(rules.burst_pct) + '% against down'));
+    // the panel names, short on a phone so neither leaves the chart; each keeps its shorter
+    // wordings, so the chart can step down to one once the browser has measured its font
+    const panels = [];
+    const panel = (name, y, words) => {
+      const list = G.narrow ? words.slice(1) : words;
+      const text = SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y, 'data-panel': name }, list[0]);
+      panels.push({ text, x: G.left, words: list });
+      axis.appendChild(text);
+    };
+    const ratioName = plain(rules.ratio_long_sessions) + '-session ratio';
+    panel('ratio', G.aTop - 4, [ratioName + ', up ' + plain(rules.burst_pct) + '% against down', ratioName]);
     // panel B: zero line, ticks, the compressed outcome axis
     const zero = G.yb(0);
     under.appendChild(SC.svg('line', { 'class': 'ss-find__zero', x1: G.left, x2: plotRight, y1: zero, y2: zero }));
     G.ticksB.forEach((t) => {
       const y = G.yb(t);
       if (t !== 0) under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R'));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R')));
     });
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.bTop - 6 }, G.narrow
-      ? 'R per ticket, compressed axis'
-      : 'what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') + ' did: R per ticket, compressed axis'));
+    panel('outcome', G.bTop - 6, ['what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') +
+      ' did: R per ticket, compressed axis', 'R per ticket, compressed axis', 'R per ticket']);
     // the note names the sessions before the first published night, inside their own
     // columns and on its own ground, so no gridline strikes it and no night sits under it;
     // where neither wording fits that space it is left out (the tables say the same)
+    let noteDrawn = null;
     if (model.nights.length && model.nights[0].i > 0) {
       const room = G.x(model.nights[0].i) - G.slot / 2 - G.left - 8;
-      const note = ['no published scan before ' + short(model.nights[0].session), 'no published scan yet'].find((s) => s.length * CHAR <= room);
+      const wordings = ['no published scan before ' + short(model.nights[0].session), 'no published scan yet'];
+      const note = wordings.find((s) => s.length * CHAR <= room);
       if (note) {
         const y = G.bTop + 12;
-        axis.appendChild(SC.svg('rect', { 'class': 'ss-find__note-ground', x: G.left + 2, y: y - 9, width: r1(note.length * CHAR + 4), height: 12 }));
-        axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y, 'data-note': 'before' }, note));
+        const ground = axis.appendChild(SC.svg('rect', { 'class': 'ss-find__note-ground', x: G.left + 2, y: y - 9, width: r1(note.length * CHAR + 4), height: 12 }));
+        const text = axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y, 'data-note': 'before' }, note));
+        noteDrawn = { text, ground, room, words: wordings };
       }
     }
     // the study's freeze: one dotted line between the last exploratory session and the next
@@ -280,20 +357,24 @@
     // the last date ends at the plot's edge, never past the chart, and a thinned date
     // that would reach into it is dropped rather than drawn against it
     const lastAt = model.sessions.length - 1, lastLeft = plotRight - short(model.sessions[lastAt].date).length * CHAR;
+    const dates = [];
     model.sessions.forEach((s, i) => {
       const last = i === lastAt, label = short(s.date);
       if (!last && (i % G.dateEvery !== 0 || G.x(i) + label.length * CHAR / 2 + 8 > lastLeft)) return;
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, label));
+      dates.push({ i, last, text: axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, label)) });
     });
+    svg.setAttribute('data-dates-drawn', dates.length);   // the dates the estimate chose, before any measure thins them
     const wFrom = model.index[model.window.from], wTo = model.index[model.window.through];
+    let bracketLabel = null;
     if (isNum(wFrom) && isNum(wTo)) {
       const x1 = r1(G.x(wFrom) - G.slot / 2), x2 = r1(G.x(wTo) + G.slot / 2), y = G.bracketY;
       over.appendChild(SC.svg('path', { 'class': 'ss-find__bracket', d: 'M' + x1 + ',' + (y - 5) + 'V' + y + 'H' + x2 + 'V' + (y - 5), 'data-bracket': 'backtest' }));
-      // the label starts at the bracket's left end, or ends at its right end when it would run past the chart
+      // placed by the estimate while drawing, and again by its measured length once the chart is on the page
       const label = (G.narrow ? 'exact lookback · ' : 'the backtest’s exact-lookback pass · ') + plural(model.window.count, 'session');
-      const fits = x1 + 4 + label.length * CHAR <= G.W - 2;
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__bracket-text', x: fits ? x1 + 4 : Math.min(x2, plotRight), y: y - 9, 'text-anchor': fits ? 'start' : 'end',
-        'data-bracket-label': 'backtest' }, label));
+      const at = bracketPlace(x1, x2, plotRight, G.W, label.length * CHAR);
+      bracketLabel = { x1, x2, right: plotRight, text: SC.svg('text', { 'class': 'ss-find__bracket-text', x: r1(at.x), y: y - 9, 'text-anchor': at.anchor,
+        'data-bracket-label': 'backtest' }, label) };
+      axis.appendChild(bracketLabel.text);
     }
     // hit columns: one per session, over everything; a press is resolved by distance
     const hits = SC.svg('g', { 'class': 'ss-find__hits' });
@@ -305,11 +386,15 @@
       const nt = model.nights[k];
       cursor.style.transform = 'translateX(' + r1(G.x(nt.i) - G.slot / 2) + 'px)';
       const text = pillText_(nt.block, model.min);
-      const width = text.length * 6.4 + 14;
+      pillText.textContent = text;
+      // the frame is the text's measured length where the browser measures one and the glyph
+      // estimate where it does not; a text longer than the plot is narrowed to it
+      const len = squeeze(pillText, plotRight - G.left - 18);
+      const width = (len || text.length * 6.4) + 14;
       const cx = Math.min(plotRight - width / 2 - 2, Math.max(G.left + width / 2 + 2, G.x(nt.i)));
       const yPill = G.aBottom + 6;
       pillRect.setAttribute('x', r1(cx - width / 2)); pillRect.setAttribute('y', yPill); pillRect.setAttribute('width', r1(width));
-      pillText.setAttribute('x', r1(cx)); pillText.setAttribute('y', yPill + 13); pillText.textContent = text;
+      pillText.setAttribute('x', r1(cx)); pillText.setAttribute('y', yPill + 13);
       pill.setAttribute('data-pill', nt.session);
     }
     function reveal(k) {
@@ -326,7 +411,7 @@
       return model.nights.map((nt, k) => ({ k, d: Math.abs(G.x(nt.i) - xs) / scale }))
         .filter((c) => c.d <= TAP_RADIUS).sort((a, b) => a.d - b.d);
     }
-    return { svg, G, place, reveal, hits, nightMarks, near };
+    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels, edge, note: noteDrawn, dates };
   }
   // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
   function pillText_(b, min) {
@@ -419,7 +504,7 @@
       : 'The chart reader gave no usable read on any of the ' + plural(rd.requested, 'requested name') + ' that night; every grade is the checklist’s.';
     return 'The scan found ' + plural(nt.bursts, 'burst') + '. The checklist graded ' + num(nt.a_quality.mechanical) + ' of them A-quality and vetoed ' +
       num(nt.vetoed) + '. ' + reader + ' The market gate said ' + reg.verdict + ': ' + sentence(reg.reasons) + ' It published ' +
-      plural(nt.tickets_published, 'ticket') + '.';
+      publishedWords(nt.tickets_published, nt.setup_tickets_published) + (nt.setup_tickets_published ? ', which the study, walking bursts alone, does not count' : '') + '.';
   }
 
   // ---- the table twins: named, focusable scrollers, as every twin in the app ----
@@ -439,12 +524,12 @@
     twin(SC, host, {
       caption: 'Every published night: the market, the scan, and the counterfactual tickets of ' + who + '; a mean prints from ' + plural(min, 'settled ticket'),
       summary: 'Nights as a table',
-      head: ['night', 'verdict', 'ratio', 'bursts', 'A-quality, checklist', 'A-quality, after the reader', 'tickets published',
+      head: ['night', 'verdict', 'ratio', 'bursts', 'A-quality, checklist', 'A-quality, after the reader', 'burst tickets published', 'setting-up tickets published',
              'bursts in the stratum', 'tickets the plan rules wrote', 'set aside unwalked', 'settled', 'won', 'lost', 'even', 'sum R', 'mean R', 'uncertain', 'not filled', 'open', 'pending'],
       rows: model.nights.map((nt) => {
         const b = nt.block, s = b.settled;
         return [words(nt.session), nt.regime.verdict, fixed(nt.regime.ratio_10d, 2), num(nt.bursts), num(nt.a_quality.mechanical), num(nt.a_quality.final),
-                num(nt.tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven),
+                num(nt.tickets_published), num(nt.setup_tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven),
                 signed(s.sum_r, 2), s.n >= min ? signed(s.mean_r, 3) : '—', num(b.buckets.uncertain), num(b.buckets.not_filled), num(b.buckets.open), num(b.buckets.pending)];
       }),
     }, 'table-nights');
@@ -530,7 +615,8 @@
     const ns = F.nights_summary;
     host.appendChild(el('h3', { 'class': 'ss-find__h', id: ids.head, text: 'The record, night by night' }));
     host.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'lead', text: 'Over the ' + plural(ns.nights, 'published night') + ' from ' + words(ns.from) + ' to ' + words(ns.through) +
-      ' the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned. ' +
+      ' the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'burst ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned' +
+      (ns.setup_tickets_published ? ', and ' + plural(ns.setup_tickets_published, 'setting-up ticket') + ', which the study does not walk' : '') + '. ' +
       'The study then ran the production plan rules over every burst, with the gate removed and the reader not run, and for the bursts graded B, C or skip or vetoed with ' +
       'the grade’s or the veto’s own refusal removed too, to see what each refusal was worth. Its figures are as of the records through ' + words(F.study.newest_session) +
       '. Step through the nights or press Play; on a phone the list of nights is the precise way to one.' }));
@@ -671,6 +757,24 @@
       }
       return { title: words(s.date), rows, meta };
     }
+    // the estimate is a glyph width and the browser's font may be wider, so every label the
+    // drawing placed by it is placed again by the length the browser measures: the bracket's,
+    // the panel names, the dates, the note, the axis labels and the pill. It runs after every draw and
+    // again whenever the page's fonts finish loading, since a web font that arrives after the
+    // draw changes every length; it moves labels and never rebuilds the chart
+    function fit() {
+      if (!view) return;
+      const G = view.G, bl = view.bracketLabel;
+      if (bl) {
+        const len = squeeze(bl.text, G.W - 4);
+        if (len) { const at = bracketPlace(bl.x1, bl.x2, bl.right, G.W, len); bl.text.setAttribute('x', r1(at.x)); bl.text.setAttribute('text-anchor', at.anchor); }
+      }
+      view.panels.forEach((pn) => panelFit(pn, G.W));
+      view.edge.forEach((t) => squeeze(t, G.left - 8));
+      datesFit(view.dates, G);
+      if (view.note) noteFit(view.note);
+      view.place(step);
+    }
     function draw() {
       const width = chart.clientWidth;
       if (!width) return;
@@ -681,6 +785,7 @@
       if (tip) { tip.destroy(); tip = null; }
       view = buildSvg(SC, F, model, width, ids);
       chart.appendChild(view.svg);
+      fit();
       if (SC.tooltip) {
         tip = SC.tooltip(chart, { live: false, top: 6, flip: 0.55, offsetX: 14 });
         // a narrow chart has no room beside a column for the tip, which would run off the
@@ -705,6 +810,11 @@
     let raf = 0;
     const redraw = () => { if (raf) return; raf = w.requestAnimationFrame(() => { raf = 0; draw(); }); };
     if (w.ResizeObserver) new w.ResizeObserver(redraw).observe(chart); else w.addEventListener('resize', redraw);
+    const fonts = w.document && w.document.fonts;
+    if (fonts && typeof fonts.addEventListener === 'function') {
+      const onFonts = () => { if (!chart.isConnected) { fonts.removeEventListener('loadingdone', onFonts); return; } fit(); };
+      fonts.addEventListener('loadingdone', onFonts);
+    }
     draw();
     retable();
     marketTwin(SC, marketTables, model);
@@ -822,6 +932,8 @@
     const allUnder = readable.length > 0 && readable.every((s) => ex.strata[s].mean_r < 0);
     const anyOver = readable.some((s) => ex.strata[s].mean_r >= 0);
     const span = (b) => words(b.from) + (b.from === b.through ? '' : ' to ' + words(b.through));
+    // one stratum by the minimum's rule: a rate from it, a count and nothing more under it
+    const oneRate = (b) => b.n >= min ? R3(b.mean_r) + ' per settled ticket over ' + num(b.n) : num(b.n) + ' settled, too few for a rate';
     const items = [];
     // 1. the exploratory reading, red nights only: the nights whose tickets the gate refused in full
     if (ex.red_nights) {
@@ -840,12 +952,19 @@
       items.push('Confirmatory: no night has been published after the freeze yet; the spec reads only that split as evidence.');
     } else {
       const sc = cs.scorecard || {}, st = cs.settled || { n: 0 };
-      items.push('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co) + (co.inside_hold ? ', ' + num(co.inside_hold) +
+      // the hold over every confirmatory night, red or not: the reading block counts its red nights only
+      const coHold = F.nights.filter((n) => n.phase === 'confirmatory' && !n.complete).length;
+      items.push('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co) + (coHold ? ', ' + num(coHold) +
         ' of them still inside their hold' : '') + '. The spec reads only this split as evidence, for the A-quality stratum, and only from ' +
-        plural(sc.min_read, 'settled ticket') + ': ' + (sc.readable ? 'the study’s confirmatory result is ' + R3(st.mean_r) + ' per settled ticket over ' + num(st.n) + '.'
+        plural(sc.min_read, 'settled ticket') + ': ' + (sc.readable ? 'the study’s confirmatory result is ' + R3(st.mean_r) + ' per settled ticket over ' + num(st.n) +
+          (function (nb) {
+            const lo = nb.ci95[0], hi = nb.ci95[1];
+            return ', and over ' + plural(nb.nights, 'night') + ' the mean of its night means is ' + R3(nb.mean_of_night_means) + ', with the study’s night-bootstrap interval of ' + R3(lo) + ' to ' + R3(hi) +
+              (lo <= 0 && hi >= 0 ? ', which includes zero: it establishes no sign.' : ', which is clear of zero.');
+          })(cs.night_bootstrap)
           : num(st.n) + ' of the ' + num(sc.min_read) + ' have settled, so nothing confirmatory is readable yet.') +
         (co.nights > co.red_nights ? ' ' + plural(co.nights - co.red_nights, 'night') + ' of them ' + (co.nights - co.red_nights === 1 ? 'was' : 'were') +
-          ' not red, so the gate published some of their tickets.' : ''));
+          ' not red' + (co.red_nights ? '; on its ' + plural(co.red_nights, 'red night') + ' alone the A-quality stratum is ' + oneRate(co.strata.admitted) : '') + '.' : ''));
     }
     // 3. the hold, dated with the as-of the file carries
     items.push('A night read before its tickets have had their hold leans toward losses, because a stop settles on its first bad day and a winner at its exit. ' +
@@ -855,10 +974,22 @@
     items.push('The chart reader is not run in either study, so every ticket here is one it could still have refused. The signal-outcome study has no slots: its A-quality ' +
       'stratum bounds the names the live policy could ticket. The backtest keeps the slot cap, so its ticket set is not a superset of the live run’s: a reader ' +
       'downgrade frees a slot the next-ranked name takes.');
-    // 5. the nights the reading leaves out
-    const other = ns.nights - ex.red_nights - co.red_nights;
-    items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red and ' + (other === 1 ? 'is' : 'are') +
-      ' left out of the exploratory reading: on them the gate published some of the tickets, so their outcomes measure no refusal.'
+    // 5. the nights the red readings leave out, named, and what the gate published on them: a
+    // yellow night admits A+ alone and a green one A+ and A, so their tickets measure the grade
+    // band's and the reader's refusals, never the red verdict's
+    const others = F.nights.filter((n) => n.regime.verdict !== 'red');
+    const other = others.length, coNights = others.filter((n) => n.phase === 'confirmatory');
+    const published = others.reduce((t, n) => t + n.tickets_published, 0), setups = others.reduce((t, n) => t + n.setup_tickets_published, 0);
+    const and = (list) => list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0];
+    const listed = others.map((n) => words(n.session));
+    // the confirmatory result holds only the nights after the freeze: named by date when they are not all of them
+    const inCo = !coNights.length ? '' : '; the study’s confirmatory result includes ' +
+      (coNights.length === other ? (other === 1 ? 'it' : 'them') : and(coNights.map((n) => words(n.session))) + ', the ' + (coNights.length === 1 ? 'one' : 'ones') + ' after its freeze');
+    items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red (' +
+      and(listed) + '). On ' + (other === 1 ? 'such a night' : 'such nights') +
+      ' the gate admits some grades, so ' + (other === 1 ? 'its' : 'their') + ' counterfactual tickets measure the refusals of the grade band and the reader rather than a red one; ' +
+      'the gate published ' + publishedWords(published, setups) + ' on ' + (other === 1 ? 'it' : 'them') + '. The red-night readings above leave ' + (other === 1 ? 'it' : 'them') + ' out' +
+      inCo + '.'
       : 'Every published night here was red: what yellow or green nights would do is not in this record, which has carried none.');
     sec.appendChild(el('ul', { 'class': 'ss-find__reading', 'data-find': 'read-as' }, items.map((t) => el('li', { text: t }))));
     sec.appendChild(el('p', { 'class': 'sc-hint', text: 'The reports behind these numbers, served as the Markdown files they are:' }));

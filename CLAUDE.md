@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4701 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4714 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9812,3 +9812,249 @@ recovered on the 16th, and the test now reads each bar's own session.
 **Not claimable:** a morning or research observation; a source-recovery
 receipt for the 16 October publication; the 19 October session; any trading
 edge.
+
+## Checkpoint, 17 Oct 2026 — PR #178 accepted; the first readable confirmatory figure, and the page sentences it made false
+
+**PR #178, accepted.** Merged as `6ac9153c` on `main` with a merge commit over
+`426d3c59`. The head `2768e467` passed all seven checks (Tests run 39002277462:
+pytest 04:21–04:49 UTC, page 04:21–04:36, the gate, the native central case
+04:22–04:49 and stress 04:22–05:11; Secret scans 39002277439 and 39002274175).
+Publisher 39005598815 printed *Verified: every one of the 47 public files
+matches committed main* at 05:15:58 UTC; Pages 39005614956 deployed
+(39005598233 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 39005598755 passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `6ac9153c`. Nothing under `src/` changed and no rule moved;
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential. `.env.example` was reviewed: nothing here is configuration.
+
+**The re-read** (`docs/input-truthfulness/2026-10-17-signal-outcomes-confirmatory.md`).
+The frozen study (`tools/signal_outcomes.py`, blob `39d4f25a`, unchanged since
+PR #100) over thirty-one publications under a spec that is the frozen file with
+fourteen entries appended (SHA-256 `5598366c9851…`, the byte-level diff
+retained), run under Python 3.12.3 and pandas 2.2.3 and again under 3.11.15 and
+pandas 3.0.6 to the same bytes. **The confirmatory admitted stratum is readable
+for the first time: 209 settled over ten nights, −0.157R a ticket, the mean of
+its night means −0.138R with a 95% night-bootstrap interval of −0.431 to
++0.129. The interval includes zero: it establishes no sign.** Three facts the
+frozen sentences do not carry, each written into the report: three of the
+eleven confirmatory nights were YELLOW (8, 9 and 12 October), so the footer's
+"refused by the RED gate" is false of all 104 tickets settled on them: 102
+grade A, refused by YELLOW's own A+-only band, and the two A+ of 8 October
+refused by the reader (an accepted review lowered MANH to C; reader authority
+refused HAE's reply, so the accepted-review requirement withheld its ticket);
+the eight RED nights' 105 settled are −0.302R a ticket. The account under the
+spec's own rule fell from $10,000 to $2,000 at `e67f8cba`, the second 8 October
+publication, a revision, so the first signals ticketed at $2,000 are 9
+October's, and the admitted rows the study marks `no_order` rose from 0–6 a
+night to between 8 and 59; and the 1 October night,
+read whole, moved from −0.364R over 50 settled with no win to −0.087R over 81
+with 20 wins, the early-read bias measured on a full night. The exploratory
+stratum stays negative, −0.119R over 301, its interval clear of zero. 77 of the
+78 confirmatory rows still moving belong to 13 to 16 October; read again after
+23 October.
+
+**Two dated readers had to stop reading rolling files.** The 12 October evidence
+review read `docs/historical-findings.json`, which this re-read rebuilds: its
+findings input is retained under its `inputs/` now (as `c759a1e6` carried it,
+SHA-256 `0d806808…`, refused on a changed byte), its study paths pinned to the 6
+October run, and its review files regenerated with only their `sources` moved.
+And the findings builder copied a night's whole `run.reads` block, which from 7
+October (`a8f9a36f`) carries a cause named `credit` that its own credential
+guard refuses;
+`reads_of()` copies the two counts the page prints and refuses a block without
+them.
+
+**The page said things the file does not, once a yellow night existed.** The
+Record view's reading list was written when every night was red, and two of its
+sentences rendered false over the rebuilt file: the confirmatory line said the
+non-red nights were ones on which "the gate published some of their tickets",
+and the last line said the same of the nights left out -- the record published
+no burst ticket on 8, 9 or 12 October, the tickets the study walks, and three
+setting-up tickets (MG and SN on 8 October, ZIM on 9 October), which it does
+not. Every check passed, because the checks read each
+sentence's first words. The confirmatory line now prints the study's interval
+and whether it includes zero, its hold count over every confirmatory night (it
+said 4, the reading block's red-night count, where 5 of 11 are inside their
+hold), and the red nights' own A-quality figure beside the study's; the last line
+names the nights not red by date, says such a night admits some grades, counts
+what the gate published on them off the file, and says the confirmatory result
+includes them only when one is confirmatory. A readable confirmatory split
+without its interval is refused by the shape check. The builder's docstring
+claimed the same false thing about yellow nights and is corrected.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 4713 tests collected. **The full suite found what the focused runs had
+not:** on the first tree 4678 passed, 34 environment-gated skips and one failed
+in 22 m 07 s -- `tests/test_findings_page.py`'s literal guard, which refuses a
+number the page types itself. The new sentence said "a 95% night-bootstrap
+interval"; the 95 lives only in the study's key name (`ci95`), and neither the
+frozen spec nor the findings file carries it as a value. The page says "the
+study's night-bootstrap interval" now, the guard is unchanged, and the full
+suite on the final tree, run in the mutation worktree at the commit with its
+index hashed equal to this one's: 4679 passed and 34
+environment-gated skips in 22 m 25 s.
+`tests/test_historical_findings.py`, `tests/test_evidence_review.py` and the new
+`tests/test_signal_outcomes_reread.py` 46 passed; with `tests/test_findings_page.py`
+and `tests/test_docs.py` 94; `python tools/build_historical_findings.py --check`
+and `python tools/evidence_review.py --check` current; no record or rule moved,
+so the page fixtures and every cascaded generator are untouched; continuity 137;
+the `findings` suite 1080/1080 on the final sentence, the screenshots at 1280 and
+on the phone looked at (the reading list, the yellow nights in the chart and the
+list of nights); gitleaks 8.24.3 over the 21 changed files from inside a scratch
+root with the repository's config: no leaks.
+
+**Mutation passes**, the tree never written. The report, through copies read by
+the new test: thirteen numbers moved one at a time (a night-table sum, the
+interval's bound, the yellow sum, the red mean, the no-order list, the 1 October
+wins, a still-moving count, the row total, the uncertain bound, the late
+settlers' sum, the hold count, the under-twenty count, the A+ count) all die;
+the control (a heading word) survives. The page, through routed copies of
+`app-findings.js` (`SCSTOCK_FINDINGS`, a read-only override added to the smoke
+beside the other modules'): nine mutants -- the hold back to red nights only,
+"includes zero" printed always, the interval dropped, the published count fixed
+at zero, the dates dropped, "the confirmatory result includes them" printed
+always, the red figure read off the study's, the interval unchecked by the shape
+check, and the old false clause put back. Eight died at once. **The old false
+clause SURVIVED**, the hole this checkpoint is about: nothing read that clause.
+It is checked now and dies. The branch case's yellow confirmatory nights are read
+red there, so its two non-red nights are exploratory and the "includes them"
+clause has a side that can fail; its green night publishes two tickets, so the
+published count can be told from zero. The interval-unchecked mutant first died
+by name and then ended the suite, waiting on an alert a half-drawn page never
+shows; the alert is read only when present. The control (a comment) passes
+1080/1080. Python, in a scratch worktree carrying this diff: seven mutants (the
+reads block copied whole, done over requested admitted, a bool admitted, the
+findings digest unchecked, the missing findings file read from the rolling one,
+the review reading the new study, the findings origin unnamed) all die in the
+test naming them; the control (a docstring) survives.
+
+**CI found what the sandbox could not.** The page job on `df0bf3e2` passed
+16193 of 16195: at 320 px, dark and light, the bracket's label *exact lookback ·
+28 sessions* sat partly outside the chart. Its placement read an estimated glyph
+width (`CHAR`, 6.5 px for the 10.5 px mono face): the label starts at the
+bracket's left end, or ends at its right end when that would run past the chart.
+The rebuilt file has more sessions before the first night, so the bracket moved
+left and an end-anchored label had about 7 px to spare here; the runner draws
+the face wider. Reproduced here by loading the page with `letter-spacing: .4px`
+on the chart's text: the same two checks fail, the rest pass. `bracketPlace()`
+now has a third case -- neither end fits, so the label sits inside the chart with
+its right end at the edge -- and `draw()` places it again by the length the
+browser measures once the chart is on the page (`getComputedTextLength()`, which
+jsdom lacks, so the estimate stands there). `tools/findings_cases.mjs` loads the
+320 px chart with its letters 0.4 and 0.8 px wider (8 checks; the suite is
+1088). The old page, the measured placement dropped and the clamp dropped each
+fail both wider-font checks; a control (a comment) passes 1088/1088.
+
+**And CI kept finding the class, because CI draws a different font.** The page
+job failed on `0483cf00`, `433e474c` and `a6a77f93` on the 0.8 px case (the lower
+panel's name past the chart) and on `0a6e163b` on *320 light* (the bracket's
+label 12.2 px past the chart's left edge). The cause, found by a review workflow
+and reproduced here with the font files it downloaded: a runner reaches Google
+Fonts, so its pages draw IBM Plex Mono, about 7.0 px a glyph at 10.5 px, where
+this sandbox, which cannot reach Google, draws the Liberation Mono fallback at
+6.3. The chart measured its labels once, at the draw, and nothing measured them
+again when the web font arrived; whether a check failed depended on whether the
+font beat the replay's draw in that browser context. Served 1.5 s late, the real
+font reproduces CI's failures exactly; served at once, nothing is out. The same
+review found three more labels still placed by the glyph estimate: the note
+before the first night (past its ground and over the first night's mark at
+390 px from 0.8 px wider), the pill (its frame sized at 6.4 px a glyph, the text
+across it from 0.8 px) and the ±10R ticks (past the chart's left edge on a phone
+from 1.2 px, in the strata that reach them).
+
+`fit()` now measures every label the drawing placed by the estimate -- the
+bracket's (narrowed to the chart if even its measured length is wider), the panel
+names (`panelFit()`, the first wording that ends inside the chart), the note
+(`noteFit()`, its ground sized to the measured text, left out where no wording
+fits its sessions), the left-axis labels (narrowed to the margin) and the pill
+(framed by its measured text) -- after every draw, and again whenever
+`document.fonts` fires *loadingdone*, without rebuilding the chart. In jsdom
+`draw()` never runs (the chart has no width), so nothing there is fitted. The
+suite reads the chart only once the page's fonts have settled; drives the
+letters 0.4, 0.8 and 1.2 px wider at 320 and 390, in the default stratum and in
+every burst's (whose ±10R ticks are drawn), holding every label, the pill's frame
+and the note's ground; widens the letters after the draw and says the fonts have
+loaded, with Google's fonts refused so a runner and this sandbox draw the same
+face, and holds the labels fitted and the chart not rebuilt; drives 3 px at 320
+(the phone wording measured past the chart first, the step-down held on the first
+draw, after a stratum change and after a redraw, the bracket narrowed) and at 390
+(the note left out); and 700 px, where every burst's desktop name steps to its
+middle wording. That page job failed once more, on `c7b0b159`, 16371/16373: at
+390 px with the letters 1.2 px wider five pairs of dates touched -- the dates were
+the last label the estimate still placed, fine with this sandbox's fallback at
+1.2 px and not with CI's font. `datesFit()` now walks the dates the drawing
+chose and keeps one only where its measured width clears the one kept before it
+and the last date by `DATE_GAP` (4 px), so a wider font drops dates and never
+crowds them; the real font at normal spacing keeps every date (4, 6 and 14 at
+320, 390 and 1280), and the drawing's count is archived on the chart
+(`data-dates-drawn`) so the suite holds that nothing is thinned where nothing
+would touch. The real font reproduces CI's 5 touching pairs on `c7b0b159` and
+leaves none now. 1263/1263 here, and the real font served late (1.5 s, 320 and
+390, 0, 0.8 and 1.2 px) leaves nothing out and no dates touching in every
+repeat. Ten mutants through routed
+copies: the font listener dropped (5 checks), the note's fit dropped (8) and its
+removal dropped (8), the pill unmeasured (10) and its text unnarrowed (2), the
+axis labels unnarrowed (4), the bracket uncapped (2), the panels unfitted (11),
+the fit on the first draw only (13), a desktop list jumping to its shortest
+wording (1) all die on the checks naming them, and `0a6e163b` itself fails 24;
+so do four over the dates -- the thinning dropped (2), its gap unchecked (2), the
+last date's clearance unchecked (1), the gap at 40 px, which over-thins (5).
+A cap on the pill's frame survived as equivalent -- the measured text is already
+narrowed to the plot -- and is removed. The control (a comment) passes.
+
+**The review, worked.** A workflow by execution over `df0bf3e2`, three finders
+(the numbers, the page, the tests) and one skeptic a finding, returned 17
+findings, 13 distinct, and the skeptic upheld every one; each was reproduced
+here before it was touched. The high one was the class this checkpoint is about,
+one level deeper: the replay counted the burst tickets the record published and
+said the gate published none on the yellow nights, while the 8 and 9 October
+records published three setting-up tickets (MG and SN, ZIM). The builder counts
+each night's setting-up tickets now (`setup_tickets_published`, held in the test
+to the watchlist's own orders), and the page prints them beside the burst
+tickets and never adds the two. Then sentences, each now asserted from the
+study's rows or from the records read off git at the commits the spec names:
+the two A+ of 8 October were refused by the reader and not by the band, so the
+RED footer is false of all 104 yellow-night tickets and not 102 (the report, the
+README and this checkpoint said 102); the account moved at `e67f8cba`, the
+second 8 October publication, not the 9 October one; the rows without an order
+are the study's `no_order` and fell to 8 on 16 October, not "22–59"; three
+nights reach twenty settled, so "no night's mean is a rate" was false; the
+pooled −0.069R is the 205 bounded uncertain tickets' +4.27R pooled with the
+settled, not the uncertain tickets' own figure; the `credit` cause is in every
+`run.reads` from 7 October, not 13; and the last reading line said the
+confirmatory result includes every non-red night, which is false of a non-red
+night before the freeze (the committed file has none, its three yellow nights
+all confirmatory; the branch case has two), so it names the confirmatory ones
+by date now. Three were browser holes, and the suite drives each branch now through a
+routed copy of the file: every night made red, with the confirmatory split one
+short of its minimum (the unreadable sentence and the all-red last line, which
+the rebuilt file no longer reaches); an interval wholly under zero, with the red
+nights one short of a rate (the "clear of zero" side and the count side of
+`oneRate()`); and every confirmatory night made yellow (the guard that drops the
+red-night clause). The re-read test also reads the numbers it had let move: the
+no-order rows by night, the uncertain bound, the A+ refusals and the account.
+The five page mutants the review named -- the unreadable sentence saying the
+split is readable, the all-red line saying green, "clear of zero" only above
+it, `oneRate()` always a rate, the red-night clause printed with no red night
+-- each die through a routed copy on the two checks naming its rule (1158/1160);
+the control (a comment) passes 1160/1160. Measured on that tree (`a6a77f93`):
+4714 collected, and the full suite, run in the mutation worktree at the commit,
+4680 passed and 34 environment-gated skips in 23 m 43 s;
+the re-read, findings, findings-page, docs and evidence-review tests 95 passed;
+both `--check`s current; continuity 137; gitleaks 8.24.3 over the five files the
+round changed: no leaks.
+
+**Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
+publications only; dated readers read retained inputs, never a rolling file.
+Fix if it bites: the frozen study's footer and reading rule still say every
+ticket was refused by the RED gate, and only a new spec could change them; the
+account change mixes two populations in one confirmatory figure, which the report
+names and the frozen rule cannot split. Defer: the re-read after 23 October, when
+the 16 October tickets reach their fifth session. Omit: any rule, threshold or
+account change on these numbers; an edge claim.
+
+**Not claimable:** a morning or research observation; any trading edge.

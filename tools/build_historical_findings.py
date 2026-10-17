@@ -50,13 +50,14 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src import funnel  # noqa: E402
 from tools import signal_outcomes as so  # noqa: E402
 
 VERSION = "historical-findings-v1"
 OUTPUT = ROOT / "docs" / "historical-findings.json"
 TRUTH = Path("docs/input-truthfulness")
-STUDY = TRUTH / "2026-10-06-signal-outcomes-confirmatory-evidence" / "signal-outcomes.json.gz"
-STUDY_SPEC = TRUTH / "2026-10-06-signal-outcomes-spec-extended.json"
+STUDY = TRUTH / "2026-10-17-signal-outcomes-confirmatory-evidence" / "signal-outcomes.json.gz"
+STUDY_SPEC = TRUTH / "2026-10-17-signal-outcomes-spec-extended.json"
 FIRST_STUDY = TRUTH / "2026-10-02-signal-outcomes-evidence" / "signal-outcomes.json.gz"
 FIRST_SPEC = TRUTH / "2026-10-02-signal-outcomes-spec.json"
 BACKTEST_DIR = TRUTH / "2026-10-06-backtest-results-evidence"
@@ -69,12 +70,15 @@ RUN6_PUBLIC = RUN6_DIR / "public-run.json"
 REPORTS = (
     ("The first real-bar outcomes (2 October)", TRUTH / "2026-10-02-signal-outcomes.md"),
     ("The confirmatory read (6 October)", TRUTH / "2026-10-06-signal-outcomes-confirmatory.md"),
+    ("The confirmatory read (17 October)", TRUTH / "2026-10-17-signal-outcomes-confirmatory.md"),
     ("The owner's backtest over the run-6 archive (6 October)", TRUTH / "2026-10-06-backtest-results.md"),
     ("The mechanical backtest tool (2 October)", TRUTH / "2026-10-02-mechanical-backtest.md"),
     ("Run 6: the RED reading on fresh bars (2 October)", TRUTH / "2026-10-02-historical-run6-result.md"),
     ("The 28 September validation review", TRUTH / "2026-09-28-validation-review.md"),
 )
 STRATA = ("admitted", "B", "C", "skip", "vetoed")
+# the reads counts a night carries: what the caption prints, read off the record
+READ_FIELDS = ("requested", "done")
 BUCKETS = ("settled", "open", "pending", "uncertain", "not_filled", "unmeasured",
            "no_ticket", "basis_mismatch", "plan_error", "unreadable", "unscored")
 # A stratum's settled R, as the study wrote it (two decimals), is kept in
@@ -244,8 +248,9 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
             "a_quality": {"mechanical": sum(grades.get(g, 0) for g in trade_grades),
                           "final": sum(final.get(g, 0) for g in trade_grades)},
             "vetoed": sum(1 for x in d["bursts"] if x.get("vetoes")),
-            "reads": d["run"].get("reads"),
+            "reads": reads_of(p["session"], d["run"].get("reads")),
             "tickets_published": len(d.get("trades") or []),
+            "setup_tickets_published": setup_tickets(d),
             "phase": phases.pop(), "horizon": horizon,
             # the hold is over: every ticket has had its sessions, or the night had no row to hold.
             # A complete night can still move while a stratum has a movable row.
@@ -264,6 +269,29 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
                                    "moved": {"admitted": moved(then_admitted, rows),
                                              "all": moved(then, rows)}}
         out.append(night)
+    return out
+
+
+def setup_tickets(d: dict) -> int:
+    """How many anticipation tickets -- the setting-up stocks' orders -- the
+    record published, placed by the one rule its page and mail print
+    (``funnel.build``, which reads a record from before the combined
+    allocation by its own old definition). The study walks bursts only, so
+    these are counted beside the burst tickets and never among them."""
+    return funnel.build(d)["anticipation"]["stages"].get("ticket", 0)
+
+
+def reads_of(session: str, reads) -> dict:
+    """The two counts of a night's reads the page prints, and nothing else
+    of the block: a record's reads block grows with its rules (a cause per
+    shortfall, the refused names, a sentence), and a field the page does not
+    read is not this file's to carry. A block without both counts is
+    refused, never copied as a null."""
+    if not isinstance(reads, dict):
+        raise FindingsError(f"{session}: the record carries no reads block")
+    out = {k: reads.get(k) for k in READ_FIELDS}
+    if any(type(v) is not int or v < 0 for v in out.values()) or out["done"] > out["requested"]:
+        raise FindingsError(f"{session}: the reads block's counts are not two whole numbers, done within requested: {out}")
     return out
 
 
@@ -292,10 +320,11 @@ def rules_of(pubs: list[dict]) -> dict:
 def reading_of(nights: list[dict], study: dict) -> dict:
     """The pooled reading the page's "Read it as" prints, split by the spec's
     phases and kept to the RED nights, the only nights whose counterfactual
-    tickets the gate refused in full: a yellow night published some of its
-    A-quality tickets and a green night all of them, so their tickets measure
-    no refusal. Each stratum is pooled from the nights' own settled R, and the
-    nights left out are counted, never dropped silently."""
+    tickets the gate refused by its verdict: a yellow night admits A+ alone and
+    a green night A+ and A, so their tickets measure the grade band's and the
+    reader's refusals and not the red verdict's. Each stratum is pooled from
+    the nights' own settled R, and the nights left out are counted, never
+    dropped silently."""
     out = {"freeze": study["frozen_through_session"], "as_of": study["newest_session"], "phases": {}}
     for phase in ("exploratory", "confirmatory"):
         these = [n for n in nights if n["phase"] == phase]
@@ -745,6 +774,7 @@ def build() -> dict:
         "nights_summary": {"nights": len(nights), "from": nights[0]["session"], "through": nights[-1]["session"],
                            "verdicts": dict(Counter(n["regime"]["verdict"] for n in nights)),
                            "tickets_published": sum(n["tickets_published"] for n in nights),
+                           "setup_tickets_published": sum(n["setup_tickets_published"] for n in nights),
                            "bursts": sum(n["bursts"] for n in nights),
                            # the nights whose tickets have not all had their hold
                            "inside_hold": sum(1 for n in nights if not n["complete"])},

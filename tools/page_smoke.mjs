@@ -116,6 +116,7 @@ async function serve() {
         : url.pathname === '/docs/app-research-observations.js' ? process.env.SCSTOCK_RESEARCH_OBSERVATIONS
         : url.pathname === '/docs/app-reader.js' ? process.env.SCSTOCK_READER
         : url.pathname === '/docs/app-observations.js' ? process.env.SCSTOCK_OBSERVATIONS
+        : url.pathname === '/docs/app-findings.js' ? process.env.SCSTOCK_FINDINGS
         : url.pathname === '/docs/index.html' ? process.env.SCSTOCK_INDEX : null;
       const body = await readFile(override || file);
       res.writeHead(200, { 'content-type': MIME[path.extname(file)] || 'application/octet-stream', 'cache-control': 'no-store' });

@@ -1,0 +1,50 @@
+SpicyStock signal-outcome study (signal-outcomes-v1) — counterfactual: no reader, no regime gate, no slot
+spec 5598366c9851; frozen through 2026-10-01; newest session 2026-10-16
+publications 31 (26 first-of-session); bars 95675 over 2572 symbols; revisions 434
+[ALL ROWS] rows 11323: settled 3290, open 221, pending 89, uncertain 3481, not_filled 1301, unmeasured 35, unreadable 0, unscored 0, no_ticket 2277, plan_error 0, basis_mismatch 629
+  settled 3290: wins 762 losses 2488 breakeven 40; sum R -778.04; mean R -0.236; median R -0.55; scorecard rate readable=True (min 20)
+  nights 25: mean of night means -0.216, 95% night-bootstrap CI [-0.339, -0.085]
+  uncertain 3481 (bounded 3358): if every uncertain day had filled at the trigger, sum R -668.6, pooled mean R -0.218
+  costs per side: 0 bps mean R -0.236 (n 3290); 5 bps mean R -0.28 (n 3290); 20 bps mean R -0.407 (n 3290)
+[stratum admitted] rows 1674: settled 510, open 59, pending 19, uncertain 539, not_filled 185, unmeasured 3, unreadable 0, unscored 0, no_ticket 310, plan_error 0, basis_mismatch 49
+  settled 510: wins 131 losses 369 breakeven 10; sum R -68.61; mean R -0.135; median R -0.35; scorecard rate readable=True (min 20)
+  nights 25: mean of night means -0.163, 95% night-bootstrap CI [-0.306, -0.018]
+  uncertain 539 (bounded 503): if every uncertain day had filled at the trigger, sum R -68.43, pooled mean R -0.135
+  costs per side: 0 bps mean R -0.135 (n 510); 5 bps mean R -0.174 (n 510); 20 bps mean R -0.289 (n 510)
+[stratum B] rows 2639: settled 829, open 34, pending 11, uncertain 821, not_filled 297, unmeasured 10, unreadable 0, unscored 0, no_ticket 491, plan_error 0, basis_mismatch 146
+  settled 829: wins 191 losses 630 breakeven 8; sum R -190.56; mean R -0.23; median R -0.57; scorecard rate readable=True (min 20)
+  nights 25: mean of night means -0.198, 95% night-bootstrap CI [-0.347, -0.017]
+  uncertain 821 (bounded 796): if every uncertain day had filled at the trigger, sum R -195.88, pooled mean R -0.238
+  costs per side: 0 bps mean R -0.23 (n 829); 5 bps mean R -0.276 (n 829); 20 bps mean R -0.412 (n 829)
+[stratum C] rows 1773: settled 533, open 17, pending 12, uncertain 544, not_filled 208, unmeasured 2, unreadable 0, unscored 0, no_ticket 306, plan_error 0, basis_mismatch 151
+  settled 533: wins 103 losses 421 breakeven 9; sum R -181.57; mean R -0.341; median R -0.76; scorecard rate readable=True (min 20)
+  nights 25: mean of night means -0.33, 95% night-bootstrap CI [-0.465, -0.182]
+  uncertain 544 (bounded 526): if every uncertain day had filled at the trigger, sum R -74.83, pooled mean R -0.242
+  costs per side: 0 bps mean R -0.341 (n 533); 5 bps mean R -0.384 (n 533); 20 bps mean R -0.513 (n 533)
+[stratum skip] rows 742: settled 192, open 3, pending 6, uncertain 238, not_filled 83, unmeasured 2, unreadable 0, unscored 0, no_ticket 170, plan_error 0, basis_mismatch 48
+  settled 192: wins 36 losses 155 breakeven 1; sum R -63.12; mean R -0.329; median R -0.92; scorecard rate readable=True (min 20)
+  nights 22: mean of night means -0.31, 95% night-bootstrap CI [-0.506, -0.098]
+  uncertain 238 (bounded 234): if every uncertain day had filled at the trigger, sum R -52.03, pooled mean R -0.27
+  costs per side: 0 bps mean R -0.329 (n 192); 5 bps mean R -0.375 (n 192); 20 bps mean R -0.509 (n 192)
+[stratum vetoed] rows 4495: settled 1226, open 108, pending 41, uncertain 1339, not_filled 528, unmeasured 18, unreadable 0, unscored 0, no_ticket 1000, plan_error 0, basis_mismatch 235
+  settled 1226: wins 301 losses 913 breakeven 12; sum R -274.18; mean R -0.224; median R -0.53; scorecard rate readable=True (min 20)
+  nights 25: mean of night means -0.209, 95% night-bootstrap CI [-0.357, -0.066]
+  uncertain 1339 (bounded 1299): if every uncertain day had filled at the trigger, sum R -277.43, pooled mean R -0.218
+  costs per side: 0 bps mean R -0.224 (n 1226); 5 bps mean R -0.266 (n 1226); 20 bps mean R -0.39 (n 1226)
+[admitted · exploratory] rows 818: settled 301, open 0, pending 0, uncertain 298, not_filled 105, unmeasured 3, unreadable 0, unscored 0, no_ticket 62, plan_error 0, basis_mismatch 49
+  settled 301: wins 73 losses 219 breakeven 9; sum R -35.89; mean R -0.119; median R -0.33; scorecard rate readable=True (min 20)
+  nights 15: mean of night means -0.18, 95% night-bootstrap CI [-0.347, -0.014]
+  uncertain 298 (bounded 298): if every uncertain day had filled at the trigger, sum R -72.7, pooled mean R -0.181
+  costs per side: 0 bps mean R -0.119 (n 301); 5 bps mean R -0.159 (n 301); 20 bps mean R -0.275 (n 301)
+[admitted · confirmatory] rows 856: settled 209, open 59, pending 19, uncertain 241, not_filled 80, unmeasured 0, unreadable 0, unscored 0, no_ticket 248, plan_error 0, basis_mismatch 0
+  settled 209: wins 58 losses 150 breakeven 1; sum R -32.72; mean R -0.157; median R -0.39; scorecard rate readable=True (min 20)
+  nights 10: mean of night means -0.138, 95% night-bootstrap CI [-0.431, 0.129]
+  uncertain 241 (bounded 205): if every uncertain day had filled at the trigger, sum R 4.27, pooled mean R -0.069
+  costs per side: 0 bps mean R -0.157 (n 209); 5 bps mean R -0.195 (n 209); 20 bps mean R -0.31 (n 209)
+[reader-accepted A/A+ (the live policy's own admissions)] rows 2: settled 1, open 0, pending 0, uncertain 1, not_filled 0, unmeasured 0, unreadable 0, unscored 0, no_ticket 0, plan_error 0, basis_mismatch 0
+  settled 1: wins 0 losses 1 breakeven 0; sum R -0.37; mean R -0.37; median R -0.37; scorecard rate readable=False (min 20)
+  uncertain 1 (bounded 1): if every uncertain day had filled at the trigger, sum R 0.9, pooled mean R 0.265
+  costs per side: 0 bps mean R -0.37 (n 1); 5 bps mean R -0.41 (n 1); 20 bps mean R -0.51 (n 1)
+
+Every ticket above was refused by the RED gate and most by the reader; this is a ceiling of the
+mechanical policy on daily bars, not the strategy's performance and not an edge claim.

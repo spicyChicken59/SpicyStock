@@ -1,0 +1,7 @@
+command: python tools/signal_outcomes.py --spec docs/input-truthfulness/2026-10-17-signal-outcomes-spec-extended.json --output <dir>
+code: 2768e467e94a88409de2c23c9e59f5188cc747b1 (tools/signal_outcomes.py blob 39d4f25ac8ffc128fe49ead8cc3d8a025e8f11a0)
+python: Python 3.12.3; pandas 2.2.3
+started: 2026-10-17T04:31:42Z
+exit code: 0
+wall seconds: 13.5
+finished: 2026-10-17T04:31:56Z

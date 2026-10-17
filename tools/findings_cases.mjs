@@ -80,6 +80,38 @@ const labelsFit = (p) => p.evaluate(() => {
   const touching = dates.filter((r, i) => i > 0 && r.left < dates[i - 1].right + 2).length;
   return { out, touching };
 });
+// every date the drawing chose is still drawn: the measure thins only dates that would touch
+const datesKept = (p) => p.evaluate(() => {
+  const svg = document.querySelector('#historical-evidence .ss-find__svg');
+  return svg.querySelectorAll('text.ss-find__date').length === +svg.getAttribute('data-dates-drawn');
+});
+// the pill's text inside its frame, and the frame inside the chart
+const pillFits = (p) => p.evaluate(() => {
+  const svg = document.querySelector('#historical-evidence .ss-find__svg'), pill = svg && svg.querySelector('[data-pill]');
+  if (!pill) return { pill: false };
+  const s = svg.getBoundingClientRect(), r = pill.querySelector('rect').getBoundingClientRect(), t = pill.querySelector('text').getBoundingClientRect();
+  return { pill: true, framed: t.left >= r.left - 0.5 && t.right <= r.right + 0.5, inside: r.left >= s.left - 1 && r.right <= s.right + 1 };
+});
+// the note's text on its own ground, or the note left out
+const noteGround = (p) => p.evaluate(() => {
+  const note = document.querySelector('#historical-evidence text[data-note="before"]');
+  if (!note) return true;
+  const n = note.getBoundingClientRect(), g = note.previousElementSibling.getBoundingClientRect();
+  return n.left >= g.left - 0.5 && n.right <= g.right + 0.5;
+});
+// a style that widens the chart's letters, added as the document loads
+const widen = (page, px) => page.addInitScript((v) => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: ' + v + 'px; }'; document.head.appendChild(st);
+  });
+}, px);
+// the fonts said to have finished loading, as a browser says it when a web font arrives, then two frames
+const fontsDone = (p) => p.evaluate(() => { document.fonts.dispatchEvent(new Event('loadingdone')); return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
+// each panel's name, its wording, and whether it ends inside the chart and the screen
+const panelsOf = (page) => page.evaluate(() => Array.from(document.querySelectorAll('#historical-evidence text[data-panel]')).map((t) => {
+  const r = t.getBoundingClientRect(), b = t.ownerSVGElement.getBoundingClientRect();
+  return { name: t.dataset.panel, text: t.textContent, inside: r.left >= b.left - 1 && r.right <= b.right + 1 && r.right <= innerWidth };
+}));
 // the note before the first night: on a ground of its own, and over no night's mark
 const noteClear = (p) => p.evaluate(() => {
   const note = document.querySelector('#historical-evidence text[data-note="before"]');
@@ -94,9 +126,17 @@ async function ready(p) {
   await p.waitForFunction((sel) => { const h = document.querySelector(sel); return h && (h.dataset.findings === 'ready' || h.dataset.findings === 'error'); }, HOST, { timeout: 15000 });
   const state = await attr(p, HOST, 'data-findings');
   if (state === 'ready') await p.waitForSelector('#historical-evidence .ss-find__svg', { timeout: 5000 });
+  // a runner reaches Google's fonts and this sandbox does not: the chart is read once the page's
+  // fonts have settled and two frames have passed, so both read the face the reader is shown
+  await p.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))));
   await settle(p, 120);
   return state;
 }
+
+// what the gate published, as the page words it: the burst tickets the study walks, and the
+// setting-up ones beside them, never summed into one count
+const publishedWords = (burst, setup) => plural(burst, 'burst ticket') + (setup ? ' and ' + plural(setup, 'setting-up ticket') : '');
+const andList = (list) => list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0];
 
 // the "Read it as" list against the file's reading block: the exploratory red nights by stratum
 // and the minimum's rule, the confirmatory split from the study's own figure, the dated hold, the
@@ -115,14 +155,37 @@ function readingHolds(F, readAs, eq, check, tag) {
     readAs[0].includes('Not every stratum is under zero'), readAs[0].endsWith('This is the exploratory reading, not evidence.')], [allUnder, !allUnder && readable.length > 0, readable.length > 0]);
   const cs = F.study.summary.phases.confirmatory, sc = cs.scorecard || {};
   check(tag + 'the confirmatory sentence counts its nights and reads the study\'s own split against its minimum', readAs[1].startsWith('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co))
-    && readAs[1].includes('only from ' + plural(sc.min_read, 'settled ticket') + ': ') && readAs[1].includes(sc.readable ? 'the study’s confirmatory result is ' + R3(cs.settled.mean_r) + ' per settled ticket over ' + thousands(cs.settled.n) + '.'
+    && readAs[1].includes('only from ' + plural(sc.min_read, 'settled ticket') + ': ') && readAs[1].includes(sc.readable ? 'the study’s confirmatory result is ' + R3(cs.settled.mean_r) + ' per settled ticket over ' + thousands(cs.settled.n) +
+      ', and over ' + plural(cs.night_bootstrap.nights, 'night') + ' the mean of its night means is ' + R3(cs.night_bootstrap.mean_of_night_means) + ', with the study’s night-bootstrap interval of ' +
+      R3(cs.night_bootstrap.ci95[0]) + ' to ' + R3(cs.night_bootstrap.ci95[1]) + (cs.night_bootstrap.ci95[0] <= 0 && cs.night_bootstrap.ci95[1] >= 0 ? ', which includes zero: it establishes no sign.' : ', which is clear of zero.')
       : thousands(cs.settled.n) + ' of the ' + thousands(sc.min_read) + ' have settled, so nothing confirmatory is readable yet.'), readAs[1]);
-  eq(tag + 'a confirmatory night that was not red is named', readAs[1].includes(' of them were not red, so the gate published some of their tickets.') || readAs[1].includes(' of them was not red'), co.nights > co.red_nights);
+  const coHold = F.nights.filter((n) => n.phase === 'confirmatory' && !n.complete).length;
+  if (co.nights) check(tag + 'the confirmatory sentence counts every confirmatory night still inside its hold, red or not', coHold ? readAs[1].includes(', ' + thousands(coHold) + ' of them still inside their hold.')
+    : !readAs[1].includes('inside their hold'), readAs[1]);
+  const oneRate = (b) => b.n >= min ? R3(b.mean_r) + ' per settled ticket over ' + thousands(b.n) : thousands(b.n) + ' settled, too few for a rate';
+  const coOther = co.nights - co.red_nights;
+  if (coOther) check(tag + 'a confirmatory night that was not red is counted, and the red nights\' own A-quality figure printed beside the study\'s', readAs[1].endsWith(' ' + plural(coOther, 'night') + ' of them ' +
+    (coOther === 1 ? 'was' : 'were') + ' not red' + (co.red_nights ? '; on its ' + plural(co.red_nights, 'red night') + ' alone the A-quality stratum is ' + oneRate(co.strata.admitted) : '') + '.'), readAs[1]);
+  else check(tag + 'no confirmatory night that was not red is claimed', !readAs[1].includes(' not red'), readAs[1]);
   check(tag + 'the hold sentence is dated by the records the figures were read on', readAs[2].includes('Every figure here is as of the records through ' + dayWords(rd.as_of) + ', when ' + plural(ns.inside_hold, 'night') + ' still had tickets inside their hold'), readAs[2]);
   check(tag + 'the reader sentence keeps the backtest\'s caveat and claims no ceiling on the live policy\'s tickets', readAs[3].includes('its ticket set is not a superset of the live run’s') && !readAs[3].includes('no more tickets than any counterfactual'), readAs[3]);
-  const other = ns.nights - ex.red_nights - co.red_nights;
-  eq(tag + 'the last sentence counts the nights left out, or says every night was red', [readAs[4].includes('not red and'), readAs[4].includes('Every published night here was red')], [other > 0, other === 0]);
-  if (other) check(tag + 'and counts them from the file', readAs[4].startsWith(plural(other, 'published night') + ' here '), readAs[4]);
+  const others = F.nights.filter((n) => n.regime.verdict !== 'red'), other = others.length;
+  eq(tag + 'the nights not red are the ones the red readings leave out', other, ns.nights - ex.red_nights - co.red_nights);
+  eq(tag + 'the last sentence counts the nights left out, or says every night was red', [readAs[4].includes(' not red ('), readAs[4].includes('Every published night here was red')], [other > 0, other === 0]);
+  if (other) {
+    check(tag + 'and counts them from the file', readAs[4].startsWith(plural(other, 'published night') + ' here '), readAs[4]);
+    check(tag + 'and names each by its date', others.every((n) => readAs[4].includes(dayWords(n.session))), readAs[4]);
+    check(tag + 'and says such a night admits some grades, never that the gate published tickets the file does not count', readAs[4].includes('On ' + (other === 1 ? 'such a night' : 'such nights') +
+      ' the gate admits some grades, so ') && !readAs[4].includes('published some of'), readAs[4]);
+    check(tag + 'and counts the burst and setting-up tickets the gate published on them off the file, never summed', readAs[4].includes('the gate published ' +
+      publishedWords(others.reduce((t, n) => t + n.tickets_published, 0), others.reduce((t, n) => t + n.setup_tickets_published, 0)) + ' on '), readAs[4]);
+    eq(tag + 'and says the study\'s confirmatory result includes them only when one is confirmatory', readAs[4].includes('the study’s confirmatory result includes'), others.some((n) => n.phase === 'confirmatory'));
+    // the confirmatory result holds only the nights after the freeze: when they are not all of the nights left out, it names them
+    const coOthers = others.filter((n) => n.phase === 'confirmatory');
+    const inCo = !coOthers.length ? '' : '; the study’s confirmatory result includes ' + (coOthers.length === other ? (other === 1 ? 'it' : 'them')
+      : andList(coOthers.map((n) => dayWords(n.session))) + ', the ' + (coOthers.length === 1 ? 'one' : 'ones') + ' after its freeze');
+    check(tag + 'and ends naming which of them the confirmatory result includes', readAs[4].endsWith(' leave ' + (other === 1 ? 'it' : 'them') + ' out' + inCo + '.'), [inCo, readAs[4]]);
+  }
 }
 
 export async function checkFindings({ browser, base, data, open, check, eq, shotsDir }) {
@@ -184,9 +247,11 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     return r('.ss-find__side').left >= r('.ss-find__stage').right - 1 && r('.ss-find__caption').top >= r('.ss-find__stage').bottom - 1;
   }));
   eq('on a desktop every chart label stays inside the chart and no two dates touch', await labelsFit(p), { out: [], touching: 0 });
+  eq('on a desktop no date is thinned out where none would touch', await datesKept(p), true);
   const lead = await txt(p, HOST + ' p[data-find="lead"]');
   check('the lead counts the nights, the verdicts, the tickets and the bursts from the file', lead.includes('Over the ' + plural(ns.nights, 'published night') + ' from ' + dayWords(ns.from) + ' to ' + dayWords(ns.through))
-    && lead.includes('the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned'), lead);
+    && lead.includes('the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'burst ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned' +
+      (ns.setup_tickets_published ? ', and ' + plural(ns.setup_tickets_published, 'setting-up ticket') + ', which the study does not walk' : '') + '. '), lead);
   check('the lead does not claim every burst was ticketed, and says what each stratum removed', !/ticketed every burst/.test(lead)
     && lead.includes('ran the production plan rules over every burst, with the gate removed and the reader not run, and for the bursts graded B, C or skip or vetoed with the grade’s or the veto’s own refusal removed too'), lead);
   check('the lead dates its figures with the records they were read on', lead.includes('Its figures are as of the records through ' + dayWords(asOf) + '.'), lead);
@@ -235,7 +300,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`${tag}: the title carries the day, the verdict and the ratio`, await txt(p, '#historical-evidence [data-find="title"]'), dayWords(nt.session) + ' · ' + nt.regime.verdict + ' · ratio ' + nt.regime.ratio_10d.toFixed(2));
     const text = await txt(p, '#historical-evidence [data-find="text"]');
     check(`${tag}: the text counts the bursts, the checklist's A-quality, the vetoes and the tickets published`, text.includes('The scan found ' + plural(nt.bursts, 'burst') + '. The checklist graded ' + thousands(nt.a_quality.mechanical) + ' of them A-quality and vetoed ' + thousands(nt.vetoed) + '.')
-      && text.includes('It published ' + plural(nt.tickets_published, 'ticket') + '.'), text);
+      && text.includes('It published ' + publishedWords(nt.tickets_published, nt.setup_tickets_published) + (nt.setup_tickets_published ? ', which the study, walking bursts alone, does not count' : '') + '.'), text);
     const reader = nt.reads.done
       ? 'The chart reader gave a usable read on ' + thousands(nt.reads.done) + ' of ' + plural(nt.reads.requested, 'requested name') + '; after it, ' + thousands(nt.a_quality.final) + ' stood at A-quality'
       : 'The chart reader gave no usable read on any of the ' + plural(nt.reads.requested, 'requested name') + ' that night; every grade is the checklist’s.';
@@ -351,7 +416,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`stratum ${s}: the nights table carries every night`, (await rows(p, nightsTable)).length, N);
     const row = (await rows(p, nightsTable))[kMid];
     eq(`stratum ${s}: the current night's row is the file's, cell by cell`, row, [dayWords(mid.session), mid.regime.verdict, mid.regime.ratio_10d.toFixed(2), thousands(mid.bursts),
-      thousands(mid.a_quality.mechanical), thousands(mid.a_quality.final), thousands(mid.tickets_published), thousands(b.rows), thousands(b.tickets), thousands(b.buckets.basis_mismatch),
+      thousands(mid.a_quality.mechanical), thousands(mid.a_quality.final), thousands(mid.tickets_published), thousands(mid.setup_tickets_published), thousands(b.rows), thousands(b.tickets), thousands(b.buckets.basis_mismatch),
       thousands(b.settled.n), thousands(b.settled.wins), thousands(b.settled.losses), thousands(b.settled.breakeven), b.settled.sum_r === null ? '—' : signed(b.settled.sum_r, 2),
       b.settled.n >= min ? signed(b.settled.mean_r, 3) : '—', thousands(b.buckets.uncertain), thousands(b.buckets.not_filled), thousands(b.buckets.open), thousands(b.buckets.pending)]);
     await p.locator(rTable + ' > summary').click(); await settle(p);
@@ -600,6 +665,9 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
       return r('.ss-find__caption').top >= r('.ss-find__stage').bottom - 1 && r('.ss-find__side').top >= r('.ss-find__caption').bottom - 1;
     }));
     eq(`${tag}: the note before the first night is on its own ground and over no mark, or left out`, await noteClear(q), { ground: true, under: 0 });
+    eq(`${tag}: each panel keeps its phone wording where it fits`, (await panelsOf(q)).map((x) => [x.name, x.text, x.inside]),
+      [['ratio', F.rules.breadth.ratio_long_sessions + '-session ratio', true], ['outcome', 'R per ticket, compressed axis', true]]);
+    eq(`${tag}: no date is thinned out where none would touch`, await datesKept(q), true);
     // a narrow chart has no room for the tooltip beside a column: none is shown, and nothing scrolls sideways
     for (const col of [Math.floor(F.market.sessions.length / 2), F.market.sessions.length - 1, 0]) {
       await q.locator(`#historical-evidence rect[data-hit="${F.market.sessions[col].date}"]`).hover({ force: true }); await settle(q, 120);
@@ -656,6 +724,99 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`${tag}: findings errors`, n.errors, []);
     await n.context.close();
   }
+  // a font wider than the glyph width the chart estimates: a runner's font is not this sandbox's,
+  // and the bracket's label is placed again by the length the browser measures, so on a narrow
+  // chart it stays inside whichever way it has to be placed
+  // a font wider than the estimate, present before the draw: every label inside the chart and
+  // the screen at 320 and at 390, where the note is drawn, in the default stratum and in every
+  // burst's, whose ±10R ticks are the widest axis labels; the pill's text inside its frame and
+  // the note on its own ground over no mark
+  for (const spacing of [0.4, 0.8, 1.2]) for (const width of [320, 390]) {
+    const wide = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => { await fast(page); await widen(page, spacing); } });
+    const tag = `${width}, letters ${spacing}px wider`, wp = wide.page;
+    eq(`${tag}: the replay is ready`, await ready(wp), 'ready');
+    check(`${tag}: the wider font reached the chart`, await wp.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#historical-evidence [data-bracket-label]')).letterSpacing) > 0));
+    eq(`${tag}: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wp), { out: [], touching: 0 });
+    eq(`${tag}: the pill's text is inside its frame, the frame inside the chart`, await pillFits(wp), { pill: true, framed: true, inside: true });
+    check(`${tag}: the note is on its own ground, or left out`, await noteGround(wp));
+    eq(`${tag}: the note is over no mark`, await noteClear(wp), { ground: true, under: 0 });
+    await wp.evaluate(() => window.SCStock.findingsHandle.setStratum('all')); await settle(wp, 120);
+    check(`${tag}, every burst: a ±10R tick is drawn`, await wp.evaluate(() => document.querySelectorAll('#historical-evidence [data-r-tick="10"], #historical-evidence [data-r-tick="-10"]').length > 0));
+    eq(`${tag}, every burst: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wp), { out: [], touching: 0 });
+    eq(`${tag}, every burst: the pill's text is inside its frame, the frame inside the chart`, await pillFits(wp), { pill: true, framed: true, inside: true });
+    eq(`${tag}: findings errors`, wide.errors, []);
+    await wide.context.close();
+  }
+  // a web font that arrives after the draw: the chart is drawn against the fallback, the letters
+  // then widen and the fonts are said to have loaded, as a browser says it when Google's face
+  // arrives; the labels are fitted again and the chart is not rebuilt. Google's fonts are
+  // refused here, so a runner and this sandbox draw against the same face
+  for (const width of [320, 390]) {
+    const late = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => {
+      await fast(page);
+      await page.route(/fonts\.g(oogleapis|static)\.com/, (r) => r.abort());
+    } });
+    const tag = `${width}, a wider font after the draw`, lp = late.page;
+    eq(`${tag}: the replay is ready`, await ready(lp), 'ready');
+    await lp.evaluate(() => {
+      document.querySelector('#historical-evidence .ss-find__svg').setAttribute('data-first-draw', '');
+      const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: 1.2px; }'; document.head.appendChild(st);
+      return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    });
+    const before = [await labelsFit(lp), await pillFits(lp), await noteGround(lp)];
+    check(`${tag}: before the fonts are said to have loaded, labels placed for the narrower face no longer fit`, before[0].out.length > 0 || !before[1].framed || !before[2], before);
+    await fontsDone(lp);
+    eq(`${tag}: once they are, every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(lp), { out: [], touching: 0 });
+    eq(`${tag}: once they are, the pill's text is inside its frame, the frame inside the chart`, await pillFits(lp), { pill: true, framed: true, inside: true });
+    check(`${tag}: once they are, the note is on its own ground, or left out`, await noteGround(lp));
+    eq(`${tag}: once they are, the note is over no mark`, await noteClear(lp), { ground: true, under: 0 });
+    check(`${tag}: the labels were fitted again, the chart not rebuilt`, await lp.evaluate(() => document.querySelector('#historical-evidence .ss-find__svg').hasAttribute('data-first-draw')));
+    eq(`${tag}: findings errors`, late.errors, []);
+    await late.context.close();
+  }
+  // a font far wider than any measured, at 320 and at 390: the phone's outcome wording runs past
+  // the chart there (measured, so the step-down is not assumed), each panel name steps down to a
+  // wording the browser measures inside it, on the first draw and on every later one; every label
+  // stays inside, the bracket's narrowed to the chart, the dates thinned by their measured width
+  // so no two touch, and at 390 the note that no longer fits its sessions is left out
+  for (const width of [320, 390]) {
+    const widest = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => { await fast(page); await widen(page, 3); } });
+    const xp = widest.page, tag = `${width}, letters 3px wider`;
+    eq(`${tag}: the replay is ready`, await ready(xp), 'ready');
+    const narrowest = width === 320;   // at 390 the phone wording and the bracket still fit
+    if (narrowest) check(`${tag}: the phone's outcome wording, measured at this font, runs past the chart`, await xp.evaluate(() => {
+      const t = document.querySelector('#historical-evidence text[data-panel="outcome"]'), probe = t.cloneNode(false);
+      probe.textContent = 'R per ticket, compressed axis'; t.parentNode.appendChild(probe); const len = probe.getComputedTextLength(); probe.remove();
+      return +t.getAttribute('x') + len > t.ownerSVGElement.viewBox.baseVal.width - 2;
+    }));
+    for (const [how, act] of [['on the first draw', null], ['after every burst is chosen', () => window.SCStock.findingsHandle.setStratum('all')], ['after a redraw', () => window.SCStock.findingsHandle.redraw()]]) {
+      if (act) { await xp.evaluate(act); await settle(xp, 120); }
+      const wp2 = await panelsOf(xp);
+      eq(`${tag}, ${how}: both panel names are drawn, each inside the chart and the screen`, wp2.map((x) => [x.name, x.inside]), [['ratio', true], ['outcome', true]]);
+      const wo = (wp2.find((x) => x.name === 'outcome') || {}).text;
+      if (narrowest) check(`${tag}, ${how}: the outcome panel steps down to a shorter wording`, typeof wo === 'string' && wo !== 'R per ticket, compressed axis' && 'R per ticket, compressed axis'.startsWith(wo), wo);
+    }
+    eq(`${tag}: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(xp), { out: [], touching: 0 });
+    if (narrowest) check(`${tag}: the bracket's label is narrowed to the chart`, await xp.evaluate(() => document.querySelector('#historical-evidence [data-bracket-label]').hasAttribute('textLength')));
+    eq(`${tag}: the pill's text is inside its frame, the frame inside the chart`, await pillFits(xp), { pill: true, framed: true, inside: true });
+    // the first night's A-quality pill is the longest wording: at 320 it is longer than the plot
+    // and is narrowed to it, its frame inside the chart
+    await xp.evaluate(() => { window.SCStock.findingsHandle.setStratum('admitted'); window.SCStock.findingsHandle.go(0); }); await settle(xp, 120);
+    eq(`${tag}, the first night: the pill's text is inside its frame, the frame inside the chart`, await pillFits(xp), { pill: true, framed: true, inside: true });
+    if (narrowest) check(`${tag}, the first night: the pill's long text is narrowed to the plot`, await xp.evaluate(() => document.querySelector('#historical-evidence [data-pill] text').hasAttribute('textLength')),
+      await xp.evaluate(() => document.querySelector('#historical-evidence [data-pill] text').textContent));
+    if (width === 390) eq(`${tag}: the note no longer fits its sessions and is left out`, await xp.evaluate(() => !!document.querySelector('#historical-evidence text[data-note="before"]')), false);
+    eq(`${tag}: findings errors`, widest.errors, []);
+    await widest.context.close();
+  }
+  // a desktop list steps down one wording at a time: at 700 px with the letters 2px wider every
+  // burst's long outcome name runs past the chart and the middle wording fits
+  const desk = await load(FULL, 700, { beforeLoad: async (page) => { await fast(page); await widen(page, 2); } });
+  eq('700, letters 2px wider: the replay is ready', await ready(desk.page), 'ready');
+  await desk.page.evaluate(() => window.SCStock.findingsHandle.setStratum('all')); await settle(desk.page, 120);
+  eq('700, letters 2px wider, every burst: the outcome panel keeps the middle wording, inside the chart', (await panelsOf(desk.page)).filter((x) => x.name === 'outcome').map((x) => [x.text, x.inside]), [['R per ticket, compressed axis', true]]);
+  eq('700, letters 2px wider: findings errors', desk.errors, []);
+  await desk.context.close();
   const l = await load(FULL, 1280, { theme: 'light' });
   eq('light: the replay is ready', await ready(l.page), 'ready');
   if (shotsDir) await l.page.locator('#historical-evidence').screenshot({ path: path.join(shotsDir, 'findings-1280-light.png') });
@@ -685,7 +846,7 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   altered.rules.pipeline.yellow_grades = ['A+', 'A'];
   altered.rules.record.scorecard_min_plans = 7;
   altered.market.thresholds = { ratio_10d_red: 1.1, ratio_10d_yellow: 2.2 };
-  Object.assign(altered.nights_summary, { nights: 99, bursts: 12345, tickets_published: 3 });
+  Object.assign(altered.nights_summary, { nights: 99, bursts: 12345, tickets_published: 3, setup_tickets_published: 4 });
   altered.backtest.lookback_130.evaluated.count = 777;
   const a = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(altered)) });
   eq('altered file: the replay is ready', await ready(a.page), 'ready');
@@ -695,7 +856,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   check('a changed count of A-quality after the reader is printed as given, not summed from grades', (await txt(a.page, '#historical-evidence [data-find="text"]')).includes('after it, ' + thousands(4321) + ' stood at A-quality'));
   check('a changed hold is printed as given, so no caption types its length', (await tc(a.page, '#historical-evidence [data-find="eyebrow"]')).endsWith(' · 7 sessions complete as of ' + shortDate(asOf)), await tc(a.page, '#historical-evidence [data-find="eyebrow"]'));
   const aLead = await txt(a.page, HOST + ' p[data-find="lead"]'), aKey = await txt(a.page, '#historical-evidence [data-find="regime-key"]');
-  check('the lead prints the changed night, burst and ticket counts', aLead.includes('Over the 99 published nights') && aLead.includes('published 3 tickets out of 12,345 bursts scanned'), aLead);
+  check('the lead prints the changed night, burst and ticket counts', aLead.includes('Over the 99 published nights') &&
+    aLead.includes('published 3 burst tickets out of 12,345 bursts scanned, and 4 setting-up tickets, which the study does not walk. '), aLead);
   check('the key prints the changed thresholds, size and grades', aKey.includes('Dashed lines, the 12-session ratio rule: under 1.1 it says red') && aKey.includes('under 2.2 yellow, size × 0.25, A+ and A only'), aKey);
   check('the legend, the panel and the description print the changed ratio length and burst size', (await txt(a.page, '#historical-evidence [data-find="legend"]')).includes('12-session ratio')
     && (await tc(a.page, '#historical-evidence text.ss-find__panel')) === '12-session ratio, up 5% against down' && (await tc(a.page, '#historical-evidence .ss-find__svg desc')).includes('the 12-session ratio of stocks up 5% to stocks down'));
@@ -719,11 +881,26 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   const ny = branches.nights[3], ngr = branches.nights[4];
   Object.assign(ny.regime, { verdict: 'yellow', size_multiplier: branches.rules.breadth.size_multiplier.yellow, reasons: ['ten-session ratio under the yellow line'] });
   Object.assign(ngr.regime, { verdict: 'green', size_multiplier: branches.rules.breadth.size_multiplier.green, reasons: [] });
-  branches.nights_summary.verdicts = { red: N - 2, yellow: 1, green: 1 };
+  // a green night publishes tickets, so the count of what the gate published on the nights not red can be told from zero
+  ngr.tickets_published = 2;
+  branches.nights_summary.tickets_published += 2;
+  // and the yellow one a setting-up ticket, so the two counts are told apart and never summed
+  ny.setup_tickets_published = 1;
+  branches.nights_summary.setup_tickets_published += 1;
+  // the confirmatory nights the record carried as yellow are read red here, so the two nights made
+  // yellow and green are exploratory and the only ones not red: the sentences' other side is driven
+  let madeRed = 0;
+  for (const nt of branches.nights) {
+    if (nt.phase === 'confirmatory' && nt.regime.verdict !== 'red') { Object.assign(nt.regime, { verdict: 'red', size_multiplier: branches.rules.breadth.size_multiplier.red }); madeRed++; }
+  }
+  branches.reading.phases.confirmatory.red_nights += madeRed;
+  const committedVerdicts = F.nights_summary.verdicts;
+  branches.nights_summary.verdicts = { red: committedVerdicts.red - 2 + madeRed, yellow: (committedVerdicts.yellow || 0) - madeRed + 1, green: (committedVerdicts.green || 0) + 1 };
   branches.reading.phases.exploratory.red_nights -= 2;
   branches.reading.phases.exploratory.strata.B.mean_r = 0.12;
   Object.assign(branches.study.summary.phases.confirmatory, { settled: { n: 27, wins: 15, losses: 12, breakeven: 0, sum_r: 3.81, mean_r: 0.141, median_r: 0.2 },
-    scorecard: Object.assign({}, branches.study.summary.phases.confirmatory.scorecard, { readable: true }) });
+    scorecard: Object.assign({}, branches.study.summary.phases.confirmatory.scorecard, { readable: true }),
+    night_bootstrap: { ci95: [0.012, 0.274], mean_of_night_means: 0.133, nights: 4, reps: 2000, seed: 20261002 } });
   branches.backtest.lookback_130.regimes.verdicts.green = 5;
   branches.backtest.lookback_130.gates.production.settled.readable = false;
   const bb = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(branches)) });
@@ -737,13 +914,82 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   const bRead = await bb.page.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
   readingHolds(branches, bRead, eq, check, 'branches: ');
   check('branches: a positive stratum withdraws the refusals\' value', bRead[0].includes('Not every stratum is under zero') && !bRead[0].includes('had value in sum'), bRead[0]);
-  check('branches: a readable confirmatory split is printed as the study\'s result', bRead[1].includes('the study’s confirmatory result is +0.141R per settled ticket over 27.'), bRead[1]);
-  check('branches: the two nights that were not red are left out and named', bRead[4].startsWith('2 published nights here were not red and are left out'), bRead[4]);
+  check('branches: a readable confirmatory split is printed as the study\'s result with its interval, clear of zero', bRead[1].includes('the study’s confirmatory result is +0.141R per settled ticket over 27, and over 4 nights the mean of its night means is +0.133R, with the study’s night-bootstrap interval of +0.012R to +0.274R, which is clear of zero.'), bRead[1]);
+  check('branches: the two nights made yellow and green are the ones named as not red, with the green one\'s two tickets counted, and kept out of the confirmatory result',
+    bRead[4].startsWith('2 published nights here were not red (' + dayWords(ny.session) + ' and ' + dayWords(ngr.session) + ').') &&
+    bRead[4].includes('the gate published 2 burst tickets and 1 setting-up ticket on them') && bRead[4].endsWith('The red-night readings above leave them out.'), bRead[4]);
   const bStrip = await txt(bb.page, '#historical-evidence dl[data-find="backtest-strip"]'), bRates = await txt(bb.page, '#historical-evidence p[data-find="backtest-rates"]');
   check('branches: a backtest with green nights says so in the strip and the text', bStrip.includes('on yellow and green nights') && !(await txt(bb.page, '#historical-evidence section[data-find-block="backtest"]')).includes('never green'), bStrip);
   check('branches: an unreadable backtest prints its count and no rate', bRates.startsWith(plural(F.backtest.lookback_130.gates.production.settled.n, 'settled ticket') + ', too few for a rate (the summary reads one from ' + F.backtest.lookback_130.gates.production.settled.min_read + ')') && !bRates.includes('Win rate'), bRates);
   eq('branches file errors', bb.errors, []);
   await bb.context.close();
+  // the nights left out are exploratory and confirmatory at once: one exploratory night made yellow
+  // beside the confirmatory yellow nights the record carries, so the confirmatory result is said to
+  // include only the ones after the freeze, by date
+  const mixed = structuredClone(F);
+  const mx = mixed.nights[3];
+  check('mixed: the committed file has a confirmatory night that is not red, so the mixed case has two sides', mixed.nights.some((n) => n.phase === 'confirmatory' && n.regime.verdict !== 'red'));
+  Object.assign(mx.regime, { verdict: 'yellow', size_multiplier: mixed.rules.breadth.size_multiplier.yellow, reasons: ['ten-session ratio under the yellow line'] });
+  mixed.nights_summary.verdicts.red -= 1;
+  mixed.nights_summary.verdicts.yellow = (mixed.nights_summary.verdicts.yellow || 0) + 1;
+  mixed.reading.phases.exploratory.red_nights -= 1;
+  const mm = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(mixed)) });
+  eq('mixed file: the replay is ready', await ready(mm.page), 'ready');
+  const mRead = await mm.page.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
+  readingHolds(mixed, mRead, eq, check, 'mixed: ');
+  const mCo = mixed.nights.filter((n) => n.phase === 'confirmatory' && n.regime.verdict !== 'red');
+  check('mixed: the confirmatory result is said to include the confirmatory nights alone, by date, and not the exploratory one',
+    mRead[4].endsWith('; the study’s confirmatory result includes ' + andList(mCo.map((n) => dayWords(n.session))) + ', the ' + (mCo.length === 1 ? 'one' : 'ones') + ' after its freeze.') &&
+    !mRead[4].endsWith('includes them.'), mRead[4]);
+  eq('mixed file errors', mm.errors, []);
+  await mm.context.close();
+  // the sides of the reading the committed file no longer reaches, each its own routed copy held by
+  // the same readingHolds: every night red with the confirmatory split unreadable; a readable split
+  // whose interval is clear of zero below it, beside red nights too few to read; and confirmatory
+  // nights none of which was red
+  const readOf = async (name, G) => {
+    const g = await load(FULL, 1280, { beforeLoad: routed(JSON.stringify(G)) });
+    eq(name + ' file: the replay is ready', await ready(g.page), 'ready');
+    const read = await g.page.locator('#historical-evidence ul[data-find="read-as"] > li').evaluateAll((e) => e.map((li) => li.textContent));
+    eq(name + ' file errors', g.errors, []);
+    await g.context.close();
+    return read;
+  };
+  const allRed = structuredClone(F);
+  const redReasons = F.nights.find((n) => n.regime.verdict === 'red').regime.reasons;
+  for (const nt of allRed.nights) if (nt.regime.verdict !== 'red') {
+    Object.assign(nt.regime, { verdict: 'red', size_multiplier: allRed.rules.breadth.size_multiplier.red, reasons: structuredClone(redReasons) });
+    allRed.nights_summary.tickets_published -= nt.tickets_published; allRed.nights_summary.setup_tickets_published -= nt.setup_tickets_published;
+    Object.assign(nt, { tickets_published: 0, setup_tickets_published: 0 });
+  }
+  allRed.nights_summary.verdicts = { red: allRed.nights.length };
+  for (const ph of ['exploratory', 'confirmatory']) allRed.reading.phases[ph].red_nights = allRed.reading.phases[ph].nights;
+  const arCo = allRed.study.summary.phases.confirmatory, arMin = arCo.scorecard.min_read, arN = arMin - 1;
+  Object.assign(arCo, { settled: Object.assign({}, arCo.settled, { n: arN }), scorecard: Object.assign({}, arCo.scorecard, { readable: false }) });
+  const arRead = await readOf('all red', allRed);
+  readingHolds(allRed, arRead, eq, check, 'all red: ');
+  check('all red: an unreadable confirmatory split prints its count against the minimum and no figure',
+    arRead[1].includes(thousands(arN) + ' of the ' + thousands(arMin) + ' have settled, so nothing confirmatory is readable yet.') && !arRead[1].includes('interval') && !arRead[1].includes(' not red'), arRead[1]);
+  check('all red: the last sentence says every published night was red', arRead[4].startsWith('Every published night here was red'), arRead[4]);
+  const below = structuredClone(F), bCo = below.reading.phases.confirmatory;
+  check('below zero: the committed file has a confirmatory night that is not red beside red ones', bCo.red_nights > 0 && bCo.nights > bCo.red_nights, [bCo.nights, bCo.red_nights]);
+  Object.assign(below.study.summary.phases.confirmatory.night_bootstrap, { ci95: [-0.4, -0.02], mean_of_night_means: -0.2 });
+  bCo.strata.admitted = Object.assign({}, bCo.strata.admitted, { n: below.rules.record.scorecard_min_plans - 1 });
+  const blRead = await readOf('below zero', below);
+  readingHolds(below, blRead, eq, check, 'below zero: ');
+  check('below zero: an interval wholly under zero is clear of zero, never said to include it', blRead[1].includes('night-bootstrap interval of ' + R3(-0.4) + ' to ' + R3(-0.02) + ', which is clear of zero.') && !blRead[1].includes('includes zero'), blRead[1]);
+  check('below zero: red nights too few to read print their count and no rate', blRead[1].endsWith(' alone the A-quality stratum is ' + thousands(bCo.strata.admitted.n) + ' settled, too few for a rate.'), blRead[1]);
+  const noRed = structuredClone(F), nCo = noRed.reading.phases.confirmatory;
+  let unred = 0;
+  for (const nt of noRed.nights) if (nt.phase === 'confirmatory' && nt.regime.verdict === 'red') {
+    Object.assign(nt.regime, { verdict: 'yellow', size_multiplier: noRed.rules.breadth.size_multiplier.yellow, reasons: ['ten-session ratio under the yellow line'] }); unred++;
+  }
+  noRed.nights_summary.verdicts = { red: noRed.nights_summary.verdicts.red - unred, yellow: (noRed.nights_summary.verdicts.yellow || 0) + unred };
+  nCo.red_nights = 0;
+  for (const s of Object.keys(nCo.strata)) nCo.strata[s] = Object.assign({}, nCo.strata[s], { n: 0, wins: 0, losses: 0, breakeven: 0, sum_r: 0, mean_r: null, median_r: null });
+  const nrRead = await readOf('no red', noRed);
+  readingHolds(noRed, nrRead, eq, check, 'no red: ');
+  check('no red: confirmatory nights none of which was red name no red-night figure', nrRead[1].endsWith(' ' + plural(nCo.nights, 'night') + ' of them were not red.') && !nrRead[1].includes('red night'), nrRead[1]);
   // a long list of nights: the caption stays under the stage on a desktop, and before the list on a phone
   const many = structuredClone(F);
   many.nights = F.market.sessions.map((s, i) => Object.assign(structuredClone(F.nights[i % N]), { session: s.date }));
@@ -790,6 +1036,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     ['a run-6 session that is null', JSON.stringify((() => { const x = structuredClone(F); x.run6.sessions[Object.keys(x.run6.sessions)[0]] = null; return x; })()), 200, 'The findings carry no fresh-bar reading.'],
     ['a gate reason that is not a sentence', JSON.stringify((() => { const x = structuredClone(F); x.nights[0].regime.reasons = [null]; return x; })()), 200, 'A night of the findings is malformed.'],
     ['a file without its reading', JSON.stringify((() => { const x = structuredClone(F); delete x.reading; return x; })()), 200, 'The findings carry no reading.'],
+    ['a readable confirmatory split without its interval', JSON.stringify((() => { const x = structuredClone(F); x.study.summary.phases.confirmatory.scorecard.readable = true; delete x.study.summary.phases.confirmatory.night_bootstrap; return x; })()), 200, 'The findings carry no study summary.'],
+    ['a readable confirmatory interval with one bound', JSON.stringify((() => { const x = structuredClone(F); x.study.summary.phases.confirmatory.scorecard.readable = true; x.study.summary.phases.confirmatory.night_bootstrap.ci95 = [-0.4]; return x; })()), 200, 'The findings carry no study summary.'],
     ['a market session without its source', JSON.stringify((() => { const x = structuredClone(F); delete x.market.sessions[0].source; return x; })()), 200, 'The findings carry no market.'],
     ['a body that is not JSON', '{"version": ', 200, 'The validation findings did not load. Reload the page to try again.'],
     ['a backtest gate without its settled block', JSON.stringify((() => { const x = structuredClone(F); delete x.backtest.lookback_130.gates.production.settled; return x; })()), 200, 'The findings carry no backtest.'],
@@ -798,7 +1046,9 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   ]) {
     const e = await load(FULL, 1280, { beforeLoad: routed(body, status) });
     eq(`${name}: the replay ends in its error state`, await ready(e.page), 'error');
-    eq(`${name}: and says why in one sentence`, await txt(e.page, HOST + ' p[role="alert"]'), sentence);
+    // read only if it is there: a page that drew the file anyway fails these checks by name rather than ending the suite
+    const alerts = await e.page.locator(HOST + ' p[role="alert"]').count();
+    eq(`${name}: and says why in one sentence`, alerts ? await txt(e.page, HOST + ' p[role="alert"]') : null, sentence);
     eq(`${name}: nothing half-drawn is left`, await e.page.locator(HOST + ' [data-find-root], ' + HOST + ' [data-find-block], ' + HOST + ' .ss-find__h').count(), 0);
     eq(`${name}: while the scorecard still renders`, (await txt(e.page, '#record-card')).includes('Published model plans'), true);
     eq(`${name}: and the open model plans and the frozen cases still render`, [await e.page.locator('#hold-rows > *').count(), await e.page.locator('#historical-evidence [data-study-case]').count()], [data.open_plans.length, 3]);
