@@ -930,6 +930,13 @@
     }
     return reads.unavailable_reason ? 'unavailable: ' + words(reads.unavailable_reason) : 'chart + numbers, may only lower a grade';
   }
+  // the refused replies a night tolerates, as reader_coverage._limit() writes
+  // it: the archived fraction, floored, and at least the archived floor (none
+  // on a record made before it) -- never every read
+  function refusalLimit(requested, pipeline) {
+    const minimum = pipeline.reader_refusal_min === undefined ? 0 : pipeline.reader_refusal_min;
+    return Math.max(Math.floor(requested * pipeline.reader_refusal_fraction), Math.min(minimum, Math.max(requested - 1, 0)));
+  }
   function reviewSelectionFacts(data) {
     const run = data.run || {}, s = run.review_selection, rules = data.rules || {}, policy = rules.review_selection;
     if (!s || !policy || s.version !== 1 || policy.version !== s.version ||
@@ -968,6 +975,7 @@
         !['green', 'yellow', 'red'].includes(regime) || !Array.isArray(pipeline.trade_grades) || !Array.isArray(pipeline.yellow_grades) ||
         !pipeline.trade_grades.every(g => grades.includes(g)) || !pipeline.yellow_grades.every(g => grades.includes(g)) ||
         !isNum(pipeline.reader_refusal_fraction) || pipeline.reader_refusal_fraction < 0 || pipeline.reader_refusal_fraction > 1 ||
+        !(pipeline.reader_refusal_min === undefined || count(pipeline.reader_refusal_min)) ||
         !['requested', 'done', 'refusal_limit'].every(k => count(reads[k])) || !count(s.attempts) ||
         !reads.causes || Object.keys(reads.causes).length !== failures.length || !failures.every(k => count(reads.causes[k])) ||
         !Array.isArray(reads.refused_names) || !Array.isArray(reads.refused_admissible) ||
@@ -1030,7 +1038,7 @@
         !failures.every(k => reads.causes[k] === causes[k]) || reads.requested !== accepted + Object.values(causes).reduce((a, b) => a + b, 0) ||
         JSON.stringify(reads.refused_names) !== JSON.stringify(refused.sort()) ||
         JSON.stringify(reads.refused_admissible) !== JSON.stringify(refusedAdmissible.sort()) ||
-        reads.refusal_limit !== Math.floor(reads.requested * pipeline.reader_refusal_fraction)) return result;
+        reads.refusal_limit !== refusalLimit(reads.requested, pipeline)) return result;
     const verdict = !reads.requested ? 'not_asked' : !accepted ? 'unavailable' : accepted === reads.requested ? 'complete'
       : unaccepted === causes.refused && causes.refused <= reads.refusal_limit && !refusedAdmissible.length ? 'tolerated' : 'partial';
     if (reads.verdict !== verdict) return result;
@@ -1188,10 +1196,15 @@
         ' measured; ' + num(cov.errors) + ' scan/quality errors. Reaction matches: ' + Object.entries(cov.matched || {}).map(([k, n]) => k + ': ' + num(n)).join('; ') + '.');
     } else line(inputWarning(run));
     line('Graded by ' + (run.model || '—') + ' from the chart and the numbers; the model may only lower a grade, never raise it.');
-    const refusal = ((data.rules || {}).pipeline || {}).reader_refusal_fraction;
-    if (isNum(refusal)) {
-      line('Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run past ' +
-        plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads, when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
+    const refusalRule = (data.rules || {}).pipeline || {}, refusal = refusalRule.reader_refusal_fraction;
+    const refusalMin = refusalRule.reader_refusal_min;
+    if (isNum(refusal) && (refusalMin === undefined || (Number.isSafeInteger(refusalMin) && refusalMin >= 0))) {
+      // the floor is quoted only when the record archived one: a record made
+      // before it tolerated the fraction alone, and says that
+      const past = refusalMin ? 'once they number more than both ' + plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads and ' + plain(refusalMin)
+        : 'past ' + plain(+(100 * refusal).toFixed(4)) + '% of the night’s reads';
+      line('Chart reader: a reply refused by reader authority or the discovery contract leaves the mechanical grade standing and never earns a ticket; refusals degrade the run ' +
+        past + ', when none is accepted, or when the refused name would otherwise have been planned. A reply that never arrived or could not be read always degrades it.');
     }
     const selectionNote = reviewSelectionNote(data);
     if (selectionNote) line(selectionNote);

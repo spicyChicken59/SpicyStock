@@ -880,7 +880,7 @@ def test_validate_asks_for_the_blocks_only_under_rules_that_write_them(stale_nig
     for key in ('input_tolerance', 'stale_followup', 'reads', 'reader_usage', 'delivery', 'seed_stale'):
         data['run'].pop(key)
     for key in ('stale_tolerance_fraction', 'stale_sessions_max', 'stale_names_max', 'reader_refusal_fraction',
-                'reader_usage_version', 'delivery_version', 'delivery_primary_et', 'delivery_retry_et', 'delivery_recovery_until',
+                'reader_refusal_min', 'reader_usage_version', 'delivery_version', 'delivery_primary_et', 'delivery_retry_et', 'delivery_recovery_until',
                 'seed_stale_version'):
         data['rules']['pipeline'].pop(key)
     assert inputs.tolerance_faults(data['run'], data['rules']['pipeline'], set()) == []

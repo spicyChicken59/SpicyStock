@@ -55,6 +55,13 @@ STALE_NAMES_MAX = 100          # stale stocks a record names in full and the nex
 #: publications at most 3 of 12. A refused name keeps its checklist grade and
 #: never earns a ticket either way.
 READER_REFUSAL_FRACTION = 0.25
+#: (P) The fewest refused replies a night tolerates, whatever the fraction
+#: gives, and never every one of its reads: a quarter of two reads floors to
+#: none, so one refused reply of two degraded 13 and 15 Oct 2026. On 17 Oct
+#: 2026 the owner chose to tolerate one. Every other condition stands: the
+#: other reads accepted, no refused name one the regime would have planned.
+#: A record made before it was archived reads its limit off the fraction alone.
+READER_REFUSAL_MIN = 1
 MAX_ERROR_FRACTION = 0.05      # more names raising than this is a code fault, not a market (P)
 SERIES_BARS = 120              # bars the page chart carries per trade (plumbing)
 SERIES_TOP = 24                # bursts, by rank, that carry a chart beside the trades and the cut names (plumbing)
@@ -89,6 +96,7 @@ RULES = {
     "pipeline.yellow_grades": list(YELLOW_GRADES),
     "pipeline.reader_policy": reader_coverage.POLICY,
     "pipeline.reader_refusal_fraction": READER_REFUSAL_FRACTION,
+    "pipeline.reader_refusal_min": READER_REFUSAL_MIN,
     "pipeline.reader_usage_version": reader_coverage.USAGE_VERSION,
     **delivery.RULES,   # the evening workflow's slots and recovery window, as the record archives them
     "pipeline.series_bars": SERIES_BARS,
@@ -527,7 +535,8 @@ def read_charts_and_grade(bursts: list[dict], frames: dict[str, pd.DataFrame], r
         b["reader_coverage"] = reader_coverage.state(b, selected=True)
         provenance.seal_reader(b)
     reads = reader_coverage.reads([b for b in bursts if b["ticker"] in selected], admitted_grades=admitted,
-                                  refusal_fraction=READER_REFUSAL_FRACTION)
+                                  refusal_fraction=READER_REFUSAL_FRACTION,
+                                  refusal_min=READER_REFUSAL_MIN)
     causes = ", ".join(f"{v} {k}" for k, v in reads["causes"].items() if v)
     if reads["verdict"] == "unavailable":
         rep.problem("claude_unavailable", f"no usable judgement for any of {len(candidates)} names ({causes})")
@@ -854,7 +863,8 @@ def run_evening(*, dry_run: bool = False, tickers: list[str] | None = None,
 
         rep.stage = "grade"
         charts_dir = docs / CHARTS_DIR_NAME
-        reads = reader_coverage.reads([], admitted_grades=(), refusal_fraction=READER_REFUSAL_FRACTION)
+        reads = reader_coverage.reads([], admitted_grades=(), refusal_fraction=READER_REFUSAL_FRACTION,
+                                      refusal_min=READER_REFUSAL_MIN)
         reader_usage = reader_coverage.usage_block([], {}, model=grader.MODEL)
         if bursts:
             system_prompt = grader_prompt()

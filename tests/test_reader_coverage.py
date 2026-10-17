@@ -246,6 +246,76 @@ def test_reads_verdict_by_counts(fraction, refused, requested, verdict):
     assert reads["verdict"] == verdict, reads
 
 
+def _refused_rows(refused, requested):
+    return [{"ticker": f"T{i}", "grade": "B", "vetoes": [],
+             "claude": {"source": "fallback", "error": "src.ReaderAuthorityError: refused"} if i < refused
+             else {"source": "claude"}} for i in range(requested)]
+
+
+@pytest.mark.parametrize("requested,limits", [
+    # requested reads: (the fraction alone, with the floor of one)
+    (0, (0, 0)), (1, (0, 0)), (2, (0, 1)), (3, (0, 1)), (4, (1, 1)), (7, (1, 1)), (8, (2, 2)), (12, (3, 3))])
+def test_the_refusal_floor_is_at_least_one_and_never_every_read(requested, limits):
+    """The quarter floors to none at two and three reads; the floor of one
+    lifts those, leaves the quarter's own answer wherever it is larger, and
+    never reaches every read -- one read refused of one is unavailable."""
+    assert (reader_coverage._limit(requested, 0.25), reader_coverage._limit(requested, 0.25, 1)) == limits
+    assert reader_coverage._limit(requested, 0.25, 5) <= max(requested - 1, 0)
+
+
+@pytest.mark.parametrize("refusal_min,verdict,problems", [(1, "tolerated", []), (0, "partial", ["claude_partial"])])
+def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, verdict, problems):
+    """13 and 15 Oct 2026: one refused reply of two degraded the night. Under
+    the owner's floor of one it is tolerated -- the other read accepted, the
+    refused name not one the regime would have planned -- and without the
+    floor it is the old partial night."""
+    reads = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=(), refusal_fraction=0.25,
+                                  refusal_min=refusal_min)
+    assert (reads["verdict"], reads["refusal_limit"]) == (verdict, refusal_min), reads
+    if verdict == "tolerated":
+        assert reads["sentence"] == ("Chart reader: 1 of 2 judgements accepted. 1 reply (T0) refused by reader "
+                                     "authority or the discovery contract, within this run's tolerance of 1; that "
+                                     "name stays research only, without a ticket.")
+    # the floor never covers a night with nothing accepted, nor a name the regime would have planned
+    both = reader_coverage.reads(_refused_rows(2, 2), admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert both["verdict"] == "unavailable", both
+    planned = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=("B",), refusal_fraction=0.25, refusal_min=1)
+    assert (planned["verdict"], planned["refused_admissible"]) == ("partial", ["T0"]), planned
+
+
+def test_the_evening_archives_the_floor(market, claude, fake_resend, tmp_path):
+    assert pipeline.READER_REFUSAL_MIN == 1
+    rep, data, _ = evening(tmp_path, market)
+    assert data["rules"]["pipeline"]["reader_refusal_min"] == pipeline.READER_REFUSAL_MIN
+    report.validate(data)
+
+
+def _reads_record(block, rules, problems):
+    return {"rules": {"pipeline": {"reader_refusal_fraction": 0.25, **rules}},
+            "run": {"reads": block, "problems": problems}}
+
+
+def test_a_record_made_before_the_floor_reads_its_limit_off_the_fraction_alone():
+    rows = _refused_rows(1, 2)
+    old = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25)
+    new = reader_coverage.reads(rows, admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert (old["verdict"], new["verdict"]) == ("partial", "tolerated")
+    partial = [{"kind": "claude_partial"}]
+    assert reader_coverage.reads_faults(_reads_record(old, {}, partial)) == []
+    assert reader_coverage.reads_faults(_reads_record(new, {"reader_refusal_min": 1}, [])) == []
+    # each block read under the other's rules is refused by the limit's own check
+    limit = ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
+    assert reader_coverage.reads_faults(_reads_record(new, {}, [])) == limit
+    assert reader_coverage.reads_faults(_reads_record(old, {"reader_refusal_min": 1}, partial)) == limit
+
+
+@pytest.mark.parametrize("bad", [True, -1, "1", 1.0, None])
+def test_an_archived_floor_that_is_not_a_count_is_refused(bad):
+    new = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=(), refusal_fraction=0.25, refusal_min=1)
+    assert reader_coverage.reads_faults(_reads_record(new, {"reader_refusal_min": bad}, [])) == \
+        ["run.reads archived reader_refusal_min is not a count"]
+
+
 def test_admitted_grades_is_one_rule_for_planning_and_the_reader(market, claude, fake_resend, tmp_path, monkeypatch):
     assert pipeline.admitted_grades("green") == tuple(pipeline.TRADE_GRADES)
     assert pipeline.admitted_grades("yellow") == tuple(pipeline.YELLOW_GRADES)
@@ -285,7 +355,7 @@ def test_validate_refuses_forged_reads(market, claude, fake_resend, tmp_path):
         "a cause count": (lambda r: r["run"]["reads"]["causes"].update(refused=1),
                           "run.reads counts do not reconcile"),
         "the limit": (lambda r: r["run"]["reads"].update(refusal_limit=3),
-                      "run.reads refusal limit is not the archived reader_refusal_fraction"),
+                      "run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"),
         "the verdict": (lambda r: r["run"]["reads"].update(verdict="tolerated"),
                         "run.reads verdict does not re-derive from its counts"),
         "the sentence": (lambda r: r["run"]["reads"].update(sentence="All read."),

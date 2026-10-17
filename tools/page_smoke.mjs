@@ -3858,7 +3858,12 @@ async function checkStaleTolerance(browser, base) {
       check(tag + ': Method prints the seed sentence verbatim', method.includes('Seed check: ' + seedBlock.sentence), method.slice(method.indexOf('Seed check'), method.indexOf('Seed check') + 300));
       check(tag + ': Method prints the seed check before the follow-up, as the cover and the mail do',
         method.indexOf('Seed check: ') > -1 && method.indexOf('Seed check: ') < method.indexOf('Stale follow-up: '), method.slice(method.indexOf('Seed check'), method.indexOf('Seed check') + 300));
-      check(tag + ': Method keeps the reader refusal rule under bounded selection', method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && reads.sentence === null, method);
+      // the refusal rule in the words of the rules this record archived: the fraction
+      // and, since 17 Oct 2026, the floor of refused replies a night tolerates
+      check(tag + ': Method keeps the reader refusal rule under bounded selection', method.includes('once they number more than both ' + (100 * thin.rules.pipeline.reader_refusal_fraction) +
+        '% of the night\u2019s reads and ' + thin.rules.pipeline.reader_refusal_min + ', when none is accepted') && !method.includes('past ' + (100 * thin.rules.pipeline.reader_refusal_fraction) + '% of the night') && reads.sentence === null, method);
+      check(tag + ': the fixture archives the floor and its reads carry the limit it gives', thin.rules.pipeline.reader_refusal_min === 1 &&
+        reads.requested === 2 && reads.refusal_limit === 1, [thin.rules.pipeline.reader_refusal_min, reads.requested, reads.refusal_limit]);
       // what the reads cost, printed as the record wrote it: calls, replies and the API's
       // token classes under the model asked, no price; the page adds no figure of its own
       const cost = thin.run.reader_usage;
@@ -3888,7 +3893,9 @@ async function checkStaleTolerance(browser, base) {
       d.run.problems = [{ stage: 'session', kind: 'coverage_thin', message: 'stale tolerance not met (over_limit)' }];
     },
     // the rule is quoted from the rules THIS record archived, never from a number the page carries
-    'another archived rule': (d) => { d.rules.pipeline.stale_tolerance_fraction = 0.02; d.rules.pipeline.reader_refusal_fraction = 0.5; },
+    'another archived rule': (d) => { d.rules.pipeline.stale_tolerance_fraction = 0.02; d.rules.pipeline.reader_refusal_fraction = 0.5; d.rules.pipeline.reader_refusal_min = 2; },
+    // a record made before the floor (every publication to 17 Oct 2026) tolerated the fraction alone, and says so
+    'a record from before the refusal floor': (d) => { delete d.rules.pipeline.reader_refusal_min; d.run.reads.refusal_limit = 0; },
     // only the benchmark a session behind: the stocks are complete, so the tolerance has nothing to say
     'only the benchmark stale': (d) => {
       Object.assign(d.run.input_tolerance, { verdict: 'complete', reasons: [], stale: 1, stale_stocks: 0, names: ['SPY'] });
@@ -3916,6 +3923,7 @@ async function checkStaleTolerance(browser, base) {
       delete d.run.reader_usage; delete d.rules.pipeline.reader_usage_version;
       delete d.run.intraday; delete d.rules.intraday;
       delete d.run.seed_stale; delete d.rules.pipeline.seed_stale_version;
+      delete d.rules.pipeline.reader_refusal_min;
     },
     'a half-written reader cost': (d) => { d.run.reader_usage = { version: 1, calls: 2 }; },
     'a seed-only stale stock': (d) => {
@@ -3952,7 +3960,9 @@ async function checkStaleTolerance(browser, base) {
         check('thin ' + name + ': Method prints no tolerance verdict for it', !method.includes('Stale tolerance:'), method.slice(0, 900));
       } else if (name === 'another archived rule') {
         check('thin ' + name + ': Method quotes the record\'s own tolerance', method.includes('at most 2% of the intended stocks') && !method.includes('at most 1% of'), method.slice(0, 600));
-        check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('past 50% of the night'), method);
+        check('thin ' + name + ': Method quotes the record\'s own refusal limit', method.includes('more than both 50% of the night\u2019s reads and 2,') && !method.includes('and 1,'), method);
+      } else if (name === 'a record from before the refusal floor') {
+        check('thin ' + name + ': Method quotes the fraction alone, as that record was published under', method.includes('past 25% of the night\u2019s reads, when none is accepted') && !method.includes('more than both'), method);
       } else if (name === 'a late match') {
         check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
       } else if (name === 'a half-written reader cost') {

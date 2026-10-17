@@ -365,13 +365,15 @@ def test_the_readme_and_the_env_example_quote_the_two_tolerances_from_the_module
     # the sessions BEFORE the one evaluated: "the last five" would count tonight's
     bound = f"within the {pipeline.STALE_SESSIONS_MAX} sessions before the session evaluated"
     assert bound in re.sub(r"\s+", " ", README), bound
-    refusal = {0.25: "a quarter"}[pipeline.READER_REFUSAL_FRACTION] + " of the night's reads"
+    quarter = {0.25: "a quarter"}[pipeline.READER_REFUSAL_FRACTION] + " of the night's reads"
+    refusal = "more than both " + quarter + " and " + {1: "one"}[pipeline.READER_REFUSAL_MIN]
     assert refusal in README, refusal
     env = re.sub(r"\s*#\s*", " ", (ROOT / ".env.example").read_text())
     assert "credit balance is too low" in env and refusal in env
     assert f"{pipeline.STALE_TOLERANCE_FRACTION:.0%} of the intended stocks" in env and bound in env
     method = re.sub(r"\s+", " ", (ROOT / "knowledge" / "method.md").read_text())
     assert bound in method and "every session" in method
+    assert quarter + ", or within " + {1: "one"}[pipeline.READER_REFUSAL_MIN] + " if that is more" in method
 
 
 def test_the_readme_and_the_env_example_quote_the_source_recovery_bounds_from_the_module():
