@@ -10209,3 +10209,141 @@ someone starting a run by 8:58 AM CT. Omit: a dispatch from the page, which
 would need a credential in the browser.
 
 **Not claimable:** a morning or research observation; any trading edge.
+
+## Checkpoint, 17 Oct 2026 — PR #180 accepted; the stale stocks read again across nights; the owner's four answers
+
+**PR #180, accepted.** Merged as `f714fb32` on `main` with a merge commit over
+`3567f698` (the 17 October recovery receipt, over #179's `2156aaca`). The final
+head `2967d3d5` passed all seven checks on Tests run 39033134847 (pytest
+12:35–12:56 UTC, page 12:35–12:52, the gate, the native central case
+12:35–13:02 and stress 12:35–13:25) and the Secret scans. Publisher
+39036539250 waited for `app-observations.js`, `app-research-observations.js` and
+`app-stop-research.js` and printed *Verified: every one of the 47 public files
+matches committed main* at 13:27:22 UTC.
+
+**The 17 October recovery receipt, read.** The `37 7` source-recovery slot's
+run published `3567f698` at 11:44 UTC, 4 h 7 min after the slot: the 16
+October publication's 18 stale stocks asked for again in one call to the bars
+endpoint, all 18 now carrying a 16 October bar that passes the session rules,
+all 18 at zero volume, status `recovered`; the publication unchanged.
+
+**The owner's four answers (17 October 2026).** Asked which things only the
+owner could unblock, Mo answered:
+- **Morning check delivery: automated, from Claude.** A claude.ai scheduled
+  task (`trig_01SVeMxasSA4sUuuQXPxjnSu`, *SpicyStock morning check (8:21 CT)*,
+  `CRON_TZ=America/Chicago 21 8 * * 1-5`, first firing Monday 19 October 13:21
+  UTC) fires into one persistent session whose only job is one
+  `workflow_dispatch` of `morning.yml` on `main` with `dry_run` false. A
+  fresh session per firing came up without the GitHub tools, so the session
+  persists; its checkout is the orphan branch `morning-dispatcher` (`930aea9a`,
+  a README only) and it runs a smaller model, which took a test firing from
+  about $2.40 over the full repository to under a cent. 8:21 CT is inside the
+  collector's window (from `POLICY["preopen_minutes"]`, 30, before the 8:30
+  open to `START_MINUTES` before the 9:00 cutoff). Two test dispatches on
+  Saturday 17 October (runs 39045039134 and 39045240320, 15:26 and 15:29
+  UTC) ran with `dry_run` true: the collector read `wrong_session`, made zero
+  requests, the persist job skipped and nothing was committed; each completion
+  started an issuer-evidence run whose guard skipped collection. Not claimable
+  until it fires: that the routine starts on time and the dispatched run
+  reaches its window.
+- **The SEC contact: the owner's chosen email.** `src/issuer_evidence.USER_AGENT`
+  names the project and that address, as SEC's fair-access policy asks; the
+  five collections from 10 to 16 October that recorded a status answered HTTP
+  403 at the ticker mapping (two earlier ones recorded no status; the 17 October
+  one asked nothing: `no_candidates`). `tests/test_issuer_http_diagnostics.py`
+  holds the header to a sender and an address. Not claimable: that SEC now
+  answers; the next collection with a candidate is the test.
+- **The broker: Fidelity.** The goal paragraph above still says unspecified;
+  the broker-specific first-trade steps are the next pull request but one.
+- **The reader rule: tolerate one refused review of two.** At two reads a
+  quarter floors to a limit of zero, so one refusal degrades the night (13 and
+  15 October). The owner chose to tolerate one; it is the next pull request.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `f714fb32`, pushed as **PR #181**. Nothing under `src/` moved but
+the SEC header; no rule moved, so the page fixtures and every cascaded
+generator are untouched; `docs/data.json`, `docs/picks.json`, the compact
+reader, every receipt, the history, the evidence objects, the quality ledger,
+the workflows and the vendored design system are untouched; no run, mail or
+provider call beyond the two dry-run dispatches above.
+
+**The reading.** `tools/stale_inputs.py` (`stale_inputs_v1`) asks what became
+of the stocks a publication could not measure. Each session's newest
+publication names its stale stock-sessions -- every session a named stock
+missed, as `followup.missed_sessions()` counts them at the record's own
+`sessions_max`; a first-version record names each stock at its own session --
+and the reading joins them to every later follow-up reading and every
+source-recovery receipt's row (a rehearsal receipt never), then puts each in
+the first class that holds: a follow-up match; the last follow-up reading that
+gave a verdict (`no_match`, scanned and not listed; `price_excluded`, under the
+$3 policy), whatever later readings said; a later bar read only for its
+volume, under or at or above `scans.MIN_VOLUME`; a bar that arrived with its
+volume unread; no later bar. `--check` holds its two files to the commits they
+name. Through `f714fb32` (7 to 16 October, 8 nights, 31 publications read, 38
+commits set aside, 4 receipts): 103 stock-sessions over 58 stocks -- 64 scanned
+and not listed, 11 under the price policy, 20 read only for their volume (18
+the 16 October night's), 0 arrived unread, 8 with no later bar (every one WBD);
+no follow-up reading a match over 127; 93 of the 95 later bars at zero volume,
+the largest 2,891 shares. 54 of the 64 scanned come from nights the tolerance
+did not tolerate; of the tolerated nights only 12 October's 10 were scanned.
+It supports the premise over the 64 and says nothing of the setting-up scans
+for the 20, nor of a night to come; it establishes no cause.
+
+**The review, worked.** A workflow by execution over the first pushed tip returned
+fifteen findings, each reproduced here before it was touched. The rule: a later
+reading with no verdict -- a re-run that no longer selected the stock, writing
+`not_selected` -- undid a scan, so the verdict is the last reading that gave one
+now; a late bar whose volume neither source could read sat under *no later
+bar*, and has its own class; a night over the names bound (`names` None) was
+refused, and stands as its session's newest with its stale stocks counted
+unnamed; the benchmark named beside the stocks was read as a stock. The report
+said more than the reading: it called the premise supported on the nights the
+tolerance relied on when 54 of the 64 scanned stock-sessions came from nights it
+did not tolerate (only 12 October's 10 are from a tolerated night), and it said
+what Monday's follow-up would read; both are scoped now. The tests: the report
+test read four columns of one table and two phrases, so a substituted number
+passed it; every number the report and the index print is built in the test
+from the committed reading or the records read off git at the commits it names,
+and nineteen substitutions each fail it while a heading change passes. The
+shallow rebuild accepted a set-aside its commits do not produce, and refuses it
+now; the walked rebuild refuses a dropped publication commit and an extra
+set-aside. README said the follow-up "ran the evening's scans on the late bar"
+(only on one that arrived, is selected and passes the $3 policy) and "under or
+at the floor". None of the rule fixes moves a class of the committed reading.
+
+**Measured.** (this sandbox, Python 3.11.15): 4756 tests collected; the full
+suite at `de7cff55` 4722 passed and 34 environment-gated skips in 23 m 56 s;
+after it one commit (`072e052c`) changed `sentence()` and one test, and
+`tests/test_stale_inputs.py`, `tests/test_docs.py` and
+`tests/test_issuer_http_diagnostics.py` pass 151 on it; `python
+tools/stale_inputs.py --check` current with the history walked again; gitleaks
+8.24.3 over the eleven changed files with the repository's config: no leaks. No
+record, rule or page file moved, so the fixtures, the chart check and the smoke
+are CI's, recorded on the PR.
+
+**Mutation passes.** Over the rules the review changed, in the mutation worktree
+at `de7cff55`, each judged by the whole `tests/test_stale_inputs.py` with the
+committed-file comparison deselected: the verdict read off the first reading or
+off the last whatever it said, `not_selected` counted a verdict, an unread bar
+put under *no later bar*, the floor made strict, the benchmark kept, the
+unnamed count dropped, the produced-set-aside check dropped, a stock-session
+counted under its first night only, a rehearsal receipt read, an older
+publication of a session naming its stocks, the unread clause and the
+read-suffix rule of the sentence each broken -- all die in the test naming
+their rule. **One survived, a hole**: the sentence's unnamed clause, which no
+test said, and which an empty reading could not say at all (it returned
+before the clause). Both are said and held in `072e052c`, where the mutant and
+its empty-reading twin die; the controls (a docstring, a comment) survive.
+Two passes over the first tip (`236be66d`) had closed four holes before the
+review.
+
+**Keep / fix / defer / omit.** Keep: the reading reads git and decides
+nothing; a new reading is a new dated directory. Fix if it bites: the 16
+October night's 18 are read only for their volume until a follow-up scans them;
+the reading's classes rest on the follow-up's selection, so a stock a run no
+longer selects is never scanned. Defer: the reader rule (next), the Fidelity
+steps, #111's ten-session acceptance from Monday's first dispatched check.
+Omit: any change to the tolerance on these numbers.
+
+**Not claimable:** a morning or research observation; that SEC answers the
+named contact; any trading edge.
