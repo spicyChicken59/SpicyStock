@@ -10402,8 +10402,9 @@ its parity corpus; morning pinned, unchanged) and `tools/recovery_rehearsal.py`'
 evidence with them, each publication identity carrying the digest.
 
 **Projected over the record** (the new `_limit()` and `_verdict()` over each
-retained publication's own `run.reads`, read off git): 11 publications carry a
-reads block; one verdict moves -- 15 October's, `partial` to `tolerated` -- and
+retained publication's own `run.reads`, read off git): all 36 schema-2
+publications carry a reads block, 11 of them (7 October on) the refusal limit
+#104 added, which the floor reads; one verdict moves -- 15 October's, `partial` to `tolerated` -- and
 that night stays degraded on coverage (WBD past the five-session bound). 13
 October stays `unavailable` (both reads refused); every twelve-read night keeps
 its limit of three.
