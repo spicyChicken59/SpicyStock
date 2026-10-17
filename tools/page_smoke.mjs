@@ -74,14 +74,19 @@ const copiedTicket = (s) => {
   return [lines[0], /^STOP LIMIT · stop \$[\d,.]+ · limit \$[\d,.]+ · DAY$/.test(lines[1] || ''),
     (lines[2] || '').replace(/ · .*$/, ''), lines.length, /Fidelity|advice|part/i.test(s)];
 };
-// every part-fill note on the whole page, named by the surface that printed
-// it and whether it is shown: a note placed anywhere but these is 'other'
+// every part-fill note a reader can be shown, anywhere on the page, named by
+// the surface that printed it, whether it is the sentence, and whether the
+// note itself is displayed: a note placed anywhere but these is 'other'. A
+// note under a hidden ancestor shows the reader nothing and is not listed
+// (the Morning desk's handoff panel is built once and kept hidden until a
+// draft is chosen; tools/handoff_cases.mjs reads its note shown there).
 const NOTE_HOSTS = [['handoff', '[data-handoff-readback]'], ['recorded', '[data-recorded-ticket]'], ['order', '.ss-order'],
   ['sheet', '#orders-table'], ['bar', '.ss-action'], ['compare', '.ss-compare__wrap']];
-const pageNotes = (page) => page.evaluate(([hosts, want]) => [...document.querySelectorAll('[data-broker-part-fill]')].map((e) => {
-  const host = hosts.find(([, sel]) => e.closest(sel));
-  return [host ? host[0] : 'other', e.textContent === want, !e.closest('[hidden]') && getComputedStyle(e).display !== 'none'];
-}), [NOTE_HOSTS, BROKER_PART_FILL]);
+const pageNotes = (page) => page.evaluate(([hosts, want]) => [...document.querySelectorAll('[data-broker-part-fill]')]
+  .filter((e) => !e.closest('[hidden]')).map((e) => {
+    const host = hosts.find(([, sel]) => e.closest(sel));
+    return [host ? host[0] : 'other', e.textContent === want, getComputedStyle(e).display !== 'none'];
+  }), [NOTE_HOSTS, BROKER_PART_FILL]);
 const brokerNotes = (page, scope) => page.locator(scope + ' [data-broker-part-fill]').evaluateAll((els) => els.map((e) => e.textContent));
 const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
 // the sequels a follow-through reading needs beside the nights: the same
@@ -1262,7 +1267,11 @@ async function checkStates(browser, base, data) {
       (await text(page, '#disc-plan')).includes(stateWord), (await text(page, '#disc-plan')).slice(0, 140));
     eq(`${name} and offers no copy control`, await count(page, '#disc-plan [data-copy]'), 0);
     eq(`${name} the order sheet is empty`, await count(page, '#order-sheet tbody tr[data-ticker]'), 0);
-    eq(`${name} no order is printed, so no part-fill rule anywhere on the page`, await pageNotes(page), []);
+    // nothing is offered, and the one order printed is the recorded ticket's
+    // history, whose note is the only one on the page
+    eq(`${name} only the recorded ticket's history carries the part-fill rule; nothing else on the page prints an order`,
+      await pageNotes(page), Array(await count(page, '[data-recorded-ticket]')).fill(['recorded', true, true]));
+    check(`${name} the record's ticket is printed as history, so the rule above can fail`, (await count(page, '[data-recorded-ticket]')) >= 1, 'no recorded ticket');
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });
     await context.close();
