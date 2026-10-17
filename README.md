@@ -453,7 +453,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    entry for this exact setup. A usable published ticket shows its applicable
    session, buy-stop trigger, stop-limit limit, protective stop and suggested
    model shares directly, with **Copy order** and **Plan details**. It prints
-   the recorded order fields and keeps material sizing explanations. A setup
+   the recorded order fields and keeps material sizing explanations, and under
+   them Fidelity's part-fill sentence (below), which the copied order never
+   carries. A setup
    without a usable ticket says **No SpicyStock entry for this setup** and the
    actual grade, planner, budget, breadth or timing/publication reason. Expired
    plans remain inspectable as recorded history with no actionable levels or
@@ -514,8 +516,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    name no broker, and provenance replays them), one sentence of
    Fidelity's own rule: the OTO sell stop is released only when the buy
    fills in full, so a part fill needs a separate sell stop for the shares
-   that filled. The tickets sheet, the private handoff's readback and the
-   mail's order and alert blocks print the same sentence
+   that filled. The Burst's action card above its **Copy order**, the
+   tickets sheet, the private handoff's readback and the mail's order and
+   alert blocks print the same sentence
    (`report.BROKER_PART_FILL`, held equal to the page's two copies by
    `tests/test_docs.py`);
    `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket and

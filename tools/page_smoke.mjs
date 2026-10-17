@@ -63,7 +63,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
 // Fidelity's part-fill rule as docs/app.js defines it; tests/test_docs.py holds
 // it equal to report.BROKER_PART_FILL. Printed beside every order the page
-// prints (the order block, the recorded ticket, the tickets sheet) and nowhere else.
+// prints or hands over (the order block, the recorded ticket, the tickets
+// sheet, the Burst action card's Copy order) and nowhere else.
 const BROKER_PART_FILL = (await readFile(path.join(ROOT, 'docs', 'app.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1];
 const brokerNotes = (page, scope) => page.locator(scope + ' [data-broker-part-fill]').evaluateAll((els) => els.map((e) => e.textContent));
 const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
@@ -354,8 +355,12 @@ async function checkDetail(page, variant, b, data, blocked) {
     check(`${variant} ${b.ticker} says there are no model exits`, (await text(page, '#disc-exits')).includes('no model exits'), 'exits');
   }
   eq(`${variant} ${b.ticker} order block ${status === 'ticket' && !blocked ? 'shown' : 'withheld'}`, order, status === 'ticket' && !blocked ? 1 : 0);
+  const cardOffers = (await page.locator('#detail .ss-action').getAttribute('data-ticket')) === 'order' ? 1 : 0;
+  eq(`${variant} ${b.ticker} the action card's Copy order has Fidelity's part-fill rule under it, and only when it offers one`,
+    [await brokerNotes(page, '#detail .ss-action'), await count(page, '#detail .ss-action pre.ss-order__pre')],
+    [Array(cardOffers).fill(BROKER_PART_FILL), cardOffers]);
   eq(`${variant} ${b.ticker} Fidelity's part-fill rule beside each printed order and nowhere else`, await brokerNotes(page, '#detail'),
-    Array(order + await count(page, '#detail [data-recorded-ticket]')).fill(BROKER_PART_FILL));
+    Array(order + cardOffers + await count(page, '#detail [data-recorded-ticket]')).fill(BROKER_PART_FILL));
   if (status === 'ticket' && !blocked) {
     const pre = await page.locator('#detail pre[data-order]').innerText();
     const o = b.plan.order_json;

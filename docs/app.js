@@ -4441,6 +4441,9 @@
       if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
+      // the card's Copy order hands the ticket over, so Fidelity's rule is
+      // read just above it and is never inside the copied lines
+      box.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
