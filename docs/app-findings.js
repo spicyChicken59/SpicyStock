@@ -137,15 +137,40 @@
     return { x: Math.max(2, W - 2 - width), anchor: 'start' };
   }
 
-  // a panel name keeps the first of its wordings whose measured length ends inside the chart;
-  // where the browser measures nothing (jsdom) the wording the estimate chose stands
+  // the length the browser measures for a drawn text, or 0 where it measures none (jsdom, or
+  // a text not on the page)
+  function measure(t) {
+    const len = typeof t.getComputedTextLength === 'function' ? t.getComputedTextLength() : 0;
+    return len > 0 ? len : 0;
+  }
+  // a text the browser measures longer than its room is drawn at that length, its glyphs
+  // narrowed, rather than past the chart; a text that fits is drawn as its font sets it
+  function squeeze(t, max) {
+    t.removeAttribute('textLength'); t.removeAttribute('lengthAdjust');
+    const len = measure(t);
+    if (len > max && max > 0) { t.setAttribute('textLength', r1(max)); t.setAttribute('lengthAdjust', 'spacingAndGlyphs'); return max; }
+    return len;
+  }
+  // a panel name keeps the first of its wordings whose measured length ends inside the chart,
+  // and the shortest where none does; where the browser measures nothing the wording the
+  // drawing chose stands
   function panelFit(pn, W) {
-    if (typeof pn.text.getComputedTextLength !== 'function') return;
     for (let k = 0; k < pn.words.length; k++) {
       if (pn.text.textContent !== pn.words[k]) pn.text.textContent = pn.words[k];
-      const len = pn.text.getComputedTextLength();
-      if (!(len > 0) || pn.x + len <= W - 2) return;
+      const len = measure(pn.text);
+      if (!len || pn.x + len <= W - 2) return;
     }
+  }
+  // the note keeps the first wording whose measured length fits the sessions before the first
+  // published night, its ground sized to that length; where none fits it is left out
+  function noteFit(nt) {
+    if (!nt.text.isConnected || !measure(nt.text)) return;
+    for (const words of nt.words) {
+      nt.text.textContent = words;
+      const len = measure(nt.text);
+      if (len <= nt.room) { nt.ground.setAttribute('width', r1(len + 4)); return; }
+    }
+    nt.ground.remove(); nt.text.remove();
   }
 
   // ---- geometry: pure, exported, drawn at the chart's OWN column ----------
@@ -219,9 +244,10 @@
     bands.appendChild(SC.svg('rect', { 'class': 'ss-find__wash', x: G.left, y: red, width: G.plotW, height: Math.max(0, G.aBottom - red), style: tone('danger') }));
     bands.appendChild(SC.svg('rect', { 'class': 'ss-find__wash', x: G.left, y: yellow, width: G.plotW, height: Math.max(0, red - yellow), style: tone('warn') }));
     const refs = [[red, 'red', th.ratio_10d_red], [yellow, 'yellow', th.ratio_10d_yellow]];
+    const edge = [];   // the labels end-anchored at the left axis, measured against its margin
     refs.forEach(([y, kind, value]) => {
       under.appendChild(SC.svg('line', { 'class': 'ss-find__ref', x1: G.left, x2: plotRight, y1: y, y2: y, 'data-ref': kind }));
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__ref-text', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-ref-label': kind }, fixed(value, 1)));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__ref-text', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-ref-label': kind }, fixed(value, 1))));
     });
     // panel A: the ratio, one line broken where a session has none, markers on the published nights
     let d = '', pen = false;
@@ -236,7 +262,7 @@
       const y = G.ya(t);
       under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
       if (refs.some((r) => Math.abs(r[0] - y) < 11)) return;   // the reference already names this height
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1)));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1))));
     });
     // the panel names, short on a phone so neither leaves the chart; each keeps its shorter
     // wordings, so the chart can step down to one once the browser has measured its font
@@ -255,20 +281,23 @@
     G.ticksB.forEach((t) => {
       const y = G.yb(t);
       if (t !== 0) under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R'));
+      edge.push(axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R')));
     });
     panel('outcome', G.bTop - 6, ['what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') +
       ' did: R per ticket, compressed axis', 'R per ticket, compressed axis', 'R per ticket']);
     // the note names the sessions before the first published night, inside their own
     // columns and on its own ground, so no gridline strikes it and no night sits under it;
     // where neither wording fits that space it is left out (the tables say the same)
+    let noteDrawn = null;
     if (model.nights.length && model.nights[0].i > 0) {
       const room = G.x(model.nights[0].i) - G.slot / 2 - G.left - 8;
-      const note = ['no published scan before ' + short(model.nights[0].session), 'no published scan yet'].find((s) => s.length * CHAR <= room);
+      const wordings = ['no published scan before ' + short(model.nights[0].session), 'no published scan yet'];
+      const note = wordings.find((s) => s.length * CHAR <= room);
       if (note) {
         const y = G.bTop + 12;
-        axis.appendChild(SC.svg('rect', { 'class': 'ss-find__note-ground', x: G.left + 2, y: y - 9, width: r1(note.length * CHAR + 4), height: 12 }));
-        axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y, 'data-note': 'before' }, note));
+        const ground = axis.appendChild(SC.svg('rect', { 'class': 'ss-find__note-ground', x: G.left + 2, y: y - 9, width: r1(note.length * CHAR + 4), height: 12 }));
+        const text = axis.appendChild(SC.svg('text', { 'class': 'ss-find__note', x: G.left + 4, y, 'data-note': 'before' }, note));
+        noteDrawn = { text, ground, room, words: wordings };
       }
     }
     // the study's freeze: one dotted line between the last exploratory session and the next
@@ -339,11 +368,15 @@
       const nt = model.nights[k];
       cursor.style.transform = 'translateX(' + r1(G.x(nt.i) - G.slot / 2) + 'px)';
       const text = pillText_(nt.block, model.min);
-      const width = text.length * 6.4 + 14;
+      pillText.textContent = text;
+      // the frame is the text's measured length where the browser measures one and the glyph
+      // estimate where it does not; a text longer than the plot is narrowed to it
+      const len = squeeze(pillText, plotRight - G.left - 18);
+      const width = (len || text.length * 6.4) + 14;
       const cx = Math.min(plotRight - width / 2 - 2, Math.max(G.left + width / 2 + 2, G.x(nt.i)));
       const yPill = G.aBottom + 6;
       pillRect.setAttribute('x', r1(cx - width / 2)); pillRect.setAttribute('y', yPill); pillRect.setAttribute('width', r1(width));
-      pillText.setAttribute('x', r1(cx)); pillText.setAttribute('y', yPill + 13); pillText.textContent = text;
+      pillText.setAttribute('x', r1(cx)); pillText.setAttribute('y', yPill + 13);
       pill.setAttribute('data-pill', nt.session);
     }
     function reveal(k) {
@@ -360,7 +393,7 @@
       return model.nights.map((nt, k) => ({ k, d: Math.abs(G.x(nt.i) - xs) / scale }))
         .filter((c) => c.d <= TAP_RADIUS).sort((a, b) => a.d - b.d);
     }
-    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels };
+    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels, edge, note: noteDrawn };
   }
   // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
   function pillText_(b, min) {
@@ -706,6 +739,23 @@
       }
       return { title: words(s.date), rows, meta };
     }
+    // the estimate is a glyph width and the browser's font may be wider, so every label the
+    // drawing placed by it is placed again by the length the browser measures: the bracket's,
+    // the panel names, the note, the axis labels and the pill. It runs after every draw and
+    // again whenever the page's fonts finish loading, since a web font that arrives after the
+    // draw changes every length; it moves labels and never rebuilds the chart
+    function fit() {
+      if (!view) return;
+      const G = view.G, bl = view.bracketLabel;
+      if (bl) {
+        const len = squeeze(bl.text, G.W - 4);
+        if (len) { const at = bracketPlace(bl.x1, bl.x2, bl.right, G.W, len); bl.text.setAttribute('x', r1(at.x)); bl.text.setAttribute('text-anchor', at.anchor); }
+      }
+      view.panels.forEach((pn) => panelFit(pn, G.W));
+      view.edge.forEach((t) => squeeze(t, G.left - 8));
+      if (view.note) noteFit(view.note);
+      view.place(step);
+    }
     function draw() {
       const width = chart.clientWidth;
       if (!width) return;
@@ -716,17 +766,7 @@
       if (tip) { tip.destroy(); tip = null; }
       view = buildSvg(SC, F, model, width, ids);
       chart.appendChild(view.svg);
-      // the estimate is a glyph width; the browser's font may be wider, so the label is
-      // placed again by the length the browser measures, when it measures one
-      const bl = view.bracketLabel;
-      const measured = bl && typeof bl.text.getComputedTextLength === 'function' ? bl.text.getComputedTextLength() : 0;
-      if (measured > 0) {
-        const at = bracketPlace(bl.x1, bl.x2, bl.right, view.G.W, measured);
-        bl.text.setAttribute('x', r1(at.x)); bl.text.setAttribute('text-anchor', at.anchor);
-      }
-      // so is each panel name: one the browser measures past the chart steps down to its next
-      // shorter wording, and the shortest stands
-      view.panels.forEach((pn) => panelFit(pn, view.G.W));
+      fit();
       if (SC.tooltip) {
         tip = SC.tooltip(chart, { live: false, top: 6, flip: 0.55, offsetX: 14 });
         // a narrow chart has no room beside a column for the tip, which would run off the
@@ -751,6 +791,11 @@
     let raf = 0;
     const redraw = () => { if (raf) return; raf = w.requestAnimationFrame(() => { raf = 0; draw(); }); };
     if (w.ResizeObserver) new w.ResizeObserver(redraw).observe(chart); else w.addEventListener('resize', redraw);
+    const fonts = w.document && w.document.fonts;
+    if (fonts && typeof fonts.addEventListener === 'function') {
+      const onFonts = () => { if (!chart.isConnected) { fonts.removeEventListener('loadingdone', onFonts); return; } fit(); };
+      fonts.addEventListener('loadingdone', onFonts);
+    }
     draw();
     retable();
     marketTwin(SC, marketTables, model);

@@ -9949,17 +9949,49 @@ jsdom lacks, so the estimate stands there). `tools/findings_cases.mjs` loads the
 1088). The old page, the measured placement dropped and the clamp dropped each
 fail both wider-font checks; a control (a comment) passes 1088/1088.
 
-**And that check found the next label of the class.** The page job on `0483cf00`
-and on `433e474c` failed one check each: at 320 px with the letters 0.8 px wider
-the lower panel's name, *R per ticket, compressed axis*, ended past the chart --
-the same estimate, on another label. Each panel name now carries its shorter
-wordings, and `draw()` keeps the first one the browser measures inside the chart
-(`panelFit()`; in jsdom, which measures nothing, the estimate's wording stands).
-The suite holds each phone panel to its phone wording where it fits, and loads
-the 320 px chart with the letters 2 px wider, where locally the outcome panel's
-name ends outside the chart without the fix: both names inside, the outcome's a
-shorter wording. The fit dropped, the bound widened and the loop starting at the
-shortest wording each die on the checks naming them; a control passes 1168/1168.
+**And CI kept finding the class, because CI draws a different font.** The page
+job failed on `0483cf00`, `433e474c` and `a6a77f93` on the 0.8 px case (the lower
+panel's name past the chart) and on `0a6e163b` on *320 light* (the bracket's
+label 12.2 px past the chart's left edge). The cause, found by a review workflow
+and reproduced here with the font files it downloaded: a runner reaches Google
+Fonts, so its pages draw IBM Plex Mono, about 7.0 px a glyph at 10.5 px, where
+this sandbox, which cannot reach Google, draws the Liberation Mono fallback at
+6.3. The chart measured its labels once, at the draw, and nothing measured them
+again when the web font arrived; whether a check failed depended on whether the
+font beat the replay's draw in that browser context. Served 1.5 s late, the real
+font reproduces CI's failures exactly; served at once, nothing is out. The same
+review found three more labels still placed by the glyph estimate: the note
+before the first night (past its ground and over the first night's mark at
+390 px from 0.8 px wider), the pill (its frame sized at 6.4 px a glyph, the text
+across it from 0.8 px) and the ±10R ticks (past the chart's left edge on a phone
+from 1.2 px, in the strata that reach them).
+
+`fit()` now measures every label the drawing placed by the estimate -- the
+bracket's (narrowed to the chart if even its measured length is wider), the panel
+names (`panelFit()`, the first wording that ends inside the chart), the note
+(`noteFit()`, its ground sized to the measured text, left out where no wording
+fits its sessions), the left-axis labels (narrowed to the margin) and the pill
+(framed by its measured text) -- after every draw, and again whenever
+`document.fonts` fires *loadingdone*, without rebuilding the chart. In jsdom
+`draw()` never runs (the chart has no width), so nothing there is fitted. The
+suite reads the chart only once the page's fonts have settled; drives the
+letters 0.4, 0.8 and 1.2 px wider at 320 and 390, in the default stratum and in
+every burst's (whose ±10R ticks are drawn), holding every label, the pill's frame
+and the note's ground; widens the letters after the draw and says the fonts have
+loaded, with Google's fonts refused so a runner and this sandbox draw the same
+face, and holds the labels fitted and the chart not rebuilt; drives 3 px at 320
+(the phone wording measured past the chart first, the step-down held on the first
+draw, after a stratum change and after a redraw, the bracket narrowed) and at 390
+(the note left out); and 700 px, where every burst's desktop name steps to its
+middle wording. 1258/1258 here, and the real font served late (1.5 s, 320 and 390,
+0 and 0.8 px) leaves nothing out in every repeat. Ten mutants through routed
+copies: the font listener dropped (5 checks), the note's fit dropped (8) and its
+removal dropped (8), the pill unmeasured (10) and its text unnarrowed (2), the
+axis labels unnarrowed (4), the bracket uncapped (2), the panels unfitted (11),
+the fit on the first draw only (13), a desktop list jumping to its shortest
+wording (1) all die on the checks naming them, and `0a6e163b` itself fails 24.
+A cap on the pill's frame survived as equivalent -- the measured text is already
+narrowed to the plot -- and is removed. The control (a comment) passes.
 
 **The review, worked.** A workflow by execution over `df0bf3e2`, three finders
 (the numbers, the page, the tests) and one skeptic a finding, returned 17
@@ -9996,7 +10028,9 @@ The five page mutants the review named -- the unreadable sentence saying the
 split is readable, the all-red line saying green, "clear of zero" only above
 it, `oneRate()` always a rate, the red-night clause printed with no red night
 -- each die through a routed copy on the two checks naming its rule (1158/1160);
-the control (a comment) passes 1160/1160. Measured on that tree: 4714 collected;
+the control (a comment) passes 1160/1160. Measured on that tree (`a6a77f93`):
+4714 collected, and the full suite, run in the mutation worktree at the commit,
+4680 passed and 34 environment-gated skips in 23 m 43 s;
 the re-read, findings, findings-page, docs and evidence-review tests 95 passed;
 both `--check`s current; continuity 137; gitleaks 8.24.3 over the five files the
 round changed: no leaks.

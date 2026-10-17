@@ -80,6 +80,28 @@ const labelsFit = (p) => p.evaluate(() => {
   const touching = dates.filter((r, i) => i > 0 && r.left < dates[i - 1].right + 2).length;
   return { out, touching };
 });
+// the pill's text inside its frame, and the frame inside the chart
+const pillFits = (p) => p.evaluate(() => {
+  const svg = document.querySelector('#historical-evidence .ss-find__svg'), pill = svg && svg.querySelector('[data-pill]');
+  if (!pill) return { pill: false };
+  const s = svg.getBoundingClientRect(), r = pill.querySelector('rect').getBoundingClientRect(), t = pill.querySelector('text').getBoundingClientRect();
+  return { pill: true, framed: t.left >= r.left - 0.5 && t.right <= r.right + 0.5, inside: r.left >= s.left - 1 && r.right <= s.right + 1 };
+});
+// the note's text on its own ground, or the note left out
+const noteGround = (p) => p.evaluate(() => {
+  const note = document.querySelector('#historical-evidence text[data-note="before"]');
+  if (!note) return true;
+  const n = note.getBoundingClientRect(), g = note.previousElementSibling.getBoundingClientRect();
+  return n.left >= g.left - 0.5 && n.right <= g.right + 0.5;
+});
+// a style that widens the chart's letters, added as the document loads
+const widen = (page, px) => page.addInitScript((v) => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: ' + v + 'px; }'; document.head.appendChild(st);
+  });
+}, px);
+// the fonts said to have finished loading, as a browser says it when a web font arrives, then two frames
+const fontsDone = (p) => p.evaluate(() => { document.fonts.dispatchEvent(new Event('loadingdone')); return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
 // each panel's name, its wording, and whether it ends inside the chart and the screen
 const panelsOf = (page) => page.evaluate(() => Array.from(document.querySelectorAll('#historical-evidence text[data-panel]')).map((t) => {
   const r = t.getBoundingClientRect(), b = t.ownerSVGElement.getBoundingClientRect();
@@ -99,6 +121,9 @@ async function ready(p) {
   await p.waitForFunction((sel) => { const h = document.querySelector(sel); return h && (h.dataset.findings === 'ready' || h.dataset.findings === 'error'); }, HOST, { timeout: 15000 });
   const state = await attr(p, HOST, 'data-findings');
   if (state === 'ready') await p.waitForSelector('#historical-evidence .ss-find__svg', { timeout: 5000 });
+  // a runner reaches Google's fonts and this sandbox does not: the chart is read once the page's
+  // fonts have settled and two frames have passed, so both read the face the reader is shown
+  await p.evaluate(() => document.fonts.ready.then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))));
   await settle(p, 120);
   return state;
 }
@@ -695,38 +720,97 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
   // a font wider than the glyph width the chart estimates: a runner's font is not this sandbox's,
   // and the bracket's label is placed again by the length the browser measures, so on a narrow
   // chart it stays inside whichever way it has to be placed
-  for (const spacing of [0.4, 0.8]) {
-    const wide = await load(FULL, 320, { height: 844, touch: true, beforeLoad: async (page) => {
-      await fast(page);
-      await page.addInitScript((px) => {
-        document.addEventListener('DOMContentLoaded', () => {
-          const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: ' + px + 'px; }'; document.head.appendChild(st);
-        });
-      }, spacing);
-    } });
-    eq(`320, letters ${spacing}px wider: the replay is ready`, await ready(wide.page), 'ready');
-    check(`320, letters ${spacing}px wider: the wider font reached the chart`, await wide.page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#historical-evidence [data-bracket-label]')).letterSpacing) > 0));
-    eq(`320, letters ${spacing}px wider: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wide.page), { out: [], touching: 0 });
-    eq(`320, letters ${spacing}px wider: findings errors`, wide.errors, []);
+  // a font wider than the estimate, present before the draw: every label inside the chart and
+  // the screen at 320 and at 390, where the note is drawn, in the default stratum and in every
+  // burst's, whose ±10R ticks are the widest axis labels; the pill's text inside its frame and
+  // the note on its own ground over no mark
+  for (const spacing of [0.4, 0.8, 1.2]) for (const width of [320, 390]) {
+    const wide = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => { await fast(page); await widen(page, spacing); } });
+    const tag = `${width}, letters ${spacing}px wider`, wp = wide.page;
+    eq(`${tag}: the replay is ready`, await ready(wp), 'ready');
+    check(`${tag}: the wider font reached the chart`, await wp.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#historical-evidence [data-bracket-label]')).letterSpacing) > 0));
+    eq(`${tag}: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wp), { out: [], touching: 0 });
+    eq(`${tag}: the pill's text is inside its frame, the frame inside the chart`, await pillFits(wp), { pill: true, framed: true, inside: true });
+    check(`${tag}: the note is on its own ground, or left out`, await noteGround(wp));
+    eq(`${tag}: the note is over no mark`, await noteClear(wp), { ground: true, under: 0 });
+    await wp.evaluate(() => window.SCStock.findingsHandle.setStratum('all')); await settle(wp, 120);
+    check(`${tag}, every burst: a ±10R tick is drawn`, await wp.evaluate(() => document.querySelectorAll('#historical-evidence [data-r-tick="10"], #historical-evidence [data-r-tick="-10"]').length > 0));
+    eq(`${tag}, every burst: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wp), { out: [], touching: 0 });
+    eq(`${tag}, every burst: the pill's text is inside its frame, the frame inside the chart`, await pillFits(wp), { pill: true, framed: true, inside: true });
+    eq(`${tag}: findings errors`, wide.errors, []);
     await wide.context.close();
   }
-  // a font far wider than any measured: each panel name steps down to a wording the browser
-  // measures inside the chart, and the outcome panel's is shorter than the one a phone starts with
-  const widest = await load(FULL, 320, { height: 844, touch: true, beforeLoad: async (page) => {
-    await fast(page);
-    await page.addInitScript(() => {
-      document.addEventListener('DOMContentLoaded', () => {
-        const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: 2px; }'; document.head.appendChild(st);
-      });
+  // a web font that arrives after the draw: the chart is drawn against the fallback, the letters
+  // then widen and the fonts are said to have loaded, as a browser says it when Google's face
+  // arrives; the labels are fitted again and the chart is not rebuilt. Google's fonts are
+  // refused here, so a runner and this sandbox draw against the same face
+  for (const width of [320, 390]) {
+    const late = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => {
+      await fast(page);
+      await page.route(/fonts\.g(oogleapis|static)\.com/, (r) => r.abort());
+    } });
+    const tag = `${width}, a wider font after the draw`, lp = late.page;
+    eq(`${tag}: the replay is ready`, await ready(lp), 'ready');
+    await lp.evaluate(() => {
+      document.querySelector('#historical-evidence .ss-find__svg').setAttribute('data-first-draw', '');
+      const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: 1.2px; }'; document.head.appendChild(st);
+      return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
-  } });
-  eq('320, letters 2px wider: the replay is ready', await ready(widest.page), 'ready');
-  const wp = await panelsOf(widest.page);
-  eq('320, letters 2px wider: both panel names are drawn, each inside the chart and the screen', wp.map((x) => [x.name, x.inside]), [['ratio', true], ['outcome', true]]);
-  const wo = (wp.find((x) => x.name === 'outcome') || {}).text;
-  check('320, letters 2px wider: the outcome panel steps down to a shorter wording', typeof wo === 'string' && wo !== 'R per ticket, compressed axis' && 'R per ticket, compressed axis'.startsWith(wo), wo);
-  eq('320, letters 2px wider: findings errors', widest.errors, []);
-  await widest.context.close();
+    const before = [await labelsFit(lp), await pillFits(lp), await noteGround(lp)];
+    check(`${tag}: before the fonts are said to have loaded, labels placed for the narrower face no longer fit`, before[0].out.length > 0 || !before[1].framed || !before[2], before);
+    await fontsDone(lp);
+    eq(`${tag}: once they are, every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(lp), { out: [], touching: 0 });
+    eq(`${tag}: once they are, the pill's text is inside its frame, the frame inside the chart`, await pillFits(lp), { pill: true, framed: true, inside: true });
+    check(`${tag}: once they are, the note is on its own ground, or left out`, await noteGround(lp));
+    eq(`${tag}: once they are, the note is over no mark`, await noteClear(lp), { ground: true, under: 0 });
+    check(`${tag}: the labels were fitted again, the chart not rebuilt`, await lp.evaluate(() => document.querySelector('#historical-evidence .ss-find__svg').hasAttribute('data-first-draw')));
+    eq(`${tag}: findings errors`, late.errors, []);
+    await late.context.close();
+  }
+  // a font far wider than any measured, at 320 and at 390: the phone's outcome wording runs past
+  // the chart there (measured, so the step-down is not assumed), each panel name steps down to a
+  // wording the browser measures inside it, on the first draw and on every later one; the labels
+  // the page measures stay inside, the bracket's narrowed to the chart, and at 390 the note that
+  // no longer fits its sessions is left out (the dates are thinned by the estimate, held above to
+  // 1.2 px)
+  for (const width of [320, 390]) {
+    const widest = await load(FULL, width, { height: 844, touch: true, beforeLoad: async (page) => { await fast(page); await widen(page, 3); } });
+    const xp = widest.page, tag = `${width}, letters 3px wider`;
+    eq(`${tag}: the replay is ready`, await ready(xp), 'ready');
+    const narrowest = width === 320;   // at 390 the phone wording and the bracket still fit
+    if (narrowest) check(`${tag}: the phone's outcome wording, measured at this font, runs past the chart`, await xp.evaluate(() => {
+      const t = document.querySelector('#historical-evidence text[data-panel="outcome"]'), probe = t.cloneNode(false);
+      probe.textContent = 'R per ticket, compressed axis'; t.parentNode.appendChild(probe); const len = probe.getComputedTextLength(); probe.remove();
+      return +t.getAttribute('x') + len > t.ownerSVGElement.viewBox.baseVal.width - 2;
+    }));
+    for (const [how, act] of [['on the first draw', null], ['after every burst is chosen', () => window.SCStock.findingsHandle.setStratum('all')], ['after a redraw', () => window.SCStock.findingsHandle.redraw()]]) {
+      if (act) { await xp.evaluate(act); await settle(xp, 120); }
+      const wp2 = await panelsOf(xp);
+      eq(`${tag}, ${how}: both panel names are drawn, each inside the chart and the screen`, wp2.map((x) => [x.name, x.inside]), [['ratio', true], ['outcome', true]]);
+      const wo = (wp2.find((x) => x.name === 'outcome') || {}).text;
+      if (narrowest) check(`${tag}, ${how}: the outcome panel steps down to a shorter wording`, typeof wo === 'string' && wo !== 'R per ticket, compressed axis' && 'R per ticket, compressed axis'.startsWith(wo), wo);
+    }
+    eq(`${tag}: every label the page measures is inside the chart and the screen`, (await labelsFit(xp)).out, []);
+    if (narrowest) check(`${tag}: the bracket's label is narrowed to the chart`, await xp.evaluate(() => document.querySelector('#historical-evidence [data-bracket-label]').hasAttribute('textLength')));
+    eq(`${tag}: the pill's text is inside its frame, the frame inside the chart`, await pillFits(xp), { pill: true, framed: true, inside: true });
+    // the first night's A-quality pill is the longest wording: at 320 it is longer than the plot
+    // and is narrowed to it, its frame inside the chart
+    await xp.evaluate(() => { window.SCStock.findingsHandle.setStratum('admitted'); window.SCStock.findingsHandle.go(0); }); await settle(xp, 120);
+    eq(`${tag}, the first night: the pill's text is inside its frame, the frame inside the chart`, await pillFits(xp), { pill: true, framed: true, inside: true });
+    if (narrowest) check(`${tag}, the first night: the pill's long text is narrowed to the plot`, await xp.evaluate(() => document.querySelector('#historical-evidence [data-pill] text').hasAttribute('textLength')),
+      await xp.evaluate(() => document.querySelector('#historical-evidence [data-pill] text').textContent));
+    if (width === 390) eq(`${tag}: the note no longer fits its sessions and is left out`, await xp.evaluate(() => !!document.querySelector('#historical-evidence text[data-note="before"]')), false);
+    eq(`${tag}: findings errors`, widest.errors, []);
+    await widest.context.close();
+  }
+  // a desktop list steps down one wording at a time: at 700 px with the letters 2px wider every
+  // burst's long outcome name runs past the chart and the middle wording fits
+  const desk = await load(FULL, 700, { beforeLoad: async (page) => { await fast(page); await widen(page, 2); } });
+  eq('700, letters 2px wider: the replay is ready', await ready(desk.page), 'ready');
+  await desk.page.evaluate(() => window.SCStock.findingsHandle.setStratum('all')); await settle(desk.page, 120);
+  eq('700, letters 2px wider, every burst: the outcome panel keeps the middle wording, inside the chart', (await panelsOf(desk.page)).filter((x) => x.name === 'outcome').map((x) => [x.text, x.inside]), [['R per ticket, compressed axis', true]]);
+  eq('700, letters 2px wider: findings errors', desk.errors, []);
+  await desk.context.close();
   const l = await load(FULL, 1280, { theme: 'light' });
   eq('light: the replay is ready', await ready(l.page), 'ready');
   if (shotsDir) await l.page.locator('#historical-evidence').screenshot({ path: path.join(shotsDir, 'findings-1280-light.png') });
