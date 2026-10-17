@@ -673,6 +673,24 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`${tag}: findings errors`, n.errors, []);
     await n.context.close();
   }
+  // a font wider than the glyph width the chart estimates: a runner's font is not this sandbox's,
+  // and the bracket's label is placed again by the length the browser measures, so on a narrow
+  // chart it stays inside whichever way it has to be placed
+  for (const spacing of [0.4, 0.8]) {
+    const wide = await load(FULL, 320, { height: 844, touch: true, beforeLoad: async (page) => {
+      await fast(page);
+      await page.addInitScript((px) => {
+        document.addEventListener('DOMContentLoaded', () => {
+          const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: ' + px + 'px; }'; document.head.appendChild(st);
+        });
+      }, spacing);
+    } });
+    eq(`320, letters ${spacing}px wider: the replay is ready`, await ready(wide.page), 'ready');
+    check(`320, letters ${spacing}px wider: the wider font reached the chart`, await wide.page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#historical-evidence [data-bracket-label]')).letterSpacing) > 0));
+    eq(`320, letters ${spacing}px wider: every chart label is inside the chart and the screen, no two dates touch`, await labelsFit(wide.page), { out: [], touching: 0 });
+    eq(`320, letters ${spacing}px wider: findings errors`, wide.errors, []);
+    await wide.context.close();
+  }
   const l = await load(FULL, 1280, { theme: 'light' });
   eq('light: the replay is ready', await ready(l.page), 'ready');
   if (shotsDir) await l.page.locator('#historical-evidence').screenshot({ path: path.join(shotsDir, 'findings-1280-light.png') });

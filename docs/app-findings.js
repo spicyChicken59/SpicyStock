@@ -126,6 +126,15 @@
     return null;
   }
 
+  // the bracket's label starts at the bracket's left end; ends at its right end when it would run
+  // past the chart; and when neither fits, sits inside the chart with its right end at the edge
+  function bracketPlace(x1, x2, right, W, width) {
+    if (x1 + 4 + width <= W - 2) return { x: x1 + 4, anchor: 'start' };
+    const end = Math.min(x2, right);
+    if (end - width >= 2) return { x: end, anchor: 'end' };
+    return { x: Math.max(2, W - 2 - width), anchor: 'start' };
+  }
+
   // ---- geometry: pure, exported, drawn at the chart's OWN column ----------
   function geometry(width, model) {
     const W = Math.max(240, Math.round(width)), narrow = W < 560;
@@ -290,14 +299,16 @@
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__date', x: last ? plotRight : G.x(i), y: G.axisY, 'text-anchor': last ? 'end' : 'middle' }, label));
     });
     const wFrom = model.index[model.window.from], wTo = model.index[model.window.through];
+    let bracketLabel = null;
     if (isNum(wFrom) && isNum(wTo)) {
       const x1 = r1(G.x(wFrom) - G.slot / 2), x2 = r1(G.x(wTo) + G.slot / 2), y = G.bracketY;
       over.appendChild(SC.svg('path', { 'class': 'ss-find__bracket', d: 'M' + x1 + ',' + (y - 5) + 'V' + y + 'H' + x2 + 'V' + (y - 5), 'data-bracket': 'backtest' }));
-      // the label starts at the bracket's left end, or ends at its right end when it would run past the chart
+      // placed by the estimate while drawing, and again by its measured length once the chart is on the page
       const label = (G.narrow ? 'exact lookback · ' : 'the backtest’s exact-lookback pass · ') + plural(model.window.count, 'session');
-      const fits = x1 + 4 + label.length * CHAR <= G.W - 2;
-      axis.appendChild(SC.svg('text', { 'class': 'ss-find__bracket-text', x: fits ? x1 + 4 : Math.min(x2, plotRight), y: y - 9, 'text-anchor': fits ? 'start' : 'end',
-        'data-bracket-label': 'backtest' }, label));
+      const at = bracketPlace(x1, x2, plotRight, G.W, label.length * CHAR);
+      bracketLabel = { x1, x2, right: plotRight, text: SC.svg('text', { 'class': 'ss-find__bracket-text', x: r1(at.x), y: y - 9, 'text-anchor': at.anchor,
+        'data-bracket-label': 'backtest' }, label) };
+      axis.appendChild(bracketLabel.text);
     }
     // hit columns: one per session, over everything; a press is resolved by distance
     const hits = SC.svg('g', { 'class': 'ss-find__hits' });
@@ -330,7 +341,7 @@
       return model.nights.map((nt, k) => ({ k, d: Math.abs(G.x(nt.i) - xs) / scale }))
         .filter((c) => c.d <= TAP_RADIUS).sort((a, b) => a.d - b.d);
     }
-    return { svg, G, place, reveal, hits, nightMarks, near };
+    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel };
   }
   // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
   function pillText_(b, min) {
@@ -685,6 +696,14 @@
       if (tip) { tip.destroy(); tip = null; }
       view = buildSvg(SC, F, model, width, ids);
       chart.appendChild(view.svg);
+      // the estimate is a glyph width; the browser's font may be wider, so the label is
+      // placed again by the length the browser measures, when it measures one
+      const bl = view.bracketLabel;
+      const measured = bl && typeof bl.text.getComputedTextLength === 'function' ? bl.text.getComputedTextLength() : 0;
+      if (measured > 0) {
+        const at = bracketPlace(bl.x1, bl.x2, bl.right, view.G.W, measured);
+        bl.text.setAttribute('x', r1(at.x)); bl.text.setAttribute('text-anchor', at.anchor);
+      }
       if (SC.tooltip) {
         tip = SC.tooltip(chart, { live: false, top: 6, flip: 0.55, offsetX: 14 });
         // a narrow chart has no room beside a column for the tip, which would run off the

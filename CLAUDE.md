@@ -9925,6 +9925,23 @@ findings digest unchecked, the missing findings file read from the rolling one,
 the review reading the new study, the findings origin unnamed) all die in the
 test naming them; the control (a docstring) survives.
 
+**CI found what the sandbox could not.** The page job on `df0bf3e2` passed
+16193 of 16195: at 320 px, dark and light, the bracket's label *exact lookback ·
+28 sessions* sat partly outside the chart. Its placement read an estimated glyph
+width (`CHAR`, 6.5 px for the 10.5 px mono face): the label starts at the
+bracket's left end, or ends at its right end when that would run past the chart.
+The rebuilt file has more sessions before the first night, so the bracket moved
+left and an end-anchored label had about 7 px to spare here; the runner draws
+the face wider. Reproduced here by loading the page with `letter-spacing: .4px`
+on the chart's text: the same two checks fail, the rest pass. `bracketPlace()`
+now has a third case -- neither end fits, so the label sits inside the chart with
+its right end at the edge -- and `draw()` places it again by the length the
+browser measures once the chart is on the page (`getComputedTextLength()`, which
+jsdom lacks, so the estimate stands there). `tools/findings_cases.mjs` loads the
+320 px chart with its letters 0.4 and 0.8 px wider (8 checks; the suite is
+1088). The old page, the measured placement dropped and the clamp dropped each
+fail both wider-font checks; a control (a comment) passes 1088/1088.
+
 **Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
 publications only; dated readers read retained inputs, never a rolling file.
 Fix if it bites: the frozen study's footer and reading rule still say every
