@@ -50,7 +50,12 @@ DOCUMENT_CACHE_SECONDS = 24 * 60 * 60
 MAX_CACHE_ENTRIES = 256
 MAX_CACHE_BYTES = 128 * 1024 * 1024
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
-USER_AGENT = "SpicyStock issuer evidence (https://github.com/spicyChicken59/SpicyStock)"
+#: SEC's fair-access policy asks every automated request to name its sender and
+#: a contact email ("Sample Company Name AdminContact@sample.com"); without the
+#: email the ticker mapping answered HTTP 403 on all five collections from 10 to
+#: 16 October 2026 that recorded a status. The owner chose this contact on 17
+#: October 2026.
+USER_AGENT = "SpicyStock spicychicken.prod@outlook.com"
 HEX = re.compile(r"[a-f0-9]{64}\Z")
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,31}\Z")
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")

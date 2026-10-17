@@ -1,6 +1,7 @@
 """HTTP refusal diagnostics retain bounded facts without reading error bodies."""
 from copy import deepcopy
 import json
+import re
 from types import SimpleNamespace
 from urllib.error import HTTPError, URLError
 from urllib.request import Request
@@ -20,6 +21,13 @@ class UnreadBody:
         pytest.fail('an HTTP error body was read')
     def close(self):
         self.closed = True
+
+
+def test_every_sec_request_names_a_sender_and_a_contact_email():
+    """SEC's fair-access policy asks for "Company Name contact@domain"; a
+    User-Agent with no email is what the ticker mapping answered 403 to."""
+    sender, _, contact = issuer.USER_AGENT.rpartition(" ")
+    assert sender.strip() and re.fullmatch(r"[^@\s]+@[^@\s]+\.[A-Za-z]{2,}", contact), issuer.USER_AGENT
 
 
 @pytest.mark.parametrize('status', [300, 301, 302, 307, 308, 400, 401, 403, 404, 408, 429, 500, 503, 599])
