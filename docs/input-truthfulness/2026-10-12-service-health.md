@@ -1,12 +1,14 @@
 # 12 October 2026 — the service, read off the retained publications (#111)
 
 **Superseded on 13 October by [the `service_health_v3` reading](2026-10-13-service-health.md)**, which reads
-each publication against the evening slots its own rules archived. This report and the files under
-`2026-10-12-service-health-evidence/` are kept as they were written: `service-health.{json,md}` are the
-v2 reading, and `v1/` holds the first version as `main` carried it before the correction below
-(`279ec5a3`), each held to its git blob identity by `tests/test_service_health.py`. The tool no longer
-re-derives either, so `--check` below now holds the 13 October files; over this history the
-correction moves nothing, no record here archiving its own slots.
+each publication against the evening slots its own rules archived. The files under
+`2026-10-12-service-health-evidence/` are kept as they were written, and this report as written apart
+from this note: `service-health.{json,md}` are the v2 reading, and `v1/` holds the first version as
+`main` carried it before the correction below (`279ec5a3`); `tests/test_service_health.py` holds the
+four files and this report to their git blob identities. The tool no longer
+re-derives either, so `--check` below now holds the newest dated reading (the 17 October files, since
+the 13 October reading was itself superseded); over this history the correction moves nothing, no record
+here archiving its own slots.
 
 `tools/service_health.py` is a reading of the service and not of the signal.
 It walks the commits that put a publication on `main` and the commits that put

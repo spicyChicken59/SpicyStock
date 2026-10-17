@@ -969,11 +969,12 @@ archived, and a record from before the block is asked for none. The run:
   rules that archive no delivery rule, is set aside by name and does not count
   as a publication. A session reads unpublished only when no other readable
   publication exists for it. It
-  writes `docs/input-truthfulness/2026-10-13-service-health-evidence/service-health.{json,md}`
+  writes `docs/input-truthfulness/2026-10-17-service-health-evidence/service-health.{json,md}`
   pinned to one commit whose time is its clock; `--check` re-reads the commits
   the file names (fetching them into a shallow checkout) and holds both files.
-  The 12 October reading beside it (v2, and v1 under its `v1/`) is kept as it
-  was written and no longer re-derived; the tests hold its bytes.
+  The 12 and 13 October readings beside it (the 12th's v2, and v1 under its
+  `v1/`) are kept as they were written and no longer re-derived; the tests
+  hold their bytes.
   `tools/recovery_rehearsal.py` rehearses what #111 asks the service to survive:
   it drives `pipeline.run_evening()` through the suite's own doubles over one
   synthetic market, one pinned night after another, injecting one failure a

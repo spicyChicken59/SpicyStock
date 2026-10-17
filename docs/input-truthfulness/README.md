@@ -38,6 +38,16 @@ recovery at the next open; reader calls stayed within names times attempts, the
 empty balance stopping them after one. `--check` runs it again and holds both
 files. Everything is injected: it is not a live provider, a runner or GitHub.
 
+[17 October 2026: the service through the first night under the retired seed](2026-10-17-service-health.md)
+is the `service_health_v3` reading run again, pinned to `426d3c59`, the issuer
+receipt that followed the 16 October publication: 26 of 26 due sessions
+published, all 26 before the next open, fresh, latency median 264.4 minutes by
+the landing commit, 19 of 26 after the retry slot; the first three
+source-recovery receipts (all `partial`, each before its applicable open) and
+the first five archived cost blocks (10 calls, 73,439 input tokens); the 16
+October night `ok`, the first under the seed that no longer asks for WBD. The
+13 October reading is kept as written; `--check` holds the 17 October files.
+
 [13 October 2026: the service, read against each publication's own slots](2026-10-13-service-health.md)
 closes #163: `service_health_v3` reads a publication whose rules archive the
 evening slots against those slots, once its `run.delivery` re-derives from
@@ -47,7 +57,7 @@ one under the rule, archived the current slots). Through 13 October: 22 of 23
 due sessions published, all 22 before the next open, the 13 October session
 pending at the clock, latency median 283.4 minutes by the landing commit, 15 of 22
 after the retry slot. The 12 October reading is kept as written (v2, and v1
-under its `v1/`); `--check` holds the 13 October files.
+under its `v1/`); the 17 October reading above supersedes it.
 
 [12 October 2026: the service, read off the retained publications](2026-10-12-service-health.md)
 starts #111's accounting: `tools/service_health.py` walks the commits that put
