@@ -197,7 +197,7 @@
       text: 'A buy stop-limit for the next open: the buy stop at the burst close, ' + usd(X.trigger) + ', and its limit the lower of '
         + 'the close +' + g(N('plan.entry_above_pct')) + '% and the highest price at which the stop is still inside his '
         + g(N('plan.max_stop_pct')) + '% line — here ' + usd(X.limit) + '. The stop is the burst day’s low, else the bar’s '
-        + 'midpoint, attached the moment the buy fills; a burst whose stop no limit above the trigger can keep inside '
+        + 'midpoint, riding on the buy and live once it has filled in full; a burst whose stop no limit above the trigger can keep inside '
         + g(N('plan.max_stop_pct')) + '% is withheld, the setup kept. Risk ' + g(N('plan.default_risk_pct'))
         + '% of equity: shares = risk ÷ (limit − stop), never more than ' + g(N('plan.default_max_position_pct'))
         + '% of equity, at most ' + N('plan.default_max_open_positions') + ' open plans.',

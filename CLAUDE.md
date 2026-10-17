@@ -2,7 +2,8 @@
 
 **Active goal (updated 10 October 2026):** [PRODUCT_GOAL.md](PRODUCT_GOAL.md) is the
 current product direction and milestone contract. Mo uses a $2,000 cash
-account and America/Chicago time; the broker is unspecified. New production
+account and America/Chicago time; the broker is Fidelity (17 October 2026,
+`knowledge/broker-fidelity.md`). New production
 workflow sizing is versioned at $2,000 / 0.5%; historical publications and local
 default model assumptions retain their own values. Mo explicitly authorizes an
 ongoing choose/build/test/review/merge/verify loop until manually stopped. Resume

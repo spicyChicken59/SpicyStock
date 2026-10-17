@@ -1512,6 +1512,7 @@
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
+    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,
@@ -1531,6 +1532,7 @@
       wrap.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:10px', text: 'what the ticket enforces, and what it leaves to you' }));
       wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
     }
+    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     return wrap;
   }
   function stopWords(plan) {
@@ -1666,6 +1668,12 @@
     if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
     return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
   }
+  // What Fidelity does with a ticket's attached stop: the OTO sell stop is
+  // released only when the buy fills in full (knowledge/broker-fidelity.md).
+  // The broker's sentence, printed beside the record's own ticket terms and
+  // never inside them; report.BROKER_PART_FILL and the handoff's copy are
+  // held equal to it by tests/test_docs.py.
+  const BROKER_PART_FILL = 'At Fidelity the OTO sell stop is released only when the buy fills in full. If the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, and check that no second sell stop remains for shares you do not hold.';
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -4804,6 +4812,7 @@
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
+    if (rows.length) sheet.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     const notes = acct.notes || [];
     if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }

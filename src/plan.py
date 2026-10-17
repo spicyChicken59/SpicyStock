@@ -542,8 +542,10 @@ def hazards(gain_pct: float, extension_pct: float | None) -> list[dict[str, Any]
 NO_ORDER: dict[str, Any] = {"order_line": None, "order_json": None, "order_readback": None,
                             "order_terms": None}
 
-#: The conditional word Fidelity's ticket uses for "then": the sell stop is
-#: placed the moment the buy fills, never before.
+#: The conditional word Fidelity's ticket uses for "then": the sell stop rides
+#: on the buy and is released to the market only when the buy fills in full,
+#: never before, so a buy filled in part leaves its shares without it
+#: (knowledge/broker-fidelity.md).
 OTO = "one_triggers_the_other"
 
 #: What the ticket enforces and what it leaves to the reader, printed beside
