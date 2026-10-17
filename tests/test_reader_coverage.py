@@ -165,11 +165,11 @@ def scripted(monkeypatch, script):
     return calls
 
 
-def four_reads(tmp_path, monkeypatch, script, admitted):
-    frames = {t: a_plus_frame() for t in ("AAA", "BBB", "CCC", "DDD")}
+def four_reads(tmp_path, monkeypatch, script, admitted, tickers=("AAA", "BBB", "CCC", "DDD")):
+    frames = {t: a_plus_frame() for t in tickers}
     rows, _, _ = pipeline.scan_frames(frames, universe.build(None, explicit=list(frames)), pipeline.RunReport())
     assert [(r["ticker"], r["grade_mechanical"], r["vetoes"]) for r in rows] == \
-        [(t, "A+", []) for t in frames], "four admissible A+ bursts, or the case tests something else"
+        [(t, "A+", []) for t in frames], "admissible A+ bursts, or the case tests something else"
     calls = scripted(monkeypatch, script)
     rep = pipeline.RunReport()
     reads, _ = pipeline.read_charts_and_grade(rows, frames, rep, tmp_path, pipeline.grader_prompt(), False,
@@ -281,6 +281,16 @@ def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, ver
     assert both["verdict"] == "unavailable", both
     planned = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=("B",), refusal_fraction=0.25, refusal_min=1)
     assert (planned["verdict"], planned["refused_admissible"]) == ("partial", ["T0"]), planned
+
+
+def test_the_evenings_reads_take_the_floor(tmp_path, monkeypatch):
+    """The floor reaches the night through the evening's own read of its
+    charts, not only through reads() called by hand: two A+ bursts read, one
+    refused, is tolerated with a limit of one and raises no problem."""
+    reads, kinds, calls, rows = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=(),
+                                           tickers=("AAA", "BBB"))
+    assert (reads["requested"], reads["refusal_limit"], reads["verdict"], kinds) == (2, 1, "tolerated", []), reads
+    assert reads["refused_names"] == ["BBB"] and rows["BBB"]["reader_coverage"] == "fallback"
 
 
 def test_the_evening_archives_the_floor(market, claude, fake_resend, tmp_path):
