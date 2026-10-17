@@ -508,8 +508,12 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    budget, the position cap and his 4% stop line at every fill it can take
    — the position, the planned price-to-stop risk, the aim, the hazards,
    and the order in Fidelity's field order with a copy button: a buy
-   stop-limit with a one-triggers-the-other sell stop attached, and under
-   it what the ticket enforces and what it leaves to the reader); the
+   stop-limit with a one-triggers-the-other sell stop riding on it, which
+   Fidelity releases only when the buy fills in full, so a part fill needs
+   a separate sell stop the ticket's terms name, and under it what the
+   ticket enforces and what it leaves to the reader;
+   `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket and
+   labels each Fidelity fact as its own words, inferred or unconfirmed); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
    line the buy row says so in the plan's own words, and a burst no limit
@@ -2000,6 +2004,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
+                broker-fidelity.md (the ticket on Fidelity's order entry, every fact labelled by its source)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)

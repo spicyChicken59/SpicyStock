@@ -542,8 +542,10 @@ def hazards(gain_pct: float, extension_pct: float | None) -> list[dict[str, Any]
 NO_ORDER: dict[str, Any] = {"order_line": None, "order_json": None, "order_readback": None,
                             "order_terms": None}
 
-#: The conditional word Fidelity's ticket uses for "then": the sell stop is
-#: placed the moment the buy fills, never before.
+#: The conditional word Fidelity's ticket uses for "then": the sell stop rides
+#: on the buy and is released to the market only when the buy fills in full,
+#: never before, so a buy filled in part leaves its shares without it
+#: (knowledge/broker-fidelity.md).
 OTO = "one_triggers_the_other"
 
 #: What the ticket enforces and what it leaves to the reader, printed beside
@@ -556,13 +558,14 @@ ORDER_TERM_ABOVE_LIMIT = ("An open above the {limit} limit does not fill at the 
                           "let it.")
 ORDER_TERM_BELOW_SKIP = ("An open under {skip_below} is the burst failing: do not place the order, or cancel it; "
                          "the buy stop at {trigger} would still trigger if the price recovered.")
-ORDER_TERM_STOP = ("The sell stop at {stop} is attached the moment the buy fills (OTO), as a stop-market order; "
-                   "nothing is protected before the fill.")
+ORDER_TERM_STOP = ("The sell stop at {stop} rides on the buy as OTO, a stop-market order released only when the "
+                   "buy fills in full; nothing is protected before then. If the buy fills only in part, place a "
+                   "separate sell stop at {stop}, good 'til canceled, for the shares that filled.")
 
 
 def order_terms(*, trigger: float, limit: float, stop: float, skip_below: float | None = None) -> list[str]:
     """The sentences beside a ticket: the day order and the window, the open
-    above the limit, the open under the skip line (bursts), the attached stop."""
+    above the limit, the open under the skip line (bursts), the OTO stop and a part fill."""
     values = {"window": ENTRY_WINDOW, "trigger": _usd(trigger), "limit": _usd(limit), "stop": _usd(stop),
               "skip_below": _usd(skip_below) if skip_below is not None else None}
     terms = [ORDER_TERM_DAY, ORDER_TERM_ABOVE_LIMIT]
