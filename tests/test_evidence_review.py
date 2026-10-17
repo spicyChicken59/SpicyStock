@@ -244,10 +244,51 @@ def test_dated_research_sources_retain_original_bytes_and_provenance(committed):
         assert observed_source == source
 
 
+def test_the_findings_input_is_retained_with_its_origin(committed):
+    """The 12 October review read the findings file as the c759a1e6 commit
+    carried it; the rolling file is rebuilt by every later study."""
+    source = committed["sources"]["findings"]
+    assert source == {
+        "path": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/historical-findings.json",
+        "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967",
+        "kind": "retained_builder_output",
+        "origin": {"commit": "c759a1e671227717cae8d0bf1d50a4121d167396", "path": "docs/historical-findings.json"},
+    }
+    raw = (ROOT / source["path"]).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == source["sha256"]
+    payload, observed = er.load_findings()
+    assert payload == json.loads(raw) and observed == source
+    # the study the retained findings name is the one this review pins
+    assert payload["sources"]["study"]["path"] == str(er.STUDY)
+
+
+@pytest.mark.parametrize("damage", ["missing", "whitespace", "changed_study"])
+def test_dated_review_refuses_a_missing_or_changed_findings_input_without_writing(damage, tmp_path, monkeypatch, capsys):
+    copied = tmp_path / "findings.json"
+    raw = (ROOT / er.FINDINGS).read_bytes()
+    if damage == "whitespace":
+        copied.write_bytes(raw + b"\n")  # same parsed value, different retained bytes
+    elif damage == "changed_study":
+        data = json.loads(raw)
+        data["sources"]["study"]["uncompressed_sha256"] = "0" * 64
+        copied.write_text(json.dumps(data), encoding="utf-8")
+    monkeypatch.setattr(er, "FINDINGS", copied)
+    out = tmp_path / "review"
+    out.mkdir()
+    original = {filename: b"previous dated evidence\n" for filename in ("review.json", "review.md")}
+    for filename, body in original.items():
+        (out / filename).write_bytes(body)
+    assert er.main(["--output-dir", str(out)]) == 2
+    refusal = capsys.readouterr().out
+    assert "retained findings:" in refusal
+    assert ("cannot read" if damage == "missing" else "SHA-256 does not match") in refusal
+    assert {filename: (out / filename).read_bytes() for filename in original} == original
+
+
 @pytest.mark.parametrize("replacement", [b'{"applicable_session":"2099-01-02","counts":{"resolved":42}}', b"not JSON"])
 def test_dated_review_ignores_rolling_companion_replacement(replacement, committed, monkeypatch):
     """A new night's companions, including unreadable ones, cannot revise this review."""
-    rolling = {ROOT / "docs/stop-research.json", ROOT / "docs/research-outcomes.json"}
+    rolling = {ROOT / "docs/stop-research.json", ROOT / "docs/research-outcomes.json", ROOT / "docs/historical-findings.json"}
     original_bytes, original_text = Path.read_bytes, Path.read_text
     reads = []
 
@@ -355,27 +396,20 @@ def test_the_reader_accepted_population_is_the_studys_own(study, spec):
 
 
 def test_the_review_refuses_evidence_that_does_not_reconcile(study, monkeypatch):
-    original_load = er.load_json
-
-    def load_with(overrides):
-        def load(path):
-            data = original_load(path)
-            return overrides.get(str(path), lambda d: d)(data)
-        return load
-
     def wrong_digest(findings):
         findings = deepcopy(findings)
         findings["sources"]["study"]["uncompressed_sha256"] = "0" * 64
         return findings
-    monkeypatch.setattr(er, "load_json", load_with({str(er.FINDINGS): wrong_digest}))
+    original_findings = er.load_findings
+    monkeypatch.setattr(er, "load_findings", lambda: (lambda data, source: (wrong_digest(data), source))(*original_findings()))
     with pytest.raises(er.ReviewError, match="different study"):
         er.build()
+    monkeypatch.setattr(er, "load_findings", original_findings)
 
     def other_cohort(journal):
         journal = deepcopy(journal)
         journal["policy"]["cohort_policy_id"] = "another_cohort_v9"
         return journal
-    monkeypatch.setattr(er, "load_json", original_load)
     original_research = er.load_research
 
     def research_with_other_cohort(name):

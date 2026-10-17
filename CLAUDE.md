@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4701 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4713 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -9812,3 +9812,113 @@ recovered on the 16th, and the test now reads each bar's own session.
 **Not claimable:** a morning or research observation; a source-recovery
 receipt for the 16 October publication; the 19 October session; any trading
 edge.
+
+## Checkpoint, 17 Oct 2026 — PR #178 accepted; the first readable confirmatory figure, and the page sentences it made false
+
+**PR #178, accepted.** Merged as `6ac9153c` on `main` with a merge commit over
+`426d3c59`. The head `2768e467` passed all seven checks (Tests run 39002277462:
+pytest 04:21–04:49 UTC, page 04:21–04:36, the gate, the native central case
+04:22–04:49 and stress 04:22–05:11; Secret scans 39002277439 and 39002274175).
+Publisher 39005598815 printed *Verified: every one of the 47 public files
+matches committed main* at 05:15:58 UTC; Pages 39005614956 deployed
+(39005598233 cancelled as superseded, as every merge does); the merge commit's
+own Secret scan 39005598755 passed.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `6ac9153c`. Nothing under `src/` changed and no rule moved;
+`docs/data.json`, `docs/picks.json`, the compact reader, every receipt, the
+history, the evidence objects, the quality ledger, the workflows and the
+vendored design system are untouched; no run, mail, dispatch, provider call or
+credential. `.env.example` was reviewed: nothing here is configuration.
+
+**The re-read** (`docs/input-truthfulness/2026-10-17-signal-outcomes-confirmatory.md`).
+The frozen study (`tools/signal_outcomes.py`, blob `39d4f25a`, unchanged since
+PR #100) over thirty-one publications under a spec that is the frozen file with
+fourteen entries appended (SHA-256 `5598366c9851…`, the byte-level diff
+retained), run under Python 3.12.3 and pandas 2.2.3 and again under 3.11.15 and
+pandas 3.0.6 to the same bytes. **The confirmatory admitted stratum is readable
+for the first time: 209 settled over ten nights, −0.157R a ticket, the mean of
+its night means −0.138R with a 95% night-bootstrap interval of −0.431 to
++0.129. The interval includes zero: it establishes no sign.** Three facts the
+frozen sentences do not carry, each written into the report: three of the
+eleven confirmatory nights were YELLOW (8, 9 and 12 October), so the footer's
+"refused by the RED gate" is false of 102 of the 104 tickets settled on them
+(grade A, refused under YELLOW by its own A+-only band; the eight RED nights'
+105 settled are −0.302R a ticket); the account under the spec's own rule fell
+from $10,000 to $2,000 from the 9 October publication, and the admitted setups
+without a whole share rose from 0–6 a night to 22–59; and the 1 October night,
+read whole, moved from −0.364R over 50 settled with no win to −0.087R over 81
+with 20 wins, the early-read bias measured on a full night. The exploratory
+stratum stays negative, −0.119R over 301, its interval clear of zero. 77 of the
+78 confirmatory rows still moving belong to 13 to 16 October; read again after
+23 October.
+
+**Two dated readers had to stop reading rolling files.** The 12 October evidence
+review read `docs/historical-findings.json`, which this re-read rebuilds: its
+findings input is retained under its `inputs/` now (as `c759a1e6` carried it,
+SHA-256 `0d806808…`, refused on a changed byte), its study paths pinned to the 6
+October run, and its review files regenerated with only their `sources` moved.
+And the findings builder copied a night's whole `run.reads` block, which from 13
+October carries a cause named `credit` that its own credential guard refuses;
+`reads_of()` copies the two counts the page prints and refuses a block without
+them.
+
+**The page said things the file does not, once a yellow night existed.** The
+Record view's reading list was written when every night was red, and two of its
+sentences rendered false over the rebuilt file: the confirmatory line said the
+non-red nights were ones on which "the gate published some of their tickets",
+and the last line said the same of the nights left out -- the record published
+none on 8, 9 or 12 October. Every check passed, because the checks read each
+sentence's first words. The confirmatory line now prints the study's interval
+and whether it includes zero, its hold count over every confirmatory night (it
+said 4, the reading block's red-night count, where 5 of 11 are inside their
+hold), and the red nights' own A-quality figure beside the study's; the last line
+names the nights not red by date, says such a night admits some grades, counts
+what the gate published on them off the file, and says the confirmatory result
+includes them only when one is confirmatory. A readable confirmatory split
+without its interval is refused by the shape check. The builder's docstring
+claimed the same false thing about yellow nights and is corrected.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1): 4713 tests collected; `tests/test_historical_findings.py`,
+`tests/test_evidence_review.py` and the new `tests/test_signal_outcomes_reread.py`
+46 passed; `python tools/build_historical_findings.py --check` and
+`python tools/evidence_review.py --check` current; the `findings` suite
+1080/1080, the screenshots at 1280 and on the phone looked at (the reading list, the
+yellow nights in the chart and the list of nights).
+
+**Mutation passes**, the tree never written. The report, through copies read by
+the new test: thirteen numbers moved one at a time (a night-table sum, the
+interval's bound, the yellow sum, the red mean, the no-order list, the 1 October
+wins, a still-moving count, the row total, the uncertain bound, the late
+settlers' sum, the hold count, the under-twenty count, the A+ count) all die;
+the control (a heading word) survives. The page, through routed copies of
+`app-findings.js` (`SCSTOCK_FINDINGS`, a read-only override added to the smoke
+beside the other modules'): nine mutants -- the hold back to red nights only,
+"includes zero" printed always, the interval dropped, the published count fixed
+at zero, the dates dropped, "the confirmatory result includes them" printed
+always, the red figure read off the study's, the interval unchecked by the shape
+check, and the old false clause put back. Eight died at once. **The old false
+clause SURVIVED**, the hole this checkpoint is about: nothing read that clause.
+It is checked now and dies. The branch case's yellow confirmatory nights are read
+red there, so its two non-red nights are exploratory and the "includes them"
+clause has a side that can fail; its green night publishes two tickets, so the
+published count can be told from zero. The interval-unchecked mutant first died
+by name and then ended the suite, waiting on an alert a half-drawn page never
+shows; the alert is read only when present. The control (a comment) passes
+1080/1080. Python, in a scratch worktree carrying this diff: seven mutants (the
+reads block copied whole, done over requested admitted, a bool admitted, the
+findings digest unchecked, the missing findings file read from the rolling one,
+the review reading the new study, the findings origin unnamed) all die in the
+test naming them; the control (a docstring) survives.
+
+**Keep / fix / defer / omit.** Keep: the spec frozen and extended by appended
+publications only; dated readers read retained inputs, never a rolling file.
+Fix if it bites: the frozen study's footer and reading rule still say every
+ticket was refused by the RED gate, and only a new spec could change them; the
+account change mixes two populations in one confirmatory figure, which the report
+names and the frozen rule cannot split. Defer: the re-read after 23 October, when
+the 16 October tickets reach their fifth session. Omit: any rule, threshold or
+account change on these numbers; an edge claim.
+
+**Not claimable:** a morning or research observation; any trading edge.

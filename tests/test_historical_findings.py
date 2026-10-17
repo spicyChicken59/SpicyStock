@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 import copy
+from datetime import date
 import gzip
 import hashlib
 import json
@@ -25,7 +26,7 @@ import subprocess
 
 import pytest
 
-from src import breadth
+from src import breadth, sessions
 from tools import build_historical_findings as bf
 from tools import historical_backtest as backtest
 from tools import signal_outcomes as so
@@ -33,9 +34,9 @@ from tools import signal_outcomes as so
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = "docs/historical-findings.json"
 TRUTH = "docs/input-truthfulness"
-STUDY = f"{TRUTH}/2026-10-06-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
-STUDY_SPEC = f"{TRUTH}/2026-10-06-signal-outcomes-spec-extended.json"
-STUDY_RUN_RECORD = f"{TRUTH}/2026-10-06-signal-outcomes-confirmatory-evidence/run-record.txt"
+STUDY = f"{TRUTH}/2026-10-17-signal-outcomes-confirmatory-evidence/signal-outcomes.json.gz"
+STUDY_SPEC = f"{TRUTH}/2026-10-17-signal-outcomes-spec-extended.json"
+STUDY_RUN_RECORD = f"{TRUTH}/2026-10-17-signal-outcomes-confirmatory-evidence/run-record.txt"
 FIRST_STUDY = f"{TRUTH}/2026-10-02-signal-outcomes-evidence/signal-outcomes.json.gz"
 FIRST_SPEC = f"{TRUTH}/2026-10-02-signal-outcomes-spec.json"
 BACKTESTS = {"lookback_130": f"{TRUTH}/2026-10-06-backtest-results-evidence/lookback-130-summary.txt",
@@ -280,7 +281,9 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
         vetoed = sum(1 for x in d["bursts"] if x.get("vetoes"))
         assert n["vetoed"] == vetoed, (session, n["vetoed"], vetoed)
         assert n["tickets_published"] == len(d.get("trades") or []), (session, n["tickets_published"])
-        assert n["reads"] == d["run"]["reads"], (session, n["reads"], d["run"]["reads"])
+        # the two counts the caption prints, and nothing else of the block (whose
+        # causes, refused names and sentence grow with its rules)
+        assert n["reads"] == {k: d["run"]["reads"][k] for k in ("requested", "done")}, (session, n["reads"], d["run"]["reads"])
         # the A-quality counts the caption prints: the record's own trade grades, counted off its bursts
         trade = d["rules"]["pipeline"]["trade_grades"]
         assert n["a_quality"] == {"mechanical": sum(mechanical.get(g, 0) for g in trade),
@@ -845,17 +848,36 @@ def test_a_night_with_no_burst_has_nothing_to_hold(pubs, study, first):
     first_doc, _ = first
     last = max((p for p in pubs if any(q["commit"] == p["commit"] and q["first"] for q in study_doc["publications"])),
                key=lambda p: p["session"])
+    # the session after the study's newest, so the study carries no row for it
+    after = sessions.next_sessions(date.fromisoformat(study_doc["newest_session"]), 1)[0].isoformat()
     empty = copy.deepcopy(last)
-    empty.update(commit="e" * 40, blob="b" * 40, session="2026-10-06")
+    empty.update(commit="e" * 40, blob="b" * 40, session=after)
     empty["data"]["bursts"] = []
     doc = {**study_doc, "publications": study_doc["publications"] + [{"commit": empty["commit"], "first": True}]}
     nights = bf.nights_of(pubs + [empty], doc, first_doc)
     night = nights[-1]
-    assert night["session"] == "2026-10-06" and night["bursts"] == 0
+    assert night["session"] == after and night["bursts"] == 0
     assert (night["horizon"], night["complete"], night["phase"]) == (None, True, "confirmatory"), night
     assert night["all"] == {"rows": 0, "tickets": 0, "movable": 0, "buckets": {b: 0 for b in BUCKETS},
                             "settled": settled_of([]), "r": []}
     assert "first_read" not in night
+
+
+def test_a_nights_reads_are_its_two_counts_and_nothing_else():
+    """The page prints a night's requested and done reads; the record's reads
+    block carries more (a cause named ``credit`` among them, which the secret
+    scan reads as a credential), so only the two counts are copied, and a block
+    without both, or with counts that are not whole numbers done within
+    requested, is refused rather than copied as a null."""
+    block = {"requested": 2, "done": 1, "status": "partial", "refused": ["JAKK"],
+             "causes": {"refused": 1, "credit": 0, "format": 0}}
+    assert bf.reads_of("2026-10-15", block) == {"requested": 2, "done": 1}
+    assert bf.reads_of("2026-10-16", {"requested": 0, "done": 0}) == {"requested": 0, "done": 0}
+    for bad in (None, [], {"requested": 2}, {"done": 1}, {"requested": 2, "done": None},
+                {"requested": "2", "done": 1}, {"requested": 2.0, "done": 1}, {"requested": True, "done": 1},
+                {"requested": 2, "done": -1}, {"requested": 1, "done": 2}):
+        with pytest.raises(bf.FindingsError, match="2026-10-15"):
+            bf.reads_of("2026-10-15", bad)
 
 
 def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, monkeypatch):

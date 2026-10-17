@@ -117,7 +117,11 @@
     if (!obj(F.study) || !str(F.study.newest_session) || !obj(F.study.summary) || !obj(F.study.summary.strata) ||
         STRATA.slice(0, -1).some((s) => !obj((F.study.summary.strata[s] || {}).settled)) ||
         !obj(phases) || !obj(phases.confirmatory) || (phases.confirmatory.rows && !(block(phases.confirmatory.settled) && obj(phases.confirmatory.scorecard) &&
-          typeof phases.confirmatory.scorecard.readable === 'boolean' && isNum(phases.confirmatory.scorecard.min_read)))) return 'The findings carry no study summary.';
+          typeof phases.confirmatory.scorecard.readable === 'boolean' && isNum(phases.confirmatory.scorecard.min_read) &&
+          // a readable split is printed with its interval, so a readable one must carry it
+          (!phases.confirmatory.scorecard.readable || (obj(phases.confirmatory.night_bootstrap) && isNum(phases.confirmatory.night_bootstrap.mean_of_night_means) &&
+            isNum(phases.confirmatory.night_bootstrap.nights) && Array.isArray(phases.confirmatory.night_bootstrap.ci95) &&
+            phases.confirmatory.night_bootstrap.ci95.length === 2 && phases.confirmatory.night_bootstrap.ci95.every(isNum)))))) return 'The findings carry no study summary.';
     if (!Array.isArray(F.reports)) return 'The findings carry no reports.';
     return null;
   }
@@ -822,6 +826,8 @@
     const allUnder = readable.length > 0 && readable.every((s) => ex.strata[s].mean_r < 0);
     const anyOver = readable.some((s) => ex.strata[s].mean_r >= 0);
     const span = (b) => words(b.from) + (b.from === b.through ? '' : ' to ' + words(b.through));
+    // one stratum by the minimum's rule: a rate from it, a count and nothing more under it
+    const oneRate = (b) => b.n >= min ? R3(b.mean_r) + ' per settled ticket over ' + num(b.n) : num(b.n) + ' settled, too few for a rate';
     const items = [];
     // 1. the exploratory reading, red nights only: the nights whose tickets the gate refused in full
     if (ex.red_nights) {
@@ -840,12 +846,19 @@
       items.push('Confirmatory: no night has been published after the freeze yet; the spec reads only that split as evidence.');
     } else {
       const sc = cs.scorecard || {}, st = cs.settled || { n: 0 };
-      items.push('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co) + (co.inside_hold ? ', ' + num(co.inside_hold) +
+      // the hold over every confirmatory night, red or not: the reading block counts its red nights only
+      const coHold = F.nights.filter((n) => n.phase === 'confirmatory' && !n.complete).length;
+      items.push('Confirmatory: ' + plural(co.nights, 'night') + ' published after the freeze, ' + span(co) + (coHold ? ', ' + num(coHold) +
         ' of them still inside their hold' : '') + '. The spec reads only this split as evidence, for the A-quality stratum, and only from ' +
-        plural(sc.min_read, 'settled ticket') + ': ' + (sc.readable ? 'the study’s confirmatory result is ' + R3(st.mean_r) + ' per settled ticket over ' + num(st.n) + '.'
+        plural(sc.min_read, 'settled ticket') + ': ' + (sc.readable ? 'the study’s confirmatory result is ' + R3(st.mean_r) + ' per settled ticket over ' + num(st.n) +
+          (function (nb) {
+            const lo = nb.ci95[0], hi = nb.ci95[1];
+            return ', and over ' + plural(nb.nights, 'night') + ' the mean of its night means is ' + R3(nb.mean_of_night_means) + ', with the study’s night-bootstrap interval of ' + R3(lo) + ' to ' + R3(hi) +
+              (lo <= 0 && hi >= 0 ? ', which includes zero: it establishes no sign.' : ', which is clear of zero.');
+          })(cs.night_bootstrap)
           : num(st.n) + ' of the ' + num(sc.min_read) + ' have settled, so nothing confirmatory is readable yet.') +
         (co.nights > co.red_nights ? ' ' + plural(co.nights - co.red_nights, 'night') + ' of them ' + (co.nights - co.red_nights === 1 ? 'was' : 'were') +
-          ' not red, so the gate published some of their tickets.' : ''));
+          ' not red' + (co.red_nights ? '; on its ' + plural(co.red_nights, 'red night') + ' alone the A-quality stratum is ' + oneRate(co.strata.admitted) : '') + '.' : ''));
     }
     // 3. the hold, dated with the as-of the file carries
     items.push('A night read before its tickets have had their hold leans toward losses, because a stop settles on its first bad day and a winner at its exit. ' +
@@ -855,10 +868,18 @@
     items.push('The chart reader is not run in either study, so every ticket here is one it could still have refused. The signal-outcome study has no slots: its A-quality ' +
       'stratum bounds the names the live policy could ticket. The backtest keeps the slot cap, so its ticket set is not a superset of the live run’s: a reader ' +
       'downgrade frees a slot the next-ranked name takes.');
-    // 5. the nights the reading leaves out
-    const other = ns.nights - ex.red_nights - co.red_nights;
-    items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red and ' + (other === 1 ? 'is' : 'are') +
-      ' left out of the exploratory reading: on them the gate published some of the tickets, so their outcomes measure no refusal.'
+    // 5. the nights the red readings leave out, named, and what the gate published on them: a
+    // yellow night admits A+ alone and a green one A+ and A, so their tickets measure the grade
+    // band's and the reader's refusals, never the red verdict's
+    const others = F.nights.filter((n) => n.regime.verdict !== 'red');
+    const other = others.length, inCo = others.some((n) => n.phase === 'confirmatory');
+    const published = others.reduce((t, n) => t + n.tickets_published, 0);
+    const listed = others.map((n) => words(n.session));
+    items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red (' +
+      (listed.length > 1 ? listed.slice(0, -1).join(', ') + ' and ' + listed[listed.length - 1] : listed[0]) + '). On ' + (other === 1 ? 'such a night' : 'such nights') +
+      ' the gate admits some grades, so ' + (other === 1 ? 'its' : 'their') + ' counterfactual tickets measure the refusals of the grade band and the reader rather than a red one; ' +
+      'the gate published ' + plural(published, 'ticket') + ' on ' + (other === 1 ? 'it' : 'them') + '. The red-night readings above leave ' + (other === 1 ? 'it' : 'them') + ' out' +
+      (inCo ? '; the study’s confirmatory result includes ' + (other === 1 ? 'it' : 'them') : '') + '.'
       : 'Every published night here was red: what yellow or green nights would do is not in this record, which has carried none.');
     sec.appendChild(el('ul', { 'class': 'ss-find__reading', 'data-find': 'read-as' }, items.map((t) => el('li', { text: t }))));
     sec.appendChild(el('p', { 'class': 'sc-hint', text: 'The reports behind these numbers, served as the Markdown files they are:' }));

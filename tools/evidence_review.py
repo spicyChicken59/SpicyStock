@@ -44,9 +44,11 @@ TRUTH = Path("docs/input-truthfulness")
 OUT_DIR = ROOT / TRUTH / "2026-10-12-evidence-review-evidence"   # absolute: a test may run from elsewhere
 OUTPUT_JSON = OUT_DIR / "review.json"
 OUTPUT_MD = OUT_DIR / "review.md"
-FINDINGS = Path("docs/historical-findings.json")
-STUDY = bf.STUDY
-STUDY_SPEC = bf.STUDY_SPEC
+FINDINGS = TRUTH / "2026-10-12-evidence-review-evidence" / "inputs" / "historical-findings.json"
+# the study this dated review read, named here rather than borrowed from the
+# findings builder, whose study moves forward as publications are appended
+STUDY = TRUTH / "2026-10-06-signal-outcomes-confirmatory-evidence" / "signal-outcomes.json.gz"
+STUDY_SPEC = TRUTH / "2026-10-06-signal-outcomes-spec-extended.json"
 FUNNEL = TRUTH / "2026-10-11-candidate-funnel-evidence" / "history.json"
 FEASIBILITY = {"archived": TRUTH / "2026-10-11-whole-share-feasibility-evidence" / "history-archived.json",
                "account_2000": TRUTH / "2026-10-11-whole-share-feasibility-evidence" / "history-account-2000.json"}
@@ -60,6 +62,11 @@ RESEARCH_ORIGIN = {
     "journal": {"path": "docs/research-outcomes.json",
                 "sha256": "15de998bec9ac4862b1e5b4d480b1a7cd0a69cabbcaab77d24b36e2a7c970db2"},
 }
+# The findings file the dated review read, retained the same way: the rolling
+# docs/historical-findings.json is rebuilt over each later study.
+FINDINGS_ORIGIN = {"commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+                   "path": "docs/historical-findings.json",
+                   "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"}
 
 #: the record's own floor for reading a rate rather than a count (record.SCORECARD_MIN_PLANS)
 MIN_SETTLED = record.SCORECARD_MIN_PLANS
@@ -220,6 +227,21 @@ def load_research(name: str) -> tuple[dict, dict]:
         raise ReviewError(f"retained research {name}: SHA-256 does not match the dated input")
     return json.loads(raw), {"path": str(path), "sha256": digest, "kind": "retained_companion",
                              "origin": {"commit": RESEARCH_ORIGIN["commit"], "path": origin["path"]}}
+
+
+def load_findings() -> tuple[dict, dict]:
+    """Read the retained findings file once, as ``load_research`` reads a
+    companion: missing or changed bytes refuse rather than fall back to the
+    rolling file, which a later study rebuilds."""
+    try:
+        raw = (ROOT / FINDINGS).read_bytes()
+    except OSError as exc:
+        raise ReviewError(f"retained findings: cannot read {FINDINGS}") from exc
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != FINDINGS_ORIGIN["sha256"]:
+        raise ReviewError("retained findings: SHA-256 does not match the dated input")
+    return json.loads(raw), {"path": str(FINDINGS), "sha256": digest, "kind": "retained_builder_output",
+                             "origin": {"commit": FINDINGS_ORIGIN["commit"], "path": FINDINGS_ORIGIN["path"]}}
 
 
 def crosscheck(study: dict) -> dict:
@@ -424,7 +446,7 @@ def build() -> dict:
     spec = so.load_spec(ROOT / STUDY_SPEC)
     if spec["_sha256"] != study["spec_sha256"]:
         raise ReviewError("the study was not run under the committed extended spec")
-    findings = load_json(FINDINGS)
+    findings, findings_source = load_findings()
     if findings.get("version") != bf.VERSION:
         raise ReviewError("the findings file is not the builder's")
     if findings["sources"]["study"]["uncompressed_sha256"] != study_sha:
@@ -450,7 +472,7 @@ def build() -> dict:
         "criteria": CRITERIA,
         "sources": {
             "study": bf.source(STUDY, kind="tool_output", uncompressed_sha256=study_sha, spec=bf.source(STUDY_SPEC)),
-            "findings": bf.source(FINDINGS, kind="builder_output"),
+            "findings": findings_source,
             "funnel": bf.source(FUNNEL, kind="tool_output"),
             "feasibility": {k: bf.source(p, kind="tool_output") for k, p in FEASIBILITY.items()},
             "research": {"cohort": cohort_source, "journal": journal_source},
@@ -511,9 +533,10 @@ def render_md(review: dict) -> str:
             flat += [(f"{name} · {k}", v) for k, v in src.items()]
     for name, src in flat:
         lines.append(f"| {name} | `{src['path']}` | `{src['sha256'][:16]}…` |")
-    lines += ["", "The research inputs retain the exact companion bytes used on 12 October; their digests are checked before reading.",
-              "The rolling companions may advance without revising this dated review. Original sources:", ""]
-    for name, src in review["sources"]["research"].items():
+    lines += ["", "The findings and research inputs retain the exact bytes used on 12 October; their digests are checked before reading.",
+              "The rolling findings file and companions may advance without revising this dated review. Original sources:", ""]
+    retained = [("findings", review["sources"]["findings"])] + list(review["sources"]["research"].items())
+    for name, src in retained:
         origin = src["origin"]
         lines.append(f"- {name}: `{origin['path']}` at commit `{origin['commit']}`.")
     et = review["evidence_through"]

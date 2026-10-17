@@ -54,10 +54,12 @@ production plan rules over every archived burst with the regime gate, the
 slot cap and the reader removed (and, outside the admitted stratum, the
 grade's or the veto's own refusal), found every stratum losing on the red
 nights -- the admitted stratum's exploratory rows −0.235R per settled ticket
-over 202 on 2 October and −0.189R over 267 on the 6 October re-read, the
-whole stratum −0.204R over 272 with the five confirmatory tickets settled
-since the freeze, all at −1R; a night read before its tickets' fifth session
-leans toward losses -- and the owner's backtest over 158 archive sessions (100
+over 202 on 2 October, −0.189R over 267 on the 6 October re-read and −0.119R
+over 301 on the 17 October one; a night read before its tickets' fifth session
+leans toward losses. Its first readable confirmatory figure, 17 October, is
+−0.157R over 209 settled on ten nights, three of them YELLOW, with a
+night-bootstrap interval of −0.431 to +0.129: it does not establish a sign --
+and the owner's backtest over 158 archive sessions (100
 yellow, 58 red, no green) wrote 99 half-size A+ tickets, of which 44
 settled, 16 won, 27 lost and 1 was even, +3.72R net, the reader not run. The
 Record view replays those nights one at a time from
@@ -941,8 +943,10 @@ archived, and a record from before the block is asked for none. The run:
   `docs/input-truthfulness/2026-10-12-evidence-review-evidence/review.{json,md}`
   and `--check` holds both. Its October 12 research inputs are retained under
   that directory's `inputs/`, with original commit/path and exact SHA-256
-  provenance; missing or changed bytes refuse before writing. The current
-  rolling cohort and journal may advance without rewriting this dated review.
+  provenance, and so is the findings file it read (as `c759a1e6` carried it,
+  over the 6 October study, which the tool names itself); missing or changed
+  bytes refuse before writing. The current rolling cohort, journal and findings
+  file may advance without rewriting this dated review.
   A later evidence review needs a separately dated output. No change is promoted
   by the October 12 review, and none earns `supported` in that review.
   `tools/service_health.py` reads the service rather than the signal: it walks
@@ -1656,12 +1660,17 @@ spec is committed before any outcome is computed and names the publication
 commits and their record blobs; a commit the checkout cannot produce or a blob
 that differs is a refusal, never a smaller population. Signals published up to
 the spec's freeze are exploratory, later ones confirmatory. It is a
-counterfactual: every ticket it walks was refused by the RED gate and the
-reader is not run; it reads no rate under the scorecard's minimum and is not
-an edge claim.
-Its first confirmatory re-read, over nineteen publications under a spec that
-differs from the frozen one by appended publication entries only, is
-`docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md`.
+counterfactual: every ticket it walks was refused by the regime -- by the RED
+gate, or on a YELLOW night by YELLOW's A+-only band, which the admitted
+stratum's A tickets do not pass -- and the reader is not run; it reads no rate
+under the scorecard's minimum and is not an edge claim. (The frozen spec's own
+sentence says the RED gate alone; the 17 October report corrects it.)
+Its confirmatory re-reads, each under a spec that differs from the frozen one
+by appended publication entries only, are
+`docs/input-truthfulness/2026-10-06-signal-outcomes-confirmatory.md` over
+nineteen publications and
+`docs/input-truthfulness/2026-10-17-signal-outcomes-confirmatory.md` over
+thirty-one.
 `python tools/build_historical_findings.py --check` holds the committed
 `docs/historical-findings.json`, which the Record view replays, to those
 evidence files and nothing else: the two study outputs, the publication

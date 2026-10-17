@@ -751,8 +751,12 @@
    }
   },
   "findings": {
-   "kind": "builder_output",
-   "path": "docs/historical-findings.json",
+   "kind": "retained_builder_output",
+   "origin": {
+    "commit": "c759a1e671227717cae8d0bf1d50a4121d167396",
+    "path": "docs/historical-findings.json"
+   },
+   "path": "docs/input-truthfulness/2026-10-12-evidence-review-evidence/inputs/historical-findings.json",
    "sha256": "0d80680846a38f6f6c92af6464b993c9e74d9b6fe7de127e7e41a2bb0963c967"
   },
   "funnel": {
