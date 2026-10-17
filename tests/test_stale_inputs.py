@@ -88,6 +88,7 @@ def test_a_record_from_before_the_tolerance_names_nothing():
     (lambda d: d["run"].update(stale_followup=[]), "stale_followup is not an object"),
     (lambda d: d["run"].update(stale_followup={"rows": [{"ticker": "AAA", "session": "2026-10-12", "outcome": "listed"}]}), "no outcome"),
     (lambda d: d["run"].update(stale_followup={"rows": [{"ticker": "AAA", "session": "2026-10-12", "outcome": "no_match", "volume": -3}]}), "not a volume"),
+    (lambda d: d["run"].update(stale_followup={"rows": [{"ticker": "AAA", "session": "2026-10-12", "outcome": "no_match", "volume": True}]}), "not a volume"),
     (lambda d: d.update(fixture="full"), "not a real schema-2 publication"),
 ])
 def test_a_record_the_reading_cannot_place_is_refused(mutate, match):
@@ -112,11 +113,12 @@ def scenario():
     night = record("2026-10-13", ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH"],
                    {t: "2026-10-12" for t in "AAA BBB CCC DDD EEE FFF GGG HHH".split()})
     nxt = record("2026-10-14", [], {}, rows=[
-        fu("AAA", "2026-10-13", "no_match", 0), fu("BBB", "2026-10-13", "no_match", 40),
+        fu("AAA", "2026-10-13", "match", 0, route="setting_up"), fu("BBB", "2026-10-13", "no_match", 40),
         fu("CCC", "2026-10-13", "price_excluded", 0), fu("DDD", "2026-10-13", "still_missing"),
         fu("FFF", "2026-10-13", "not_selected"), fu("HHH", "2026-10-13", "unmeasurable", 99_999)])
-    later = record("2026-10-15", [], {}, rows=[fu("AAA", "2026-10-13", "match", 0, route="setting_up")])
-    rc = receipt("2026-10-13", [("DDD", "recovered", 0), ("EEE", "recovered", scans.MIN_VOLUME), ("FFF", "still_stale", None)])
+    later = record("2026-10-15", [], {}, rows=[fu("AAA", "2026-10-13", "no_match", 0)])
+    rc = receipt("2026-10-13", [("BBB", "recovered", 0), ("DDD", "recovered", 0), ("EEE", "recovered", scans.MIN_VOLUME),
+                                ("FFF", "still_stale", None)])
     dry = receipt("2026-10-13", [("GGG", "recovered", 5)], dry_run=True)
     return pubs(night, nxt, later), recs(rc, dry)
 
@@ -137,7 +139,9 @@ def test_each_stock_session_lands_in_the_first_class_that_holds():
     assert [n["session"] for n in nights] == ["2026-10-13", "2026-10-14", "2026-10-15"]
     assert nights[0]["stock_sessions"] == 8 and nights[1]["stock_sessions"] == 0
     aaa = next(r for r in rows if r["ticker"] == "AAA")
-    assert [x["read_by"] for x in aaa["followup"]] == ["2026-10-14", "2026-10-15"] and aaa["followup_final"] == "match"
+    assert [x["read_by"] for x in aaa["followup"]] == ["2026-10-14", "2026-10-15"] and aaa["followup_final"] == "no_match"
+    bbb = next(r for r in rows if r["ticker"] == "BBB")
+    assert bbb["max_volume"] == 40 and bbb["zero_volume"] is False     # a zero-volume bar beside a printed one is not zero
 
 
 def test_the_summary_and_its_sentence_are_hand_computed():
@@ -147,13 +151,13 @@ def test_the_summary_and_its_sentence_are_hand_computed():
     assert s["stock_sessions"] == 8 and s["stocks"] == 8 and s["nights"] == 3
     assert s["classes"] == {"would_have_been_listed": 1, "scanned_not_listed": 1, "under_price_policy": 1,
                             "under_volume_floor_unscanned": 2, "at_or_above_volume_floor_unscanned": 1, "no_later_bar": 2}
-    # later bars: AAA 0, BBB 40, CCC 0, DDD 0, EEE MIN_VOLUME, HHH 99,999
+    # later bars: AAA 0, BBB 40 and 0, CCC 0, DDD 0, EEE MIN_VOLUME, HHH 99,999
     assert s["with_later_bar"] == 6 and s["zero_volume"] == 3 and s["max_volume"] == scans.MIN_VOLUME
     assert s["followup"] == {"readings": 7, "stock_sessions_read": 6, "matches": 1,
-                             "final_outcomes": {**{o: 0 for o in followup.OUTCOMES}, "match": 1, "no_match": 1, "price_excluded": 1,
+                             "final_outcomes": {**{o: 0 for o in followup.OUTCOMES}, "no_match": 2, "price_excluded": 1,
                                                 "still_missing": 1, "not_selected": 1, "unmeasurable": 1}}
-    assert s["recovery"]["receipts"] == 2 and s["recovery"]["stock_sessions_read"] == 3
-    assert s["recovery"]["outcomes"] == {**{o: 0 for o in source_recovery.OUTCOMES}, "recovered": 2, "still_stale": 1}
+    assert s["recovery"]["receipts"] == 2 and s["recovery"]["stock_sessions_read"] == 4
+    assert s["recovery"]["outcomes"] == {**{o: 0 for o in source_recovery.OUTCOMES}, "recovered": 3, "still_stale": 1}
     assert s["no_later_bar"] == {"count": 2, "not_read_again": 1,
                                  "followup_final": {**{o: 0 for o in followup.OUTCOMES}, "not_selected": 1}}
     words = si.sentence(s)
@@ -282,6 +286,10 @@ def test_a_shallow_checkout_rebuilds_from_the_named_commits_alone(repo, monkeypa
     again, walked = si.rebuild(out)
     assert walked == "not_walked_in_shallow_clone" and again == out
     assert fetched == [[out["source"]["through"], *out["source"]["publication_commits"], repo["receipt"]]]
+    unsaid = deepcopy(out)
+    unsaid["skipped"] = []                                # the fixture commit is set aside and nothing says so
+    with pytest.raises(sh.ServiceError, match="does not say so"):
+        si.rebuild(unsaid)
     with pytest.raises(sh.ServiceError, match="cannot walk"):
         si.build(ref="main")
     with pytest.raises(sh.ServiceError, match="names no commits"):
