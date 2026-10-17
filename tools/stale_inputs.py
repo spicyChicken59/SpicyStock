@@ -307,7 +307,9 @@ def summary(rows: list[dict], nights: list[dict], pubs: list[dict], receipts: li
 def sentence(s: dict) -> str:
     """The reading in one paragraph, every number off the summary."""
     if not s["stock_sessions"]:
-        return "No retained publication names a stale stock."
+        return "No retained publication names a stale stock" + (
+            f"; {s['unnamed_stale']} were counted but not named, so no stock-session of theirs is read here."
+            if s["unnamed_stale"] else ".")
     c = s["classes"]
     parts = [f"{c['scanned_not_listed']} were scanned again by a follow-up on their late bar and would not have been listed",
              f"{c['under_price_policy']} fell under the $3 session-close policy"]

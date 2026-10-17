@@ -304,6 +304,15 @@ def test_a_night_over_the_names_bound_is_kept_as_the_newest_and_counted_unnamed(
         == [(f"{1:040x}", 2, 0, 4, False, None)]
     s = si.summary(rows, nights, p, [])
     assert s["unnamed_stale"] == 4 and s["nights_names_not_carried"] == 1 and s["measured_by_revision"] == 0
+    assert si.sentence(s) == "No retained publication names a stale stock; 4 were counted but not named, so no stock-session of theirs is read here."
+    # beside a night that does name its stocks, the unnamed ones are still said
+    later = produced("2026-10-14", ["BBB"], {"BBB": "2026-10-13"}, previous="2026-10-13")
+    p = pubs(named, over, later)
+    rows, nights = si.join(p, [])
+    s = si.summary(rows, nights, p, [])
+    assert [(r["ticker"], r["session"]) for r in rows] == [("BBB", "2026-10-14")] and s["unnamed_stale"] == 4
+    assert si.sentence(s).endswith(" 4 more stale stocks were counted but not named, so no stock-session of theirs is read here."
+                                   " Why a bar was absent is not established.")
 
 
 def test_the_benchmark_named_beside_the_stocks_is_not_a_stock():
