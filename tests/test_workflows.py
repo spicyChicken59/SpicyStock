@@ -291,6 +291,31 @@ def test_morning_has_only_two_active_daily_slots_and_an_explicit_rehearsal():
     assert steps(wf, 'collect')['Guard the scheduled morning']['run'] == 'python -m tools.publish_morning guard'
 
 
+def test_page_handoff_names_this_workflow_its_publishing_input_and_the_collectors_window():
+    """The Morning desk sends the owner to this repository's morning workflow,
+    tells them to untick dry_run, and offers that only from the collector's own
+    pre-open minutes. Each is read here off the code it names, so a renamed
+    workflow, a flipped default or a moved window cannot leave the page's
+    instruction behind."""
+    import re
+    from src import morning
+    from tools import publish_morning
+    page = (ROOT / 'docs' / 'app-observations.js').read_text()
+    repo = re.search(r"const REPO = '([^']+)';", (ROOT / 'docs' / 'app.js').read_text()).group(1)
+    url = re.search(r"const MORNING_WORKFLOW = '([^']+)';", page).group(1)
+    assert url == f'https://github.com/{repo}/actions/workflows/morning.yml'
+    wf = load('morning.yml')
+    dry_run = triggers(wf)['workflow_dispatch']['inputs']['dry_run']
+    assert dry_run['type'] == 'boolean' and dry_run['default'] is True
+    assert 'untick dry_run' in page
+    # Unticked, a dispatch on main collects and publishes; ticked, it never does.
+    assert "inputs.dry_run == false" in wf['jobs']['persist']['if']
+    assert "github.ref == 'refs/heads/main'" in wf['jobs']['persist']['if']
+    assert publish_morning.schedule_guard(b'', 'workflow_dispatch', '') == (True, 'manual_dispatch')
+    minutes = int(re.search(r"const PREOPEN_MINUTES = (\d+);", page).group(1))
+    assert minutes == morning.POLICY['preopen_minutes']
+
+
 def test_morning_collector_cannot_write_and_has_no_delivery_credentials():
     wf = load('morning.yml')
     assert wf['permissions'] == {'contents': 'read'}

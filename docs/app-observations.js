@@ -29,6 +29,15 @@
     } catch (e) { return null; }
   };
   const rowKey = c => (c.stage === 'bursts' ? 'burst' : 'anticipation') + ':' + c.ticker;
+  // GitHub's scheduler can start the morning workflow hours late, so the owner
+  // can start it by hand. The summary offers that only inside the window the
+  // collector itself accepts (the applicable session's market date, from
+  // PREOPEN_MINUTES before the open until the entry cutoff: src/morning.py's
+  // POLICY and _reason()) and only while no current check for this publication
+  // has arrived. It is a link and a sentence: the page dispatches nothing.
+  const MORNING_WORKFLOW = 'https://github.com/spicyChicken59/SpicyStock/actions/workflows/morning.yml';
+  const PREOPEN_MINUTES = 30;
+  const clockCT = ms => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit' }).format(new Date(ms)) + ' CT';
   let record = null, recordHash = null, epoch = 0, sequence = 0, controller = null, state = 'unbound', receipt = null, issue = '', now = Date.now();
   let readerBinding = null;
   let halted = new Map(), corporate = new Map(), onChange = null, storageIssue = '', cachedHalt = false, pinned = false;
@@ -393,6 +402,34 @@
     if (receipt.rows.length && !receipt.rows.every(quotesCurrent)) return 'Quote observations are stale or incomplete';
     return ({ observed: 'Morning snapshot available', partial: 'Morning check is incomplete', provider_unavailable: 'Market provider unavailable', no_tickets: 'No admitted tickets to check', inapplicable: 'Morning check is outside its session', invalid_publication: 'Publication could not be checked' })[receipt.status] || 'Morning check unavailable';
   }
+  // A current check is an applicable receipt (no inapplicable reason) still
+  // inside its five-minute life. Before the morning file has been read the
+  // answer is unknown, so nothing is offered.
+  function handoff() {
+    const tm = record && record.run && record.run.timing;
+    if (!tm || !['loaded', 'unavailable'].includes(state)) return null;
+    const opens = dateMs(tm.opens_at), cutoff = dateMs(tm.cutoff_at);
+    if (!Number.isFinite(opens) || !Number.isFinite(cutoff) || typeof tm.applicable_session !== 'string'
+        || sessionAt(now) !== tm.applicable_session || now >= cutoff) return null;
+    const applicable = !!receipt && receipt.reason === null;
+    if (applicable && receiptFresh()) return null;
+    const from = opens - PREOPEN_MINUTES * 60000;
+    return { due: now >= from, from, cutoff, expired: applicable };
+  }
+  function offerHandoff(body) {
+    const offer = handoff();
+    if (!offer) return;
+    if (!offer.due) {
+      line(body, 'Morning check:', 'One can be started from ' + clockCT(offer.from) + ', ' + PREOPEN_MINUTES + ' minutes before the open. A run before then publishes only a receipt saying it was too early.', { 'data-observation-handoff': 'before' });
+      return;
+    }
+    line(body, offer.expired ? 'The last morning check has expired.' : 'No current morning check for this session.',
+      'Scheduled runs can start hours late, so you can start one yourself: open the morning workflow, choose Run workflow on the main branch, untick dry_run and run it. ' +
+      'It reads IEX and delayed SIP data for this publication\'s admitted plans and any current research rows, publishes one dated receipt and places no order. ' +
+      'When the run has finished, press Reload published observations. Accepted until ' + clockCT(offer.cutoff) + ', the end of the entry window.',
+      { class: 'sc-note', 'data-observation-handoff': offer.expired ? 'expired' : 'due' });
+    body.append(node('a', { href: MORNING_WORKFLOW, target: '_blank', rel: 'noopener noreferrer', 'data-observation-link': MORNING_WORKFLOW, 'data-observation-workflow': '' }, 'Open the morning workflow on GitHub'));
+  }
   function line(host, label, value, attrs) {
     const p = node('p', Object.assign({ class: 'sc-hint' }, attrs));
     p.append(node('strong', {}, label + ' '), d.createTextNode(value)); host.append(p);
@@ -408,6 +445,7 @@
     const c = descriptor.candidate, row = c && rowFor(c), blocked = c && refusal(c);
     title.textContent = descriptor.kind === 'summary' ? headline() : 'Morning quote check · ' + (c.status !== 'ticket' ? 'not requested' : blocked ? 'entry restricted' : !row ? 'unavailable' : !quotesCurrent(row) ? 'stale or incomplete' : 'dated snapshot');
     host.setAttribute('data-observation-state', state === 'loaded' && (!receiptFresh() || row && !quotesCurrent(row)) ? 'stale' : state);
+    if (descriptor.kind === 'summary') offerHandoff(body);
     if (issue) line(body, 'File status:', issue);
     if (storageIssue) line(body, 'Reload coverage:', storageIssue);
     if (cachedHalt) line(body, 'Earlier public evidence:', 'A sourced halt or event exclusion was retained in this tab. Cached evidence is not a new quote check.');
@@ -471,8 +509,15 @@
     host.append(title, node('div', { 'data-observation-body': '' }));
     if (kind === 'summary') {
       const button = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-observation-reload': '' }, 'Reload published observations');
-      button.addEventListener('click', reload); host.append(button);
-      host.append(node('p', { class: 'sc-hint' }, 'Reload reads the latest static morning file. It does not request a new market quote or start a provider refresh.'));
+      // The same run publishes the research rows' dated observation, so one
+      // press re-reads both; the research module reads nothing while its
+      // comparison has not been opened.
+      button.addEventListener('click', () => {
+        reload();
+        if (api.researchObservations && typeof api.researchObservations.reload === 'function') api.researchObservations.reload();
+      });
+      host.append(button);
+      host.append(node('p', { class: 'sc-hint' }, 'Reload reads the latest static morning file and, once the research comparison is open, its dated observation. It does not request a new market quote or start a provider refresh.'));
     } else host.id = 'disc-observations';
     const descriptor = { kind, candidate }; hosts.set(host, descriptor); paintHost(host, descriptor); return host;
   }

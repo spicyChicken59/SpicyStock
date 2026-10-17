@@ -15,7 +15,7 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
   const wait = page => page.waitForFunction(() => ['loaded', 'unavailable'].includes(SCStock.observations.facts().state));
   const facts = page => page.evaluate(() => SCStock.observations.facts());
   const setup = async (name = 'observed', options = {}) => {
-    const response = { body: JSON.stringify(records[name]), status: 200, delay: 0 };
+    const response = { body: JSON.stringify(records[name]), status: options.status || 200, delay: 0 };
     const requests = [];
     const tab = await open(browser, base, '/tests/fixtures/morning/' + (name === 'no-tickets' ? 'red' : 'full') + '-publication.json', options.now || NOW, options.width || 1280, {
       hash: '#/explore/bursts/AAPL', theme: options.theme || 'dark', reducedMotion: 'reduce',
@@ -239,4 +239,81 @@ export async function checkObservations({ browser, base, open, check, eq, shotsD
     eq('missing WebCrypto makes no unbound sidecar request', cryptoMissing.requests.length, 0);
     check('missing WebCrypto explains exact verification is unavailable', (await cryptoMissing.page.locator('#disc-observations').textContent()).includes('Exact publication verification is unavailable'));
   } finally { await cryptoMissing.context.close(); }
+
+  // The hand-started morning check. GitHub's scheduler can start the morning
+  // workflow hours late, so the summary offers the owner a link to start it --
+  // only on the applicable session, from the collector's own pre-open window to
+  // the entry cutoff, and only while no current applicable check has arrived.
+  // The clock moves through each boundary of the full publication's window:
+  // 9:00 ET (8:00 CT) to the 10:00 ET cutoff (9:00 CT) on Fri 11 Sep.
+  const WORKFLOW = 'https://github.com/spicyChicken59/SpicyStock/actions/workflows/morning.yml';
+  const offer = page => page.locator('[data-observations="summary"] [data-observation-handoff]');
+  const offered = async page => (await offer(page).count()) ? offer(page).getAttribute('data-observation-handoff') : null;
+  const offerText = async page => (await offer(page).count()) ? offer(page).textContent() : '';
+  const workflowLink = page => page.locator('[data-observations="summary"] [data-observation-workflow]');
+  const linkFacts = async page => (await workflowLink(page).count()) ? workflowLink(page).evaluate(a => [a.getAttribute('href'), a.target, a.rel, a.textContent]) : null;
+  const at = (page, stamp) => page.evaluate(stamp => SCStock.observations.clock(new Date(stamp)), stamp);
+  for (const [width, theme] of [[1280, 'dark'], [390, 'light']]) {
+    const label = 'handoff ' + width + '/' + theme;
+    const tab = await setup('observed', { now: '2026-09-11T12:30:00Z', status: 404, width, theme });
+    const { page } = tab, seen = [];
+    page.on('request', request => seen.push(request.url()));
+    try {
+      await page.locator('#morning-open').click();
+      eq(label + ': an absent morning file reads as unavailable', (await facts(page)).state, 'unavailable');
+      eq(label + ': at 7:30 CT the check is offered for later, with no link', [await offered(page), await workflowLink(page).count()], ['before', 0]);
+      check(label + ': the early line names the collector\'s own start, 8:00 CT, 30 minutes before the open', /from 8:00 AM CT, 30 minutes before the open/.test(await offerText(page)));
+      await at(page, '2026-09-11T12:59:59Z');
+      eq(label + ': one second before the window it is still too early', await offered(page), 'before');
+      await at(page, '2026-09-11T13:00:00Z');
+      eq(label + ': at the window\'s first instant the check is due', await offered(page), 'due');
+      const due = await offerText(page);
+      check(label + ': the due line says there is no current check and how to start one', /^No current morning check for this session\./.test(due) && /choose Run workflow on the main branch, untick dry_run and run it/.test(due));
+      check(label + ': it says what the run does and does not do', /publishes one dated receipt and places no order/.test(due) && /press Reload published observations/.test(due));
+      check(label + ': it names the entry cutoff in Chicago time', /Accepted until 9:00 AM CT, the end of the entry window\./.test(due));
+      eq(label + ': the link is this repository\'s own morning workflow, in a new tab, without referrer or opener', await linkFacts(page), [WORKFLOW, '_blank', 'noopener noreferrer', 'Open the morning workflow on GitHub']);
+      if (await workflowLink(page).count()) await workflowLink(page).focus();
+      await at(page, '2026-09-11T13:30:00Z');
+      eq(label + ': a clock repaint keeps the focus on the workflow link', await page.evaluate(() => document.activeElement && document.activeElement.hasAttribute('data-observation-workflow')), true);
+      await at(page, '2026-09-11T13:59:59Z');
+      eq(label + ': one second before the cutoff it is still due', await offered(page), 'due');
+      await at(page, '2026-09-11T14:00:00Z');
+      eq(label + ': at the cutoff nothing is offered', [await offered(page), await workflowLink(page).count()], [null, 0]);
+      for (const [stamp, words] of [['2026-09-10T13:10:00Z', 'the day before'], ['2026-09-12T13:10:00Z', 'the day after']]) {
+        await at(page, stamp);
+        eq(label + ': ' + words + ' the applicable session nothing is offered', await offered(page), null);
+      }
+      eq(label + ': the offer is a link and a sentence -- the page requested nothing from GitHub', seen.filter(url => new URL(url).hostname === 'github.com'), []);
+      eq(label + ': moving the clock read the morning file again never', seen.filter(url => url.endsWith('/morning.json')), []);
+      check(label + ': the desk fits with the offer', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
+      if (shotsDir) {
+        await at(page, '2026-09-11T13:10:00Z');
+        if (await offer(page).count()) await offer(page).scrollIntoViewIfNeeded();
+        await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, `handoff-${width}-${theme}.png`) });
+      }
+      eq(label + ': no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
+  {
+    const tab = await setup('observed', { now: '2026-09-11T13:35:30Z' }), { page } = tab;
+    try {
+      await page.locator('#morning-open').click();
+      eq('handoff: a current applicable check offers nothing', [await offered(page), await workflowLink(page).count()], [null, 0]);
+      await at(page, '2026-09-11T13:40:01Z');
+      eq('handoff: once the receipt has expired the check is offered again', await offered(page), 'expired');
+      check('handoff: the expired line says so', /^The last morning check has expired\./.test(await offerText(page)) && await workflowLink(page).count() === 1);
+      await at(page, '2026-09-11T13:35:30Z');
+      const inapplicable = structuredClone(records.observed);
+      Object.assign(inapplicable, { status: 'inapplicable', reason: 'before_collection_window', rows: [] });
+      for (const feed of ['iex', 'delayed_sip']) Object.assign(inapplicable.sources[feed], { status: 'not_requested', entitlement: 'not_requested' });
+      await tab.reload(inapplicable);
+      eq('handoff: an inapplicable receipt (served transport copy) loads', [(await facts(page)).state, (await facts(page)).fresh], ['loaded', true]);
+      eq('handoff: an inapplicable receipt is not a current check, so one is offered', await offered(page), 'due');
+      await tab.reload(records.outage);
+      eq('handoff: a fresh provider-outage receipt is a current check', await offered(page), null);
+      await page.evaluate(() => { const data = structuredClone(SCStock.data); data.fixture = 'practice'; SCStock.render(data, new Date('2026-09-11T13:10:00Z')); });
+      eq('handoff: a practice record offers nothing', await offered(page), null);
+      eq('handoff: no browser errors', tab.errors, []);
+    } finally { await tab.context.close(); }
+  }
 }

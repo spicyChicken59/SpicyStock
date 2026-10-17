@@ -1177,6 +1177,27 @@ credentials, and no provider secret reaches the browser. No new subscription
 or environment variable is required. Timely morning delivery and comprehensive
 event coverage remain acceptance work for milestone 2.
 
+GitHub's scheduler has started every scheduled run of this repository hours
+late since 21 September (the [13 October schedule reading](docs/input-truthfulness/2026-10-13-schedule-reliability.md)),
+and each morning run from 12 to 16 October was created after its entry window
+had ended, so the Morning desk offers the owner a hand-started check, the
+reading's recommended first step. On the applicable session, from the collector's own
+pre-open minutes (`src/morning.py`'s `POLICY`, 30) until the entry cutoff, and
+while no current applicable receipt for the loaded publication has arrived
+(none, an inapplicable one, or one past its five-minute life), the summary links
+to `morning.yml` on GitHub and says to run it on main with **dry_run** unticked;
+earlier that day it names the time the window opens. It is a link and a
+sentence: the page dispatches nothing, holds no token and sends nothing to
+GitHub, and starting the run needs write access to the repository. Two earlier
+manual dispatches went from the run's creation to its committed receipt in 64
+and 75 seconds, and one was verified on the served site by the publisher 130
+seconds after its creation; both made no provider request (one after the
+cutoff, one on a Saturday), so a collection that asks the providers takes
+longer. **Reload published observations** re-reads the morning file and, once
+the research comparison has been opened, its dated research observation; the
+comparison's own reload re-reads that observation even when its cohort is
+unchanged.
+
 ### SEC issuer evidence
 
 The Morning desk includes an optional filing reader for current admitted plans

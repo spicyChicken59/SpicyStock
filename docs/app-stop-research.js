@@ -371,7 +371,13 @@
     content.append(node('p', { class: 'sc-hint' }, 'An optional 4% versus 5% stop-width comparison. Production tickets keep their original policy. Research quantities are not broker drafts, reported fills or evidence of a profitable strategy.'),
       node('p', { class: 'sc-hint', role: 'status', 'aria-live': 'polite', 'data-stop-status': '' }), node('div', { 'data-stop-body': '' }));
     const button = node('button', { class: 'sc-btn sc-btn--secondary sc-btn--sm', type: 'button', 'data-stop-reload': '' }, 'Reload published comparison');
-    button.addEventListener('click', load);
+    // A same-cohort comparison re-attaches without a request, so a pressed
+    // reload asks the research rows' dated observation again itself, unless
+    // re-attaching a new cohort has already started that read.
+    button.addEventListener('click', () => load().then(ok => {
+      const observations = api.researchObservations;
+      if (ok && observations && typeof observations.reload === 'function' && observations.status().state !== 'loading') observations.reload();
+    }));
     content.append(button, node('p', { class: 'sc-hint' }, 'Reload reads the same public research files. It does not run a scan, request provider data or send your cash inputs, saved symbols or broker reports.'));
     host.append(content); mounted = host;
     host.addEventListener('toggle', () => { if (host.open && state === 'deferred') load(); else paintStatus(); });

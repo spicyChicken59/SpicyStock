@@ -111,6 +111,9 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     const { page, context, requests, errors } = tab;
     try {
       eq(label + ': a closed research panel performs zero observation requests', observationRequests(requests).length, 0);
+      await page.locator('[data-observation-reload]').click();
+      await page.waitForFunction(() => SCStock.observations.facts().state !== 'loading');
+      eq(label + ': the morning reload with the comparison never opened reads no research observation', observationRequests(requests).length, 0);
       await page.locator('.ss-morning__prep > summary').click();
       await page.locator('#morning-cash').fill('345.67'); await page.locator('#morning-cash').focus();
       const before = await snapshot(page), requestsBefore = requests.length;
@@ -156,6 +159,37 @@ export async function checkResearchObservations({ browser, base, open, check, eq
     eq('partial: PSNL stale print has no position', await value(page, 'PSNL', 'trade-state'), 'unknown — no recent observation');
     check('partial: the summary says some prices were stale, invalid or missing', /stale, invalid or missing/.test(await summary(page)));
     await capture(page, 'research-observation-partial-1280-dark', 'KE');
+    // The two buttons a reader presses, not the module's own reload: the same
+    // morning run publishes the research rows' observation, so the comparison's
+    // reload (same cohort, which re-attaches without a request) and the morning
+    // desk's reload each read it again.
+    const press = async (selector, served, clock) => {
+      transport.current = served;
+      await page.evaluate(now => { SCStock.now = now; SCStock.reclock(); }, clock || clockFor(current, served));
+      const before = await page.evaluate(() => window.__observationFetches.length);
+      await page.locator(selector).click();
+      await page.waitForFunction(n => window.__observationFetches.length > n, before, { timeout: 5000 }).catch(() => {});
+      await settled(page);
+      return (await page.evaluate(() => window.__observationFetches.length)) - before;
+    };
+    eq('comparison reload: one press reads the same cohort\'s observation again', await press('[data-stop-reload]', variants.followup), 1);
+    eq('comparison reload: the newer observation replaces the partial one', [(await state(page)).state, (await state(page)).status], ['loaded', 'observed']);
+    eq('morning reload: one press reads the research observation too', await press('[data-observation-reload]', variants.outage), 1);
+    eq('morning reload: the newer observation replaces the last', [(await state(page)).state, (await state(page)).status], ['loaded', 'provider_unavailable']);
+    // A comparison reload that brings a later cohort of the same publication:
+    // re-attaching it already starts the observation read, so the press adds
+    // no second one. Then the current cohort is put back the same way.
+    const late = { receiptRaw: await file(STOP, 'current-late-receipt.json'), raw: await file(STOP, 'current-late-bundle.json') };
+    const lateReceipt = route => route.fulfill({ contentType: 'application/json', body: late.receiptRaw });
+    const lateBundle = route => route.fulfill({ contentType: 'application/json', body: late.raw });
+    await page.route('**/stop-research.json', lateReceipt); await page.route('**/stop-research/*.json', lateBundle);
+    const lateClock = new Date(Date.parse(JSON.parse(late.receiptRaw).timing.generated_at) + 60000).toISOString();
+    eq('comparison reload to a later cohort: the observation is read once, not twice', await press('[data-stop-reload]', variants.followup, lateClock), 1);
+    eq('comparison reload to a later cohort: the comparison is the later one', (await stopState(page)).state, 'loaded');
+    eq('comparison reload to a later cohort: the earlier cohort\'s observation cannot describe it', (await state(page)).state, 'unavailable');
+    await page.unroute('**/stop-research.json', lateReceipt); await page.unroute('**/stop-research/*.json', lateBundle);
+    eq('comparison reload back to the current cohort: read once', await press('[data-stop-reload]', variants.partial), 1);
+    eq('comparison reload back to the current cohort: its observation loads again', [(await state(page)).state, (await state(page)).status], ['loaded', 'partial']);
     const reloadTo = async served => {
       transport.current = served;
       await page.evaluate(now => { SCStock.now = now; SCStock.reclock(); return SCStock.researchObservations.reload(); }, clockFor(current, served));
