@@ -402,6 +402,21 @@ def test_the_page_reads_the_recovery_statuses_the_collector_writes():
     assert tuple(re.findall(r"'(\w+)'", listed)) == source_recovery.STATUSES
 
 
+def test_the_page_the_handoff_and_the_mail_say_fidelitys_part_fill_rule_in_one_sentence():
+    """Fidelity's OTO releases the sell stop only on a full fill, so a part
+    fill needs a separate stop. The mail, the page's order block and tickets
+    sheet, and the private handoff's readback print one sentence, defined once
+    in each file and used there; the plan's own terms, which provenance
+    replays, stay broker-neutral."""
+    assert "Fidelity" in report.BROKER_PART_FILL and "in full" in report.BROKER_PART_FILL
+    for name, uses in (("app.js", 2), ("app-handoff-ui.js", 1)):
+        page = (ROOT / "docs" / name).read_text(encoding="utf-8")
+        assert re.findall(r"const BROKER_PART_FILL = '([^']+)';", page) == [report.BROKER_PART_FILL], name
+        assert page.count("text: BROKER_PART_FILL") + page.count("}, BROKER_PART_FILL)") == uses, name
+    for term in (plan.ORDER_TERM_STOP, plan.ORDER_TERM_DAY, plan.ORDER_TERM_ABOVE_LIMIT, plan.ORDER_TERM_BELOW_SKIP):
+        assert "Fidelity" not in term and "in full" not in term, term
+
+
 def test_the_page_and_the_mail_refuse_to_say_no_ticket_twice_by_the_same_rule():
     """The budget's reason for a withheld plan opens with "ticket withheld",
     so a line that introduces it with "No ticket" says it twice. Both

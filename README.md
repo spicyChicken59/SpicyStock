@@ -508,10 +508,16 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    budget, the position cap and his 4% stop line at every fill it can take
    — the position, the planned price-to-stop risk, the aim, the hazards,
    and the order in Fidelity's field order with a copy button: a buy
-   stop-limit with a one-triggers-the-other sell stop riding on it, which
-   Fidelity releases only when the buy fills in full, so a part fill needs
-   a separate sell stop the ticket's terms name, and under it what the
-   ticket enforces and what it leaves to the reader;
+   stop-limit with a one-triggers-the-other sell stop riding on it, and
+   under it what the ticket enforces and what it leaves to the reader;
+   beside those terms, never inside them (the plan's terms are its record,
+   name no broker, and provenance replays them), one sentence of
+   Fidelity's own rule: the OTO sell stop is released only when the buy
+   fills in full, so a part fill needs a separate sell stop for the shares
+   that filled. The tickets sheet, the private handoff's readback and the
+   mail's order and alert blocks print the same sentence
+   (`report.BROKER_PART_FILL`, held equal to the page's two copies by
+   `tests/test_docs.py`);
    `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket and
    labels each Fidelity fact as its own words, inferred or unconfirmed); the
    model exit guidance, dated; and the provenance (what Claude saw in the

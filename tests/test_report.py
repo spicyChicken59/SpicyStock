@@ -115,6 +115,36 @@ def _rendered(markup: str) -> str:
     return " ".join(parser.text)
 
 
+# --- the broker's part-fill rule ----------------------------------------------------
+
+def test_the_mail_prints_fidelitys_part_fill_rule_once_after_each_block_of_orders():
+    """Fidelity releases an OTO's sell stop only on a full fill. The ticket's own
+    terms name no broker, so the mail prints the broker's sentence beside them:
+    once after the burst orders and once after the anticipation alerts."""
+    text = _rendered(digest_html(build(**_night())))
+    assert text.count(report.BROKER_PART_FILL) == 2, text
+    first = text.index(report.BROKER_PART_FILL)
+    second = text.index(report.BROKER_PART_FILL, first + 1)
+    assert text.index(ORDER_LINE) < first < text.index("Alerts — set these before the open"), text
+    assert text.index("Buy 40 WCH") < second, text
+
+
+def test_the_mail_prints_no_part_fill_rule_where_no_order_is_printed():
+    quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
+    assert report.BROKER_PART_FILL not in _rendered(digest_html(build(**_night(trades=[], watchlist=quiet))))
+    # a trade with an order and an alert without one: the sentence follows the trades alone
+    unordered = {"top": [{"ticker": "WCH", "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 0,
+                          "plan": {"order_line": None}}],
+                 "also_quiet": [], "counts": {"top": 1, "also_quiet": 0}}
+    text = _rendered(digest_html(build(**_night(watchlist=unordered))))
+    assert text.count(report.BROKER_PART_FILL) == 1, text
+    assert text.index(report.BROKER_PART_FILL) < text.index("Alerts — set these before the open"), text
+    # an alert with an order and no trade: the sentence follows the alerts alone
+    text = _rendered(digest_html(build(**_night(trades=[]))))
+    assert text.count(report.BROKER_PART_FILL) == 1, text
+    assert text.index(report.BROKER_PART_FILL) > text.index("Buy 40 WCH"), text
+
+
 # --- the cover ---------------------------------------------------------------------
 
 @pytest.mark.parametrize("label, run, breadth, trades, expected", [

@@ -3,6 +3,10 @@
 (function (w) {
   'use strict';
   const api = w.SCStock = w.SCStock || {}, d = w.document;
+  // Fidelity's own rule for the draft's attached stop, the sentence
+  // report.BROKER_PART_FILL and docs/app.js carry (tests/test_docs.py holds
+  // the three equal): the OTO sell stop is released only on a full fill.
+  const BROKER_PART_FILL = 'At Fidelity the OTO sell stop is released only when the buy fills in full. If the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, and check that no second sell stop remains for shares you do not hold.';
   const labels = {
     submitted_quantity: 'Total shares submitted', submitted_at: 'Submission time',
     filled_quantity: 'Cumulative entry shares filled', average_price: 'Average entry fill price ($)', filled_at: 'Latest entry fill time',
@@ -368,6 +372,7 @@
     const readback = node('details', { class: 'sc-disclosure', 'data-handoff-readback': '' });
     readback.append(node('summary', {}, 'Saved draft readback and dated exit plan'),
       node('p', { class: 'sc-hint' }, 'Original personal draft, retained as history after broker facts are reported. A planned protective order is not confirmed protection.'),
+      node('p', { class: 'sc-hint', 'data-broker-part-fill': '' }, BROKER_PART_FILL),
       node('pre', { class: 'ss-handoff__readback', 'data-handoff-text': '' }),
       node('h4', {}, 'Archived model exit schedule'),
       node('p', { class: 'sc-hint' }, 'Original published dates and wording. This schedule is not resized to your personal draft or reported holdings; review the whole-share exit check and your prior exits before acting.'),
