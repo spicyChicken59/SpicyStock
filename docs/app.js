@@ -1511,6 +1511,7 @@
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
+    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,

@@ -61,6 +61,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
+// Fidelity's part-fill rule as docs/app.js defines it; tests/test_docs.py holds
+// it equal to report.BROKER_PART_FILL. Printed beside every order the page
+// prints (the order block, the recorded ticket, the tickets sheet) and nowhere else.
+const BROKER_PART_FILL = (await readFile(path.join(ROOT, 'docs', 'app.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1];
+const brokerNotes = (page, scope) => page.locator(scope + ' [data-broker-part-fill]').evaluateAll((els) => els.map((e) => e.textContent));
 const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
 // the sequels a follow-through reading needs beside the nights: the same
 // market one session on, and that session re-run on later bars
@@ -349,6 +354,8 @@ async function checkDetail(page, variant, b, data, blocked) {
     check(`${variant} ${b.ticker} says there are no model exits`, (await text(page, '#disc-exits')).includes('no model exits'), 'exits');
   }
   eq(`${variant} ${b.ticker} order block ${status === 'ticket' && !blocked ? 'shown' : 'withheld'}`, order, status === 'ticket' && !blocked ? 1 : 0);
+  eq(`${variant} ${b.ticker} Fidelity's part-fill rule beside each printed order and nowhere else`, await brokerNotes(page, '#detail'),
+    Array(order + await count(page, '#detail [data-recorded-ticket]')).fill(BROKER_PART_FILL));
   if (status === 'ticket' && !blocked) {
     const pre = await page.locator('#detail pre[data-order]').innerText();
     const o = b.plan.order_json;
@@ -412,9 +419,12 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
     eq(`${variant} ${r.ticker} action carries the order`, ticketAttr, 'order');
     check(`${variant} ${r.ticker} action prints the order line`, action.includes(r.plan.order_line), action);
     eq(`${variant} ${r.ticker} order block shown`, await count(page, '#detail pre[data-order]'), 1);
+    eq(`${variant} ${r.ticker} Fidelity's part-fill rule beside the order`, await brokerNotes(page, '#detail'), [BROKER_PART_FILL]);
   } else {
     eq(`${variant} ${r.ticker} action status`, ticketAttr, status === 'ticket' ? 'blocked' : status);
     eq(`${variant} ${r.ticker} order block withheld`, await count(page, '#detail pre[data-order]'), 0);
+    eq(`${variant} ${r.ticker} the part-fill rule only beside a recorded ticket`, await brokerNotes(page, '#detail'),
+      Array(await count(page, '#detail [data-recorded-ticket]')).fill(BROKER_PART_FILL));
     if (['slot_cap', 'equity', 'existing_position', 'duplicate'].includes(status)) {
       const cut = (data.cash_budget.cut || []).find(c => c.ticker === r.ticker && c.setup_kind === 'anticipation');
       eq(`${variant} ${r.ticker} allocation refusal matches combined budget`, cut && cut.kind, status);
@@ -615,6 +625,7 @@ async function checkVariant(browser, base, variant, data) {
   }
   check(`${variant} the budget says it once`, !/no ticket\W{0,4}(no ticket|ticket withheld)/i.test(budget), budget);
   eq(`${variant} order sheet rows`, await count(page, '#order-sheet tbody tr[data-ticker]'), withOrders.length);
+  eq(`${variant} the sheet prints Fidelity's part-fill rule once under its orders`, await brokerNotes(page, '#orders-table'), withOrders.length ? [BROKER_PART_FILL] : []);
   if (!withOrders.length) check(`${variant} order sheet says no orders`, (await text(page, '#order-sheet')).includes('No orders'), 'sheet');
   else {
     const foot = await text(page, '#order-sheet tfoot');

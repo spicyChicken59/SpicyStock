@@ -409,7 +409,7 @@ def test_the_page_the_handoff_and_the_mail_say_fidelitys_part_fill_rule_in_one_s
     in each file and used there; the plan's own terms, which provenance
     replays, stay broker-neutral."""
     assert "Fidelity" in report.BROKER_PART_FILL and "in full" in report.BROKER_PART_FILL
-    for name, uses in (("app.js", 2), ("app-handoff-ui.js", 1)):
+    for name, uses in (("app.js", 3), ("app-handoff-ui.js", 1)):
         page = (ROOT / "docs" / name).read_text(encoding="utf-8")
         assert re.findall(r"const BROKER_PART_FILL = '([^']+)';", page) == [report.BROKER_PART_FILL], name
         assert page.count("text: BROKER_PART_FILL") + page.count("}, BROKER_PART_FILL)") == uses, name
