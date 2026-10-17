@@ -63,6 +63,8 @@
   const sentence = (parts) => parts.map((t) => /[.!?]$/.test(t) ? t : t + '.').join(' ');
   const underscores = (s) => String(s).replace(/_/g, ' ');
   const verdictCount = (v) => VERDICTS.filter((k) => v[k]).map((k) => num(v[k]) + ' ' + k).join(', ');
+  // what the gate published: the burst tickets the study's family is, and the setting-up ones beside them, never summed
+  const publishedWords = (burst, setup) => plural(burst, 'burst ticket') + (setup ? ' and ' + plural(setup, 'setting-up ticket') : '');
   const stratumOf = (nt, s) => s === 'all' ? nt.all : nt.strata[s];
 
   // ---- the shape the module indexes into, checked before anything is drawn --
@@ -90,10 +92,10 @@
           typeof nt.complete !== 'boolean' || !(str(nt.horizon) || nt.horizon === null) || (!nt.complete && !str(nt.horizon)) ||
           (nt.first_read !== undefined && !(obj(nt.first_read) && str(nt.first_read.as_of) && block(nt.first_read.admitted) && block(nt.first_read.all) &&
             nums(nt.first_read.moved, ['admitted', 'all']))) ||
-          ['bursts', 'vetoed', 'tickets_published'].some((k) => !isNum(nt[k]))) return 'A night of the findings is malformed.';
+          ['bursts', 'vetoed', 'tickets_published', 'setup_tickets_published'].some((k) => !isNum(nt[k]))) return 'A night of the findings is malformed.';
       if (!obj(nt.strata) || STRATA.slice(0, -1).some((s) => !settled(nt.strata[s]))) return 'A night of the findings has a malformed stratum.';
     }
-    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'bursts', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
+    if (!nums(F.nights_summary, ['nights', 'tickets_published', 'setup_tickets_published', 'bursts', 'inside_hold']) || !obj(F.nights_summary.verdicts)) return 'The findings carry no night summary.';
     const rd = F.reading;
     if (!obj(rd) || !str(rd.freeze) || !str(rd.as_of) || !obj(rd.phases) || ['exploratory', 'confirmatory'].some((ph) => {
       const b = rd.phases[ph];
@@ -434,7 +436,7 @@
       : 'The chart reader gave no usable read on any of the ' + plural(rd.requested, 'requested name') + ' that night; every grade is the checklist’s.';
     return 'The scan found ' + plural(nt.bursts, 'burst') + '. The checklist graded ' + num(nt.a_quality.mechanical) + ' of them A-quality and vetoed ' +
       num(nt.vetoed) + '. ' + reader + ' The market gate said ' + reg.verdict + ': ' + sentence(reg.reasons) + ' It published ' +
-      plural(nt.tickets_published, 'ticket') + '.';
+      publishedWords(nt.tickets_published, nt.setup_tickets_published) + (nt.setup_tickets_published ? ', which the study, walking bursts alone, does not count' : '') + '.';
   }
 
   // ---- the table twins: named, focusable scrollers, as every twin in the app ----
@@ -454,12 +456,12 @@
     twin(SC, host, {
       caption: 'Every published night: the market, the scan, and the counterfactual tickets of ' + who + '; a mean prints from ' + plural(min, 'settled ticket'),
       summary: 'Nights as a table',
-      head: ['night', 'verdict', 'ratio', 'bursts', 'A-quality, checklist', 'A-quality, after the reader', 'tickets published',
+      head: ['night', 'verdict', 'ratio', 'bursts', 'A-quality, checklist', 'A-quality, after the reader', 'burst tickets published', 'setting-up tickets published',
              'bursts in the stratum', 'tickets the plan rules wrote', 'set aside unwalked', 'settled', 'won', 'lost', 'even', 'sum R', 'mean R', 'uncertain', 'not filled', 'open', 'pending'],
       rows: model.nights.map((nt) => {
         const b = nt.block, s = b.settled;
         return [words(nt.session), nt.regime.verdict, fixed(nt.regime.ratio_10d, 2), num(nt.bursts), num(nt.a_quality.mechanical), num(nt.a_quality.final),
-                num(nt.tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven),
+                num(nt.tickets_published), num(nt.setup_tickets_published), num(b.rows), num(b.tickets), num(b.buckets.basis_mismatch), num(s.n), num(s.wins), num(s.losses), num(s.breakeven),
                 signed(s.sum_r, 2), s.n >= min ? signed(s.mean_r, 3) : '—', num(b.buckets.uncertain), num(b.buckets.not_filled), num(b.buckets.open), num(b.buckets.pending)];
       }),
     }, 'table-nights');
@@ -545,7 +547,8 @@
     const ns = F.nights_summary;
     host.appendChild(el('h3', { 'class': 'ss-find__h', id: ids.head, text: 'The record, night by night' }));
     host.appendChild(el('p', { 'class': 'sc-note', 'data-find': 'lead', text: 'Over the ' + plural(ns.nights, 'published night') + ' from ' + words(ns.from) + ' to ' + words(ns.through) +
-      ' the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned. ' +
+      ' the gate said ' + verdictCount(ns.verdicts) + ' and published ' + plural(ns.tickets_published, 'burst ticket') + ' out of ' + plural(ns.bursts, 'burst') + ' scanned' +
+      (ns.setup_tickets_published ? ', and ' + plural(ns.setup_tickets_published, 'setting-up ticket') + ', which the study does not walk' : '') + '. ' +
       'The study then ran the production plan rules over every burst, with the gate removed and the reader not run, and for the bursts graded B, C or skip or vetoed with ' +
       'the grade’s or the veto’s own refusal removed too, to see what each refusal was worth. Its figures are as of the records through ' + words(F.study.newest_session) +
       '. Step through the nights or press Play; on a phone the list of nights is the precise way to one.' }));
@@ -891,14 +894,18 @@
     // yellow night admits A+ alone and a green one A+ and A, so their tickets measure the grade
     // band's and the reader's refusals, never the red verdict's
     const others = F.nights.filter((n) => n.regime.verdict !== 'red');
-    const other = others.length, inCo = others.some((n) => n.phase === 'confirmatory');
-    const published = others.reduce((t, n) => t + n.tickets_published, 0);
+    const other = others.length, coNights = others.filter((n) => n.phase === 'confirmatory');
+    const published = others.reduce((t, n) => t + n.tickets_published, 0), setups = others.reduce((t, n) => t + n.setup_tickets_published, 0);
+    const and = (list) => list.length > 1 ? list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1] : list[0];
     const listed = others.map((n) => words(n.session));
+    // the confirmatory result holds only the nights after the freeze: named by date when they are not all of them
+    const inCo = !coNights.length ? '' : '; the study’s confirmatory result includes ' +
+      (coNights.length === other ? (other === 1 ? 'it' : 'them') : and(coNights.map((n) => words(n.session))) + ', the ' + (coNights.length === 1 ? 'one' : 'ones') + ' after its freeze');
     items.push(other ? plural(other, 'published night') + ' here ' + (other === 1 ? 'was' : 'were') + ' not red (' +
-      (listed.length > 1 ? listed.slice(0, -1).join(', ') + ' and ' + listed[listed.length - 1] : listed[0]) + '). On ' + (other === 1 ? 'such a night' : 'such nights') +
+      and(listed) + '). On ' + (other === 1 ? 'such a night' : 'such nights') +
       ' the gate admits some grades, so ' + (other === 1 ? 'its' : 'their') + ' counterfactual tickets measure the refusals of the grade band and the reader rather than a red one; ' +
-      'the gate published ' + plural(published, 'ticket') + ' on ' + (other === 1 ? 'it' : 'them') + '. The red-night readings above leave ' + (other === 1 ? 'it' : 'them') + ' out' +
-      (inCo ? '; the study’s confirmatory result includes ' + (other === 1 ? 'it' : 'them') : '') + '.'
+      'the gate published ' + publishedWords(published, setups) + ' on ' + (other === 1 ? 'it' : 'them') + '. The red-night readings above leave ' + (other === 1 ? 'it' : 'them') + ' out' +
+      inCo + '.'
       : 'Every published night here was red: what yellow or green nights would do is not in this record, which has carried none.');
     sec.appendChild(el('ul', { 'class': 'ss-find__reading', 'data-find': 'read-as' }, items.map((t) => el('li', { text: t }))));
     sec.appendChild(el('p', { 'class': 'sc-hint', text: 'The reports behind these numbers, served as the Markdown files they are:' }));

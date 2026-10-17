@@ -1282,6 +1282,7 @@
     "verdict": "red"
    },
    "session": "2026-09-11",
+   "setup_tickets_published": 0,
    "status": "ok",
    "strata": {
     "B": {
@@ -1600,6 +1601,7 @@
     "verdict": "red"
    },
    "session": "2026-09-14",
+   "setup_tickets_published": 0,
    "status": "ok",
    "strata": {
     "B": {
@@ -1990,6 +1992,7 @@
     "verdict": "red"
    },
    "session": "2026-09-15",
+   "setup_tickets_published": 0,
    "status": "ok",
    "strata": {
     "B": {
@@ -2461,6 +2464,7 @@
     "verdict": "red"
    },
    "session": "2026-09-16",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -2984,6 +2988,7 @@
     "verdict": "red"
    },
    "session": "2026-09-17",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -3555,6 +3560,7 @@
     "verdict": "red"
    },
    "session": "2026-09-18",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -4135,6 +4141,7 @@
     "verdict": "red"
    },
    "session": "2026-09-21",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -4674,6 +4681,7 @@
     "verdict": "red"
    },
    "session": "2026-09-22",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -5126,6 +5134,7 @@
     "verdict": "red"
    },
    "session": "2026-09-23",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -5643,6 +5652,7 @@
     "verdict": "red"
    },
    "session": "2026-09-24",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -6143,6 +6153,7 @@
     "verdict": "red"
    },
    "session": "2026-09-25",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -6580,6 +6591,7 @@
     "verdict": "red"
    },
    "session": "2026-09-28",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -7151,6 +7163,7 @@
     "verdict": "red"
    },
    "session": "2026-09-29",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -7681,6 +7694,7 @@
     "verdict": "red"
    },
    "session": "2026-09-30",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -8287,6 +8301,7 @@
     "verdict": "red"
    },
    "session": "2026-10-01",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -8977,6 +8992,7 @@
     "verdict": "red"
    },
    "session": "2026-10-02",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -9721,6 +9737,7 @@
     "verdict": "red"
    },
    "session": "2026-10-05",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -10364,6 +10381,7 @@
     "verdict": "red"
    },
    "session": "2026-10-06",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -10749,6 +10767,7 @@
     "verdict": "red"
    },
    "session": "2026-10-07",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -11354,6 +11373,7 @@
     "verdict": "yellow"
    },
    "session": "2026-10-08",
+   "setup_tickets_published": 2,
    "status": "degraded",
    "strata": {
     "B": {
@@ -11980,6 +12000,7 @@
     "verdict": "yellow"
    },
    "session": "2026-10-09",
+   "setup_tickets_published": 1,
    "status": "ok",
    "strata": {
     "B": {
@@ -12406,6 +12427,7 @@
     "verdict": "yellow"
    },
    "session": "2026-10-12",
+   "setup_tickets_published": 0,
    "status": "ok",
    "strata": {
     "B": {
@@ -12788,6 +12810,7 @@
     "verdict": "red"
    },
    "session": "2026-10-13",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -13090,6 +13113,7 @@
     "verdict": "red"
    },
    "session": "2026-10-14",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -13471,6 +13495,7 @@
     "verdict": "red"
    },
    "session": "2026-10-15",
+   "setup_tickets_published": 0,
    "status": "degraded",
    "strata": {
     "B": {
@@ -13821,6 +13846,7 @@
     "verdict": "red"
    },
    "session": "2026-10-16",
+   "setup_tickets_published": 0,
    "status": "ok",
    "strata": {
     "B": {
@@ -13973,6 +13999,7 @@
   "from": "2026-09-11",
   "inside_hold": 5,
   "nights": 26,
+  "setup_tickets_published": 3,
   "through": "2026-10-16",
   "tickets_published": 0,
   "verdicts": {

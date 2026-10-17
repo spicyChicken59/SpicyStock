@@ -261,6 +261,7 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
     assert {p["commit"] for p in firsts.values()} == {p["commit"] for p in study_doc["publications"] if p["first"]}
     nights = {n["session"]: n for n in committed["nights"]}
     assert set(nights) == set(firsts), (sorted(nights), sorted(firsts))
+    setups: dict[str, list] = {}
     for session, p in firsts.items():
         n, d = nights[session], p["data"]
         b, reg = d["breadth"], d["breadth"]["regime"]
@@ -281,6 +282,12 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
         vetoed = sum(1 for x in d["bursts"] if x.get("vetoes"))
         assert n["vetoed"] == vetoed, (session, n["vetoed"], vetoed)
         assert n["tickets_published"] == len(d.get("trades") or []), (session, n["tickets_published"])
+        # the setting-up tickets, read off the listed rows' own orders rather than the funnel the
+        # builder asks, so the two readings of a record's anticipation tickets are held to each other
+        orders = [r["ticker"] for r in (d.get("watchlist") or {}).get("top") or [] if (r.get("plan") or {}).get("order_line")]
+        assert n["setup_tickets_published"] == len(orders), (session, n["setup_tickets_published"], orders)
+        if orders:
+            setups[session] = orders
         # the two counts the caption prints, and nothing else of the block (whose
         # causes, refused names and sentence grow with its rules)
         assert n["reads"] == {k: d["run"]["reads"][k] for k in ("requested", "done")}, (session, n["reads"], d["run"]["reads"])
@@ -290,12 +297,17 @@ def test_the_market_and_the_counts_are_the_records_own(committed, pubs, study):
                                   "final": sum(final.get(g, 0) for g in trade)}, (session, n["a_quality"], trade)
     assert any(n["reads"]["done"] == 0 for n in nights.values()) and any(n["reads"]["done"] for n in nights.values()), \
         "the reader's two caption branches, none read and some read, are not both in the records"
+    # the yellow nights' setting-up tickets, by name: the burst tickets are none on every night, so a
+    # sentence that says the gate published nothing on a yellow night is false of these
+    assert setups == {"2026-10-08": ["MG", "SN"], "2026-10-09": ["ZIM"]}, setups
+    assert all(nights[s]["regime"]["verdict"] == "yellow" and nights[s]["tickets_published"] == 0 for s in setups), setups
     # the one-line count over every published night is the records' own too
     records = [p["data"] for _, p in sorted(firsts.items())]
     assert committed["nights_summary"] == {
         "nights": len(records), "from": min(firsts), "through": max(firsts),
         "verdicts": dict(Counter(d["breadth"]["regime"]["verdict"] for d in records)),
         "tickets_published": sum(len(d.get("trades") or []) for d in records),
+        "setup_tickets_published": sum(len(v) for v in setups.values()),
         "bursts": sum(len(d["bursts"]) for d in records),
         "inside_hold": sum(1 for n in committed["nights"] if n["horizon"] > study_doc["newest_session"])}, committed["nights_summary"]
     # the rules the captions name are every record's own, and the same in every record
@@ -881,15 +893,21 @@ def test_a_nights_reads_are_its_two_counts_and_nothing_else():
 
 
 def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, monkeypatch):
-    """Every committed record published no ticket and requested twelve reads,
-    so the file cannot tell a constant from the record's own count: a
-    publication given a ticket and another reads block must carry them."""
+    """Every committed record published no burst ticket, so the file cannot
+    tell a constant zero from the record's own count: a publication given a
+    ticket and another reads block must carry them, and a yellow night whose
+    listed setups lose one of their two orders must count one setting-up
+    ticket, not the two the committed record carries."""
     study_doc, _ = study
     firsts = {p["commit"] for p in study_doc["publications"] if p["first"]}
     changed = copy.deepcopy(pubs)
     target = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-09-22")
     target["data"]["trades"] = [{"ticker": "TKTA"}, {"ticker": "TKTB"}]
     target["data"]["run"]["reads"] = {"requested": 7, "done": 3}
+    yellow = next(p for p in changed if p["commit"] in firsts and p["session"] == "2026-10-08")
+    top = yellow["data"]["watchlist"]["top"]
+    assert [r["ticker"] for r in top if (r.get("plan") or {}).get("order_line")] == ["MG", "SN"]
+    yellow["data"]["watchlist"]["top"] = [r for r in top if r["ticker"] != "MG"]
     monkeypatch.setattr(bf.so, "load_publications", lambda spec: changed)
     built = bf.build()
     night = next(n for n in built["nights"] if n["session"] == "2026-09-22")
@@ -897,3 +915,6 @@ def test_the_published_tickets_and_the_reads_are_each_nights_own(pubs, study, mo
     assert built["nights_summary"]["tickets_published"] == 2
     others = [n for n in built["nights"] if n["session"] != "2026-09-22"]
     assert all(n["tickets_published"] == 0 for n in others)
+    setups = {n["session"]: n["setup_tickets_published"] for n in built["nights"] if n["setup_tickets_published"]}
+    assert setups == {"2026-10-08": 1, "2026-10-09": 1}, setups
+    assert built["nights_summary"]["setup_tickets_published"] == 2

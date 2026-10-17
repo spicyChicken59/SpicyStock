@@ -50,6 +50,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src import funnel  # noqa: E402
 from tools import signal_outcomes as so  # noqa: E402
 
 VERSION = "historical-findings-v1"
@@ -249,6 +250,7 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
             "vetoed": sum(1 for x in d["bursts"] if x.get("vetoes")),
             "reads": reads_of(p["session"], d["run"].get("reads")),
             "tickets_published": len(d.get("trades") or []),
+            "setup_tickets_published": setup_tickets(d),
             "phase": phases.pop(), "horizon": horizon,
             # the hold is over: every ticket has had its sessions, or the night had no row to hold.
             # A complete night can still move while a stratum has a movable row.
@@ -268,6 +270,15 @@ def nights_of(pubs: list[dict], study: dict, first: dict) -> list[dict]:
                                              "all": moved(then, rows)}}
         out.append(night)
     return out
+
+
+def setup_tickets(d: dict) -> int:
+    """How many anticipation tickets -- the setting-up stocks' orders -- the
+    record published, placed by the one rule its page and mail print
+    (``funnel.build``, which reads a record from before the combined
+    allocation by its own old definition). The study walks bursts only, so
+    these are counted beside the burst tickets and never among them."""
+    return funnel.build(d)["anticipation"]["stages"].get("ticket", 0)
 
 
 def reads_of(session: str, reads) -> dict:
@@ -763,6 +774,7 @@ def build() -> dict:
         "nights_summary": {"nights": len(nights), "from": nights[0]["session"], "through": nights[-1]["session"],
                            "verdicts": dict(Counter(n["regime"]["verdict"] for n in nights)),
                            "tickets_published": sum(n["tickets_published"] for n in nights),
+                           "setup_tickets_published": sum(n["setup_tickets_published"] for n in nights),
                            "bursts": sum(n["bursts"] for n in nights),
                            # the nights whose tickets have not all had their hold
                            "inside_hold": sum(1 for n in nights if not n["complete"])},
