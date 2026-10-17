@@ -137,6 +137,17 @@
     return { x: Math.max(2, W - 2 - width), anchor: 'start' };
   }
 
+  // a panel name keeps the first of its wordings whose measured length ends inside the chart;
+  // where the browser measures nothing (jsdom) the wording the estimate chose stands
+  function panelFit(pn, W) {
+    if (typeof pn.text.getComputedTextLength !== 'function') return;
+    for (let k = 0; k < pn.words.length; k++) {
+      if (pn.text.textContent !== pn.words[k]) pn.text.textContent = pn.words[k];
+      const len = pn.text.getComputedTextLength();
+      if (!(len > 0) || pn.x + len <= W - 2) return;
+    }
+  }
+
   // ---- geometry: pure, exported, drawn at the chart's OWN column ----------
   function geometry(width, model) {
     const W = Math.max(240, Math.round(width)), narrow = W < 560;
@@ -227,10 +238,17 @@
       if (refs.some((r) => Math.abs(r[0] - y) < 11)) return;   // the reference already names this height
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end' }, fixed(t, 1)));
     });
-    // the panel names, short on a phone so neither leaves the chart
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.aTop - 4 }, G.narrow
-      ? plain(rules.ratio_long_sessions) + '-session ratio'
-      : plain(rules.ratio_long_sessions) + '-session ratio, up ' + plain(rules.burst_pct) + '% against down'));
+    // the panel names, short on a phone so neither leaves the chart; each keeps its shorter
+    // wordings, so the chart can step down to one once the browser has measured its font
+    const panels = [];
+    const panel = (name, y, words) => {
+      const list = G.narrow ? words.slice(1) : words;
+      const text = SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y, 'data-panel': name }, list[0]);
+      panels.push({ text, x: G.left, words: list });
+      axis.appendChild(text);
+    };
+    const ratioName = plain(rules.ratio_long_sessions) + '-session ratio';
+    panel('ratio', G.aTop - 4, [ratioName + ', up ' + plain(rules.burst_pct) + '% against down', ratioName]);
     // panel B: zero line, ticks, the compressed outcome axis
     const zero = G.yb(0);
     under.appendChild(SC.svg('line', { 'class': 'ss-find__zero', x1: G.left, x2: plotRight, y1: zero, y2: zero }));
@@ -239,9 +257,8 @@
       if (t !== 0) under.appendChild(SC.svg('line', { 'class': 'ss-find__grid', x1: G.left, x2: plotRight, y1: y, y2: y }));
       axis.appendChild(SC.svg('text', { 'class': 'ss-find__tick', x: G.left - 6, y: y + 3.5, 'text-anchor': 'end', 'data-r-tick': t }, (t > 0 ? '+' : t < 0 ? '−' : '') + Math.abs(t) + 'R'));
     });
-    axis.appendChild(SC.svg('text', { 'class': 'ss-find__panel', x: G.left, y: G.bTop - 6 }, G.narrow
-      ? 'R per ticket, compressed axis'
-      : 'what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') + ' did: R per ticket, compressed axis'));
+    panel('outcome', G.bTop - 6, ['what the night’s ' + (model.stratum === 'all' ? 'tickets, every burst,' : STRATUM_WORDS[model.stratum] + ' tickets') +
+      ' did: R per ticket, compressed axis', 'R per ticket, compressed axis', 'R per ticket']);
     // the note names the sessions before the first published night, inside their own
     // columns and on its own ground, so no gridline strikes it and no night sits under it;
     // where neither wording fits that space it is left out (the tables say the same)
@@ -343,7 +360,7 @@
       return model.nights.map((nt, k) => ({ k, d: Math.abs(G.x(nt.i) - xs) / scale }))
         .filter((c) => c.d <= TAP_RADIUS).sort((a, b) => a.d - b.d);
     }
-    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel };
+    return { svg, G, place, reveal, hits, nightMarks, near, bracketLabel, panels };
   }
   // a night's outcome in a line: its mean from the record's minimum of settled tickets, under it its sum
   function pillText_(b, min) {
@@ -707,6 +724,9 @@
         const at = bracketPlace(bl.x1, bl.x2, bl.right, view.G.W, measured);
         bl.text.setAttribute('x', r1(at.x)); bl.text.setAttribute('text-anchor', at.anchor);
       }
+      // so is each panel name: one the browser measures past the chart steps down to its next
+      // shorter wording, and the shortest stands
+      view.panels.forEach((pn) => panelFit(pn, view.G.W));
       if (SC.tooltip) {
         tip = SC.tooltip(chart, { live: false, top: 6, flip: 0.55, offsetX: 14 });
         // a narrow chart has no room beside a column for the tip, which would run off the

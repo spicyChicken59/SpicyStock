@@ -80,6 +80,11 @@ const labelsFit = (p) => p.evaluate(() => {
   const touching = dates.filter((r, i) => i > 0 && r.left < dates[i - 1].right + 2).length;
   return { out, touching };
 });
+// each panel's name, its wording, and whether it ends inside the chart and the screen
+const panelsOf = (page) => page.evaluate(() => Array.from(document.querySelectorAll('#historical-evidence text[data-panel]')).map((t) => {
+  const r = t.getBoundingClientRect(), b = t.ownerSVGElement.getBoundingClientRect();
+  return { name: t.dataset.panel, text: t.textContent, inside: r.left >= b.left - 1 && r.right <= b.right + 1 && r.right <= innerWidth };
+}));
 // the note before the first night: on a ground of its own, and over no night's mark
 const noteClear = (p) => p.evaluate(() => {
   const note = document.querySelector('#historical-evidence text[data-note="before"]');
@@ -629,6 +634,8 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
       return r('.ss-find__caption').top >= r('.ss-find__stage').bottom - 1 && r('.ss-find__side').top >= r('.ss-find__caption').bottom - 1;
     }));
     eq(`${tag}: the note before the first night is on its own ground and over no mark, or left out`, await noteClear(q), { ground: true, under: 0 });
+    eq(`${tag}: each panel keeps its phone wording where it fits`, (await panelsOf(q)).map((x) => [x.name, x.text, x.inside]),
+      [['ratio', F.rules.breadth.ratio_long_sessions + '-session ratio', true], ['outcome', 'R per ticket, compressed axis', true]]);
     // a narrow chart has no room for the tooltip beside a column: none is shown, and nothing scrolls sideways
     for (const col of [Math.floor(F.market.sessions.length / 2), F.market.sessions.length - 1, 0]) {
       await q.locator(`#historical-evidence rect[data-hit="${F.market.sessions[col].date}"]`).hover({ force: true }); await settle(q, 120);
@@ -703,6 +710,23 @@ export async function checkFindings({ browser, base, data, open, check, eq, shot
     eq(`320, letters ${spacing}px wider: findings errors`, wide.errors, []);
     await wide.context.close();
   }
+  // a font far wider than any measured: each panel name steps down to a wording the browser
+  // measures inside the chart, and the outcome panel's is shorter than the one a phone starts with
+  const widest = await load(FULL, 320, { height: 844, touch: true, beforeLoad: async (page) => {
+    await fast(page);
+    await page.addInitScript(() => {
+      document.addEventListener('DOMContentLoaded', () => {
+        const st = document.createElement('style'); st.textContent = '.ss-find__svg text { letter-spacing: 2px; }'; document.head.appendChild(st);
+      });
+    });
+  } });
+  eq('320, letters 2px wider: the replay is ready', await ready(widest.page), 'ready');
+  const wp = await panelsOf(widest.page);
+  eq('320, letters 2px wider: both panel names are drawn, each inside the chart and the screen', wp.map((x) => [x.name, x.inside]), [['ratio', true], ['outcome', true]]);
+  const wo = (wp.find((x) => x.name === 'outcome') || {}).text;
+  check('320, letters 2px wider: the outcome panel steps down to a shorter wording', typeof wo === 'string' && wo !== 'R per ticket, compressed axis' && 'R per ticket, compressed axis'.startsWith(wo), wo);
+  eq('320, letters 2px wider: findings errors', widest.errors, []);
+  await widest.context.close();
   const l = await load(FULL, 1280, { theme: 'light' });
   eq('light: the replay is ready', await ready(l.page), 'ready');
   if (shotsDir) await l.page.locator('#historical-evidence').screenshot({ path: path.join(shotsDir, 'findings-1280-light.png') });

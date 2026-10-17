@@ -9949,6 +9949,18 @@ jsdom lacks, so the estimate stands there). `tools/findings_cases.mjs` loads the
 1088). The old page, the measured placement dropped and the clamp dropped each
 fail both wider-font checks; a control (a comment) passes 1088/1088.
 
+**And that check found the next label of the class.** The page job on `0483cf00`
+and on `433e474c` failed one check each: at 320 px with the letters 0.8 px wider
+the lower panel's name, *R per ticket, compressed axis*, ended past the chart --
+the same estimate, on another label. Each panel name now carries its shorter
+wordings, and `draw()` keeps the first one the browser measures inside the chart
+(`panelFit()`; in jsdom, which measures nothing, the estimate's wording stands).
+The suite holds each phone panel to its phone wording where it fits, and loads
+the 320 px chart with the letters 2 px wider, where locally the outcome panel's
+name ends outside the chart without the fix: both names inside, the outcome's a
+shorter wording. The fit dropped, the bound widened and the loop starting at the
+shortest wording each die on the checks naming them; a control passes 1168/1168.
+
 **The review, worked.** A workflow by execution over `df0bf3e2`, three finders
 (the numbers, the page, the tests) and one skeptic a finding, returned 17
 findings, 13 distinct, and the skeptic upheld every one; each was reproduced
