@@ -3903,6 +3903,21 @@ async function checkStaleTolerance(browser, base) {
     // a floor that is not a whole number is no rule the page can read: the desk
     // reconciles nothing under it and Method quotes no refusal rule
     'a malformed refusal floor': (d) => { d.rules.pipeline.reader_refusal_min = true; },
+    'a negative refusal floor': (d) => { d.rules.pipeline.reader_refusal_min = -1; },
+    'a fractional refusal floor': (d) => { d.rules.pipeline.reader_refusal_min = 1.5; },
+    // the night the floor exists for (15 Oct 2026): one of the two selected reads refused
+    // by reader authority, the other accepted. Written as the run writes it -- the row
+    // falls back, its purpose counts the refusal, run.reads is tolerated within a limit of
+    // one -- so the desk can reconcile the batch only by reading the floor this record archived
+    'a tolerated refusal of two': (d) => {
+      const tsla = d.bursts.find(b => b.ticker === 'TSLA');
+      tsla.claude = { ...tsla.claude, source: 'fallback', error: 'src.ReaderAuthorityError: refused' };
+      tsla.reader_coverage = 'fallback';
+      Object.assign(d.run.review_selection.by_purpose.research_rotating, { accepted: 0, unaccepted: 1, refused: 1 });
+      Object.assign(d.run.reads, { done: 1, causes: { ...d.run.reads.causes, refused: 1 }, refused_names: ['TSLA'], refused_admissible: [],
+        verdict: 'tolerated', unavailable_reason: 'refused within the tolerance',
+        sentence: 'Chart reader: 1 of 2 judgements accepted. 1 reply (TSLA) refused by reader authority or the discovery contract, within this run\'s tolerance of 1; that name stays research only, without a ticket.' });
+    },
     // only the benchmark a session behind: the stocks are complete, so the tolerance has nothing to say
     'only the benchmark stale': (d) => {
       Object.assign(d.run.input_tolerance, { verdict: 'complete', reasons: [], stale: 1, stale_stocks: 0, names: ['SPY'] });
@@ -3975,9 +3990,16 @@ async function checkStaleTolerance(browser, base) {
       } else if (name === 'a record from before the refusal floor') {
         check('thin ' + name + ': Method quotes the fraction alone, as that record was published under', method.includes('past 25% of the night\u2019s reads, when none is accepted') && !method.includes('more than both'), method);
         check('thin ' + name + ': the desk reconciles the batch under the fraction alone', reviewState === 'reconciled', reviewState);
-      } else if (name === 'a malformed refusal floor') {
+      } else if (['a malformed refusal floor', 'a negative refusal floor', 'a fractional refusal floor'].includes(name)) {
         check('thin ' + name + ': the desk reconciles nothing under a floor it cannot read', reviewState === 'unknown', reviewState);
         check('thin ' + name + ': Method quotes no refusal rule it cannot read', !method.includes('Chart reader: a reply refused'), method);
+      } else if (name === 'a tolerated refusal of two') {
+        // the fraction alone floors to no refusal at two reads; only the archived floor tolerates TSLA's
+        check('thin ' + name + ': the desk reconciles the tolerated batch under the archived floor', reviewState === 'reconciled', reviewState);
+        const desk = await page.evaluate(() => { const n = document.querySelector('[data-morning="review-selection"]'); return n ? n.textContent : ''; });
+        check('thin ' + name + ': the desk says the refusal is within the archived tolerance',
+          desk.includes('Selected batch: 1 of 2 chart reviews accepted; 1 without an accepted review (1 refused).') && desk.includes('Refusals are within the archived tolerance'), desk);
+        check('thin ' + name + ': Method prints the run\'s tolerated sentence verbatim', method.includes(d.run.reads.sentence), method.slice(method.indexOf('Chart reader: 1 of'), method.indexOf('Chart reader: 1 of') + 300));
       } else if (name === 'a late match') {
         check('thin ' + name + ': the stored follow-up sentence is printed as written', coverage.includes(d.run.stale_followup.sentence) && method.includes('Stale follow-up: ' + d.run.stale_followup.sentence), [coverage.slice(-300), method.slice(0, 200)]);
       } else if (name === 'a half-written reader cost') {

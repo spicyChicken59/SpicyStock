@@ -77,8 +77,10 @@ def failure_of(error):
 
 def _limit(requested, fraction, minimum=0):
     """The refused replies a night of ``requested`` reads tolerates: the
-    fraction of them, floored, and at least ``minimum`` -- never every read,
-    since a night with no accepted read is unavailable whatever refused it."""
+    fraction of them, floored, or ``minimum`` if that is more. The minimum
+    never reaches every read (a fraction of 1 can, on a record that archived
+    one); either way a night with no accepted read is unavailable, whatever
+    refused it."""
     requested = int(requested)
     share = math.floor(requested * Fraction(str(fraction or 0)))
     return max(share, min(int(minimum), max(requested - 1, 0)))

@@ -932,7 +932,8 @@
   }
   // the refused replies a night tolerates, as reader_coverage._limit() writes
   // it: the archived fraction, floored, and at least the archived floor (none
-  // on a record made before it) -- never every read
+  // on a record made before it), the floor never reaching every read; a
+  // night with no accepted read is unavailable whatever the limit
   function refusalLimit(requested, pipeline) {
     const minimum = pipeline.reader_refusal_min === undefined ? 0 : pipeline.reader_refusal_min;
     return Math.max(Math.floor(requested * pipeline.reader_refusal_fraction), Math.min(minimum, Math.max(requested - 1, 0)));

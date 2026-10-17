@@ -56,9 +56,10 @@ STALE_NAMES_MAX = 100          # stale stocks a record names in full and the nex
 #: never earns a ticket either way.
 READER_REFUSAL_FRACTION = 0.25
 #: (P) The fewest refused replies a night tolerates, whatever the fraction
-#: gives, and never every one of its reads: a quarter of two reads floors to
-#: none, so one refused reply of two degraded 13 and 15 Oct 2026. On 17 Oct
-#: 2026 the owner chose to tolerate one. Every other condition stands: the
+#: gives, and the floor never reaches every one of its reads: a quarter of two
+#: reads floors to none, so one refused reply of two degraded 15 Oct 2026 (on
+#: 13 Oct both were refused, which no floor covers). On 17 Oct 2026 the owner
+#: chose to tolerate one. Every other condition stands: the
 #: other reads accepted, no refused name one the regime would have planned.
 #: A record made before it was archived reads its limit off the fraction alone.
 READER_REFUSAL_MIN = 1

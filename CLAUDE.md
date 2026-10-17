@@ -343,7 +343,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4774 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4775 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10440,6 +10440,42 @@ the thin night (reconciled at every width and theme), under another archived
 rule (reconciled: half of two reads floors to one and a floor of two is capped
 under every read) and under a floor that is not a number (unknown, and no
 refusal rule quoted); all five die and the control (a comment) passes 293/293.
+
+**The review, worked.** A workflow by execution over `13a8883c`, three finders
+(the Python rule, the page, the documents), returned nine findings. The page's
+verifiers upheld three and judged one not a defect; the Python verifiers never
+finished, and a finding no verifier judged is not refuted, so each was
+reproduced here by execution before it was touched. The page held the core case
+nowhere: no variant had one of two selected reads refused, the night the floor
+exists for (15 October). `a tolerated refusal of two` now drives it, TSLA's
+reply refused by reader authority beside an accepted read, and holds the
+Morning desk reconciled, its sentence *1 of 2 chart reviews accepted; 1 without
+an accepted review (1 refused)* with *within the archived tolerance*, and
+Method printing the run's own tolerated sentence verbatim. The malformed floor
+was tested with a bool alone; a floor of -1 and of 1.5 are variants now, each
+leaving the desk `unknown` and Method quoting no refusal rule.
+`knowledge/method.md` said a refusal is tolerated on any night; it says "with
+every other read accepted (at least one)". The Python side: the validator's
+re-derivation of a record's limit under its archived floor had no test (an open
+night re-derives its reads from the bursts under the floor now, and dropping
+`refusal_min` from that re-derivation fails it alone, 1 failed and 92 passed);
+`READER_REFUSAL_MIN`'s comment said 13 October was one refusal of two when it
+was both (it names 15 October now, and 13 October as the night with none
+accepted); `test_review_selection.py` still asserted the fraction-only verdict
+(it asserts a limit of 1 and `tolerated` under the floor, 0 and `partial` under
+the fraction alone); the 1-of-2 test never read its `problems` (it does); and
+`_limit()`'s docstring read as if the floor could exceed the reads. Recorded,
+not fixed: Python's `type(...) is int` refuses an archived floor of `1.0` that
+the page reconciles, and accepts `2**60`, which the page reads as unknown;
+neither is a record the run writes. Page mutants through routed copies, judged
+by `--only inputs`: the desk's verdict on the fraction's floor alone fails the
+two tolerated-desk checks (304/306); Method's floor check without its `>= 0`
+fails the negative floor (305/306); the desk's floor check as `typeof ===
+'number'` fails the fractional floor (305/306; -1 is refused there by the
+limit's equality anyway); the control (a comment) passes 306/306. Measured on
+this tree: 4775 collected; the `inputs` suite 306/306;
+`tests/test_reader_coverage.py`, `tests/test_review_selection.py`,
+`tests/test_docs.py` and `tests/test_report.py` 292 passed.
 
 **Keep / fix / defer / omit.** Keep: a refusal is tolerated only beside an
 accepted read and never on a name the regime would plan. Fix if it bites: at

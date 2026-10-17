@@ -2,6 +2,7 @@
 from collections import Counter
 from copy import deepcopy
 import json
+from pathlib import Path
 import re
 
 import pytest
@@ -264,8 +265,9 @@ def test_the_refusal_floor_is_at_least_one_and_never_every_read(requested, limit
 
 
 @pytest.mark.parametrize("refusal_min,verdict,problems", [(1, "tolerated", []), (0, "partial", ["claude_partial"])])
-def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, verdict, problems):
-    """13 and 15 Oct 2026: one refused reply of two degraded the night. Under
+def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, verdict, problems, tmp_path,
+                                                                monkeypatch):
+    """15 Oct 2026: one refused reply of two degraded the night. Under
     the owner's floor of one it is tolerated -- the other read accepted, the
     refused name not one the regime would have planned -- and without the
     floor it is the old partial night."""
@@ -281,6 +283,10 @@ def test_one_refused_review_of_two_is_tolerated_under_the_floor(refusal_min, ver
     assert both["verdict"] == "unavailable", both
     planned = reader_coverage.reads(_refused_rows(1, 2), admitted_grades=("B",), refusal_fraction=0.25, refusal_min=1)
     assert (planned["verdict"], planned["refused_admissible"]) == ("partial", ["T0"]), planned
+    # and the evening's own read of its charts raises the problem word the verdict names, under each floor
+    monkeypatch.setattr(pipeline, "READER_REFUSAL_MIN", refusal_min)
+    night, kinds, _, _ = four_reads(tmp_path, monkeypatch, {"BBB": "refuse"}, admitted=(), tickers=("AAA", "BBB"))
+    assert (night["verdict"], night["refusal_limit"], kinds) == (verdict, refusal_min, problems), (night, kinds)
 
 
 def test_the_evenings_reads_take_the_floor(tmp_path, monkeypatch):
@@ -317,6 +323,31 @@ def test_a_record_made_before_the_floor_reads_its_limit_off_the_fraction_alone()
     limit = ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
     assert reader_coverage.reads_faults(_reads_record(new, {}, [])) == limit
     assert reader_coverage.reads_faults(_reads_record(old, {"reader_refusal_min": 1}, partial)) == limit
+
+
+def test_an_open_night_re_derives_its_reads_from_the_bursts_under_the_archived_floor():
+    """The validator's re-derivation from the bursts reads the floor the record
+    archived: the thin night with one of its two selected reads refused is
+    tolerated, and the bursts give the same answer only under that floor."""
+    d = json.loads((Path(__file__).parent / "fixtures" / "page" / "thin.json").read_text())
+    rules = d["rules"]["pipeline"]
+    assert d["run"]["session_state"] == "open" and rules["reader_refusal_min"] == 1, "the case tests something else"
+    selected = [b for b in d["bursts"] if isinstance(b.get("claude"), dict)]
+    assert [b["ticker"] for b in selected] == ["AAPL", "TSLA"], "two selected reads, or the case tests something else"
+    tsla = selected[1]
+    tsla["claude"] = {**tsla["claude"], "source": "fallback",
+                      "error": grader._error_text(reader_authority.ReaderAuthorityError("refused"))}
+    tsla["reader_coverage"] = "fallback"
+    admitted = reader_coverage.admitted(d["breadth"]["regime"]["verdict"], rules["trade_grades"], rules["yellow_grades"])
+    d["run"]["reads"] = reader_coverage.reads(selected, admitted_grades=admitted,
+                                              refusal_fraction=rules["reader_refusal_fraction"],
+                                              refusal_min=rules["reader_refusal_min"])
+    assert (d["run"]["reads"]["refusal_limit"], d["run"]["reads"]["verdict"]) == (1, "tolerated"), d["run"]["reads"]
+    assert reader_coverage.reads_faults(d) == []
+    # the same bursts under the fraction alone are a partial night, not this record's block
+    d["rules"]["pipeline"] = {k: v for k, v in rules.items() if k != "reader_refusal_min"}
+    assert reader_coverage.reads_faults(d) == \
+        ["run.reads refusal limit is not the archived reader_refusal_fraction and reader_refusal_min"]
 
 
 @pytest.mark.parametrize("bad", [True, -1, "1", 1.0, None])
