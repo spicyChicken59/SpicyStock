@@ -9,8 +9,10 @@ receipt that followed the 16 October publication), whose committer time, 00:31
 UTC on 17 October, is its clock. Nothing in the tool's rules changed; the 13
 October reading is kept as it was written and no longer re-derived. What is new
 in the history is the first evening under the seed that no longer asks for
-WBD, the first three source-recovery receipts and the first five archived cost
-blocks.
+WBD, the first three source-recovery receipts and four more archived cost
+blocks (five in all; the 13 October reading carried the 12 October
+publication's). A record's own clock, `published_at`, is set when its run
+starts; this reading calls it the generation time.
 
 ## What the history establishes (11 September to 16 October 2026)
 
@@ -27,18 +29,19 @@ blocks.
   11.7 minutes after the primary slot; from 22 September to 16 October every
   first publication landed after the retry slot, 131.0 to 289.5 minutes after
   the primary one. The four since the 13 October reading landed 179.6, 138.4,
-  131.0 and 133.4 minutes after it: the last three are the three promptest
-  landings since 21 September, and still after the retry slot.
+  131.0 and 133.4 minutes after it: 15 and 16 October's are the two promptest
+  from 22 September on, 14 October's the fifth (behind 23 and 22 September's
+  137.2 and 137.7), all still after the retry slot.
 - **Latency after completion, by the landing commit:** min 55.8, median
   264.4, max 410.5 minutes; by the records' own clocks 53.1, 259.7 and 407.2.
   Each commit landed 2.4 to 5.5 minutes after its record's clock.
 - **31 publications**; four sessions published more than once (11 and 21
   September, 8 and 9 October), none since. Statuses 22 degraded and 9 ok. The
   13, 14 and 15 October nights are degraded, each naming WBD, a seed name whose
-  last bar is 5 October, past the tolerance's five-session bound (13 and 15
-  October carry a refused reader reply beside it); 16 October is `ok`, the first
-  night under the seed that no longer asks for WBD, its 18 stale frames all
-  ending on the previous session and within the tolerance.
+  last bar is 5 October, past the tolerance's five-session bound (13 October
+  carries two refused reader replies beside it, 15 October one); 16 October is
+  `ok`, the first night under the seed that no longer asks for WBD, its 18
+  stale frames all ending on the previous session and within the tolerance.
 - **Slots:** 5 publications read against the slots their own rules archived
   (12 to 16 October, each 6:16 and 8:16 PM ET), 26 against the current
   policy's.
@@ -70,9 +73,10 @@ delivery fact here is a lower bound on when a reader could see the record,
 never a claim that Pages served it then (the publication gate's log says
 when). Nothing here says why a run landed when it did. No morning check has
 been observed, and nothing here is a trading result. A `partial` recovery
-receipt says the provider returned a bar on a second ask; every recovered bar
-so far is the provider's placeholder (zero volume), and the publication it
-repairs is unchanged.
+receipt says the provider returned a bar on a second ask: 52 bars recovered
+so far, 50 of them the provider's placeholder (zero volume) and two, GEG's and
+NCEW's 15 October bars (recovered on 16 October), carrying 2,891 and 237
+shares; the publication a receipt is bound to is unchanged by it.
 
 ## Known limits, written down rather than worked
 

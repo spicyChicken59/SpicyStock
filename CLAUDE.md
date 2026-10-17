@@ -9642,12 +9642,13 @@ nothing here is configuration.
 **The first night under the retired seed, read.** Session 16 October, run
 38986314620, the `16 22` primary slot created at 00:25:39 UTC on the 17th
 (129.7 minutes late), the pipeline 00:26:16–00:29:23 (`elapsed_seconds` 145.4,
-`fetch_seconds` 78.5), the record generated at 00:26:18 and landed as
-`7a1a9e49` at 00:29:26, the mail delivered. `run.status` **ok** beside a
-`degraded` acceptance -- the second live night the tolerance kept green, and
-the first with no frame past the bound: `run.universe.selection.seed_added` is
-0 with an empty sample (WBD left the seed at 07:20 UTC on the 16th; the 15
-October night's was 1, `['WBD']`), 4,759 of 4,777 intended stocks ready, and
+`fetch_seconds` 78.5), the record's own clock (`published_at`, set when the run
+starts) 00:26:18, landed as `7a1a9e49` at 00:29:26, the mail delivered. `run.status` **ok** beside a
+`degraded` acceptance -- the third session the tolerance kept green (9 and 12
+October before it), and the first since 12 October with no frame past the bound: `run.universe.selection.seed_added` is
+0 with an empty sample (WBD left `main`'s seed with the #174 merge, `6555538e`,
+at 09:37 UTC on the 16th -- the 07:20 UTC the #176 and #177 checkpoints give is
+the branch commit's time; the 15 October night's was 1, `['WBD']`), 4,759 of 4,777 intended stocks ready, and
 `run.input_tolerance` (version 2) `tolerated`: 18 stale stocks (ACVA, ATXG,
 BSBK, CVR, DIT, FKWL, GBLI, HFBL, IOR, MAYS, NCEW, NSYS, PBHC, RAND, ROMA,
 SENEB, SFWL, XBP), every one ending 15 October, `held` empty, against the limit
@@ -9655,14 +9656,17 @@ of 47. **The first `run.seed_stale`** (version 1): membership `complete`,
 `seed_added` 0, `seed_named` 0, `stale_stocks` 18, `names` empty, no reason,
 and the sentence *None of the 18 stale stocks is on the seed alone; each is in
 the directory this run selected from.* The sentence the rule was built to print
--- WBD's -- would have run on 13, 14 and 15 October; on the first night it ran
+-- WBD's -- would have run on every publication from 7 to 15 October, seven
+sessions (`inputs.seed_stale()` re-derived over each record names WBD on all
+ten); on the first night it ran
 the seed had already been retired by hand, so its first live case is the none
 case, and the record now says so on every night rather than leaving the join to
 a reader. `run.stale_followup` (version 2, `applied`) read the 15 October
-publication's 20 stale stocks at the five sessions each missed (9 and 12–15
-October), 24 readings: 13 `no_match`, 5 `price_excluded`, 6 `not_selected` (WBD
-at all five sessions, and TJGC at 15 October), 0 `match`; 16 of the late bars
-at zero volume and 17 flat, the provider's placeholder again. `run.reads` 2 of
+publication's 20 stale stocks again, 24 readings -- WBD at the five sessions it
+missed (9 and 12–15 October), the other 19 at 15 October alone: 13 `no_match`, 5 `price_excluded`, 6 `not_selected` (WBD
+at all five sessions, and TJGC at 15 October), 0 `match`; of the 18 readings that
+carried a late bar, 16 at zero volume (the provider's placeholder again) and 17
+flat; GEG's carried 2,891 shares and NCEW's 237. `run.reads` 2 of
 2, `complete` (AIG and AR, the review selection's two research reads under
 RED; the refusal limit at two reads is 0). `run.reader_usage`: 2 calls, 2
 replies, 14,667 input tokens (7,995 uncached, 3,336 written to the cache,
@@ -9675,9 +9679,10 @@ fast selling phase"), `funnel` 206 reaction candidates (mechanical A+ 0, A 28,
 B 31, C 28, skip 119), all 206 at the market gate, 0 potentially usable, 0
 tickets; anticipation 707 momentum names, 162 quiet, 8 passing the coil checks,
 0 listed, 0 tickets; the closest miss AIG at B 9.0; the cover *Stand aside.*;
-`rules_version` `f6c9a7388d9c`. The `16 23` retry slot (run 38990388404,
-created 01:19:53 UTC, 63.9 minutes late) found the session published and
-skipped every step.
+`rules_version` `f6c9a7388d9c`. The `16 23` cron (run 38990388404) -- the
+EST season's primary, inactive while the US is on EDT -- was created at
+01:19:53 UTC, 123.9 minutes after its slot; its guard printed *Not the active
+UTC slot* (job 117271274212) and every step after it skipped.
 
 **The publication's path to the served site.** The evening's own persist is a
 `GITHUB_TOKEN` push and triggers no workflow (this file's standing note); the
@@ -9690,11 +9695,15 @@ printed *Verified: every one of the 47 public files matches committed main* at
 file records that interval. The 16 October morning slots were created at
 17:26, 17:32, 18:05 and 18:15 UTC (runs 38939668907, 38940441166,
 38944618528 and 38945895892; 246.2, 244.2, 225.3 and 227.2 minutes late), the
-guard passed each through and every collection step and the persist job
-skipped: the morning checks still stand at zero observed. The 16 October `37 9`
+guard step ran and refused each -- `entry_window_ended` for the 13:20 and 13:28
+slots and `inactive_schedule` for the winter pair, which
+`tools/publish_morning.schedule_guard()` replayed over the 15 October record at
+each creation instant also says -- so every collection step and the persist
+job skipped: the morning checks still stand at zero observed. The 16 October `37 9`
 source-recovery slot (run 38913623932) was created at 14:10:27 UTC, after the
-open, and published nothing; the 17 October `37 7` slot had not been created at
-02:40 UTC, and the 16 October publication's next open is Monday's, so a
+open, and published nothing; the 17 October `37 7` slot (07:37 UTC) was still
+ahead when this was written, and the 16 October publication's next open is
+Monday's, so a
 Saturday or Sunday slot may publish its receipt.
 
 **The service, read again** (`docs/input-truthfulness/2026-10-17-service-health.md`,
@@ -9707,8 +9716,9 @@ the next open; none missing, none pending; **fresh: yes** (`main` carries
 publications after the retry slot, as 19 were generated after it; from 22
 September to 16 October every first publication landed 131.0 to 289.5 minutes
 after the primary slot, the four since the 13 October reading at 179.6, 138.4,
-131.0 and 133.4 -- the last three the promptest since 21 September, and still
-after the retry slot. Latency by the landing commit 55.8 / 264.4 / 410.5
+131.0 and 133.4 -- 15 and 16 October's the two promptest from 22 September on,
+14 October's the fifth (behind 23 and 22 September's), all still after the retry
+slot. Latency by the landing commit 55.8 / 264.4 / 410.5
 minutes (by the records' clocks 53.1 / 259.7 / 407.2), each commit 2.4 to 5.5
 minutes after its record. 31 publications, 22 degraded and 9 ok; 5 read
 against their own archived slots and 26 against the current policy's. Reader
@@ -9730,8 +9740,14 @@ count line at 4701; `python tools/service_health.py --check` current with the
 history walked again (two runs of the tool, into a scratch directory and into
 the repository, byte-identical); `git diff --check` clean; gitleaks 8.24.3 from
 inside a scratch root holding the eleven changed and new files and the
-repository's config: no leaks. The full suite's figure on the final tree is
-recorded in the paragraph after this one, as run.
+repository's config: no leaks. The full suite, in the mutation worktree with
+its diff hashed equal to this tree's: at the pushed head `abec26a9` 4667 passed
+and 34 environment-gated skips in 21 m 36 s, and on the corrected tree below
+4667 passed and 34 skips in 20 m 33 s (4701 collected both times; the only edits
+after that run are this file's prose, which the suite reads for its count line
+alone). CI on `abec26a9`: all seven checks green (Tests run 38996501106 --
+pytest 02:50–03:06 UTC, page 02:50–03:05, the gate, the native stress case
+02:51–03:10 and central 02:51–03:39; Secret scans 38996501029 and 38996469642).
 
 **Mutation pass**, each mutant in the mutation worktree (its diff hashed equal
 to this tree's before and after), judged by the whole
@@ -9745,6 +9761,53 @@ the issuer counts off by one in words die in the report test; the committed
 JSON's median moved dies in `--check` and the report test; the 13 October
 report naming no 17 October report dies in the frozen test. Six die; the
 control, a word of the report outside every quoted phrase, passes 39.
+
+**The review, worked, and the sentences it caught.** A workflow by execution over
+the pushed tip `abec26a9`, three lenses (the words against the record, the
+reading against its reports, whether the tests can fail), two skeptics a
+finding. Its first launch produced nothing: all three finders hit the session's
+usage limit before running a check, and two of their isolation worktrees were
+left behind and removed. Re-run, it returned 27 findings, 21 distinct, and both
+skeptics upheld every one; each was also reproduced here before it was touched.
+Eleven were sentences of this checkpoint that said more than the record:
+- the `16 23` cron called the retry slot, its lateness measured from another
+  slot (63.9 minutes against 123.9), and -- a skeptic one level deeper, from the
+  job log -- its guard never reached the published check;
+- "the second live night the tolerance kept green" (9 and 12 October were
+  before it) and "the first with no frame past the bound" (8, 9 and 12 October
+  had none);
+- the follow-up's 20 stocks "at the five sessions each missed" (WBD alone missed
+  five);
+- WBD leaving the seed at 07:20 UTC (the branch commit; `main`'s seed moved at
+  09:37), and its sentence "on 13, 14 and 15 October" (every publication from 7
+  October on);
+- the morning guard "passed each through" (it ran and refused each);
+- a slot "not created at 02:40 UTC" five hours before its own time;
+- the record "generated at" its run's start clock;
+- 16 of 18 late bars "the provider's placeholder" with two carrying 2,891 and
+  237 shares unnamed;
+- "the three promptest since 21 September" (14 October is fifth);
+- and the full-suite figure promised and absent.
+Five were sentences of the reports and the index: the 17 October report's
+"first five" cost blocks (four were new), its one refused reply on 13 October
+(two), its "every recovered bar so far" a placeholder (50 of 52 -- found here
+while checking the receipts, beside the review's late-bar finding), the 13
+October report "kept as written" while this pull request edited it, and the
+index still saying `--check` holds the 13 October files; and the tool's `OUT_DIR`
+comment naming only the 12 October reading. Five were test holes: the
+republished-sessions check passed with the list deleted (every date matched
+text elsewhere in the report), the superseded notes were held by a filename
+alone, and the recovery sentence, the cost-block counts, the four latest
+landings, the promptest ranking and the archived-slot span were held by nothing.
+Each assertion now builds its phrase from the committed reading or the records
+-- the 13 and 15 October refusals and the 52 recovered bars read off git at the
+commits the reading names -- and the 12 and 13 October reports are held to
+their blobs. Thirteen mutants over the new assertions, each in the mutation
+worktree and judged by the report and frozen tests (the only ones that read
+the reports), all die in the test that names their rule; the control, a word
+of a definition, passes. One of mine found while fixing: GEG's and NCEW's
+recovered bars were first written "on 16 October"; they are 15 October bars,
+recovered on the 16th, and the test now reads each bar's own session.
 
 **Not claimable:** a morning or research observation; a source-recovery
 receipt for the 16 October publication; the 19 October session; any trading
