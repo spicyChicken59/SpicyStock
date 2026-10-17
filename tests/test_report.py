@@ -12,6 +12,7 @@ import datetime as dt
 import json
 import logging
 import math
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -159,6 +160,75 @@ def test_the_mail_prints_the_part_fill_rule_only_beside_an_order_it_printed():
     text = _rendered(digest_html(build(**_night(trades=[], watchlist=own))))
     assert text.count(report.BROKER_PART_FILL) == 1, text
     assert text.index("Buy 40 WCH") < text.index(report.BROKER_PART_FILL), text
+
+
+
+def test_the_mail_prints_the_part_fill_rule_once_after_trades_whichever_of_them_carry_an_order():
+    """One sentence after the block of burst orders, however many of them print
+    an order line, and as soon as one does."""
+    quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
+    two = _night(bursts=[_burst("XYZ"), _burst("DEF")], trades=["XYZ", "DEF"], watchlist=quiet)
+    text = _rendered(digest_html(build(**two)))
+    assert text.count("Buy 69 XYZ") == 2, text            # both trades print their order line
+    assert text.count(report.BROKER_PART_FILL) == 1, text
+    # one trade with an order and one without: the one that prints an order brings the sentence
+    mixed = _night(bursts=[_burst("XYZ"), _burst("DEF", plan={**_plan(), "order_line": None})],
+                   trades=["XYZ", "DEF"], watchlist=quiet)
+    text = _rendered(digest_html(build(**mixed)))
+    assert text.count("Buy 69 XYZ") == 1 and text.count(report.BROKER_PART_FILL) == 1, text
+
+
+def test_the_mail_prints_the_part_fill_rule_once_after_alerts_however_many_carry_an_order():
+    two = {"top": [{"ticker": t, "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 40,
+                    "plan": {"order_line": f"Buy 40 {t} stop 20.05 limit 20.30; OTO sell stop 18.90"}} for t in ("WCH", "QRS")],
+           "also_quiet": [], "counts": {"top": 2, "also_quiet": 0}}
+    text = _rendered(digest_html(build(**_night(trades=[], watchlist=two))))
+    assert "Buy 40 WCH" in text and "Buy 40 QRS" in text, text
+    assert text.count(report.BROKER_PART_FILL) == 1, text
+
+
+def test_an_alert_whose_own_order_line_is_blank_prints_no_order_and_so_no_part_fill_rule():
+    """The row's own field is read first, as _alert_row reads it: a blank
+    order line there is no order, whatever its plan carries."""
+    blank = {"top": [{"ticker": "WCH", "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 40, "order_line": "",
+                      "plan": {"order_line": "Buy 40 WCH stop 20.05 limit 20.30; OTO sell stop 18.90"}}],
+             "also_quiet": [], "counts": {"top": 1, "also_quiet": 0}}
+    text = _rendered(digest_html(build(**_night(trades=[], watchlist=blank))))
+    assert "No order" in text and "Buy 40 WCH" not in text, text
+    assert report.BROKER_PART_FILL not in text, text
+
+
+def test_a_closed_night_that_carries_the_standing_tickets_prints_the_part_fill_rule_beside_them():
+    """A closed night carries the previous session's tickets verbatim, and the
+    mail prints them, so the broker's rule follows them as on any night."""
+    quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
+    closed = _night(run=_run(session_state="closed", status="closed"), watchlist=quiet)
+    text = _rendered(digest_html(build(**closed)))
+    assert ORDER_LINE in text, text
+    assert text.count(report.BROKER_PART_FILL) == 1 and text.index(ORDER_LINE) < text.index(report.BROKER_PART_FILL), text
+
+
+def test_the_part_fill_rule_is_printed_where_a_reader_sees_it():
+    """The mail's paragraph is a plain muted one, never hidden from the reader."""
+    html = digest_html(build(**_night()))
+    styles = re.findall(r'<p style="([^"]*)">' + re.escape(report.esc(report.BROKER_PART_FILL)) + "</p>", html)
+    assert len(styles) == 2, styles
+    for style in styles:
+        assert not re.search(r"display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0", style), style
+
+
+def test_no_ticket_lines_and_recorded_problems_bring_no_part_fill_rule():
+    """Lines saying a plan has no ticket and the night's problems print no
+    order, so neither brings the broker's sentence."""
+    quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
+    night = _night(trades=[], watchlist=quiet, beyond_cap=["XYZ"],
+                   cash_budget={"committed_usd": 0, "slots_used": 0, "slots_max": 4,
+                                "cut": [{"ticker": "XYZ", "kind": "slot_cap", "reason": "beyond the slot cap"}]},
+                   run=_run(problems=[{"stage": "grade", "kind": "claude_partial", "message": "one read refused"}]))
+    text = _rendered(digest_html(build(**night)))
+    assert "No ticket for XYZ: beyond the slot cap" in text, text
+    assert report.PROBLEM_SENTENCES["claude_partial"] in text, text
+    assert report.BROKER_PART_FILL not in text, text
 
 
 # --- the cover ---------------------------------------------------------------------

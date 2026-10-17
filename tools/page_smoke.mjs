@@ -66,6 +66,22 @@ const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'page');
 // prints or hands over (the order block, the recorded ticket, the tickets
 // sheet, the Burst action card's Copy order) and nowhere else.
 const BROKER_PART_FILL = (await readFile(path.join(ROOT, 'docs', 'app.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1];
+// what a copied ticket is: its first line, whether its second carries the
+// stop-limit's prices and day term, its OTO leg, its line count, and whether
+// any of the broker sentence rode along (it must not)
+const copiedTicket = (s) => {
+  const lines = String(s).split('\n');
+  return [lines[0], /^STOP LIMIT · stop \$[\d,.]+ · limit \$[\d,.]+ · DAY$/.test(lines[1] || ''),
+    (lines[2] || '').replace(/ · .*$/, ''), lines.length, /Fidelity|advice|part/i.test(s)];
+};
+// every part-fill note on the whole page, named by the surface that printed
+// it and whether it is shown: a note placed anywhere but these is 'other'
+const NOTE_HOSTS = [['handoff', '[data-handoff-readback]'], ['recorded', '[data-recorded-ticket]'], ['order', '.ss-order'],
+  ['sheet', '#orders-table'], ['bar', '.ss-action'], ['compare', '.ss-compare__wrap']];
+const pageNotes = (page) => page.evaluate(([hosts, want]) => [...document.querySelectorAll('[data-broker-part-fill]')].map((e) => {
+  const host = hosts.find(([, sel]) => e.closest(sel));
+  return [host ? host[0] : 'other', e.textContent === want, !e.closest('[hidden]') && getComputedStyle(e).display !== 'none'];
+}), [NOTE_HOSTS, BROKER_PART_FILL]);
 const brokerNotes = (page, scope) => page.locator(scope + ' [data-broker-part-fill]').evaluateAll((els) => els.map((e) => e.textContent));
 const VARIANTS = ['full', 'degraded', 'notrade', 'yellow', 'red', 'closed', 'next', 'thin'];
 // the sequels a follow-through reading needs beside the nights: the same
@@ -356,7 +372,7 @@ async function checkDetail(page, variant, b, data, blocked) {
   }
   eq(`${variant} ${b.ticker} order block ${status === 'ticket' && !blocked ? 'shown' : 'withheld'}`, order, status === 'ticket' && !blocked ? 1 : 0);
   const cardOffers = (await page.locator('#detail .ss-action').getAttribute('data-ticket')) === 'order' ? 1 : 0;
-  eq(`${variant} ${b.ticker} the action card's Copy order has Fidelity's part-fill rule under it, and only when it offers one`,
+  eq(`${variant} ${b.ticker} the action card's Copy order has Fidelity's part-fill rule above it, and only when it offers one`,
     [await brokerNotes(page, '#detail .ss-action'), await count(page, '#detail .ss-action pre.ss-order__pre')],
     [Array(cardOffers).fill(BROKER_PART_FILL), cardOffers]);
   eq(`${variant} ${b.ticker} Fidelity's part-fill rule beside each printed order and nowhere else`, await brokerNotes(page, '#detail'),
@@ -371,11 +387,20 @@ async function checkDetail(page, variant, b, data, blocked) {
     check(`${variant} ${b.ticker} ticket quantity is the plan's shares`, o.quantity === b.plan.shares && o.then.quantity === b.plan.shares, `${o.quantity} vs ${b.plan.shares}`);
     check(`${variant} ${b.ticker} risk and cap hold at the limit`, b.plan.shares * (o.limit_price - b.plan.stop) <= b.plan.sizing.budget_usd + 1e-9 && b.plan.shares * o.limit_price <= b.plan.sizing.cap_usd + 1e-9, 'inequalities');
     for (const term of b.plan.order_terms || []) check(`${variant} ${b.ticker} order term printed`, planText.includes(term), term.slice(0, 40));
-    // the copy button hands the clipboard the ticket as printed
-    await page.locator('#detail button[data-copy]').first().click();
-    const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => null);
-    if (copied !== null) eq(`${variant} ${b.ticker} copied text is the ticket`, copied, pre);
-    else console.log(`  (clipboard not readable for ${b.ticker}; the copy check was skipped)`);
+    // every copy control hands the clipboard the ticket and nothing else: the
+    // card's Copy order and the order block's Copy each, clicked by position,
+    // their lines held to the order_json fields and never the broker sentence
+    const copies = page.locator('#detail button[data-copy]');
+    eq(`${variant} ${b.ticker} a copy control on the order block, and the card's when it offers one`, await copies.count(), 1 + cardOffers);
+    for (let i = 0; i < await copies.count(); i++) {
+      await page.evaluate(() => navigator.clipboard.writeText('nothing was copied').catch(() => {}));
+      await copies.nth(i).click();
+      const copied = await page.evaluate(() => navigator.clipboard.readText()).catch(() => null);
+      if (copied === null) { console.log(`  (clipboard not readable for ${b.ticker}; the copy check was skipped)`); break; }
+      eq(`${variant} ${b.ticker} copy control ${i + 1} copies the printed ticket`, copied, pre);
+      eq(`${variant} ${b.ticker} copy control ${i + 1} copies the order's lines alone`, copiedTicket(copied),
+        [`BUY ${o.quantity} ${o.symbol}`, true, `then OTO → SELL ${o.then.quantity} ${o.symbol}`, 3, false]);
+    }
   } else if (status === 'withheld' && b.plan) check(`${variant} ${b.ticker} withheld keeps the setup`, planText.includes(usd(b.plan.stop)) && planText.includes(String(b.plan.shares)), 'setup');
   if (status !== 'ticket' || blocked) check(`${variant} ${b.ticker} plan says why there is no order`, /No ticket tonight|Ticket withheld|No order is offered|No plan/.test(planText), planText.slice(-200));
   // and never says it twice: the lead and the record's own reason are one sentence
@@ -424,7 +449,8 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
     eq(`${variant} ${r.ticker} action carries the order`, ticketAttr, 'order');
     check(`${variant} ${r.ticker} action prints the order line`, action.includes(r.plan.order_line), action);
     eq(`${variant} ${r.ticker} order block shown`, await count(page, '#detail pre[data-order]'), 1);
-    eq(`${variant} ${r.ticker} Fidelity's part-fill rule beside the order`, await brokerNotes(page, '#detail'), [BROKER_PART_FILL]);
+    eq(`${variant} ${r.ticker} Fidelity's part-fill rule after the action bar's order line and beside the order block`,
+      [await brokerNotes(page, '#detail .ss-action'), await brokerNotes(page, '#detail')], [[BROKER_PART_FILL], [BROKER_PART_FILL, BROKER_PART_FILL]]);
   } else {
     eq(`${variant} ${r.ticker} action status`, ticketAttr, status === 'ticket' ? 'blocked' : status);
     eq(`${variant} ${r.ticker} order block withheld`, await count(page, '#detail pre[data-order]'), 0);
@@ -792,6 +818,11 @@ async function checkVariant(browser, base, variant, data) {
     const publishedCount = withOrders.length + top.filter(row => row.plan && row.plan.order_json).length;
     check(`${variant} next: review both stages' conditional tickets, for a named session`,
       next === `Review ${publishedCount} conditional ticket${publishedCount === 1 ? '' : 's'} for ${forDay}.`, next);
+    // before the window the next action says how the stop rides on the order,
+    // in Fidelity's frame, and never to attach a second stop after a fill
+    const nextP = await text(page, '#next-p');
+    check(`${variant} next: the sell stop is part of the order and released on a full fill`,
+      nextP.includes('Its sell stop is part of the order (OTO) and is released when the buy fills in full') && !/attach/i.test(nextP), nextP);
   }
   else check(`${variant} next: nothing new, for a named session`, /^(Nothing|No new burst ticket)/.test(next) && next.includes(forDay), next);
   check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
@@ -1231,6 +1262,7 @@ async function checkStates(browser, base, data) {
       (await text(page, '#disc-plan')).includes(stateWord), (await text(page, '#disc-plan')).slice(0, 140));
     eq(`${name} and offers no copy control`, await count(page, '#disc-plan [data-copy]'), 0);
     eq(`${name} the order sheet is empty`, await count(page, '#order-sheet tbody tr[data-ticker]'), 0);
+    eq(`${name} no order is printed, so no part-fill rule anywhere on the page`, await pageNotes(page), []);
     eq(`${name} page errors`, errors, []);
     if (shotsDir && name === 'stale2') await page.screenshot({ path: path.join(shotsDir, 'stale2-1280-dark.png'), fullPage: true });
     await context.close();
@@ -2724,6 +2756,12 @@ async function checkCompare(browser, base, data) {
   await page.click('#compare .ss-compare__tools .sc-tab[data-range="120"]'); await page.waitForTimeout(400);
   eq('one range choice redraws both charts', await page.locator('#compare .sc-chart--stock').evaluateAll((e) => e.map((x) => x.dataset.range)), ['120', '120']);
   eq('and both are still live', await live(page), 3);
+  // the ticket row prints a recorded order line, so the broker's rule sits
+  // under the table, once, and only when one of the two prints an order line
+  const printsOrder = [A, B].some((x) => (data.trades || []).includes(x.ticker) && x.plan && x.plan.order_json && x.plan.order_line);
+  eq('the comparison prints Fidelity\'s part-fill rule under its facts when a compared ticket prints its order line',
+    (await pageNotes(page)).filter((n) => n[0] === 'compare'), printsOrder ? [['compare', true, true]] : []);
+  check('the fixture compares a ticket, so the rule above can fail', printsOrder, [A.ticker, B.ticker]);
   // the facts: the record's own values, aligned, with no winner declared
   const facts = await page.locator('#compare-table tbody tr').evaluateAll((rows) => rows.map((r) => [r.dataset.fact, r.dataset.differs, r.children[1].textContent.trim(), r.children[2].textContent.trim()]));
   // the rows exist in the DOM either way: what matters is that the sheet gives
@@ -2817,6 +2855,16 @@ async function checkCompare(browser, base, data) {
   check('the facts still compare what the record does carry', (await text(nb.page, '#compare-table')).includes(B.ticker), 'facts');
   eq('no-bars comparison page errors', nb.errors, []);
   await nb.close();
+
+  // two setups neither of which carries a ticket: no order line, no broker rule
+  const nt = await openMutant(browser, base, data, (c) => { c.trades = []; }, { lens: 'all' });
+  await nt.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${A.ticker}"]) .ss-pin`);
+  await nt.page.click(`#pick-list .ss-pick-item:has(.ss-pick[data-ticker="${B.ticker}"]) .ss-pin`); await nt.page.waitForTimeout(200);
+  await nt.page.click('#compare-open'); await nt.page.waitForTimeout(500);
+  check('without a ticket the comparison prints no order line', !(await text(nt.page, '#compare-table tr[data-fact="ticket"]')).includes('OTO'), await text(nt.page, '#compare-table tr[data-fact="ticket"]'));
+  eq('and no part-fill rule', (await pageNotes(nt.page)).filter((n) => n[0] === 'compare'), []);
+  eq('no-ticket comparison page errors', nt.errors, []);
+  await nt.close();
 
   // the phone: one chart at a time, both symbols and both statuses on screen
   const m = await open(browser, base, '/tests/fixtures/page/full.json', FRESH_NOW, 390, { height: 844, lens: 'all' });
@@ -3253,6 +3301,7 @@ async function checkSession(browser, base, full) {
   // the fixture variants open inside the window, so this is the one place a
   // recorded ticket is drawn: its broker sentence is read here or nowhere
   eq('with Fidelity\'s part-fill rule under it, once', await brokerNotes(page, '#disc-plan [data-recorded-ticket]'), [BROKER_PART_FILL]);
+  eq('and nowhere else on the page: the card, the bar and the sheet print no order once the window ended', await pageNotes(page), [['recorded', true, true]]);
   await openAll(page, '#orders');
   check('the ticket sheet says the window ended in its own summary',
     (await text(page, '#orders-summary')).includes('window ended') && (await text(page, '#orders-summary')).startsWith(forDay), await text(page, '#orders-summary'));

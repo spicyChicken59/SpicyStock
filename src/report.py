@@ -993,17 +993,20 @@ def _alert_row(row: dict) -> str:
 
 
 #: What Fidelity does with a ticket's attached stop, and what that leaves to the
-#: reader: its one-triggers-the-other sell stop is released to the market only
-#: when the buy fills in full (knowledge/broker-fidelity.md). The ticket's own
-#: terms are the plan's record and name no broker, and provenance replays them,
-#: so this sentence is the broker's and is printed beside them, never inside.
-#: The page holds the same sentence in ``docs/app.js`` and the private handoff
-#: in ``docs/app-handoff-ui.js`` (each ``BROKER_PART_FILL``), and
+#: reader, labelled apart: Fidelity's rule, that a one-triggers-the-other sell
+#: stop is released to the market only when the buy fills in full, and
+#: SpicyStock's advice for a part fill, which no Fidelity source read here
+#: states (knowledge/broker-fidelity.md). The ticket's own terms are the plan's
+#: record and name no broker, and provenance replays them, so this is printed
+#: beside them, never inside, and says that they assume a full fill. The page
+#: holds the same text in ``docs/app.js`` and the private handoff in
+#: ``docs/app-handoff-ui.js`` (each ``BROKER_PART_FILL``), and
 #: ``tests/test_docs.py`` holds the three equal.
-BROKER_PART_FILL = ("At Fidelity the OTO sell stop is released only when the buy fills in full. "
-                    "If the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, "
-                    "at the stop for the shares that filled, and check that no second sell stop remains "
-                    "for shares you do not hold.")
+BROKER_PART_FILL = ("Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. "
+                    "SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, "
+                    "place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, "
+                    "confirm Fidelity accepts it on shares bought that day, "
+                    "and check that no second sell stop remains for shares you do not hold.")
 
 
 def _part_fill_note() -> str:
