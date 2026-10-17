@@ -5,7 +5,8 @@ This is the active product goal and release sequence.
 
 Build a dependable morning workspace for an educated first real-money trade,
 then make that preparation repeatable. Mo uses a **$2,000 cash account**
-and **America/Chicago** time. The broker is not yet specified. The desired
+and **America/Chicago** time. The broker is **Fidelity** (Mo, 17 October
+2026); `knowledge/broker-fidelity.md` maps a ticket onto its order entry. The desired
 personal outcome is a first profitable trade; product acceptance is based on
 verifiable data, usable decisions and accurately measured outcomes, not a
 promise that a particular trade will win.
@@ -50,7 +51,8 @@ Milestone **2: a verified morning check** remains in progress. Reliable on-time
 delivery and broader issuer-news/earnings coverage remain open. Two best-effort
 pre-open Actions attempts cannot supply dependable sub-minute quotes during the
 entry window. The server-side delivery proposal is recorded in #108; an existing
-hosting account has not been identified. Broker confirmation remains outstanding.
+hosting account has not been identified. Broker confirmation, outstanding on 9
+October, is closed: the broker is Fidelity (17 October 2026).
 Keep the milestone 3 candidate-funnel and sizing studies separate from evidence
 that a real-money strategy has an established edge.
 
@@ -194,7 +196,8 @@ decision fast while loading detailed retained evidence on demand.
 Acceptance: an on-time refresh before the normal 8:30 a.m. Chicago open, visible
 staleness during the entry window, actual halt/event test cases, provider outage
 behavior, no client credentials, and a reproducible decision for each retained
-candidate. Confirm the broker before adding broker-specific instructions.
+candidate. The broker was confirmed as Fidelity on 17 October 2026; its
+instructions say which facts are Fidelity's own words and which are unconfirmed.
 
 ### 3. Better opportunity coverage
 

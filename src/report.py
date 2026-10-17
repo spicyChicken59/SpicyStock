@@ -992,6 +992,27 @@ def _alert_row(row: dict) -> str:
             + f'</div><p style="margin:8px 0 0">{" · ".join(facts)}</p>' + ticket + "</div>")
 
 
+#: What Fidelity does with a ticket's attached stop, and what that leaves to the
+#: reader, labelled apart: Fidelity's rule, that a one-triggers-the-other sell
+#: stop is released to the market only when the buy fills in full, and
+#: SpicyStock's advice for a part fill, which no Fidelity source read here
+#: states (knowledge/broker-fidelity.md). The ticket's own terms are the plan's
+#: record and name no broker, and provenance replays them, so this is printed
+#: beside them, never inside, and says that they assume a full fill. The page
+#: holds the same text in ``docs/app.js`` and the private handoff in
+#: ``docs/app-handoff-ui.js`` (each ``BROKER_PART_FILL``), and
+#: ``tests/test_docs.py`` holds the three equal.
+BROKER_PART_FILL = ("Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. "
+                    "SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, "
+                    "place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, "
+                    "confirm Fidelity accepts it on shares bought that day, "
+                    "and check that no second sell stop remains for shares you do not hold.")
+
+
+def _part_fill_note() -> str:
+    return f'<p style="{_S_MUTED}">{esc(BROKER_PART_FILL)}</p>'
+
+
 #: The words that already say a stock has no ticket. A reason that opens with
 #: one of them must not be introduced by another: the budget's own reason for
 #: a withheld plan begins "ticket withheld: at the $X limit ...", and
@@ -1145,6 +1166,8 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
     out.append(f'<h2 style="{_S_H2}">Next-session orders</h2>')
     if trades:
         out.extend(_trade_block(b, data.get("breadth")) for b in trades)
+        if any(_text(_get(b, "plan", "order_line")) for b in trades):
+            out.append(_part_fill_note())
     else:
         out.append(f'<p style="margin:0 0 12px">No orders for the next session.</p>')
     out.extend(_no_ticket_lines(data))
@@ -1172,6 +1195,8 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
                    'if you hold nothing from this screener, nothing to do.</p>')
     out.append(f'<h2 style="{_S_H2}">Alerts — set these before the open</h2>')
     out.extend(_alert_row(r) for r in alerts)
+    if any(_text(_first(r.get("order_line"), _get(r, "plan", "order_line"))) for r in alerts):
+        out.append(_part_fill_note())
     if not alerts:
         out.append('<p style="margin:0 0 12px">No anticipation names for this measured session.</p>')
     out.append(_problems_block(recorded))

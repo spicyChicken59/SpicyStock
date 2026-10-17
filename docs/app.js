@@ -1512,6 +1512,7 @@
     lines.forEach((line, i) => { if (i) pre.appendChild(d.createTextNode('\n')); pre.appendChild(el('span', { text: line })); });
     wrap.appendChild(pre);
     wrap.appendChild(el('p', { 'class': 'ss-order__readback', text: 'History, not an order to place. ' + cancelLine() }));
+    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     return wrap;
   }
   // the order, as written by the run: shown only when the plan carries one,
@@ -1531,6 +1532,7 @@
       wrap.appendChild(el('div', { 'class': 'sc-eyebrow', style: 'margin-top:10px', text: 'what the ticket enforces, and what it leaves to you' }));
       wrap.appendChild(el('ul', { 'class': 'ss-notes ss-order__terms' }, terms.map((t) => el('li', { text: t }))));
     }
+    wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     return wrap;
   }
   function stopWords(plan) {
@@ -1666,6 +1668,13 @@
     if (CUT_WORDS[status]) return [CUT_WORDS[status], CUT_TONE[status] || 'neutral'];
     return STATUS_WORDS[status] || [words(status || 'no ticket'), 'neutral'];
   }
+  // Fidelity's rule for a ticket's attached stop -- the OTO sell stop is
+  // released only when the buy fills in full -- and SpicyStock's advice for a
+  // part fill, each labelled (knowledge/broker-fidelity.md). Printed beside the
+  // record's own ticket terms and never inside them or a copied order;
+  // report.BROKER_PART_FILL and the handoff's copy are held equal to it by
+  // tests/test_docs.py.
+  const BROKER_PART_FILL = 'Fidelity’s rule: an OTO’s sell stop is released only when the buy fills in full. SpicyStock’s advice: the ticket’s stop terms assume a full fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til Canceled, at the stop for the shares that filled, confirm Fidelity accepts it on shares bought that day, and check that no second sell stop remains for shares you do not hold.';
   // Saying there is no ticket, once. STATUS_WORDS already answers "no ticket"
   // for below_grade, not_admitted and no_plan and CUT_WORDS answers "ticket
   // withheld", so a sentence that leads with those words must not close with
@@ -3027,6 +3036,10 @@
     panels.appendChild(compareSide(b, 'b', 'cmp-b', height));
     wrap.appendChild(panels);
     wrap.appendChild(el('div', { 'class': 'sc-table-scroll ss-compare__facts' }, compareTable(a, b)));
+    // the ticket row prints a recorded order line, so the broker's rule and the
+    // advice for a part fill sit under the table whenever one is printed
+    if ([a, b].some((c) => c.status === 'ticket' && text((c.plan || {}).order_line)))
+      wrap.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     wrap.appendChild(el('p', { 'class': 'sc-hint', text: 'Every value is the published record’s own, for ' + dateWords(run.session) + '. A marked row is one the two records differ on — it is not a verdict, and nothing here says which setup is better. Each chart keeps its own price scale and its own dates; the two are never drawn on one axis.' }));
     dlg.appendChild(wrap);
     function sync() {
@@ -4433,6 +4446,9 @@
       if (isNum(plan.hazard_multiplier) && plan.hazard_multiplier < 1) sizing.push(...(plan.hazards || []).map(sentence));
       if (isNum((plan.multipliers || {}).regime) && plan.multipliers.regime < 1) sizing.push('Breadth size multiplier: ' + plain(plan.multipliers.regime) + '.');
       if (sizing.length) box.appendChild(el('p', { 'class': 'sc-hint ss-action__sizing', 'data-sizing-note': '', text: sizing.join(' ') }));
+      // the card's Copy order hands the ticket over, so Fidelity's rule is
+      // read just above it and is never inside the copied lines
+      box.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     } else {
       box.appendChild(el('p', { 'data-no-entry-reason': '', text: c.status === 'ticket' ? available.reason : cap(sentence(noTicketWhy(c) || 'The run did not publish a ticket.')) }));
     }
@@ -4485,6 +4501,10 @@
       box.appendChild(el('p', { 'class': 'ss-action__refused', 'data-copy-refused': '', role: 'alert', text: copyRefused.text }));
     btn.addEventListener('click', () => openDisclosure(btn.getAttribute('data-open')));
     box.appendChild(btn);
+    // the bar prints the order line itself, so Fidelity's rule and the advice
+    // for a part fill follow it on a row of their own
+    if (c.status === 'ticket' && offered && text(plan.order_line))
+      box.appendChild(el('p', { 'class': 'sc-hint ss-order__broker ss-action__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     box.appendChild(followBlock(c));
     return box;
   }
@@ -4804,6 +4824,7 @@
     const committed = rows.reduce((a, b) => a + (b.plan.position_usd || 0), 0), risk = rows.reduce((a, b) => a + (b.plan.risk_usd || 0), 0);
     table.appendChild(el('tfoot', null, el('tr', null, el('td', { colspan: '10', text: plural(rows.length, 'order') + ' · ' + usd(committed, 0) + ' would be committed at the limits · ' + usd(risk, 0) + ' planned price-to-stop risk · ' + (isNum(acct.equity) && acct.equity ? (100 * committed / acct.equity).toFixed(1) : '—') + '% of the configured equity' }))));
     sheet.appendChild(table);
+    if (rows.length) sheet.appendChild(el('p', { 'class': 'sc-hint ss-order__broker', 'data-broker-part-fill': '', text: BROKER_PART_FILL }));
     const notes = acct.notes || [];
     if (notes.length) sheet.appendChild(el('details', { 'class': 'sc-details' }, [el('summary', { text: 'the configured sizing assumptions this sheet follows' }), el('ul', { 'class': 'ss-notes' }, notes.map((n) => el('li', { text: n })))]));
   }
@@ -5091,7 +5112,7 @@
         ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
-    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Attach its protective stop after a fill; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
+    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is part of the order (OTO) and is released when the buy fills in full; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
     if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
     return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }

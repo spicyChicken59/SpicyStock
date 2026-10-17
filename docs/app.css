@@ -298,6 +298,8 @@
    this page is here. Its phone layout -- the sentence releasing the row
    basis it would otherwise keep as a 260px height -- lives upstream too. */
 .ss-action { margin-top: var(--sc-s3); }
+/* the broker's rule after the bar's order line, on a follow-on row of its own */
+.sc-actionbar > .ss-action__broker { flex: 1 1 100%; }
 .ss-plan-selection { flex-basis: 100%; margin-block: var(--sc-s2); }
 .ss-plan-selection p { margin: var(--sc-s1) 0 0; }
 .ss-plan-selection button { min-height: 44px; }

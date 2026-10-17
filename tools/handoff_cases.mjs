@@ -55,6 +55,11 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       eq('readback focuses its heading after explicit preparation', await page.evaluate(() => document.activeElement.id), 'handoff-title');
       await page.locator('[data-handoff-readback] > summary').click();
       check('dated exit schedule is labelled archived and not resized', /Archived model exit schedule/.test(await page.locator('[data-handoff-readback]').textContent()) && /not resized to your personal draft or reported holdings/.test(await page.locator('[data-handoff-readback]').textContent()));
+      // counted over the whole desk and read as shown: a hidden note, or one
+      // printed anywhere in the desk but the readback, is a failure
+      eq('readback prints Fidelity\'s part-fill rule once, as the page defines it, shown, and nowhere else in the desk',
+        await page.locator('#morning-desk [data-broker-part-fill]').evaluateAll((els) => els.map((e) => [e.textContent, !!e.closest('[data-handoff-readback]'), e.checkVisibility()])),
+        [[(await readFile(path.join(ROOT, 'docs', 'app-handoff-ui.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1], true, true]]);
       check('two-share draft has explicit whole-share reference', /personal draft is 2 whole shares.*rounds up to 1 whole share, leaving 1/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       check('readback labels personal two and original four separately', /BUY 2 COIL/.test(await page.locator('[data-handoff-text]').textContent()) && /Published quantity: 4/.test(await page.locator('[data-handoff-text]').textContent()));
       await page.locator('[data-handoff-copy]').click();

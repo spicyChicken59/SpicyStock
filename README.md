@@ -453,7 +453,9 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    entry for this exact setup. A usable published ticket shows its applicable
    session, buy-stop trigger, stop-limit limit, protective stop and suggested
    model shares directly, with **Copy order** and **Plan details**. It prints
-   the recorded order fields and keeps material sizing explanations. A setup
+   the recorded order fields and keeps material sizing explanations, and under
+   them Fidelity's part-fill rule and SpicyStock's advice (below), which the
+   copied order never carries. A setup
    without a usable ticket says **No SpicyStock entry for this setup** and the
    actual grade, planner, budget, breadth or timing/publication reason. Expired
    plans remain inspectable as recorded history with no actionable levels or
@@ -508,8 +510,26 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    budget, the position cap and his 4% stop line at every fill it can take
    — the position, the planned price-to-stop risk, the aim, the hazards,
    and the order in Fidelity's field order with a copy button: a buy
-   stop-limit with a one-triggers-the-other sell stop attached, and under
-   it what the ticket enforces and what it leaves to the reader); the
+   stop-limit with a one-triggers-the-other sell stop riding on it, and
+   under it what the ticket enforces and what it leaves to the reader;
+   beside those terms, never inside them (the plan's terms are its record,
+   name no broker, and provenance replays them), two sentences, each
+   labelled: Fidelity's rule, that the OTO sell stop is released only when
+   the buy fills in full, and SpicyStock's advice, that the ticket's stop
+   terms assume a full fill and a part fill needs one separate sell stop
+   for the shares that filled, once Fidelity is confirmed to accept it on
+   shares bought that day. Wherever an order is printed or copyable the
+   same text is printed beside it and never inside the copied lines: the
+   order block, a recorded ticket, the Burst's action card above its
+   **Copy order**, the setting-up action bar after its order line, the
+   comparison under its facts when a compared ticket prints one, the
+   tickets sheet, the private handoff's readback and the mail's order and
+   alert blocks (`report.BROKER_PART_FILL`, held equal to the page's two
+   copies by `tests/test_docs.py`); before the window the next action
+   says the sell stop is part of the order and released on a full fill.
+   `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket and
+   labels each fact as Fidelity's words with its source, inferred,
+   unconfirmed or SpicyStock's advice); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
    line the buy row says so in the plan's own words, and a burst no limit
@@ -2000,6 +2020,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
+                broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
