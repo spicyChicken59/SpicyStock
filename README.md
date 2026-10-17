@@ -1254,6 +1254,12 @@ cannot replace those anchors.
 Future earnings and comprehensive issuer news still require verification.
 This reader does not change a ticket, copied quantity or cash preview.
 
+Every request names the project and a contact email in its User-Agent
+(`issuer_evidence.USER_AGENT`), as SEC's fair-access policy asks. Until
+17 October 2026 it named only the project's URL, and the ticker mapping
+answered HTTP 403 on all five collections from 10 to 16 October that
+recorded a status.
+
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks
 its repository, main branch and current publication binding. Dynamic run titles
