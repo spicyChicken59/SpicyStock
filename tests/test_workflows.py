@@ -471,7 +471,8 @@ def test_issuer_trigger_is_publication_bound_and_has_no_recursion_or_new_cron():
     assert on['workflow_run'] == {'workflows': [load('evening.yml')['name'], load('morning.yml')['name']],
                                   'types': ['completed'], 'branches': ['main']}
     assert on['workflow_dispatch']['inputs']['dry_run']['default'] is True
-    assert set(on['workflow_dispatch']['inputs']) == {'dry_run'}
+    assert set(on['workflow_dispatch']['inputs']) == {'dry_run', 'probe_sec'}
+    assert on['workflow_dispatch']['inputs']['probe_sec']['default'] is False
     assert wf['concurrency'] == {'group': 'issuer-evidence', 'cancel-in-progress': False}
     assert wf['permissions'] == {'contents': 'read', 'actions': 'read'}
 
@@ -500,6 +501,27 @@ def test_issuer_readonly_collection_and_main_only_writer_are_separate():
     assert writer['Publish only against unchanged main source and receipt']['run'] == \
         'python -m tools.publish_issuer_evidence publish --input "$RUNNER_TEMP/issuer-candidate"'
     assert 'secrets.' not in str(wf) and 'git add' not in str(wf)
+
+
+def test_sec_probe_is_opt_in_rehearsal_only_separately_retained_and_never_persisted():
+    wf = load('issuer-evidence.yml')
+    current = steps(wf, 'collect')
+    probe = current['Probe SEC access from this runner']
+    artifact = current['Retain the SEC diagnostic separately']
+    only = "github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true"
+    assert probe['if'] == artifact['if'] == only
+    assert probe['env'] == {'SCAN_SEND_EMAIL': 'false'}
+    assert probe['run'] == 'python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json"'
+    assert artifact['with']['path'] == '${{ runner.temp }}/sec-probe.json'
+    assert artifact['with']['name'] == 'sec-probe-${{ github.run_id }}-${{ github.run_attempt }}'
+    assert 'docs' not in artifact['with']['path']
+    # A probe is a dispatch rehearsal: never a production run, never a collection, never persisted.
+    assert 'inputs.probe_sec != true || inputs.dry_run == true' in wf['jobs']['collect']['if']
+    assert 'inputs.probe_sec != true' in current['Collect issuer evidence (rehearsal)']['if']
+    assert "github.event_name != 'workflow_dispatch' || inputs.dry_run == false" in current['Collect issuer evidence (production)']['if']
+    assert 'inputs.probe_sec != true' in wf['jobs']['persist']['if']
+    names = list(current)
+    assert names.index('Guard the trigger and daily collection budget') < names.index('Probe SEC access from this runner')
 
 
 def test_issuer_cache_and_capture_retention_do_not_promote_untrusted_artifacts():
