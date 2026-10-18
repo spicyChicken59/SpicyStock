@@ -289,6 +289,8 @@
 .ss-decision__item h3 { margin: 0 0 4px; }
 .ss-decision__item p { margin: 0; color: var(--sc-text); font-size: var(--sc-text-sm); line-height: 1.55; }
 .ss-decision__item p + p { margin-top: 4px; }
+/* a hint inside an answer (the part-fill note) keeps the hint's own colour */
+.ss-decision__item p.sc-hint { color: var(--sc-text-2); }
 .ss-screening-warnings { margin-top: var(--sc-s2); padding-top: var(--sc-s2); border-top: 1px solid var(--sc-border); }
 .ss-screening-warnings h4 { margin: 0 0 4px; }
 @media (max-width: 900px) { .ss-decision { grid-template-columns: minmax(0, 1fr); } }

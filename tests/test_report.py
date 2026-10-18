@@ -172,7 +172,9 @@ def test_the_mail_prints_the_part_fill_rule_once_after_trades_whichever_of_them_
     text = _rendered(digest_html(build(**two)))
     assert text.count("Buy 69 XYZ") == 2, text            # both trades print their order line
     assert text.count(report.BROKER_PART_FILL) == 1, text
-    assert text.index(report.BROKER_PART_FILL) > text.rindex("Buy 69 XYZ"), text   # after the last of them
+    # directly after the last of them: no line comes between the cards and it
+    (_, before, _), = _part_fill_notes(digest_html(build(**two)))
+    assert before["tag"] == "div" and before["text"].startswith("DEF") and "Buy 69 XYZ" in before["text"], before["text"][:200]
     # one trade with an order and one without: the one that prints an order brings the sentence
     mixed = _night(bursts=[_burst("XYZ"), _burst("DEF", plan={**_plan(), "order_line": None})],
                    trades=["XYZ", "DEF"], watchlist=quiet)
@@ -188,6 +190,9 @@ def test_the_mail_prints_the_part_fill_rule_once_after_alerts_however_many_carry
     assert "Buy 40 WCH" in text and "Buy 40 QRS" in text, text
     assert text.count(report.BROKER_PART_FILL) == 1, text
     assert text.index(report.BROKER_PART_FILL) > text.index("Buy 40 QRS") > text.index("Buy 40 WCH"), text
+    # directly after the last alert: no block comes between the rows and it
+    (_, before, _), = _part_fill_notes(digest_html(build(**_night(trades=[], watchlist=two))))
+    assert before["tag"] == "div" and before["text"].startswith("QRS") and "Buy 40 QRS" in before["text"], before["text"][:200]
 
 
 def test_an_alert_whose_own_order_line_is_blank_prints_no_order_and_so_no_part_fill_rule():
@@ -208,8 +213,12 @@ def test_an_order_line_of_blank_space_or_not_text_is_no_order_and_brings_no_part
     quiet = {"top": [], "also_quiet": [], "counts": {"top": 0, "also_quiet": 0}}
     for line in ("   ", 7):
         plan = {**_plan(), "order_line": line}
-        text = _rendered(digest_html(build(**_night(bursts=[_burst(plan=plan), _miss()], watchlist=quiet))))
+        html = digest_html(build(**_night(bursts=[_burst(plan=plan), _miss()], watchlist=quiet)))
+        text = _rendered(html)
         assert "Buy zone" in text and "Buy 69 XYZ" not in text and report.BROKER_PART_FILL not in text, (line, text)
+        # and the card prints no order block for it at all: a <pre> of blank
+        # space or of a number is an order the sentence would have to follow
+        assert "<pre" not in html, (line, html[html.find("<pre"):html.find("<pre") + 200])
         own = {"top": [{"ticker": "WCH", "setups": ["TI65"], "trigger": 20.05, "stop": 18.9, "shares": 40, "order_line": line,
                         "plan": {"order_line": "Buy 40 WCH stop 20.05 limit 20.30; OTO sell stop 18.90"}}],
                "also_quiet": [], "counts": {"top": 1, "also_quiet": 0}}
@@ -231,48 +240,73 @@ def test_a_closed_night_that_carries_the_standing_tickets_prints_the_part_fill_r
 
 
 _VOID = {"area", "base", "br", "col", "hr", "img", "input", "link", "meta", "source", "wbr"}
-_HIDING = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\.0*)?\s*(?:;|$)"
-                     r"|(?:max-)?height\s*:\s*0(?:px)?\s*(?:;|$)|font-size\s*:\s*0(?:px)?\s*(?:;|$)"
-                     r"|line-height\s*:\s*0|mso-hide|clip\s*:|text-indent\s*:\s*-"
-                     r"|(?<![-\w])color\s*:\s*(?:#fff(?:fff)?|white|transparent)\b", re.I)
 
 
-class _Ancestry(HTMLParser):
-    """Each place a text is emitted, with the open elements above it."""
+class _Tree(HTMLParser):
+    """The digest as a tree: each element's tag, style, children and whole
+    inner text, so a test can ask where a paragraph sits among its siblings."""
 
-    def __init__(self, needle: str) -> None:
+    def __init__(self, html: str) -> None:
         super().__init__()
-        self.needle, self.stack, self.hits = needle, [], []
+        self.root = {"tag": None, "style": "", "kids": [], "text": ""}
+        self.stack = [self.root]
+        self.feed(html)
 
     def handle_starttag(self, tag, attrs):
+        node = {"tag": tag, "style": dict(attrs).get("style") or "", "kids": [], "text": ""}
+        self.stack[-1]["kids"].append(node)
         if tag not in _VOID:
-            self.stack.append((tag, dict(attrs).get("style") or ""))
+            self.stack.append(node)
 
     def handle_endtag(self, tag):
-        for i in range(len(self.stack) - 1, -1, -1):
-            if self.stack[i][0] == tag:
+        for i in range(len(self.stack) - 1, 0, -1):
+            if self.stack[i]["tag"] == tag:
                 del self.stack[i:]
                 break
 
     def handle_data(self, data):
-        if self.needle in data:
-            self.hits.append(list(self.stack))
+        for node in self.stack:
+            node["text"] += data
+
+    def nodes(self, node=None):
+        """Every element with its parent and its place among the parent's children."""
+        node = node or self.root
+        for i, kid in enumerate(node["kids"]):
+            yield node, i, kid
+            yield from self.nodes(kid)
+
+
+def _part_fill_notes(html: str, tree: _Tree | None = None) -> list[tuple[dict, dict, dict]]:
+    """Each paragraph that is the broker's sentence, as (its parent, the
+    element directly before it, itself)."""
+    tree = tree or _Tree(html)
+    return [(parent, parent["kids"][i - 1] if i else None, node) for parent, i, node in tree.nodes()
+            if node["text"] == report.BROKER_PART_FILL and node["tag"] == "p"]
+
+
+def _section_of(tree: _Tree, heading: str) -> dict:
+    """The element whose children are the digest's sections: the parent of a heading."""
+    return next(parent for parent, _, node in tree.nodes() if node["tag"] == "h2" and node["text"] == heading)
 
 
 def test_the_part_fill_rule_is_printed_where_a_reader_sees_it():
-    """The mail's paragraph is a plain muted one, and nothing above it --
-    no wrapper, no style of its own -- hides it from the reader."""
+    """Each note is a paragraph of the digest's own column -- a sibling of the
+    section headings, with no wrapper of any kind between the column and the
+    note, no element inside it, and the style of the column's other muted
+    lines -- directly after the card whose order it follows."""
     html = digest_html(build(**_night()))
-    expected = f'<p style="{report._S_MUTED}">{report.esc(report.BROKER_PART_FILL)}</p>'
-    assert html.count(expected) == 2, html
-    parser = _Ancestry(report.BROKER_PART_FILL)
-    parser.feed(html)
-    assert len(parser.hits) == 2, parser.hits
-    for stack in parser.hits:
-        assert stack[-1] == ("p", report._S_MUTED), stack
-        for tag, style in stack:
-            assert not _HIDING.search(style), (tag, style)
-    assert not _HIDING.search(report._S_MUTED), report._S_MUTED
+    tree = _Tree(html)
+    found = _part_fill_notes(html, tree)
+    column = _section_of(tree, "Next-session orders")
+    muted = [node for _, _, node in tree.nodes() if node["tag"] == "p" and node["text"].startswith("Model allocation:")]
+    assert len(found) == 2 and len(muted) == 1, found
+    for parent, before, note in found:
+        assert parent is column, "the note sits inside an element of its own"
+        assert note["style"] == muted[0]["style"] == report._S_MUTED, note["style"]
+        assert not note["kids"], note["kids"]
+    (_, after_trades, _), (_, after_alerts, _) = found
+    assert "Buy 69 XYZ" in after_trades["text"] and after_trades["tag"] == "div", after_trades["text"][:200]
+    assert "Buy 40 WCH" in after_alerts["text"] and after_alerts["tag"] == "div", after_alerts["text"][:200]
 
 
 def test_no_ticket_lines_and_recorded_problems_bring_no_part_fill_rule():

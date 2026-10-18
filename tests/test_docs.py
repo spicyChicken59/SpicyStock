@@ -402,6 +402,66 @@ def test_the_page_reads_the_recovery_statuses_the_collector_writes():
     assert tuple(re.findall(r"'(\w+)'", listed)) == source_recovery.STATUSES
 
 
+_REGEX_AFTER = set("(,=:[!&|?{};+-*%<>~^")
+
+
+def _js_code(source: str) -> str:
+    """The page's script without its comments: line and block comments are
+    dropped, while strings, template literals and regex literals -- in which a
+    '//' or a quote is text, not a comment or a string -- are kept whole. A
+    regex literal starts at a '/' after an operator, an opening bracket, a
+    comma, the start of a line or the words return/typeof."""
+    out, i, n, last = [], 0, len(source), ""
+    while i < n:
+        c, nxt = source[i], source[i + 1] if i + 1 < n else ""
+        if c == "/" and nxt == "/":
+            j = source.find("\n", i)
+            i = n if j < 0 else j
+            continue
+        if c == "/" and nxt == "*":
+            j = source.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+            out.append(" ")
+            continue
+        if c in "'\"`":
+            j = i + 1
+            while j < n and source[j] != c:
+                j += 2 if source[j] == "\\" else 1
+            out.append(source[i:j + 1]); i, last = j + 1, c
+            continue
+        word = re.search(r"\b(?:return|typeof)\s*$", "".join(out[-12:]))
+        if c == "/" and (last in _REGEX_AFTER or last in ("", "\n") or word):
+            j, klass = i + 1, False
+            while j < n and (klass or source[j] != "/") and source[j] != "\n":
+                if source[j] == "\\":
+                    j += 1
+                elif source[j] == "[":
+                    klass = True
+                elif source[j] == "]":
+                    klass = False
+                j += 1
+            out.append(source[i:j + 1]); i, last = j + 1, "/"
+            continue
+        out.append(c)
+        if not c.isspace() or c == "\n":
+            last = c if not c.isspace() else ("\n" if last in _REGEX_AFTER or last == "" else last)
+        i += 1
+    return "".join(out)
+
+
+def test_the_comment_stripper_keeps_strings_regexes_and_templates_and_drops_comments():
+    """The count below is only as good as this: a call in a comment of either
+    kind is not a call, and a '//' or a quote inside a string, a template or a
+    regex literal does not start a comment or a string."""
+    src = ("a(); // b()\n/* c() */ d('//e()'); f(/['\"]+\\/\\//g, x); g(`//${h()}`);\n"
+           "const k = 1 / 2; m(); /*\n n() */ return /\\/* o()/.test(s);")
+    code = _js_code(src)
+    for kept in ("a()", "d('//e()')", "/['\"]+\\/\\//g", "g(`//${h()}`)", "m()", "/\\/* o()/"):
+        assert kept in code, (kept, code)
+    for dropped in ("b()", "c()", "n()"):
+        assert dropped not in code, (dropped, code)
+
+
 def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_as_one_text():
     """Fidelity's OTO releases the sell stop only on a full fill, so a part
     fill needs a separate stop. The text labels the two apart -- Fidelity's
@@ -424,7 +484,7 @@ def test_the_page_the_handoff_and_the_mail_print_fidelitys_rule_and_the_advice_a
     calls = re.compile(r"(?<![\w.])partFillNote\((?:'[\w-]+')?\)")
     for name, sites in (("app.js", 10), ("app-handoff-ui.js", 1)):
         page = (ROOT / "docs" / name).read_text(encoding="utf-8")
-        code = "\n".join(line for line in page.splitlines() if not line.lstrip().startswith("//"))
+        code = _js_code(page)
         assert len(re.findall(r"(?<![\w.])BROKER_PART_FILL\s*=", code)) == 1, name
         assert re.findall(r"const BROKER_PART_FILL = '([^']+)';", code) == [report.BROKER_PART_FILL], name
         # the definition and its one use, nothing else reads the name

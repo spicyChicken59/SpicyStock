@@ -4398,8 +4398,13 @@
     section.querySelector('[data-item="why"]').appendChild(el('p', { id: 'candidate-guide', 'class': 'ss-reading-order' }, [
       d.createTextNode('Being listed or A-graded does not mean a ticket is available. '), help('discovery', 'Why listed?'), help('grade', 'Grade') ]));
     // A ticket's need item prints its entry instruction, or its order line,
-    // whose sell stop is live from the fill: the part-fill note beside it.
-    if (c.status === 'ticket' && (entryInstruction(c.plan) || text((c.plan || {}).order_line))) section.querySelector('[data-item="need"]').appendChild(partFillNote());
+    // whose sell stop is live from the fill: the part-fill note beside it --
+    // unless this is a setting-up stock whose action bar, which follows the
+    // summary on the same screen, offers that order with the note after it.
+    // The bar's offer moves with the clock, so reclockDetail() repaints both.
+    const need = c.plan || {};
+    const barCarries = c.stage !== 'bursts' && !!(candidateAvailability(c) || {}).offered && !!text(need.order_line);
+    if (c.status === 'ticket' && !barCarries && (entryInstruction(c.plan) || text(need.order_line))) section.querySelector('[data-item="need"]').appendChild(partFillNote());
     if (c.status !== 'ticket') {
       const reasons = independentWaitReasons(c, current);
       section.querySelector('[data-item="wait"]').appendChild(el('ul', { 'data-all-blockers': '' }, reasons.map(p => el('li', { text: p }))));
@@ -5125,10 +5130,10 @@
       'Mechanical A+/A candidates remain research only while accepted reader review is missing. This does not establish a setup failure. ' + (open ? 'Existing open model plans keep their recorded instructions. ' : '') + line, 'quiet'];
     if (ph === 'open') {
       return orders
-        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its published exit terms apply after a fill; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
+        ? ['The entry window for ' + day + ' is in progress.', 'Review the ' + plural(orders, 'conditional ticket') + ' and each setup’s restrictions. If you submit an order, its sell stop is part of it (OTO), and Fidelity releases that stop only when the buy fills in full; cancel any unfilled entry by the end of the ' + window + '. ' + line, 'orders']
         : ['Nothing new to place in ' + day + '’s window.', 'No setup qualified with a ticket. ' + line, 'quiet'];
     }
-    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is part of the order (OTO) and is released when the buy fills in full; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
+    if (orders) return ['Review ' + plural(orders, 'conditional ticket') + ' for ' + day + '.', 'If you choose to follow a plan, review its conditions and prepare before ' + by_ + '. Its sell stop is part of the order (OTO), and Fidelity releases that stop only when the buy fills in full; cancel an unfilled entry by the end of the ' + window + '. SpicyStock submits nothing. ' + line, 'orders'];
     if (open) return ['Nothing new to place for ' + day + '. Review the open public-model plans.', 'No setup qualified with a ticket tonight; the open model plans still carry their instructions. ' + line, 'quiet'];
     return ['No new entry offered for ' + day + '.', 'No setup qualified with a ticket and there are no open public-model plans. Come back after the next run. ' + line, 'quiet'];
   }
@@ -5375,11 +5380,14 @@
 
   // The chosen stock's clock-dependent parts, in place. `renderDetail()` would
   // rebuild the whole panel and dispose the chart, which is exactly what a
-  // reader mid-reading must not have happen; these two children carry every
-  // word the clock touches.
+  // reader mid-reading must not have happen; these three children carry every
+  // word the clock touches (the decision summary's need item gives up its
+  // part-fill note to a setting-up action bar only while the bar offers the
+  // order).
   function reclockDetail() {
     const box = $('detail'), c = model && state.stage ? model.byId[state.selected[state.stage]] : null;
     if (!box || !c) return;
+    repaint(box.querySelector('.ss-decision'), () => decisionSummary(c));
     repaint(box.querySelector('.ss-action'), () => actionArea(c));
     repaint($('disc-plan'), () => discPlan(c));
   }

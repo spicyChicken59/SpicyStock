@@ -524,17 +524,21 @@ sort and expanded evidence; loading a new record replaces the old scan rows.
    lines: the order block, a recorded ticket, the Burst's action card above
    its **Copy order**, the setting-up action bar after its order line, the
    comparison under its facts when a compared ticket prints one, the
-   tickets sheet, a ticket's decision summary under its entry, the model
+   tickets sheet, a ticket's decision summary under its entry (for a
+   setting-up stock only while its action bar, which follows the summary on
+   the same screen, does not offer the order), the model
    exit guidance under a ticket's dated schedule, a saved setup's archived
    order when it was a ticket, an archived original's status when it was a
    ticket, the private handoff's readback and the mail's order and alert
    blocks (`report.BROKER_PART_FILL`, held equal to the page's two copies
    by `tests/test_docs.py`); a pick card's summary never falls back to a
-   ticket's order line; before the window the next action says the sell
-   stop is part of the order and released on a full fill.
+   ticket's order line; before and during the window the next action says
+   the sell stop is part of the order (OTO) and that Fidelity releases it
+   only when the buy fills in full.
    `knowledge/broker-fidelity.md` maps each field onto Fidelity's ticket,
    the field names labelled unconfirmed, and labels each fact as Fidelity's
-   words with its source, inferred, unconfirmed or SpicyStock's advice); the
+   words or a regulator's words with its source, inferred, unconfirmed or
+   SpicyStock's advice); the
    model exit guidance, dated; and the provenance (what Claude saw in the
    chart, the bars, the rules digest). Where the limit is under the day-2
    line the buy row says so in the plan's own words, and a burst no limit
@@ -2025,7 +2029,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
                 intraday/ (minute bars of plans' first days, one content-addressed object per plan, written once)
                 quality-ledger/ (versioned publication facts; created by future real publications)
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
-                broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, inferred, unconfirmed or SpicyStock's advice)
+                broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
 tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)

@@ -80,7 +80,8 @@ const copiedTicket = (s) => {
 // after the element that prints that order -- 'order' after the order
 // block's <pre>, 'recorded' after the recorded ticket's, 'card' after the
 // Burst card's terms and before its controls (which copy the order), 'bar'
-// after the setting-up bar's 'Conditional ticket:' paragraph, 'sheet' after
+// directly after the setting-up bar's button, which follows its 'Conditional
+// ticket:' paragraph (and before the bar's follow row), 'sheet' after
 // the tickets table, 'compare' directly after the comparison's facts, 'need'
 // after the decision summary's entry sentence, 'exits' directly after the
 // model exits' dated timeline, 'saved' after a saved setup's archived order,
@@ -90,9 +91,11 @@ const copiedTicket = (s) => {
 // A note under a [hidden] ancestor is not listed (the Morning desk's handoff
 // panel is built once and kept hidden until a draft is chosen;
 // tools/handoff_cases.mjs reads it there). What a reader gets: 'seen' when
-// the note is drawn in a box of its own, not transparent, hidden or clipped
-// (the 1 px clipped box of sc-sr-only is not seen); 'collapsed' inside a
-// closed <details>, which the reader opens; else 'unseen'.
+// the note is drawn in a box of its own on the page (not off its edge, not
+// inside an ancestor that clips it away), in a colour that is neither
+// transparent nor its background's, and not hidden or clipped (the 1 px
+// clipped box of sc-sr-only is not seen); 'collapsed' inside a closed
+// <details>, which the reader opens; else 'unseen'.
 const notePlaces = (page, scope = 'body') => page.evaluate(([scope, want]) => {
   const prev = (e, sel) => { for (let s = e.previousElementSibling; s; s = s.previousElementSibling) if (s.matches(sel)) return s; return null; };
   const next = (e, sel) => { for (let s = e.nextElementSibling; s; s = s.nextElementSibling) if (s.matches(sel)) return s; return null; };
@@ -102,7 +105,7 @@ const notePlaces = (page, scope = 'body') => page.evaluate(([scope, want]) => {
     if (p.matches('.ss-order--history')) return prev(e, 'pre[data-recorded]') ? 'recorded' : 'other';
     if (p.matches('.ss-order')) return prev(e, 'pre[data-order]') ? 'order' : 'other';
     if (p.matches('.ss-action--burst')) return prev(e, '.ss-action__terms') && next(e, '.ss-action__controls') ? 'card' : 'other';
-    if (p.matches('.ss-action')) { const line = prev(e, 'p:not([data-broker-part-fill])'); return line && line.textContent.startsWith('Conditional ticket: ') ? 'bar' : 'other'; }
+    if (p.matches('.ss-action')) { const line = prev(e, 'p:not([data-broker-part-fill])'); return before && before.matches('button[data-open]') && line && line.textContent.startsWith('Conditional ticket: ') ? 'bar' : 'other'; }
     if (p.id === 'orders-table') return prev(e, '#order-sheet') ? 'sheet' : 'other';
     if (before && before.matches('.ss-compare__facts')) return 'compare';
     if (p.matches('.ss-decision__item[data-item="need"]')) return prev(e, 'p:not([data-broker-part-fill])') ? 'need' : 'other';
@@ -112,13 +115,29 @@ const notePlaces = (page, scope = 'body') => page.evaluate(([scope, want]) => {
     if (p.matches('[data-handoff-readback]')) return next(e, 'pre[data-handoff-text]') ? 'handoff' : 'other';
     return 'other';
   };
+  const alpha = (c) => { const m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return c === 'transparent' ? 0 : 1; const v = m[1].split(/[ ,\/]+/).filter(Boolean); return v.length > 3 ? parseFloat(v[3]) : 1; };
   const reader = (e) => {
     for (let a = e; a; a = a.parentElement) if (a.tagName === 'DETAILS' && !a.open && !e.closest('summary')) return 'collapsed';
     const r = e.getBoundingClientRect();
     if (!(r.width > 2 && r.height > 2) || !e.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return 'unseen';
+    // off the page's edge: no scroll reaches left of 0 or past the viewport's width
+    if (r.right + scrollX <= 0 || r.bottom + scrollY <= 0 || r.left + scrollX >= document.documentElement.clientWidth) return 'unseen';
+    let x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
     for (let a = e; a && a !== document.documentElement; a = a.parentElement) {
       const cs = getComputedStyle(a);
-      if (cs.clipPath !== 'none' || cs.clip !== 'auto' || parseFloat(cs.fontSize) < 6) return 'unseen';
+      if (cs.clipPath !== 'none' || cs.clip !== 'auto' || parseFloat(cs.fontSize) < 6 || parseFloat(cs.opacity) < 0.1) return 'unseen';
+      // an ancestor that clips its overflow without scrolling cuts the box
+      if (a !== e && /hidden|clip/.test(cs.overflowX + ' ' + cs.overflowY)) {
+        const q = a.getBoundingClientRect();
+        x0 = Math.max(x0, q.left); y0 = Math.max(y0, q.top); x1 = Math.min(x1, q.right); y1 = Math.min(y1, q.bottom);
+      }
+    }
+    if (!(x1 - x0 > 2 && y1 - y0 > 2)) return 'unseen';
+    const ink = getComputedStyle(e);
+    if (alpha(ink.color) === 0 || alpha(ink.webkitTextFillColor) === 0) return 'unseen';
+    for (let a = e; a; a = a.parentElement) {
+      const bg = getComputedStyle(a).backgroundColor;
+      if (alpha(bg) > 0) { if (bg === ink.color) return 'unseen'; break; }
     }
     return 'seen';
   };
@@ -430,6 +449,12 @@ async function checkDetail(page, variant, b, data, blocked) {
   eq(`${variant} ${b.ticker} Fidelity's part-fill rule beside each printed order, seen, and nowhere else`, await notePlaces(page, '#detail'),
     notes(['card', cardOffers], ['order', order], ['recorded', await count(page, '#detail [data-recorded-ticket]')],
       ['need', ticketed && (entryOf(b.plan) || !!b.plan.order_line) ? 1 : 0], ['exits', ticketed && entryOf(b.plan) ? 1 : 0]));
+  if (ticketed) {
+    // the need item's note sits inside an answer whose paragraphs are drawn in
+    // the text colour: it keeps the hint's, as every other note does
+    const ink = await page.evaluate(() => [...document.querySelectorAll('#detail [data-broker-part-fill]')].map((e) => getComputedStyle(e).color));
+    check(`${variant} ${b.ticker} every part-fill note keeps the hint's colour, the entry's among them`, ink.length > 1 && ink.every((c) => c === ink[0]), ink);
+  }
   if (status === 'ticket' && !blocked) {
     const pre = await page.locator('#detail pre[data-order]').innerText();
     const o = b.plan.order_json;
@@ -502,8 +527,12 @@ async function checkCoil(page, variant, r, data, blocked, quiet) {
     eq(`${variant} ${r.ticker} action carries the order`, ticketAttr, 'order');
     check(`${variant} ${r.ticker} action prints the order line`, action.includes(r.plan.order_line), action);
     eq(`${variant} ${r.ticker} order block shown`, await count(page, '#detail pre[data-order]'), 1);
-    eq(`${variant} ${r.ticker} Fidelity's part-fill rule after the action bar's order line, beside the order block, the entry and the exits`,
-      await notePlaces(page, '#detail'), notes(['bar'], ['order'], ['need', entryOf(r.plan) || !!r.plan.order_line ? 1 : 0], ['exits', entryOf(r.plan) ? 1 : 0]));
+    // the bar follows the decision summary on the same screen and prints the
+    // same order: its note stands for the entry's, so the rule is shown once
+    eq(`${variant} ${r.ticker} Fidelity's part-fill rule after the action bar's order line, beside the order block and the exits, and not again over the entry`,
+      await notePlaces(page, '#detail'), notes(['bar'], ['order'], ['exits', entryOf(r.plan) ? 1 : 0]));
+    const ink = await page.evaluate(() => [...document.querySelectorAll('#detail [data-broker-part-fill]')].map((e) => getComputedStyle(e).color));
+    check(`${variant} ${r.ticker} every part-fill note keeps the hint's colour`, ink.length > 1 && ink.every((c) => c === ink[0]), ink);
   } else {
     eq(`${variant} ${r.ticker} action status`, ticketAttr, status === 'ticket' ? 'blocked' : status);
     eq(`${variant} ${r.ticker} order block withheld`, await count(page, '#detail pre[data-order]'), 0);
@@ -876,11 +905,14 @@ async function checkVariant(browser, base, variant, data) {
     check(`${variant} next: review both stages' conditional tickets, for a named session`,
       next === `Review ${publishedCount} conditional ticket${publishedCount === 1 ? '' : 's'} for ${forDay}.`, next);
     // before the window the next action says how the stop rides on the order,
-    // in Fidelity's frame, and never to attach a second stop after a fill
-    const nextP = await text(page, '#next-p');
-    check(`${variant} next: the sell stop is part of the order and released on a full fill, and no other stop is asked for`,
-      /^If you choose to follow a plan, review its conditions and prepare before [^.]+\. Its sell stop is part of the order \(OTO\) and is released when the buy fills in full; cancel an unfilled entry by the end of the [^.;]+\. SpicyStock submits nothing\./.test(nextP)
-        && (nextP.match(/sell stop/gi) || []).length === 1 && !/attach|second stop|place a stop|stop after/i.test(nextP), nextP);
+    // in Fidelity's frame, and never to attach a second stop after a fill:
+    // its sentence is read whole, the prepare-by time and the window off the
+    // record, and nothing after it may speak of a stop
+    const nextP = await text(page, '#next-p'), tmv = data.run.timing;
+    const byWords = `${+tmv.prepare_by_et.slice(0, 2) % 12 || 12}:${tmv.prepare_by_et.slice(3)} ${+tmv.prepare_by_et.slice(0, 2) < 12 ? 'AM' : 'PM'} ET`;
+    const nextWant = `If you choose to follow a plan, review its conditions and prepare before ${byWords}. Its sell stop is part of the order (OTO), and Fidelity releases that stop only when the buy fills in full; cancel an unfilled entry by the end of the ${tmv.window}. SpicyStock submits nothing. `;
+    check(`${variant} next: the sell stop is part of the order and Fidelity releases it only on a full fill, and no other stop is asked for`,
+      nextP.startsWith(nextWant) && !/stop/i.test(nextP.slice(nextWant.length)), nextP);
   }
   else check(`${variant} next: nothing new, for a named session`, /^(Nothing|No new burst ticket)/.test(next) && next.includes(forDay), next);
   check(`${variant} next never names a deadline that has passed`, !/before 9:28 AM/.test(next) || await attr(page, 'html', 'data-ss-window') === 'upcoming',
@@ -1367,6 +1399,24 @@ async function checkStates(browser, base, data) {
     eq('failed page errors', errors, []);
     await context.close();
   } finally { await unlink(path.join(ROOT, failedPath)); }
+  // a ticket whose dated schedule carries no entry step: the decision summary
+  // falls back to its order line and keeps the rule beside it, and the model
+  // exits, which then print no entry, carry none (the fixtures' every ticket
+  // has an entry step, so neither arm is otherwise reached)
+  const noEntry = JSON.parse(JSON.stringify(data));
+  const lone = noEntry.bursts.find((b) => (noEntry.trades || []).includes(b.ticker) && b.plan && b.plan.order_line);
+  if (lone) lone.plan.exit_schedule = (lone.plan.exit_schedule || []).filter((x) => !(x && (x.key === 'entry' || x.day === 1)));
+  check('a ticket without an entry step and with an order line, so the two arms below can fail', !!lone && !entryOf(lone.plan) && !!lone.plan.order_line && lone.plan.exit_schedule.length > 0, lone && lone.ticker);
+  const noEntryPath = '/tests/fixtures/page/.noentry.json';
+  await writeFile(path.join(ROOT, noEntryPath), JSON.stringify(noEntry));
+  try {
+    const { context, page, errors } = await open(browser, base, noEntryPath, FRESH_NOW, 1280, { hash: `#/explore/bursts/${lone.ticker}` });
+    await openAll(page, '#detail details');
+    check('without an entry step the need item prints the order line', (await text(page, '#detail .ss-decision__item[data-item="need"]')).includes(lone.plan.order_line), await text(page, '#detail .ss-decision__item[data-item="need"]'));
+    eq('and keeps the rule beside it; the exits, with no entry, carry none', await notePlaces(page, '#detail'), notes(['card'], ['order'], ['need']));
+    eq('no-entry page errors', errors, []);
+    await context.close();
+  } finally { await unlink(path.join(ROOT, noEntryPath)); }
   // a record missing a cosmetic field still renders, with no undefined or NaN in sight
   console.log('-- a field missing');
   for (const field of ['bursts.quality.checks.threshold', 'bursts.quality.checks.label', 'breadth.up4', 'open_plans.entry_ref', 'open_plans.targets', 'run.reads', 'bursts.claude', 'watchlist.top.plan', 'bursts.series', 'bursts.summary', 'watchlist.top.box', 'cash_budget.cut', 'bursts.plan.exit_schedule', 'cover.action_target', 'bursts.quality.base', 'bursts.volume_vs_prior', 'observations', 'run.input_tolerance', 'run.stale_followup', 'run.reads.causes']) {
@@ -1390,8 +1440,18 @@ async function checkStates(browser, base, data) {
         const first = data.bursts[0];
         check('the dropped-summary burst is a ticket, so the card check below can fail', (data.trades || []).includes(first.ticker) && !!first.plan.order_line, first.ticker);
         eq('without a summary a ticket\'s card says so and never prints its order line', await text(page, `#pick-list .ss-pick[data-ticker="${first.ticker}"] .ss-pick__reason`), 'No summary recorded.');
-        if (await page.locator('#choose-open').isVisible()) { await page.locator('#choose-open').click(); await page.waitForTimeout(150); }
-        check('nor does the chooser', !(await text(page, '#chooser-list')).includes('OTO'), (await text(page, '#chooser-list')).slice(0, 200));
+        // the chooser opens on a phone (at 1280 its button is not shown and its
+        // list is never filled), so it is read there, where it lists every stock
+        const phone = await open(browser, base, dropPath, FRESH_NOW, 390);
+        try {
+          await phone.page.locator('#choose-open').click();
+          await phone.page.waitForSelector(`#chooser-list .ss-chooser__item[data-id="bursts:${first.ticker}"]`, { timeout: 5000 }).catch(() => null);
+          const item = await text(phone.page, `#chooser-list .ss-chooser__item[data-id="bursts:${first.ticker}"]`);
+          check('the chooser lists the dropped-summary ticket, so the check below can fail', item.includes(first.ticker), item);
+          check('nor does the chooser: the ticket says it has no summary and prints no order line',
+            item.includes('No summary recorded.') && !(await text(phone.page, '#chooser-list')).includes('OTO'), item);
+          eq('the phone page errors, without a summary', phone.errors, []);
+        } finally { await phone.context.close(); }
       }
       if (field === 'bursts.quality.base') {
         check('without base dates the Setup range says so and falls back', (await text(page, '#detail .ss-chart-panel__range')).includes('Setup range unavailable'), await text(page, '#detail .ss-chart-panel__range'));
@@ -1706,6 +1766,14 @@ async function checkFollowThrough(browser, base, full) {
   check('the later observation is in its own section with its actual date', since.includes(usd(obsNext.c)) && since.includes(dateWords(obsNext.date)), since.slice(0, 200));
   check('overlapping public history does not claim the basis is unknown', !since.includes('nothing confirms'), since.slice(0, 400));
   eq('the card and the detail reconcile to the same observation count', await count(page, '#saved [data-obs-row]'), 1);
+  await closeSaved(page); await page.waitForTimeout(280);
+  // a saved setup that was not a ticket prints its archived instruction as
+  // dated history and no part-fill rule: the rule stands beside orders, and
+  // that record offered none
+  await openSaved(page, withheld);
+  eq('the withheld setup opens its own saved sheet', await savedTitle(page), withheld);
+  check('it carries an archived instruction, so the no-rule check below can fail', (await said(page, '#saved [data-archived-order]')).length > 0, await said(page, '#saved [data-archived-order]'));
+  eq('a saved setup that was not a ticket carries no part-fill rule', await notePlaces(page, '#saved'), []);
   await closeSaved(page); await page.waitForTimeout(280);
 
   // ---- a NEWER signal for the same ticker must not be substituted
@@ -3412,6 +3480,16 @@ async function checkSession(browser, base, full) {
   eq('and the copy control is back', await count(page, '#disc-plan [data-copy]'), 1);
   check('the next action says the window is in progress, not that a trigger has been met',
     (await text(page, '#next-h3')).includes('is in progress') && /not verified here/.test(await text(page, '#next-p')), await text(page, '#next-p'));
+  {
+    // its sentence read whole, the count and the window off the record, and
+    // nothing after it about a stop: the exit terms never 'apply after a fill'
+    const nextP = await text(page, '#next-p');
+    const n = (next.trades || []).filter((t) => { const b = next.bursts.find((x) => x.ticker === t); return b && b.plan && b.plan.order_json; }).length
+      + ((next.watchlist || {}).top || []).filter((r) => r.plan && r.plan.order_json).length;
+    const want = `Review the ${n} conditional ticket${n === 1 ? '' : 's'} and each setup’s restrictions. If you submit an order, its sell stop is part of it (OTO), and Fidelity releases that stop only when the buy fills in full; cancel any unfilled entry by the end of the ${tm.window}. `;
+    check('inside the window the next action says the sell stop is part of the order and Fidelity releases it only on a full fill, and asks for no other stop',
+      n > 0 && nextP.startsWith(want) && !/stop|after a fill/i.test(nextP.slice(want.length)), nextP);
+  }
   check('the last observed data timestamp stays visible inside the window',
     /published \d+:\d\d [AP]M ET/.test(await said(page, '#market-facts [data-fact="data"]')), await said(page, '#market-facts [data-fact="data"]'));
   check('the action bar names the window it fills inside, and never "tomorrow"',
@@ -3945,15 +4023,57 @@ async function checkGradingHistory(browser, base) {
       await page.locator('#history-ticker').fill(ticker);
       await page.locator('#history-search button').click();
       await page.locator(`[data-history-inspect="${src}"]`).click();
-      await page.locator('[data-history-save]').waitFor();
-      const line = await text(page, '#history-results [data-original-status]');
+      await page.locator('[data-history-save]').waitFor({ timeout: 10000 }).catch(() => null);
+      // a page that drops the marker fails here by name, not by a timeout
+      eq(`archived ${status} ${ticker} ${width}/${theme} its status sentence is marked`, await count(page, '#history-results [data-original-status]'), 1);
+      const line = (await count(page, '#history-results [data-original-status]')) ? await text(page, '#history-results [data-original-status]') : '';
       const order = full.bursts.find((b) => b.ticker === ticker).plan.order_line;
-      eq(`archived ${status} ${ticker} ${width}/${theme} its status sentence ${status === 'ticket' ? 'prints its order line' : 'prints no order'}`,
-        !!order && line.includes(order), status === 'ticket');
+      // a ticket's sentence carries its own order line; a withheld one carries
+      // no order of any shape (its record wrote none, so comparing against its
+      // own empty order line could not fail)
+      check(`archived ${status} ${ticker} ${width}/${theme} its status sentence ${status === 'ticket' ? 'prints its order line' : 'prints no order'}`,
+        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/.test(line), line);
       eq(`archived ${status} ${ticker} ${width}/${theme} Fidelity's part-fill rule ${status === 'ticket' ? 'follows it, seen, once' : 'is not printed'}`,
         await notePlaces(page, '#history-results'), notes(['original', status === 'ticket' ? 1 : 0]));
     }
     eq(`archived originals ${width}/${theme} runtime errors`, errors.slice(), []);
+    await context.close();
+  }
+  // The Record view's study prints a frozen case's original decision through
+  // the same helper. The study's real cases are none of them tickets, so a
+  // synthetic study names the same two originals, served under their digests.
+  const study = { version: 'historical-validation-v1', from: full.run.session, through: full.run.session, publications: 1, unique_sessions: 1,
+    unique_candidate_sessions: 2, selection: 'A synthetic study for the smoke.',
+    cases: picks.map(([ticker]) => ({ ticker, session: full.run.session,
+      entry: { source: src, path: `${src}/burst-${ticker}.json`, sha256: sha(files[`burst-${ticker}.json`]) },
+      source: { context_sha256: sha(files['record.json']), rules_version: full.app.rules_version } })) };
+  for (const [width, theme] of [[1280, 'dark'], [390, 'light']]) {
+    // opened away from the Record view, so the study is first fetched after
+    // the routes stand (the page keeps its first answer)
+    const { context, page, errors } = await open(browser, base, '/tests/fixtures/page/full.json', '2026-09-15T22:31:00Z', width, { theme, hash: '#/explore' });
+    await page.route('**/historical-validation.json', route => route.fulfill({ json: study }));
+    await page.route(`**/historical-validation/${src}/*.json`, async route => {
+      const name = new URL(route.request().url()).pathname.split('/').at(-1);
+      await route.fulfill(files[name] ? { contentType: 'application/json', body: files[name] } : { status: 404 });
+    });
+    await page.evaluate(() => { location.hash = '#/record'; });
+    for (const [ticker, status] of picks) {
+      const button = page.locator(`[data-study-inspect="${ticker}"]`);
+      await button.waitFor({ timeout: 10000 }).catch(() => null);
+      eq(`study ${status} ${ticker} ${width}/${theme} the frozen case offers its inspection`, await button.count(), 1);
+      if (!(await button.count())) continue;
+      await button.click();
+      const box = `[data-study-original="${ticker}"]`;
+      await page.locator(box).waitFor({ timeout: 10000 }).catch(() => null);
+      eq(`study ${status} ${ticker} ${width}/${theme} its original decision is marked`, await count(page, `${box} [data-original-status]`), 1);
+      const line = (await count(page, `${box} [data-original-status]`)) ? await text(page, `${box} [data-original-status]`) : '';
+      const order = full.bursts.find((b) => b.ticker === ticker).plan.order_line;
+      check(`study ${status} ${ticker} ${width}/${theme} its original decision ${status === 'ticket' ? 'prints its order line' : 'prints no order'}`,
+        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/.test(line), line);
+      eq(`study ${status} ${ticker} ${width}/${theme} Fidelity's part-fill rule ${status === 'ticket' ? 'follows it, seen, once' : 'is not printed'}`,
+        await notePlaces(page, box), notes(['original', status === 'ticket' ? 1 : 0]));
+    }
+    eq(`study originals ${width}/${theme} runtime errors`, errors.slice(), []);
     await context.close();
   }
 }

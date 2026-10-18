@@ -8,10 +8,12 @@ cancels nothing; it reads no account and no fill.
 **How this was read.** The machine that wrote this note could not open
 fidelity.com, sec.gov or finra.org (its proxy refuses them), so every fact below
 was read off search-result excerpts of those pages, not the pages themselves.
-Each fact carries one label, and a fact in Fidelity's words names the source it
-was read from by its number under **Sources**:
+Each fact carries one label, and a fact in Fidelity's or a regulator's words
+names the source it was read from by its number under **Sources**:
 
 - **Fidelity's words** — the excerpt quotes or summarises a fidelity.com page;
+- **a regulator's words** — the excerpt quotes or summarises an SEC, SEC staff
+  or FINRA page;
 - **inferred** — it follows from Fidelity's words, but no excerpt says it;
 - **unconfirmed** — no source read here says it;
 - **SpicyStock's advice** — what this note asks the reader to do, which is not
@@ -26,9 +28,10 @@ screen it was read on.
 A stock's plan disclosure prints a SpicyStock ticket in Fidelity's field order
 with a copy button and reads it back in one line:
 `Buy N SYM stop-limit: stop TRIGGER limit LIMIT, day · OTO sell N SYM stop-loss STOP GTC`.
-The tickets sheet lists every offered ticket in the same field order, with no
-copy control; each row's ticker leads to that stock's plan. A Burst's action
-card carries the same ticket with its own **Copy order**. The
+The tickets sheet lists every offered burst ticket, the symbol first, with no
+copy control; each row's ticker opens that stock. An offered setting-up ticket
+is not on the sheet: it is printed on its own stock's plan and action bar. A
+Burst's action card carries the same ticket with its own **Copy order**. The
 Morning desk's private handoff is different: it copies a personal readback at
 the quantity you chose, with the protective sell listed as a separate line, and
 it is not in Fidelity's order-entry format; at Fidelity that sell is the OTO's
@@ -50,11 +53,13 @@ secondary order.
 | GTC | secondary Time in Force | Good 'til Canceled |
 
 The field names are **unconfirmed**: no excerpt read here gives the current
-web or mobile ticket's field names. The values are SpicyStock's ticket. A dated
-search excerpt [7] says the conditional trade ticket defaults to a Contingent
-order and that its Trade Type drop-down selects another type, so OTO is looked
-for there; where the conditional ticket is on the current web and mobile
-screens is unconfirmed. The Day buy beside a Good 'til Canceled sell stop is
+web or mobile ticket's field names. The values are SpicyStock's ticket.
+Fidelity's words, from a search summary over about ten fidelity.com links that
+names no single page (among them [7] and the Active Trader Pro user guide
+[21]): the conditional trade ticket defaults to a Contingent order and its
+Trade Type drop-down selects another type, so OTO is looked for there. Where
+the conditional ticket is on the current web and mobile screens is
+unconfirmed. The Day buy beside a Good 'til Canceled sell stop is
 item 6 below, on which the sources disagree.
 
 ## What Fidelity does with it
@@ -78,7 +83,9 @@ item 6 below, on which the sources disagree.
    yours). The page prints this rule and this advice, each labelled, beside
    every order it prints: the plan disclosure's ticket and its recorded copy
    after the window, the tickets sheet, a Burst's action card, a setting-up
-   stock's action bar, the comparison, the decision summary's entry, the model
+   stock's action bar, the comparison, the decision summary's entry (a
+   setting-up stock's only while its action bar, on the same screen, does not
+   offer the order), the model
    exits, a saved setup's archived order and an archived original's status.
    The private handoff prints it in its readback, and the mail after each block
    of orders.
@@ -119,12 +126,17 @@ item 6 below, on which the sources disagree.
    by 9:00 AM CT, cancel it, unless its expiration was set to 10:00 AM ET.
 
 6. **A Day buy with a Good 'til Canceled sell stop: the sources disagree.**
-   A search summary of fidelity.com pages [4, 7, 18] says each order of an OTO
-   can have its own time in force (an OCO's two must match), and that a GTC
-   OTO is good for 180 days in all, so the secondary's life is shortened by the
-   time the primary took to fill. Another search summary, over mixed sites
-   [1, 3, 18], says an OTO's two orders must share one time in force.
-   Unconfirmed which holds on the current ticket. SpicyStock's advice: if the
+   Unconfirmed, because two search summaries read here say opposite things,
+   and each covers about ten links without naming which page carries which
+   sentence. The first, over fidelity.com links only (among them [4], [7], [18]
+   and [21]), says each order of an OTO can have its own time in force (an
+   OCO's two must match), and that a GTC OTO is good for 180 days in all, so
+   the secondary's life is shortened by the time the primary took to fill. The
+   second, over fidelity.com links (among them [1], [3] and [18]) and pages of
+   three other sites not listed here (two other brokers' help pages and a
+   trading forum), attributes to "Fidelity's OTO guidance" that
+   an OTO's two orders must share one time in force. [18] is among the links of
+   both, so neither statement can be tied to one page. SpicyStock's advice: if the
    ticket refuses a Day buy with a GTC sell stop, do not make the stop Day (it
    would expire at the close and leave the shares without a stop overnight)
    and do not make the buy GTC (it would outlive the entry window). Place the
@@ -152,9 +164,9 @@ item 6 below, on which the sources disagree.
    settled cash is the part of core cash that can buy and sell securities in a
    cash account without a good faith violation, and uncollected deposits may be
    left out "until the bank collection process clears, which is usually four
-   business days". The SEC staff's investor bulletin [16]: most US stock trades
-   settle one business day after the trade (T+1), for trades on or after
-   28 May 2024. A ticket's stop can sell on the day the buy fills, so
+   business days". A regulator's words [16], the SEC staff's investor
+   bulletin: most US stock trades settle one business day after the trade
+   (T+1), for trades on or after 28 May 2024. A ticket's stop can sell on the day the buy fills, so
    SpicyStock's advice is to buy with settled cash only: the Morning desk asks
    for settled cash and never reads it from the account. How long a given
    deposit takes to clear in the owner's account is unconfirmed: read the
@@ -163,10 +175,11 @@ item 6 below, on which the sources disagree.
 10. **Costs.** Fidelity's words [13]: $0 online commission on US stocks.
    Fidelity's words [10]: a sale carries an additional assessment fee of $0.01
    to $0.03 per $1,000 of principal (read on the fractional-shares page; the
-   commissions page's own fee line was not read). The SEC's
-   words [15]: the Section 31 fee on sales is $20.60 per million dollars from
-   4 April 2026. FINRA's filing [17]: the trading activity fee is $0 from
-   1 October to 31 December 2026 and the previous rates resume in January 2027.
+   commissions page's own fee line was not read). A regulator's
+   words [15], the SEC's: the Section 31 fee on sales is $20.60 per million
+   dollars from 4 April 2026. A regulator's words [17], FINRA's filing: the
+   trading activity fee is $0 from 1 October to 31 December 2026 and the
+   previous rates resume in January 2027.
    Enter the fees your confirmation shows in the private report's fee fields;
    SpicyStock never computes them.
 
@@ -217,3 +230,4 @@ item 6 below, on which the sources disagree.
 18. Fidelity, conditional order types (learning center): https://www.fidelity.com/learning-center/trading-investing/trading/conditional-order-types
 19. Fidelity, account FAQ: https://www.fidelity.com/trading/faqs-about-account
 20. Fidelity, Active Trader Pro balances help: https://www.fidelity.com/products/atbt/help/ActiveTraderTools_Balances_Help.html
+21. Fidelity, Active Trader Pro user guide: https://www.fidelity.com/products/atbt/pdf/ActiveTraderProUserGuide.pdf
