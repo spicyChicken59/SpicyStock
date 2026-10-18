@@ -1,0 +1,38 @@
+{
+  "reviewed_at": "2026-10-18T14:54:31.775030+00:00",
+  "scope": "Independent read-only source review and execution; synthetic transport scenarios, no service deployed",
+  "source_sha256": {
+    "docs/app-observations.js": "9d51ed86217f3b20d923018f2a193ae5405c477a4b1f2017d8e3c275aee6ff69",
+    "docs/index.html": "b20f8ee074a75bc6682e12c96723b0744eab3a3306e0e838ee851c1179c36c42",
+    "tools/morning_service_reader_cases.mjs": "6920fb0ec49a33fdaadc362276b12a15feca52f6b31d8e476c0b100b93375ffe"
+  },
+  "findings": [],
+  "verification": {
+    "browser_checks_passed": 291,
+    "browser_checks_failed": 0,
+    "python_checks_passed": 70,
+    "python_checks_failed": 0,
+    "python_warning": "Existing websockets.legacy deprecation warning",
+    "commands": [
+      "XDG_CACHE_HOME=/workspace/cache PLAYWRIGHT_BROWSERS_PATH=/workspace/browsers node tools/page_smoke.mjs --only morning-service-reader,observations --shots /tmp/spicystock-adapter-review-final",
+      "/workspace/venv/bin/python -m pytest tests/test_browser_source.py tests/test_docs.py -q"
+    ]
+  },
+  "screenshots_inspected": [
+    "morning-service-390.png",
+    "morning-service-1280.png"
+  ],
+  "reviewed_properties": [
+    "Deployment-owned canonical fixed HTTPS /morning.json URL captured once; malformed configuration fails closed",
+    "Credentials/body/private query/referrer omitted and redirects refused",
+    "Visible eligible-window automatic reads bounded by 30-second spacing, no overlapping automatic read",
+    "Publication epochs and request sequence prevent stale response application; manual supersession preserved",
+    "No static fallback; last verified timestamp and positive restrictions survive failures",
+    "512 KiB/15-second bounds with earlier automatic cutoff abort",
+    "Default empty endpoint preserves static behavior and polling remains disabled"
+  ],
+  "limitations": [
+    "No hosting, live provider or on-time delivery claim",
+    "Author mutation outcomes are separate evidence"
+  ]
+}

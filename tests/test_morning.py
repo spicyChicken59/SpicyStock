@@ -488,3 +488,26 @@ def test_malformed_nested_observation_types_raise_a_public_validation_error(muta
     mutate(out)
     with pytest.raises(ValueError):
         morning.validate_observation(out, publication())
+
+
+@pytest.mark.parametrize("reason", ["local_budget", "local_backoff"])
+def test_local_service_refusals_do_not_claim_new_provider_http_observations(reason):
+    class Deferred(Exception):
+        local_reason = reason
+        status_code = 401  # Even a carried old status must not imply a new reply.
+    class LocalClient:
+        def get_stock_snapshot(self, request):
+            raise Deferred()
+    out = morning.collect(publication(), client=LocalClient(), clock=lambda: NOW,
+                          event_observer=event_outage, dry_run=True)
+    assert out["status"] == "provider_unavailable"
+    assert {s["error_kind"] for s in out["sources"].values()} == {reason}
+    assert all(row["quote"]["status"] == "unavailable" and row["quote"]["timestamp"] is None for row in out["rows"])
+    morning.validate_observation(out, publication())
+
+
+def test_unknown_local_error_label_cannot_override_actual_provider_status():
+    class Failure(Exception):
+        local_reason = "invented_coverage"
+        status_code = 403
+    assert morning._error(Failure()) == "entitlement"

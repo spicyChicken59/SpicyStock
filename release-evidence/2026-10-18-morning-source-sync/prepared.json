@@ -1,0 +1,38 @@
+{
+  "scope": "Trusted fixed-GitHub-repository source handoff; provider-free offline verification only",
+  "base_commit": "54938271",
+  "verification": [
+    {
+      "command": "python -m pytest tests/test_sync_morning_service.py tests/test_morning_service.py -q --disable-warnings --tb=short",
+      "passed": 76,
+      "failed": 0
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "python -m tools.sync_morning_service --help",
+      "result": "passed"
+    }
+  ],
+  "source_sha256": {
+    "tools/sync_morning_service.py": "7f57b7cf7606ff373de27121ef544abae90cd9db515e155cc223c45181bddc19",
+    "tests/test_sync_morning_service.py": "6496e68ac5ed5a5c3ec62cacb4542c74308deef9599df55bac139ddc77cbc203",
+    "src/morning_service.py": "6c29d71f4f52d553235b09311193fba6e2186302cc3d68e9b49a3e94747b3c2e",
+    "docs/operations/morning-service.md": "5a9e48d66c6a36c5622d53e9259cd524c29774cefaadce987b432273154c9464"
+  },
+  "covered": [
+    "Immutable source commit and Git blob identity; unchanged-blob download avoidance; existing production provenance validation",
+    "Shared persistent poll cadence and typed failure backoff; total request and response-body bounds",
+    "Main advance after fetch and concurrent local generation race refusals",
+    "Absent bootstrap receipt distinguished from invalid/unavailable continuity evidence",
+    "Exact URLs derived by code only; no auth, arbitrary client URLs, provider requests or repository writes"
+  ],
+  "remaining": [
+    "Actual selected-host TLS routing, runtime supervision, persistent volume, scheduling and browser endpoint configuration",
+    "No real GitHub synchronization, provider collection or live morning timing is established by these synthetic tests",
+    "GitHub inline metadata responses exceeding16KiB are refused; current multiMiB canonical metadata-only path is intended",
+    "Provider DNS/platform stalls need runtime supervision; no hosting guarantees claimed"
+  ]
+}

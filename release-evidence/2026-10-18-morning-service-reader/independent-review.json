@@ -1,0 +1,41 @@
+{
+  "reviewed_at": "2026-10-18T15:04:40.201706+00:00",
+  "scope": "Independent typed-source/coherence follow-up, explicitly synthetic tests; no live provider access",
+  "source_sha256": {
+    "docs/app-observations.js": "9fdf58515f9863d2cedadb00a65bde2af254f871f5af8184ecd59a597853ab88",
+    "docs/index.html": "b20f8ee074a75bc6682e12c96723b0744eab3a3306e0e838ee851c1179c36c42",
+    "tools/morning_service_reader_cases.mjs": "118e36945098858bcc1068c4109c1c14ae17d87fce2342097ec0ff0f5c52bf7d"
+  },
+  "finding": {
+    "status": "resolved",
+    "before": "A synthetic provider_unavailable receipt with both feed sources unavailable/local_backoff but original observed price/volume rows was accepted, fresh:true, and displayed recent bid/ask and within-band comparisons alongside no-provider-request explanation.",
+    "after": "Same independent reproduction refuses source/row contradiction: unavailable, generatedAt null, fresh false; no quote displayed.",
+    "fix": "Canonical unavailable datum shapes and unknown comparisons are required; source success cannot coexist with unavailable rows. Applies to all source failures."
+  },
+  "verification": {
+    "browser_checks_passed": 333,
+    "browser_checks_failed": 0,
+    "command": "XDG_CACHE_HOME=/workspace/cache PLAYWRIGHT_BROWSERS_PATH=/workspace/browsers node tools/page_smoke.mjs --only morning-service-reader,observations --shots /tmp/spicystock-adapter-coherence-review",
+    "independent_reproduction": "/tmp/spicystock-typed-contradiction.mjs",
+    "reproduction_after": {
+      "source": "Explicit synthetic contradictory receipt: both feeds unavailable local_backoff, observed fixture price rows retained",
+      "facts": {
+        "state": "unavailable",
+        "recordHash": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+        "canonicalHash": "9e34f06249d04c55a2480695a29d6e4dfaa620f16fe1de0041883f47784bc44f",
+        "projected": false,
+        "headline": "Morning observations unavailable",
+        "generatedAt": null,
+        "fresh": false,
+        "pending": false,
+        "restricted": []
+      },
+      "text": "Morning quote check \u00b7 unavailableFile status: Quote availability contradicts its source.No matching quote check. Verify current quote, spread and trading status at your broker.Feed limits: IEX is a single venue, not the consolidated market. Delayed SIP is at least 15 minutes behind. Quote/trade observations expire after 60 seconds; a receipt expires after 5 minutes.Still to verify: Current broker quote, spread and trading status; issuer news, earnings and corporate actions. A morning snapshot is not comprehensive event clearance or permission to trade."
+    }
+  },
+  "prior_review": "/tmp/spicystock-adapter-review-final/independent-review.json",
+  "limitations": [
+    "Optional service endpoint remains disabled by default",
+    "No hosting, on-time delivery, event coverage or real execution outcome claimed"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "scope": "Actual read-only public GitHub source handoff into isolated local database; no providers, repository writes or production deployment",
+  "repository": "spicyChicken59/SpicyStock",
+  "commit_sha": "88e708f254988b7b11abb72f5b70ffca40a64050",
+  "requests": 5,
+  "status": "ingested",
+  "started_at": "2026-10-18T15:01:11.626432+00:00",
+  "completed_at": "2026-10-18T15:01:16.182153+00:00",
+  "canonical_bytes": 10404000,
+  "canonical_sha256": "2a26a5ae6b728e182ec9354ad1f9c77cdb625d31d9eb4d27abe59ad34c5c9089",
+  "measured_session": "2026-10-16",
+  "applicable_session": "2026-10-19",
+  "bootstrap_receipt_sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+  "bootstrap_applicable_session": "2026-10-12",
+  "local_get_status": "503 Service Unavailable",
+  "repeat_sync": "poll_interval with zero requests"
+}

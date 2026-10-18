@@ -1,0 +1,1671 @@
+{
+  "checks": 333,
+  "failures": 0,
+  "results": [
+    {
+      "name": "1280/dark: exact publication SHA matched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: generated observation accepted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "static observations never rewrite publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-origin read sends no private symbols or credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "within-band observation preserves conditional order controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "IEX bid, ask and spread are timestamped",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entitlement describes actual request and feed limits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unmatched halt coverage never implies clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recorded price comparison never promises an entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry appears while the entry window remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expiry preserves cash value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry cannot create or remove a conditional strategy ticket",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload wording names the static-file limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: observation desk fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt expires independently of quote age",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser observation errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: exact publication SHA matched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: generated observation accepted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "static observations never rewrite publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-origin read sends no private symbols or credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "within-band observation preserves conditional order controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "IEX bid, ask and spread are timestamped",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entitlement describes actual request and feed limits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unmatched halt coverage never implies clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recorded price comparison never promises an entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry appears while the entry window remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expiry preserves cash value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry cannot create or remove a conditional strategy ticket",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload wording names the static-file limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: observation desk fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt expires independently of quote age",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser observation errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: exact publication SHA matched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: generated observation accepted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "static observations never rewrite publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-origin read sends no private symbols or credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "within-band observation preserves conditional order controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "IEX bid, ask and spread are timestamped",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entitlement describes actual request and feed limits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unmatched halt coverage never implies clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recorded price comparison never promises an entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry appears while the entry window remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expiry preserves cash value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry cannot create or remove a conditional strategy ticket",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload wording names the static-file limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: observation desk fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt expires independently of quote age",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser observation errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: exact publication SHA matched",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: generated observation accepted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "static observations never rewrite publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-origin read sends no private symbols or credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "within-band observation preserves conditional order controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "IEX bid, ask and spread are timestamped",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "entitlement describes actual request and feed limits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unmatched halt coverage never implies clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "recorded price comparison never promises an entry",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry appears while the entry window remains open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expiry preserves cash value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "quote expiry cannot create or remove a conditional strategy ticket",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload wording names the static-file limit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: observation desk fits",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt expires independently of quote age",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser observation errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage: correctly bound outcome is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage: provider failure or no-ticket reason is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no-tickets: correctly bound outcome is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no-tickets: provider failure or no-ticket reason is explicit",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no-ticket snapshot cannot invent copying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no-tickets: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt narrows the action area",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt removes all selected entry-copy controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "known halt removes the executable sheet row",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "archived order remains available for inspection",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old detached copy control still checks current halt at click time",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expiry and provider outage cannot revive entry copying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "tab reload and 404 retain source-backed halt from bounded cache",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached evidence is explicitly not a new quote check",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "malformed resumption cannot clear a remembered halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "older halt source cannot clear a newer remembered restriction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "only newer source-backed resumption releases the extra halt restriction",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "resumption does not rewrite published model admission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halt browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "new source-backed corporate exclusion narrows an older admitted order",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate source is visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "registry omission cannot remove a known corporate exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit retained corporate evidence is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "reload/outage preserve known corporate exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unrelated corporate proof cannot release a remembered event",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "carried explicit source-backed corporate resolution releases only the extra refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate resolution preserves original plan admission",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/false: byte revision retains independent positive facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/false: previous sidecar cannot attach quote state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/false: revised SHA remains exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/false: revised publication reload and 404 retain exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/false: cached facts never restore old quote receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/true: byte revision retains independent positive facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/true: previous sidecar cannot attach quote state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/true: revised SHA remains exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/true: revised publication reload and 404 retain exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/true: cached facts never restore old quote receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/false: byte revision retains independent positive facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/false: previous sidecar cannot attach quote state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/false: revised SHA remains exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/false: revised publication reload and 404 retain exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/false: cached facts never restore old quote receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/true: byte revision retains independent positive facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/true: previous sidecar cannot attach quote state",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/true: revised SHA remains exact",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/true: revised publication reload and 404 retain exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/true: cached facts never restore old quote receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/1280/dark: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/1280/dark: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/1280/light: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/1280/light: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/390/dark: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/390/dark: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/390/light: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "halted/390/light: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/1280/dark: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/1280/dark: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/1280/light: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/1280/light: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/390/dark: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/390/dark: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/390/light: event refusal is prominent in Morning desk",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "corporate-excluded/390/light: event desk fits viewport",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "publication bytes: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "publication bytes: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-session publication revision: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "same-session publication revision: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan binding: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "plan binding: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate membership: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate membership: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rehearsal receipt: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rehearsal receipt: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future receipt: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future receipt: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "crossed quote: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "crossed quote: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsafe source URL: invalid observations rejected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsafe source URL: source publication unchanged",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "decoded byte limit refuses oversized multibyte response",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized response names bounded refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "captured QETA fractional-second evidence validates exactly",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "late prior-publication response cannot replace the new binding",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "late response cannot transfer an old ticket observation",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "new RED publication remains without order controls",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "detached copy control cannot copy a previous publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing WebCrypto cannot claim a verified receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing WebCrypto makes no unbound sidecar request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing WebCrypto explains exact verification is unavailable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: a 404 morning file reads as unavailable and absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: at 7:30 CT the check is offered for later, with no link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the early line names the collector's own start, 8:00 CT, 30 minutes before the open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the early line says an early run publishes a too-early receipt and still starts the SEC collection",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: one second before the window it is still too early",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: at the window's first instant the check is due",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the due line says there is no current check and how to start one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: it says the run reads its clock after it starts and refuses at the cutoff",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: it says what the run quotes, publishes, starts and does not do",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: it says when Reload can read the new files",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the link is this repository's own morning workflow, in a new tab, without referrer or opener",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: a clock repaint keeps the focus on the workflow link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: one second before the start allowance it is still due",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: two minutes before the cutoff nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the withdrawn link hands the focus to the reload control, not the body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the day before the applicable session nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the day after, past its cutoff, nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the offer is a link and a sentence -- the page requested nothing from any GitHub host",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: moving the clock read the morning file again never",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: the desk fits with the offer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 1280/dark: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: a 404 morning file reads as unavailable and absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: at 7:30 CT the check is offered for later, with no link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the early line names the collector's own start, 8:00 CT, 30 minutes before the open",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the early line says an early run publishes a too-early receipt and still starts the SEC collection",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: one second before the window it is still too early",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: at the window's first instant the check is due",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the due line says there is no current check and how to start one",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: it says the run reads its clock after it starts and refuses at the cutoff",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: it says what the run quotes, publishes, starts and does not do",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: it says when Reload can read the new files",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the link is this repository's own morning workflow, in a new tab, without referrer or opener",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: a clock repaint keeps the focus on the workflow link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: one second before the start allowance it is still due",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: two minutes before the cutoff nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the withdrawn link hands the focus to the reload control, not the body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the day before the applicable session nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the day after, past its cutoff, nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the offer is a link and a sentence -- the page requested nothing from any GitHub host",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: moving the clock read the morning file again never",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: the desk fits with the offer",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff 390/light: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a current applicable check offers nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: once the receipt has expired the check is offered again",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: the expired line says so",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a current receipt withdraws the link, and the focus goes to the reload control",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: an inapplicable receipt (served transport copy) loads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: an inapplicable receipt is not a current check, so one is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a fresh provider-outage receipt is a current check",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a practice record offers nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a morning file bound to another publication was read and holds none for this one, so one is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: the file status names the other publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a morning file that could not be read leaves the answer unknown, so nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: while the morning file is being read nothing is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: once it is read and absent the check is offered",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a browser that cannot verify the file is offered nothing, and no disabled reload is pointed to",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a publication with no admitted plan is offered no run",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: it says why",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: its own no-ticket receipt offers nothing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: a no-ticket receipt past its five minutes is still final",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "handoff: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: configured receipt validates against exact publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: private off-universe following sentinel is actually stored",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: no early automatic request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: one automatic read at 30 seconds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: automatic receipt changes apply their sourced halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: automatically observed halt withdraws entry copying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: polling preserves private cash draft and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: every request uses captured fixed endpoint with no private fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: transport refuses redirects and credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: dynamic read and failure semantics are visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: configured service never suggests publishing a disconnected static receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: hidden tab stops polling",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: becoming visible resumes one due read",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: configured receipt validates against exact publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: private off-universe following sentinel is actually stored",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: no early automatic request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: one automatic read at 30 seconds",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: automatic receipt changes apply their sourced halt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: automatically observed halt withdraws entry copying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: polling preserves private cash draft and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: every request uses captured fixed endpoint with no private fields",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: transport refuses redirects and credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: dynamic read and failure semantics are visible",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: configured service never suggests publishing a disconnected static receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: hidden tab stops polling",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: becoming visible resumes one due read",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390: no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "static default: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "empty deployment config retains exact static route",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "before pre-open: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cutoff: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stale session: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "no admitted tickets: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing timing: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "pinned replay: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "practice: automatic reads remain off",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "practice requests no receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: http://receipts.example.invalid/morning.json",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://receipts.example.invalid/morning.json?ticker=AAPL",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://receipts.example.invalid/morning.json#private",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://user:pass@receipts.example.invalid/morning.json",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://receipts.example.invalid/refresh",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://receipts.example.invalid/morning.json?",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: https://receipts.example.invalid/morning.json#",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint refuses all network routes: //receipts.example.invalid/morning.json",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "invalid endpoint explains configuration refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "pre-open boundary starts polling through existing clock",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cutoff cancels future automatic reads",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cutoff removes entry authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "malformed: last verified receipt and halt remain",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "malformed: no static fallback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage: last verified receipt and halt remain",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage: no static fallback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "omitted restriction: last verified receipt and halt remain",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "omitted restriction: no static fallback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized: last verified receipt and halt remain",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized: no static fallback",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old retained receipt remains visibly expired",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired restriction still withholds copying",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_budget: local deferral is a readable unavailable-source receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_budget: no new provider request or entitlement result is claimed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_budget: unavailable quotes remain unavailable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_budget: skipped request cannot claim a fresh provider HTTP status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_budget: HTTP contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: local deferral is a readable unavailable-source receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: no new provider request or entitlement result is claimed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: unavailable quotes remain unavailable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: skipped request cannot claim a fresh provider HTTP status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: HTTP contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown failure: contradictory source error kind is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown failure: source failure validation explains refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "failure on success: contradictory source error kind is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "failure on success: source failure validation explains refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unavailable without reason: contradictory source error kind is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unavailable without reason: source failure validation explains refusal",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/copied recent prices: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/copied recent prices: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/invented comparison: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/invented comparison: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/copied delayed volume: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/copied delayed volume: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/unavailable quote with spread: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/unavailable quote with spread: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/unavailable volume with timestamp: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error/unavailable volume with timestamp: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "provider_error: successful feed cannot label its data unavailable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/copied recent prices: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/copied recent prices: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/invented comparison: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/invented comparison: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/copied delayed volume: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/copied delayed volume: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/unavailable quote with spread: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/unavailable quote with spread: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/unavailable volume with timestamp: source/row contradiction is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff/unavailable volume with timestamp: contradiction is explained",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "local_backoff: successful feed cannot label its data unavailable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clock and page-restoration bursts do not multiply inflight requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "hidden tab aborts an inflight automatic read",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "manual reload remains available while hidden",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "an older otherwise valid receipt cannot replace newer evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "monotonic refusal names the older receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "changed publication rejects previously bound quotes",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "changed source accepts only newly bound receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "redirect cannot change the single configured destination",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "redirect failure preserves last verified receipt",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cutoff aborts an inflight automatic request before its ordinary timeout",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "configured transport keeps the 15-second request bound",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "bounded timeout does not immediately retry",
+      "status": "PASS",
+      "lane": "A"
+    }
+  ]
+}

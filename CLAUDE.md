@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4812 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4953 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10813,3 +10813,56 @@ count of metadata rows not listed omitted the new acquisition links. The count
 now subtracts both disjoint lists; a visible assertion at each width holds it.
 504 browser checks pass after the fix, with refreshed captures. Hosted checks
 and production verification remain pending; no current event or trade is inferred.
+
+### Optional morning receipt browser adapter — 18 October 2026
+
+The browser can read one deployment-owned exact HTTPS `/morning.json` endpoint.
+The committed meta tag is empty, so production retains its static same-origin
+receipt and does not poll. An explicit deployment opt-in uses credential-free,
+referrer-free reads with redirects refused and the existing 512 KiB / 15-second
+bounds. Automatic reads are separated by at least 30 seconds, require visible
+current production plans inside their recorded pre-open/entry window, stop when
+hidden and abort by cutoff. Manual reload and exact-publication binding remain;
+source revisions cancel old work. Failed or older receipts cannot replace the
+last verified receipt or remove retained source-backed exclusions. No automatic
+static fallback is added. README and `.env.example` describe the disabled default.
+Locally deferred budget/cadence and backoff outcomes explicitly say no provider
+request was made; the source validator refuses unknown or contradictory error
+kinds and a local deferral carrying an asserted provider HTTP response.
+Independent review reproduced unavailable source metadata beside recent copied
+prices. The browser now matches the producer's unavailable observation shapes:
+empty trade/quote/volume fields and unknown comparisons, for provider failures
+and local deferrals alike. Contradictory source/row claims are refused.
+
+The local preparation receipt in
+`release-evidence/2026-10-18-morning-service-reader/prepared.json` separates
+synthetic browser controls, targeted Python checks, source mutations and
+independent review. Hosting, scheduler precision, server-side provider bindings,
+actual fresh quote coverage, measured live-session delivery and the goal's
+ten-session reliability gate remain external deployment/operating work. This
+adapter alone establishes none of them and places no trade.
+
+### Integrated prepared morning service — 18 October 2026
+
+The service branch joins the durable single-host store, supervised live worker,
+fixed-repository source synchronization and optional browser reader. The public
+endpoint remains empty. The deployment runbook describes separate processes,
+persistent storage, 300-second source sync and 30-second worker invocation
+targets; actual host, TLS route and worker credential bindings remain external.
+
+`release-evidence/2026-10-18-morning-service/integration.json` records the exact
+runtime hashes and scoped evidence: 264 integrated Python checks, 333 browser
+checks (also independently run), 21 unchanged producer fixtures and 4,953
+collected Python tests. Independent review and named mutation controls covered
+leases/replay isolation, source identity, real socket completion, hard process
+deadlines, quotas, shared credential backoff and truthful local refusal labels.
+The actual public GitHub handoff used five requests; an immediate repeat used
+zero. Today's actual Sunday worker returned `wrong_session` with no network,
+child process or reservation. Those are dated implementation/source checks,
+not live-session quote coverage or deployed service reliability.
+
+README and `.env.example` now describe the combined runtime. Production data,
+history, fixtures and strategy rules retain their bytes. Hosted checks and
+public acceptance are the remaining release steps; the goal also still needs
+identified hosting/provider bindings, broader news/earnings source coverage,
+actual expected-session evidence and owner-reported trade outcomes.

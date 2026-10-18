@@ -1,0 +1,68 @@
+{
+  "prepared_at": "2026-10-18T15:09:17.008207+00:00",
+  "scope": "Locally verified browser adapter and typed unavailable-source display. Synthetic archived-fixture rehearsals only; no public service is configured or deployed.",
+  "base_commit": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+  "branch": "codex/morning-service-reader",
+  "source_sha256": {
+    "docs/app-observations.js": "9fdf58515f9863d2cedadb00a65bde2af254f871f5af8184ecd59a597853ab88",
+    "docs/index.html": "b20f8ee074a75bc6682e12c96723b0744eab3a3306e0e838ee851c1179c36c42",
+    "tools/morning_service_reader_cases.mjs": "118e36945098858bcc1068c4109c1c14ae17d87fce2342097ec0ff0f5c52bf7d",
+    "tools/page_smoke.mjs": "cf0a855384dbf3d1ed0c1924aeb32dd32724347ee859183ac49e60eec9b35a04",
+    "README.md": "ad90849238950ba429f69b15b9bcd678886b317026c66721168701688d1f6555",
+    ".env.example": "cdcab40d1c450472b73356ce2aa21647015884e6044fbba31909e13d768b5cc2",
+    "CLAUDE.md": "efa70891b24fada87580a67e2439efdeecc890e567a2bc20e67c3943951709b5"
+  },
+  "default": "Empty committed spicystock-morning-endpoint meta tag preserves existing same-origin static morning.json and disables automatic reads.",
+  "changes": [
+    "Optional captured exact HTTPS /morning.json endpoint, no URL input or private request fields; omit credentials/referrer, refuse redirects, preserve existing bounds.",
+    "Visible current production publications with admitted tickets poll at least 30 seconds apart during recorded pre-open/entry window; hidden and cutoff cancel automatic work; no overlap or static fallback.",
+    "Source revisions cancel old requests and retain existing exact binding, monotonic receipt age and positive halt/event restrictions.",
+    "Explicit local-budget/backoff outcomes say no provider request occurred; malformed failure kinds, local HTTP claims and unavailable-source/price/volume contradictions are refused."
+  ],
+  "verification": {
+    "browser": {
+      "passed": 333,
+      "failed": 0,
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/workspace/browsers XDG_CONFIG_HOME=/workspace/chromium-trust node tools/page_smoke.mjs --only morning-service-reader,observations --shots /tmp/morning-reader-final-shots",
+      "log_sha256": "9bf1782916d338fd20c4f63366ea38fbd978014bf04540f90c6fe2b1199e4c25",
+      "results": "browser-results.json"
+    },
+    "python": {
+      "passed": 179,
+      "failed": 0,
+      "command": "/workspace/venv/bin/python -m pytest tests/test_docs.py tests/test_morning.py tests/test_workflows.py -q",
+      "log_sha256": "0d5cc1cf8c0b66d2dcad731527888bea98206a996b3c39a416161cc81f6cffbf",
+      "warnings": [
+        "Existing websockets.legacy deprecation warning"
+      ]
+    },
+    "mutations": {
+      "detected": 10,
+      "unrelated_control_passed": 1,
+      "receipt": "mutations.json"
+    },
+    "independent": {
+      "browser_passed": 333,
+      "unresolved_findings": 0,
+      "receipt": "independent-review.json",
+      "prior_review": "prior-independent-review.json",
+      "finding_fixed": "Unavailable provider metadata could previously accompany copied recent prices; exact unavailable shapes and unknown comparisons now enforce source/row consistency."
+    },
+    "visual_inspection": [
+      "Phone/light and desktop/dark configured-service captions, existing event restrictions and shared design-system controls inspected. All captured cash inputs and receipts are explicitly synthetic test values."
+    ]
+  },
+  "acceptance_mapping": {
+    "1": "Fixed bounded source transport, explicit source failure types and contradiction handling; last verified evidence survives failures.",
+    "3": "Existing SpicyChicken design-system observation/morning desk controls used and inspected on phone/desktop.",
+    "4": "Eligible, hidden, cutoff, stale/malformed, missing/no-ticket, source revision, privacy and restriction-continuity controls executed; deterministic synthetic fixtures separate from current production.",
+    "5": "No fill or performance calculation introduced; all checks are simulations of transport and UI behavior."
+  },
+  "pending": [
+    "Hosted branch gates, merge and actual public asset/browser verification are root release tasks.",
+    "Approved existing hosting project, HTTPS endpoint/CORS, durable storage and scheduler, provider bindings/entitlements, capacity/costs and live-delivery measurement remain deployment dependencies.",
+    "Pre-open/current quote availability and ten consecutive expected-session delivery checks remain live operating validation; this adapter establishes neither.",
+    "Broader issuer news/earnings coverage and confirmed real trade outcomes remain outside this browser change."
+  ],
+  "real_trades_or_profits_claimed": false
+}

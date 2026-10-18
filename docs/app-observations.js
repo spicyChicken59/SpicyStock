@@ -4,6 +4,21 @@
   'use strict';
   const api = w.SCStock = w.SCStock || {}, d = w.document;
   const MAX_BYTES = 512 * 1024, QUOTE_AGE = 60, RECEIPT_AGE = 300, FUTURE_SKEW = 5;
+  const RELOAD_MS = 30000;
+  const SOURCE_ERRORS = new Set([null, 'missing_credentials', 'authentication', 'entitlement', 'rate_limit', 'timeout', 'provider_error', 'local_budget', 'local_backoff']);
+  // Deployment-owned HTML is the only configuration source. Capture it once;
+  // private inputs, storage, query parameters and later DOM edits cannot route
+  // requests. An invalid opt-in fails closed instead of choosing a fallback.
+  const endpoint = (() => {
+    const tags = d.querySelectorAll('meta[name="spicystock-morning-endpoint"]');
+    const value = tags.length === 1 ? tags[0].getAttribute('content') : '';
+    if (!tags.length || tags.length === 1 && value === '') return { service: false };
+    try {
+      const url = new URL(value);
+      if (tags.length !== 1 || url.protocol !== 'https:' || !url.hostname || url.username || url.password || url.search || url.hash || /[?#]/.test(value) || url.pathname !== '/morning.json' || url.href !== value) throw Error();
+      return { service: true, url: url.href };
+    } catch (e) { return { service: true, error: 'The configured morning receipt endpoint is invalid.' }; }
+  })();
   const HEX = /^[a-f0-9]{64}$/;
   const HALT_URL = 'https://www.nasdaqtrader.com/rss.aspx?feed=tradehalts', CACHE_KEY = 'spicystock:morning-receipt:v1';
   const HALT_CODES = new Set('T1 T2 T3 T5 T6 T7 T8 T12 H4 H9 H10 H11 O1 IPO1 IPOQ IPOE M1 M2 LUDP LUDS MWC1 MWC2 MWC3 MWC0 MWCQ R4 R9 C3 C4 C9 C11 R1 R2 M D'.split(' '));
@@ -41,6 +56,7 @@
   const PREOPEN_MINUTES = 30, START_MINUTES = 2;
   const clockCT = ms => new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', hour: 'numeric', minute: '2-digit' }).format(new Date(ms)) + ' CT';
   let record = null, recordHash = null, epoch = 0, sequence = 0, controller = null, state = 'unbound', receipt = null, issue = '', now = Date.now();
+  let reloadTimer = null, automaticRequest = false, lastRequest = -Infinity;
   // True only when the morning file was read and holds no receipt for this
   // publication (a 404, or a receipt bound to another publication): the one
   // unavailable state in which the absence of a check is known, not assumed.
@@ -101,11 +117,15 @@
     const status = code === 'D' ? 'security_deleted' : event.trade_resumption_at === null ? 'halt_reported' : !HALT_CODES.has(code) ? 'unknown' : trade > checked || trade > published ? 'resumption_scheduled' : halt.retained_source || coverage.status !== 'fresh' ? 'unknown' : 'resumption_reported';
     require(halt.status === status && halt.blocks_entry === (['halt_reported', 'resumption_scheduled', 'security_deleted'].includes(status) ? true : null), 'Halt classification disagrees with source evidence.');
   }
+  const unavailableDatum = (datum, fields, unknown = []) => datum && datum.status === 'unavailable' && Object.keys(datum).length === fields.length + unknown.length + 1 && fields.every(field => datum[field] === null) && unknown.every(field => datum[field] === 'unknown');
   function validatePrices(row, value) {
     const generated = dateMs(value.generated_at), observed = dateMs(value.sources.iex.checked_at), session = value.publication.applicable_session;
+    const unavailableIEX = value.sources.iex.status === 'unavailable';
     for (const [key, fields] of [['trade', ['price']], ['quote', ['bid', 'ask', 'bid_size', 'ask_size']]]) {
       const datum = row[key];
       require(datum && ['recent', 'stale', 'missing', 'invalid', 'unavailable'].includes(datum.status), 'Unknown quote or trade status.');
+      require((datum.status === 'unavailable') === unavailableIEX, 'Quote availability contradicts its source.');
+      if (unavailableIEX) require(unavailableDatum(datum, key === 'trade' ? ['timestamp', 'age_seconds', 'price', 'exchange', 'conditions'] : ['timestamp', 'age_seconds', 'bid', 'ask', 'bid_size', 'ask_size', 'bid_exchange', 'ask_exchange', 'conditions', 'spread_usd', 'spread_pct']), 'Unavailable source claims quote evidence.');
       fields.forEach(field => require(datum[field] === null || finite(datum[field]) && datum[field] > 0 && datum[field] <= 1e15, 'Invalid quote or trade value.'));
       if (['missing', 'unavailable'].includes(datum.status)) require(datum.timestamp === null && fields.every(field => datum[field] === null), 'Missing quote claims observed values.');
       if (['recent', 'stale'].includes(datum.status)) {
@@ -116,6 +136,10 @@
       }
     }
     require(row.price_checks && ['trade', 'ask'].every(key => ['below_stop', 'below_entry_floor', 'below_trigger', 'within_published_band', 'above_limit', 'above_day2_extension', 'unknown'].includes(row.price_checks[key])), 'Unknown recorded price comparison.');
+    if (unavailableIEX) require(row.price_checks.trade === 'unknown' && row.price_checks.ask === 'unknown', 'Unavailable source claims a price comparison.');
+    const volume = row.delayed_volume, unavailableSIP = value.sources.delayed_sip.status === 'unavailable';
+    require(volume && (volume.status === 'unavailable') === unavailableSIP, 'Delayed-volume availability contradicts its source.');
+    if (unavailableSIP) require(unavailableDatum(volume, ['daily_timestamp', 'previous_timestamp', 'latest_trade_timestamp', 'session', 'partial_volume', 'previous_volume', 'data_through'], ['comparison']), 'Unavailable source claims volume evidence.');
   }
   function validateCorporate(action, row, session) {
     require(action && action.version === 1 && action.coverage === 'manual_known_events_only' && action.symbol === row.ticker && action.session === session && HEX.test(action.registry_sha256) && typeof action.blocked === 'boolean' && Array.isArray(action.matches), 'Corporate-event evidence is invalid.');
@@ -228,6 +252,8 @@
       const source = (value.sources || {})[feed];
       require(source && source.feed === feed && source.scope === (feed === 'iex' ? 'single_venue' : 'consolidated_delayed') && source.minimum_delay_seconds === (feed === 'iex' ? 0 : 900), 'Feed source or scope is invalid.');
       require(value.rows.length ? ['ok', 'unavailable'].includes(source.status) && source.entitlement === (source.status === 'ok' ? 'request_succeeded' : 'unavailable') && dateMs(source.checked_at) >= started && dateMs(source.checked_at) <= generated : source.status === 'not_requested' && source.entitlement === 'not_requested', 'Feed entitlement observation is invalid.');
+      require(SOURCE_ERRORS.has(source.error_kind) && (source.status === 'unavailable' ? source.error_kind !== null : source.error_kind === null), 'Feed failure observation is invalid.');
+      require(!['local_budget', 'local_backoff'].includes(source.error_kind) || source.status_code === undefined || source.status_code === null, 'A local deferral cannot claim a provider HTTP response.');
     }
     const coverage = value.coverage || {};
     require(coverage.issuer_news && coverage.issuer_news.status === 'not_checked' && coverage.earnings && coverage.earnings.status === 'not_checked', 'Unsupported event coverage claim.');
@@ -332,18 +358,41 @@
       return text + decoder.decode();
     } finally { reader.releaseLock(); }
   }
-  async function reload() {
+  function autoEligible() {
+    if (!endpoint.url || !recordHash || !record || record.fixture || pinned || d.hidden || !candidates().length || !api.availability) return false;
+    const clock = Date.now(), av = api.availability(record, new Date(clock)), tm = av.timing;
+    return av.offered && tm.known && sessionAt(clock) === tm.session && clock >= tm.opens.getTime() - PREOPEN_MINUTES * 60000 && clock < tm.cutoff.getTime();
+  }
+  function scheduleReload() {
+    if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
+    if (!autoEligible()) {
+      if (controller && automaticRequest) controller.abort();
+      return;
+    }
+    if (controller) return;
+    const cutoff = dateMs(record.run.timing.cutoff_at);
+    reloadTimer = w.setTimeout(() => {
+      reloadTimer = null;
+      if (autoEligible()) void reload(true);
+    }, Math.min(Math.max(0, lastRequest + RELOAD_MS - Date.now()), cutoff - Date.now()));
+  }
+  async function reload(automatic = false) {
     if (!recordHash || state === 'practice') return;
+    if (automatic && (controller || !autoEligible())) return;
     const token = epoch, request = ++sequence;
     if (controller) controller.abort();
+    if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
     controller = new AbortController();
-    const active = controller, timeout = w.setTimeout(() => active.abort(), 15000);
+    automaticRequest = automatic; lastRequest = Date.now();
+    const requestLimit = automatic ? Math.min(15000, dateMs(record.run.timing.cutoff_at) - Date.now()) : 15000;
+    const active = controller, timeout = w.setTimeout(() => active.abort(), requestLimit);
     state = 'loading'; issue = ''; paintAll();
     try {
-      const url = new URL('morning.json', w.location.href);
-      if (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol)) throw Error('Same-origin observations are unavailable.');
+      if (endpoint.error) throw Error(endpoint.error);
+      const url = new URL(endpoint.url || 'morning.json', w.location.href);
+      if (!endpoint.service && (url.origin !== w.location.origin || !['http:', 'https:'].includes(url.protocol))) throw Error('Same-origin observations are unavailable.');
       url.hash = ''; url.search = '';
-      const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: 'same-origin', redirect: 'error', signal: active.signal });
+      const response = await w.fetch(url.href, { cache: 'no-store', credentials: 'omit', mode: endpoint.service ? 'cors' : 'same-origin', redirect: 'error', referrerPolicy: 'no-referrer', signal: active.signal });
       if (response.status === 404) throw Object.assign(Error('The published morning file could not be read.'), { elsewhere: true });
       const raw = await readBounded(response);
       if (token !== epoch || request !== sequence) return;
@@ -361,11 +410,16 @@
     } catch (e) {
       if (token !== epoch || request !== sequence) return;
       state = 'unavailable'; issue = e && e.message || 'Observation file unavailable.'; absent = !!(e && e.elsewhere); paintAll(); if (onChange) onChange();
-    } finally { w.clearTimeout(timeout); }
+    } finally {
+      w.clearTimeout(timeout);
+      if (controller === active) { controller = null; automaticRequest = false; scheduleReload(); }
+    }
   }
   function reset(data, at, clockPinned) {
     epoch++; sequence++;
     if (controller) controller.abort();
+    controller = null; automaticRequest = false; lastRequest = -Infinity;
+    if (reloadTimer !== null) { w.clearTimeout(reloadTimer); reloadTimer = null; }
     record = data; recordHash = null; readerBinding = null; receipt = null; halted = new Map(); corporate = new Map(); issue = ''; storageIssue = ''; cachedHalt = false; pinned = !!clockPinned; absent = false;
     state = data && data.fixture ? 'practice' : 'unbound'; now = at ? new Date(at).getTime() : Date.now();
     if (state !== 'practice') applySourceMemory();
@@ -416,6 +470,7 @@
   // so nothing is offered: only a file read and shown absent counts as none.
   // Research rows count once the comparison has loaded and named its fits.
   function handoff() {
+    if (endpoint.service) return null; // The Actions link publishes the static file only.
     const tm = record && record.run && record.run.timing;
     if (!tm || !(state === 'loaded' || state === 'unavailable' && absent)) return null;
     const opens = dateMs(tm.opens_at), cutoff = dateMs(tm.cutoff_at);
@@ -510,7 +565,10 @@
     }
     if (receipt) for (const feed of ['iex', 'delayed_sip']) {
       const observed = receipt.sources[feed];
-      line(body, feed === 'iex' ? 'IEX access:' : 'Delayed SIP access:', words(observed.entitlement) + ' · ' + atCT(observed.checked_at) + (observed.error_kind ? ' · ' + words(observed.error_kind) : '') + '. This describes that request, not a future entitlement guarantee.');
+      const explanation = observed.error_kind === 'local_budget' ? 'No provider request was made in this collection: local request budget/cadence.'
+        : observed.error_kind === 'local_backoff' ? 'No provider request was made in this collection: backoff after earlier provider failure.'
+        : 'This describes that request, not a future entitlement guarantee.';
+      line(body, feed === 'iex' ? 'IEX access:' : 'Delayed SIP access:', words(observed.entitlement) + ' · ' + atCT(observed.checked_at) + (observed.error_kind ? ' · ' + words(observed.error_kind) : '') + '. ' + explanation);
     }
     line(body, 'Feed limits:', 'IEX is a single venue, not the consolidated market. Delayed SIP is at least 15 minutes behind. Quote/trade observations expire after 60 seconds; a receipt expires after 5 minutes.');
     line(body, 'Still to verify:', 'Current broker quote, spread and trading status; issuer news, earnings and corporate actions. A morning snapshot is not comprehensive event clearance or permission to trade.');
@@ -543,16 +601,20 @@
         if (api.researchObservations && typeof api.researchObservations.refresh === 'function') api.researchObservations.refresh();
       });
       host.append(button);
-      host.append(node('p', { class: 'sc-hint' }, 'Reload reads the latest static morning file and, once the research comparison has been opened, its dated observation, keeping what was verified when a read fails. It does not request a new market quote or start a provider refresh.'));
+      host.append(node('p', { class: 'sc-hint' }, endpoint.service
+        ? 'Reload reads the configured public morning receipt and, once opened, the separate published research observation. While this tab is visible, admitted plans are checked at most once every 30 seconds during their session’s pre-open and entry window. Failed reads retain the last verified receipt with its original time. Reads do not request a new market quote or start a provider refresh.'
+        : 'Reload reads the latest static morning file and, once the research comparison has been opened, its dated observation, keeping what was verified when a read fails. It does not request a new market quote or start a provider refresh.'));
     } else host.id = 'disc-observations';
     const descriptor = { kind, candidate }; hosts.set(host, descriptor); paintHost(host, descriptor); return host;
   }
   api.observations = {
     reset, bind, reload, refusal, summary: () => mount('summary'), detail: c => mount('detail', c),
     validateHaltEvidence: (halt, coverage, ticker, at) => validateHalt(halt, coverage, { ticker }, dateMs(at)),
-    clock: at => { now = new Date(at).getTime(); paintAll(); },
+    clock: at => { now = new Date(at).getTime(); paintAll(); scheduleReload(); },
     repaint: () => paintAll(),
     onChange: handler => { onChange = handler; },
     facts: () => ({ state, recordHash, canonicalHash: readerBinding ? readerBinding.canonicalSha : recordHash, projected: !!readerBinding, headline: headline(), generatedAt: receipt && receipt.generated_at, fresh: receiptFresh(), pending: !receipt && ['unbound', 'loading'].includes(state), restricted: [...new Set([...halted.keys(), ...corporate.keys()])] })
   };
+  d.addEventListener('visibilitychange', scheduleReload);
+  w.addEventListener('pageshow', scheduleReload);
 })(window);

@@ -53,6 +53,7 @@ import { checkStockFinder } from './stock_finder_cases.mjs';
 import { checkReaderTransport } from './reader_cases.mjs';
 import { checkPublicationRecovery } from './publication_recovery_cases.mjs';
 import { checkObservations } from './observation_cases.mjs';
+import { checkMorningServiceReader } from './morning_service_reader_cases.mjs';
 import { readFile, stat, mkdir, writeFile, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -4482,6 +4483,7 @@ async function main() {
       if (runs('journalreports')) await checkJournalReports({ browser, base, open, check, eq, shotsDir });
       if (runs('reader-transport')) await checkReaderTransport({ browser, base, open, check, eq, shotsDir });
       if (runs('observations')) await checkObservations({ browser, base, open, check, eq, shotsDir });
+      if (runs('morning-service-reader')) await checkMorningServiceReader({ browser, base, open, check, eq, shotsDir });
       if (runs('scan')) await checkDeferredScan({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('reading')) await checkReading({ browser, base, data: full, open, check, eq, shotsDir });
       if (runs('followed-plan')) await checkFollowedPlan({browser, base, data: full, open, check, eq, shotsDir});
