@@ -89,6 +89,7 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       eq('acquisition warning bundle loads at ' + width, (await status(page)).state, 'loaded');
       const warning = page.locator('[data-acquisition-review]');
       eq('acquisition metadata is visible at ' + width, await warning.count(), 1);
+      check('acquisition links count among displayed metadata', (await bodyText(page)).includes('0 observed metadata rows not listed here.'));
       check('acquisition warning is dated and explicitly unreviewed', /DEFM14A.*2026-10-09.*SEC accepted.*metadata only; content unreviewed/s.test(await warning.innerText()));
       eq('acquisition source is the exact filing', await warning.locator('a').getAttribute('href'), 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009099/synthetic-acquisition.htm');
       check('form alone never claims pending acquisition', (await bodyText(page)).includes('Form names alone do not establish a pending or completed acquisition'));

@@ -1,5 +1,5 @@
 {
-  "checks": 502,
+  "checks": 504,
   "failures": 0,
   "results": [
     {
@@ -9,6 +9,11 @@
     },
     {
       "name": "acquisition metadata is visible at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition links count among displayed metadata",
       "status": "PASS",
       "lane": "A"
     },
@@ -74,6 +79,11 @@
     },
     {
       "name": "acquisition metadata is visible at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition links count among displayed metadata",
       "status": "PASS",
       "lane": "A"
     },

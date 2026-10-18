@@ -8,7 +8,7 @@
     "focused_python_plus_docs": 320,
     "additional_final_acquisition_checks": 14,
     "browser": {
-      "passed": 502,
+      "passed": 504,
       "failed": 0,
       "viewport_widths": [
         390,
@@ -24,9 +24,9 @@
   },
   "source_sha256": {
     "src/issuer_evidence.py": "d148473282b2094797e638f93c824a7403a80e3bf7f56e4c392b88b345ff360f",
-    "docs/app-issuer-evidence.js": "6c9f90fd1b697b669c336bb1e308a4169191a6397dd23516d9803d66083ed5eb",
+    "docs/app-issuer-evidence.js": "5ea62711ee160551cfdadcd88cbcf76a99284e73087ae77a2e3ed588d449bda5",
     "tests/test_issuer_evidence.py": "37f4e74946f3bcc9b75f51d2fb7a28249757780d67b9f068ec97b360979feb52",
-    "tools/issuer_evidence_cases.mjs": "907b196f3953b149b0b6a732a59d109ca8ed150f16f00d7acf128579788e92db"
+    "tools/issuer_evidence_cases.mjs": "d1dda14d839c283b59e50c45cf6db6eab79dac983563ab434879348320c7e4ca"
   },
   "acceptance_mapping": {
     "1": "Dated acquisition form metadata, verified issuer identity, bounded scope, explicit legacy unknown state; synthetic source propagation and malformed inputs checked.",
@@ -40,5 +40,12 @@
     "AC1_AC2_AC4": "Timely fresh morning delivery requires an identified provisioned server-side host with provider secrets; current environment has no secret bindings or hosting identity. GitHub Actions schedule latency is not a dependable quote transport. Broader issuer-news and future earnings coverage still require a suitable source and entitlement.",
     "AC4_live": "Confirm pre-open Chicago receipt, expiry during entry window and ten consecutive expected publication/morning sessions. Future sessions validate engineering; they did not gate this work.",
     "AC2_AC5_owner": "Fidelity ticket capabilities, settled cash and actual executions require owner/broker evidence; no orders authorized."
+  },
+  "review": {
+    "independent_python_checks": 270,
+    "independent_browser_checks": 502,
+    "finding": "Displayed metadata count omitted acquisition links; fixed and explicitly asserted at both widths.",
+    "after_fix_browser_checks": 504,
+    "shape_refusal": "Malformed current-report metadata still fails closed; typed exception cleanup is not a release blocker."
   }
 }

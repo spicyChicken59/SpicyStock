@@ -10802,3 +10802,14 @@ morning delivery, broader news/earnings source coverage, actual on-time session
 validation, and owner-confirmed Fidelity capabilities/cash/executions.
 Preserve production/history bytes and the existing strategy. No actual trade
 or trading edge is claimed.
+
+
+### Acquisition review follow-up — 18 October 2026
+
+Mo explicitly authorized PR creation and merge after the earlier approval block.
+PR #185 is open. Independent execution passed 270 Python checks, 502 browser
+checks and the six detection-mutation/control cases. It found that the displayed
+count of metadata rows not listed omitted the new acquisition links. The count
+now subtracts both disjoint lists; a visible assertion at each width holds it.
+504 browser checks pass after the fix, with refreshed captures. Hosted checks
+and production verification remain pending; no current event or trade is inferred.
