@@ -10487,3 +10487,210 @@ transport failures under this rule.
 
 **Not claimable:** a live night under the floor (the first night with two
 reads and one refused); a morning or research observation; any trading edge.
+
+## Checkpoint, 17 Oct 2026 — PR #182 accepted; Fidelity's part-fill rule and SpicyStock's advice beside every order the page and the mail print (#110)
+
+**PR #182, accepted.** Merged as `b9196b14` on `main` with a merge commit over
+`97dbf7bd`. Publisher 39061392038 printed *Verified: every one of the 47
+public files matches committed main* at 19:12:46 UTC; Pages 39061414396
+deployed; the merge commit's own Secret scan 39061392064 and Tests run
+39061392015 (19:11–19:39 UTC) passed. The first night under the refusal floor
+is still ahead.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `b9196b14`, pushed as **PR #183**. The owner's third answer of
+17 October: the broker is Fidelity. Nothing under `docs/data.json`,
+`docs/picks.json`, the compact reader, the receipts, the history, the evidence
+objects, the quality ledger, the workflows or the vendored design system moves,
+and no rule moves (`src/plan.py` changes a comment), so `rules_version` and
+every fixture stand; no run, mail, dispatch, provider call or credential.
+
+**What the ticket did not say.** A ticket is a day buy stop-limit with a
+one-triggers-the-other sell stop riding on it. Its terms, its entry instruction
+and its dated schedule -- which provenance replays and which name no broker --
+say the stop "is attached the moment the buy fills" and "is live from the
+fill". Fidelity's conditional-trading help says the secondary order is released
+only when the primary executes in full, and that "a partial fill of your
+primary order will not release your secondary order" (the excerpt, read off a
+search result; fidelity.com does not resolve from this sandbox). So on a part
+fill the shares that filled have no stop at all until the rest fills, and
+nothing SpicyStock printed said so.
+
+**What was built.** `knowledge/broker-fidelity.md`, dated 17 October, maps a
+ticket field by field onto Fidelity's order entry (the field names labelled
+unconfirmed; the conditional ticket's Trade Type drop-down named from a dated
+excerpt) and labels every fact as Fidelity's words with the numbered source it
+was read from (20 sources, each a search-result excerpt; the T+1 fact cited to
+the SEC staff's investor bulletin, the press release seen as a link only),
+inferred, unconfirmed, or SpicyStock's advice. Its unconfirmed list is what to
+check in Fidelity's own ticket before the first order: that the web and mobile
+tickets offer a Stop Limit with an OTO secondary and where; that an OTO takes a
+Day buy beside a Good 'til Canceled sell stop -- the sources read disagree, and
+item 6 says what to do if it does not (never a Day stop, never a GTC buy; the
+buy alone, then a separate stop for the shares that filled); the price Fidelity
+compares a buy stop against before the open -- a burst ticket's buy stop IS
+its last close, so if Fidelity compares against the close every burst ticket is
+refused as written, with no fallback; that a 10:00 AM ET expiration (9:00 AM
+CT, the end of the entry window) can be set on an OTO primary; that a sell stop
+on shares bought the same day is accepted. One text, `report.BROKER_PART_FILL`,
+held equal to the page's two copies by `tests/test_docs.py`, labels the two
+apart: *Fidelity’s rule: an OTO’s sell stop is released only when the buy fills
+in full. SpicyStock’s advice: wherever a ticket, a plan or its dated schedule
+says the sell stop is attached at or live from the fill, that assumes a full
+fill; if the buy fills only in part, place a separate Sell Stop Loss, Good ’til
+Canceled, at the stop for the shares that filled, confirm Fidelity accepts it
+on shares bought that day, and check that no second sell stop remains for
+shares you do not hold.* The page prints it through one helper,
+`partFillNote()`, at each of its ten places, beside the order and never inside
+its terms or a copied order: the order block, a recorded ticket, the Burst's
+action card above its **Copy order**, the setting-up action bar after its order
+line, the comparison under its facts, the tickets sheet, a ticket's decision
+summary under its entry (a setting-up stock's only while its action bar does
+not offer the order), the model exits under a ticket's dated schedule, a
+saved setup's archived order and an archived original's status; the private
+handoff prints it in its readback, and the mail once after its burst orders and
+once after its alerts, by the same rule the card and the row print an order by
+(`_trade_order()`, `_alert_order()`). A pick card's summary never falls back to
+a ticket's order line. Before and during the window, the next action says the
+sell stop is part of the order (OTO) and that Fidelity releases it only when
+the buy fills in full, where it said to attach the stop after a fill. `PRODUCT_GOAL.md`'s 9 October "broker
+confirmation remains outstanding" is marked closed.
+
+**Two reviews by execution, every upheld finding reproduced before it was
+touched.** The first, over `a8c5c1e7`, returned 23. The note said things its
+sources do not (that Fidelity will not cancel a day order at 9:00 CT, when its
+own source offers a 10:00 AM ET expiration; an anticipation trigger at the top
+of its box, when it sits a cushion above; an extended-hours parenthetical no
+excerpt carries; one sentence called "Fidelity's own rule" when the second half
+is SpicyStock's); the action bar, the Burst card's **Copy order** and the
+comparison printed an order with no note; the next action told the reader to
+attach a stop after a fill beside an OTO ticket; and no test held a copied
+order free of the note or the note's placement beyond two surfaces. The
+second, over `88278545`, returned 30 over three lenses (wording, placement,
+tests), a skeptic each: 24 upheld, one not, and five never judged -- the disk
+filled under the review's own worktrees and five skeptics died. A skeptic that
+died is not a refutation, so all five are treated as upheld: each is fixed, and
+the mutant each describes dies under the new check (below). The note still sat beside the record's words "live from the fill"
+without naming them (the advice names them now, and the record's own words,
+which provenance replays, are unchanged); four surfaces printed an order with
+no note (the decision summary, the model exits, a saved setup and an archived
+original, the last reproduced on the committed 9 October ZIM original);
+the knowledge note dropped the time-in-force disagreement its own research had
+flagged, cited a fee to a page that did not carry it, invented a "funds on
+hand" parenthetical, called a deposit fact unconfirmed that Fidelity's words
+give, cited a press-release URL it never read, and gave the tickets sheet a
+copy button it does not have. Its test findings were the shapes this file
+names: the page's "beside" was a count, so a note inside the ticket's terms or
+under the controls passed; "shown" read `display` and so called a
+screen-reader-only box shown; the mail's visibility test read three words of
+the note's own style, so a hidden wrapper passed; two rows' notes were held by
+a count, so a note after the first passed; the next action was a keyword
+denylist. `notePlaces()` names each note by where it sits relative to the
+element that prints its order, and what a sighted reader gets (seen, collapsed
+inside a closed disclosure, or unseen); the mail's test walks every ancestor of
+the note's text. Not upheld: the Morning desk's cash preview, which prints a
+personal quantity and no order.
+
+**A third round re-ran the second's 30 findings against `fe8afb14`** -- 23
+fixed, 6 partly fixed, 1 not a defect -- and three finders returned 15 new
+ones, 13 upheld by both skeptics and 2 by one each; every one was reproduced
+here before it was touched. A setting-up ticket printed the 75-word note twice
+on one desktop screen, in the decision summary's entry and after the action
+bar's order line: the entry gives its note up while the bar, on the same
+screen, offers the order, and `reclockDetail()` repaints the summary, so when
+the window ends under an open tab the note returns to the entry (held by a
+left-open check across the deadline). The note inherited the answer's and the
+action bar's text colour where its paragraph's own rule lost to theirs
+(`p.sc-hint.ss-order__broker` keeps the hint's colour everywhere). Inside the
+window the next action still said the exit terms apply after a fill; it says
+the sell stop is part of the order (OTO) and that Fidelity releases it only
+when the buy fills in full, before and during the window alike. The Method
+walkthrough had put Fidelity's full-fill release into Bonde's own words; it
+carries the record's words again. The knowledge note said the tickets sheet
+lists every offered ticket (it lists burst tickets; a setting-up ticket is on
+its own stock's plan and bar), pinned the conditional ticket's Trade Type to
+one page when the excerpt summarises about ten, cited one page for both sides
+of the time-in-force disagreement (item 6 is unconfirmed now, both summaries
+named by the links they cover), and carried facts under no label of its four
+(*a regulator's words* is the fifth). The tests: the dropped-summary chooser
+check ran at 1280, where the chooser never opens (it reads a 390 page now);
+*seen* passed a note in transparent text, off the page or clipped by an
+ancestor (each is unseen now); the mail's denylist of hiding styles missed a
+real wrapper (the test walks the mail's tree and holds the note to the column
+that holds *Next-session orders*, the allocation line's own style and the order
+block before it); the no-note arms of the exits and the saved setup were never
+reached (a fixture ticket without an entry step and the withheld TSLA saved
+reach them); the archived TSLA's no-order check was vacuous and the clipboard
+waits never waited; and `tests/test_docs.py` counted calls inside comments (it
+strips the page's comments first, keeping strings, templates and regular
+expressions, with a test of its own). Recorded, not fixed: the exits note sits
+after the dated timeline rather than under day 1 (one skeptic each way; the
+timeline is one block); `plan.NOTE_ATTACH_STOP`, an account note every record
+archives, still says to plan a protective order as soon as the buy fills (one
+skeptic each way; changing it changes what new records say about every broker);
+and a plan without a ticket still prints the record's "live from the fill" with
+no note, because it offers no order.
+
+**Measured** (this sandbox, Python 3.11.15, Node 22, Chromium through Playwright
+1.56.1, on the code head `2726830e`): 4787 tests collected, the full suite 4753 passed
+and 34 environment-gated skips in 22 m 03 s (in a spare worktree at the commit);
+the full smoke with `--shots` 16740/16740 in its two lanes;
+continuity 137; the chart check 378/378; 13 page fixtures and every cascaded
+generator current (morning 21, issuer-evidence 30, stop-research 22,
+research-outcomes 40, research-observations 24, source-recovery 20), the parity
+corpus current (109 cases, 32 accepted by the page) and the 5 frozen validation
+copies current, though no record or rule moved; gitleaks 8.24.3 over the
+branch's 11 commits with the repository's config: no leaks. The setting-up
+stock's action bar and decision summary, and a burst's, at 1280 and 390 in both
+themes, were looked at: one note per screen, in the hint's colour. CI on
+`47ef12db` passed the page job and failed pytest on the count line alone (4786
+against 4787), which `2726830e` moves.
+
+**Mutation passes**, the tree never written: page mutants through routed copies
+of `app.js`, `app-handoff-ui.js` or `index.html`, judged by the suites that
+visit their placement; mail and docs-test mutants in a spare worktree, judged by
+the whole `tests/test_report.py` and `tests/test_docs.py`. Round 2: seventeen
+page mutants (the need, exits, saved and original notes dropped; a pick card's
+summary falling back to the order line; the card's note under its controls; the
+note inside the terms; the bar's note when the bar offers nothing; the
+comparison's and the sheet's notes above their tables; the recorded ticket's
+note screen-reader-only; the need and exits notes on every status; the next
+action asking for a second stop; the handoff's note screen-reader-only, after
+its readback or in its copy) and ten mail mutants (the trades' and the alerts'
+note after the first row; the note in a hidden wrapper, at zero opacity, in
+white text or at zero size; the trades' note after the open plans; the card's
+order read raw; an alert's order read as `or`; the advice's old wording): all
+die, each control green. Round 3: nineteen page mutants -- the coil's
+deduplication dropped and forced; the decision summary not repainted on the
+clock; the note transparent, off the page and clipped; the in-window and
+pre-window wording put back; the bar's note after the follow row; an original's
+note on every status and an order shape in its status sentence; the exits note
+on every ticket; the saved note on every status; the need note without the
+order-line fallback; the chooser printing the order line; the handoff's copy
+rewriting the clipboard with the note 400 ms later; the readback's note
+transparent and off the page; the colour rule overridden by the old selectors
+-- and eight mail and docs-test mutants (the note in a plain wrapper, after the
+allocation line, at the mail's end and before the alert rows; a `<pre>` printed
+for a blank order; the note in a style of its own; a real `partFillNote()` call
+in `app.js` commented out, by line and by block). **Two survived the first
+pass, each a hole.** The archived original's no-order check was case-sensitive,
+so a status sentence carrying "Stop-limit order." passed it (`/i` now). And a
+copy that wrote the readback and then, 400 ms later, the readback with the rule
+passed the copy check, which had already read the first write: the handoff suite
+now records every text the page writes to the clipboard, across the reload, and
+holds them all, after the report, the reload and the deletion, to one readback
+without the rule. Both die. The controls (an `app.js` comment, an `index.html`
+comment, a `report.py` docstring) survive; the docstring control first failed
+`test_claude_md_counts_the_suite` alone, because the count line still read 4786
+at `47ef12db`, and survives at 4787.
+
+
+**Keep / fix / defer / omit.** Keep: Fidelity's words, SpicyStock's advice and
+the unconfirmed list kept apart; the record's own terms broker-neutral. Fix if
+it bites: the knowledge note is read off search excerpts, and a fact confirmed
+in Fidelity's own ticket belongs in a dated revision. Defer: the first trade,
+which is Mo's, and the unconfirmed list with it. Omit: a broker connection, an
+order SpicyStock places, a plain-limit fallback for a refused buy stop.
+
+**Not claimable:** that Fidelity's ticket behaves as its help pages say; a
+first trade; any trading edge.
