@@ -9,6 +9,7 @@
     max_history_files: 1, max_metadata_rows: 2000, max_listed_filings: 12, max_excerpt_bytes: 16384,
     receipt_ttl_seconds: 86400, max_future_skew_seconds: 5, max_requests: 96, max_response_bytes: 2097152,
     max_download_bytes: 33554432, max_collection_seconds: 240, min_request_interval_seconds: 1 };
+  const ACQUISITION_FORMS = ['PREM14A', 'DEFM14A', 'SC TO-T', 'SC TO-T/A', 'SC 14D9', 'SC 14D9/A'];
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
   const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
@@ -217,7 +218,7 @@
       require(ident.status === 'verified' ? integer(ident.cik, 9999999999) && ident.cik > 0 && text(ident.name, 512) && ident.name.length > 0 && ident.mapping_source && ident.submissions_source :
         (ident.cik === null || integer(ident.cik, 9999999999)) && (ident.name === null || text(ident.name, 512)), 'Issuer identity could not be verified.');
       if (ident.status === 'verified') require(ident.mapping_source.url === 'https://www.sec.gov/files/company_tickers_exchange.json' && ident.submissions_source.url === 'https://data.sec.gov/submissions/CIK' + String(ident.cik).padStart(10, '0') + '.json', 'SEC submissions CIK or mapping source differs from the issuer.');
-      require(keys(index, 'window_start window_end coverage_status reason range_start range_end metadata_count eligible_current_report_count not_selected_count history_files_advertised history_files_fetched history_sources selected_accessions listed_filings exhibit_links_observed exhibit_links_not_fetched') &&
+      require(keys(index, 'window_start window_end coverage_status reason range_start range_end metadata_count eligible_current_report_count not_selected_count history_files_advertised history_files_fetched history_sources selected_accessions listed_filings exhibit_links_observed exhibit_links_not_fetched' + (Object.hasOwn(index, 'acquisition_review') ? ' acquisition_review' : '')) &&
         index.window_start === value.window_start && index.window_end === new Date(asOf).toISOString().slice(0, 10) && ['observed_window', 'partial', 'unknown'].includes(index.coverage_status) &&
         (index.reason === null || text(index.reason)) && [index.range_start, index.range_end].every(x => x === null || day(x)) &&
         (index.range_start === null) === (index.range_end === null) && (index.range_start === null || index.range_start <= index.range_end) &&
@@ -232,6 +233,17 @@
       for (const item of index.history_sources) {
         source(item, end, asOf);
         require(ident.status === 'verified' && new RegExp('^https://data\\.sec\\.gov/submissions/CIK' + String(ident.cik).padStart(10, '0') + '-submissions-[0-9]{3}\\.json$').test(item.url), 'Historical index CIK differs from the issuer.');
+      }
+      if (Object.hasOwn(index, 'acquisition_review')) {
+        const review = index.acquisition_review;
+        require(ident.status === 'verified' && keys(review, 'observed_count filings') && integer(review.observed_count, index.metadata_count) && review.observed_count > 0 && review.observed_count + index.eligible_current_report_count <= index.metadata_count &&
+          Array.isArray(review.filings) && review.filings.length === Math.min(review.observed_count, 12), 'Acquisition review count is invalid.');
+        review.filings.forEach(item => {
+          filing(item, asOf);
+          require(ACQUISITION_FORMS.includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end, 'Acquisition review form falls outside this collection.');
+        });
+        const sorted = review.filings.slice().sort((a, b) => a.accepted_at === b.accepted_at ? (a.accession < b.accession ? 1 : a.accession > b.accession ? -1 : 0) : a.accepted_at < b.accepted_at ? 1 : -1);
+        require(review.filings.every(f => !index.listed_filings.some(r => r.accession === f.accession)) && equal(sorted, review.filings) && new Set(review.filings.map(x => x.accession)).size === review.filings.length, 'Acquisition review ordering is invalid.');
       }
       index.listed_filings.forEach(item => {
         filing(item, asOf);
@@ -367,7 +379,17 @@
     paragraph(body, 'Issuer identity:', ident.status === 'verified' ? ident.name + ' · CIK ' + String(ident.cik).padStart(10, '0') + ' · matched SEC mapping and submissions' : 'Unverified — no issuer content may be treated as matched.');
     paragraph(body, 'Index window:', index.window_start + '–' + index.window_end + ' · ' + index.coverage_status.replaceAll('_', ' ') + (index.reason ? ' · ' + index.reason : '') + '. Observed range: ' + (index.range_start || 'unknown') + '–' + (index.range_end || 'unknown') + '.');
     paragraph(body, 'Content boundary:', index.metadata_count + ' metadata rows observed; ' + index.eligible_current_report_count + ' current reports; ' + index.selected_accessions.length + ' selected; ' + primaries + ' primary documents retrieved. ' + index.not_selected_count + ' eligible reports not selected; ' + (index.selected_accessions.length - primaries) + ' selected primary documents missing. All remaining content is unreviewed.');
-    paragraph(body, 'Historical index:', index.history_files_fetched + ' of ' + index.history_files_advertised + ' advertised history files fetched. ' + (index.metadata_count - index.listed_filings.length) + ' observed metadata rows not listed here.');
+    paragraph(body, 'Historical index:', index.history_files_fetched + ' of ' + index.history_files_advertised + ' advertised history files fetched. ' + (index.metadata_count - index.listed_filings.length - (index.acquisition_review?.filings.length || 0)) + ' observed metadata rows not listed here.');
+    const review = index.acquisition_review;
+    paragraph(body, 'Acquisition review:', review
+      ? review.observed_count + ' acquisition-related form(s) observed; ' + review.filings.length + ' listed below. Review before considering a trade. Form names alone do not establish a pending or completed acquisition, its terms, or clearance. Documents below cover selected current reports, not these forms.'
+      : 'No acquisition-form warning recorded in this bundle. This is not evidence that no acquisition exists; older collectors did not record these warnings and bounded metadata can miss events.');
+    if (review) for (const item of review.filings) {
+      const line = node('p', { class: 'sc-hint', 'data-acquisition-review': '' });
+      line.append(link(item.form + ' · filed ' + item.filing_date, 'https://www.sec.gov/Archives/edgar/data/' + ident.cik + '/' + item.accession.replaceAll('-', '') + '/' + item.primary_document),
+        d.createTextNode(' · SEC accepted ' + stamp(item.accepted_at) + ' · accession ' + item.accession + ' · metadata only; content unreviewed'));
+      body.append(line);
+    }
     paragraph(body, 'Exhibit boundary:', index.exhibit_links_observed + ' eligible exhibit links observed; ' + index.exhibit_links_not_fetched + ' not retrieved. Unfetched linked material remains unreviewed.');
     for (const [label, src] of [['SEC ticker mapping', ident.mapping_source], ['SEC submissions index', ident.submissions_source], ...index.history_sources.map(src => ['Older SEC submissions index', src])]) if (src) {
       const p = node('p', { class: 'sc-hint' }); p.append(link(label, src.url)); body.append(p);

@@ -1,0 +1,2526 @@
+{
+  "checks": 504,
+  "failures": 0,
+  "results": [
+    {
+      "name": "acquisition warning bundle loads at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition metadata is visible at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition links count among displayed metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition warning is dated and explicitly unreviewed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition source is the exact filing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "form alone never claims pending acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid count rejected at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid form rejected at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid future rejected at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid old rejected at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid duplicate rejected at 390",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy acquisition receipt still readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy absence is not clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source changes remove the previous warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition warning bundle loads at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition metadata is visible at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition links count among displayed metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition warning is dated and explicitly unreviewed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition source is the exact filing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "form alone never claims pending acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid count rejected at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid form rejected at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid future rejected at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid old rejected at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acquisition invalid duplicate rejected at 1280",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy acquisition receipt still readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy absence is not clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source changes remove the previous warning",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: closed disclosure makes no source request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source reader causes no eager canonical/history/research download",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact browser publication hash settled before source tests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer receipt and bundle are readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves private input focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves a real existing chart node",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified issuer plus CIK are named",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selection distinguishes published ticket and excluded research",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coverage states selected, missing and unreviewed remainder",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acceptance, filing, report, release and retrieval are separated",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTML-like excerpt is inert literal text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stripped script body is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection preserves cash DOM and draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection never changes data, model, local saves, morning receipt or copies",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one fixed receipt and one digest bundle requested",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source requests omit cookies, referrer, body and private inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser transport explicitly refuses redirects and cross-origin credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excluded research shows archived unresolved cash acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "newer actual guidance/regulatory documents cannot erase anchor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selector uses shared bundle without a symbol request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: source body fits phone/dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "issuer source browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: closed disclosure makes no source request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source reader causes no eager canonical/history/research download",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact browser publication hash settled before source tests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer receipt and bundle are readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves private input focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves a real existing chart node",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified issuer plus CIK are named",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selection distinguishes published ticket and excluded research",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coverage states selected, missing and unreviewed remainder",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acceptance, filing, report, release and retrieval are separated",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTML-like excerpt is inert literal text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stripped script body is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection preserves cash DOM and draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection never changes data, model, local saves, morning receipt or copies",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one fixed receipt and one digest bundle requested",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source requests omit cookies, referrer, body and private inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser transport explicitly refuses redirects and cross-origin credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excluded research shows archived unresolved cash acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "newer actual guidance/regulatory documents cannot erase anchor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selector uses shared bundle without a symbol request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: source body fits phone/dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "issuer source browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: closed disclosure makes no source request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact browser publication hash settled before source tests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer receipt and bundle are readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves private input focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves a real existing chart node",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified issuer plus CIK are named",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selection distinguishes published ticket and excluded research",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coverage states selected, missing and unreviewed remainder",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acceptance, filing, report, release and retrieval are separated",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTML-like excerpt is inert literal text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stripped script body is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection preserves cash DOM and draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection never changes data, model, local saves, morning receipt or copies",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one fixed receipt and one digest bundle requested",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source requests omit cookies, referrer, body and private inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser transport explicitly refuses redirects and cross-origin credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excluded research shows archived unresolved cash acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "newer actual guidance/regulatory documents cannot erase anchor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selector uses shared bundle without a symbol request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/dark: source body fits phone/dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "issuer source browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: closed disclosure makes no source request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exact browser publication hash settled before source tests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer receipt and bundle are readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves private input focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source completion preserves a real existing chart node",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified issuer plus CIK are named",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selection distinguishes published ticket and excluded research",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coverage states selected, missing and unreviewed remainder",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "acceptance, filing, report, release and retrieval are separated",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTML-like excerpt is inert literal text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "stripped script body is absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection preserves cash DOM and draft",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source inspection never changes data, model, local saves, morning receipt or copies",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one fixed receipt and one digest bundle requested",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source requests omit cookies, referrer, body and private inputs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "browser transport explicitly refuses redirects and cross-origin credentials",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excluded research shows archived unresolved cash acquisition",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "newer actual guidance/regulatory documents cannot erase anchor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selector uses shared bundle without a symbol request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/light: source body fits phone/dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "issuer source browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic disclosure remains deferred",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer HTTP403 failure is readable missing coverage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed HTTP403 and human collection phase are shown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 diagnostic links only its fixed requested SEC mapping",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 never invents retrieved issuer content",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP refusal does not clear issuer news or earnings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw HTTP body, headers and exception strings remain absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic preserves private input node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic changes no publication, model, saved state, observation or copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 retains existing source-backed event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostics fetch only the two shared public artifacts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "390/light: HTTP diagnostic fits the dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic disclosure remains deferred",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer HTTP403 failure is readable missing coverage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed HTTP403 and human collection phase are shown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 diagnostic links only its fixed requested SEC mapping",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 never invents retrieved issuer content",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP refusal does not clear issuer news or earnings",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw HTTP body, headers and exception strings remain absent",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic preserves private input node, value and focus",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic changes no publication, model, saved state, observation or copy",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP403 retains existing source-backed event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostics fetch only the two shared public artifacts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "1280/dark: HTTP diagnostic fits the dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "semantic reader remains lazy while closed",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "empty-window genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "empty-window keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "empty-window presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "empty-window never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache-unverified genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache-unverified keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache-unverified presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache-unverified never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document-denied genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document-denied keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document-denied presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "later primary HTTP403 does not erase the observed index",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document-denied never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-invalid genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-invalid keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-invalid presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-invalid never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short-index genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short-index keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short-index presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short-index never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "prefetch-budget genuine semantic producer result is readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "prefetch-budget keeps its observed index scope",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "prefetch-budget presents only actually retained documents",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "prefetch-budget never clears the independent archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer captures deduplicate identical bodies from distinct network URLs",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer network accounting deduplicates the shared mapping descriptor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer verified cache does not invent mapping or document requests",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "producer cache preserves captured bytes independently of network download count",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "equivalent UTC offsets do not double-count a shared network source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "distinct microsecond source event remains readable with its extra request accounted",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy errors without observed HTTP status impose no invented request count",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy accounting control keeps HTTP status unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "explicit partial collection may retain missing primary without an invented error",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "partial missing primary is disclosed rather than silently called collected",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot claim observed index after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot claim observed index fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot claim observed index exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot claim observed index preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot retain a submissions source after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot retain a submissions source fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot retain a submissions source exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified identity cannot retain a submissions source preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified rows cannot become collected after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified rows cannot become collected fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified rows cannot become collected exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unverified rows cannot become collected preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short index cannot claim the complete window after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short index cannot claim the complete window fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short index cannot claim the complete window exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "short index cannot claim the complete window preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "index metadata failure cannot claim the complete window after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "index metadata failure cannot claim the complete window fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "index metadata failure cannot claim the complete window exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "index metadata failure cannot claim the complete window preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete rows cannot silently claim partial collection after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete rows cannot silently claim partial collection fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete rows cannot silently claim partial collection exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "complete rows cannot silently claim partial collection preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing HTTP-refused documents cannot become collected after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing HTTP-refused documents cannot become collected fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing HTTP-refused documents cannot become collected exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing HTTP-refused documents cannot become collected preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selected primary cannot silently disappear after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selected primary cannot silently disappear fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selected primary cannot silently disappear exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "selected primary cannot silently disappear preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "eligible report count cannot omit listed metadata after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "eligible report count cannot omit listed metadata fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "eligible report count cannot omit listed metadata exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "eligible report count cannot omit listed metadata preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt status must reconcile its collected rows after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt status must reconcile its collected rows fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt status must reconcile its collected rows exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt status must reconcile its collected rows preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network sources require enough request events after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network sources require enough request events fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network sources require enough request events exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network sources require enough request events preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed shared HTTP refusal requires one request after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed shared HTTP refusal requires one request fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed shared HTTP refusal requires one request exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed shared HTTP refusal requires one request preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "distinct microsecond events cannot be merged into one request after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "distinct microsecond events cannot be merged into one request fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "distinct microsecond events cannot be merged into one request exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "distinct microsecond events cannot be merged into one request preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network bodies require downloaded bytes after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network bodies require downloaded bytes fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network bodies require downloaded bytes exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible network bodies require downloaded bytes preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible distinct bodies require retained capture bytes after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible distinct bodies require retained capture bytes fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible distinct bodies require retained capture bytes exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "visible distinct bodies require retained capture bytes preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one raw digest cannot claim conflicting byte lengths after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one raw digest cannot claim conflicting byte lengths fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one raw digest cannot claim conflicting byte lengths exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "one raw digest cannot claim conflicting byte lengths preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive downloads cannot claim zero network requests after coherent digest resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive downloads cannot claim zero network requests fails its named semantic boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive downloads cannot claim zero network requests exposes no contradictory retrieved text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "positive downloads cannot claim zero network requests preserves the archived event source",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "honest primary denial recovers after all semantic refusals",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "observed index and missing primary fit the phone without overflow",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "semantic refusal/recovery preserves private input and public authority",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "semantic refusal/recovery keeps the private cash value",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "semantic source review transmits no private data or request body",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "semantic source accounting produces no browser errors",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-only is an honestly readable incomplete producer result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-only has no invented issuer excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-only explains unreviewed or unverified coverage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata-only retains known exclusion independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "identity-unverified is an honestly readable incomplete producer result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "identity-unverified has no invented issuer excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "identity-unverified explains unreviewed or unverified coverage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "identity-unverified retains known exclusion independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage is an honestly readable incomplete producer result",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage has no invented issuer excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage explains unreviewed or unverified coverage",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy source failure explicitly leaves HTTP status unknown",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "legacy source failure never invents an HTTP status",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "outage retains known exclusion independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "status without phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "status without phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "status without phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "phase without status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "phase without status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "phase without status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "boolean HTTP status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "boolean HTTP status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "boolean HTTP status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "string HTTP status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "string HTTP status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "string HTTP status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fractional HTTP status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fractional HTTP status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "fractional HTTP status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "null HTTP status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "null HTTP status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "null HTTP status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "successful HTTP status is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "successful HTTP status leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "successful HTTP status cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "below HTTP refusal range is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "below HTTP refusal range leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "below HTTP refusal range cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "above HTTP refusal range is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "above HTTP refusal range leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "above HTTP refusal range cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown collection phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown collection phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unknown collection phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP status with timeout code is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP status with timeout code leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP status with timeout code cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "redirect status with HTTP error code is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "redirect status with HTTP error code leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "redirect status with HTTP error code cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rate-limit status with HTTP error code is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rate-limit status with HTTP error code leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rate-limit status with HTTP error code cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with rate-limit code is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with rate-limit code leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with rate-limit code cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with redirect code is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with redirect code leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP error status with redirect code cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping phase wrong exact SEC URL is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping phase wrong exact SEC URL leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping phase wrong exact SEC URL cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic lacks source URL is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic lacks source URL leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic lacks source URL cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with submissions phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with submissions phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with submissions phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with history phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with history phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with history phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with primary phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with primary phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with primary phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with exhibit phase is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with exhibit phase leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "mapping URL with exhibit phase cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry a raw body is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry a raw body leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry a raw body cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry response headers is refused after valid transport resealing",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry response headers leaves no unverified diagnostic text",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "HTTP diagnostic cannot carry response headers cannot erase the archived event exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "submissions CIK diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "submissions CIK leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history CIK diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history CIK leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history filename diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history filename leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history trailing newline diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history trailing newline leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history trailing carriage return diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "history trailing carriage return leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary issuer diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary issuer leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary unselected accession diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary unselected accession leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary filename diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "primary filename leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit issuer diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit issuer leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit unselected accession diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit unselected accession leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit cannot be primary diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit cannot be primary leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit filetype diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit filetype leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit leading dot diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit leading dot leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit leading hyphen diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit leading hyphen leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit oversized basename diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit oversized basename leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit trailing newline diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit trailing newline leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit trailing carriage return diagnostic URL is refused against verified source metadata",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit trailing carriage return leaves no invalid diagnostic source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary leading dot diagnostic is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary leading dot leaves no invalid source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary leading hyphen diagnostic is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary leading hyphen leaves no invalid source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary oversized basename diagnostic is refused",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "coherently altered primary oversized basename leaves no invalid source link",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "genuine HTTP403 receipt reloads after diagnostic refusals",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual skipped collection remains readable source context",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "wrong scan session is named without a false fetch-cap claim",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "skipped collection still retains the archived exclusion",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "long unbroken source excerpt remains readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "bounded unbroken source text cannot widen the phone dialog",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "canonical publication hash is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "canonical publication hash leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "canonical publication hash cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual reader hash is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual reader hash leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "actual reader hash cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "context identity is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "context identity leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "context identity cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source run identity is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source run identity leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source run identity cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "publication time is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "publication time leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "publication time cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "applicable session is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "applicable session leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "applicable session cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rules identity is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rules identity leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rules identity cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rehearsal is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rehearsal leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "rehearsal cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future collection is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future collection leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future collection cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source limits is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source limits leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "source limits cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "path traversal is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "path traversal leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "path traversal cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "external path is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "external path leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "external path cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized declared bundle is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized declared bundle leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized declared bundle cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "wrong declared bundle length is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "wrong declared bundle length leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "wrong declared bundle length cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw bundle digest is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw bundle digest leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw bundle digest cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "bundle publication mismatch is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "bundle publication mismatch leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "bundle publication mismatch cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate membership is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate membership leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate membership cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate plan is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate plan leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate plan cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate evidence is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate evidence leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate evidence cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate stage is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate stage leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate stage cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate admission is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate admission leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "candidate admission cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "archived anchor removal is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "archived anchor removal leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "archived anchor removal cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified CIK path is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified CIK path leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "verified CIK path cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document accession path is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document accession path leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "document accession path cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsafe source URL is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsafe source URL leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "unsafe source URL cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excerpt digest is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excerpt digest leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "excerpt digest cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future source check is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future source check leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "future source check cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible source date is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible source date leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "impossible source date cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache claims fresh SEC check is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache claims fresh SEC check leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cache claims fresh SEC check cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired cached document is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired cached document leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired cached document cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached submissions forbidden is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached submissions forbidden leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "cached submissions forbidden cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata remainder arithmetic is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata remainder arithmetic leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "metadata remainder arithmetic cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit remainder arithmetic is refused independently",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit remainder arithmetic leaves no fetched excerpts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "exhibit remainder arithmetic cannot erase current archived event evidence",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "oversized receipt refused before decoding",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw UTF-8 BOM cannot bypass exact byte digest",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "raw BOM fails the raw digest boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "valid retry recovers after every malformed boundary",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "expired receipt is dated research, never clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "receipt aging never clears excluded anchor",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "clock rollback withdraws freshness claim without inventing clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "race control actually holds a requested old bundle",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old source bundle cannot bind to the replacement publication",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "old issuer content absent after replacement",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "new publication exact hash remains authoritative",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing crypto refuses source inspection",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing crypto makes no unverified source request",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing crypto cannot erase archived source facts",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing optional source module keeps the ordinary page readable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing module is explained without clearance",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing source module leaves ordinary cash input usable",
+      "status": "PASS",
+      "lane": "A"
+    },
+    {
+      "name": "missing source module has no uncaught application errors",
+      "status": "PASS",
+      "lane": "A"
+    }
+  ]
+}

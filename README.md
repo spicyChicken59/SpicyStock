@@ -1279,6 +1279,16 @@ complete news coverage. Domestic 8-K and foreign 6-K reports retain their own
 dates and document types. An acquisition mentioned by an issuer does not, by
 itself, establish that the issuer is a takeover target.
 
+Acquisition-related metadata forms (PREM14A, DEFM14A, SC TO-T and SC 14D9,
+including tender-offer amendments) now produce a separate review warning from
+the same bounded submissions/history reads, with no additional request. Up to
+twelve dated links are shown with the total observed count. These form names
+do not establish whether an acquisition is pending or completed, its terms,
+or that the issuer is the target. Their document content remains unreviewed;
+the latest-three current-report excerpts do not cover these forms. An absent
+warning, including in older bundles, is never event clearance. This metadata
+warning does not modify published tickets, sizing or known-event exclusions.
+
 Known unresolved events remain separate, source-backed anchors. The collector
 does not classify new events or clear an existing exclusion. In the 10 October
 2026 source audit, the original ZIM merger report was seventeenth newest among
