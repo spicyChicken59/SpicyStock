@@ -171,8 +171,10 @@ output. A timeout can coincide with an already completed atomic ingestion, so
 it reports unknown completion rather than claiming a rollback. The next
 synchronization rechecks committed source identity and deduplicates normally.
 
-The SQLite poll ledger persists the next allowed time and attempt count even
-when a synchronization fails. Calls before 300 seconds elapse perform no source
+The SQLite poll ledger reserves the next allowed time before source requests.
+Normally completed success/failure records include the request count; interrupted
+completion can leave that count unknown while the poll floor remains durable.
+Calls before 300 seconds elapse perform no source
 requests. HTTP 403 and 429 use typed statuses and bounded backoff up to one hour;
 no response body or credentials are logged. A bootstrap 404 means no published
 morning receipt was available. Other failures or an invalid receipt refuse the

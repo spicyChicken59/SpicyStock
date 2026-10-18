@@ -1225,7 +1225,7 @@ uses the existing production session, freshness and event rules.
 The [deployment handoff](docs/operations/morning-deployment.md) describes
 300-second synchronization and 30-second worker invocation targets, separate
 HTTP serving and worker-only provider credentials. The actual worker has a
-25-second process deadline and no provider retries; source synchronization has
+25-second collection-child deadline and no provider retries; source synchronization has
 a separate 35-second supervisor. These are prepared implementation limits, not
 measured live delivery. An existing host, persistent volume, scheduler, TLS
 route and source bindings still need to be supplied and verified.
