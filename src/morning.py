@@ -38,7 +38,7 @@ LIMITS = ["dated_best_effort_snapshot", "iex_single_venue_not_consolidated",
 STATUSES = ("observed", "partial", "provider_unavailable", "no_tickets", "inapplicable")
 PRICE_STATES = ("below_stop", "below_entry_floor", "below_trigger", "within_published_band",
                 "above_limit", "above_day2_extension", "unknown")
-SOURCE_ERRORS = (None, "missing_credentials", "authentication", "entitlement", "rate_limit", "timeout", "provider_error")
+SOURCE_ERRORS = (None, "missing_credentials", "authentication", "entitlement", "rate_limit", "timeout", "provider_error", "local_budget", "local_backoff")
 
 
 def _require(condition, message):
@@ -277,6 +277,11 @@ def _source(feed):
 
 
 def _error(exc):
+    # A durable service adapter may skip a request locally. Do not report an
+    # earlier HTTP failure as a newly observed provider response.
+    local = getattr(exc, "local_reason", None)
+    if local in ("local_budget", "local_backoff"):
+        return local
     code = getattr(exc, "status_code", None)
     if code is None:
         code = getattr(getattr(exc, "response", None), "status_code", None)
