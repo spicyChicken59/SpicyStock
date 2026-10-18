@@ -2,7 +2,8 @@
 
 This adapter implements the durable collection/receipt boundary in issue #108.
 It is prepared software, not an active quote service or evidence of timely
-morning delivery. GitHub Pages and existing workflows are unchanged. Its tests
+morning delivery. The [deployment handoff](morning-deployment.md) gives
+concrete invocation cadences, process separation and bring-up checks. GitHub Pages and existing workflows are unchanged. Its tests
 use explicitly synthetic retained publications and provider doubles.
 
 `src.morning_service` supplies a **single-host SQLite store on durable local
