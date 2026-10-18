@@ -1,0 +1,21 @@
+{
+  "scope": "actual wall-clock CLI boundary over a synthetic historical Store; no provider or public arrival measurement",
+  "checked_at": "2026-10-18T23:13:44.061367+00:00",
+  "checks": [
+    {
+      "name": "actual subprocess CLI accepts historical as-of",
+      "passed": true
+    },
+    {
+      "name": "actual subprocess CLI refuses future as-of with no operational evidence",
+      "passed": true
+    },
+    {
+      "name": "CLI refusals and valid output have no diagnostics",
+      "passed": true
+    }
+  ],
+  "source_sha256": "af719bff81e310a93328ca8b5be8e19d89039aa565ae9448cd87ba23719d6aea",
+  "passed": 3,
+  "total": 3
+}

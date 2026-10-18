@@ -1222,6 +1222,13 @@ collection. The synchronizer checks this repository's fixed main publication
 and downloads its canonical bytes only when the Git blob changes; the worker
 uses the existing production session, freshness and event rules.
 
+A bounded [operational journal and read-only session report](docs/operations/morning-service-report.md)
+retain source changes, collection outcomes and charged provider attempts across
+restarts. Reports keep receipt generation separate from its local commit time,
+disclose legacy/pruned history, and distinguish no-ticket mornings from quote
+coverage. They measure stored worker observations; public HTTPS delivery and
+actual trading outcomes require their own evidence.
+
 The [deployment handoff](docs/operations/morning-deployment.md) describes
 300-second synchronization and 30-second worker invocation targets, separate
 HTTP serving and worker-only provider credentials. The actual worker has a
@@ -2093,7 +2100,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · reader.py · issuer_evidence.py
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)

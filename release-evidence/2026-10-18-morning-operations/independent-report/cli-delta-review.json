@@ -1,0 +1,32 @@
+{
+  "scope": "Only the CLI actual-wall-clock boundary changed after the original independent 34-test and 43-control acceptance",
+  "final_commit": "fff0916fecaeb6856df84c760ec32a19f92da38f",
+  "source_sha256": "af719bff81e310a93328ca8b5be8e19d89039aa565ae9448cd87ba23719d6aea",
+  "tests_sha256": "2ba91ef17a25857d2ae2440be9fe51a2772d4872118edc3ee9a5ae35b0c27b9c",
+  "baseline_source_sha256": "161b982a128b328a2b02b77c02468dcb43ae7a3b46d5dd1bfbd76ad2fa897939",
+  "delta_identity_proof": "Removing only utcnow(), the future-as-of CLI guard and its fixed refusal allowlist member reproduces the exact earlier tested source SHA. Pure report logic is byte-identical.",
+  "focused_suite": {
+    "command": "/workspace/venv/bin/python -m pytest tests/test_morning_service_report.py -q -k 'cli or pure_report'",
+    "passed": 3,
+    "deselected": 33,
+    "warnings": 1,
+    "seconds": 1.13
+  },
+  "subprocess_controls": "cli-delta-controls.json",
+  "mutation_controls": "cli-delta-mutations.json",
+  "mutations": {
+    "deleted_future_clock_guard": "named test failed as expected",
+    "unrelated_quote_asof_age_flattened": "same named test passed"
+  },
+  "open_findings": [],
+  "reproduce": [
+    "/workspace/venv/bin/python independent-report-controls.py <checkout> <output-directory>",
+    "/workspace/venv/bin/python independent-cli-delta.py <checkout> <output-json>",
+    "/workspace/venv/bin/python independent-cli-mutations.py <checkout> <output-json>"
+  ],
+  "limitations": [
+    "Historical Store and snapshots are synthetic; no live provider or delivery claims.",
+    "The original 34-test run and final 3-test delta overlap on one historical CLI test and are not summed as unique tests.",
+    "Final release CI and public acceptance remain separate."
+  ]
+}

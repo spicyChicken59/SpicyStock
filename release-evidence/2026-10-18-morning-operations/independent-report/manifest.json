@@ -1,0 +1,15 @@
+{
+  "scope": "Compact independent report acceptance. No database copies. Original acceptance and later CLI delta remain separately scoped.",
+  "review": "independent-review.json",
+  "final_cli_delta": "cli-delta-review.json",
+  "files": {
+    "independent-review.json": "bf08f92824bce3e05425f6789b2e979ae1974a9be3583f93b282764dd0437882",
+    "independent-report-controls.py": "c821b17c50df93e4d17341049f37a461d560f6e82d3fe5f7f485e5f9d6128712",
+    "independent-cli-delta.py": "a80db765de5ec1d3270200aaa7638da6e12e6dd7ffd947285b736d57f42c7fa3",
+    "independent-cli-mutations.py": "5f9367c21c0b23fdef7ad8d51bb317d73b0192aab2d313256cf3ced34f5a45e2",
+    "cli-delta-review.json": "f67b39508a3c1e6077036bbec01d397d0be01aea2258e0fe71eaa262b42639ee",
+    "cli-delta-controls.json": "6dc57e83ccb1d1b1eb3ccd2bd8c6d3ce0a6bcd996d87cb794cfc6c7f9100fcc7",
+    "cli-delta-mutations.json": "b297c35e6c9e862cc193ff2f0ca9315dc4f73f7c2b33ecd91e66dc9fd79e4628",
+    "final-report-controls/independent-controls.json": "465c968d602f6e32c237d7457e963a5db707e762163ee12189df46b4482d867d"
+  }
+}

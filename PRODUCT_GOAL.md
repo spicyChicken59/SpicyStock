@@ -17,6 +17,44 @@ daily ticket by dropping a market, data, event or account constraint. A more
 speculative idea may be useful research when its added risks, missing evidence
 and experimental status are explicit.
 
+## Current release reconciliation — 18 October 2026
+
+[PR #185](https://github.com/spicyChicken59/SpicyStock/pull/185) and
+[PR #186](https://github.com/spicyChicken59/SpicyStock/pull/186) are merged and
+publicly verified. The first adds bounded SEC acquisition-form review warnings;
+the second prepares a durable morning service, bounded private collection worker,
+trusted publication synchronization and optional browser reader. The compact
+[acquisition release receipt](release-evidence/2026-10-18-pr185/acceptance.json)
+and [service release receipt](release-evidence/2026-10-18-pr186/acceptance.json)
+retain exact reviewed/merged identities, all seven successful hosted checks per
+release, deployments and public acceptance. The final service release passed
+4,953 Python tests, 47 public asset comparisons and 78 phone/desktop browser
+checks. These dated results supersede earlier pending-release notes below.
+
+The service endpoint remains unconfigured; production still reads its static
+receipt. No host, durable volume, scheduler, TLS route or provider secret bindings
+were provisioned. The current public record is RED with zero plans, unknown
+settled cash and a morning receipt belonging to another publication. Dependable
+on-time delivery, broader issuer-news/future-earnings coverage and actual
+expected-session validation remain open. No actual trade or profitable result
+is claimed. See the [deployment handoff](docs/operations/morning-deployment.md)
+for the prepared bring-up procedure.
+
+The prepared service now also retains bounded operational history and offers a
+[read-only session report](docs/operations/morning-service-report.md). It keeps
+source revisions, collection outcomes, provider attempts and original receipt
+bytes, while declaring migration and retention gaps. Local commit time remains
+separate from public arrival; a no-ticket morning does not establish quote
+coverage. The [scoped implementation evidence](release-evidence/2026-10-18-morning-operations/prepared.json)
+records the offline controls without claiming live-session acceptance.
+
+| Remaining dependency | Affected acceptance | Pending validation |
+| --- | --- | --- |
+| Identified hosting account/project, durable storage, scheduler, HTTPS route and worker-only provider bindings with confirmed entitlement/cost | Required results 1 and 4; milestones 2 and 5 | Activate the reviewed endpoint, measure actual pre-open arrival and in-window expiry, and verify restart and provider-failure behavior on that host. |
+| Authorized sources and access for current issuer news and future earnings | Required results 1 and 2; milestone 2 | Retain source timestamps, coverage and exclusions for applicable candidates; unavailable coverage cannot become clearance. |
+| Actual expected-session observations after deployment | Required result 4; milestone 5 | Review ten consecutive expected sessions using publication evidence, worker history, independent public-arrival measurements and measured usage/costs, including no-ticket sessions. |
+| Owner/broker evidence for settled cash, available Fidelity order terms and any actual executions | Required results 2 and 5; milestone 4 | Verify account facts at Fidelity; compute actual results only from reported entry, exit, quantity and costs. Real orders require separate explicit instruction. |
+
 ## Release status — 9 October 2026
 
 Milestone 1's core changes are merged in

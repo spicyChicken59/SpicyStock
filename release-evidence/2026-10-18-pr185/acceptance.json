@@ -1,0 +1,869 @@
+{
+  "date": "2026-10-18",
+  "verified_at": "2026-10-18T15:37:48.927981+00:00",
+  "pull_request": "https://github.com/spicyChicken59/SpicyStock/pull/185",
+  "reviewed_head": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+  "merge_commit": "5931d9de2a96b3e6e080d2323595ed636dfd5365",
+  "url": "https://spicychicken59.github.io/SpicyStock/",
+  "scope": "Actual post-release public-byte and browser acceptance; no route mocks or clock overrides; synthetic private marker/cash input in ephemeral browser profiles only. No live provider calls or real orders.",
+  "checks": {
+    "public_files_matched": 47,
+    "public_files_total": 47,
+    "browser_passed": 72,
+    "browser_failed": 0,
+    "viewport_widths": [
+      390,
+      1280
+    ],
+    "no_page_console_network_or_http_errors": true
+  },
+  "observed": {
+    "published_session": "2026-10-16",
+    "applicable_session": "2026-10-19",
+    "account_equity": 2000,
+    "planned_risk_pct": 0.5,
+    "per_position_cap_pct": 25,
+    "market": "RED: stand aside for new longs",
+    "conditional_plans": 0,
+    "settled_cash": "unknown until optional unverified local input",
+    "morning": "Unavailable: belongs to another publication; no fresh quote asserted",
+    "issuer": "Dated aged receipt loaded; no relevant candidates",
+    "chart": "SKWD: source-backed Alpaca SIP daily bars, 2\u201316 October, no plan levels"
+  },
+  "acceptance_mapping": {
+    "1": "Exact47 deployed files, bound receipt availability, dates/source limits, no fabricated issuer candidate or quote.",
+    "2": "RED wait, zero plans, unknown settled cash and2000/.5%/25% assumptions preserved.",
+    "3": "Actual shared SpicyChicken UI and sourced stock chart inspected at390/1280.",
+    "4": "Actual waiting/no-candidate path and source request privacy passed72 checks. Acquisition-warning eligible/blocked scenarios remain separately labeled synthetic branch checks.",
+    "5": "No order, execution, fill or profit claimed; private test input is synthetic and not transmitted in issuer source reads."
+  },
+  "limitations": [
+    "Actual current issuer receipt has no relevant candidates; no claim that this public run displayed an acquisition warning.",
+    "Timely fresh morning delivery and broader issuer-news/future-earnings coverage remain separately unresolved.",
+    "Future on-time pre-open/entry-window and repeated-session operational validation remain pending.",
+    "No live Fidelity account cash or execution observations."
+  ],
+  "schema": "spicystock-release-reconciliation-v1",
+  "scope_note": "Compact transcription of completed release observations, retained on 18 October 2026; this is not a new acceptance execution.",
+  "reviewed_tree": "80f6c90cec21172b3824065b9e26880a480ea119",
+  "merged_tree": "80f6c90cec21172b3824065b9e26880a480ea119",
+  "hosted_python_passed": 4812,
+  "hosted_checks": [
+    {
+      "name": "historical-runtime (stress)",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:53Z",
+      "completed_at": "2026-10-18T15:34:23Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354200/job/117704528936"
+    },
+    {
+      "name": "historical-runtime (central)",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:53Z",
+      "completed_at": "2026-10-18T15:03:06Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354200/job/117704528902"
+    },
+    {
+      "name": "historical-runtime-gate",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:40Z",
+      "completed_at": "2026-10-18T14:44:51Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354200/job/117704482909"
+    },
+    {
+      "name": "page",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:40Z",
+      "completed_at": "2026-10-18T15:01:30Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354200/job/117704482905"
+    },
+    {
+      "name": "gitleaks",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:40Z",
+      "completed_at": "2026-10-18T14:44:53Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354165/job/117704482753"
+    },
+    {
+      "name": "pytest",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:40Z",
+      "completed_at": "2026-10-18T15:01:26Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137354200/job/117704482686"
+    },
+    {
+      "name": "gitleaks",
+      "head_sha": "6aba09523383fd9327a79c0f2a536c8eff1d4831",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T14:44:37Z",
+      "completed_at": "2026-10-18T14:44:53Z",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39137351052/job/117704473087"
+    }
+  ],
+  "successful_deployments": [
+    {
+      "id": 39141150474,
+      "name": "pages build and deployment",
+      "event": "dynamic",
+      "head_sha": "5931d9de2a96b3e6e080d2323595ed636dfd5365",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39141150474",
+      "created_at": "2026-10-18T15:35:11Z",
+      "updated_at": "2026-10-18T15:35:56Z"
+    },
+    {
+      "id": 39141128140,
+      "name": "Publish committed dashboard",
+      "event": "push",
+      "head_sha": "5931d9de2a96b3e6e080d2323595ed636dfd5365",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/spicyChicken59/SpicyStock/actions/runs/39141128140",
+      "created_at": "2026-10-18T15:34:55Z",
+      "updated_at": "2026-10-18T15:36:04Z"
+    }
+  ],
+  "public_assets": {
+    "phase": "post-release PR185 public acceptance",
+    "started_at": "2026-10-18T15:36:58.497893+00:00",
+    "finished_at": "2026-10-18T15:37:01.068059+00:00",
+    "checkout_head": "5931d9de2a96b3e6e080d2323595ed636dfd5365",
+    "source": "Read-only HTTPS public GETs; public_files validates the checked-out companion bundles; no build or workflow dispatch.",
+    "total": 47,
+    "matched": 47,
+    "files": [
+      {
+        "file": "index.html",
+        "expected_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+        "bytes": 17247,
+        "actual_sha256": "d43182ae49af40df4b01b26cf6c181c44b1b691db9d32b299721f9ee657469a1",
+        "matches": true
+      },
+      {
+        "file": "data.json",
+        "expected_sha256": "2a26a5ae6b728e182ec9354ad1f9c77cdb625d31d9eb4d27abe59ad34c5c9089",
+        "bytes": 10404000,
+        "actual_sha256": "2a26a5ae6b728e182ec9354ad1f9c77cdb625d31d9eb4d27abe59ad34c5c9089",
+        "matches": true
+      },
+      {
+        "file": "reader.json",
+        "expected_sha256": "8cb6ec68065583717b2ade68fa87030c45a5085c3abe5780d40b9dd3a10f4aa5",
+        "bytes": 1872005,
+        "actual_sha256": "8cb6ec68065583717b2ade68fa87030c45a5085c3abe5780d40b9dd3a10f4aa5",
+        "matches": true
+      },
+      {
+        "file": "picks.json",
+        "expected_sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "bytes": 3921,
+        "actual_sha256": "7fdaac0b99a12a90345f06f38a01180e4b07a8d487361da49a39235f34250774",
+        "matches": true
+      },
+      {
+        "file": "historical-validation.json",
+        "expected_sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "bytes": 5048,
+        "actual_sha256": "57b8ef8a82bceedab96fb071b03c0d9b44c7c30109ea93b904020a1047bdc53e",
+        "matches": true
+      },
+      {
+        "file": "historical-findings.json",
+        "expected_sha256": "4f09fb143fef00342916bbc4ca194d4cc6b4d56c1d491b25ead0fd1a533dcfa3",
+        "bytes": 254629,
+        "actual_sha256": "4f09fb143fef00342916bbc4ca194d4cc6b4d56c1d491b25ead0fd1a533dcfa3",
+        "matches": true
+      },
+      {
+        "file": "morning.json",
+        "expected_sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "bytes": 4284,
+        "actual_sha256": "97c60ab9bb8185b765f1d016147094ab3d3808466fd955d8f99ef87e17eb4ab0",
+        "matches": true
+      },
+      {
+        "file": "source-recovery.json",
+        "expected_sha256": "0c29b78f78f4d22c701f5871566923625b0552fc67cdd14cabe912050d239ba8",
+        "bytes": 10935,
+        "actual_sha256": "0c29b78f78f4d22c701f5871566923625b0552fc67cdd14cabe912050d239ba8",
+        "matches": true
+      },
+      {
+        "file": "design-system/assets/favicon.ico",
+        "expected_sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "bytes": 5057,
+        "actual_sha256": "1290eef86ae1af2266eec58aaac3f6d0f72c7ed4829d080d30b5c4ee7d0999d4",
+        "matches": true
+      },
+      {
+        "file": "design-system/assets/sc-avatar-tile.svg",
+        "expected_sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "bytes": 9274,
+        "actual_sha256": "9121794d5632085d4a5c978519829d5187b41887cf573537da0e7f95f64a6499",
+        "matches": true
+      },
+      {
+        "file": "design-system/assets/apple-touch-icon.png",
+        "expected_sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "bytes": 11284,
+        "actual_sha256": "5a86780d62829e950541c8b66cdfe7bf5c6dbd587d1664d4f91fa9dcdfa97177",
+        "matches": true
+      },
+      {
+        "file": "design-system/sc.css",
+        "expected_sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "bytes": 130987,
+        "actual_sha256": "c5c2a151f8b31a9e7a9b29a64ae6610e6bbb1ebc0fd508ffbb6fe45e44a7fc55",
+        "matches": true
+      },
+      {
+        "file": "design-system/sc-theme.js",
+        "expected_sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "bytes": 2077,
+        "actual_sha256": "cfb0658e417d201bb89e536240e4bcc70980d59edd36541dd786f8618c94bcbe",
+        "matches": true
+      },
+      {
+        "file": "design-system/sc-charts.js",
+        "expected_sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "bytes": 27390,
+        "actual_sha256": "a4347e1f2b443330138f136d1625ee9d96b40652f9ec1bbf6c84dd5a4b33ea85",
+        "matches": true
+      },
+      {
+        "file": "design-system/sc-motion.js",
+        "expected_sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "bytes": 10458,
+        "actual_sha256": "6a72a069cb8d6ea6f9202729fb8c26354d1d7175183d64442718715e4ec99e7a",
+        "matches": true
+      },
+      {
+        "file": "app.css",
+        "expected_sha256": "146acf61230fdc795cc10859baba8951f53191a69e6efb906edee1a93e73e330",
+        "bytes": 90366,
+        "actual_sha256": "146acf61230fdc795cc10859baba8951f53191a69e6efb906edee1a93e73e330",
+        "matches": true
+      },
+      {
+        "file": "app-chart.js",
+        "expected_sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "bytes": 73555,
+        "actual_sha256": "c8d391018c037ef761ca6456761d094db6fb81011423119e9581a48fc2eec509",
+        "matches": true
+      },
+      {
+        "file": "app-map.js",
+        "expected_sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "bytes": 29522,
+        "actual_sha256": "7c4481310d9465d5c9e086bc67aa770273613dcd78a332e3dff07c770cc52a8f",
+        "matches": true
+      },
+      {
+        "file": "app-follow.js",
+        "expected_sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "bytes": 32450,
+        "actual_sha256": "f09a38fab9935ac9956c942b1308bd87e14c4ff21b8a0f46da3340559eb1098f",
+        "matches": true
+      },
+      {
+        "file": "app-reading.js",
+        "expected_sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "bytes": 23705,
+        "actual_sha256": "179bec71cd76d00bf2cec0ac4252219590d89566ebeaca290407683082fb2d21",
+        "matches": true
+      },
+      {
+        "file": "app-method.js",
+        "expected_sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "bytes": 44156,
+        "actual_sha256": "1196592d0f4caa43f1da188cb05340f2b408fd4bfae47278b5d793ccde057d02",
+        "matches": true
+      },
+      {
+        "file": "app-findings.js",
+        "expected_sha256": "4f630a8cf0f06a55c9186384d303db9f77a046849065c885a6b7df8136b7770b",
+        "bytes": 77029,
+        "actual_sha256": "4f630a8cf0f06a55c9186384d303db9f77a046849065c885a6b7df8136b7770b",
+        "matches": true
+      },
+      {
+        "file": "app-reader.js",
+        "expected_sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "bytes": 9507,
+        "actual_sha256": "512e784d10ed7bd2bc6a4965653597095b6dd880473447e4a7237f594408c274",
+        "matches": true
+      },
+      {
+        "file": "app-observations.js",
+        "expected_sha256": "f57be4c486fe7a2dfb45c70ca5433c2df0522bcb5fc48424488656781b65d73c",
+        "bytes": 50543,
+        "actual_sha256": "f57be4c486fe7a2dfb45c70ca5433c2df0522bcb5fc48424488656781b65d73c",
+        "matches": true
+      },
+      {
+        "file": "app-cash-preview.js",
+        "expected_sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "bytes": 3836,
+        "actual_sha256": "34503219ff000cfc0fb7def70f647bccc683a1b8a8c77978ed5146ade6c502b7",
+        "matches": true
+      },
+      {
+        "file": "app-handoff.js",
+        "expected_sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+        "bytes": 40838,
+        "actual_sha256": "67734bc1895632bf2ecf468c17a4d36ae11cfc5383f02c22764a2864753e153e",
+        "matches": true
+      },
+      {
+        "file": "app-handoff-ui.js",
+        "expected_sha256": "3b095256557ae9c2f276447bd8f840e3e42ab05210318131c869975f20ce6ed1",
+        "bytes": 51481,
+        "actual_sha256": "3b095256557ae9c2f276447bd8f840e3e42ab05210318131c869975f20ce6ed1",
+        "matches": true
+      },
+      {
+        "file": "app-issuer-evidence.js",
+        "expected_sha256": "5ea62711ee160551cfdadcd88cbcf76a99284e73087ae77a2e3ed588d449bda5",
+        "bytes": 44667,
+        "actual_sha256": "5ea62711ee160551cfdadcd88cbcf76a99284e73087ae77a2e3ed588d449bda5",
+        "matches": true
+      },
+      {
+        "file": "app-research-observations.js",
+        "expected_sha256": "3939dc3240f2faeda7f0ed6b07c198ce64c78fdb43b2319b9f6680df3807e5c6",
+        "bytes": 30310,
+        "actual_sha256": "3939dc3240f2faeda7f0ed6b07c198ce64c78fdb43b2319b9f6680df3807e5c6",
+        "matches": true
+      },
+      {
+        "file": "app-stop-research.js",
+        "expected_sha256": "708b9a4bad6f6e575e3703cbbf60ccec97386ab22b4627e82bcd14c24a366e73",
+        "bytes": 39437,
+        "actual_sha256": "708b9a4bad6f6e575e3703cbbf60ccec97386ab22b4627e82bcd14c24a366e73",
+        "matches": true
+      },
+      {
+        "file": "app-research-outcomes.js",
+        "expected_sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "bytes": 43372,
+        "actual_sha256": "0efc7533856fe09256fd6f5c60f129549166240c59c4d83aff4357986c3ee635",
+        "matches": true
+      },
+      {
+        "file": "app-morning.js",
+        "expected_sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "bytes": 26098,
+        "actual_sha256": "9517ed673d711f54682dc052dfe793ec16a81a9418323920d6e9237b71a0dcd4",
+        "matches": true
+      },
+      {
+        "file": "app.js",
+        "expected_sha256": "aa075af311300a2b9257ed82155fc45824e271c62318f84d78ab58b65997a049",
+        "bytes": 436898,
+        "actual_sha256": "aa075af311300a2b9257ed82155fc45824e271c62318f84d78ab58b65997a049",
+        "matches": true
+      },
+      {
+        "file": "design-system/assets/sc-mark-color-dark.svg",
+        "expected_sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "bytes": 6701,
+        "actual_sha256": "4706f372f265bf8d4626b3b5e8a61bd2ecdab780adfa8c8b4df8cc189ec9fe1e",
+        "matches": true
+      },
+      {
+        "file": "design-system/assets/sc-mark-mono-cream.svg",
+        "expected_sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "bytes": 4901,
+        "actual_sha256": "92980ebc35f1b86dbf252a4444b9aa0499cd5023967e4fab77099adc12ecaaf2",
+        "matches": true
+      },
+      {
+        "file": "reader-observations/9d6efa5ecdf93988f577bfd8d5dd735ae451c9b5b2d672e1681fd58b7d30fd71.json",
+        "expected_sha256": "9d6efa5ecdf93988f577bfd8d5dd735ae451c9b5b2d672e1681fd58b7d30fd71",
+        "bytes": 5355825,
+        "actual_sha256": "9d6efa5ecdf93988f577bfd8d5dd735ae451c9b5b2d672e1681fd58b7d30fd71",
+        "matches": true
+      },
+      {
+        "file": "issuer-evidence.json",
+        "expected_sha256": "a156e4205a436a947b2f5097b5f440536d77380281fa72932bcb15a69f9dbd08",
+        "bytes": 1759,
+        "actual_sha256": "a156e4205a436a947b2f5097b5f440536d77380281fa72932bcb15a69f9dbd08",
+        "matches": true
+      },
+      {
+        "file": "issuer-evidence/1dce604fa195044c264b1793536224d3059b0491253ed6e20d6f50e10ac05876.json",
+        "expected_sha256": "1dce604fa195044c264b1793536224d3059b0491253ed6e20d6f50e10ac05876",
+        "bytes": 779,
+        "actual_sha256": "1dce604fa195044c264b1793536224d3059b0491253ed6e20d6f50e10ac05876",
+        "matches": true
+      },
+      {
+        "file": "stop-research.json",
+        "expected_sha256": "3ae1a4a90b9f7c4b98574e88a94459d43b14d8129e967e3d284fe3bfb41dcc1d",
+        "bytes": 1650,
+        "actual_sha256": "3ae1a4a90b9f7c4b98574e88a94459d43b14d8129e967e3d284fe3bfb41dcc1d",
+        "matches": true
+      },
+      {
+        "file": "stop-research/16a8f5748caaaf381bc1d111ba193a455c253f7de10e1e0bcdf3fc400e04828c.json",
+        "expected_sha256": "16a8f5748caaaf381bc1d111ba193a455c253f7de10e1e0bcdf3fc400e04828c",
+        "bytes": 2170,
+        "actual_sha256": "16a8f5748caaaf381bc1d111ba193a455c253f7de10e1e0bcdf3fc400e04828c",
+        "matches": true
+      },
+      {
+        "file": "research-outcomes.json",
+        "expected_sha256": "da14046a3cce7e15a2a1aa1e4d950ade58e9db642740683d9299d18e12fd2734",
+        "bytes": 2134,
+        "actual_sha256": "da14046a3cce7e15a2a1aa1e4d950ade58e9db642740683d9299d18e12fd2734",
+        "matches": true
+      },
+      {
+        "file": "research-outcomes/34c950e53ea89863230c035036cf3ade2668bdc843954dd3102628f7cceb9c84.json",
+        "expected_sha256": "34c950e53ea89863230c035036cf3ade2668bdc843954dd3102628f7cceb9c84",
+        "bytes": 69457,
+        "actual_sha256": "34c950e53ea89863230c035036cf3ade2668bdc843954dd3102628f7cceb9c84",
+        "matches": true
+      },
+      {
+        "file": "historical-validation/332b99ffac36b3b723de58197ce853e1ecd96b20/burst-CRL.json",
+        "expected_sha256": "53e3f6d6f5e1d572f14224d143aea1ad3f7b4b1c152bc918170bd67aa6267de5",
+        "bytes": 21360,
+        "actual_sha256": "53e3f6d6f5e1d572f14224d143aea1ad3f7b4b1c152bc918170bd67aa6267de5",
+        "matches": true
+      },
+      {
+        "file": "historical-validation/332b99ffac36b3b723de58197ce853e1ecd96b20/burst-IQV.json",
+        "expected_sha256": "3aa003bc988727941411f7dc9a829e03e0f7709437979284d893380602dd95d4",
+        "bytes": 11636,
+        "actual_sha256": "3aa003bc988727941411f7dc9a829e03e0f7709437979284d893380602dd95d4",
+        "matches": true
+      },
+      {
+        "file": "historical-validation/332b99ffac36b3b723de58197ce853e1ecd96b20/record.json",
+        "expected_sha256": "1e7fd209bf7a61694dd2cf17925680e54ff257dc97e5bbcc9a93a529ad0bf2e4",
+        "bytes": 38696,
+        "actual_sha256": "1e7fd209bf7a61694dd2cf17925680e54ff257dc97e5bbcc9a93a529ad0bf2e4",
+        "matches": true
+      },
+      {
+        "file": "historical-validation/6fce465edd51badead8ad0c38b111819ee69c884/burst-MSFT.json",
+        "expected_sha256": "26ef0c085dbad0bdad0bcdf880a9d4c1070a50b6ccd991c292f5561db3b9f639",
+        "bytes": 20098,
+        "actual_sha256": "26ef0c085dbad0bdad0bcdf880a9d4c1070a50b6ccd991c292f5561db3b9f639",
+        "matches": true
+      },
+      {
+        "file": "historical-validation/6fce465edd51badead8ad0c38b111819ee69c884/record.json",
+        "expected_sha256": "f841d8cdfda44014235a52af4c3dccae51d890c45be5bf262012a6a99c62cb0f",
+        "bytes": 39425,
+        "actual_sha256": "f841d8cdfda44014235a52af4c3dccae51d890c45be5bf262012a6a99c62cb0f",
+        "matches": true
+      }
+    ]
+  },
+  "public_browser": {
+    "started_at": "2026-10-18T15:37:01.528Z",
+    "finished_at": "2026-10-18T15:37:10.648Z",
+    "expected_head": "5931d9de2a96b3e6e080d2323595ed636dfd5365",
+    "url": "https://spicychicken59.github.io/SpicyStock/",
+    "source": "Actual deployed public page; no route mocks, fixture substitution, or clock override.",
+    "tls": "Verification enabled; managed proxy CA trusted by Chromium NSS.",
+    "chromium": "151.0.7922.34",
+    "passed": 72,
+    "failed": 0,
+    "verify_service_default": false,
+    "checks": [
+      {
+        "width": 390,
+        "name": "actual HTTPS public page returns 200",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "real publication is not a fixture",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "publication identifies session and time",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "published sizing remains $2000 / 0.5% / 25%",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "receipt cannot authorize unrelated observations",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no issuer request before disclosure",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "home fits viewport",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "source-backed chart has stock, dates and sessions",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "chart fits its actual panel",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "chart ticker belongs to recorded candidate set",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "morning desk opens",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "Chicago entry window is visible",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "current RED market blocks new longs",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "zero conditional orders remain visible",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "settled cash begins unknown",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "balances and holdings remain unverified",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "morning source mismatch remains explained",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "venue, delay and expiry limitations visible",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "morning dialog fits viewport",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "local cash entry remains explicitly unverified",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "actual issuer receipt and immutable companion load",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "issuer status is dated and limits news coverage",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "actual no-candidate receipt does not invent event clearance",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "issuer requests contain no private state or credentials",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "source reads explicitly omit credentials and referrer",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "local preparation and issuer inspection preserve publication and decisions",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "source completion preserves entered cash",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no issuer warning fabricated for absent candidate",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no executable copy order appears from manual cash input",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "issuer content fits its dialog",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "morning desk closes",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no market/provider browser requests",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "all observed requests are read-only GET",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no browser errors",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no failed requests",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "name": "no HTTP error responses",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "actual HTTPS public page returns 200",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "real publication is not a fixture",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "publication identifies session and time",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "published sizing remains $2000 / 0.5% / 25%",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "receipt cannot authorize unrelated observations",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no issuer request before disclosure",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "home fits viewport",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "source-backed chart has stock, dates and sessions",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "chart fits its actual panel",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "chart ticker belongs to recorded candidate set",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "morning desk opens",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "Chicago entry window is visible",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "current RED market blocks new longs",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "zero conditional orders remain visible",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "settled cash begins unknown",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "balances and holdings remain unverified",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "morning source mismatch remains explained",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "venue, delay and expiry limitations visible",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "morning dialog fits viewport",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "local cash entry remains explicitly unverified",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "actual issuer receipt and immutable companion load",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "issuer status is dated and limits news coverage",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "actual no-candidate receipt does not invent event clearance",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "issuer requests contain no private state or credentials",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "source reads explicitly omit credentials and referrer",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "local preparation and issuer inspection preserve publication and decisions",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "source completion preserves entered cash",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no issuer warning fabricated for absent candidate",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no executable copy order appears from manual cash input",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "issuer content fits its dialog",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "morning desk closes",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no market/provider browser requests",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "all observed requests are read-only GET",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no browser errors",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no failed requests",
+        "passed": true
+      },
+      {
+        "width": 1280,
+        "name": "no HTTP error responses",
+        "passed": true
+      }
+    ]
+  },
+  "visual_review": {
+    "completed": true,
+    "result": "Readable Chicago/account/wait state, SEC limits and source-backed chart; no horizontal overflow observed.",
+    "scope": "Original captures inspected in the release workspace; this compact receipt retains the finding, not image copies."
+  },
+  "original_artifact_sha256": {
+    "acceptance.json": "3ddeb2adbd8611d24743e320e8dfd50ce0839a916306233c6a4cad7ade384e82",
+    "pr-checks.json": "5591869178fe995b1c254133003d0083d88da6aef851a671b50201be4d64572b",
+    "public-browser.json": "de09c150c26fb829b0c5e482ecabdea38df1add75fca47cdb481dcd7a48d9563",
+    "public-bytes.json": "6c03a172886783dd93e6f4f1f40312d61a026c43877f41912e591e843e029ae2"
+  },
+  "verification_helper_sha256": {
+    "spicystock-public-check.mjs": "1901ae52d5d0e26f4313dd2ceeae1124f4f01bd0df4436a5f0bff2e13d239bf9",
+    "spicystock-public-bytes.py": "4af741e871a6a8f7866b5531b36f91628ba10efd98022cdc649f42bbf2294130"
+  }
+}

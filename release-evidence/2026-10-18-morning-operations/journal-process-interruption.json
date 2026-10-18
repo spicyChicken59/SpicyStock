@@ -1,0 +1,15 @@
+{
+  "case": "Actual child terminated after durable provider reservation, before transport completion",
+  "result": "worker_deadline",
+  "elapsed_seconds": 1.023,
+  "provider_reserved": 1,
+  "provider_finished": 0,
+  "collection_outcomes": [
+    "worker_deadline"
+  ],
+  "durable_provider_charge": 1,
+  "durable_collection_charge": 1,
+  "child_reaped": true,
+  "source_requests": 0,
+  "passed": true
+}
