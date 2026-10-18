@@ -10519,10 +10519,10 @@ nothing SpicyStock printed said so.
 **What was built.** `knowledge/broker-fidelity.md`, dated 17 October, maps a
 ticket field by field onto Fidelity's order entry (the field names labelled
 unconfirmed; the conditional ticket's Trade Type drop-down named from a dated
-excerpt) and labels every fact as Fidelity's words with the numbered source it
-was read from (20 sources, each a search-result excerpt; the T+1 fact cited to
-the SEC staff's investor bulletin, the press release seen as a link only),
-inferred, unconfirmed, or SpicyStock's advice. Its unconfirmed list is what to
+excerpt) and labels every fact as Fidelity's words or a regulator's words with
+the numbered source it was read from (21 sources, each a search-result excerpt;
+the T+1 fact cited to the SEC staff's investor bulletin, the press release seen
+as a link only), inferred, unconfirmed, or SpicyStock's advice. Its unconfirmed list is what to
 check in Fidelity's own ticket before the first order: that the web and mobile
 tickets offer a Stop Limit with an OTO secondary and where; that an OTO takes a
 Day buy beside a Good 'til Canceled sell stop -- the sources read disagree, and
