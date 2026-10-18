@@ -15,6 +15,11 @@ on:
         type: boolean
         required: false
         default: true
+      probe_sec:
+        description: "Ask SEC once for its ticker mapping and one fixed issuer's submissions, as a transport diagnostic printed to the log; needs dry_run, publishes nothing and collects no candidate."
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -31,6 +36,7 @@ jobs:
     if: >-
       (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == true))
       && (github.event_name != 'workflow_run' || github.event.workflow_run.head_repository.full_name == github.repository)
+      && (inputs.probe_sec != true || inputs.dry_run == true)
     runs-on: ubuntu-latest
     timeout-minutes: 12
     outputs:
@@ -67,12 +73,25 @@ jobs:
           echo "ready=true" >> "$GITHUB_OUTPUT"
       - name: Collect issuer evidence (rehearsal)
         id: rehearsal
-        if: steps.guard.outputs.go == 'true' && github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        if: steps.guard.outputs.go == 'true' && github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec != true
         env:
           SCAN_SEND_EMAIL: "false"
         run: |
           python -m src.issuer_evidence --record docs/data.json --previous docs/issuer-evidence.json --output "$RUNNER_TEMP/issuer-output" --cache-dir "$RUNNER_TEMP/issuer-source-cache" --dry-run
           echo "ready=true" >> "$GITHUB_OUTPUT"
+      - name: Probe SEC access from this runner
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
+        env:
+          SCAN_SEND_EMAIL: "false"
+        run: python -m tools.probe_sec_access --output "$RUNNER_TEMP/sec-probe.json"
+      - name: Retain the SEC diagnostic separately
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true && inputs.probe_sec == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-probe-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sec-probe.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Retain this run's validated public candidate
         if: steps.production.outputs.ready == 'true' || steps.rehearsal.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
@@ -110,6 +129,7 @@ jobs:
       github.ref == 'refs/heads/main'
       && needs.collect.outputs.ready == 'true'
       && (github.event_name == 'workflow_run' || inputs.dry_run == false)
+      && inputs.probe_sec != true
     permissions:
       contents: write
     runs-on: ubuntu-latest

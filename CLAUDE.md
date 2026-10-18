@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4787 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4798 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10694,3 +10694,82 @@ order SpicyStock places, a plain-limit fallback for a refused buy stop.
 
 **Not claimable:** that Fidelity's ticket behaves as its help pages say; a
 first trade; any trading edge.
+
+## Checkpoint, 18 Oct 2026 — PR #183 accepted; SEC answers the named contact from a runner
+
+**PR #183, accepted.** Merged as `169557c1` on `main` with a merge commit over
+`b9196b14`. The head `50cce5d7` passed pytest, page, the gate's docs-only
+decision and both gitleaks runs; the native central and stress cases passed on
+the code head `2726830e`. Publisher 39094690154 waited for `app.css`,
+`app-handoff-ui.js` and `app.js` and printed *Verified: every one of the 47
+public files matches committed main* at 03:45:55 UTC on 18 October; Pages
+39094704703 deployed (39094690122 cancelled as superseded, as every merge
+does); the merge commit's own Secret scan 39094690128 passed and its Tests run
+is on the PR below.
+
+**Revision.** Branch `claude/spicystock-historical-workflow-i53ud1` restarted
+from `main` at `169557c1`, pushed as **PR #184**. One tool is new
+(`tools/probe_sec_access.py`), `issuer-evidence.yml` gains one dispatch input
+and two steps, the tests, README and this file are swept. Nothing under `src/`
+changed and no rule moved; `docs/data.json`, `docs/picks.json`, every receipt,
+the history and the vendored design system are untouched. `.env.example` was
+reviewed: the probe reads no variable.
+
+**Monday's first dispatched morning check, pre-flighted offline.** Over the
+16 October record on `main` at the dispatcher's instant (13:21:40 UTC on
+19 October), `tools/publish_morning.schedule_guard()` admits a dispatch
+(`manual_dispatch`), the record admits no plan (RED), and `src/morning.collect()`
+with the halt fetcher stubbed writes a valid `no_tickets` receipt, phase
+`upcoming`, both feeds `not_requested`; the research cohort holds no
+allocation-fit row, so the research observation will say so. Nothing a
+provider answers can change that: Monday's check is a check that runs and
+quotes nothing.
+
+**Why a probe.** The issuer collector asks SEC only for a night's candidates
+(admitted plans and known-event exclusions); a RED night has none and writes
+`no_candidates` without a request, so no night since the owner named the SEC
+contact on 17 October could show whether SEC answers it, and every collection
+from 10 to 16 October that recorded a status got HTTP 403 at the ticker
+mapping. `tools/probe_sec_access.py` asks twice -- the mapping, then a fixed
+issuer's submissions (AAPL) -- through the collector's own `_Transport` with no
+cache (its User-Agent, spacing, deadline, refused redirects and size bounds),
+and writes each request's outcome, status, bytes and digest, whether the
+identity was established and the submissions parsed, and whether the
+User-Agent names a sender and a contact, never the address (a payload carrying
+the header or any address is refused); it prints the result to the job log,
+which this sandbox can read where it cannot read an artifact blob, writes
+nothing under `docs/`, never replaces a file and never logs a raw exception.
+`issuer-evidence.yml` runs it on a dispatch with `dry_run` and `probe_sec`
+ticked, in place of the rehearsal collection, keeps it as a 14-day artifact
+and never persists it.
+
+**The runner's answer.** Dispatched once on the branch, run 39095391329 (job
+117580649908, Python 3.12.15) at 03:57:30–31 UTC on 18 October: the mapping
+523,925 bytes (`d04923d6…`) and AAPL's submissions 163,690 bytes (`aad00f6a…`),
+both `ok`, the identity verified (CIK 320193), 17 filings in the 365-day window
+and one history file advertised. The refusal recorded through 16 October is
+not what SEC gives the named contact. The sandbox's own run of the probe says
+`network_error` -- the proxy refuses sec.gov here -- which is why the answer
+had to come from a runner. Not shown: a collection with candidates succeeding,
+or anything of news or earnings coverage.
+
+**Measured** (this sandbox, Python 3.11.15): 4798 tests collected;
+`tests/test_sec_probe.py` 10 and with `test_docs`, `test_workflows` and
+`test_issuer_http_diagnostics` 178 passed; actionlint 1.7.12 clean on the
+workflow; gitleaks 8.24.3 over the changed files: no leaks. Twelve mutants of
+the probe in the spare worktree, judged by the whole `tests/test_sec_probe.py`
+-- the cache used, an unverified identity still asked, `answered` ignoring the
+submissions, a null status counted as a refusal, the address check dropped,
+overwrite allowed, the raw error logged, the contact always claimed, no log
+line, `docs/` writable, a backwards clock unchecked, the status words changed
+-- all die; the control (a docstring word) survives.
+
+**Keep / fix / defer / omit.** Keep: a diagnostic binds nothing and is read off
+its log. Defer: a pending-acquisition flag from the merger forms SEC's
+submissions already list (`PREM14A`, `DEFM14A`, `SC TO-T`, `SC 14D9`) for each
+candidate, now that SEC answers -- no extra request, a warning beside the
+evidence and never an order authority; the account note `plan.NOTE_ATTACH_STOP`
+recorded under #183. Omit: a scheduled probe.
+
+**Not claimable:** a collection with candidates; Monday's dispatched morning
+check, until it runs; any trading edge.
