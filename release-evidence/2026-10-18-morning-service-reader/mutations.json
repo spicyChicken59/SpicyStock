@@ -1,0 +1,169 @@
+{
+  "scope": "Isolated temporary-source overrides; production tree unchanged throughout execution",
+  "base_source_sha256": "9fdf58515f9863d2cedadb00a65bde2af254f871f5af8184ecd59a597853ab88",
+  "test_source_sha256": "118e36945098858bcc1068c4109c1c14ae17d87fce2342097ec0ff0f5c52bf7d",
+  "results": [
+    {
+      "name": "visible_only",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 5,
+      "failed_controls": [
+        "1280: hidden tab stops polling",
+        "1280: becoming visible resumes one due read",
+        "390: hidden tab stops polling",
+        "390: becoming visible resumes one due read",
+        "hidden tab aborts an inflight automatic read"
+      ],
+      "log_sha256": "d569686fd67910fb45b019d619e3d745691bca60f8ce21bbae7ad2d183326853",
+      "source_sha256": "720d32d0dd5b9cde76ca5d5945ca8031aff2be66b89d1c94fabd3a09ecbe9759"
+    },
+    {
+      "name": "https_guard",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 2,
+      "failed_controls": [
+        "invalid endpoint refuses all network routes: http://receipts.example.invalid/morning.json",
+        "invalid endpoint explains configuration refusal"
+      ],
+      "log_sha256": "fc7566b078ddee8725e20152c86e91c76fcabcf52a1758fbbbc999354219ce62",
+      "source_sha256": "b55508621d05ec5f7531b374509877a0bddfbbda4ccd00fe66b2b14b79ddc671"
+    },
+    {
+      "name": "cutoff_deadline",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 1,
+      "failed_controls": [
+        "cutoff aborts an inflight automatic request before its ordinary timeout"
+      ],
+      "log_sha256": "a618fbb16d842d0eb315b88f4879ff4c02a80be2dc899fa43aae06a946696348",
+      "source_sha256": "76d3f3edc6e7a6d81923b9d61da5791c603f31668e1171335b56486af57be753"
+    },
+    {
+      "name": "ticket_gate",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 1,
+      "failed_controls": [
+        "no admitted tickets: automatic reads remain off"
+      ],
+      "log_sha256": "9a485bf05a10992be1ff78c2d2100b106aaa60b713fb32b99a0b13718773480c",
+      "source_sha256": "a9728186c0b16f4bd723a8b3beaa1e9d36158a1ac5be4a80869965f8ca217bfe"
+    },
+    {
+      "name": "local_http_claim",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 4,
+      "failed_controls": [
+        "local_budget: skipped request cannot claim a fresh provider HTTP status",
+        "local_budget: HTTP contradiction is explained",
+        "local_backoff: skipped request cannot claim a fresh provider HTTP status",
+        "local_backoff: HTTP contradiction is explained"
+      ],
+      "log_sha256": "f27e7fcf781c2f36df185f4d7878ebd8ebfe9b4c381b1d3f9df71216af95a9e2",
+      "source_sha256": "675e15d666803b5f6b8c23a7cf92cc9128d276c54a89bf83384bb63bae1e4011"
+    },
+    {
+      "name": "source_error_shape",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 6,
+      "failed_controls": [
+        "unknown failure: contradictory source error kind is refused",
+        "unknown failure: source failure validation explains refusal",
+        "failure on success: contradictory source error kind is refused",
+        "failure on success: source failure validation explains refusal",
+        "unavailable without reason: contradictory source error kind is refused",
+        "unavailable without reason: source failure validation explains refusal"
+      ],
+      "log_sha256": "16031d1d5ebed207bd1d473afbb397fd4ce52d6854351a2abea542e0d950da71",
+      "source_sha256": "bde31e746070d6ad62ae268e3480397d8bde9ffb1de5745536881930af78f271"
+    },
+    {
+      "name": "local_wording",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 1,
+      "failed_controls": [
+        "local_budget: no new provider request or entitlement result is claimed"
+      ],
+      "log_sha256": "8e7384a248274da7ece8457cb17bd27b752b701bcdf815bfd8a838c5ae4b8222",
+      "source_sha256": "80c8d70ddbb195c89ecfa0ae325272e8d5b9231ae537901068c8c2aff64f954d"
+    },
+    {
+      "name": "quote_source_coherence",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 10,
+      "failed_controls": [
+        "provider_error/copied recent prices: source/row contradiction is refused",
+        "provider_error/copied recent prices: contradiction is explained",
+        "provider_error/unavailable quote with spread: source/row contradiction is refused",
+        "provider_error/unavailable quote with spread: contradiction is explained",
+        "provider_error: successful feed cannot label its data unavailable",
+        "local_backoff/copied recent prices: source/row contradiction is refused",
+        "local_backoff/copied recent prices: contradiction is explained",
+        "local_backoff/unavailable quote with spread: source/row contradiction is refused",
+        "local_backoff/unavailable quote with spread: contradiction is explained",
+        "local_backoff: successful feed cannot label its data unavailable"
+      ],
+      "log_sha256": "c97dee62b93a5251428f8d2ee7a703c51770e855cdda8fe975e6dc1deba6f234",
+      "source_sha256": "0a29ef6ba5e7b9639151f08e69eda6aa73649002bb8c387a7edacb8be3040f3a"
+    },
+    {
+      "name": "unknown_price_comparison",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 4,
+      "failed_controls": [
+        "provider_error/invented comparison: source/row contradiction is refused",
+        "provider_error/invented comparison: contradiction is explained",
+        "local_backoff/invented comparison: source/row contradiction is refused",
+        "local_backoff/invented comparison: contradiction is explained"
+      ],
+      "log_sha256": "4472cc32f1dc32a5e804b966e5805471b93e0980614cdefec211be7dc704a98e",
+      "source_sha256": "526c0f297bb922fe0982f39fa12a3b3fae094382af5ecf9e7a2e7e286135c1ae"
+    },
+    {
+      "name": "volume_source_coherence",
+      "expected": "fail",
+      "exit_code": 1,
+      "checks": 117,
+      "failures": 8,
+      "failed_controls": [
+        "provider_error/copied delayed volume: source/row contradiction is refused",
+        "provider_error/copied delayed volume: contradiction is explained",
+        "provider_error/unavailable volume with timestamp: source/row contradiction is refused",
+        "provider_error/unavailable volume with timestamp: contradiction is explained",
+        "local_backoff/copied delayed volume: source/row contradiction is refused",
+        "local_backoff/copied delayed volume: contradiction is explained",
+        "local_backoff/unavailable volume with timestamp: source/row contradiction is refused",
+        "local_backoff/unavailable volume with timestamp: contradiction is explained"
+      ],
+      "log_sha256": "9e58740ecb6564c958c68e03ce7179ccf32c6c15320e42b15328d709901e3bd7",
+      "source_sha256": "1b3bca1303484bd81e26dcb57df0d6771119119d50d59f5685b5af7c64196b79"
+    },
+    {
+      "name": "outside_scope_handoff",
+      "expected": "pass",
+      "exit_code": 0,
+      "checks": 117,
+      "failures": 0,
+      "failed_controls": [],
+      "log_sha256": "795effdd369f62f93dc014bb5bdf6b29ad3825d30738797e58c57a04f88d001a",
+      "source_sha256": "4884a1b229fd3eeee9de11ddd0ab766eb4571e1373e0e17e0da75612966407a5"
+    }
+  ]
+}

@@ -1213,6 +1213,37 @@ Pages can deliver late; this is a dated snapshot, not a sub-minute quote
 service. The browser recomputes freshness as time passes. Its reload control
 only re-reads the public snapshot; it does not call a market-data provider.
 
+An optional deployment adapter reads one fixed public HTTPS `/morning.json`
+endpoint from the committed `spicystock-morning-endpoint` meta tag in
+`docs/index.html`. It is empty by default: the shipped site still reads the
+same-origin static file and does not poll. Only a reviewed deployment may set
+that exact URL; query strings, fragments, credentials, other paths and malformed
+configuration are refused. Browser preferences, local reports, notes and ticker
+selections never configure the destination or enter its request. The configured
+server must allow the site's origin through CORS. Requests omit credentials and
+referrers, refuse redirects, and retain the 15-second timeout and 512 KiB bound.
+
+With that explicit opt-in, visible tabs automatically read at a 30-second
+minimum interval only for a current production publication with admitted plans,
+from 30 minutes before its recorded exchange open until its entry cutoff.
+Hidden tabs, practice/replay records, missing timing, stale publications and
+zero-ticket publications do not poll. The manual reload remains available.
+An automatic read never overlaps another read; publication changes cancel old
+work and recheck the exact source binding. An outage, malformed response or older
+receipt preserves the last verified receipt and known event exclusions. There
+is no automatic static-file fallback. Reads cannot trigger provider work.
+This disabled-by-default adapter establishes no hosting, scheduler, source
+coverage or live-session delivery reliability; those remain deployment and
+operating acceptance requirements.
+
+Locally deferred collections distinguish a request budget/cadence limit from
+backoff after an earlier provider failure. They explicitly say no provider
+request was made in that collection, keep quote fields unavailable, and cannot
+claim a new provider HTTP result or entitlement observation. Unsupported or
+contradictory source failure kinds are refused by the browser receipt validator.
+Unavailable feeds must carry empty unavailable price/volume fields and unknown
+comparisons; contradictory copied prices or volume are refused as well.
+
 Manual dispatch defaults to a rehearsal artifact. An optional rehearsal-only
 source diagnostic requests the fixed SPY symbol through the same feed adapter
 and normalizers, even when there are no admitted tickets. Its separate artifact

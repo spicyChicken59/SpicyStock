@@ -10813,3 +10813,31 @@ count of metadata rows not listed omitted the new acquisition links. The count
 now subtracts both disjoint lists; a visible assertion at each width holds it.
 504 browser checks pass after the fix, with refreshed captures. Hosted checks
 and production verification remain pending; no current event or trade is inferred.
+
+### Optional morning receipt browser adapter — 18 October 2026
+
+The browser can read one deployment-owned exact HTTPS `/morning.json` endpoint.
+The committed meta tag is empty, so production retains its static same-origin
+receipt and does not poll. An explicit deployment opt-in uses credential-free,
+referrer-free reads with redirects refused and the existing 512 KiB / 15-second
+bounds. Automatic reads are separated by at least 30 seconds, require visible
+current production plans inside their recorded pre-open/entry window, stop when
+hidden and abort by cutoff. Manual reload and exact-publication binding remain;
+source revisions cancel old work. Failed or older receipts cannot replace the
+last verified receipt or remove retained source-backed exclusions. No automatic
+static fallback is added. README and `.env.example` describe the disabled default.
+Locally deferred budget/cadence and backoff outcomes explicitly say no provider
+request was made; the source validator refuses unknown or contradictory error
+kinds and a local deferral carrying an asserted provider HTTP response.
+Independent review reproduced unavailable source metadata beside recent copied
+prices. The browser now matches the producer's unavailable observation shapes:
+empty trade/quote/volume fields and unknown comparisons, for provider failures
+and local deferrals alike. Contradictory source/row claims are refused.
+
+The local preparation receipt in
+`release-evidence/2026-10-18-morning-service-reader/prepared.json` separates
+synthetic browser controls, targeted Python checks, source mutations and
+independent review. Hosting, scheduler precision, server-side provider bindings,
+actual fresh quote coverage, measured live-session delivery and the goal's
+ten-session reliability gate remain external deployment/operating work. This
+adapter alone establishes none of them and places no trade.
