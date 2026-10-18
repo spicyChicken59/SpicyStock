@@ -1,0 +1,35 @@
+{
+  "scope": "Prepared single-host provider-free service adapter; synthetic tests only, not deployed live delivery",
+  "base_commit": "a75dddbe",
+  "verification": [
+    {
+      "command": "python -m pytest tests/test_morning_service.py -q --disable-warnings --tb=short",
+      "passed": 50,
+      "failed": 0
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "command": "python -m src.morning_service --help",
+      "result": "passed"
+    }
+  ],
+  "source_sha256": {
+    "src/morning_service.py": "f338838142c0bc5cc92804dc314535f40abfce96f05d102d3d603e81841b84e7",
+    "tests/test_morning_service.py": "e82801a8b2eb3484b8e44842f4e16b79e22a86f7d820777981191323aa43ec45",
+    "docs/operations/morning-service.md": "34e962100918d764c82952a2b8ee91021b59d8504ea89a5b11b2c4a19aefba3c"
+  },
+  "acceptance_mapping": {
+    "trustworthy_inputs": "Existing production binding, receipt replay and independent cross-publication restriction validators retained; changed source and previous receipt fenced.",
+    "verified_workflow": "Concurrency, quota persistence, restart, lease expiry, callback failure, no-ticket, off-window, outage, cross-publication continuity, replay separation and public GET no-work controls pass.",
+    "honest_outcomes": "Offline replay database is permanently segregated and never served; source timestamps unchanged. No fills, trades, profits or timely live delivery claimed."
+  },
+  "remaining": [
+    "Actual bounded live transport integration including attempt quotas/backoff/halt cache/process deadline is separate work.",
+    "Selected existing host, persistent local storage and scheduler, TLS routing and trusted publication handoff remain unconfigured.",
+    "Production browser endpoint remains unconfigured; CORS adapter is optional exact-origin only.",
+    "Actual expected-session quote-age and delivery evidence, ten-session service acceptance and broader issuer-news/earnings coverage remain pending."
+  ]
+}
