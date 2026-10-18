@@ -92,7 +92,10 @@ result = collect_once(store, bounded_collector, clock=utc_clock)
 
 `bounded_collector(canonical_raw, previous_raw=..., clock=...,
 observation_run_id=...)` returns the existing `morning.collect` receipt shape.
-There is deliberately **no default provider or live command**. The tests call
+There is deliberately **no implicit provider in this store**. The separately
+implemented [bounded worker](../MORNING_SERVICE_WORKER.md) is the explicit live
+integration entry point; it owns provider attempt quotas, retries, backoff, halt
+cache and execution supervision. The store tests call
 `morning.collect` with explicit provider/halt doubles and the production
 validators; identical recorded inputs produce identical decisions.
 
@@ -106,12 +109,12 @@ collection window is still open. Reserve an attempt in that transaction,
 release the transaction, then perform the network request. This helper does not
 spend a provider request or implement its adapter's limits itself.
 
-Before any real provider wiring, the adapter must implement per-feed attempt
-budgets, disabled/charged retries, authentication/entitlement/429 backoff,
-durable Nasdaq cache with its 60-second floor, and a process execution deadline.
+The bounded worker must remain the only live provider path: bypassing its
+attempt budgets, disabled retries, authentication/entitlement/429 backoff,
+durable Nasdaq cache and process deadline invalidates those guarantees. Its
+offline checks do not establish actual provider access or on-time delivery.
 The existing SDK's retry/timeout settings cannot be connected unchanged and
-called a 30-second guarantee. Publication ingestion also still needs a trusted
-actual hosting handoff; public GET must never accept source URLs or symbols.
+called a 30-second guarantee. Public GET never accepts source URLs or symbols.
 
 ## Deterministic offline replay
 
@@ -134,3 +137,47 @@ provider entitlements/costs, the production browser's explicit endpoint config,
 and actual expected-session delivery evidence. Broader issuer news/earnings
 coverage remains separate. Ten expected live sessions cannot be inferred from
 these deterministic implementation checks.
+
+## Trusted publication synchronization
+
+The separate fixed-repository handoff can ingest committed main directly:
+
+```sh
+python -m tools.sync_morning_service --database /srv/spicystock/morning.sqlite
+```
+
+It accepts only a local database path. The repository is fixed to
+`spicyChicken59/SpicyStock`, ref `refs/heads/main`, source `docs/data.json` and
+bootstrap companion `docs/morning.json`; public clients cannot choose a URL,
+ref or symbol. It reads the small GitHub ref descriptor, then file metadata at
+that exact immutable commit. The canonical bytes must match the reported Git
+blob SHA-1 and length and pass existing SHA-256 publication/reader binding and
+provenance validation. A matching stored blob skips the full download, even
+when code-only main commits advance. A changed main ref at the final check
+refuses ingestion. This establishes the source at that final observed instant,
+not a promise that main cannot advance afterward. A concurrent local ingestion
+is refused by an expected-generation compare-and-swap inside the store.
+
+Each synchronization makes at most five read-only requests and has a 30-second
+whole-response deadline with bounded headers and streamed bodies, decreasing
+socket read timeouts, refused redirects and no retries or credentials. The
+current multi-megabyte canonical file receives metadata-only GitHub contents
+responses. If GitHub instead includes inline content that exceeds the 16 KiB
+metadata bound, synchronization refuses explicitly; it does not expand that
+bound or silently download an unbounded metadata response. Deployment still
+needs a runtime supervisor for DNS/platform stalls beyond HTTP socket control.
+
+The SQLite poll ledger persists the next allowed time and attempt count even
+when a synchronization fails. Calls before 300 seconds elapse perform no source
+requests. HTTP 403 and 429 use typed statuses and bounded backoff up to one hour;
+no response body or credentials are logged. A bootstrap 404 means no published
+morning receipt was available. Other failures or an invalid receipt refuse the
+entire bootstrap, preserving the distinction between missing observations and
+lost restrictions. An older receipt seeds independently validated event facts;
+its quotes are not served as current publication authority.
+
+The synchronizer creates no schedule or hosting resource. A selected host must
+invoke it before and during the preparation window at an appropriate bounded
+cadence, retain its ledger across restarts, and run the separately supervised
+worker. Tests use synthetic transport responses; no live handoff or deployment
+has been claimed by these implementation checks.

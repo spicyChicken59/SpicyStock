@@ -122,7 +122,7 @@ class Store:
         if state['clock'] is not None and at.timestamp() < state['clock']:
             raise ValueError('service_clock_moved_backwards')
 
-    def ingest(self, raw, *, now, previous=None):
+    def ingest(self, raw, *, now, previous=None, expected_generation=None):
         """Local authenticated/operator handoff; never exposed over HTTP.
 
         ``previous`` seeds restriction continuity only on the first ingestion
@@ -147,6 +147,8 @@ class Store:
         with self._transaction() as db:
             state = db.execute('SELECT * FROM state WHERE id=1').fetchone()
             self._clock(state, at)
+            if expected_generation is not None and state['generation'] != expected_generation:
+                return 'source_record_changed'
             if previous is not None and state['publication'] is not None:
                 raise ValueError('service_previous_receipt_only_at_bootstrap')
             if state['publication_sha'] == binding['data_sha256']:
