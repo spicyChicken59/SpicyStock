@@ -3536,6 +3536,40 @@ async function checkSession(browser, base, full) {
     await c2.close();
   }
 
+  // ---- a setting-up ticket left open across the deadline: while its bar
+  // offers the order, the bar's note stands for the entry's above it; once the
+  // window ends the bar offers nothing, and the decision summary, repainted in
+  // place, carries the entry's own note again
+  {
+    const deg = JSON.parse(await readFile(path.join(FIXTURES, 'degraded.json'), 'utf8'));
+    const coil = ((deg.watchlist || {}).top || []).find((r) => r.plan && r.plan.order_json);
+    check('the degraded night carries a setting-up ticket, so the repaint below can fail', !!coil, coil && coil.ticker);
+    if (coil) {
+      const tmd = deg.run.timing;
+      const { context: c3, page: p3, errors: e3 } = await open(browser, base, '/tests/fixtures/page/degraded.json', null, 1280,
+        { lens: 'all', hash: `#/explore/setting-up/${coil.ticker}` });
+      await p3.evaluate((iso) => {
+        const Real = Date;
+        window.__fake = new Real(iso).getTime();
+        function Fake(...a) { return a.length ? new Real(...a) : new Real(window.__fake); }
+        Fake.now = () => window.__fake; Fake.parse = Real.parse; Fake.UTC = Real.UTC;
+        Fake.prototype = Real.prototype;
+        window.Date = Fake;
+      }, atSession(tmd, '09:40'));
+      await p3.evaluate(() => window.SCStock.reclock());
+      const places = async () => (await notePlaces(p3, '#detail')).map((n) => n[0]).sort();
+      eq('inside the window a setting-up bar offers the order, and its note stands for the entry\'s', await places(), ['bar', 'exits', 'order']);
+      const [moved, phase] = await p3.evaluate((iso) => {
+        window.__fake = new Date(iso).getTime();
+        return [window.SCStock.reclock(), document.documentElement.getAttribute('data-ss-window')];
+      }, atSession(tmd, '11:00'));
+      eq('the clock crosses the cutoff on the setting-up page', [moved, phase], [true, 'ended']);
+      eq('then the bar offers nothing, and the entry\'s own note is back beside the recorded ticket\'s', await places(), ['exits', 'need', 'recorded']);
+      eq('setting-up left-open page errors', e3, []);
+      await c3.close();
+    }
+  }
+
   // ---- a copy that is pressed after the window closed under it
   {
     const { context: c3, page: p3, errors: e3 } = await open(browser, base, '/tests/fixtures/page/next.json', null, 1280,
