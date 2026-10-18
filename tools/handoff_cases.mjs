@@ -38,6 +38,13 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     const tab = await open(browser, base, '/' + DIR + '/publication' + (multiple ? '-multiple' : '') + '.json', NOW, width, {
       theme, hash: '#/explore/setting-up/COIL', reducedMotion: 'reduce', beforeLoad: async page => {
         page.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
+        // every text the page writes to the clipboard, kept across a reload,
+        // so a write that lands after the copy check has read is still held
+        await page.addInitScript(() => {
+          const c = navigator.clipboard; if (!c || !c.writeText) return;
+          const write = c.writeText.bind(c);
+          c.writeText = (t) => { try { const k = 'ss:clipwrites', a = JSON.parse(sessionStorage.getItem(k) || '[]'); a.push(String(t)); sessionStorage.setItem(k, JSON.stringify(a)); } catch (e) {} return write(t); };
+        });
         await page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: sidecar }));
         if (extra) await extra(page);
       }
@@ -157,6 +164,12 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       await page.locator('[data-handoff-delete]').evaluate(node => node.click());
       await page.waitForFunction(() => SCStock.handoff.list().length === 0);
       check('deletion explains broker positions unchanged', /did not cancel an order or close a position/.test(await page.locator('[data-handoff-message]').textContent()));
+      // read after the report, the reload and the deletion: a copy that wrote
+      // the readback and then, a moment later, the readback with the rule is
+      // caught here, where the copy check above had already read the first
+      const writes = (await page.evaluate(() => JSON.parse(sessionStorage.getItem('ss:clipwrites') || '[]'))).filter((t) => !/ sentinel$/.test(t));
+      eq('every clipboard write the page made was a readback, and none carried Fidelity\'s part-fill rule',
+        [writes.length, writes.filter((t) => /Fidelity’s rule|SpicyStock’s advice|fills only in part/.test(t)).length], [1, 0]);
       eq('handoff browser errors', [...errors], []);
     } finally { await context.close(); }
   }

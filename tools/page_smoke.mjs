@@ -4066,7 +4066,7 @@ async function checkGradingHistory(browser, base) {
       // no order of any shape (its record wrote none, so comparing against its
       // own empty order line could not fail)
       check(`archived ${status} ${ticker} ${width}/${theme} its status sentence ${status === 'ticket' ? 'prints its order line' : 'prints no order'}`,
-        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/.test(line), line);
+        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/i.test(line), line);
       eq(`archived ${status} ${ticker} ${width}/${theme} Fidelity's part-fill rule ${status === 'ticket' ? 'follows it, seen, once' : 'is not printed'}`,
         await notePlaces(page, '#history-results'), notes(['original', status === 'ticket' ? 1 : 0]));
     }
@@ -4103,7 +4103,7 @@ async function checkGradingHistory(browser, base) {
       const line = (await count(page, `${box} [data-original-status]`)) ? await text(page, `${box} [data-original-status]`) : '';
       const order = full.bursts.find((b) => b.ticker === ticker).plan.order_line;
       check(`study ${status} ${ticker} ${width}/${theme} its original decision ${status === 'ticket' ? 'prints its order line' : 'prints no order'}`,
-        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/.test(line), line);
+        status === 'ticket' ? !!order && line.includes(order) : line.length > 0 && !/stop-limit|stop-loss|\bOTO\b/i.test(line), line);
       eq(`study ${status} ${ticker} ${width}/${theme} Fidelity's part-fill rule ${status === 'ticket' ? 'follows it, seen, once' : 'is not printed'}`,
         await notePlaces(page, box), notes(['original', status === 'ticket' ? 1 : 0]));
     }
