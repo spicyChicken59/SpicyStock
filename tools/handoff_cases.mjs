@@ -10,6 +10,18 @@ const field = (page, key) => page.locator('[data-handoff-field="' + key + '"]');
 const state = page => page.locator('[data-handoff-summary]').evaluate(node => Object.fromEntries([...node.children].map(row => [row.querySelector('dt').textContent, row.querySelector('dd').textContent])));
 const resultAmounts = page => page.locator('[data-handoff-result-amounts]').evaluate(node => Object.fromEntries([...node.children].map(row => [row.querySelector('dt').textContent, row.querySelector('dd').textContent])));
 const saved = page => page.evaluate(() => SCStock.handoff.list());
+// The clipboard read again until it no longer holds the sentinel written
+// before the copy, from Node: an async predicate to waitForFunction resolves
+// at once on its Promise, so it would not wait. The sentinel, still there
+// after five seconds, is returned and named by the caller's check.
+const copiedText = async (page, sentinel) => {
+  for (let i = 0; i < 100; i++) {
+    const t = await page.evaluate(() => navigator.clipboard.readText());
+    if (t !== sentinel) return t;
+    await page.waitForTimeout(50);
+  }
+  return sentinel;
+};
 const set = async (page, fields) => { for (const [key, value] of Object.entries(fields)) await field(page, key).fill(value); };
 async function save(page) {
   await page.locator('[data-handoff-save]').click();
@@ -26,6 +38,13 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
     const tab = await open(browser, base, '/' + DIR + '/publication' + (multiple ? '-multiple' : '') + '.json', NOW, width, {
       theme, hash: '#/explore/setting-up/COIL', reducedMotion: 'reduce', beforeLoad: async page => {
         page.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
+        // every text the page writes to the clipboard, kept across a reload,
+        // so a write that lands after the copy check has read is still held
+        await page.addInitScript(() => {
+          const c = navigator.clipboard; if (!c || !c.writeText) return;
+          const write = c.writeText.bind(c);
+          c.writeText = (t) => { try { const k = 'ss:clipwrites', a = JSON.parse(sessionStorage.getItem(k) || '[]'); a.push(String(t)); sessionStorage.setItem(k, JSON.stringify(a)); } catch (e) {} return write(t); };
+        });
         await page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: sidecar }));
         if (extra) await extra(page);
       }
@@ -55,10 +74,41 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       eq('readback focuses its heading after explicit preparation', await page.evaluate(() => document.activeElement.id), 'handoff-title');
       await page.locator('[data-handoff-readback] > summary').click();
       check('dated exit schedule is labelled archived and not resized', /Archived model exit schedule/.test(await page.locator('[data-handoff-readback]').textContent()) && /not resized to your personal draft or reported holdings/.test(await page.locator('[data-handoff-readback]').textContent()));
+      // counted over the whole desk and read as a sighted reader gets it: a
+      // note hidden, transparent or clipped to a screen-reader-only box, or
+      // printed anywhere in the desk but the readback before its <pre>, fails
+      eq('readback prints Fidelity\'s part-fill rule once, as the page defines it, seen, and nowhere else in the desk',
+        await page.locator('#morning-desk [data-broker-part-fill]').evaluateAll((els) => els.map((e) => {
+          // the smoke's own measure (tools/page_smoke.mjs, notePlaces): a box
+          // of its own on the page, not clipped away by an ancestor, in a
+          // colour neither transparent nor its background's
+          const alpha = (c) => { const m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return c === 'transparent' ? 0 : 1; const v = m[1].split(/[ ,\/]+/).filter(Boolean); return v.length > 3 ? parseFloat(v[3]) : 1; };
+          const r = e.getBoundingClientRect();
+          let seen = r.width > 2 && r.height > 2 && e.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+            && !(r.right + scrollX <= 0 || r.bottom + scrollY <= 0 || r.left + scrollX >= document.documentElement.clientWidth);
+          let x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
+          for (let a = e; seen && a && a !== document.documentElement; a = a.parentElement) {
+            const cs = getComputedStyle(a); if (cs.clipPath !== 'none' || cs.clip !== 'auto' || parseFloat(cs.fontSize) < 6 || parseFloat(cs.opacity) < 0.1) seen = false;
+            if (a !== e && /hidden|clip/.test(cs.overflowX + ' ' + cs.overflowY)) { const q = a.getBoundingClientRect(); x0 = Math.max(x0, q.left); y0 = Math.max(y0, q.top); x1 = Math.min(x1, q.right); y1 = Math.min(y1, q.bottom); }
+          }
+          if (seen && !(x1 - x0 > 2 && y1 - y0 > 2)) seen = false;
+          const ink = getComputedStyle(e);
+          if (seen && (alpha(ink.color) === 0 || alpha(ink.webkitTextFillColor) === 0)) seen = false;
+          for (let a = e; seen && a; a = a.parentElement) { const bg = getComputedStyle(a).backgroundColor; if (alpha(bg) > 0) { if (bg === ink.color) seen = false; break; } }
+          let pre = e.nextElementSibling; while (pre && !pre.matches('pre[data-handoff-text]')) pre = pre.nextElementSibling;
+          return [e.textContent, e.parentElement.matches('[data-handoff-readback]') && !!pre, seen];
+        })),
+        [[(await readFile(path.join(ROOT, 'docs', 'app-handoff-ui.js'), 'utf8')).match(/const BROKER_PART_FILL = '([^']+)';/)[1], true, true]]);
       check('two-share draft has explicit whole-share reference', /personal draft is 2 whole shares.*rounds up to 1 whole share, leaving 1/.test(await page.locator('[data-handoff-exit-review]').textContent()));
       check('readback labels personal two and original four separately', /BUY 2 COIL/.test(await page.locator('[data-handoff-text]').textContent()) && /Published quantity: 4/.test(await page.locator('[data-handoff-text]').textContent()));
+      await page.evaluate(() => navigator.clipboard.writeText('handoff sentinel').catch(() => {}));
       await page.locator('[data-handoff-copy]').click();
-      check('clipboard contains chosen two and no submission claim', await page.evaluate(async () => /BUY 2 COIL/.test(await navigator.clipboard.readText()) && /places no order/.test(await navigator.clipboard.readText())));
+      const clip = await copiedText(page, 'handoff sentinel');
+      check('the copy reached the clipboard, so the checks below read it', clip !== 'handoff sentinel', clip.slice(0, 80));
+      check('clipboard contains chosen two and no submission claim', /BUY 2 COIL/.test(clip) && /places no order/.test(clip), clip.slice(0, 200));
+      // the copied readback is the draft's own lines, exactly as the readback
+      // prints them: the broker sentence is read beside it and never rides along
+      eq('the copied readback is the printed readback, and carries none of Fidelity\'s part-fill rule', clip, await page.locator('[data-handoff-text]').textContent());
       eq('copy does not invent a report', (await saved(page))[0].report_updated_at, null);
       await page.locator('[data-handoff-report] > summary').click();
       await set(page, { submitted_quantity: '2', submitted_at: '2026-09-11T08:33:00-05:00', filled_quantity: '1', average_price: '111.23', filled_at: '2026-09-11T08:34:00-05:00' });
@@ -114,6 +164,12 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
       await page.locator('[data-handoff-delete]').evaluate(node => node.click());
       await page.waitForFunction(() => SCStock.handoff.list().length === 0);
       check('deletion explains broker positions unchanged', /did not cancel an order or close a position/.test(await page.locator('[data-handoff-message]').textContent()));
+      // read after the report, the reload and the deletion: a copy that wrote
+      // the readback and then, a moment later, the readback with the rule is
+      // caught here, where the copy check above had already read the first
+      const writes = (await page.evaluate(() => JSON.parse(sessionStorage.getItem('ss:clipwrites') || '[]'))).filter((t) => !/ sentinel$/.test(t));
+      eq('every clipboard write the page made was a readback, and none carried Fidelity\'s part-fill rule',
+        [writes.length, writes.filter((t) => /Fidelity’s rule|SpicyStock’s advice|fills only in part/.test(t)).length], [1, 0]);
       eq('handoff browser errors', [...errors], []);
     } finally { await context.close(); }
   }
@@ -278,8 +334,10 @@ export async function checkHandoff({ browser, base, open, check, eq, shotsDir })
         check('odd draft review is conditional and broker support remains unknown', /reference arithmetic.*does not determine whether another exit is due/.test(message) && /fractional-share support is unknown/.test(message));
         if (quantity === 1) check('single-share draft explicitly cannot be partially exited', /one-share position cannot be partly exited/.test(message));
         await page.locator('[data-handoff-readback] > summary').click();
+        await page.evaluate(() => navigator.clipboard.writeText('whole-share sentinel').catch(() => {}));
         await page.locator('[data-handoff-copy]').click();
-        check('copied readback keeps whole-share explanation', await page.evaluate(async expected => (await navigator.clipboard.readText()).includes('Whole-share exit reference: ' + expected), message));
+        const copiedWhole = await copiedText(page, 'whole-share sentinel');
+        check('copied readback keeps whole-share explanation', copiedWhole.includes('Whole-share exit reference: ' + message), copiedWhole.slice(0, 200));
         eq('odd draft leaves original model and all report fields unchanged', await page.evaluate(original => [JSON.stringify(SCStock.data) === original, SCStock.handoff.list()[0].plan.order.quantity, Object.values(SCStock.handoff.list()[0].report).every(value => value === null)], before), [true, 4, true]);
         eq('whole-share review sends no network requests', requests.slice(requestCount), []);
         check('whole-share text fits phone and desktop', await page.locator('#morning-desk').evaluate(node => node.scrollWidth <= node.clientWidth + 1 && document.documentElement.scrollWidth <= innerWidth));
