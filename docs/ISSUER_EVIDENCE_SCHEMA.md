@@ -220,3 +220,15 @@ Expired valid pairs may be pruned only after all entries validate. Unknown,
 orphan, symlinked or tampered files are preserved and disable cache reuse/save;
 network collection can continue. `validate_cache(path, prune=True)` is the
 stdlib save guard. Only trusted-main workflows may restore/save this cache.
+
+## Acquisition metadata review extension
+
+An issuer index may carry `acquisition_review` with positive `observed_count`
+and `filings` (the latest min(count, 12) metadata rows). It requires verified
+identity, unique accessions, descending acceptance/accession order, acceptance
+no later than the collection instant, and filing dates in the bounded window.
+Forms are PREM14A, DEFM14A, SC TO-T, SC TO-T/A, SC 14D9 and SC 14D9/A.
+The collector derives it from already parsed submissions and bounded history.
+It does not fetch those documents or change current-report selection. Missing
+fields on legacy or no-match bundles mean no warning recorded, never clearance.
+The links are metadata references; form names do not prove an active deal.

@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-18",
+  "base_commit": "88e708f254988b7b11abb72f5b70ffca40a64050",
+  "branch": "codex/issuer-acquisition-review",
+  "scope": "Local verification; synthetic acquisition metadata only; no production collection or personal execution",
+  "python": "3.12.14",
+  "checks": {
+    "focused_python_plus_docs": 320,
+    "additional_final_acquisition_checks": 14,
+    "browser": {
+      "passed": 502,
+      "failed": 0,
+      "viewport_widths": [
+        390,
+        1280
+      ],
+      "screenshots_inspected": true
+    },
+    "unchanged_producer_fixtures": 30,
+    "mutation": {
+      "removed_form_detection": "6 expected failures",
+      "unrelated_docstring_control": "6 passed"
+    }
+  },
+  "source_sha256": {
+    "src/issuer_evidence.py": "d148473282b2094797e638f93c824a7403a80e3bf7f56e4c392b88b345ff360f",
+    "docs/app-issuer-evidence.js": "6c9f90fd1b697b669c336bb1e308a4169191a6397dd23516d9803d66083ed5eb",
+    "tests/test_issuer_evidence.py": "37f4e74946f3bcc9b75f51d2fb7a28249757780d67b9f068ec97b360979feb52",
+    "tools/issuer_evidence_cases.mjs": "907b196f3953b149b0b6a732a59d109ca8ed150f16f00d7acf128579788e92db"
+  },
+  "acceptance_mapping": {
+    "1": "Dated acquisition form metadata, verified issuer identity, bounded scope, explicit legacy unknown state; synthetic source propagation and malformed inputs checked.",
+    "2": "Published plans, sizes, cash constraints, exclusions and current-report document selection unchanged. No new recommendation.",
+    "3": "Phone/desktop warning and SEC links inspected in existing shared SpicyChicken styling.",
+    "4": "502 issuer browser checks, collector deterministic replay, refusal controls, source changes and mutation controls. Prior full-product release evidence remains historical.",
+    "5": "No real fills, outcomes or profit asserted; synthetic and historical inputs unchanged."
+  },
+  "pending": {
+    "release": "Hosted checks and deployed-byte/browser verification have not run for this branch.",
+    "AC1_AC2_AC4": "Timely fresh morning delivery requires an identified provisioned server-side host with provider secrets; current environment has no secret bindings or hosting identity. GitHub Actions schedule latency is not a dependable quote transport. Broader issuer-news and future earnings coverage still require a suitable source and entitlement.",
+    "AC4_live": "Confirm pre-open Chicago receipt, expiry during entry window and ten consecutive expected publication/morning sessions. Future sessions validate engineering; they did not gate this work.",
+    "AC2_AC5_owner": "Fidelity ticket capabilities, settled cash and actual executions require owner/broker evidence; no orders authorized."
+  }
+}

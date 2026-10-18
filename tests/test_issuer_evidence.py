@@ -398,3 +398,78 @@ def test_absolute_alarm_interrupts_a_blocked_open_before_socket_timeout(monkeypa
     assert entered == [0.02] and budget.requests == 1 and budget.bytes == 0
     assert issuer.signal.getitimer(issuer.signal.ITIMER_REAL) == (0.0, 0.0)
     assert issuer.signal.getsignal(issuer.signal.SIGALRM) == previous
+
+
+@pytest.mark.parametrize('form', ['PREM14A', 'DEFM14A', 'SC TO-T', 'SC TO-T/A', 'SC 14D9', 'SC 14D9/A'])
+def test_acquisition_metadata_uses_existing_requests_and_never_changes_plans(producer, packet, form):
+    raw, baseline = packet
+    source = producer.aapl_submissions()
+    # Replace an unselected current report: warnings must inspect metadata
+    # beyond the three documents selected for retrieval.
+    source['filings']['recent']['form'][3] = form
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)})
+    result = producer.collect(raw, fetch=fetch)
+    index = result['bundle']['issuers'][0]['index']
+    assert index['acquisition_review']['observed_count'] == 1
+    assert index['acquisition_review']['filings'][0]['accession'] == '0000320193-26-009004'
+    assert index['acquisition_review']['filings'][0]['form'] == form
+    assert result['bundle']['issuers'][0]['documents'] == baseline['bundle']['issuers'][0]['documents']
+    assert result['bundle']['candidates'] == baseline['bundle']['candidates']
+    assert result['receipt']['coverage'] == baseline['receipt']['coverage']
+    assert result['bundle']['stats']['request_count'] == baseline['bundle']['stats']['request_count']
+    issuer.validate_for_publication(raw, result['receipt_bytes'], result['bundle_bytes'], allow_fixture=True)
+    again = producer.collect(raw, fetch=producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)}))
+    assert again['bundle_bytes'] == result['bundle_bytes']
+    assert again['receipt_bytes'] == result['receipt_bytes']
+    assert 'acquisition_review' not in baseline['bundle']['issuers'][0]['index']
+
+
+@pytest.mark.parametrize('edit', [
+    lambda r: r.update(observed_count=0),
+    lambda r: r.update(observed_count=True),
+    lambda r: r['filings'][0].update(form='10-K'),
+    lambda r: r['filings'][0].update(filing_date='2020-01-01'),
+    lambda r: r['filings'][0].update(accepted_at='2027-01-01T00:00:00+00:00'),
+    lambda r: r['filings'].append(r['filings'][0]),
+])
+def test_acquisition_metadata_refuses_corruption_after_rehash(producer, packet, edit):
+    raw, _ = packet
+    source = producer.aapl_submissions()
+    source['filings']['recent']['form'][3] = 'DEFM14A'
+    result = producer.collect(raw, fetch=producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)}))
+    receipt, bundle = repack(result, lambda r, b: edit(b['issuers'][0]['index']['acquisition_review']))
+    with pytest.raises(ValueError):
+        issuer.validate_bundle(receipt, bundle)
+
+
+def test_acquisition_future_and_old_metadata_cannot_enter_decision(producer, packet):
+    raw, _ = packet
+    source = producer.aapl_submissions()
+    recent = source['filings']['recent']
+    recent['form'][3] = recent['form'][4] = 'DEFM14A'
+    recent['acceptanceDateTime'][3] = '2026-10-11T16:00:00Z'
+    result = producer.collect(raw, fetch=producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)}))
+    assert 'acquisition_review' not in result['bundle']['issuers'][0]['index']
+
+
+def test_acquisition_review_retains_count_and_latest_twelve_without_document_fetches(producer, packet):
+    raw, _ = packet
+    source = producer.aapl_submissions()
+    original = source['filings']['recent']
+    old = {key: values[-1] for key, values in original.items()}
+    rows = []
+    for day in range(1, 16):
+        rows.append(dict(accessionNumber=f'0000320193-26-{9100 + day:06d}', form='DEFM14A',
+                         filingDate=f'2026-09-{day:02d}', reportDate='',
+                         acceptanceDateTime=f'2026-09-{day:02d}T16:00:00Z',
+                         primaryDocument=f'synthetic-{day}.htm', items=''))
+    rows.append(old)
+    source['filings']['recent'] = {key: [row[key] for row in rows] for key in original}
+    fetch = producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)})
+    result = producer.collect(raw, fetch=fetch)
+    row = result['bundle']['issuers'][0]
+    assert row['index']['acquisition_review']['observed_count'] == 15
+    assert [f['filing_date'] for f in row['index']['acquisition_review']['filings']] == [f'2026-09-{day:02d}' for day in range(15, 3, -1)]
+    assert not row['documents']
+    assert not any('/Archives/edgar/data/320193/' in url for url in fetch.calls)
+    issuer.validate_for_publication(raw, result['receipt_bytes'], result['bundle_bytes'], allow_fixture=True)

@@ -60,6 +60,7 @@ HEX = re.compile(r"[a-f0-9]{64}\Z")
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,31}\Z")
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
 BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
+ACQUISITION_FORMS = {"PREM14A", "DEFM14A", "SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A"}
 FORMS = {"8-K", "8-K/A", "6-K", "6-K/A"}
 ERRORS = {"rate_limit", "http_error", "timeout", "network_error", "redirect_refused",
           "size_limit", "request_budget", "time_budget", "invalid_response",
@@ -408,7 +409,7 @@ def validate_bundle(receipt_raw, bundle_raw):
         if identity["status"] == "verified":
             _require(identity["cik"] is not None and identity["name"] is not None and identity["mapping_source"] is not None and identity["submissions_source"] is not None, "issuer verified identity sources")
         index = row["index"]
-        _keys(index, ("window_start", "window_end", "coverage_status", "reason", "range_start", "range_end", "metadata_count", "eligible_current_report_count", "not_selected_count", "history_files_advertised", "history_files_fetched", "history_sources", "selected_accessions", "listed_filings", "exhibit_links_observed", "exhibit_links_not_fetched"))
+        _keys(index, ("window_start", "window_end", "coverage_status", "reason", "range_start", "range_end", "metadata_count", "eligible_current_report_count", "not_selected_count", "history_files_advertised", "history_files_fetched", "history_sources", "selected_accessions", "listed_filings", "exhibit_links_observed", "exhibit_links_not_fetched"), ("acquisition_review",))
         _require(index["window_start"] == bundle["window_start"] and index["window_end"] == as_of.date().isoformat()
                  and index["coverage_status"] in ("observed_window", "partial", "unknown") and (index["reason"] is None or _text(index["reason"])), "issuer index coverage")
         for key in ("range_start", "range_end"):
@@ -430,6 +431,20 @@ def validate_bundle(receipt_raw, bundle_raw):
             _source(source, completion)
             _require(identity["status"] == "verified" and re.fullmatch(r"https://data.sec.gov/submissions/CIK" + f'{identity["cik"]:010d}' + r"-submissions-[0-9]{3}\.json", source["url"]), "issuer history source URL")
         _require(isinstance(index["listed_filings"], list) and len(index["listed_filings"]) <= MAX_LISTED_FILINGS, "issuer listed metadata bound")
+        if "acquisition_review" in index:
+            review = index["acquisition_review"]
+            _keys(review, ("observed_count", "filings"))
+            _require(identity["status"] == "verified" and _count(review["observed_count"], index["metadata_count"])
+                     and review["observed_count"] > 0
+                     and review["observed_count"] + index["eligible_current_report_count"] <= index["metadata_count"]
+                     and isinstance(review["filings"], list)
+                     and len(review["filings"]) == min(review["observed_count"], MAX_LISTED_FILINGS), "issuer acquisition review count")
+            for filing in review["filings"]:
+                _filing(filing, as_of)
+                _require(filing["form"] in ACQUISITION_FORMS and index["window_start"] <= filing["filing_date"] <= index["window_end"], "issuer acquisition review form/window")
+            _require(len({f["accession"] for f in review["filings"]}) == len(review["filings"])
+                     and not {f["accession"] for f in review["filings"]} & {f["accession"] for f in index["listed_filings"]}
+                     and review["filings"] == sorted(review["filings"], key=lambda f: (f["accepted_at"], f["accession"]), reverse=True), "issuer acquisition review ordering")
         metadata = {}
         for filing in index["listed_filings"]:
             _filing(filing, as_of)
@@ -1104,6 +1119,9 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     if not full_window:
         _error(row, "history_incomplete")
     ordered = sorted(filings.values(), key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)
+    acquisition = [filing for filing in ordered if filing["form"] in ACQUISITION_FORMS]
+    if acquisition:
+        index["acquisition_review"] = {"observed_count": len(acquisition), "filings": acquisition[:MAX_LISTED_FILINGS]}
     reports = [filing for filing in ordered if filing["form"] in FORMS]
     selected = reports[:MAX_REPORTS]
     index.update(metadata_count=len(ordered), eligible_current_report_count=len(reports),

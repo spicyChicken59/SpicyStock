@@ -74,6 +74,47 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   const reveal = async page => {
     await page.locator('[data-issuer-evidence] > summary').click(); await wait(page);
   };
+  // Explicit synthetic transport controls; collector source propagation is
+  // independently exercised by test_acquisition_metadata_uses_existing_requests_and_never_changes_plans.
+  const withAcquisition = changed(null, b => {
+    const index = b.issuers[0].index;
+    const filing = { ...index.listed_filings[0], form: 'DEFM14A', accession: '0000320193-26-009099', primary_document: 'synthetic-acquisition.htm' };
+    index.metadata_count += 1;
+    index.acquisition_review = { observed_count: 1, filings: [filing] };
+  });
+  for (const width of [390, 1280]) {
+    const { page, context, transport } = await setup({ width, variant: withAcquisition });
+    try {
+      await reveal(page);
+      eq('acquisition warning bundle loads at ' + width, (await status(page)).state, 'loaded');
+      const warning = page.locator('[data-acquisition-review]');
+      eq('acquisition metadata is visible at ' + width, await warning.count(), 1);
+      check('acquisition warning is dated and explicitly unreviewed', /DEFM14A.*2026-10-09.*SEC accepted.*metadata only; content unreviewed/s.test(await warning.innerText()));
+      eq('acquisition source is the exact filing', await warning.locator('a').getAttribute('href'), 'https://www.sec.gov/Archives/edgar/data/320193/000032019326009099/synthetic-acquisition.htm');
+      check('form alone never claims pending acquisition', (await bodyText(page)).includes('Form names alone do not establish a pending or completed acquisition'));
+      if (shotsDir) {
+        await mkdir(shotsDir, { recursive: true });
+        await warning.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: path.join(shotsDir, 'issuer-acquisition-' + width + '.png') });
+      }
+      for (const [name, edit] of [
+        ['count', r => { r.observed_count = 0; }],
+        ['form', r => { r.filings[0].form = '10-K'; }],
+        ['future', r => { r.filings[0].accepted_at = '2027-01-01T00:00:00Z'; }],
+        ['old', r => { r.filings[0].filing_date = '2020-01-01'; }],
+        ['duplicate', r => { r.filings.push(r.filings[0]); r.observed_count = 2; }]
+      ]) {
+        transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review), withAcquisition);
+        await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+        eq('acquisition invalid ' + name + ' rejected at ' + width, (await status(page)).state, 'unavailable');
+      }
+      transport.current = original;
+      await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
+      eq('legacy acquisition receipt still readable', (await status(page)).state, 'loaded');
+      check('legacy absence is not clearance', (await bodyText(page)).includes('This is not evidence that no acquisition exists'));
+      eq('source changes remove the previous warning', await page.locator('[data-acquisition-review]').count(), 0);
+    } finally { await context.close(); }
+  }
   for (const [width, theme, canonical] of [[1280, 'dark', false], [390, 'light', false], [390, 'dark', true], [1280, 'light', true]]) {
     const { page, context, errors, requests } = await setup({ width, theme, canonical });
     try {

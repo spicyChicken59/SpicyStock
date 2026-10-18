@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4798 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 4812 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10773,3 +10773,32 @@ recorded under #183. Omit: a scheduled probe.
 
 **Not claimable:** a collection with candidates; Monday's dispatched morning
 check, until it runs; any trading edge.
+
+
+## Codex continuation, 18 October 2026 — acquisition metadata warning
+
+Resumed from main `88e708f2`, after reading the product goal, standing rules,
+latest #183/#184 handoff and open #108/#111 dependencies. Branch
+`codex/issuer-acquisition-review` adds the handoff's deferred acquisition-form
+review warning from existing SEC submissions/history metadata. It makes no
+extra provider request and does not classify a deal, alter plans or clear an
+event. The optional field is absent when no matching form was observed; both
+that absence and older receipts explicitly remain unknown, never clearance.
+
+Local evidence is in `release-evidence/2026-10-18-acquisition-review/acceptance.json`.
+320 focused Python/documentation checks passed before one final cap/order test
+was added; all 14 acquisition tests passed afterward. 502 issuer browser checks
+passed with phone/desktop captures inspected, and all 30 existing producer
+fixtures remain current. Removing form detection makes all six propagation
+checks fail; an unrelated docstring control passes them. Python 3.12, Node 22,
+Playwright 1.62.1; writable XDG cache and matching Chromium were required in
+this fresh environment. No provider credentials are configured here.
+README and the issuer schema are updated; `.env.example` was reviewed and
+needs no change because this adds no variable, request or schedule.
+
+This is local implementation evidence, not a new production release receipt.
+Remaining dependencies: identified hosting and provider bindings for dependable
+morning delivery, broader news/earnings source coverage, actual on-time session
+validation, and owner-confirmed Fidelity capabilities/cash/executions.
+Preserve production/history bytes and the existing strategy. No actual trade
+or trading edge is claimed.
