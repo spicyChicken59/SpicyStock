@@ -1305,7 +1305,11 @@ today. It prints its result to the job log and keeps it as a 14-day artifact:
 each request's outcome, HTTP status, bytes and digest, whether the issuer's
 identity was established, and whether the User-Agent names a sender and a
 contact (never the address). It binds no publication, collects no candidate,
-writes nothing under `docs/` and is never persisted.
+writes nothing under `docs/` and is never persisted. Its first run, from a
+runner on 18 October 2026 (run 39095391329), got both answers -- the mapping
+(523,925 bytes) and AAPL's submissions (163,690 bytes), the identity
+established -- so the refusal recorded through 16 October is not what SEC
+gives the named contact; a collection with candidates has yet to show it.
 
 `issuer-evidence.yml` follows an actual committed evening or morning publication;
 the guard identifies the parent by its exact workflow file path, then checks
