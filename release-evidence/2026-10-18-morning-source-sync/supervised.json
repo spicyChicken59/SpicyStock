@@ -1,0 +1,38 @@
+{
+  "scope": "Supervised fixed-source handoff corrections; offline implementation checks separated from isolated actual public-source reads",
+  "base_commit": "6021a06e",
+  "verification": [
+    {
+      "command": "python -m pytest tests/test_sync_morning_service.py tests/test_morning_service.py -q --disable-warnings --tb=short",
+      "passed": 87,
+      "failed": 0,
+      "note": "Before final deterministic hung-test scheduling adjustment; runtime source unchanged afterward."
+    },
+    {
+      "command": "python -m pytest tests/test_sync_morning_service.py -q --disable-warnings --tb=short",
+      "passed": 37,
+      "failed": 0,
+      "note": "Final tests, including real loopback urllib and child-process supervision."
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "source_sha256": {
+    "tools/sync_morning_service.py": "8b47dc101af8933da9e3acb149d404e9088c7115db79568ccb7d0ad135fbda43",
+    "tests/test_sync_morning_service.py": "f3e0be1ae65cbffe0ee9cccf45d25dcbb3d28ec0f4fd7b2aeeec4cca56d4eb37",
+    "docs/operations/morning-service.md": "78a9f6ff77ba5ac312ced93ee5b1dbbeaed157ea74ec092192040e9edab248fb"
+  },
+  "corrections": [
+    "Real urllib read1 closes the response at exact Content-Length; finish there and reject truncated bodies. Actual loopback regression exercises stdlib transport.",
+    "Fixed docs-directory metadata avoids inline small-file payloads while retaining the five-request bound.",
+    "Normal CLI uses a spawned35-second supervisor; hung children terminated/joined, bounded structured result only. Timeout does not imply rollback of an atomic local ingest."
+  ],
+  "actual_public_source_validation": "real-source.json; five read-only requests into isolated local database, then zero-request repeat; no providers, real trades or deployment",
+  "remaining": [
+    "Existing host, durable local storage, scheduler, TLS/service URL and browser endpoint configuration",
+    "Provider bindings/entitlements and actual on-time session verification",
+    "Broader issuer news and future earnings source coverage"
+  ]
+}

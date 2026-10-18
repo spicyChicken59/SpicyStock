@@ -4,6 +4,12 @@ import hashlib
 import io
 import json
 import sqlite3
+import socket
+import multiprocessing
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from threading import Thread
+from pathlib import Path
+import time
 from types import SimpleNamespace
 from urllib.error import HTTPError
 
@@ -12,6 +18,9 @@ import pytest
 from src import morning_service as service
 from tools import sync_morning_service as syncer
 from tests.test_morning_service import RAW, NOW, FIXTURES, encode, request, store_at
+
+_LOCAL_CONNECT = socket.socket.connect
+_LOCAL_CREATE_CONNECTION = socket.create_connection
 
 COMMIT = '1' * 40
 NEXT = '2' * 40
@@ -22,7 +31,7 @@ def reference(commit=COMMIT):
 
 
 def metadata(raw=RAW):
-    return encode({'type': 'file', 'path': 'docs/data.json', 'size': len(raw), 'sha': syncer.blob_sha(raw)})
+    return encode([{'type': 'file', 'name': 'data.json', 'path': 'docs/data.json', 'size': len(raw), 'sha': syncer.blob_sha(raw)}])
 
 
 class Source:
@@ -109,7 +118,7 @@ def test_bytes_must_match_git_blob_digest_and_size(tmp_path, alter):
     def corrupt(url, maximum, deadline):
         result = source(url, maximum, deadline)
         if url.startswith(syncer.CONTENTS_URL):
-            value = json.loads(result); alter(value); return encode(value)
+            value = json.loads(result); alter(value[0]); return encode(value)
         return result
     assert run(store, corrupt)['status'] == 'source_blob_identity_differs'
     assert store.reserve(now=NOW)[1] == 'publication_missing'
@@ -169,7 +178,7 @@ def test_metadata_cannot_supply_an_arbitrary_download_url(tmp_path):
     def changed(url, maximum, deadline):
         result = source(url, maximum, deadline)
         if url.startswith(syncer.CONTENTS_URL):
-            value = json.loads(result); value['download_url'] = 'https://attacker.invalid/private'; return encode(value)
+            value = json.loads(result); value[0]['download_url'] = 'https://attacker.invalid/private'; return encode(value)
         return result
     assert run(store, changed)['status'] == 'ingested'
     assert all('attacker' not in url for url, _, _ in source.calls)
@@ -222,6 +231,7 @@ def test_real_transport_bounds_stream_and_shrinks_socket_deadline(monkeypatch):
     assert response.timeouts == [4, 2]
     headers = dict(requests[0][0].header_items())
     assert headers['Accept-encoding'] == 'identity'
+    assert headers['Accept'] == 'application/vnd.github+json'
     assert not any('auth' in h.lower() for h in headers)
 
 
@@ -249,3 +259,109 @@ def test_http_errors_are_typed_without_response_bodies(monkeypatch, code, reason
 def test_redirects_are_refused():
     with pytest.raises(syncer.SyncError, match='redirect'):
         syncer._NoRedirect().redirect_request(None, None, 302, '', {}, 'https://other.invalid')
+
+
+def test_actual_urllib_content_length_response_finishes_without_extra_socket_access(monkeypatch):
+    body = b'{"actual":"socket"}'
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        def log_message(self, *args):
+            pass
+    with ThreadingHTTPServer(('127.0.0.1', 0), Handler) as server:
+        port = server.server_address[1]
+        def local_connect(sock, address):
+            assert address == ('127.0.0.1', port), 'only this loopback regression server is permitted'
+            return _LOCAL_CONNECT(sock, address)
+        monkeypatch.setattr(socket.socket, 'connect', local_connect)
+        monkeypatch.setattr(socket, 'create_connection', _LOCAL_CREATE_CONNECTION)
+        # Proxy settings are irrelevant to this explicit loopback transport.
+        monkeypatch.setenv('NO_PROXY', '127.0.0.1')
+        thread = Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            assert syncer.fetch(f'http://127.0.0.1:{port}/', 100, time.monotonic() + 5) == body
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+
+
+def test_transport_refuses_truncated_content_length(monkeypatch):
+    response = Response([b'{}', b''], {'Content-Length': '5'})
+    monkeypatch.setattr(syncer, 'build_opener', lambda *args: SimpleNamespace(open=lambda *a, **k: response))
+    monkeypatch.setattr(syncer.time, 'monotonic', lambda: 0)
+    with pytest.raises(syncer.SyncError, match='truncated'):
+        syncer.fetch(syncer.REF_URL, 100, 30)
+
+
+def _hung_child(database, output):
+    Path(database + '.started').write_text('synthetic hung child; no source requests')
+    time.sleep(60)
+
+
+def _result_child(database, output):
+    output.send_bytes(b'{"status":"unchanged","requests":3,"commit_sha":null}')
+    output.close()
+
+
+def _oversized_child(database, output):
+    output.send_bytes(b'x' * (syncer.MAX_RESULT_BYTES + 1))
+    output.close()
+
+
+class RecordingContext:
+    def __init__(self, method='spawn'):
+        self.context = multiprocessing.get_context(method)
+        self.process = None
+    def Pipe(self, **kwargs):
+        return self.context.Pipe(**kwargs)
+    def Process(self, **kwargs):
+        self.process = self.context.Process(**kwargs)
+        return self.process
+
+
+def test_real_supervisor_terminates_hung_child_without_claiming_rollback(tmp_path):
+    if 'fork' not in multiprocessing.get_all_start_methods():
+        pytest.skip('deterministic hang-entry control requires a POSIX fork')
+    context = RecordingContext('fork')
+    at = time.monotonic()
+    result = syncer.supervise(tmp_path / 'hung.sqlite', timeout=3, context=context, child=_hung_child)
+    assert result == {'status': 'source_supervisor_timeout', 'requests': None}
+    assert time.monotonic() - at < 8
+    assert (tmp_path / 'hung.sqlite.started').exists()
+    assert context.process._closed  # close is reached only after join confirms exit
+
+
+def test_supervisor_accepts_only_bounded_structured_result_and_joins_child(tmp_path):
+    context = RecordingContext()
+    assert syncer.supervise(tmp_path / 'result.sqlite', timeout=10, context=context, child=_result_child) == {'status': 'unchanged', 'requests': 3, 'commit_sha': None}
+    assert context.process._closed
+    context = RecordingContext()
+    assert syncer.supervise(tmp_path / 'large.sqlite', timeout=10, context=context, child=_oversized_child)['status'] == 'source_supervisor_result_invalid'
+    assert context.process._closed
+
+
+@pytest.mark.parametrize('timeout', [0, -1, 36, float('nan'), True])
+def test_supervisor_deadline_cannot_exceed_hard_cap(tmp_path, timeout):
+    with pytest.raises(ValueError, match='deadline_invalid'):
+        syncer.supervise(tmp_path / 'unused.sqlite', timeout=timeout)
+
+
+def test_cli_always_uses_supervisor_not_direct_network_sync(tmp_path, monkeypatch, capsys):
+    calls = []
+    monkeypatch.setattr(syncer, 'supervise', lambda path: calls.append(path) or {'status': 'poll_interval', 'requests': 0})
+    monkeypatch.setattr(syncer, 'sync', lambda *a, **k: pytest.fail('CLI bypassed supervisor'))
+    path = tmp_path / 'source.sqlite'
+    assert syncer.main(['--database', str(path)]) == 0
+    assert calls == [path] and json.loads(capsys.readouterr().out)['status'] == 'poll_interval'
+
+
+def test_directory_metadata_has_no_small_file_inline_content_requirement():
+    small = b'{}'
+    assert syncer._metadata(metadata(small))['size'] == 2
+    duplicate = json.loads(metadata()) * 2
+    with pytest.raises(syncer.SyncError, match='identity'):
+        syncer._metadata(encode(duplicate))

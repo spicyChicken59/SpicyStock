@@ -149,8 +149,9 @@ python -m tools.sync_morning_service --database /srv/spicystock/morning.sqlite
 It accepts only a local database path. The repository is fixed to
 `spicyChicken59/SpicyStock`, ref `refs/heads/main`, source `docs/data.json` and
 bootstrap companion `docs/morning.json`; public clients cannot choose a URL,
-ref or symbol. It reads the small GitHub ref descriptor, then file metadata at
-that exact immutable commit. The canonical bytes must match the reported Git
+ref or symbol. It reads the small GitHub ref descriptor, then a bounded docs-directory metadata listing at
+that exact immutable commit. The fixed `docs/data.json` entry is selected; a
+directory listing never embeds canonical content, including for small files. The canonical bytes must match the reported Git
 blob SHA-1 and length and pass existing SHA-256 publication/reader binding and
 provenance validation. A matching stored blob skips the full download, even
 when code-only main commits advance. A changed main ref at the final check
@@ -160,12 +161,14 @@ is refused by an expected-generation compare-and-swap inside the store.
 
 Each synchronization makes at most five read-only requests and has a 30-second
 whole-response deadline with bounded headers and streamed bodies, decreasing
-socket read timeouts, refused redirects and no retries or credentials. The
-current multi-megabyte canonical file receives metadata-only GitHub contents
-responses. If GitHub instead includes inline content that exceeds the 16 KiB
-metadata bound, synchronization refuses explicitly; it does not expand that
-bound or silently download an unbounded metadata response. Deployment still
-needs a runtime supervisor for DNS/platform stalls beyond HTTP socket control.
+socket read timeouts, refused redirects and no retries or credentials. Ref descriptors are limited to 16 KiB and directory metadata to 256 KiB / 1,000
+entries. The normal CLI runs synchronization in a spawned child with a 35-second
+wall-clock cap, including startup, DNS, HTTP and local ingestion. It terminates
+and joins a stalled child, escalating to kill if necessary; cleanup waits are
+limited to two seconds each. The parent accepts at most 4 KiB of structured child
+output. A timeout can coincide with an already completed atomic ingestion, so
+it reports unknown completion rather than claiming a rollback. The next
+synchronization rechecks committed source identity and deduplicates normally.
 
 The SQLite poll ledger persists the next allowed time and attempt count even
 when a synchronization fails. Calls before 300 seconds elapse perform no source
@@ -179,5 +182,11 @@ its quotes are not served as current publication authority.
 The synchronizer creates no schedule or hosting resource. A selected host must
 invoke it before and during the preparation window at an appropriate bounded
 cadence, retain its ledger across restarts, and run the separately supervised
-worker. Tests use synthetic transport responses; no live handoff or deployment
-has been claimed by these implementation checks.
+worker. The automated checks use synthetic transport responses. A separate
+read-only check on 18 October 2026 ingested public main `88e708f2` into an isolated
+local database in five requests, verifying the actual metadata and 10,404,000-byte
+canonical transport. Its prior-publication receipt remained unavailable at the
+GET route, and a repeat synchronization made zero requests. This establishes
+that dated source handoff only; it is not a production deployment or a timely
+morning quote check. The minimal receipt is retained in
+[release evidence](../../release-evidence/2026-10-18-morning-source-sync/real-source.json).
