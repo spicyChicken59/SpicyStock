@@ -1,0 +1,26 @@
+[
+  {
+    "name": "local_backoff_reason_removed",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.25s"
+  },
+  {
+    "name": "cached_http_status_restamped",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.24s"
+  },
+  {
+    "name": "original_http_completion_lost",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.29s"
+  },
+  {
+    "name": "control_docstring_only",
+    "passed_control": true,
+    "pytest_exit": 0,
+    "output": "1 passed, 50 deselected, 1 warning in 1.05s"
+  }
+]

@@ -1,0 +1,54 @@
+{
+  "reviewed_at": "2026-10-18T15:04:59.741084+00:00",
+  "head": "1ac5a489",
+  "root_commit": "b4469ab8dcabc66924a56b5107f240b2c5558d38",
+  "focused_pytest": "136 passed (tests/test_morning.py and tests/test_morning_service_worker.py)",
+  "mutations": [
+    {
+      "name": "local_reason_recognition_disabled",
+      "pytest_exit": 1,
+      "output": "2 failed, 1 passed, 82 deselected, 1 warning in 1.41s",
+      "expected": true
+    },
+    {
+      "name": "unknown_local_reason_accepted",
+      "pytest_exit": 1,
+      "output": "1 failed, 2 passed, 82 deselected, 1 warning in 1.22s",
+      "expected": true
+    },
+    {
+      "name": "unrelated_comment_control",
+      "pytest_exit": 0,
+      "output": "3 passed, 82 deselected, 1 warning in 2.38s",
+      "expected": true
+    }
+  ],
+  "actual_sdk_mock_transport_integration": [
+    {
+      "scenario": "backoff",
+      "source_errors": {
+        "iex": "authentication",
+        "delayed_sip": "local_backoff"
+      },
+      "transport_attempts": 2,
+      "real_network_calls": 0,
+      "validated": true
+    },
+    {
+      "scenario": "budget",
+      "source_errors": {
+        "iex": "local_budget",
+        "delayed_sip": "local_budget"
+      },
+      "transport_attempts": 1,
+      "real_network_calls": 0,
+      "validated": true
+    }
+  ],
+  "hashes": {
+    "src/morning.py": "8ea62a912095546ae8bc03401a2393f62de9395e8d56beb7175562e2ecc1171d",
+    "src/morning_service_worker.py": "139628fc5a2d90701946f8d34e0222360ffced965231f00319f39b09be5143b0",
+    "tests/test_morning.py": "1eb1c656e08f9b48ebc01a2f23e51912646b727c1a42dd4737d9a7623e304b1a",
+    "tests/test_morning_service_worker.py": "7b08a6b92933af9a8338a7abc3f3407747a68d38426d6ec4617a93e21a5e9ccc"
+  }
+}

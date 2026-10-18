@@ -1213,6 +1213,23 @@ Pages can deliver late; this is a dated snapshot, not a sub-minute quote
 service. The browser recomputes freshness as time passes. Its reload control
 only re-reads the public snapshot; it does not call a market-data provider.
 
+The prepared [single-host service](docs/operations/morning-service.md) provides
+the separate server path: trusted publication synchronization, a supervised
+private collection worker and read-only receipt serving. One durable local
+SQLite database preserves source identity, event restrictions, fenced leases,
+provider attempt limits and backoff across restarts. Public reads never start
+collection. The synchronizer checks this repository's fixed main publication
+and downloads its canonical bytes only when the Git blob changes; the worker
+uses the existing production session, freshness and event rules.
+
+The [deployment handoff](docs/operations/morning-deployment.md) describes
+300-second synchronization and 30-second worker invocation targets, separate
+HTTP serving and worker-only provider credentials. The actual worker has a
+25-second process deadline and no provider retries; source synchronization has
+a separate 35-second supervisor. These are prepared implementation limits, not
+measured live delivery. An existing host, persistent volume, scheduler, TLS
+route and source bindings still need to be supplied and verified.
+
 An optional deployment adapter reads one fixed public HTTPS `/morning.json`
 endpoint from the committed `spicystock-morning-endpoint` meta tag in
 `docs/index.html`. It is empty by default: the shipped site still reads the
@@ -2076,7 +2093,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · reader.py · issuer_evidence.py
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)
@@ -2090,7 +2107,7 @@ docs/           index.html · app.js · app.css · app-reading.js · app-method.
 knowledge/      strategy.md (the rulebook the grader reads) · method.md (whose number is whose)
                 broker-fidelity.md (the ticket on Fidelity's order entry; each fact labelled Fidelity's words, a regulator's words, inferred, unconfirmed or SpicyStock's advice)
 tests/          the suite, the doubles (fakes.py), the synthetic frames, fixtures/page/
-tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py
+tools/          make_fixture.py · page_smoke.mjs · chart_check.mjs · publish_dashboard.py · publish_morning.py · probe_morning_sources.py · sync_morning_service.py
                 probe_sec_access.py (a dispatch-only diagnostic: two fixed SEC requests through the issuer collector's transport, printed to the log; never published)
                 verify_provenance.py · provenance_impact.py (offline receipts and measurements)
                 entry_limit_study.py (read-only: the retired ceiling, production and an oracle over an archived record)

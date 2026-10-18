@@ -1,0 +1,45 @@
+{
+  "scope": "Integrated prepared service; endpoint disabled; hosted release acceptance pending",
+  "component_parent": "9dea759a85adccc254d88ee79683d96eb544c6cc",
+  "runtime": "Python 3.12; Node 22; Playwright 1.62.1",
+  "source_sha256": {
+    "src/morning.py": "8ea62a912095546ae8bc03401a2393f62de9395e8d56beb7175562e2ecc1171d",
+    "src/morning_service.py": "6c29d71f4f52d553235b09311193fba6e2186302cc3d68e9b49a3e94747b3c2e",
+    "src/morning_service_worker.py": "139628fc5a2d90701946f8d34e0222360ffced965231f00319f39b09be5143b0",
+    "tools/sync_morning_service.py": "8b47dc101af8933da9e3acb149d404e9088c7115db79568ccb7d0ad135fbda43",
+    "docs/app-observations.js": "9fdf58515f9863d2cedadb00a65bde2af254f871f5af8184ecd59a597853ab88",
+    "docs/index.html": "b20f8ee074a75bc6682e12c96723b0744eab3a3306e0e838ee851c1179c36c42"
+  },
+  "local_validation": {
+    "integrated_python": {
+      "passed": 264,
+      "files": [
+        "tests/test_morning.py",
+        "tests/test_morning_service.py",
+        "tests/test_morning_service_worker.py",
+        "tests/test_sync_morning_service.py",
+        "tests/test_publish_morning.py"
+      ]
+    },
+    "collected_python_tests": 4953,
+    "unchanged_morning_fixtures": 21,
+    "browser_checks": 333,
+    "independent_browser_checks": 333,
+    "reviewed_backend": "Independent service/worker 101 checks, final typed-refusal 9 checks, service/sync 87 checks; real loopback completion and truncation; named mutation failures and passing unrelated controls."
+  },
+  "retained_evidence": [
+    "local-refusal-review.json",
+    "worker-mutations.json",
+    "worker-local-mutations.json",
+    "sunday-refusal.json",
+    "../2026-10-18-morning-source-sync/real-source.json",
+    "../2026-10-18-morning-service-reader/prepared.json"
+  ],
+  "limitations": [
+    "No service host or live endpoint configured",
+    "No new provider collection or measured on-time quote delivery",
+    "Broader current news/earnings coverage and ten expected sessions remain open",
+    "No real-money order, fill or profit recorded"
+  ],
+  "preserved": "Production market publications, historical evidence, fixture bytes and strategy rules unchanged"
+}

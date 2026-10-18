@@ -1,0 +1,45 @@
+{
+  "verified_at": "2026-10-18T15:04:18.239431+00:00",
+  "head": "1ac5a489",
+  "source_sha256": "2a26a5ae6b728e182ec9354ad1f9c77cdb625d31d9eb4d27abe59ad34c5c9089",
+  "source_session": "2026-10-16",
+  "applicable_session": "2026-10-19",
+  "actual_calendar_day": "2026-10-18",
+  "commands": [
+    {
+      "command": [
+        "python",
+        "-m",
+        "src.morning_service",
+        "--database",
+        "<isolated-local-database>",
+        "ingest",
+        "--publication",
+        "docs/data.json"
+      ],
+      "returncode": 0,
+      "stdout": {
+        "mode": "prepared_adapter",
+        "result": "ingested"
+      }
+    },
+    {
+      "command": [
+        "python",
+        "-m",
+        "src.morning_service_worker",
+        "--database",
+        "<isolated-local-database>"
+      ],
+      "returncode": 0,
+      "stdout": {
+        "mode": "bounded_private_worker",
+        "result": "wrong_session"
+      }
+    }
+  ],
+  "provider_or_child_attempts": 0,
+  "collection_reservations": 0,
+  "receipt": null,
+  "guard": "socket connect, DNS resolution and process start rejected if attempted; no rejection occurred"
+}

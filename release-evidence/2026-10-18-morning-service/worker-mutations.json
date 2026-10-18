@@ -1,0 +1,56 @@
+[
+  {
+    "name": "sdk_retries_enabled",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "4 failed, 47 deselected, 1 warning in 1.17s"
+  },
+  {
+    "name": "authentication_not_shared",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.18s"
+  },
+  {
+    "name": "redirect_body_buffered",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.08s"
+  },
+  {
+    "name": "nasdaq_floor_lowered",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.99s"
+  },
+  {
+    "name": "daily_budget_removed",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "3 failed, 48 deselected, 1 warning in 1.42s"
+  },
+  {
+    "name": "response_cap_removed",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 2.27s"
+  },
+  {
+    "name": "attempt_not_charged",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "4 failed, 47 deselected, 1 warning in 1.41s"
+  },
+  {
+    "name": "supervisor_deadline_result_removed",
+    "passed_control": true,
+    "pytest_exit": 1,
+    "output": "1 failed, 50 deselected, 1 warning in 1.11s"
+  },
+  {
+    "name": "control_docstring_only",
+    "passed_control": true,
+    "pytest_exit": 0,
+    "output": "12 passed, 39 deselected, 1 warning in 3.89s"
+  }
+]
