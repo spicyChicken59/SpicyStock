@@ -108,9 +108,15 @@ class Ledger:
                 raise Deferred('worker_provider_daily_budget')
             attempt = row['attempt'] + 1 if row else 1
             db.execute('INSERT OR REPLACE INTO provider_attempts VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL)', (feed, at.date().isoformat(), used + 1, at.timestamp(), attempt))
+            service.journal.append(db, kind='provider_reserved', at=at, generation=self.claim.generation,
+                                   fence=self.claim.fence, publication=self.claim.publication,
+                                   payload={'feed': feed, 'attempt': attempt, 'quota_day': at.date().isoformat(),
+                                            'quota_used': used + 1})
             return attempt
 
     def finish(self, feed, attempt, *, status=None, retry_after=None, cache=None):
+        if feed not in FEEDS or type(attempt) is not int or attempt < 1 or (status is not None and (type(status) is not int or not 100 <= status <= 599)):
+            raise ValueError('worker_provider_completion_invalid')
         at = self.now()
         until = None
         if status in (401, 403):
@@ -120,7 +126,12 @@ class Ledger:
         elif status != 200:
             until = at.timestamp() + ERROR_BACKOFF_SECONDS
         with self.store.request_transaction(self.claim, now=at) as db:
-            changed = db.execute('UPDATE provider_attempts SET backoff_until=?, status_code=?, finished_at=? WHERE feed=? AND attempt=?', (until, status, at.timestamp(), feed, attempt)).rowcount
+            changed = db.execute('UPDATE provider_attempts SET backoff_until=?, status_code=?, finished_at=? WHERE feed=? AND attempt=? AND finished_at IS NULL', (until, status, at.timestamp(), feed, attempt)).rowcount
+            if changed:
+                service.journal.append(db, kind='provider_finished', at=at, generation=self.claim.generation,
+                                       fence=self.claim.fence, publication=self.claim.publication,
+                                       payload={'feed': feed, 'attempt': attempt, 'status_code': status,
+                                                'backoff_until': datetime.fromtimestamp(until, timezone.utc).isoformat() if until is not None else None})
             if changed and cache is not None and status == 200 and feed == 'nasdaq':
                 db.execute('INSERT OR REPLACE INTO provider_cache VALUES (?, ?, ?, ?)', (feed, cache['body'], cache['fetched_at'], cache['http_date']))
 
@@ -283,24 +294,29 @@ def run_once(store, *, clock=utcnow, context=None, child_target=_collect_child, 
     if claim is None:
         return reason
     child = None
+    outcome = 'released_unknown'
     try:
         at = service._instant(clock())
         cutoff = service._instant(json.loads(claim.publication)['run']['timing']['cutoff_at'])
         deadline = min(deadline, time.monotonic() + (cutoff - at).total_seconds(),
                        time.monotonic() + (service._instant(claim.expires_at) - at).total_seconds())
         if time.monotonic() >= deadline:
-            return 'worker_deadline'
+            outcome = 'worker_deadline'
+            return outcome
         with tempfile.TemporaryDirectory(prefix='spicystock-worker-') as private:
             output = str(Path(private) / 'receipt.json')
             child = (context or multiprocessing.get_context('spawn')).Process(target=child_target, args=(str(store.path), store.policy, claim, output, deadline))
             child.start()
             child.join(max(0, deadline - time.monotonic()))
             if child.is_alive() or time.monotonic() >= deadline:
-                return 'worker_deadline'
+                outcome = 'worker_deadline'
+                return outcome
             if child.exitcode != 0:
-                return 'worker_failed'
+                outcome = 'worker_failed'
+                return outcome
             raw = service._read(output, morning.MAX_OBSERVATION_BYTES)
-            return store.commit(claim, raw, now=clock())
+            outcome = store.commit(claim, raw, now=clock())
+            return outcome
     finally:
         if child is not None and child.is_alive():
             child.terminate()
@@ -311,7 +327,7 @@ def run_once(store, *, clock=utcnow, context=None, child_target=_collect_child, 
         # Never free the lease before the collector is reaped. If the OS cannot
         # reap it, leave the lease charged/fenced for operator investigation.
         if child is None or not child.is_alive():
-            store.release(claim, now=clock())
+            store.release(claim, now=clock(), outcome=outcome if outcome != 'committed' else 'released_unknown')
 
 
 def main(argv=None):

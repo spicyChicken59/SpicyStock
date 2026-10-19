@@ -1,0 +1,35 @@
+{
+  "scope": "Independent read-only source review and synthetic actual-Store acceptance; no live provider calls, public delivery measurement, real account, trade or profit claims",
+  "recorded_at": "2026-10-18T23:11:25.283772+00:00",
+  "root": "/workspace/SpicyStock-report",
+  "producer_head": "1478454f",
+  "suite": {
+    "command": "/workspace/venv/bin/python -m pytest tests/test_morning_service_report.py -q",
+    "passed": 34,
+    "warnings": 1,
+    "seconds": 4.49,
+    "warning": "Existing websockets.legacy deprecation"
+  },
+  "independent": {
+    "command": "/workspace/venv/bin/python /workspace/SpicyStock-release-evidence/2026-10-18-operational-independent/independent-report-controls.py /workspace/SpicyStock-report /workspace/SpicyStock-release-evidence/2026-10-18-operational-independent/final-report-controls",
+    "passed": 43,
+    "total": 43,
+    "results": "final-report-controls/independent-controls.json"
+  },
+  "hashes": {
+    "src/morning_service_report.py": "161b982a128b328a2b02b77c02468dcb43ae7a3b46d5dd1bfbd76ad2fa897939",
+    "tests/test_morning_service_report.py": "bb87b3ef0dbeb3d9379915444891206619fcf8e29795ecb7cfdb6556abe2eeec",
+    "src/morning_service_journal.py": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "src/morning_service.py": "71c7869cc9609ebfbbfab3243d403ab1a5399494daace45d4b1e615b3809bbce",
+    "src/morning_service_worker.py": "36f778b104d089a42c0f9a44b1fe452bac893dea1f0ccea33ffe851cc5ea2255"
+  },
+  "helper_sha256": "c821b17c50df93e4d17341049f37a461d560f6e82d3fe5f7f485e5f9d6128712",
+  "findings": [],
+  "regression": "Pruned actual 13:29 commit followed by retained 13:35 commit reports unobserved, null unqualified first fields, explicitly retained late timestamp and unknown pre-open absence. Retained pre-open commit remains known positive evidence while first-ever time stays unknown.",
+  "concurrency": "Report receipt interpretation paused after snapshot release; real Store reserve and commit completed within 3 seconds while paused. Returned snapshot retained one receipt; next report read saw two.",
+  "limitations": [
+    "Synthetic historical clock and snapshot evidence only.",
+    "Hosted exact-head and post-merge public acceptance remain root-owned future release gates.",
+    "Journal snapshot bounded-loading adversarial review is handled separately by review_acquisition."
+  ]
+}

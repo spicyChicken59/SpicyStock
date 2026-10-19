@@ -1,0 +1,162 @@
+[
+  {
+    "name": "atomic_rollback",
+    "module": "src.morning_service",
+    "source_sha256": "71c7869cc9609ebfbbfab3243d403ab1a5399494daace45d4b1e615b3809bbce",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_journal_failure_atomically_rolls_back_accepted_service_write",
+      "test_provider_journal_failure_rolls_back_quota_or_result"
+    ],
+    "log": "/tmp/journal-review-atomic_rollback.log",
+    "tail": [
+      "FAILED tests/test_morning_service_journal.py::test_journal_failure_atomically_rolls_back_accepted_service_write[commit]",
+      "FAILED tests/test_morning_service_journal.py::test_provider_journal_failure_rolls_back_quota_or_result[reserve]",
+      "FAILED tests/test_morning_service_journal.py::test_provider_journal_failure_rolls_back_quota_or_result[finish]",
+      "5 failed in 1.23s"
+    ]
+  },
+  {
+    "name": "retention",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_retention_declares_loss_preserves_references_and_never_resets_quota"
+    ],
+    "log": "/tmp/journal-review-retention.log",
+    "tail": [
+      "FAILED tests/test_morning_service_journal.py::test_retention_declares_loss_preserves_references_and_never_resets_quota[events]",
+      "FAILED tests/test_morning_service_journal.py::test_retention_declares_loss_preserves_references_and_never_resets_quota[bytes]",
+      "FAILED tests/test_morning_service_journal.py::test_retention_declares_loss_preserves_references_and_never_resets_quota[age]",
+      "3 failed in 1.46s"
+    ]
+  },
+  {
+    "name": "inception",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_actual_collector_commit_preserves_writer_clock_and_exact_historical_bytes"
+    ],
+    "log": "/tmp/journal-review-inception.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:39: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_actual_collector_commit_preserves_writer_clock_and_exact_historical_bytes",
+      "1 failed in 0.83s"
+    ]
+  },
+  {
+    "name": "read_bound",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_read_bound_refuses_before_loading_blobs_and_filters_sessions"
+    ],
+    "log": "/tmp/journal-review-read_bound.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:250: Failed",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_read_bound_refuses_before_loading_blobs_and_filters_sessions",
+      "1 failed in 0.72s"
+    ]
+  },
+  {
+    "name": "read_lock",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_reader_releases_snapshot_before_hash_validation"
+    ],
+    "log": "/tmp/journal-review-read_lock.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:287: OperationalError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_reader_releases_snapshot_before_hash_validation",
+      "1 failed in 0.74s"
+    ]
+  },
+  {
+    "name": "replay",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_replay_journal_is_never_read_as_prepared_evidence"
+    ],
+    "log": "/tmp/journal-review-replay.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:129: Failed",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_replay_journal_is_never_read_as_prepared_evidence",
+      "1 failed in 0.58s"
+    ]
+  },
+  {
+    "name": "provider_result",
+    "module": "src.morning_service_worker",
+    "source_sha256": "36f778b104d089a42c0f9a44b1fe452bac893dea1f0ccea33ffe851cc5ea2255",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_provider_attempts_and_completion_are_durable_exact_and_sanitized"
+    ],
+    "log": "/tmp/journal-review-provider_result.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:164: AssertionError",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_provider_attempts_and_completion_are_durable_exact_and_sanitized",
+      "1 failed in 0.63s"
+    ]
+  },
+  {
+    "name": "privacy",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 1,
+    "expected_exit_code": 1,
+    "named_tests": [
+      "test_raw_exception_text_is_not_a_terminal_reason"
+    ],
+    "log": "/tmp/journal-review-privacy.log",
+    "tail": [
+      "/workspace/SpicyStock-journal/tests/test_morning_service_journal.py:307: Failed",
+      "=========================== short test summary info ============================",
+      "FAILED tests/test_morning_service_journal.py::test_raw_exception_text_is_not_a_terminal_reason",
+      "1 failed in 0.62s"
+    ]
+  },
+  {
+    "name": "control",
+    "module": "src.morning_service_journal",
+    "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "named_tests": [
+      "test_journal_failure_atomically_rolls_back_accepted_service_write",
+      "test_provider_journal_failure_rolls_back_quota_or_result",
+      "test_retention_declares_loss_preserves_references_and_never_resets_quota",
+      "test_actual_collector_commit_preserves_writer_clock_and_exact_historical_bytes",
+      "test_read_bound_refuses_before_loading_blobs_and_filters_sessions",
+      "test_reader_releases_snapshot_before_hash_validation",
+      "test_replay_journal_is_never_read_as_prepared_evidence",
+      "test_provider_attempts_and_completion_are_durable_exact_and_sanitized",
+      "test_raw_exception_text_is_not_a_terminal_reason"
+    ],
+    "log": "/tmp/journal-review-control.log",
+    "tail": [
+      "..............                                                           [100%]",
+      "14 passed in 2.05s"
+    ]
+  }
+]

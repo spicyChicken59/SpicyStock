@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 4953 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5019 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10807,12 +10807,13 @@ or trading edge is claimed.
 ### Acquisition review follow-up — 18 October 2026
 
 Mo explicitly authorized PR creation and merge after the earlier approval block.
-PR #185 is open. Independent execution passed 270 Python checks, 502 browser
+PR #185 was open at this checkpoint; the release reconciliation below records
+its completed merge and public acceptance. Independent execution passed 270 Python checks, 502 browser
 checks and the six detection-mutation/control cases. It found that the displayed
 count of metadata rows not listed omitted the new acquisition links. The count
 now subtracts both disjoint lists; a visible assertion at each width holds it.
 504 browser checks pass after the fix, with refreshed captures. Hosted checks
-and production verification remain pending; no current event or trade is inferred.
+and production verification were pending here; no current event or trade is inferred.
 
 ### Optional morning receipt browser adapter — 18 October 2026
 
@@ -10863,6 +10864,67 @@ not live-session quote coverage or deployed service reliability.
 
 README and `.env.example` now describe the combined runtime. Production data,
 history, fixtures and strategy rules retain their bytes. Hosted checks and
-public acceptance are the remaining release steps; the goal also still needs
+public acceptance were pending here and are completed below; the goal still needs
 identified hosting/provider bindings, broader news/earnings source coverage,
 actual expected-session evidence and owner-reported trade outcomes.
+
+### Verified release reconciliation — 18 October 2026
+
+PR #185 merged reviewed head `6aba0952` as `5931d9de`; PR #186 merged reviewed
+head `25d8677d` as `0d32bd29`. Each merged tree equals its reviewed tree. All
+seven hosted checks passed on each reviewed head, including 4,812 and 4,953
+Python tests respectively. Publisher and final Pages deployments succeeded.
+The actual public site matched all 47 required assets for each release and
+passed 72 (#185) and 78 (#186) phone/desktop browser checks without browser,
+network or HTTP errors. Compact, self-contained transcriptions of the original
+observations and source-artifact hashes are retained in
+`release-evidence/2026-10-18-pr185/acceptance.json` and
+`release-evidence/2026-10-18-pr186/acceptance.json`. This reconciliation does not
+repeat or expand those dated acceptance executions.
+
+The current RED/zero-plan state and unknown settled cash are preserved. The
+static morning receipt belongs to another publication and remains unavailable;
+the issuer receipt has no relevant candidates, so public acceptance does not
+claim an actual acquisition warning was shown. The optional service endpoint
+meta tag is empty. Hosting, TLS/scheduling, provider bindings and entitlement,
+broader issuer news/future earnings and ten expected sessions of live evidence
+remain outstanding. Broker cash, order capabilities and actual fills require
+owner/broker observations; no actual trade or trading edge is established.
+
+### Operational morning history — 18 October 2026
+
+Continuation found a buildable gap after #186: the service overwrote prior
+receipts and provider ledgers, so future operation would lose the evidence
+needed to review repeated sessions. Branch `codex/morning-operational-evidence`
+adds a bounded local journal and a deterministic read-only session report.
+Source, collection and provider events share the existing atomic transactions;
+exact publication and receipt bytes are retained by digest. Existing databases
+start without backfilled history. Append-time pruning declares lost evidence;
+public reads still perform no writes or collection. Strategy, provider quotas,
+production records and the empty public endpoint configuration are preserved.
+
+The report separates source changes, local commit time, quote/provider coverage,
+charged attempts and unknown public delivery. A late first retained receipt
+cannot establish late first delivery when earlier history is missing. Actual
+first times stay unknown in that case, while a retained pre-open receipt remains
+positive evidence that one existed. The real CLI refuses future observation
+cutoffs; the internal builder keeps explicit historical/fixture cutoffs.
+
+The scoped preparation evidence is in
+`release-evidence/2026-10-18-morning-operations/prepared.json`. Producer verification
+passed 168 focused checks (30 new), report verification passed 36 new checks,
+and independent review exercised real SQLite rollback, child interruption,
+snapshot consistency, retention, 43 report controls and the CLI clock guard.
+Named guard mutations fail their corresponding controls; unrelated controls
+pass. An indexed realistic 20,000-event retention check took 0.174–0.330 seconds
+in this environment; it is a bounded local measurement, not a hosting SLA.
+An offline check using the actual Sunday clock and current publication returned
+`wrong_session` with no quota charge or socket connection. The report left ten
+past sessions unobserved and Monday not yet due; no live-service history was
+manufactured from the current record.
+
+README, `.env.example`, the goal and deployment/report instructions are swept.
+Use the release PR for this branch for final hosted-check and deployment
+identities; this checkpoint describes the retained local evidence. The prepared
+journal/report does not provide a host, provider bindings, broader event sources,
+future expected-session measurements or owner-confirmed trading results.

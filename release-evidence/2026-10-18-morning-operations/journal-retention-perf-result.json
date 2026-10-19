@@ -1,0 +1,115 @@
+{
+  "source_sha256": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+  "database": "/tmp/journal-retention-rjnau7j1/journal.sqlite",
+  "database_bytes": 424873984,
+  "events": 20000,
+  "refs": 29998,
+  "sources": 34,
+  "receipt_blobs": 3333,
+  "indexed_plan": {
+    "counts": [
+      [
+        9,
+        0,
+        213,
+        "SCAN b USING INDEX sqlite_autoindex_morning_journal_blobs_1"
+      ],
+      [
+        12,
+        0,
+        63,
+        "SEARCH r USING INDEX morning_journal_refs_sha (sha256=?)"
+      ]
+    ],
+    "orphan_delete": [
+      [
+        3,
+        0,
+        216,
+        "SCAN morning_journal_blobs"
+      ],
+      [
+        6,
+        0,
+        0,
+        "CORRELATED SCALAR SUBQUERY 1"
+      ],
+      [
+        10,
+        6,
+        56,
+        "SEARCH morning_journal_refs USING COVERING INDEX morning_journal_refs_sha (sha256=?)"
+      ]
+    ]
+  },
+  "indexed_20k_prune": {
+    "samples": 12,
+    "min_s": 0.173830597999995,
+    "median_s": 0.2372304460000123,
+    "max_s": 0.33008653399997456
+  },
+  "prune_20_events_s": 0.17869878499993774,
+  "reference_integrity": {
+    "events": 19980,
+    "dangling_blob_refs": 0,
+    "dangling_event_refs": 0,
+    "orphan_blobs": 0,
+    "remaining_sources": 34,
+    "removed_blobs": 2,
+    "pruned_events": 20,
+    "invalid_blob_hashes": 0,
+    "hash_check_seconds": 0.7022711949999803
+  },
+  "unindexed_plan": {
+    "counts": [
+      [
+        8,
+        0,
+        216,
+        "SCAN r"
+      ],
+      [
+        10,
+        0,
+        47,
+        "SEARCH b USING INDEX sqlite_autoindex_morning_journal_blobs_1 (sha256=?)"
+      ],
+      [
+        15,
+        0,
+        0,
+        "USE TEMP B-TREE FOR GROUP BY"
+      ]
+    ],
+    "orphan_delete": [
+      [
+        3,
+        0,
+        216,
+        "SCAN morning_journal_blobs"
+      ],
+      [
+        6,
+        0,
+        0,
+        "CORRELATED SCALAR SUBQUERY 1"
+      ],
+      [
+        10,
+        6,
+        216,
+        "SCAN morning_journal_refs"
+      ]
+    ]
+  },
+  "unindexed_19980_prune": {
+    "samples": 1,
+    "min_s": 16.39939249400004,
+    "median_s": 16.39939249400004,
+    "max_s": 16.39939249400004
+  },
+  "remaining_indexes": [
+    "sqlite_autoindex_morning_journal_refs_1"
+  ],
+  "source_sha256_after": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764"
+}

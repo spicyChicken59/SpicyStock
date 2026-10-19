@@ -1,0 +1,61 @@
+{
+  "source_sha256": "161b982a128b328a2b02b77c02468dcb43ae7a3b46d5dd1bfbd76ad2fa897939",
+  "tests_sha256": "bb87b3ef0dbeb3d9379915444891206619fcf8e29795ecb7cfdb6556abe2eeec",
+  "mutations": [
+    {
+      "name": "generation_mistaken_for_commit",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.76s"
+    },
+    {
+      "name": "partial_late_mistaken_for_first",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.99s"
+    },
+    {
+      "name": "retained_first_exposed_as_actual",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.99s"
+    },
+    {
+      "name": "no_tickets_claim_quote_health",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.64s"
+    },
+    {
+      "name": "reserved_attempt_claim_socket",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.60s"
+    },
+    {
+      "name": "chicago_offset_lost",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "2 failed, 32 deselected in 0.46s"
+    },
+    {
+      "name": "event_clock_order_ignored",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.59s"
+    },
+    {
+      "name": "read_bound_ignored",
+      "pytest_exit": 1,
+      "expected": true,
+      "output": "1 failed, 33 deselected in 0.57s"
+    },
+    {
+      "name": "unrelated_docstring_control",
+      "pytest_exit": 0,
+      "expected": true,
+      "output": "8 passed, 26 deselected in 1.38s"
+    }
+  ],
+  "method": "isolated subprocess imports in-memory source replacements; no repository file mutated"
+}

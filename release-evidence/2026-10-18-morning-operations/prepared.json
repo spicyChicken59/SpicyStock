@@ -1,0 +1,99 @@
+{
+  "schema": "spicystock-morning-operations-preparation-v1",
+  "date": "2026-10-18",
+  "branch": "codex/morning-operational-evidence",
+  "base_release_commit": "0d32bd29ae5a40b94c964d86343272d03fdfbe5e",
+  "scope": "Local implementation and independently executed deterministic/fixture controls; actual-clock offline probes are separately labeled. This receipt does not assert hosting, provider collection, public delivery, live-session reliability or actual trades.",
+  "runtime_sha256": {
+    "src/morning_service.py": "71c7869cc9609ebfbbfab3243d403ab1a5399494daace45d4b1e615b3809bbce",
+    "src/morning_service_worker.py": "36f778b104d089a42c0f9a44b1fe452bac893dea1f0ccea33ffe851cc5ea2255",
+    "src/morning_service_journal.py": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "src/morning_service_report.py": "af719bff81e310a93328ca8b5be8e19d89039aa565ae9448cd87ba23719d6aea",
+    "tools/sync_morning_service.py": "a77756029743546ca71ef56150c296c6ede1c0a6b20002eb17e8de8b39820f2d"
+  },
+  "test_sha256": {
+    "tests/test_morning_service_journal.py": "013cf0d8500213d0f22fbe00fa064d06b08cfba5b09ee303e2da93ba461e8b5a",
+    "tests/test_morning_service_report.py": "2ba91ef17a25857d2ae2440be9fe51a2772d4872118edc3ee9a5ae35b0c27b9c"
+  },
+  "verification": {
+    "producer_focused_tests": 168,
+    "producer_new_tests": 30,
+    "report_final_focused_tests": 36,
+    "collected_python_suite": 5019,
+    "independent_report_store_controls": 43,
+    "independent_final_cli_focused_tests": 3,
+    "independent_final_cli_subprocess_controls": 3,
+    "producer_sqlite_snapshot_controls": 6,
+    "producer_actual_interrupted_child_controls": 1,
+    "producer_named_mutations": 8,
+    "report_named_mutations_before_cli_delta": 8,
+    "future_cli_guard_mutation_rejected": true,
+    "unrelated_mutation_controls_passed": true,
+    "retention_measurement": "Synthetic realistic 20,000 events: indexed pruning 0.174\u20130.330 seconds; no dangling refs/orphan blobs/hash faults. Index-removal control 16.399 seconds. These are local measurements, not hosting guarantees.",
+    "documentation_workflow_tests": 97,
+    "documentation_command": "/workspace/venv/bin/python -m pytest tests/test_docs.py tests/test_workflows.py -q",
+    "prior_release_public_assets_preserved": 47,
+    "production_history_fixtures_strategy_workflows_changed": false
+  },
+  "bounds": {
+    "append_prune_calendar_days": 45,
+    "events": 20000,
+    "logical_payload_bytes": 1073741824,
+    "report_read_bytes": 268435456,
+    "report_output_bytes": 8388608,
+    "report_calendar_days": 62,
+    "idle_database_age_pruning": false,
+    "physical_sqlite_file_bound_claimed": false
+  },
+  "acceptance_mapping": {
+    "1": "Exact source and receipt blobs retain hashes, original timestamps, coverage and limitations; future writer events excluded by explicit as-of boundary.",
+    "2": "Existing market/event/account/entry constraints and published plans retain bytes; waiting and no-ticket observations stay distinct from quote coverage.",
+    "3": "Public UI and shared design-system assets are unchanged from publicly verified PR186; this adds operator reporting rather than an unconfigured public route.",
+    "4": "Atomic rollback, restart/migration, interrupted providers, source changes, bounded retention, read-only snapshots and historical/future boundary controls executed. Current-clock Sunday worker skipped with zero reservations and socket connects.",
+    "5": "Report never creates fills/results or a live-acceptance verdict. Public arrival and overall quote-health pass remain null; incomplete history cannot manufacture a late first arrival or successful streak."
+  },
+  "current_clock_observations": {
+    "worker": "actual-clock-probe.json",
+    "report": "morning-report-current-evidence.json",
+    "report_output": "morning-report-current-publication.json",
+    "conclusion": "Sunday wrong_session; ten past sessions unobserved and Monday not yet due; no fabricated service history."
+  },
+  "artifacts": {
+    "producer_independent": "journal-independent-checks.json",
+    "producer_process_interruption": "journal-process-interruption.json",
+    "producer_mutations": "journal-review-mutations.json",
+    "producer_retention": "journal-retention-perf-result.json",
+    "report_mutations": "morning-report-mutations.json",
+    "report_independent_directory": "independent-report"
+  },
+  "release_verification": "Final exact-head hosted checks and deployment identities are recorded in the associated release PR; they are outside this scoped local receipt.",
+  "remaining_dependencies": [
+    {
+      "acceptance": [
+        1,
+        4
+      ],
+      "dependency": "Identified host/account/project with durable volume, production WSGI/TLS route, scheduler, worker-only provider bindings and confirmed entitlement/cost."
+    },
+    {
+      "acceptance": [
+        1,
+        2
+      ],
+      "dependency": "Authorized current issuer-news and future-earnings sources with usable coverage and access."
+    },
+    {
+      "acceptance": [
+        4
+      ],
+      "dependency": "Actual expected-session evidence, including pre-open public arrival, visible expiry and ten-session reliability/usage review after deployment."
+    },
+    {
+      "acceptance": [
+        2,
+        5
+      ],
+      "dependency": "Owner/broker observations of settled cash, available Fidelity order terms and actual reported executions/fees. Real trades require separate instruction."
+    }
+  ]
+}

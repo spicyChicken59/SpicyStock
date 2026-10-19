@@ -118,6 +118,14 @@ remains unavailable; do not silently redirect it to an older static receipt.
    sessions. Ten consecutive-session acceptance remains measured operating
    evidence; installing timers does not establish it.
 
+The [operational journal and read-only report](morning-service-report.md) retain
+bounded worker observations in the same durable database. Export a dated report
+alongside the independently measured HTTPS arrival and cost evidence. The first
+trusted writer opening an uninstrumented database starts a new journal without
+reconstructing earlier operations; later upgrades preserve its history. Check
+the report's capture and pruning limits before interpreting a missing receipt. No-op ticks
+are not scheduler heartbeats, and local receipt commitment is not public delivery.
+
 The remaining external inputs are the selected existing host/account, persistent
 volume, production WSGI/TLS route and its URL, server-side provider bindings and
 verified entitlement/costs. These templates purchase or provision nothing.

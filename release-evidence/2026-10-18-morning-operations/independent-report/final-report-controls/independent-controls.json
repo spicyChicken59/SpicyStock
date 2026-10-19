@@ -1,0 +1,188 @@
+{
+  "scope": "synthetic actual Store/journal/report controls; no live provider or public arrival",
+  "runtime": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "root": "/workspace/SpicyStock-report",
+  "hashes": {
+    "src/morning_service.py": "71c7869cc9609ebfbbfab3243d403ab1a5399494daace45d4b1e615b3809bbce",
+    "src/morning_service_worker.py": "36f778b104d089a42c0f9a44b1fe452bac893dea1f0ccea33ffe851cc5ea2255",
+    "src/morning_service_journal.py": "e9e7d5b014250006367be1f12d9d9bd0236386be333f97457417478cf08f2764",
+    "src/morning_service_report.py": "161b982a128b328a2b02b77c02468dcb43ae7a3b46d5dd1bfbd76ad2fa897939"
+  },
+  "passed": 43,
+  "total": 43,
+  "checks": [
+    {
+      "name": "before open remains not yet due",
+      "passed": true
+    },
+    {
+      "name": "as-of filters later commit despite old generated timestamp",
+      "passed": true
+    },
+    {
+      "name": "as-of retains charged reservation without later HTTP response",
+      "passed": true
+    },
+    {
+      "name": "writer late completion controls timing",
+      "passed": true
+    },
+    {
+      "name": "generated and committed clocks remain separate",
+      "passed": true
+    },
+    {
+      "name": "local writer is not public HTTPS evidence",
+      "passed": true
+    },
+    {
+      "name": "successful worker commit does not hide provider outage",
+      "passed": true
+    },
+    {
+      "name": "historical unavailable rows remain visible after recovery",
+      "passed": true
+    },
+    {
+      "name": "latest generation freshness is separate from report age",
+      "passed": true
+    },
+    {
+      "name": "journal does not claim overall quote health",
+      "passed": true
+    },
+    {
+      "name": "no-plan receipt avoids synthetic snapshot reads",
+      "passed": true
+    },
+    {
+      "name": "no-plan local receipt remains separate from source health",
+      "passed": true
+    },
+    {
+      "name": "no-plan feed statuses are not requested",
+      "passed": true
+    },
+    {
+      "name": "no-plan report does not establish ten-session acceptance",
+      "passed": true
+    },
+    {
+      "name": "source revision is bound to exact changed bytes",
+      "passed": true
+    },
+    {
+      "name": "older source receipt is not current-source evidence",
+      "passed": true
+    },
+    {
+      "name": "source history is retained",
+      "passed": true
+    },
+    {
+      "name": "future revision is excluded from earlier as-of",
+      "passed": true
+    },
+    {
+      "name": "HTTP 200 alone does not create receipt coverage",
+      "passed": true
+    },
+    {
+      "name": "HTTP response and collector outcome remain separately visible",
+      "passed": true
+    },
+    {
+      "name": "charged reservation does not invent actual socket count",
+      "passed": true
+    },
+    {
+      "name": "retention gap remains explicit",
+      "passed": true
+    },
+    {
+      "name": "retained late receipt cannot establish first-ever late delivery",
+      "passed": true
+    },
+    {
+      "name": "partial capture clears unqualified first-commit fields",
+      "passed": true
+    },
+    {
+      "name": "partial capture explicitly labels first retained commit",
+      "passed": true
+    },
+    {
+      "name": "pruned pre-open history cannot establish absence of pre-open delivery",
+      "passed": true
+    },
+    {
+      "name": "retained late receipt remains inspectable",
+      "passed": true
+    },
+    {
+      "name": "pruned reservations have unknown as-of total",
+      "passed": true
+    },
+    {
+      "name": "retained pre-open commit remains positive evidence despite earlier pruning",
+      "passed": true
+    },
+    {
+      "name": "positive retained pre-open evidence does not recover unknown first-ever time",
+      "passed": true
+    },
+    {
+      "name": "real Store reserve and commit finish during paused report validation",
+      "passed": true
+    },
+    {
+      "name": "closed report snapshot remains internally consistent during write",
+      "passed": true
+    },
+    {
+      "name": "subsequent report sees real concurrent commit",
+      "passed": true
+    },
+    {
+      "name": "identical journal and as-of yield identical report bytes",
+      "passed": true
+    },
+    {
+      "name": "report leaves database bytes untouched",
+      "passed": true
+    },
+    {
+      "name": "ten unobserved sessions cannot become successes or outages",
+      "passed": true
+    },
+    {
+      "name": "exchange holiday and weekend are excluded",
+      "passed": true
+    },
+    {
+      "name": "future windows are not yet due and totals are unknown",
+      "passed": true
+    },
+    {
+      "name": "Chicago winter open and shortened session are preserved",
+      "passed": true
+    },
+    {
+      "name": "migration never backfills committed legacy current state",
+      "passed": true
+    },
+    {
+      "name": "migration gap remains unobserved",
+      "passed": true
+    },
+    {
+      "name": "replay store is refused as live writer evidence",
+      "passed": true
+    },
+    {
+      "name": "CLI refuses missing database without creating it or exposing path",
+      "passed": true
+    }
+  ],
+  "failure": null
+}

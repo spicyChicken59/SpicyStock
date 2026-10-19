@@ -208,7 +208,7 @@ def sync(store, *, transport=fetch, clock=None, monotonic=None):
         finished = _instant(clock())
         if finished < started or (finished - started).total_seconds() > MAX_SYNC_SECONDS or monotonic() >= deadline:
             raise SyncError('source_deadline_exceeded')
-        result = store.ingest(raw, now=finished, previous=previous, expected_generation=generation)
+        result = store.ingest(raw, now=finished, previous=previous, expected_generation=generation, source_commit=commit)
     except SyncError as exc:
         result, backoff = exc.reason, exc.backoff
     except (ValueError, KeyError, TypeError, UnicodeError):

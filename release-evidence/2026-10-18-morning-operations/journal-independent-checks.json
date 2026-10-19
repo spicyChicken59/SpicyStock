@@ -1,0 +1,29 @@
+{
+  "checks": [
+    {
+      "case": "actual SQLite insert abort atomically rolls back source",
+      "passed": true
+    },
+    {
+      "case": "actual SQLite insert abort atomically rolls back reserve",
+      "passed": true
+    },
+    {
+      "case": "actual SQLite insert abort atomically rolls back commit",
+      "passed": true
+    },
+    {
+      "case": "actual SQLite insert abort atomically rolls back provider_reserve",
+      "passed": true
+    },
+    {
+      "case": "actual SQLite insert abort atomically rolls back provider_finish",
+      "passed": true
+    },
+    {
+      "case": "snapshot survives actual pruning during unlocked hash validation",
+      "passed": true
+    }
+  ],
+  "passed": 6
+}

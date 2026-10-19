@@ -18,7 +18,7 @@ import sqlite3
 from wsgiref.simple_server import make_server, WSGIRequestHandler
 from urllib.parse import urlsplit
 
-from src import morning
+from src import morning, morning_service_journal as journal
 from tools.publish_morning import publication_check
 
 VERSION = 1
@@ -101,6 +101,7 @@ class Store:
             state = db.execute('SELECT * FROM state WHERE id=1').fetchone()
             if state['version'] != VERSION or state['mode'] != mode or json.loads(state['policy']) != asdict(self.policy):
                 raise ValueError('service_database_policy_differs')
+            journal.initialize(db, state)
 
     @contextmanager
     def _transaction(self):
@@ -122,7 +123,7 @@ class Store:
         if state['clock'] is not None and at.timestamp() < state['clock']:
             raise ValueError('service_clock_moved_backwards')
 
-    def ingest(self, raw, *, now, previous=None, expected_generation=None):
+    def ingest(self, raw, *, now, previous=None, expected_generation=None, source_commit=None):
         """Local authenticated/operator handoff; never exposed over HTTP.
 
         ``previous`` seeds restriction continuity only on the first ingestion
@@ -133,6 +134,8 @@ class Store:
         """
         at = _instant(now)
         binding = morning.bind_record(raw)
+        if source_commit is not None and not journal._hex(source_commit, 40):
+            raise ValueError('service_source_commit_invalid')
         if _instant(binding['published_at']) > at + timedelta(seconds=morning.POLICY['max_future_skew_seconds']):
             raise ValueError('service_publication_is_in_future')
         if previous is not None:
@@ -161,6 +164,11 @@ class Store:
                     raise ValueError('service_publication_rollback_refused')
             db.execute('UPDATE state SET publication=?, publication_sha=?, generation=generation+1, fence=fence+1, lease_until=NULL, clock=?, receipt=?, receipt_sha=? WHERE id=1',
                        (raw, binding['data_sha256'], at.timestamp(), previous if previous is not None else state['receipt'], _sha(previous) if previous is not None else state['receipt_sha']))
+            journal.append(db, kind='source_ingested', at=at, generation=state['generation'] + 1,
+                           fence=state['fence'] + 1, publication=raw,
+                           payload={'git_commit': source_commit, 'published_at': binding['published_at'],
+                                    'measured_session': binding['measured_session'],
+                                    'admitted_count': len(morning.admitted_rows(json.loads(raw)))})
         return 'ingested'
 
     def reserve(self, *, now):
@@ -194,6 +202,11 @@ class Store:
             expires = at + timedelta(seconds=self.policy.lease_seconds)
             db.execute('UPDATE state SET fence=?, lease_until=?, last_reserved=?, quota_day=?, quota_used=? WHERE id=1',
                        (fence, expires.timestamp(), at.timestamp(), day, used + 1))
+            journal.append(db, kind='collection_reserved', at=at, generation=state['generation'],
+                           fence=fence, publication=raw, previous=state['receipt'],
+                           payload={'started_at': at.isoformat(), 'expires_at': expires.isoformat(),
+                                    'previous_receipt_sha256': state['receipt_sha'],
+                                    'quota_day': day, 'quota_used': used + 1})
             return Claim(fence, state['generation'], at.isoformat(), expires.isoformat(), raw, state['receipt']), 'reserved'
 
     @contextmanager
@@ -251,16 +264,32 @@ class Store:
             if at >= _instant(claim.expires_at) or at.timestamp() >= state['lease_until']:
                 return 'lease_expired'
             db.execute('UPDATE state SET receipt=?, receipt_sha=?, lease_until=NULL, clock=? WHERE id=1', (raw, _sha(raw), at.timestamp()))
+            journal.append(db, kind='collection_finished', at=at, generation=claim.generation,
+                           fence=claim.fence, publication=claim.publication, receipt=raw, previous=claim.previous,
+                           payload={'outcome': 'committed', 'receipt_sha256': _sha(raw),
+                                    'previous_receipt_sha256': _sha(claim.previous)})
         return 'committed'
 
-    def release(self, claim, *, now):
+    def release(self, claim, *, now, outcome='released_unknown'):
         """A failed attempt releases only its own lease and never refunds quota."""
         at = _instant(now)
+        if outcome not in journal.OUTCOMES - {'committed'}:
+            raise ValueError('service_release_outcome_invalid')
         with self._transaction() as db:
             state = db.execute('SELECT * FROM state WHERE id=1').fetchone()
             self._clock(state, at)
             if state['fence'] != claim.fence or state['generation'] != claim.generation:
                 return False
+            if state['lease_until'] is not None:
+                if (state['publication_sha'] != _sha(claim.publication)
+                        or state['receipt_sha'] != _sha(claim.previous)
+                        or state['last_reserved'] != _instant(claim.started_at).timestamp()
+                        or state['lease_until'] != _instant(claim.expires_at).timestamp()):
+                    return False
+                journal.append(db, kind='collection_finished', at=at, generation=claim.generation,
+                               fence=claim.fence, publication=claim.publication, previous=claim.previous,
+                               payload={'outcome': outcome, 'receipt_sha256': None,
+                                        'previous_receipt_sha256': _sha(claim.previous)})
             db.execute('UPDATE state SET lease_until=NULL, clock=? WHERE id=1', (at.timestamp(),))
         return True
 
@@ -276,12 +305,17 @@ def collect_once(store, collector, *, clock):
     claim, reason = store.reserve(now=clock())
     if claim is None:
         return reason
+    outcome = 'released_unknown'
     try:
         result = collector(claim.publication, previous_raw=claim.previous,
                            clock=clock, observation_run_id=f'service-{claim.generation}-{claim.fence}')
-        return store.commit(claim, _encode(result), now=clock())
+        outcome = store.commit(claim, _encode(result), now=clock())
+        return outcome
+    except Exception:
+        outcome = 'collector_failed'
+        raise
     finally:
-        store.release(claim, now=clock())
+        store.release(claim, now=clock(), outcome=outcome if outcome != 'committed' else 'released_unknown')
 
 
 def application(database, *, allowed_origin=None):
