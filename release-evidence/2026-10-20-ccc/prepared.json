@@ -6,7 +6,22 @@
   "change": "Add CCC to the existing unresolved cash-acquisition registry from its official 2026-10-15 announcement; no runtime policy, planner, collector, earnings rule or configuration change.",
   "source_receipt": "source-manifest.json",
   "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
-  "author_checks": [
+  "test_count_note": "Initial 240 core and 346 consumer tests are distinct selections; the initial 42 documentation checks repeat that subset. Initial independent 35-case evidence and correction review/test evidence are separately attributed. 5,024 author-tree collected tests and 5,067 integrated-tree collected tests are inventories, not full-suite pass claims. The failed hosted head recorded 5,056 passed, 8 skipped and 3 failed.",
+  "retained_production_record": {
+    "file": "docs/data.json",
+    "sha256": "a8839a5af3152c9f4f946b977e3748e3345d6b6d10a8ed26617369b3272d4602",
+    "session": "2026-10-19",
+    "status": "unchanged; existing CCC plan was already refused for its wide stop and zero sizing; its archived event status remains not_in_registry",
+    "independent_direct_replay": "Applying the corrected registry in memory adds known_event while retaining the other plan fields, original reasons and notes."
+  },
+  "limitations": [
+    "This is one manually verified known event, not comprehensive current news or future earnings coverage.",
+    "Review dates and the expected closing quarter do not establish completion or resolve the exclusion.",
+    "No published record or historical source was rewritten. A subsequent verified production publication must establish this exclusion on the site.",
+    "This author worktree performed no branch push, pull request, merge, deployment, paid market-data call or order. Parent release work and the failed hosted PR run are separately identified above; corrected hosted acceptance remains pending."
+  ],
+  "updated_at": "2026-10-20T16:11:24.800031+00:00",
+  "initial_author_checks": [
     {
       "command": "python -m pytest tests/test_event_risk.py tests/test_docs.py tests/test_morning.py tests/test_provenance.py -q",
       "result": "240 passed",
@@ -23,8 +38,7 @@
       "log_sha256": "53ba77ae0d21d67fa931ab46e76090dea5e7cf0f090c598c4a54e0c7169c9e70"
     }
   ],
-  "test_count_note": "240 core and 346 consumer tests are distinct selections. The final 42 documentation checks repeat that subset after the checkpoint update. Independent 35-case evidence is separately attributed; 5,024 collected tests is not a full-suite pass claim.",
-  "fixture_checks": [
+  "initial_fixture_checks": [
     {
       "command": "python tools/make_fixture.py --check",
       "result": "13 fixtures current",
@@ -66,7 +80,8 @@
       "log_sha256": "d03fa9706bf6056a6a56571e9706d0628e9ba94ee4b29a1878ce5a0e510b2943"
     }
   ],
-  "fixture_regeneration": {
+  "initial_fixture_checks_note": "These preserve the initial outcomes, not a final ordered sweep. The research-observations check ran before stop-research regeneration, so its pass did not cover the final dependency bytes. Cash-preview and recovery-rehearsal checks were omitted. Hosted CI exposed this incomplete preparation.",
+  "initial_fixture_regeneration": {
     "reason": "Existing --check commands found current synthetic outputs stale because each publication archives the complete registry and binds dependent rules, evidence and source identities. Existing generators were run without source edits.",
     "changed_files": 101,
     "by_directory": {
@@ -78,7 +93,7 @@
     },
     "semantic_review": "Independent comparison found only registry and deterministic binding/hash/ID/byte-count changes; numeric outcomes, eligibility, gates, provider data, bars and timestamps are unchanged."
   },
-  "protected_paths_with_empty_diff": [
+  "initial_protected_paths_with_empty_diff": [
     "docs",
     "src",
     "tools",
@@ -95,14 +110,7 @@
     "tests/fixtures/research-outcomes/pending-publication.json.gz",
     "tests/fixtures/research-outcomes/pending-reader.json.gz"
   ],
-  "retained_production_record": {
-    "file": "docs/data.json",
-    "sha256": "a8839a5af3152c9f4f946b977e3748e3345d6b6d10a8ed26617369b3272d4602",
-    "session": "2026-10-19",
-    "status": "unchanged; existing CCC plan was already refused for its wide stop and zero sizing; its archived event status remains not_in_registry",
-    "independent_direct_replay": "Applying the corrected registry in memory adds known_event while retaining the other plan fields, original reasons and notes."
-  },
-  "independent_review": {
+  "initial_independent_review": {
     "source_receipt_sha256": "86a71723448eb6858f4221912ad286fed9d03019f8a2c4fefbe421a33264b9fa",
     "receipt": {
       "review_status": "no_findings",
@@ -174,10 +182,227 @@
       ]
     }
   },
-  "limitations": [
-    "This is one manually verified known event, not comprehensive current news or future earnings coverage.",
-    "Review dates and the expected closing quarter do not establish completion or resolve the exclusion.",
-    "No published record or historical source was rewritten. A subsequent verified production publication must establish this exclusion on the site.",
-    "No branch push, pull request, merge, deployment, paid market-data call or order was performed for this local preparation."
-  ]
+  "initial_independent_review_note": "The original review compared the 101 then-changed fixtures; it did not establish completeness of all downstream generated consumers. Its scoped measurements and receipt remain unchanged here.",
+  "hosted_failure_exposing_incomplete_sweep": {
+    "pr": 189,
+    "head_commit": "505111db92650f5a20a6378d6cd9af59951863d2",
+    "tested_merge_commit": "2d38ea01873a2af17e71243110e58561d5c51ae2",
+    "workflow_run": "39449775104",
+    "pytest": {
+      "job": "118721176137",
+      "passed": 5056,
+      "skipped": 8,
+      "failed": 3,
+      "failures": [
+        "tests/test_cash_preview_fixture.py::test_cash_preview_controls_reproduce_exact_offline_producer_bytes",
+        "tests/test_recovery_rehearsal.py::test_the_committed_files_are_this_fresh_run",
+        "tests/test_research_observations.py::test_the_fixtures_are_the_collectors_own_output"
+      ],
+      "log_sha256": "77d302742fe929586f2ae2180f059ef39079bd3e8ee8860374f325d692807e89"
+    },
+    "page": {
+      "job": "118721176385",
+      "passed": 16883,
+      "failed": 2,
+      "failures": [
+        "red cohort: a fit-free cohort loads with no observed row",
+        "red cohort: the summary says no allocation fit existed and zero requests were made"
+      ],
+      "actual_red_state": [
+        "unavailable",
+        null,
+        0
+      ],
+      "expected_red_state": [
+        "loaded",
+        "no_research_rows",
+        0
+      ],
+      "log_sha256": "b25cd946a029cf176a2cc3d0b6e9f28adf4c4a02043117a608fdb1a1334ac7ce"
+    },
+    "cause": "Generated consumers still bound the old registry/rules/publication after their synthetic source fixtures changed. The browser correctly refused the old no-rows receipt; no product validator or test assertion was changed."
+  },
+  "final_ordered_fixture_checks": [
+    {
+      "command": "python tools/make_fixture.py --check",
+      "result": "13 fixtures current",
+      "exit_code": 0,
+      "log_sha256": "35f2770b7ec7270246dd0b489568f76a720e559c570095d4f044534b0b235fbc"
+    },
+    {
+      "command": "python tests/fixtures/morning/generate.py --check",
+      "result": "21 morning fixture files current",
+      "exit_code": 0,
+      "log_sha256": "66dee48f48b31e26b87bbdae6528bf889136ec1806b3e4d18b9b340ddddf6b6c"
+    },
+    {
+      "command": "python tests/fixtures/issuer-evidence/generate.py --check",
+      "result": "30 issuer producer fixtures current",
+      "exit_code": 0,
+      "log_sha256": "382ad4abaf0d2a40a39dad3203818a0cbecb6f1f496185fd458c3acdb91153fe"
+    },
+    {
+      "command": "python tests/fixtures/stop-research/generate.py --check",
+      "result": "22 stop-research fixture files current",
+      "exit_code": 0,
+      "log_sha256": "6b882c7d4f19703da48e76b8e23c7465403d9fca9d7cc2cec9d4df7a7cc28a39"
+    },
+    {
+      "command": "python tests/fixtures/research-outcomes/generate.py --check",
+      "result": "40 research-outcomes fixture files current",
+      "exit_code": 0,
+      "log_sha256": "ae5d90900ab35795bb8a132c6d7cb7e1e8a5141bff83668d7a494c161c4de5d1"
+    },
+    {
+      "command": "python tests/fixtures/research-observations/generate.py --check",
+      "result": "24 research observation fixture files current",
+      "exit_code": 0,
+      "log_sha256": "3e288f1afd8158269a0648861910e1e4546898fb24271df44734f88b5ea5578a"
+    },
+    {
+      "command": "python tests/fixtures/source-recovery/generate.py --check",
+      "result": "20 source recovery fixture files current",
+      "exit_code": 0,
+      "log_sha256": "cb8e5350327538b08cfdd628eb8bbdf1843ecb68ad2be80bde5549d8ec467a51"
+    },
+    {
+      "command": "python tools/freeze_validation_cases.py --check",
+      "result": "5 frozen case files current",
+      "exit_code": 0,
+      "log_sha256": "d03fa9706bf6056a6a56571e9706d0628e9ba94ee4b29a1878ce5a0e510b2943"
+    },
+    {
+      "command": "python tests/fixtures/cash-preview/generate.py --check",
+      "result": "6 cash-preview fixture files current",
+      "exit_code": 0,
+      "log_sha256": "80e6dd874a8658e549b3c83a1545edd236cece7d794ef746a0513747d6f5481b"
+    },
+    {
+      "command": "python tools/recovery_rehearsal.py --check",
+      "result": "current: rehearsal.json and rehearsal.md are what the rehearsal writes",
+      "exit_code": 0,
+      "log_sha256": "d4252e502eefc4c669b92388ca1b6ec3ea56a7b94233514486a9839ea827d909"
+    },
+    {
+      "command": "node tools/private_results_parity.mjs --check",
+      "result": "parity corpus current: 109 cases, 32 accepted by the page",
+      "exit_code": 0,
+      "log_sha256": "ed1a3b12a43326414b9b9eff02b77fcf3d4ac9804876df78f24c4452c13d160a"
+    }
+  ],
+  "final_fixture_regeneration": {
+    "changed_outputs": 113,
+    "synthetic_test_fixtures": 112,
+    "synthetic_rehearsal_json": 1,
+    "by_directory": {
+      "docs/input-truthfulness/2026-10-12-recovery-rehearsal-evidence": 1,
+      "tests/fixtures/cash-preview": 6,
+      "tests/fixtures/first-trade": 2,
+      "tests/fixtures/issuer-evidence": 30,
+      "tests/fixtures/page": 13,
+      "tests/fixtures/research-observations": 3,
+      "tests/fixtures/research-outcomes": 36,
+      "tests/fixtures/source-recovery": 6,
+      "tests/fixtures/stop-research": 16
+    },
+    "additional_corrective_outputs": 12,
+    "generation": "Existing research-observations, cash-preview and recovery-rehearsal generators, then the existing first-trade browser writer and private-results parity generator. No generator, runtime or assertion edits.",
+    "semantic_review": "Independent comparison found no numeric/boolean changes in the nine additional cash/research JSON files, no numerical/verdict change in all 109 parity cases, and digest substitutions only in the synthetic recovery rehearsal. The first-trade backup carries the regenerated publication identity."
+  },
+  "dependency_correction_independent_review": {
+    "source_receipt_sha256": "488a626c07a118e705f54bcce79d5605cf9ec2392aab38a2b6a636ae6267e0e7",
+    "receipt": {
+      "scope": "Independent review of generated fixture dependency-order correction after PR189 hosted page failure; not production publication acceptance",
+      "baseline_commit": "0f6d3c21867012b312f8af05c238f3f5778ec833",
+      "finding": "Research observation receipts were checked before stop-research dependency regeneration and retained stale publication/cohort bindings. Initial hosted page correctly refused them.",
+      "corrective_generated_files": 12,
+      "semantic_findings": [],
+      "semantics": "Only registry metadata and dependent binding identifiers/digests changed; prices, eligibility, provider counts, statuses, synthetic clocks and all109 parity verdicts/numerical outputs unchanged.",
+      "runtime_generator_assertion_edits": false,
+      "independent_tests": {
+        "passed": 9,
+        "duration_seconds": 84.86,
+        "warning": "existing websockets.legacy deprecation",
+        "scope": [
+          "all24 research observation fixture bytes equal real collector output",
+          "6 zero-provider guard cases",
+          "missing/foreign cohort spends nothing",
+          "exact publication/cohort/prior byte binding"
+        ]
+      },
+      "browser_controls": {
+        "passed": 3,
+        "cases": [
+          "corrected no-rows loads, zero-request summary",
+          "old original no-rows refused against regenerated cohort, no false zero-request summary",
+          "only cohort digest changed is refused"
+        ],
+        "page_errors": 0,
+        "visual_inspection": "390px corrected and old-receipt refusal screenshots inspected; relevant summary visible"
+      },
+      "providers_called": false,
+      "author_tree_modified_by_reviewer": false,
+      "final_generated_hashes_rechecked": true,
+      "original_review_and_hosted_failure_preserved": true,
+      "artifacts": {
+        "summary.json": "11636f4d0e001c91fea044efe079b77e865b539790bda0c17b67f4064df02fdc",
+        "browser-binding-review.mjs": "aebcb24ed8709f17a2184ca8056943b54c506d4bc70df315703b0f2acecde477",
+        "browser-binding-review.json": "b3996b5d61caf595822ba3de0cbc537cce5272a398e205e99d8b5299c4f62d56",
+        "focused-collector.log": "92b9ba65ef3b8182d90dd5dc1f437995c0e45b33c1cafa418d3e27e494d4b263",
+        "regenerated_receipt.png": "b8c1a023ac8e7cb8b21c5167ebd19531b371d3795b5eedc9bfca0dffc6631960",
+        "previous_receipt_new_cohort.png": "f736bfedd71d8e1cc99cd3c4dc1332051b5b400900de553674fcec5e148bfc96",
+        "wrong_cohort_only.png": "2277b3c562e01b2292ba81b63c0b745c66e1210b4f1d582d888c26297d2e7af9"
+      },
+      "limitations": [
+        "Author final ordered generator suite and exact-head hosted CI still required; this receipt does not claim those results.",
+        "Separate external post-publication acceptance helper still under review."
+      ]
+    }
+  },
+  "final_protected_paths_with_empty_diff": [
+    "docs/data.json",
+    "docs/reader.json",
+    "docs/picks.json",
+    "docs/history",
+    "docs/evidence",
+    "src",
+    "tools",
+    ".github",
+    ".env.example",
+    "tests/fixtures/morning",
+    "tests/fixtures/provenance",
+    "tests/fixtures/issuer-evidence/sources",
+    "tests/fixtures/issuer-evidence/manifest.json",
+    "tests/fixtures/issuer-evidence/excerpts",
+    "tests/fixtures/stop-research/current-publication.json.gz",
+    "tests/fixtures/stop-research/current-reader.json.gz",
+    "tests/fixtures/research-outcomes/pending-publication.json.gz",
+    "tests/fixtures/research-outcomes/pending-reader.json.gz"
+  ],
+  "generated_document_exception": "docs/input-truthfulness/2026-10-12-recovery-rehearsal-evidence/rehearsal.json is the existing reproducible synthetic rehearsal output, not a historical production capture. Its stored publication/picks digests were regenerated; rehearsal.md is unchanged.",
+  "docs_sweep": "README and .env.example reviewed after correction: no new configuration, schedule or runtime behavior. CLAUDE checkpoint now describes the initial incomplete sweep and corrected dependency outputs.",
+  "dependency_correction_author_checks": [
+    {
+      "command": "python -m pytest tests/test_cash_preview_fixture.py tests/test_recovery_rehearsal.py tests/test_research_observations.py tests/test_private_results.py -q -p no:cacheprovider",
+      "result": "291 passed; one existing websockets deprecation warning",
+      "log_sha256": "93b0cc6feabc614d6e1a6ba2283b8af4a48eb72f99c5f67c69986b012e0aa208"
+    },
+    {
+      "command": "SCSTOCK_FIRST_TRADE_WRITE=1 node tools/page_smoke.mjs --only firsttrade --shots EXTERNAL_DIRECTORY",
+      "result": "80/80 passed; existing writer regenerated dependent backup",
+      "log_sha256": "7f39bff8aeea24be4ea98425a5f03a03867505fa4ad67dc0224f2cd41ae77bd7"
+    },
+    {
+      "command": "node tools/page_smoke.mjs --only research-observations --shots EXTERNAL_DIRECTORY",
+      "result": "387/387 passed",
+      "log_sha256": "f61a476b4c5bb1f59d12a7161b72b39ac0ff131121dd0977707ed142c6311a8c"
+    },
+    {
+      "command": "python -m pytest tests/test_docs.py -q -p no:cacheprovider",
+      "result": "42 passed; one existing websockets deprecation warning",
+      "log_sha256": "e7187998c62b948bcc06f6bc2d2e5f70d0bce8fcb69d46d900849fb3b297ad61"
+    }
+  ],
+  "dependency_correction_visual_inspection": "Inspected phone red-cohort summary (no allocation-fit rows, zero requests), desktop research observations, and phone/desktop first-trade report captures. Text is readable and the dated/synthetic scope remains visible.",
+  "dependency_correction_review_note": "Independent reviewer cleared the frozen 12 generated outputs and the corrected CLAUDE/preparation claims before commit. The final 291-test author consumer result was appended after its process completed; it is separate from the independent 9-test result."
 }

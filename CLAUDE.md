@@ -10947,12 +10947,21 @@ the actual retained October 19 CCC plan: its wide stop, zero shares and absence
 of an order remain. Three in-memory registry mutations fail the corresponding
 controls; an unrelated event change leaves CCC controls passing.
 
-Existing generators required 101 synthetic fixture files to acquire the new
-archived registry and dependent hashes; their numeric outcomes, eligibility,
-provider inputs, bars and timestamps are unchanged. All eight fixture checks
-pass. Published records, history, captured sources and frozen controls retain
-their original bytes. README is updated and `.env.example` remains accurate;
-this correction requires no new configuration. The local test and independent
+The initial 101-file regeneration missed downstream consumers: one check ran
+before its source regeneration, and the sweep omitted cash previews and the
+synthetic recovery rehearsal. Hosted CI exposed three Python failures and two
+browser failures; the browser correctly refused the stale publication binding.
+The preparation receipt preserves those results and the incomplete initial
+checks. Existing generators now update 112 synthetic test fixtures and one
+synthetic rehearsal JSON, including dependent private-report controls. All eight
+CI generator checks and three additional consumer checks pass after the final
+writes in dependency order. Independent comparison found only registry and
+binding changes; numeric results, eligibility, provider inputs, bars and
+timestamps are unchanged. The same browser still refuses the old receipt.
+
+Production records, history, captured sources and frozen controls retain their
+original bytes. README is updated and `.env.example` remains accurate; this
+correction requires no new configuration. The scoped local and independent
 review receipt is `release-evidence/2026-10-20-ccc/prepared.json`. A subsequent
 verified production publication is still needed to show the added exclusion on
 the site; this checkpoint claims neither deployment nor a trade.
