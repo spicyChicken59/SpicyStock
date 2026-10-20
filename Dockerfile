@@ -25,6 +25,11 @@ COPY tools/*.py ./tools/
 COPY knowledge/event-risk.json ./knowledge/event-risk.json
 COPY data/symbols.txt ./data/symbols.txt
 
+# Checkout permissions vary between builders. Every unprivileged role must be
+# able to import these root-owned files, and none needs to edit application code.
+RUN find /app -type d -exec chmod 0555 {} + \
+    && find /app -type f -exec chmod 0444 {} +
+
 # Root initializes the mounted volume, then launches separate unprivileged roles.
 # The launcher refuses an ordinary directory in place of the persistent mount.
 STOPSIGNAL SIGTERM
