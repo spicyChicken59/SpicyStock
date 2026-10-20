@@ -1234,8 +1234,18 @@ The [deployment handoff](docs/operations/morning-deployment.md) describes
 HTTP serving and worker-only provider credentials. The actual worker has a
 25-second collection-child deadline and no provider retries; source synchronization has
 a separate 35-second supervisor. These are prepared implementation limits, not
-measured live delivery. An existing host, persistent volume, scheduler, TLS
-route and source bindings still need to be supplied and verified.
+measured live delivery.
+
+The [Railway deployment runbook](docs/operations/morning-railway.md) uses the
+root `Dockerfile` and pinned `requirements-host.txt` for a single continuously
+running service. Its launcher requires the persistent `/srv/spicystock` mount,
+supervises independent synchronization and worker timers, and serves the reader
+with Gunicorn under a separate operating-system user. `MORNING_WORKER_ENABLED`
+defaults to `false`; enabling it requires both existing Alpaca credentials.
+`PORT` defaults to `8080`. The reader and synchronizer receive neither provider
+credential. `/healthz` measures reader-process availability, not receipt freshness.
+Host spending controls, the volume, TLS route and provider bindings still need
+to be configured and verified; building the image establishes no live delivery.
 
 An optional deployment adapter reads one fixed public HTTPS `/morning.json`
 endpoint from the committed `spicystock-morning-endpoint` meta tag in
@@ -2100,7 +2110,7 @@ src/            history.py (public recovery and coverage)
                 sessions.py (pinned XNYS sessions, actual hours and timing provenance)
                 timing.py (which session a plan is for, and when its window is over)
                 delivery.py (where a publication fell against the evening workflow's own slots and the next open; the record archives it, the page and the service-health reading read it)
-                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · reader.py · issuer_evidence.py
+                grader.py · reader_authority.py · reader_coverage.py · charts.py · record.py · report.py · event_risk.py · allocation.py · morning.py · morning_halts.py · morning_service.py · morning_service_worker.py · morning_service_journal.py · morning_service_report.py · morning_host.py · morning_host_wsgi.py · reader.py · issuer_evidence.py
 docs/           index.html · app.js · app.css · app-reading.js · app-method.js · app-chart.js · app-map.js · app-follow.js · app-findings.js · app-morning.js · app-cash-preview.js · app-handoff.js · app-handoff-ui.js · app-observations.js · app-reader.js · app-issuer-evidence.js · app-stop-research.js · app-research-observations.js · app-research-outcomes.js · design-system/
                 data.json · picks.json (the record) · charts/ (gitignored)
                 reader.json · reader-observations/ (derived browser projection and deferred public history)

@@ -1,10 +1,12 @@
 # Single-host morning deployment handoff
 
-This is an operator template for the service in
-[morning-service.md](morning-service.md), not an installed schedule or an active
-endpoint. Select an existing host with durable local storage, a Python runtime,
-a production WSGI server and TLS routing. Use one reviewed application revision
-and its existing requirements for all three processes.
+This is the host contract for the service in
+[morning-service.md](morning-service.md). The prepared
+[Railway container and runbook](morning-railway.md) implement its process
+separation and scheduler; they are not an installed schedule or an active
+endpoint. Other hosts need durable local storage, a Python runtime, a production
+WSGI server and TLS routing. Use one reviewed application revision and its
+requirements for all three processes.
 
 ## Process separation and cadence
 

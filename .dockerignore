@@ -1,0 +1,19 @@
+# Build inputs are allowlisted; no publication, local credential or git history
+# belongs in the runtime image or its upload context.
+**
+!Dockerfile
+!.dockerignore
+!requirements.txt
+!requirements-host.txt
+!src/
+src/**
+!src/*.py
+!tools/
+tools/**
+!tools/*.py
+!knowledge/
+knowledge/**
+!knowledge/event-risk.json
+!data/
+data/**
+!data/symbols.txt
