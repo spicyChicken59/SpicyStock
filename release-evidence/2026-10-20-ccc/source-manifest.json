@@ -1,0 +1,28 @@
+{
+  "url": "https://ir.cccis.com/news-releases/news-release-details/ccc-intelligent-solutions-signs-definitive-agreement-be-acquired",
+  "final_url": "https://ir.cccis.com/news-releases/news-release-details/ccc-intelligent-solutions-signs-definitive-agreement-be-acquired",
+  "fetched_at": "2026-10-20T15:12:33.928128+00:00",
+  "status": 200,
+  "bytes": 42525,
+  "maximum_bytes": 524288,
+  "sha256": "1594a97a0809d2ebf1d9911c17f8db9b82a4b4182064c8059c3019dc8accea0d",
+  "published_on": "2026-10-15",
+  "published_at": "2026-10-15T08:00:00-04:00",
+  "quote": "CCC stockholders will receive $7.75 in cash for each share of CCC common stock",
+  "retention": "Only the short excerpt and source identity are committed; original response bytes retained locally for verification.",
+  "purpose": "Bounded primary-source evidence for one manual cash-acquisition exclusion; no comprehensive news or earnings coverage.",
+  "issuer": "CCC Intelligent Solutions Holdings Inc.",
+  "symbol": "CCC",
+  "exchange_as_published": "NASDAQ",
+  "announcement_facts": {
+    "transaction": "Announced definitive cash-acquisition agreement with consortium led by GTCR and including Elliott",
+    "cash_per_share_usd": 7.75,
+    "expected_closing_at_announcement": "2027 first quarter, conditional on regulatory and stockholder approvals",
+    "earnings_date_mentioned": "2026-10-29"
+  },
+  "limitations": [
+    "Expected closing is not a completed transaction or an automatic resolution.",
+    "The earnings date is retained as source context only; this correction adds no earnings-clearance rule or calendar coverage.",
+    "Original HTML bytes were verified locally and are not redistributed; the committed evidence contains a short excerpt and exact response identity."
+  ]
+}

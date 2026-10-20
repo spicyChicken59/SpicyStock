@@ -4,7 +4,7 @@
  "app": {
   "name": "SpicyStock",
   "version": "2.0",
-  "rules_version": "984ea6de7248"
+  "rules_version": "cb56153aca6e"
  },
  "cover": {
   "h1": "Trade next session. 2 A-quality bursts.",
@@ -940,7 +940,7 @@
   },
   "evidence": {
    "version": 1,
-   "context_sha256": "2dd14d222bda399577540395752826631d8455a8ffbd7c2dcf5ebac127992094"
+   "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8"
   },
   "sanitised": {
    "replaced": 0,
@@ -1260,11 +1260,11 @@
    "max_events": 128,
    "max_sources": 8,
    "max_text_length": 2000,
-   "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
+   "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
    "registry": {
     "version": 1,
     "coverage": "manual_known_events_only",
-    "reviewed_on": "2026-10-10",
+    "reviewed_on": "2026-10-20",
     "coverage_note": "A bounded manual registry of known cash-acquisition events, not a live news feed, exhaustive corporate-action screen, or clearance of unlisted stocks. Each event records its own source dates and manual review date. Unresolved events stay excluded after review_due and require a new source review; expected closing dates and go-shop deadlines never automatically clear a stock.",
     "events": [
      {
@@ -1424,6 +1424,28 @@
         "url": "https://www.sec.gov/Archives/edgar/data/1654126/000117891326004724/exhibit_99-1.htm",
         "sha256": "9c4ac3ec5770dfacf5cadc7a392c65c06c20837fd078e9d26950e02f3a9edff6",
         "quote": "statements relating to the timing and closing of the pending transaction with Hapag-Lloyd"
+       }
+      ]
+     },
+     {
+      "id": "ccc-gtcr-elliott-cash-acquisition",
+      "symbol": "CCC",
+      "issuer": "CCC Intelligent Solutions Holdings Inc.",
+      "kind": "cash_acquisition",
+      "announced_on": "2026-10-15",
+      "active_from": "2026-10-15",
+      "active_until": null,
+      "evidence_as_of": "2026-10-15",
+      "reviewed_on": "2026-10-20",
+      "review_due": "2026-10-27",
+      "reason": "CCC announced an agreement to be acquired by a consortium led by GTCR and including Elliott for $7.75 per share in cash. Deal pricing and a possible deal break are outside this momentum strategy; no new entry ticket.",
+      "sources": [
+       {
+        "title": "CCC issuer release: GTCR and Elliott cash acquisition",
+        "published_on": "2026-10-15",
+        "url": "https://ir.cccis.com/news-releases/news-release-details/ccc-intelligent-solutions-signs-definitive-agreement-be-acquired",
+        "sha256": "1594a97a0809d2ebf1d9911c17f8db9b82a4b4182064c8059c3019dc8accea0d",
+        "quote": "CCC stockholders will receive $7.75 in cash for each share of CCC common stock"
        }
       ]
      }
@@ -2350,8 +2372,8 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
-     "registry_reviewed_on": "2026-10-10",
+     "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+     "registry_reviewed_on": "2026-10-20",
      "session": "2026-09-11",
      "symbol": "NVDA",
      "blocked": false,
@@ -2366,9 +2388,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "19b3925878915c5990fceff90982e91f80458014a98c9d6e9792890aad390397",
-     "context_sha256": "2dd14d222bda399577540395752826631d8455a8ffbd7c2dcf5ebac127992094",
-     "plan_sha256": "e79d51473f34793b1c75b9cb9c50078e637d032f4bd9c5a553b9f2833bef161c",
+     "id": "2da829bbe7287d9978bbe0f9743fa41c04d04c709ed3e43920f02c9d3bb71220",
+     "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+     "plan_sha256": "2e97c86bc0d9b0a3d5f58a15e01a6ae6f78ae311ac47c457ffa8a7832bdac587",
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     }
    },
@@ -2472,7 +2494,7 @@
      },
      "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
      "session": "2026-09-11",
-     "output_sha256": "e79d51473f34793b1c75b9cb9c50078e637d032f4bd9c5a553b9f2833bef161c",
+     "output_sha256": "2e97c86bc0d9b0a3d5f58a15e01a6ae6f78ae311ac47c457ffa8a7832bdac587",
      "error": null,
      "pick_sha256": "60f4999a826dafe140bcd6d80a1a5c4ea23e905b2a2a9923f7a42d18f9c31485"
     },
@@ -2499,8 +2521,8 @@
     "kind": "burst",
     "ticker": "NVDA",
     "session": "2026-09-11",
-    "rules_version": "984ea6de7248",
-    "context_sha256": "2dd14d222bda399577540395752826631d8455a8ffbd7c2dcf5ebac127992094",
+    "rules_version": "cb56153aca6e",
+    "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -2513,7 +2535,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "19b3925878915c5990fceff90982e91f80458014a98c9d6e9792890aad390397"
+    "id": "2da829bbe7287d9978bbe0f9743fa41c04d04c709ed3e43920f02c9d3bb71220"
    },
    "series": [
     {
@@ -3964,8 +3986,8 @@
     "event_risk": {
      "version": 1,
      "coverage": "manual_known_events_only",
-     "registry_sha256": "b11e259c3f598562097a9a13474826cef3b0b9edc2e2c1c701417954ffcf7748",
-     "registry_reviewed_on": "2026-10-10",
+     "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+     "registry_reviewed_on": "2026-10-20",
      "session": "2026-09-11",
      "symbol": "COIL",
      "blocked": false,
@@ -3980,9 +4002,9 @@
     },
     "evidence_ref": {
      "version": 1,
-     "id": "a7f710ce06fa7f7838ca5143b018bffa4677ecc0866ac8fac1ed9b77e663183f",
-     "context_sha256": "2dd14d222bda399577540395752826631d8455a8ffbd7c2dcf5ebac127992094",
-     "plan_sha256": "2ecb2f276c315298d9f12105bfcd537a9374cfca34726570d09dd8cdbb296de9",
+     "id": "3161f9ff0ad0b75847472271645f67053d6b34d83ed5244ad2d901d9d1c5f9c1",
+     "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
+     "plan_sha256": "ca9b0e0f41f338615bae69660fde525051f0de2906fffa6cfcf2c59b9d2305ab",
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     }
    },
@@ -4086,7 +4108,7 @@
      },
      "regime_sha256": "af0374e40239e48b1ad3f672a19e269acdd8afbd705133621f43d75644ed61e1",
      "session": "2026-09-11",
-     "output_sha256": "2ecb2f276c315298d9f12105bfcd537a9374cfca34726570d09dd8cdbb296de9",
+     "output_sha256": "ca9b0e0f41f338615bae69660fde525051f0de2906fffa6cfcf2c59b9d2305ab",
      "error": null,
      "pick_sha256": "c7182ae8b763598bbf333e0823e9638fc4a711148fae0b2757ec663c49eb930f"
     },
@@ -4113,8 +4135,8 @@
     "kind": "burst",
     "ticker": "COIL",
     "session": "2026-09-11",
-    "rules_version": "984ea6de7248",
-    "context_sha256": "2dd14d222bda399577540395752826631d8455a8ffbd7c2dcf5ebac127992094",
+    "rules_version": "cb56153aca6e",
+    "context_sha256": "89445f0ac5e9687ae8354a040420da0e58d8cbfbb68e45429165be824ad6acc8",
     "gate": {
      "reader_coverage": "accepted",
      "regime": "green",
@@ -4127,7 +4149,7 @@
      "reason": null,
      "detail": null
     },
-    "id": "a7f710ce06fa7f7838ca5143b018bffa4677ecc0866ac8fac1ed9b77e663183f"
+    "id": "3161f9ff0ad0b75847472271645f67053d6b34d83ed5244ad2d901d9d1c5f9c1"
    },
    "series": [
     {
@@ -5446,9 +5468,9 @@
    "limit": 126.47,
    "evidence_ref": {
     "version": 1,
-    "id": "12f01dc8bf96753316b2cff737e112d7a0e4bc21ec7c548c3bb47906031a9b69",
-    "context_sha256": "3c3df35463248bcafa85f5cfa71f8c517f24ad4c4d05fb840e164cb61997aa17",
-    "plan_sha256": "19413666de2f2d4426207bb55de0cac352ba03bb715ce28378951725391dabef",
+    "id": "0f2622d5d49e3f2e034b69257124899f6f027c98997c8b0d7996648d724923b8",
+    "context_sha256": "74dea98e6513167de10901ceb1bb4c4c9ee727451873bb44e31e9ac2269d2573",
+    "plan_sha256": "0f9a29ecc5c1d5c64d66fe20dde133b7798eabb86df158a16f01a0a06f3f3c83",
     "pick_sha256": "bba74ff2baa64377a377d36beb1a283e22fb958aaf137ab0db8b34dd519ad82c"
    }
   }
@@ -5508,7 +5530,7 @@
    "expected_session": "2026-09-11",
    "evaluated_session": "2026-09-11"
   },
-  "replay_rules_version": "984ea6de7248"
+  "replay_rules_version": "cb56153aca6e"
  },
  "observations": {
   "as_of": "2026-09-11",
@@ -5816,74 +5838,74 @@
    }
   },
   "signals": {
-   "burst:AAPL:2026-09-10:984ea6de7248": {
+   "burst:AAPL:2026-09-10:cb56153aca6e": {
     "ticker": "AAPL",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:AMD:2026-09-10:984ea6de7248": {
+   "burst:AMD:2026-09-10:cb56153aca6e": {
     "ticker": "AMD",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-10:984ea6de7248": {
+   "burst:NVDA:2026-09-10:cb56153aca6e": {
     "ticker": "NVDA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:TSLA:2026-09-10:984ea6de7248": {
+   "burst:TSLA:2026-09-10:cb56153aca6e": {
     "ticker": "TSLA",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:PLUG:2026-09-10:984ea6de7248": {
+   "burst:PLUG:2026-09-10:cb56153aca6e": {
     "ticker": "PLUG",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:DLLR:2026-09-10:984ea6de7248": {
+   "burst:DLLR:2026-09-10:cb56153aca6e": {
     "ticker": "DLLR",
     "session": "2026-09-10",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "anticipation:COIL:2026-09-10:984ea6de7248": {
+   "anticipation:COIL:2026-09-10:cb56153aca6e": {
     "ticker": "COIL",
     "session": "2026-09-10",
     "kind": "anticipation",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:NVDA:2026-09-11:984ea6de7248": {
+   "burst:NVDA:2026-09-11:cb56153aca6e": {
     "ticker": "NVDA",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "burst:COIL:2026-09-11:984ea6de7248": {
+   "burst:COIL:2026-09-11:cb56153aca6e": {
     "ticker": "COIL",
     "session": "2026-09-11",
     "kind": "burst",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    },
-   "anticipation:VRT:2026-09-11:984ea6de7248": {
+   "anticipation:VRT:2026-09-11:cb56153aca6e": {
     "ticker": "VRT",
     "session": "2026-09-11",
     "kind": "anticipation",
-    "rules_version": "984ea6de7248",
+    "rules_version": "cb56153aca6e",
     "coverage": "observed"
    }
   },
