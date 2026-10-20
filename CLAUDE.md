@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5062 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5067 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10928,3 +10928,31 @@ Use the release PR for this branch for final hosted-check and deployment
 identities; this checkpoint describes the retained local evidence. The prepared
 journal/report does not provide a host, provider bindings, broader event sources,
 future expected-session measurements or owner-confirmed trading results.
+
+### Prepared CCC event correction — 20 October 2026
+
+The official 15 October issuer release identifies NASDAQ:CCC and a pending
+$7.75-per-share cash acquisition by a consortium led by GTCR and including
+Elliott. The manual registry now applies its existing unresolved-event exclusion
+from that announcement date. Review expiry and the expected closing quarter do
+not resolve it. The release's earnings date is source context only; this adds no
+earnings-calendar rule or broader news coverage. The bounded source receipt in
+`release-evidence/2026-10-20-ccc/source-manifest.json` records the verified
+response identity and a short excerpt without redistributing the full webpage.
+
+Five added regression cases cover announcement timing, otherwise executable
+burst and anticipation plans, retained stop/sizing refusals, and an unresolved
+event after review and expected closing dates. Independent review also replayed
+the actual retained October 19 CCC plan: its wide stop, zero shares and absence
+of an order remain. Three in-memory registry mutations fail the corresponding
+controls; an unrelated event change leaves CCC controls passing.
+
+Existing generators required 101 synthetic fixture files to acquire the new
+archived registry and dependent hashes; their numeric outcomes, eligibility,
+provider inputs, bars and timestamps are unchanged. All eight fixture checks
+pass. Published records, history, captured sources and frozen controls retain
+their original bytes. README is updated and `.env.example` remains accurate;
+this correction requires no new configuration. The local test and independent
+review receipt is `release-evidence/2026-10-20-ccc/prepared.json`. A subsequent
+verified production publication is still needed to show the added exclusion on
+the site; this checkpoint claims neither deployment nor a trade.

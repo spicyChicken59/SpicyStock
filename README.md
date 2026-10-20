@@ -1123,6 +1123,13 @@ archived, and a record from before the block is asked for none. The run:
   earnings-calendar coverage for other candidates. The [captured issuer and
   SEC sources](release-evidence/2026-10-10-zim/README.md) retain the reviewed
   bytes, source dates, retrieval times and digests.
+  CCC was added on 20 October 2026 from its issuer's 15 October announcement
+  of the pending GTCR/Elliott $7.75-per-share cash acquisition. This uses the
+  same unresolved-event exclusion; neither the expected closing quarter nor
+  the review date clears it. The [bounded source receipt](release-evidence/2026-10-20-ccc/source-manifest.json)
+  records the dated release, short excerpt and response digest. Existing
+  published records keep their original evidence; the next verified production
+  publication must establish this added exclusion on the site.
 - **record** — the picks go to `docs/picks.json`; the open plans and the
   scorecard are computed from it and the bars. Suggested shares are model
   sizing, never shares bought. New plans carry a versioned evidence reference.

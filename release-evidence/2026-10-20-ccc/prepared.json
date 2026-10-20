@@ -1,0 +1,183 @@
+{
+  "status": "locally_prepared_not_released",
+  "prepared_at": "2026-10-20T15:28:36.005030+00:00",
+  "base_commit": "8fe55c28d2ead28bc59b18acb8271f5625fe5e4c",
+  "python": "3.12.14",
+  "change": "Add CCC to the existing unresolved cash-acquisition registry from its official 2026-10-15 announcement; no runtime policy, planner, collector, earnings rule or configuration change.",
+  "source_receipt": "source-manifest.json",
+  "registry_sha256": "0aab3dbd87a18a295e72d39094a5de1e6a00d5daec65b51df627d1d77cab7b67",
+  "author_checks": [
+    {
+      "command": "python -m pytest tests/test_event_risk.py tests/test_docs.py tests/test_morning.py tests/test_provenance.py -q",
+      "result": "240 passed",
+      "log_sha256": "019316d935f1ddf2fcd2c6c7a8e5b713efb58648dcdb7ca43fdc86d3eaac10df"
+    },
+    {
+      "command": "python -m pytest tests/test_issuer_evidence.py tests/test_issuer_evidence_sources.py tests/test_issuer_evidence_reconciliation.py tests/test_stop_research.py tests/test_research_outcomes.py tests/test_source_recovery.py -q",
+      "result": "346 passed",
+      "log_sha256": "2dd15bd84fcc5784c5a6708b4002c1ecd40a9928855d636833c3e26d432349e6"
+    },
+    {
+      "command": "python -m pytest tests/test_docs.py -q",
+      "result": "42 passed",
+      "log_sha256": "53ba77ae0d21d67fa931ab46e76090dea5e7cf0f090c598c4a54e0c7169c9e70"
+    }
+  ],
+  "test_count_note": "240 core and 346 consumer tests are distinct selections. The final 42 documentation checks repeat that subset after the checkpoint update. Independent 35-case evidence is separately attributed; 5,024 collected tests is not a full-suite pass claim.",
+  "fixture_checks": [
+    {
+      "command": "python tools/make_fixture.py --check",
+      "result": "13 fixtures current",
+      "log_sha256": "35f2770b7ec7270246dd0b489568f76a720e559c570095d4f044534b0b235fbc"
+    },
+    {
+      "command": "python tests/fixtures/morning/generate.py --check",
+      "result": "21 morning fixture files current",
+      "log_sha256": "66dee48f48b31e26b87bbdae6528bf889136ec1806b3e4d18b9b340ddddf6b6c"
+    },
+    {
+      "command": "python tests/fixtures/issuer-evidence/generate.py --check",
+      "result": "30 issuer producer fixtures current",
+      "log_sha256": "382ad4abaf0d2a40a39dad3203818a0cbecb6f1f496185fd458c3acdb91153fe"
+    },
+    {
+      "command": "python tests/fixtures/stop-research/generate.py --check",
+      "result": "22 stop-research fixture files current",
+      "log_sha256": "6b882c7d4f19703da48e76b8e23c7465403d9fca9d7cc2cec9d4df7a7cc28a39"
+    },
+    {
+      "command": "python tests/fixtures/research-outcomes/generate.py --check",
+      "result": "40 research-outcomes fixture files current",
+      "log_sha256": "ae5d90900ab35795bb8a132c6d7cb7e1e8a5141bff83668d7a494c161c4de5d1"
+    },
+    {
+      "command": "python tests/fixtures/research-observations/generate.py --check",
+      "result": "24 research observation fixture files current",
+      "log_sha256": "3e288f1afd8158269a0648861910e1e4546898fb24271df44734f88b5ea5578a"
+    },
+    {
+      "command": "python tests/fixtures/source-recovery/generate.py --check",
+      "result": "20 source recovery fixture files current",
+      "log_sha256": "cb8e5350327538b08cfdd628eb8bbdf1843ecb68ad2be80bde5549d8ec467a51"
+    },
+    {
+      "command": "python tools/freeze_validation_cases.py --check",
+      "result": "5 frozen case files current",
+      "log_sha256": "d03fa9706bf6056a6a56571e9706d0628e9ba94ee4b29a1878ce5a0e510b2943"
+    }
+  ],
+  "fixture_regeneration": {
+    "reason": "Existing --check commands found current synthetic outputs stale because each publication archives the complete registry and binds dependent rules, evidence and source identities. Existing generators were run without source edits.",
+    "changed_files": 101,
+    "by_directory": {
+      "tests/fixtures/issuer-evidence": 30,
+      "tests/fixtures/page": 13,
+      "tests/fixtures/research-outcomes": 36,
+      "tests/fixtures/source-recovery": 6,
+      "tests/fixtures/stop-research": 16
+    },
+    "semantic_review": "Independent comparison found only registry and deterministic binding/hash/ID/byte-count changes; numeric outcomes, eligibility, gates, provider data, bars and timestamps are unchanged."
+  },
+  "protected_paths_with_empty_diff": [
+    "docs",
+    "src",
+    "tools",
+    ".github",
+    ".env.example",
+    "tests/fixtures/morning",
+    "tests/fixtures/research-observations",
+    "tests/fixtures/provenance",
+    "tests/fixtures/issuer-evidence/sources",
+    "tests/fixtures/issuer-evidence/manifest.json",
+    "tests/fixtures/issuer-evidence/excerpts",
+    "tests/fixtures/stop-research/current-publication.json.gz",
+    "tests/fixtures/stop-research/current-reader.json.gz",
+    "tests/fixtures/research-outcomes/pending-publication.json.gz",
+    "tests/fixtures/research-outcomes/pending-reader.json.gz"
+  ],
+  "retained_production_record": {
+    "file": "docs/data.json",
+    "sha256": "a8839a5af3152c9f4f946b977e3748e3345d6b6d10a8ed26617369b3272d4602",
+    "session": "2026-10-19",
+    "status": "unchanged; existing CCC plan was already refused for its wide stop and zero sizing; its archived event status remains not_in_registry",
+    "independent_direct_replay": "Applying the corrected registry in memory adds known_event while retaining the other plan fields, original reasons and notes."
+  },
+  "independent_review": {
+    "source_receipt_sha256": "86a71723448eb6858f4221912ad286fed9d03019f8a2c4fefbe421a33264b9fa",
+    "receipt": {
+      "review_status": "no_findings",
+      "base_commit": "8fe55c28",
+      "candidate": "author-frozen registry/tests/101syntheticfixtures; author documentation and final commit pending",
+      "reviewed_files": {
+        "knowledge/event-risk.json": "5d24078ce949296d43179e230ca333078b86e58a4bf69e9aaff1740ae989c27b",
+        "tests/test_event_risk.py": "d2e07a19fbffc868e0acfd29fd2007c2022ea4c18517eaaaec085d6449de037e",
+        "README.md": "6009ddc0fcc06d5beea465069ef4160624bc4427c54c276f3658522e98ec595c",
+        "release-evidence/2026-10-20-ccc/source-manifest.json": "d831eccf35fe401de6cdfdaf156eda3db663643acbf62f08698933570142ba40"
+      },
+      "independent_tests": {
+        "command": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider tests/test_event_risk.py",
+        "python": "3.12.14",
+        "passed": 35,
+        "seconds": 0.17
+      },
+      "direct_probes": {
+        "retained_actual_oct19_plan_replayed_in_memory": true,
+        "existing_wide_stop_zero_sizing_original_notes_and_other_plan_fields_preserved": true,
+        "otherwise_executable_burst_order_removed": true,
+        "before_announcement_not_blocked": true,
+        "announcement_day_blocked": true,
+        "review_deadline_and_expected_closing_quarter_do_not_clear": true,
+        "existing_six_registry_events_unchanged": true,
+        "guard_mutants_failed": 3,
+        "unrelated_MG_reason_behavior_mutant_passed": true,
+        "published_source_bytes_unchanged": true
+      },
+      "source_review": {
+        "issuer_announcement": "https://ir.cccis.com/news-releases/news-release-details/ccc-intelligent-solutions-signs-definitive-agreement-be-acquired",
+        "ticker_change": "https://ir.cccis.com/news-releases/news-release-details/ccc-intelligent-solutions-announces-change-ticker-symbol-ccc-and",
+        "findings": "Official sources identify same issuer common stock; CCCS changed to CCC effective2025-10-31 with unchanged CUSIP. Oct15 2026 announcement is pending $7.75 cash agreement with conditional expected Q1 2027 closing. Registry preserves pending status and dated source evidence.",
+        "captured_html_response_digest_verified": true
+      },
+      "fixture_review": {
+        "count": 101,
+        "page": 13,
+        "issuer": 30,
+        "stop_research": 16,
+        "research_outcomes": 36,
+        "source_recovery": 6,
+        "only_registry_and_deterministic_binding_changes": true,
+        "numeric_outcomes_eligibility_gates_provider_data_bars_timestamps_unchanged": true,
+        "production_history_frozen_captures_and_retained_controls_unchanged": true
+      },
+      "limits": [
+        "This is a manual known-event exclusion, not comprehensive news or earnings clearance.",
+        "No historical or current published record was rewritten. A later verified production publication is still needed to establish this added exclusion on the site.",
+        "No live market-data provider calls, purchases or orders."
+      ],
+      "evidence": [
+        {
+          "file": "independent-checks.json",
+          "sha256": "1482b38f687548467aab7607fbb9184130bebcb6a2b70abb49691f55ec24d912"
+        },
+        {
+          "file": "ccc-final-scope-review.json",
+          "sha256": "778b0ee5f37b41a04441a491fc7162449be765dc231bc1cde075d7696f6dd837"
+        },
+        {
+          "file": "ccc-research-semantic-review.json",
+          "sha256": "b3b547ec20cb788e4213df39eb3aa4172b730c6bb23a7b2e9fb72ac13bf4c62a"
+        },
+        {
+          "file": "review.py",
+          "sha256": "a8cb7fe1ba50048c19fe12c17295f10afc509814e6c2c3ce14ff6fa6a964c926"
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "This is one manually verified known event, not comprehensive current news or future earnings coverage.",
+    "Review dates and the expected closing quarter do not establish completion or resolve the exclusion.",
+    "No published record or historical source was rewritten. A subsequent verified production publication must establish this exclusion on the site.",
+    "No branch push, pull request, merge, deployment, paid market-data call or order was performed for this local preparation."
+  ]
+}

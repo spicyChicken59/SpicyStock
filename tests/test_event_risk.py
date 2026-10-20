@@ -22,6 +22,7 @@ def burst(ticker="MG"):
 @pytest.mark.parametrize("symbol,announced", [
     ("MG", "2026-09-18"), ("PRTH", "2026-09-21"), ("ARX", "2026-08-13"),
     ("BWIN", "2026-09-14"), ("ACVA", "2026-09-10"), ("ZIM", "2026-02-16"),
+    ("CCC", "2026-10-15"),
 ])
 def test_public_announcement_is_first_blocked_session(symbol, announced):
     start = date.fromisoformat(announced)
@@ -94,6 +95,51 @@ def test_zim_historical_evidence_does_not_borrow_later_merger_updates():
     assert before["reason"] == setback["reason"] == latest["reason"]
     assert not any(word in before["reason"] for word in ("GCA", "revised proposal", "guidance"))
     assert latest["active_until"] is None
+
+
+@pytest.mark.parametrize("kind", ["burst", "anticipation"])
+def test_ccc_cash_deal_refuses_otherwise_executable_plans_without_changing_geometry(kind):
+    # Synthetic mechanically eligible controls isolate the existing event gate.
+    original = burst("CCC") if kind == "burst" else plan.anticipation_plan(
+        ticker="CCC", close=20, box_high=20.05, box_low=19.70,
+        lows_last3=[19.90, 19.85, 19.95], account=plan.Account())
+    assert original["eligible"] and original["order_json"]
+    kept = deepcopy(original)
+    rejected = event_risk.apply(original, "CCC", "2026-10-20")
+    assert rejected["eligible"] is False and rejected["action"] == "refused"
+    assert {name: rejected[name] for name in plan.NO_ORDER} == plan.NO_ORDER
+    assert "$7.75" in rejected["reason"] and "GTCR" in rejected["reason"] and "Elliott" in rejected["reason"]
+    assert rejected["event_risk"]["matches"][0]["sources"][0]["url"].startswith("https://ir.cccis.com/")
+    for field in ("entry_ref", "limit", "stop", "shares", "position_usd", "risk_usd"):
+        assert rejected[field] == kept[field]
+    assert original == kept
+
+
+def test_ccc_oct19_existing_stop_and_market_refusals_remain_after_event_correction():
+    # Retained real-publication inputs at 8fe55c28; this is a replay of its
+    # refusal, not a rewritten historical record or a newly executable plan.
+    original = plan.anticipation_plan(ticker="CCC", close=7.63, box_high=7.85,
+        box_low=7.52, lows_last3=[7.59, 7.61, 7.61],
+        account=plan.Account(equity=2000, risk_pct=0.5), size_multiplier=0)
+    assert original["eligible"] is False and original["order_json"] is None
+    assert "wide_stop" in original["flags"] and original["shares"] == 0
+    rejected = event_risk.apply(original, "CCC", "2026-10-19")
+    assert rejected["event_risk"]["blocked"] is True
+    assert {name: rejected[name] for name in plan.NO_ORDER} == plan.NO_ORDER
+    assert "wide_stop" in rejected["flags"] and rejected["shares"] == 0
+    assert original["reason"] in rejected["notes"]
+    assert all(note in rejected["notes"] for note in original["notes"])
+
+
+def test_ccc_review_and_expected_closing_dates_never_resolve_the_pending_event():
+    reviewed = event_risk.classify("CCC", "2026-10-20")
+    assert reviewed["blocked"] is True and reviewed["status"] == "known_event"
+    assert reviewed["matches"][0]["active_until"] is None
+    assert reviewed["matches"][0]["evidence_as_of"] == "2026-10-15"
+    for session in ("2026-10-28", "2027-04-01"):
+        overdue = event_risk.classify("CCC", session)
+        assert overdue["blocked"] is True and overdue["status"] == "review_required"
+        assert overdue["matches"][0]["active_until"] is None
 
 
 def test_unlisted_stock_keeps_its_ticket_and_does_not_claim_news_clearance():
