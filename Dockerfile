@@ -20,8 +20,8 @@ RUN groupadd --gid 10000 morning \
     && useradd --uid 10002 --gid morning --no-create-home --shell /usr/sbin/nologin morning-reader \
     && mkdir -p /srv/spicystock
 
-COPY src/ ./src/
-COPY tools/ ./tools/
+COPY src/*.py ./src/
+COPY tools/*.py ./tools/
 COPY knowledge/event-risk.json ./knowledge/event-risk.json
 COPY data/symbols.txt ./data/symbols.txt
 
