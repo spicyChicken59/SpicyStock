@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5067 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5069 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10965,3 +10965,66 @@ correction requires no new configuration. The scoped local and independent
 review receipt is `release-evidence/2026-10-20-ccc/prepared.json`. A subsequent
 verified production publication is still needed to show the added exclusion on
 the site; this checkpoint claims neither deployment nor a trade.
+
+## Checkpoint, 23 Oct 2026 -- the chart reader's two empty nights, read off the runner, and the SDK held below the API version that refuses `temperature`
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` from `main` at
+`503193ea` (the issuer receipt after the 22 October publication). Four files
+move: `requirements.txt`, `src/grader.py` (one named constant and its comment;
+no rule, so `rules_version` stands and no fixture moves), `tests/test_grader.py`
+and `README.md`, plus this note. The checkpoint branch
+`codex/issuer-transaction-review` (`4cd163c3`) was read and left where it is;
+its two changes follow in the next pull request, reconciled onto `main` rather
+than replayed.
+
+**The first morning check inside its window.** The owner's claude.ai task fired
+at 13:21 UTC and dispatched `morning.yml` (run 39960745472, created 13:23:07 UTC,
+8:23 CT). The guard admitted it, the collector wrote `docs/morning.json` at
+13:23:41 UTC (`no_tickets`: the 22 October record is RED and admits no plan, so
+no provider was asked), the research collector wrote `docs/research-observations.json`
+at 13:23:48 (`no_research_rows`), and the persist job committed both
+(`6418f2a8`, `777a9917`) 97 seconds after the dispatch. The four scheduled
+morning crons were created 4.5 to 5.1 hours late (17:52 to 18:34 UTC) and each
+skipped every collection step. One in-window check that had nothing to quote is
+what the service has to show; the ten-session acceptance still needs a night
+with an admitted plan.
+
+**The two empty nights, read off the job logs** (an agent fetched both whole
+logs through the GitHub API; the archive host is refused from this sandbox).
+Runs 39701029811 (21 October session) and 39879239067 (22 October) installed
+`anthropic-2.1.0` from the unpinned `anthropic>=0.40`, and every one of their
+four chart-reader calls was answered `HTTP 400 invalid_request_error:
+temperature: Extra inputs are not permitted`; the grader fell back to the
+checklist for CL, ABT, COST and WRB, `run.reads` counted the four refusals as
+`transport` -- the one cause it has for an answer it does not know -- and both
+nights published `degraded` on `claude_unavailable`. The 19 and 20 October runs
+installed 1.17.0 and were answered. The timeline is exact: anthropic 2.0.0 was
+released 15:51 UTC on 21 October, between the two. Reproduced offline with a
+mock transport: 2.2.0 sends `anthropic-version: 2026-10-21`, 1.17.0 sends
+`2023-06-01`, and the request body is the same under both; under 2026-10-21 the
+Messages API removes `temperature`, `top_p` and `top_k` on every model, and the
+grader sends `temperature: 0` on purpose for `SAMPLING_MODELS` through
+`extra_body`.
+
+**The fix, and the decision it leaves to the owner.** `requirements.txt` holds
+`anthropic>=1.15,<2` with the reason beside it; `grader.API_VERSION` names
+`2023-06-01` as the version the request shape was validated under; a new test
+reads the header the INSTALLED SDK puts on the wire through the grader's own
+client, with `temperature` and `output_config` in the body, so a loosened pin
+fails CI and not the next evening's run; a second holds the pin's text.
+Moving to API version 2026-10-21 means deleting the temperature and grading at
+default sampling (the migration guide marks a non-default value the owner's
+decision); nothing here decides it. Recorded, not fixed: a 400 is counted as
+`transport`, because `run.reads` version 1 has no cause for a request the API
+refuses; a new cause is a reads version bump and a validator change, and
+`reads()` could stop asking after the first 400 the way it does after a refused
+key -- both leads, not tonight's work. The morning host image (`requirements-host.txt`)
+already pins 1.15.0.
+
+**Measured** (this sandbox, Python 3.12.3, anthropic 1.17.0 under the pin):
+`tests/test_grader.py`, `tests/test_reader_request_v2.py` and
+`tests/test_docs.py` 127 passed with the count line at 5069; the full suite and
+the mutation controls are recorded on the pull request. **Not claimable until
+tonight's run:** that the API answers the pinned SDK's request again -- the
+22:16 UTC evening cron on `main` is the test, and its `run.reads` and
+`run.reader_usage` are what to read tomorrow.

@@ -19,6 +19,7 @@ from __future__ import annotations
 import inspect
 import hashlib
 import json
+import re
 import logging
 from pathlib import Path
 
@@ -812,3 +813,61 @@ def test_an_empty_credit_balance_is_not_bought_again(claude):
     assert len(claude.calls) == 1, "6 Oct 2026 bought twelve calls after the first answer said this"
     assert [r["provenance"]["source"] for r in rows] == [SOURCE_FALLBACK] * 3
     assert all("credit balance is too low" in r["provenance"]["error"] for r in rows)
+
+
+# -------------------------------------------------- the API version pin ----
+
+
+def test_the_installed_sdk_sends_the_validated_api_version_on_the_wire(monkeypatch):
+    """The request the grader builds was validated under grader.API_VERSION.
+
+    anthropic 2.x defaults to 2026-10-21, under which the API refuses the
+    `temperature` the grader sends on purpose (a 400 on every call, which is
+    what emptied the 21 and 22 October 2026 runs' reads). This reads the
+    header the INSTALLED SDK puts on the wire through the grader's own client,
+    so a loosened pin fails here rather than on the next evening's run.
+    """
+    import anthropic
+    import httpx2 as httpx
+
+    from src import grader
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "offline-transport-test")
+    real_client = anthropic.Anthropic
+    seen = []
+
+    def answer(request):
+        seen.append(request)
+        return httpx.Response(200, json={
+            "id": "msg_offline", "type": "message", "role": "assistant", "model": grader.MODEL,
+            "content": [{"type": "text", "text": "{}"}], "stop_reason": "end_turn", "stop_sequence": None,
+            "usage": {"input_tokens": 1, "output_tokens": 1,
+                      "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0}})
+
+    def client_with_local_transport(**kwargs):
+        return real_client(http_client=httpx.Client(transport=httpx.MockTransport(answer)), **kwargs)
+
+    monkeypatch.setattr(anthropic, "Anthropic", client_with_local_transport)
+    client = grader._client()
+    try:
+        client.messages.create(**request_kwargs(SYSTEM, [{"type": "text", "text": "t"}]))
+    finally:
+        client.close()
+    assert len(seen) == 1
+    request = seen[0]
+    assert request.headers["anthropic-version"] == grader.API_VERSION == "2023-06-01"
+    body = json.loads(request.content)
+    # the two gated parameters reach the wire as the request builder sent them
+    assert body["temperature"] == 0 and body["output_config"]["format"]["type"] == "json_schema"
+    assert anthropic.__version__.split(".")[0] == "1", anthropic.__version__
+
+
+def test_requirements_hold_the_sdk_below_the_major_that_changes_the_api_version():
+    """requirements.txt is what evening.yml installs on every run. The bound is
+    the pipeline's, so a bare `anthropic>=x` can never come back silently."""
+    root = Path(__file__).resolve().parents[1]
+    lines = [line.strip() for line in (root / "requirements.txt").read_text().splitlines()]
+    anthropic_lines = [line for line in lines if line and not line.startswith("#") and re.match(r"anthropic\b", line)]
+    assert len(anthropic_lines) == 1, anthropic_lines
+    assert re.fullmatch(r"anthropic\s*>=\s*1\.\d+\s*,\s*<\s*2", anthropic_lines[0]), anthropic_lines[0]
+    assert "2026-10-21" in (root / "requirements.txt").read_text(), "the pin names the API version it holds back"

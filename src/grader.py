@@ -86,6 +86,16 @@ NOT_GRADED_REASON = "call budget"
 # output_config; local authority validation remains mandatory afterwards.
 REQUEST_VERSION = 2
 RULES = {"grading.reader_request_version": REQUEST_VERSION}
+
+#: The Messages API version this request shape was validated under: the SDK's
+#: default header. API version 2026-10-21 removes `temperature`, `top_p` and
+#: `top_k` (a 400 on every model, extra_body included), and anthropic 2.x sends
+#: it by default -- which is what refused every read of the 21 and 22 October
+#: 2026 runs. requirements.txt holds the SDK below 2.0 and
+#: tests/test_grader.py reads the header off the wire, so an unpinned upgrade
+#: fails CI instead of the next evening's run. Moving to 2026-10-21 means
+#: deleting the temperature (default sampling), an owner's decision.
+API_VERSION = "2023-06-01"
 STRUCTURED_OUTPUT_MODELS = frozenset({
     "claude-fable-5", "claude-mythos-5", "claude-opus-5", "claude-opus-4-8",
     "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-4-6", "claude-sonnet-4-5",
