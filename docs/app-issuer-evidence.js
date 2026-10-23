@@ -9,7 +9,8 @@
     max_history_files: 1, max_metadata_rows: 2000, max_listed_filings: 12, max_excerpt_bytes: 16384,
     receipt_ttl_seconds: 86400, max_future_skew_seconds: 5, max_requests: 96, max_response_bytes: 2097152,
     max_download_bytes: 33554432, max_collection_seconds: 240, min_request_interval_seconds: 1 };
-  const ACQUISITION_FORMS = ['PREM14A', 'DEFM14A', 'SC TO-T', 'SC TO-T/A', 'SC 14D9', 'SC 14D9/A'];
+  const ACQUISITION_FORMS = ['PREM14A', 'PREM14A/A', 'DEFM14A', 'DEFM14A/A', 'SC TO-T', 'SC TO-T/A', 'SC 14D9', 'SC 14D9/A'];
+  const ACQUISITION_REVIEW_VERSION = 2;
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
   const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
@@ -197,6 +198,44 @@
       require(r.status === expected, 'Issuer receipt status contradicts its retained rows.');
     }
   }
+  const newestFirst = rows => rows.slice().sort((a, b) => a.accepted_at === b.accepted_at ? (a.accession < b.accession ? 1 : a.accession > b.accession ? -1 : 0) : a.accepted_at < b.accepted_at ? 1 : -1);
+  function validateAcquisitionReview(row, end, asOf) {
+    // Absent: a bundle from before the warning, which recorded nothing and
+    // clears nothing. Version 1 (no schema_version): the first collector's
+    // block, bare filings, present only when a form was observed. Version 2:
+    // always present, zero and unknown said, each listed filing naming the
+    // retained index it was read from. Form names never establish a deal.
+    const ident = row.identity, index = row.index;
+    if (!Object.hasOwn(index, 'acquisition_review')) return;
+    const review = index.acquisition_review;
+    require(object(review), 'Acquisition review is invalid.');
+    if (!Object.hasOwn(review, 'schema_version')) {
+      require(ident.status === 'verified' && keys(review, 'observed_count filings') && integer(review.observed_count, index.metadata_count) && review.observed_count > 0 && review.observed_count + index.eligible_current_report_count <= index.metadata_count &&
+        Array.isArray(review.filings) && review.filings.length === Math.min(review.observed_count, 12), 'Acquisition review count is invalid.');
+      review.filings.forEach(item => {
+        filing(item, asOf);
+        require(ACQUISITION_FORMS.includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end, 'Acquisition review form falls outside this collection.');
+      });
+      require(review.filings.every(f => !index.listed_filings.some(r => r.accession === f.accession)) && equal(newestFirst(review.filings), review.filings) && new Set(review.filings.map(x => x.accession)).size === review.filings.length, 'Acquisition review ordering is invalid.');
+      return;
+    }
+    require(keys(review, 'schema_version observed_count not_listed_count filings') && review.schema_version === ACQUISITION_REVIEW_VERSION &&
+      integer(review.observed_count, index.metadata_count - index.eligible_current_report_count) && integer(review.not_listed_count, review.observed_count) &&
+      Array.isArray(review.filings) && review.filings.length === Math.min(review.observed_count, 12) && review.not_listed_count === review.observed_count - review.filings.length &&
+      (ident.status === 'verified' || review.observed_count === 0), 'Acquisition review count is invalid.');
+    const sources = [ident.submissions_source, ...index.history_sources].filter(Boolean), seen = new Set();
+    for (const entry of review.filings) {
+      require(keys(entry, 'filing index_source'), 'Acquisition review metadata is invalid.');
+      filing(entry.filing, asOf);
+      const item = entry.filing;
+      require(ACQUISITION_FORMS.includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end && !seen.has(item.accession), 'Acquisition review form falls outside this collection.');
+      source(entry.index_source, end, asOf);
+      require(sources.some(src => equal(src, entry.index_source)), 'Acquisition review filing lacks its retained issuer index source.');
+      seen.add(item.accession);
+    }
+    const filings = review.filings.map(entry => entry.filing);
+    require(filings.every(f => !index.listed_filings.some(r => r.accession === f.accession)) && equal(newestFirst(filings), filings), 'Acquisition review ordering is invalid.');
+  }
   async function validateBundle(value, r) {
     require(keys(value, 'schema_version publication collection_started_at generated_at as_of window_start candidates issuers stats') && value.schema_version === 1 &&
       equal(value.publication, r.publication) && value.collection_started_at === r.collection_started_at && value.generated_at === r.generated_at && value.as_of === r.collection_started_at && day(value.window_start), 'Issuer bundle metadata differs from its receipt.');
@@ -234,17 +273,7 @@
         source(item, end, asOf);
         require(ident.status === 'verified' && new RegExp('^https://data\\.sec\\.gov/submissions/CIK' + String(ident.cik).padStart(10, '0') + '-submissions-[0-9]{3}\\.json$').test(item.url), 'Historical index CIK differs from the issuer.');
       }
-      if (Object.hasOwn(index, 'acquisition_review')) {
-        const review = index.acquisition_review;
-        require(ident.status === 'verified' && keys(review, 'observed_count filings') && integer(review.observed_count, index.metadata_count) && review.observed_count > 0 && review.observed_count + index.eligible_current_report_count <= index.metadata_count &&
-          Array.isArray(review.filings) && review.filings.length === Math.min(review.observed_count, 12), 'Acquisition review count is invalid.');
-        review.filings.forEach(item => {
-          filing(item, asOf);
-          require(ACQUISITION_FORMS.includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end, 'Acquisition review form falls outside this collection.');
-        });
-        const sorted = review.filings.slice().sort((a, b) => a.accepted_at === b.accepted_at ? (a.accession < b.accession ? 1 : a.accession > b.accession ? -1 : 0) : a.accepted_at < b.accepted_at ? 1 : -1);
-        require(review.filings.every(f => !index.listed_filings.some(r => r.accession === f.accession)) && equal(sorted, review.filings) && new Set(review.filings.map(x => x.accession)).size === review.filings.length, 'Acquisition review ordering is invalid.');
-      }
+      validateAcquisitionReview(row, end, asOf);
       index.listed_filings.forEach(item => {
         filing(item, asOf);
         require(['8-K', '8-K/A', '6-K', '6-K/A'].includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end, 'Listed report falls outside this collection.');
@@ -355,6 +384,34 @@
   function paintAge() {
     if (mounted && receipt && state === 'loaded') mounted.querySelector('[data-issuer-status]').textContent = ageLabel();
   }
+  // One section for the merger/tender-form review, whatever the receipt's
+  // generation: not_recorded (no block), unknown (version 2, unverified
+  // identity), none (version 2, verified, nothing observed) or observed. It
+  // reads counts and attributions off the block and adds no figure of its own.
+  function acquisitionReview(body, ident, index) {
+    const review = index.acquisition_review, versioned = !!review && Object.hasOwn(review, 'schema_version');
+    const state = !review ? 'not_recorded' : versioned && ident.status !== 'verified' ? 'unknown' : review.observed_count ? 'observed' : 'none';
+    const section = node('section', { 'data-acquisition-section': '', 'data-acquisition-state': state, 'data-acquisition-version': review ? (versioned ? String(review.schema_version) : '1') : 'none' });
+    const incomplete = index.coverage_status !== 'observed_window' ? ' Incomplete index: missing or invalid metadata may omit other acquisition filings.' : '';
+    if (state === 'not_recorded') {
+      paragraph(section, 'Acquisition review:', 'No acquisition-form warning recorded in this bundle. This is not evidence that no acquisition exists; older collectors did not record these warnings and bounded metadata can miss events.');
+    } else if (state === 'unknown') {
+      paragraph(section, 'Acquisition review:', 'Unknown. Issuer identity or submissions could not be verified, so merger and tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 and their amendments) were not checked. This is not event clearance; known event evidence above remains in force.');
+    } else if (state === 'none') {
+      paragraph(section, 'Acquisition review:', 'No merger or tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 or their amendments) among the ' + index.metadata_count + ' observed metadata rows. Index coverage: ' + index.coverage_status.replaceAll('_', ' ') + '.' + incomplete + ' An empty list is not event clearance: bounded metadata can miss events, and known event evidence above remains in force.');
+    } else {
+      paragraph(section, 'Acquisition review:', review.observed_count + ' acquisition-related form(s) observed; ' + review.filings.length + ' listed below; ' + (versioned ? review.not_listed_count : review.observed_count - review.filings.length) + ' not listed. Review before considering a trade. Form names alone do not establish a pending or completed acquisition, its terms, or clearance. Documents below cover selected current reports, not these forms.' + incomplete + (versioned ? '' : ' This older receipt lists forms without attributing each to its retained index source.'));
+      for (const entry of review.filings) {
+        const item = versioned ? entry.filing : entry, src = versioned ? entry.index_source : null;
+        const line = node('p', { class: 'sc-hint', 'data-acquisition-review': '' });
+        line.append(link(item.form + ' · filed ' + item.filing_date, 'https://www.sec.gov/Archives/edgar/data/' + ident.cik + '/' + item.accession.replaceAll('-', '') + '/' + item.primary_document),
+          d.createTextNode(' · SEC accepted ' + stamp(item.accepted_at) + ' · accession ' + item.accession + ' · metadata only; content unreviewed'));
+        if (src) line.append(d.createTextNode(' · read from the '), link('retained SEC submissions index', src.url), d.createTextNode(' retrieved / checked ' + stamp(src.fetched_at) + ' / ' + stamp(src.checked_at) + ' · ' + src.cache_status.replaceAll('_', ' ')));
+        section.append(line);
+      }
+    }
+    body.append(section);
+  }
   function paint() {
     if (!mounted) return;
     mounted.setAttribute('data-issuer-state', state);
@@ -380,16 +437,7 @@
     paragraph(body, 'Index window:', index.window_start + '–' + index.window_end + ' · ' + index.coverage_status.replaceAll('_', ' ') + (index.reason ? ' · ' + index.reason : '') + '. Observed range: ' + (index.range_start || 'unknown') + '–' + (index.range_end || 'unknown') + '.');
     paragraph(body, 'Content boundary:', index.metadata_count + ' metadata rows observed; ' + index.eligible_current_report_count + ' current reports; ' + index.selected_accessions.length + ' selected; ' + primaries + ' primary documents retrieved. ' + index.not_selected_count + ' eligible reports not selected; ' + (index.selected_accessions.length - primaries) + ' selected primary documents missing. All remaining content is unreviewed.');
     paragraph(body, 'Historical index:', index.history_files_fetched + ' of ' + index.history_files_advertised + ' advertised history files fetched. ' + (index.metadata_count - index.listed_filings.length - (index.acquisition_review?.filings.length || 0)) + ' observed metadata rows not listed here.');
-    const review = index.acquisition_review;
-    paragraph(body, 'Acquisition review:', review
-      ? review.observed_count + ' acquisition-related form(s) observed; ' + review.filings.length + ' listed below. Review before considering a trade. Form names alone do not establish a pending or completed acquisition, its terms, or clearance. Documents below cover selected current reports, not these forms.'
-      : 'No acquisition-form warning recorded in this bundle. This is not evidence that no acquisition exists; older collectors did not record these warnings and bounded metadata can miss events.');
-    if (review) for (const item of review.filings) {
-      const line = node('p', { class: 'sc-hint', 'data-acquisition-review': '' });
-      line.append(link(item.form + ' · filed ' + item.filing_date, 'https://www.sec.gov/Archives/edgar/data/' + ident.cik + '/' + item.accession.replaceAll('-', '') + '/' + item.primary_document),
-        d.createTextNode(' · SEC accepted ' + stamp(item.accepted_at) + ' · accession ' + item.accession + ' · metadata only; content unreviewed'));
-      body.append(line);
-    }
+    acquisitionReview(body, ident, index);
     paragraph(body, 'Exhibit boundary:', index.exhibit_links_observed + ' eligible exhibit links observed; ' + index.exhibit_links_not_fetched + ' not retrieved. Unfetched linked material remains unreviewed.');
     for (const [label, src] of [['SEC ticker mapping', ident.mapping_source], ['SEC submissions index', ident.submissions_source], ...index.history_sources.map(src => ['Older SEC submissions index', src])]) if (src) {
       const p = node('p', { class: 'sc-hint' }); p.append(link(label, src.url)); body.append(p);

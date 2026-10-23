@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5069 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5130 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11028,3 +11028,76 @@ the mutation controls are recorded on the pull request. **Not claimable until
 tonight's run:** that the API answers the pinned SDK's request again -- the
 22:16 UTC evening cron on `main` is the test, and its `run.reads` and
 `run.reader_usage` are what to read tomorrow.
+
+## Checkpoint, 23 Oct 2026 -- the paused handoff reconciled onto `main`: merger and tender forms under the shipped review block, and acknowledgements that belong to one plan
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` over the reader
+pin (PR #190, `17d2f092`). The checkpoint branch `codex/issuer-transaction-review`
+(`4cd163c3`, base `88e708f2`, handoff `FABLE_HANDOFF.md`) was read and its two
+changes carried onto current `main` selectively; nothing of it was merged or
+replayed wholesale, and `main` had advanced through PRs #185-#189 and twelve
+publications since its base. `docs/data.json`, `docs/picks.json`, the compact
+reader, every receipt, the history, the evidence objects, the quality ledger,
+the workflows and the vendored design system are untouched; no run, mail,
+dispatch, provider call or credential.
+
+**The issuer change, reconciled rather than duplicated.** The handoff added a
+second block, `index.transaction_filings`, beside the `index.acquisition_review`
+that PR #185 had shipped a week earlier for the same forms, with a second
+section and a second count on the page. One block now: `acquisition_review`
+version 2 under the key version 1 shipped. The collector writes it for EVERY
+row (`_empty_acquisition_review()`, filled in `_collect_issuer`), so nothing
+observed is said rather than left out, and an unverified identity carries zero;
+the forms are the eight the handoff named (PREM14A, DEFM14A, SC TO-T, SC 14D9
+and each `/A` amendment; version 1 had six); `not_listed_count` is the observed
+count less the twelve listed; and each listed entry is `{filing, index_source}`,
+the source byte-equal to the row's retained `submissions_source` or one of its
+`history_sources` (a filing in both the recent file and a fetched history file
+keeps the recent source). `_acquisition_review()` holds version 2 one level in
+(version, counts against `metadata_count` less the current reports, the twelve
+bound, forms, window, unique accessions never among `listed_filings`, each
+source validated as a source and found among the row's, newest first) and
+`_acquisition_review_v1()` keeps the first collector's block readable under its
+own rules; an absent block is a bundle from before the warning and clears
+nothing. The page's `validateAcquisitionReview()` mirrors both branches, and
+`acquisitionReview()` draws ONE section (`data-acquisition-section`,
+`data-acquisition-state` of `not_recorded`, `unknown`, `none` or `observed`,
+`data-acquisition-version` of `none`, `1` or `2`) with the existing per-filing
+`data-acquisition-review` lines, each version-2 line naming its retained index
+with its retrieval and check instants; the "observed metadata rows not listed
+here" count subtracts the listed forms as before. The receipt's `policy` block
+is unchanged on purpose: a changed policy would refuse every published receipt.
+**Compatibility by execution:** all eleven issuer receipts ever published on
+`main` (every commit of `docs/issuer-evidence.json`, each with the bundle it
+names at that commit) validate under the new validator; none carries a block.
+The generator gains six variants through the real collector (`observed`,
+`none`, `partial`, `unavailable`, `history`, `capped`), so the 30 fixtures are
+42 and every bundle regenerated, since every row now carries the block.
+
+**The acknowledgement change, and the control that timed out.** `refreshPreview()`
+clears the four manual checks when the previewed plan's identity changes
+(stage, ticker, `plan_sha256`, the order), as the handoff did; `render()` still
+clears them only on a new publication or session. The handoff's same-plan
+refresh control called `SCStock.render(SCStock.data, …)` and waited for the
+observations to load, which can never happen: `render()` nulls the record's
+bytes and resets the observations module to `unbound`, and only the loader's
+`bind(raw)` moves it on. The product's clock path is `reclock()`, which a
+pinned page refuses, so the multiple-plan case now opens UNPINNED with `Date`
+replaced (the first-trade rehearsal's pattern over the same fixture), moves the
+clock across the 14:00Z cutoff and calls `SCStock.reclock()`: the desk repaints
+through `morning.render()` (`data-morning-offered` true to false), the preview
+is withdrawn with the cutoff's own reason, the plan selection and the four
+checks survive. Before it, an edit of the same plan's quantity recalculates the
+preview and keeps them. README says both.
+
+**Measured** (this sandbox, Python 3.12.3, anthropic 1.17.0, Node 22, Chromium
+through Playwright 1.63): the issuer Python files 340 passed
+(`test_issuer_acquisition_review` new, 61 cases); `tests/test_docs.py`,
+`test_workflows.py`, `test_publish_dashboard.py` and `test_secret_scan.py` 224
+passed with the count line at 5130; the issuer generator `--check` 42 current;
+the `issuer`, `cashpreview` and `morning` suites 1165/1165 with `--shots`
+against `main`'s 1038, and the four new screenshots at 1280 and 390 were
+looked at (one column on the phone, nothing sideways); gitleaks 8.24.3 with the
+repository's config over the 50 changed files: no leaks. `.env.example` was
+read: nothing here is configuration. The full suite, the chart check, the full
+smoke, the mutation passes and the review are recorded below as they finished.

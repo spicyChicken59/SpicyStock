@@ -411,8 +411,9 @@ def test_acquisition_metadata_uses_existing_requests_and_never_changes_plans(pro
     result = producer.collect(raw, fetch=fetch)
     index = result['bundle']['issuers'][0]['index']
     assert index['acquisition_review']['observed_count'] == 1
-    assert index['acquisition_review']['filings'][0]['accession'] == '0000320193-26-009004'
-    assert index['acquisition_review']['filings'][0]['form'] == form
+    assert index['acquisition_review']['filings'][0]['filing']['accession'] == '0000320193-26-009004'
+    assert index['acquisition_review']['filings'][0]['filing']['form'] == form
+    assert index['acquisition_review']['filings'][0]['index_source'] == result['bundle']['issuers'][0]['identity']['submissions_source']
     assert result['bundle']['issuers'][0]['documents'] == baseline['bundle']['issuers'][0]['documents']
     assert result['bundle']['candidates'] == baseline['bundle']['candidates']
     assert result['receipt']['coverage'] == baseline['receipt']['coverage']
@@ -421,16 +422,20 @@ def test_acquisition_metadata_uses_existing_requests_and_never_changes_plans(pro
     again = producer.collect(raw, fetch=producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)}))
     assert again['bundle_bytes'] == result['bundle_bytes']
     assert again['receipt_bytes'] == result['receipt_bytes']
-    assert 'acquisition_review' not in baseline['bundle']['issuers'][0]['index']
+    # the block is always written now: nothing observed is said, not left out
+    assert baseline['bundle']['issuers'][0]['index']['acquisition_review'] == {
+        'schema_version': issuer.ACQUISITION_REVIEW_VERSION, 'observed_count': 0, 'not_listed_count': 0, 'filings': []}
 
 
 @pytest.mark.parametrize('edit', [
     lambda r: r.update(observed_count=0),
     lambda r: r.update(observed_count=True),
-    lambda r: r['filings'][0].update(form='10-K'),
-    lambda r: r['filings'][0].update(filing_date='2020-01-01'),
-    lambda r: r['filings'][0].update(accepted_at='2027-01-01T00:00:00+00:00'),
+    lambda r: r['filings'][0]['filing'].update(form='10-K'),
+    lambda r: r['filings'][0]['filing'].update(filing_date='2020-01-01'),
+    lambda r: r['filings'][0]['filing'].update(accepted_at='2027-01-01T00:00:00+00:00'),
     lambda r: r['filings'].append(r['filings'][0]),
+    lambda r: r.update(not_listed_count=1),
+    lambda r: r['filings'][0]['index_source'].update(url='https://data.sec.gov/submissions/CIK0001045810.json'),
 ])
 def test_acquisition_metadata_refuses_corruption_after_rehash(producer, packet, edit):
     raw, _ = packet
@@ -449,7 +454,7 @@ def test_acquisition_future_and_old_metadata_cannot_enter_decision(producer, pac
     recent['form'][3] = recent['form'][4] = 'DEFM14A'
     recent['acceptanceDateTime'][3] = '2026-10-11T16:00:00Z'
     result = producer.collect(raw, fetch=producer.transport(edits={producer.AAPL_SUBMISSIONS: producer.json_bytes(source)}))
-    assert 'acquisition_review' not in result['bundle']['issuers'][0]['index']
+    assert result['bundle']['issuers'][0]['index']['acquisition_review']['observed_count'] == 0
 
 
 def test_acquisition_review_retains_count_and_latest_twelve_without_document_fetches(producer, packet):
@@ -469,7 +474,8 @@ def test_acquisition_review_retains_count_and_latest_twelve_without_document_fet
     result = producer.collect(raw, fetch=fetch)
     row = result['bundle']['issuers'][0]
     assert row['index']['acquisition_review']['observed_count'] == 15
-    assert [f['filing_date'] for f in row['index']['acquisition_review']['filings']] == [f'2026-09-{day:02d}' for day in range(15, 3, -1)]
+    assert [f['filing']['filing_date'] for f in row['index']['acquisition_review']['filings']] == [f'2026-09-{day:02d}' for day in range(15, 3, -1)]
+    assert row['index']['acquisition_review']['not_listed_count'] == 3
     assert not row['documents']
     assert not any('/Archives/edgar/data/320193/' in url for url in fetch.calls)
     issuer.validate_for_publication(raw, result['receipt_bytes'], result['bundle_bytes'], allow_fixture=True)

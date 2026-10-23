@@ -76,7 +76,7 @@ def test_generator_reproduces_additive_controls_without_rewriting_originals():
     generator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(generator)
     outputs = generator.build()
-    assert len(outputs) == 30
+    assert len(outputs) == 42
     assert all((FIXTURES / name).read_bytes() == raw for name, raw in outputs.items())
 
 

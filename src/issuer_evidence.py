@@ -60,7 +60,14 @@ HEX = re.compile(r"[a-f0-9]{64}\Z")
 SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,31}\Z")
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
 BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
-ACQUISITION_FORMS = {"PREM14A", "DEFM14A", "SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A"}
+# Merger-proxy and tender-offer forms, with their amendments. Version 2 of the
+# review block (always written, zero and unknown said out loud, every listed
+# filing naming the retained index it was read from) under the key version 1
+# shipped; a version-1 block (no schema_version, bare filings, written only
+# when a form was observed) stays readable.
+ACQUISITION_FORMS = {"PREM14A", "PREM14A/A", "DEFM14A", "DEFM14A/A",
+                     "SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A"}
+ACQUISITION_REVIEW_VERSION = 2
 FORMS = {"8-K", "8-K/A", "6-K", "6-K/A"}
 ERRORS = {"rate_limit", "http_error", "timeout", "network_error", "redirect_refused",
           "size_limit", "request_budget", "time_budget", "invalid_response",
@@ -337,6 +344,75 @@ def _reconcile_row(row):
              "issuer row label contradicts visible completeness")
 
 
+def _acquisition_review_v1(row, as_of):
+    """The block as the first collector wrote it: present only when a form was
+    observed, bare filings, no source attribution. Read, never written."""
+    index, identity, review = row["index"], row["identity"], row["index"]["acquisition_review"]
+    _keys(review, ("observed_count", "filings"))
+    _require(identity["status"] == "verified" and _count(review["observed_count"], index["metadata_count"])
+             and review["observed_count"] > 0
+             and review["observed_count"] + index["eligible_current_report_count"] <= index["metadata_count"]
+             and isinstance(review["filings"], list)
+             and len(review["filings"]) == min(review["observed_count"], MAX_LISTED_FILINGS), "issuer acquisition review count")
+    for filing in review["filings"]:
+        _filing(filing, as_of)
+        _require(filing["form"] in ACQUISITION_FORMS and index["window_start"] <= filing["filing_date"] <= index["window_end"], "issuer acquisition review form/window")
+    _require(len({f["accession"] for f in review["filings"]}) == len(review["filings"])
+             and not {f["accession"] for f in review["filings"]} & {f["accession"] for f in index["listed_filings"]}
+             and review["filings"] == sorted(review["filings"], key=lambda f: (f["accepted_at"], f["accession"]), reverse=True), "issuer acquisition review ordering")
+
+
+def _acquisition_review(row, as_of, completion):
+    """Validate observed form metadata, never a pending deal or event clearance.
+
+    Absent: a bundle from before the warning, which recorded nothing and clears
+    nothing. Version 1: the first collector's block, bare filings, present only
+    when a form was observed. Version 2: always present; zero observed is said,
+    an unverified identity carries zero, each listed filing names the exact
+    retained index (the submissions file or one fetched history file) it was
+    read from, and the omitted count is the observed count less the listed.
+    The block adds no source or retrieval and cannot establish the current
+    state of a transaction.
+    """
+    index, identity = row["index"], row["identity"]
+    if "acquisition_review" not in index:
+        return
+    review = index["acquisition_review"]
+    _require(isinstance(review, dict), "issuer acquisition review shape")
+    if "schema_version" not in review:
+        _acquisition_review_v1(row, as_of)
+        return
+    _keys(review, ("schema_version", "observed_count", "not_listed_count", "filings"))
+    _require(type(review["schema_version"]) is int and review["schema_version"] == ACQUISITION_REVIEW_VERSION,
+             "issuer acquisition review version")
+    bound = MAX_METADATA_ROWS * (1 + MAX_HISTORY_FILES)
+    _require(_count(review["observed_count"], bound) and _count(review["not_listed_count"], bound)
+             and isinstance(review["filings"], list)
+             and len(review["filings"]) == min(review["observed_count"], MAX_LISTED_FILINGS)
+             and review["not_listed_count"] == review["observed_count"] - len(review["filings"])
+             and review["observed_count"] + index["eligible_current_report_count"] <= index["metadata_count"],
+             "issuer acquisition review count")
+    if identity["status"] != "verified":
+        _require(review["observed_count"] == 0, "issuer unverified acquisition review")
+    sources = [identity["submissions_source"], *index["history_sources"]]
+    filings, seen = [], set()
+    for item in review["filings"]:
+        _keys(item, ("filing", "index_source"))
+        filing = item["filing"]
+        _filing(filing, as_of)
+        _require(filing["form"] in ACQUISITION_FORMS
+                 and index["window_start"] <= filing["filing_date"] <= index["window_end"]
+                 and filing["accession"] not in seen, "issuer acquisition review form/window")
+        _source(item["index_source"], completion)
+        _require(item["index_source"] is not None and item["index_source"] in sources,
+                 "issuer acquisition review source differs from retained index")
+        seen.add(filing["accession"])
+        filings.append(filing)
+    _require(not seen & {f["accession"] for f in index["listed_filings"]}
+             and filings == sorted(filings, key=lambda f: (f["accepted_at"], f["accession"]), reverse=True),
+             "issuer acquisition review ordering")
+
+
 def _reconcile_budget(issuers, stats):
     """Visible sources prove lower bounds, never all attempts or raw captures."""
     network, captures, failures = {}, {}, set()
@@ -431,20 +507,7 @@ def validate_bundle(receipt_raw, bundle_raw):
             _source(source, completion)
             _require(identity["status"] == "verified" and re.fullmatch(r"https://data.sec.gov/submissions/CIK" + f'{identity["cik"]:010d}' + r"-submissions-[0-9]{3}\.json", source["url"]), "issuer history source URL")
         _require(isinstance(index["listed_filings"], list) and len(index["listed_filings"]) <= MAX_LISTED_FILINGS, "issuer listed metadata bound")
-        if "acquisition_review" in index:
-            review = index["acquisition_review"]
-            _keys(review, ("observed_count", "filings"))
-            _require(identity["status"] == "verified" and _count(review["observed_count"], index["metadata_count"])
-                     and review["observed_count"] > 0
-                     and review["observed_count"] + index["eligible_current_report_count"] <= index["metadata_count"]
-                     and isinstance(review["filings"], list)
-                     and len(review["filings"]) == min(review["observed_count"], MAX_LISTED_FILINGS), "issuer acquisition review count")
-            for filing in review["filings"]:
-                _filing(filing, as_of)
-                _require(filing["form"] in ACQUISITION_FORMS and index["window_start"] <= filing["filing_date"] <= index["window_end"], "issuer acquisition review form/window")
-            _require(len({f["accession"] for f in review["filings"]}) == len(review["filings"])
-                     and not {f["accession"] for f in review["filings"]} & {f["accession"] for f in index["listed_filings"]}
-                     and review["filings"] == sorted(review["filings"], key=lambda f: (f["accepted_at"], f["accession"]), reverse=True), "issuer acquisition review ordering")
+        _acquisition_review(row, as_of, completion)
         metadata = {}
         for filing in index["listed_filings"]:
             _filing(filing, as_of)
@@ -1000,7 +1063,12 @@ def _empty_index(start):
             "window_end": start.date().isoformat(), "coverage_status": "unknown", "reason": "SEC index coverage has not been established.",
             "range_start": None, "range_end": None, "metadata_count": 0, "eligible_current_report_count": 0,
             "not_selected_count": 0, "history_files_advertised": 0, "history_files_fetched": 0,
-            "history_sources": [], "selected_accessions": [], "listed_filings": [], "exhibit_links_observed": 0, "exhibit_links_not_fetched": 0}
+            "history_sources": [], "selected_accessions": [], "listed_filings": [], "exhibit_links_observed": 0, "exhibit_links_not_fetched": 0,
+            "acquisition_review": _empty_acquisition_review()}
+
+
+def _empty_acquisition_review():
+    return {"schema_version": ACQUISITION_REVIEW_VERSION, "observed_count": 0, "not_listed_count": 0, "filings": []}
 
 
 def _empty_issuer(ticker, start):
@@ -1086,6 +1154,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     index = row["index"]
     index.update(range_start=parsed["range_start"], range_end=parsed["range_end"], history_files_advertised=len(parsed["history"]))
     filings = {filing["accession"]: filing for filing in parsed["filings"]}
+    filing_sources = {accession: source for accession in filings}
     if parsed["invalid_count"]:
         _error(row, "metadata_invalid", url)
     history = [h for h in parsed["history"] if _day(h["filing_to"]) >= _day(index["window_start"])
@@ -1103,6 +1172,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                     _require(filing["accession"] not in filings or filings[filing["accession"]] == filing, "conflicting history accession")
                 for filing in old["filings"]:
                     filings[filing["accession"]] = filing
+                    filing_sources.setdefault(filing["accession"], history_source)
                 index["history_files_fetched"] += 1
                 index["history_sources"].append(history_source)
                 if old["range_start"] is not None:
@@ -1120,8 +1190,10 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
         _error(row, "history_incomplete")
     ordered = sorted(filings.values(), key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)
     acquisition = [filing for filing in ordered if filing["form"] in ACQUISITION_FORMS]
-    if acquisition:
-        index["acquisition_review"] = {"observed_count": len(acquisition), "filings": acquisition[:MAX_LISTED_FILINGS]}
+    index["acquisition_review"].update(
+        observed_count=len(acquisition), not_listed_count=max(0, len(acquisition) - MAX_LISTED_FILINGS),
+        filings=[{"filing": filing, "index_source": filing_sources[filing["accession"]]}
+                 for filing in acquisition[:MAX_LISTED_FILINGS]])
     reports = [filing for filing in ordered if filing["form"] in FORMS]
     selected = reports[:MAX_REPORTS]
     index.update(metadata_count=len(ordered), eligible_current_report_count=len(reports),

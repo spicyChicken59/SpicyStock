@@ -117,6 +117,10 @@
     if (previewKey !== identity) {
       host.querySelector('#morning-preview-fees').value = '';
       host.querySelector('#morning-preview-quantity').value = '';
+      // Acknowledgements belong to one plan: a quote, cash, stop or event check
+      // made for one stock says nothing about another, so a changed plan
+      // identity clears all four. The same plan, repainted by the clock, keeps them.
+      host.querySelectorAll('[data-morning-check]').forEach(input => { input.checked = false; });
       previewKey = identity;
     }
     result.replaceChildren();
