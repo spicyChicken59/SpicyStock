@@ -35,6 +35,8 @@ MAX_EXHIBITS = 2
 MAX_HISTORY_FILES = 1
 MAX_METADATA_ROWS = 2000
 MAX_LISTED_FILINGS = 12
+MAX_TRANSACTION_FILINGS = 12
+TRANSACTION_FILINGS_VERSION = 1
 MAX_EXCERPT_BYTES = 16 * 1024
 MAX_REQUESTS = 96
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
@@ -61,6 +63,8 @@ SYMBOL = re.compile(r"[A-Z][A-Z0-9.\-]{0,31}\Z")
 ACCESSION = re.compile(r"[0-9]{10}-[0-9]{2}-[0-9]{6}\Z")
 BASENAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.\-]{0,199}\Z")
 FORMS = {"8-K", "8-K/A", "6-K", "6-K/A"}
+TRANSACTION_FORMS = {"PREM14A", "PREM14A/A", "DEFM14A", "DEFM14A/A",
+                     "SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A"}
 ERRORS = {"rate_limit", "http_error", "timeout", "network_error", "redirect_refused",
           "size_limit", "request_budget", "time_budget", "invalid_response",
           "identity_unverified", "metadata_invalid", "document_invalid", "history_incomplete"}
@@ -336,6 +340,49 @@ def _reconcile_row(row):
              "issuer row label contradicts visible completeness")
 
 
+def _transaction_filings(row, as_of, completion):
+    """Validate observed form metadata, never a pending deal or event clearance.
+
+    The optional extension keeps older receipts readable. Each observation
+    names an index already retained by the collection; it adds no source or
+    retrieval and cannot establish the current state of a transaction.
+    """
+    index, identity = row["index"], row["identity"]
+    if "transaction_filings" not in index:
+        return
+    value = index["transaction_filings"]
+    _keys(value, ("schema_version", "observed_count", "not_listed_count", "filings"))
+    _require(type(value["schema_version"]) is int and value["schema_version"] == TRANSACTION_FILINGS_VERSION,
+             "issuer transaction filing version")
+    _require(_count(value["observed_count"], MAX_METADATA_ROWS * (1 + MAX_HISTORY_FILES))
+             and _count(value["not_listed_count"], MAX_METADATA_ROWS * (1 + MAX_HISTORY_FILES))
+             and isinstance(value["filings"], list)
+             and len(value["filings"]) == min(value["observed_count"], MAX_TRANSACTION_FILINGS)
+             and value["not_listed_count"] == value["observed_count"] - len(value["filings"])
+             and value["observed_count"] <= index["metadata_count"] - index["eligible_current_report_count"],
+             "issuer transaction filing counts")
+    if identity["status"] != "verified":
+        _require(value["observed_count"] == 0, "issuer unverified transaction filings")
+    sources = [identity["submissions_source"], *index["history_sources"]]
+    filings, seen = [], set()
+    for item in value["filings"]:
+        _keys(item, ("filing", "index_source"))
+        filing = item["filing"]
+        _filing(filing, as_of)
+        _require(filing["form"] in TRANSACTION_FORMS
+                 and index["window_start"] <= filing["filing_date"] <= index["window_end"]
+                 and filing["accession"] not in seen
+                 and all(filing["accession"] != report["accession"] for report in index["listed_filings"]),
+                 "issuer transaction filing identity")
+        _source(item["index_source"], completion)
+        _require(item["index_source"] is not None and item["index_source"] in sources,
+                 "issuer transaction filing source differs from retained index")
+        seen.add(filing["accession"])
+        filings.append(filing)
+    _require(filings == sorted(filings, key=lambda filing: (filing["accepted_at"], filing["accession"]), reverse=True),
+             "issuer transaction filing order")
+
+
 def _reconcile_budget(issuers, stats):
     """Visible sources prove lower bounds, never all attempts or raw captures."""
     network, captures, failures = {}, {}, set()
@@ -408,7 +455,7 @@ def validate_bundle(receipt_raw, bundle_raw):
         if identity["status"] == "verified":
             _require(identity["cik"] is not None and identity["name"] is not None and identity["mapping_source"] is not None and identity["submissions_source"] is not None, "issuer verified identity sources")
         index = row["index"]
-        _keys(index, ("window_start", "window_end", "coverage_status", "reason", "range_start", "range_end", "metadata_count", "eligible_current_report_count", "not_selected_count", "history_files_advertised", "history_files_fetched", "history_sources", "selected_accessions", "listed_filings", "exhibit_links_observed", "exhibit_links_not_fetched"))
+        _keys(index, ("window_start", "window_end", "coverage_status", "reason", "range_start", "range_end", "metadata_count", "eligible_current_report_count", "not_selected_count", "history_files_advertised", "history_files_fetched", "history_sources", "selected_accessions", "listed_filings", "exhibit_links_observed", "exhibit_links_not_fetched"), ("transaction_filings",))
         _require(index["window_start"] == bundle["window_start"] and index["window_end"] == as_of.date().isoformat()
                  and index["coverage_status"] in ("observed_window", "partial", "unknown") and (index["reason"] is None or _text(index["reason"])), "issuer index coverage")
         for key in ("range_start", "range_end"):
@@ -429,6 +476,7 @@ def validate_bundle(receipt_raw, bundle_raw):
         for source in index["history_sources"]:
             _source(source, completion)
             _require(identity["status"] == "verified" and re.fullmatch(r"https://data.sec.gov/submissions/CIK" + f'{identity["cik"]:010d}' + r"-submissions-[0-9]{3}\.json", source["url"]), "issuer history source URL")
+        _transaction_filings(row, as_of, completion)
         _require(isinstance(index["listed_filings"], list) and len(index["listed_filings"]) <= MAX_LISTED_FILINGS, "issuer listed metadata bound")
         metadata = {}
         for filing in index["listed_filings"]:
@@ -985,7 +1033,9 @@ def _empty_index(start):
             "window_end": start.date().isoformat(), "coverage_status": "unknown", "reason": "SEC index coverage has not been established.",
             "range_start": None, "range_end": None, "metadata_count": 0, "eligible_current_report_count": 0,
             "not_selected_count": 0, "history_files_advertised": 0, "history_files_fetched": 0,
-            "history_sources": [], "selected_accessions": [], "listed_filings": [], "exhibit_links_observed": 0, "exhibit_links_not_fetched": 0}
+            "history_sources": [], "selected_accessions": [], "listed_filings": [], "exhibit_links_observed": 0, "exhibit_links_not_fetched": 0,
+            "transaction_filings": {"schema_version": TRANSACTION_FILINGS_VERSION, "observed_count": 0,
+                                    "not_listed_count": 0, "filings": []}}
 
 
 def _empty_issuer(ticker, start):
@@ -1071,6 +1121,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     index = row["index"]
     index.update(range_start=parsed["range_start"], range_end=parsed["range_end"], history_files_advertised=len(parsed["history"]))
     filings = {filing["accession"]: filing for filing in parsed["filings"]}
+    filing_sources = {accession: source for accession in filings}
     if parsed["invalid_count"]:
         _error(row, "metadata_invalid", url)
     history = [h for h in parsed["history"] if _day(h["filing_to"]) >= _day(index["window_start"])
@@ -1088,6 +1139,7 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
                     _require(filing["accession"] not in filings or filings[filing["accession"]] == filing, "conflicting history accession")
                 for filing in old["filings"]:
                     filings[filing["accession"]] = filing
+                    filing_sources.setdefault(filing["accession"], history_source)
                 index["history_files_fetched"] += 1
                 index["history_sources"].append(history_source)
                 if old["range_start"] is not None:
@@ -1104,6 +1156,11 @@ def _collect_issuer(row, mapping_body, mapping_source, fetcher, start):
     if not full_window:
         _error(row, "history_incomplete")
     ordered = sorted(filings.values(), key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)
+    transactions = [filing for filing in ordered if filing["form"] in TRANSACTION_FORMS]
+    index["transaction_filings"].update(
+        observed_count=len(transactions), not_listed_count=max(0, len(transactions) - MAX_TRANSACTION_FILINGS),
+        filings=[{"filing": filing, "index_source": filing_sources[filing["accession"]]}
+                 for filing in transactions[:MAX_TRANSACTION_FILINGS]])
     reports = [filing for filing in ordered if filing["form"] in FORMS]
     selected = reports[:MAX_REPORTS]
     index.update(metadata_count=len(ordered), eligible_current_report_count=len(reports),

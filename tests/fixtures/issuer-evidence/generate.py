@@ -26,6 +26,7 @@ NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
 VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
 SEMANTIC_VARIANTS = ("complete", "empty-window", "cached", "cache-unverified", "document-denied",
                      "metadata-invalid", "short-index", "prefetch-budget")
+TRANSACTION_VARIANTS = ("observed", "none", "partial", "unavailable", "history", "capped")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
 
@@ -193,6 +194,44 @@ def collect_semantic(raw, variant, *, dry_run=False):
     return issuer.collect(raw, **options)
 
 
+def transaction_responses(variant):
+    """Synthetic form observations over the unchanged report-fetch boundary."""
+    assert variant in TRANSACTION_VARIANTS
+    data = aapl_submissions()
+    forms = ("PREM14A", "PREM14A/A", "DEFM14A", "DEFM14A/A",
+             "SC TO-T", "SC TO-T/A", "SC 14D9", "SC 14D9/A")
+    count = 15 if variant == "capped" else 0 if variant == "none" else len(forms)
+    rows = [{"accessionNumber": f"0000320193-26-{8000 + number:06d}",
+             "form": forms[number % len(forms)], "filingDate": "2026-09-01", "reportDate": "",
+             "acceptanceDateTime": "2026-09-01T16:00:00Z",
+             "primaryDocument": f"synthetic-transaction-{number}.htm", "items": ""}
+            for number in range(count)]
+    recent = data["filings"]["recent"]
+    additions = {key: [row[key] for row in rows] for key in recent}
+    edits = {}
+    if variant == "history":
+        old = {key: values[-1:] + additions[key] for key, values in recent.items()}
+        data["filings"]["recent"] = {key: values[:-1] for key, values in recent.items()}
+        data["filings"]["files"] = [{"name": "CIK0000320193-submissions-001.json",
+            "filingCount": len(rows) + 1, "filingFrom": "2025-10-01", "filingTo": "2026-09-01"}]
+        edits["https://data.sec.gov/submissions/CIK0000320193-submissions-001.json"] = json_bytes(old)
+    else:
+        data["filings"]["recent"] = {
+            key: (values[:-1] if variant == "partial" else values) + additions[key]
+            for key, values in recent.items()}
+    edits[AAPL_SUBMISSIONS] = json_bytes(data)
+    return edits
+
+
+def collect_transactions(raw, variant, **kwargs):
+    options = {"fetch": transport("http-denied" if variant == "unavailable" else "collected",
+                                  edits=transaction_responses(variant)),
+               "now": NOW, "run_id": "fixture-issuer-transaction-" + variant,
+               "dry_run": False, "allow_fixture": True}
+    options.update(kwargs)
+    return issuer.collect(raw, **options)
+
+
 def build():
     raw = publication()
     projected, _ = reader.derive(raw)
@@ -209,6 +248,11 @@ def build():
         issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
         outputs["semantic-" + variant + "-receipt.json"] = result["receipt_bytes"]
         outputs["semantic-" + variant + "-bundle.json"] = result["bundle_bytes"]
+    for variant in TRANSACTION_VARIANTS:
+        result = collect_transactions(raw, variant)
+        issuer.validate_for_publication(raw, result["receipt_bytes"], result["bundle_bytes"], allow_fixture=True)
+        outputs["transaction-" + variant + "-receipt.json"] = result["receipt_bytes"]
+        outputs["transaction-" + variant + "-bundle.json"] = result["bundle_bytes"]
     return outputs
 
 

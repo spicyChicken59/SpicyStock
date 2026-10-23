@@ -117,6 +117,7 @@
     if (previewKey !== identity) {
       host.querySelector('#morning-preview-fees').value = '';
       host.querySelector('#morning-preview-quantity').value = '';
+      host.querySelectorAll('[data-morning-check]').forEach(input => { input.checked = false; });
       previewKey = identity;
     }
     result.replaceChildren();

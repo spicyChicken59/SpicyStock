@@ -167,23 +167,42 @@ export async function checkCashPreview({ browser, base, open, check, eq, shotsDi
   } finally { await context.close(); }
 
   const multipleReceipt = await readFile(path.join(ROOT, DIR, 'observed-multiple.json'), 'utf8');
-  const multiple = await open(browser, base, '/' + DIR + '/publication-multiple.json', NOW, 390, {
-    beforeLoad: page => page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: multipleReceipt }))
-  });
-  try {
-    const page = multiple.page; await wait(page);
-    await page.locator('#morning-open').click(); await page.locator('.ss-morning__prep > summary').click();
-    eq('multiple-plan control is a genuine combined producer allocation', await page.evaluate(() => [SCStock.data.cash_budget.committed_usd, ...SCStock.morning.facts(SCStock.data, SCStock.avail, SCStock.model).tickets.map(c => c.ticker)]), [510.1, 'AAPL', 'COIL']);
-    await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await fill(page, '447.88', '1', '4');
-    const first = await output(page);
-    eq('first independent plan fits exactly', [first['Your preview shares'], first['Cash left after this preview only']], ['4', '$0.00']);
-    await page.locator('#morning-preview-plan').selectOption('bursts:AAPL');
-    eq('switching plan keeps entered cash but clears its fee/quantity estimates', await page.evaluate(() => ['morning-cash', 'morning-preview-fees', 'morning-preview-quantity'].map(id => document.getElementById(id).value)), ['447.88', '', '']);
-    await page.locator('#morning-preview-fees').fill('1');
-    eq('second plan is its own calculation, not a reserved basket', [(await output(page))['Your preview shares'], (await output(page))['Total cash for this preview']], ['1', '$64.22']);
-    await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await page.locator('#morning-preview-fees').fill('1');
-    eq('returning to first plan never implies second plan consumed/reserved cash', await output(page), first);
-    check('no combined affordability claim accompanies independent results', (await page.locator('[data-cash-preview]').textContent()).includes('Each calculation uses the cash you entered independently; it reserves nothing'));
-    eq('multiple-plan browser errors', [...multiple.errors], []);
-  } finally { await multiple.context.close(); }
+  for (const width of [1280, 390]) {
+    const multiple = await open(browser, base, '/' + DIR + '/publication-multiple.json', NOW, width, {
+      beforeLoad: page => page.route('**/morning.json', route => route.fulfill({ contentType: 'application/json', body: multipleReceipt }))
+    });
+    try {
+      const page = multiple.page; await wait(page);
+      await page.locator('#morning-open').click(); await page.locator('.ss-morning__prep > summary').click();
+      eq('multiple-plan control is a genuine combined producer allocation', await page.evaluate(() => [SCStock.data.cash_budget.committed_usd, ...SCStock.morning.facts(SCStock.data, SCStock.avail, SCStock.model).tickets.map(c => c.ticker)]), [510.1, 'AAPL', 'COIL']);
+      await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await fill(page, '447.88', '1', '4');
+      const checks = () => page.locator('[data-morning-check]').evaluateAll(nodes => nodes.map(node => [node.dataset.morningCheck, node.checked]));
+      const unchecked = [['quote', false], ['cash', false], ['stop', false], ['events', false]];
+      eq(width + ': new plan has no broker acknowledgements', await checks(), unchecked);
+      for (const key of ['quote', 'cash', 'stop', 'events']) await page.locator('[data-morning-check="' + key + '"]').check();
+      const acknowledged = [['quote', true], ['cash', true], ['stop', true], ['events', true]];
+      eq(width + ': first plan acknowledgements are genuinely checked', await checks(), acknowledged);
+      await page.evaluate(() => SCStock.render(SCStock.data, new Date('2026-09-11T13:36:00Z')));
+      await wait(page);
+      eq(width + ': same-plan clock refresh keeps acknowledgements', await checks(), acknowledged);
+      const first = await output(page);
+      eq('first independent plan fits exactly', [first['Your preview shares'], first['Cash left after this preview only']], ['4', '$0.00']);
+      await page.locator('#morning-preview-plan').selectOption('bursts:AAPL');
+      eq(width + ': changing ticker clears every per-order acknowledgement', await checks(), unchecked);
+      eq('switching plan keeps entered cash but clears its fee/quantity estimates', await page.evaluate(() => ['morning-cash', 'morning-preview-fees', 'morning-preview-quantity'].map(id => document.getElementById(id).value)), ['447.88', '', '']);
+      await page.locator('#morning-preview-fees').fill('1');
+      eq('second plan is its own calculation, not a reserved basket', [(await output(page))['Your preview shares'], (await output(page))['Total cash for this preview']], ['1', '$64.22']);
+      for (const key of ['quote', 'cash', 'stop', 'events']) await page.locator('[data-morning-check="' + key + '"]').check();
+      eq(width + ': second plan acknowledgements are genuinely checked', await checks(), acknowledged);
+      await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await page.locator('#morning-preview-fees').fill('1');
+      eq(width + ': returning to an earlier plan requires fresh acknowledgements', await checks(), unchecked);
+      eq('returning to first plan never implies second plan consumed/reserved cash', await output(page), first);
+      check('no combined affordability claim accompanies independent results', (await page.locator('[data-cash-preview]').textContent()).includes('Each calculation uses the cash you entered independently; it reserves nothing'));
+      if (shotsDir) {
+        await page.locator('.ss-morning__checks').scrollIntoViewIfNeeded();
+        await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'cash-preview-per-order-checks-' + width + '.png') });
+      }
+      eq('multiple-plan browser errors', [...multiple.errors], []);
+    } finally { await multiple.context.close(); }
+  }
 }

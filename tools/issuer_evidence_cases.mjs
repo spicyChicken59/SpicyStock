@@ -13,7 +13,8 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
   const file = name => readFile(path.join(ROOT, DIR, name));
   const publicationRaw = await file('publication.json'), readerRaw = await file('reader.json');
   const variants = {};
-  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable', 'http-denied']) {
+  for (const name of ['collected', 'metadata-only', 'identity-unverified', 'outage', 'inapplicable', 'http-denied',
+    ...['observed', 'none', 'partial', 'unavailable', 'history', 'capped'].map(name => 'transaction-' + name)]) {
     variants[name] = { receipt: JSON.parse(await file(name + '-receipt.json')), raw: await file(name + '-bundle.json') };
   }
   const original = variants.collected;
@@ -472,6 +473,74 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
     eq('old issuer content absent after replacement', await race.page.locator('[data-issuer-document]').count(), 0);
     check('new publication exact hash remains authoritative', await race.page.evaluate(want => SCStock.observations.facts().canonicalHash === want, sha(nextRaw)));
   } finally { if (race.transport.release) race.transport.release(); await race.context.close(); }
+
+  for (const width of [390, 1280]) {
+    const tab = await setup({ width, variant: variants['transaction-observed'] });
+    try {
+      const before = await tab.page.evaluate(() => JSON.stringify({ data: SCStock.data, model: SCStock.model, storage: { ...localStorage } }));
+      await reveal(tab.page);
+      eq(`${width}: transaction producer output loads`, (await status(tab.page)).state, 'loaded');
+      const section = tab.page.locator('[data-issuer-transactions]');
+      eq(`${width}: all eight form/amendment observations appear`, await section.locator('[data-issuer-transaction]').count(), 8);
+      const words = await section.innerText();
+      check(`${width}: transaction status and event clearance remain unknown`, /Review required/.test(words) && /do not establish whether a transaction is pending, completed or cancelled/.test(words) && /empty list is not event clearance/.test(words));
+      eq(`${width}: exact newest filing link comes from issuer, accession and document`, await section.locator('[data-issuer-transaction] a').first().getAttribute('href'), 'https://www.sec.gov/Archives/edgar/data/320193/000032019326008007/synthetic-transaction-7.htm');
+      eq(`${width}: source link identifies retained recent index`, await section.locator('[data-issuer-transaction]').first().locator('a').nth(1).getAttribute('href'), 'https://data.sec.gov/submissions/CIK0000320193.json');
+      check(`${width}: filing, acceptance and index check dates are distinguished`, /filed 2026-09-01/.test(words) && /Acceptance is not the transaction date/.test(words) && /Index retrieved \/ checked/.test(words));
+      eq(`${width}: form warning cannot change plans, model or private state`, await tab.page.evaluate(() => JSON.stringify({ data: SCStock.data, model: SCStock.model, storage: { ...localStorage } })), before);
+      eq(`${width}: warning adds no browser provider request`, publicRequests(tab.requests).length, 2);
+      check(`${width}: transaction links stay inside the dialog width`, await section.evaluate(n => n.scrollWidth <= n.clientWidth + 1));
+      if (shotsDir) {
+        await section.scrollIntoViewIfNeeded();
+        await tab.page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, `issuer-transactions-${width}.png`) });
+      }
+      await tab.page.locator('[data-issuer-choice]').selectOption('anticipation:ZIM');
+      check(`${width}: transaction inspection preserves the known exclusion`, /35/.test(await tab.page.locator('[data-issuer-anchors]').innerText()));
+      eq(`${width}: transaction browser errors`, [...tab.errors], []);
+    } finally { await tab.context.close(); }
+  }
+  const transactions = await setup({ variant: variants['transaction-observed'] });
+  try {
+    await reveal(transactions.page);
+    for (const [name, count, words] of [
+      ['none', 0, /No matching forms in the observed metadata/],
+      ['partial', 8, /Incomplete index/],
+      ['unavailable', 0, /Unknown.*Issuer identity or submissions/s],
+      ['history', 8, /Review required/],
+      ['capped', 12, /15 transaction-form filings observed; 12 listed; 3 not listed/]
+    ]) {
+      transactions.transport.current = variants['transaction-' + name];
+      await transactions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(transactions.page);
+      eq(name + ': valid transaction scope loads', (await status(transactions.page)).state, 'loaded');
+      eq(name + ': bounded transaction list', await transactions.page.locator('[data-issuer-transaction]').count(), count);
+      check(name + ': uncertainty is explicit', words.test(await transactions.page.locator('[data-issuer-transactions]').innerText()));
+      if (name === 'history') eq('historical forms identify their actual retained history source', await transactions.page.locator('[data-issuer-transaction]').first().locator('a').nth(1).getAttribute('href'), 'https://data.sec.gov/submissions/CIK0000320193-submissions-001.json');
+    }
+    transactions.transport.current = changed(null, b => { for (const row of b.issuers) delete row.index.transaction_filings; });
+    await transactions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(transactions.page);
+    eq('legacy receipt without transaction extension remains readable', (await status(transactions.page)).state, 'loaded');
+    check('legacy absence never claims no transaction risk', /older collection.*absent list as no transaction risk/s.test(await transactions.page.locator('[data-issuer-transactions]').innerText()));
+    for (const [name, edit] of [
+      ['unknown version', x => { x.schema_version = 2; }],
+      ['boolean count', x => { x.observed_count = true; }],
+      ['incorrect omitted count', x => { x.not_listed_count = 1; }],
+      ['erased listed warning', x => { x.filings.pop(); }],
+      ['duplicate accession', x => { x.filings[1] = structuredClone(x.filings[0]); }],
+      ['irrelevant form', x => { x.filings[0].filing.form = '10-K'; }],
+      ['foreign index source', x => { x.filings[0].index_source.url = 'https://data.sec.gov/submissions/CIK0001654126.json'; }],
+      ['altered source digest', x => { x.filings[0].index_source.raw_sha256 = '0'.repeat(64); }],
+      ['out of window', x => { x.filings[0].filing.filing_date = '2025-01-01'; }],
+      ['reversed chronology', x => { x.filings.reverse(); }]
+    ]) {
+      transactions.transport.current = changed(null, b => edit(b.issuers[0].index.transaction_filings), variants['transaction-observed']);
+      await transactions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(transactions.page);
+      eq(name + ': resealed transaction corruption is refused', (await status(transactions.page)).state, 'unavailable');
+      eq(name + ': no unverified transaction warning displayed', await transactions.page.locator('[data-issuer-transaction]').count(), 0);
+    }
+    transactions.transport.current = variants['transaction-observed'];
+    await transactions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(transactions.page);
+    eq('valid transaction receipt recovers after refusal controls', (await status(transactions.page)).state, 'loaded');
+  } finally { await transactions.context.close(); }
 
   const noCrypto = await setup();
   try {

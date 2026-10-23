@@ -1,0 +1,9 @@
+[A] -- morning desk: Chicago time, account reference and immutable plans
+[A] -- cash preview: exact cents, immutable ticket and private single-plan arithmetic
+page.waitForFunction: Timeout 30000ms exceeded.
+    at wait (/workspace/SpicyStock/tools/cash_preview_cases.mjs:17:29)
+    at checkCashPreview (/workspace/SpicyStock/tools/cash_preview_cases.mjs:186:13)
+    at async laneA (/workspace/SpicyStock/tools/page_smoke.mjs:4471:32)
+    at async main (/workspace/SpicyStock/tools/page_smoke.mjs:4527:21) {
+  name: 'TimeoutError'
+}

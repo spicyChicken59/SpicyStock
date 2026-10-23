@@ -11,6 +11,8 @@
     max_download_bytes: 33554432, max_collection_seconds: 240, min_request_interval_seconds: 1 };
   const ERRORS = ['rate_limit', 'http_error', 'timeout', 'network_error', 'redirect_refused', 'size_limit', 'request_budget', 'time_budget', 'invalid_response', 'identity_unverified', 'metadata_invalid', 'document_invalid', 'history_incomplete'];
   const SOURCE_PHASES = { mapping: 'SEC ticker mapping', submissions: 'SEC submissions index', history: 'older SEC submissions index', primary: 'primary filing document', exhibit: 'filing exhibit' };
+  const TRANSACTION_FORMS = ['PREM14A', 'PREM14A/A', 'DEFM14A', 'DEFM14A/A', 'SC TO-T', 'SC TO-T/A', 'SC 14D9', 'SC 14D9/A'];
+  const MAX_TRANSACTION_FILINGS = 12;
   const object = x => !!x && typeof x === 'object' && !Array.isArray(x);
   const require = (ok, why) => { if (!ok) throw Error(why); };
   const canonical = x => Array.isArray(x) ? x.map(canonical) : object(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
@@ -196,6 +198,31 @@
       require(r.status === expected, 'Issuer receipt status contradicts its retained rows.');
     }
   }
+  function validateTransactionFilings(row, asOf) {
+    const index = row.index;
+    if (!Object.hasOwn(index, 'transaction_filings')) return; // Older receipts retain their unknown coverage.
+    const review = index.transaction_filings;
+    require(keys(review, 'schema_version observed_count not_listed_count filings') && review.schema_version === 1 &&
+      integer(review.observed_count, index.metadata_count - index.eligible_current_report_count) &&
+      integer(review.not_listed_count, review.observed_count) && Array.isArray(review.filings) &&
+      review.filings.length === Math.min(review.observed_count, MAX_TRANSACTION_FILINGS) &&
+      review.not_listed_count === review.observed_count - review.filings.length &&
+      (row.identity.status === 'verified' || review.observed_count === 0), 'Transaction filing coverage is invalid.');
+    const sources = [row.identity.submissions_source, ...index.history_sources].filter(Boolean), seen = new Set();
+    for (const entry of review.filings) {
+      require(keys(entry, 'filing index_source'), 'Transaction filing metadata is invalid.');
+      filing(entry.filing, asOf);
+      const item = entry.filing;
+      require(TRANSACTION_FORMS.includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end &&
+        !seen.has(item.accession) && !index.listed_filings.some(other => other.accession === item.accession) &&
+        sources.some(src => equal(src, entry.index_source)), 'Transaction filing lacks its retained issuer index source.');
+      seen.add(item.accession);
+    }
+    const ordered = review.filings.slice().sort((a, b) => a.filing.accepted_at === b.filing.accepted_at
+      ? (a.filing.accession < b.filing.accession ? 1 : a.filing.accession > b.filing.accession ? -1 : 0)
+      : a.filing.accepted_at < b.filing.accepted_at ? 1 : -1);
+    require(equal(ordered, review.filings), 'Transaction filing order is invalid.');
+  }
   async function validateBundle(value, r) {
     require(keys(value, 'schema_version publication collection_started_at generated_at as_of window_start candidates issuers stats') && value.schema_version === 1 &&
       equal(value.publication, r.publication) && value.collection_started_at === r.collection_started_at && value.generated_at === r.generated_at && value.as_of === r.collection_started_at && day(value.window_start), 'Issuer bundle metadata differs from its receipt.');
@@ -217,7 +244,7 @@
       require(ident.status === 'verified' ? integer(ident.cik, 9999999999) && ident.cik > 0 && text(ident.name, 512) && ident.name.length > 0 && ident.mapping_source && ident.submissions_source :
         (ident.cik === null || integer(ident.cik, 9999999999)) && (ident.name === null || text(ident.name, 512)), 'Issuer identity could not be verified.');
       if (ident.status === 'verified') require(ident.mapping_source.url === 'https://www.sec.gov/files/company_tickers_exchange.json' && ident.submissions_source.url === 'https://data.sec.gov/submissions/CIK' + String(ident.cik).padStart(10, '0') + '.json', 'SEC submissions CIK or mapping source differs from the issuer.');
-      require(keys(index, 'window_start window_end coverage_status reason range_start range_end metadata_count eligible_current_report_count not_selected_count history_files_advertised history_files_fetched history_sources selected_accessions listed_filings exhibit_links_observed exhibit_links_not_fetched') &&
+      require(keys(index, 'window_start window_end coverage_status reason range_start range_end metadata_count eligible_current_report_count not_selected_count history_files_advertised history_files_fetched history_sources selected_accessions listed_filings exhibit_links_observed exhibit_links_not_fetched' + (object(index) && Object.hasOwn(index, 'transaction_filings') ? ' transaction_filings' : '')) &&
         index.window_start === value.window_start && index.window_end === new Date(asOf).toISOString().slice(0, 10) && ['observed_window', 'partial', 'unknown'].includes(index.coverage_status) &&
         (index.reason === null || text(index.reason)) && [index.range_start, index.range_end].every(x => x === null || day(x)) &&
         (index.range_start === null) === (index.range_end === null) && (index.range_start === null || index.range_start <= index.range_end) &&
@@ -233,6 +260,7 @@
         source(item, end, asOf);
         require(ident.status === 'verified' && new RegExp('^https://data\\.sec\\.gov/submissions/CIK' + String(ident.cik).padStart(10, '0') + '-submissions-[0-9]{3}\\.json$').test(item.url), 'Historical index CIK differs from the issuer.');
       }
+      validateTransactionFilings(row, asOf);
       index.listed_filings.forEach(item => {
         filing(item, asOf);
         require(['8-K', '8-K/A', '6-K', '6-K/A'].includes(item.form) && item.filing_date >= index.window_start && item.filing_date <= index.window_end, 'Listed report falls outside this collection.');
@@ -343,6 +371,29 @@
   function paintAge() {
     if (mounted && receipt && state === 'loaded') mounted.querySelector('[data-issuer-status]').textContent = ageLabel();
   }
+  function transactionFilings(host, row) {
+    const section = node('section', { 'data-issuer-transactions': '' }), review = row.index.transaction_filings;
+    section.append(node('h4', {}, 'Merger and tender-offer filings'));
+    if (!review) {
+      paragraph(section, 'Not retained in this receipt.', 'This older collection did not retain a separate transaction-form review. Do not read an absent list as no transaction risk.');
+    } else if (row.identity.status !== 'verified') {
+      paragraph(section, 'Unknown.', 'Issuer identity or submissions could not be verified; transaction filings have not been checked.');
+    } else {
+      paragraph(section, review.observed_count ? 'Review required.' : 'No matching forms in the observed metadata.',
+        review.observed_count + ' transaction-form filings observed; ' + review.filings.length + ' listed; ' + review.not_listed_count + ' not listed. Index coverage: ' + row.index.coverage_status.replaceAll('_', ' ') + '.');
+      paragraph(section, 'What this means:', 'Form labels do not establish whether a transaction is pending, completed or cancelled. Filing content and current issuer announcements still need review before an order. An empty list is not event clearance.');
+      if (row.index.coverage_status !== 'observed_window') paragraph(section, 'Incomplete index.', 'Missing or invalid metadata may omit other transaction filings.');
+      for (const entry of review.filings) {
+        const item = entry.filing, article = node('div', { 'data-issuer-transaction': '' });
+        paragraph(article, item.form + ' · filed ' + item.filing_date, 'SEC accepted ' + stamp(item.accepted_at) + ' · accession ' + item.accession + '. Acceptance is not the transaction date.');
+        const filingUrl = 'https://www.sec.gov/Archives/edgar/data/' + row.identity.cik + '/' + item.accession.replaceAll('-', '') + '/' + item.primary_document;
+        article.append(link('Open filing — content not reviewed here', filingUrl), d.createTextNode(' · '), link('Retained SEC index source', entry.index_source.url));
+        paragraph(article, 'Index retrieved / checked:', stamp(entry.index_source.fetched_at) + ' / ' + stamp(entry.index_source.checked_at) + ' · ' + entry.index_source.cache_status.replaceAll('_', ' '));
+        section.append(article);
+      }
+    }
+    host.append(section);
+  }
   function paint() {
     if (!mounted) return;
     mounted.setAttribute('data-issuer-state', state);
@@ -365,6 +416,7 @@
     if (!row) { paragraph(body, 'Not collected:', 'This issuer exceeded the fetch cap. Its filings and news remain unreviewed.'); return; }
     const ident = row.identity, index = row.index, primaries = row.documents.filter(x => x.role === 'primary').length;
     paragraph(body, 'Issuer identity:', ident.status === 'verified' ? ident.name + ' · CIK ' + String(ident.cik).padStart(10, '0') + ' · matched SEC mapping and submissions' : 'Unverified — no issuer content may be treated as matched.');
+    transactionFilings(body, row);
     paragraph(body, 'Index window:', index.window_start + '–' + index.window_end + ' · ' + index.coverage_status.replaceAll('_', ' ') + (index.reason ? ' · ' + index.reason : '') + '. Observed range: ' + (index.range_start || 'unknown') + '–' + (index.range_end || 'unknown') + '.');
     paragraph(body, 'Content boundary:', index.metadata_count + ' metadata rows observed; ' + index.eligible_current_report_count + ' current reports; ' + index.selected_accessions.length + ' selected; ' + primaries + ' primary documents retrieved. ' + index.not_selected_count + ' eligible reports not selected; ' + (index.selected_accessions.length - primaries) + ' selected primary documents missing. All remaining content is unreviewed.');
     paragraph(body, 'Historical index:', index.history_files_fetched + ' of ' + index.history_files_advertised + ' advertised history files fetched. ' + (index.metadata_count - index.listed_filings.length) + ' observed metadata rows not listed here.');

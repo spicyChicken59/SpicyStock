@@ -85,7 +85,10 @@ mismatched account assumptions cannot produce a current personal preview.
 
 Each preview considers one plan independently and reserves no cash. Account for
 other orders and broker holds before entering available settled cash. Changing
-plans clears the fees and quantity inputs; a new session clears cash too, and a
+plans clears the fees and quantity inputs and the manual preparation checks;
+checking one stock's quote, events or order terms does not check another stock.
+Refreshing the same plan's clock preserves those acknowledgements. A new
+session clears cash too, and a
 reload clears these preview inputs. Published copy controls still copy the original model
 quantity, clearly identified beside the preview. The calculation does not submit
 an order or verify a balance. Preparation checks do not establish live quotes,
@@ -1278,6 +1281,16 @@ truncated excerpts are explicit; a recent-document sample does not establish
 complete news coverage. Domestic 8-K and foreign 6-K reports retain their own
 dates and document types. An acquisition mentioned by an issuer does not, by
 itself, establish that the issuer is a takeover target.
+
+The same fetched index also retains separate merger/tender-form observations:
+PREM14A, DEFM14A, SC TO-T and SC 14D9, including their `/A` amendments. Up to
+twelve are listed newest first, with the observed and omitted counts, filing
+and acceptance dates, a filing link and the exact retained recent/history
+index source. This adds no SEC requests or document downloads. The reader
+calls for review without claiming a transaction is pending, completed or
+cancelled. An empty, partial, unavailable or older unextended receipt never
+establishes an absence of transaction risk; the original trade restrictions
+remain in force.
 
 Known unresolved events remain separate, source-backed anchors. The collector
 does not classify new events or clear an existing exclusion. In the 10 October
