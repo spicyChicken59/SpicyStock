@@ -179,7 +179,8 @@ def test_extension_shape_and_count_corruption_is_rejected_after_reseal(field, va
 
 
 @pytest.mark.parametrize("mutation", ["unsupported_form", "outside_window", "future_acceptance", "duplicate", "order",
-    "wrong_issuer", "wrong_digest", "wrong_size", "wrong_clock", "mapping_source", "current_report_accession"])
+    "wrong_issuer", "wrong_digest", "wrong_size", "wrong_clock", "mapping_source", "current_report_accession",
+    "later_instant_other_offset"])
 def test_filing_or_source_corruption_is_rejected_after_reseal(mutation):
     values = packet()
     observed = warning(values)
@@ -195,7 +196,13 @@ def test_filing_or_source_corruption_is_rejected_after_reseal(mutation):
     elif mutation == "wrong_clock": item["index_source"]["fetched_at"] = item["index_source"]["checked_at"] = "2026-10-10T06:19:59+00:00"
     elif mutation == "mapping_source": item["index_source"] = deepcopy(aapl(values[1])["identity"]["mapping_source"])
     elif mutation == "current_report_accession": item["filing"]["accession"] = aapl(values[1])["index"]["selected_accessions"][0]
-    with pytest.raises((ValueError, TypeError, KeyError)):
+    elif mutation == "later_instant_other_offset":
+        # the last entry's clock respelled under -05:00 is the LATEST instant of the
+        # list, so the list is no longer newest first, whatever the strings say
+        observed["filings"][-1]["filing"]["accepted_at"] = "2026-09-01T15:00:00-05:00"
+    expected = {"current_report_accession": "overlaps listed current reports", "later_instant_other_offset": "acquisition review ordering",
+                "order": "acquisition review ordering", "duplicate": "acquisition review form/window"}.get(mutation, "")
+    with pytest.raises(ValueError, match=expected):
         validate(values)
 
 
@@ -262,23 +269,32 @@ def test_legacy_version_one_block_is_held_to_its_own_rules(edit):
         validate(values)
 
 
-def test_every_new_row_carries_the_block_so_zero_is_said_and_unknown_is_unknown():
-    receipt, bundle = packet("none")
+def test_every_new_row_carries_the_block_so_zero_is_said_and_unknown_is_unknown(producer, canonical):
+    """Driven through the collector, not read off the committed bytes: a block written
+    only once the identity is verified would leave the unverified rows without one."""
+    bundle = json.loads(producer.collect_acquisition(canonical, "none")["bundle_bytes"])
     for row in bundle["issuers"]:
         review = row["index"]["acquisition_review"]
         assert review["schema_version"] == issuer.ACQUISITION_REVIEW_VERSION and review["observed_count"] == 0
-    _, unavailable = packet("unavailable")
+    unavailable = json.loads(producer.collect_acquisition(canonical, "unavailable")["bundle_bytes"])
+    assert unavailable["issuers"] and all(row["identity"]["status"] != "verified" for row in unavailable["issuers"])
     for row in unavailable["issuers"]:
-        assert row["identity"]["status"] != "verified"
         assert row["index"]["acquisition_review"] == {"schema_version": issuer.ACQUISITION_REVIEW_VERSION,
                                                      "observed_count": 0, "not_listed_count": 0, "filings": []}
 
 
 def test_an_unverified_identity_cannot_carry_an_observation():
+    """With the unverified row's metadata count left at zero the count rule refuses
+    first; forging it too reaches the identity clause, which must name itself."""
     values = packet("unavailable")
     observed = warning(packet())
     aapl(values[1])["index"]["acquisition_review"] = observed
-    with pytest.raises((ValueError, TypeError, KeyError)):
+    with pytest.raises(ValueError, match="acquisition review count"):
+        validate(values)
+    values = packet("unavailable")
+    aapl(values[1])["index"]["acquisition_review"] = deepcopy(observed)
+    aapl(values[1])["index"]["metadata_count"] = 20
+    with pytest.raises(ValueError, match="unverified acquisition review"):
         validate(values)
 
 
@@ -286,3 +302,42 @@ def test_amendments_are_observed_and_the_bare_proxy_forms_are_not():
     """PREM14A/A and DEFM14A/A are acquisition forms; PRE 14A and DEF 14A are not."""
     assert {"PREM14A/A", "DEFM14A/A"} <= EXPECTED_FORMS
     assert not {"PRE 14A", "DEF 14A", "SC 13D", "SC TO-I"} & EXPECTED_FORMS
+
+
+@pytest.mark.parametrize("observed", [issuer.MAX_METADATA_ROWS + 1, issuer.MAX_METADATA_ROWS * (1 + issuer.MAX_HISTORY_FILES) - 4])
+def test_counts_past_the_recent_index_bound_validate_up_to_the_history_bound(observed):
+    """A heavy filer can carry up to MAX_METADATA_ROWS rows in the recent file and as
+    many again in the one history file, so a bound of the recent file alone would
+    refuse a real night; the forged counts stay consistent with the capped list."""
+    values = packet("capped")
+    index = aapl(values[1])["index"]
+    warning(values)["observed_count"] = observed
+    warning(values)["not_listed_count"] = observed - len(warning(values)["filings"])
+    index["metadata_count"] = observed + index["eligible_current_report_count"]
+    assert index["metadata_count"] <= issuer.MAX_METADATA_ROWS * (1 + issuer.MAX_HISTORY_FILES)
+    assert aapl(validate(values))["index"]["acquisition_review"]["observed_count"] == observed
+
+
+def test_a_count_past_the_history_bound_is_refused_by_the_metadata_relationship():
+    values = packet("capped")
+    index = aapl(values[1])["index"]
+    bound = issuer.MAX_METADATA_ROWS * (1 + issuer.MAX_HISTORY_FILES)
+    warning(values)["observed_count"] = bound + 1
+    warning(values)["not_listed_count"] = bound + 1 - len(warning(values)["filings"])
+    index["metadata_count"] = bound
+    with pytest.raises(ValueError, match="acquisition review count"):
+        validate(values)
+
+
+@pytest.mark.parametrize("listed", [[1], [{"form": "8-K"}], ["x"], [None]])
+def test_a_malformed_listed_report_is_named_not_raised_through(listed):
+    """Every new bundle carries the block, whose overlap check reads the listed
+    reports: their shape is named first (a ValueError), never a TypeError or
+    KeyError from indexing into them."""
+    values = packet("none")
+    index = aapl(values[1])["index"]
+    index["listed_filings"] = listed
+    index["selected_accessions"] = []
+    index["not_selected_count"] = index["eligible_current_report_count"]
+    with pytest.raises(ValueError, match="issuer object keys"):
+        validate(values)

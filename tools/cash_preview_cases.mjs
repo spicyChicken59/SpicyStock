@@ -187,13 +187,13 @@ export async function checkCashPreview({ browser, base, open, check, eq, shotsDi
       const page = multiple.page; await wait(page);
       eq(width + ': the unpinned page reads the replaced clock', await page.evaluate(() => new Date(SCStock.avail.at).toISOString()), new Date(NOW).toISOString());
       await page.locator('#morning-open').click(); await page.locator('.ss-morning__prep > summary').click();
-      eq('multiple-plan control is a genuine combined producer allocation', await page.evaluate(() => [SCStock.data.cash_budget.committed_usd, ...SCStock.morning.facts(SCStock.data, SCStock.avail, SCStock.model).tickets.map(c => c.ticker)]), [510.1, 'AAPL', 'COIL']);
+      eq(width + ': multiple-plan control is a genuine combined producer allocation', await page.evaluate(() => [SCStock.data.cash_budget.committed_usd, ...SCStock.morning.facts(SCStock.data, SCStock.avail, SCStock.model).tickets.map(c => c.ticker)]), [510.1, 'AAPL', 'COIL']);
       await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await fill(page, '447.88', '1', '4');
       const checks = () => page.locator('[data-morning-check]').evaluateAll(nodes => nodes.map(node => [node.dataset.morningCheck, node.checked]));
       const acknowledge = async () => { for (const key of ['quote', 'cash', 'stop', 'events']) await page.locator('[data-morning-check="' + key + '"]').check(); };
       const unchecked = [['quote', false], ['cash', false], ['stop', false], ['events', false]];
       const acknowledged = [['quote', true], ['cash', true], ['stop', true], ['events', true]];
-      eq(width + ': new plan has no broker acknowledgements', await checks(), unchecked);
+      eq(width + ': a fresh desk starts with no acknowledgements', await checks(), unchecked);
       await acknowledge();
       eq(width + ': first plan acknowledgements are genuinely checked', await checks(), acknowledged);
       // the same plan, another input: the preview is recalculated and the
@@ -203,18 +203,18 @@ export async function checkCashPreview({ browser, base, open, check, eq, shotsDi
       eq(width + ': and recalculates the preview', (await output(page))['Your preview shares'], '3');
       await page.locator('#morning-preview-quantity').fill('4');
       const first = await output(page);
-      eq('first independent plan fits exactly', [first['Your preview shares'], first['Cash left after this preview only']], ['4', '$0.00']);
+      eq(width + ': first independent plan fits exactly', [first['Your preview shares'], first['Cash left after this preview only']], ['4', '$0.00']);
       await page.locator('#morning-preview-plan').selectOption('bursts:AAPL');
       eq(width + ': changing ticker clears every per-order acknowledgement', await checks(), unchecked);
-      eq('switching plan keeps entered cash but clears its fee/quantity estimates', await page.evaluate(() => ['morning-cash', 'morning-preview-fees', 'morning-preview-quantity'].map(id => document.getElementById(id).value)), ['447.88', '', '']);
+      eq(width + ': switching plan keeps entered cash but clears its fee/quantity estimates', await page.evaluate(() => ['morning-cash', 'morning-preview-fees', 'morning-preview-quantity'].map(id => document.getElementById(id).value)), ['447.88', '', '']);
       await page.locator('#morning-preview-fees').fill('1');
-      eq('second plan is its own calculation, not a reserved basket', [(await output(page))['Your preview shares'], (await output(page))['Total cash for this preview']], ['1', '$64.22']);
+      eq(width + ': second plan is its own calculation, not a reserved basket', [(await output(page))['Your preview shares'], (await output(page))['Total cash for this preview']], ['1', '$64.22']);
       await acknowledge();
       eq(width + ': second plan acknowledgements are genuinely checked', await checks(), acknowledged);
       await page.locator('#morning-preview-plan').selectOption('setting-up:COIL'); await page.locator('#morning-preview-fees').fill('1');
       eq(width + ': returning to an earlier plan requires fresh acknowledgements', await checks(), unchecked);
-      eq('returning to first plan never implies second plan consumed/reserved cash', await output(page), first);
-      check('no combined affordability claim accompanies independent results', (await page.locator('[data-cash-preview]').textContent()).includes('Each calculation uses the cash you entered independently; it reserves nothing'));
+      eq(width + ': returning to first plan never implies second plan consumed/reserved cash', await output(page), first);
+      check(width + ': no combined affordability claim accompanies independent results', (await page.locator('[data-cash-preview]').textContent()).includes('Each calculation uses the cash you entered independently; it reserves nothing'));
       // the clock crosses the cutoff on the same plan: reclock() finds the
       // offer withdrawn and repaints the desk through morning.render(), which
       // withdraws the preview and keeps the plan's acknowledgements, because
@@ -227,14 +227,15 @@ export async function checkCashPreview({ browser, base, open, check, eq, shotsDi
         return [before, repainted, document.getElementById('morning-desk').getAttribute('data-morning-offered')];
       }), ['true', true, 'false']);
       eq(width + ': same-plan clock refresh keeps acknowledgements', await checks(), acknowledged);
-      eq(width + ': the withdrawn preview says the window ended', await state(page), 'unavailable');
+      eq(width + ': the withdrawn preview is unavailable at the cutoff', await state(page), 'unavailable');
+      check(width + ': and says the window ended, in the availability sentence', /ended at/.test(await page.locator('[data-cash-preview-status]').textContent()));
       eq(width + ': and the plan selection survives the repaint', await page.locator('#morning-preview-plan').inputValue(), 'setting-up:COIL');
       if (shotsDir) {
         await mkdir(shotsDir, { recursive: true });
         await page.locator('.ss-morning__checks').scrollIntoViewIfNeeded();
         await page.locator('#morning-desk').screenshot({ path: path.join(shotsDir, 'cash-preview-per-order-checks-' + width + '.png') });
       }
-      eq('multiple-plan browser errors', [...multiple.errors], []);
+      eq(width + ': multiple-plan browser errors', [...multiple.errors], []);
     } finally { await multiple.context.close(); }
   }
 }

@@ -157,6 +157,16 @@ def _iso(value):
     return _instant(value).isoformat()
 
 
+def _newest_first(filing):
+    """Sort key for filing metadata: the acceptance INSTANT, then the accession.
+
+    The collector writes every clock in UTC, where the spelling sorts as the
+    instant; a bundle spelled under another offset is ordered by what the
+    clock means, not how it is written.
+    """
+    return (_instant(filing["accepted_at"]), filing["accession"])
+
+
 def _day(value):
     _require(isinstance(value, str), "issuer date shape")
     parsed = date.fromisoformat(value)
@@ -357,9 +367,10 @@ def _acquisition_review_v1(row, as_of):
     for filing in review["filings"]:
         _filing(filing, as_of)
         _require(filing["form"] in ACQUISITION_FORMS and index["window_start"] <= filing["filing_date"] <= index["window_end"], "issuer acquisition review form/window")
-    _require(len({f["accession"] for f in review["filings"]}) == len(review["filings"])
-             and not {f["accession"] for f in review["filings"]} & {f["accession"] for f in index["listed_filings"]}
-             and review["filings"] == sorted(review["filings"], key=lambda f: (f["accepted_at"], f["accession"]), reverse=True), "issuer acquisition review ordering")
+    accessions = {f["accession"] for f in review["filings"]}
+    _require(len(accessions) == len(review["filings"]), "issuer acquisition review duplicate accession")
+    _require(not accessions & {f["accession"] for f in index["listed_filings"]}, "issuer acquisition review overlaps listed current reports")
+    _require(review["filings"] == sorted(review["filings"], key=_newest_first, reverse=True), "issuer acquisition review ordering")
 
 
 def _acquisition_review(row, as_of, completion):
@@ -392,6 +403,10 @@ def _acquisition_review(row, as_of, completion):
              and review["not_listed_count"] == review["observed_count"] - len(review["filings"])
              and review["observed_count"] + index["eligible_current_report_count"] <= index["metadata_count"],
              "issuer acquisition review count")
+    # Named here as the rule it is; a forged count on an unverified row is also
+    # refused by the index rules (its metadata count is held to zero) and by the
+    # source rule below (it retains no index source), so this clause is reached
+    # first only when the metadata count is forged with it.
     if identity["status"] != "verified":
         _require(review["observed_count"] == 0, "issuer unverified acquisition review")
     sources = [identity["submissions_source"], *index["history_sources"]]
@@ -408,9 +423,8 @@ def _acquisition_review(row, as_of, completion):
                  "issuer acquisition review source differs from retained index")
         seen.add(filing["accession"])
         filings.append(filing)
-    _require(not seen & {f["accession"] for f in index["listed_filings"]}
-             and filings == sorted(filings, key=lambda f: (f["accepted_at"], f["accession"]), reverse=True),
-             "issuer acquisition review ordering")
+    _require(not seen & {f["accession"] for f in index["listed_filings"]}, "issuer acquisition review overlaps listed current reports")
+    _require(filings == sorted(filings, key=_newest_first, reverse=True), "issuer acquisition review ordering")
 
 
 def _reconcile_budget(issuers, stats):
@@ -507,16 +521,18 @@ def validate_bundle(receipt_raw, bundle_raw):
             _source(source, completion)
             _require(identity["status"] == "verified" and re.fullmatch(r"https://data.sec.gov/submissions/CIK" + f'{identity["cik"]:010d}' + r"-submissions-[0-9]{3}\.json", source["url"]), "issuer history source URL")
         _require(isinstance(index["listed_filings"], list) and len(index["listed_filings"]) <= MAX_LISTED_FILINGS, "issuer listed metadata bound")
-        _acquisition_review(row, as_of, completion)
         metadata = {}
         for filing in index["listed_filings"]:
             _filing(filing, as_of)
             _require(filing["form"] in FORMS and index["window_start"] <= filing["filing_date"] <= index["window_end"]
                      and filing["accession"] not in metadata, "issuer listed current-report identity")
             metadata[filing["accession"]] = filing
-        _require(index["listed_filings"] == sorted(index["listed_filings"], key=lambda f: (f["accepted_at"], f["accession"]), reverse=True)
+        _require(index["listed_filings"] == sorted(index["listed_filings"], key=_newest_first, reverse=True)
                  and len(metadata) <= index["eligible_current_report_count"]
                  and accessions == [f["accession"] for f in index["listed_filings"][:MAX_REPORTS]], "issuer latest report selection")
+        # Read after the listed current reports: the block's overlap check indexes
+        # into them, so their shape is named first and never raised through.
+        _acquisition_review(row, as_of, completion)
         _require(isinstance(row["errors"], list) and len(row["errors"]) <= MAX_REQUESTS, "issuer errors bound")
         for error in row["errors"]:
             _keys(error, ("code", "source_url"), ("http_status", "source_phase"))
