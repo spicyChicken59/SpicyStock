@@ -2,7 +2,12 @@ pandas>=2.0
 numpy>=1.24
 requests>=2.31
 mplfinance>=0.12.10b0
-anthropic>=0.40
+# Held below 2.0: anthropic 2.x sends anthropic-version 2026-10-21, under which
+# the Messages API refuses `temperature` with HTTP 400 on every model, and the
+# chart reader sends temperature 0 on purpose (grader.SAMPLING_MODELS). The
+# unpinned install took 2.1.0 on 21 and 22 Oct 2026 and every review failed.
+# grader.API_VERSION names the version the request shape was validated under.
+anthropic>=1.15,<2
 resend>=2.0
 alpaca-py>=0.21
 exchange_calendars==4.13.2

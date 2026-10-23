@@ -945,7 +945,14 @@ archived, and a record from before the block is asked for none. The run:
   sent, the replies received and the four token classes a reply reports (uncached
   input, written to the cache, read from it, output), under the model the run
   asked -- with no price, because a price is the provider's list and not a fact
-  the run observes. Every reply that arrived is billed, a reply the checks then
+  the run observes. The reader's SDK is held below 2.0 in `requirements.txt`:
+  anthropic 2.x sends API version 2026-10-21, under which the Messages API
+  refuses the `temperature` the grader sends on purpose, and every reply of the
+  21 and 22 October 2026 runs was an HTTP 400 that `run.reads` counted as
+  `transport`, the one cause it has for an answer it does not know.
+  `grader.API_VERSION` names the validated version and `tests/test_grader.py`
+  reads the header off the wire, so a loosened pin fails CI, not the evening.
+  Every reply that arrived is billed, a reply the checks then
   refuse or cannot read included, and each attempt's own bill is kept beside the
   attempt, so `report.validate()` re-derives the block's totals from the bursts'
   own evidence and refuses a block that is not theirs; a record made before the
