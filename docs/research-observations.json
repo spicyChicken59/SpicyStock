@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "collection_started_at": "2026-10-23T13:23:46.081350+00:00",
+  "generated_at": "2026-10-23T13:23:48.569264+00:00",
+  "expires_at": "2026-10-23T13:28:48.569264+00:00",
+  "observation_run_id": "39960745472",
+  "previous_observation_sha256": null,
+  "dry_run": false,
+  "publication": {
+    "data_sha256": "71780fdfbd145b967579eae922c2edf7012d2e8081673b7a85b874a39acc52c6",
+    "context_sha256": "f82568ec7360c32720a6ef7ca8b015501a3f85e8317bfb807b1905f85bd87e0e",
+    "run_id": "39879239067",
+    "rules_version": "f29e0a832f4d",
+    "measured_session": "2026-10-22",
+    "applicable_session": "2026-10-23",
+    "published_at": "2026-10-23T00:38:24.921494+00:00",
+    "reader_projection_version": 1,
+    "reader_sha256": "f6fa2545b8e76c3eac60c0195833211ead7573f76e2d713cbc92e874ec7dc2cd"
+  },
+  "cohort": {
+    "receipt_sha256": "b9b2952158fca526991b163cf6e398a9fee560f92942dedb7e850e2e808b8025",
+    "bundle_sha256": "96185f96ca19bdfd6ace954d878728b10d3d2c861db6d482c4941b007bc2b5fe",
+    "bundle_path": "stop-research/96185f96ca19bdfd6ace954d878728b10d3d2c861db6d482c4941b007bc2b5fe.json",
+    "bundle_bytes": 7189,
+    "policy_id": "anticipation_stop_width_4_to_5_v1",
+    "generated_at": "2026-10-23T00:42:02.833608+00:00",
+    "status": "recorded",
+    "applicable_session": "2026-10-23",
+    "bound": true
+  },
+  "policy": {
+    "version": 1,
+    "feed": "iex",
+    "max_requests_per_run": 1,
+    "selection": "allocation_fit_rows_of_the_bound_registered_cohort",
+    "cohort_policy_id": "anticipation_stop_width_4_to_5_v1",
+    "cohort_schema_version": 1,
+    "quote_max_age_seconds": 60,
+    "trade_max_age_seconds": 60,
+    "snapshot_max_age_seconds": 300,
+    "max_future_skew_seconds": 5,
+    "preopen_minutes": 30,
+    "max_collection_seconds": 180,
+    "market_timezone": "America/New_York"
+  },
+  "status": "no_research_rows",
+  "reason": null,
+  "entry_phase": "upcoming",
+  "source": {
+    "status": "not_requested",
+    "feed": "iex",
+    "scope": "single_venue",
+    "entitlement": "not_requested",
+    "checked_at": null,
+    "error_kind": null,
+    "minimum_delay_seconds": 0,
+    "requests": 0
+  },
+  "coverage": {
+    "halts": "not_checked",
+    "delayed_volume": "not_requested",
+    "issuer_news": "not_checked",
+    "earnings": "not_checked",
+    "corporate_action": "archived_cohort_registry_only"
+  },
+  "rows": [],
+  "limits": [
+    "dated_best_effort_snapshot",
+    "iex_single_venue_not_consolidated",
+    "no_delayed_volume_request",
+    "halts_news_earnings_not_checked",
+    "research_rows_are_not_tickets",
+    "no_ready_label_or_entry_authority",
+    "no_personal_sizing_or_cash",
+    "broker_verification_required"
+  ]
+}
