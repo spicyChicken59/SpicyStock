@@ -238,7 +238,13 @@ acceptance is no later than the collection instant and filing dates lie in the
 bounded window. A version-1 block (no `schema_version`, bare filings, present
 only when a form was observed, verified identity, same forms, order and
 window) stays readable. A missing block is a bundle from before the warning:
-no record, never clearance. The collector derives the block from already
+no record, never clearance. The page reads the block's state off the index
+that produced it: a verified issuer whose index yielded no readable metadata
+row under partial coverage observed nothing and is `unknown`, not a zero
+result; a complete window holding no filing of any form is `none` and says so.
+JSON numbers carry no integer type in the browser, so `2.0` and `8.0` read as
+`2` and `8` there; the publisher's validator, which runs before publication,
+holds the typed contract. The collector derives the block from already
 parsed submissions and bounded history; it fetches no document and changes no
 current-report selection. The links are metadata references; form names do
 not prove an active deal, and an empty list is not event clearance.

@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 NOW = datetime(2026, 10, 10, 6, 20, tzinfo=timezone.utc)
 VARIANTS = ("collected", "metadata-only", "identity-unverified", "outage", "inapplicable", "http-denied")
 SEMANTIC_VARIANTS = ("complete", "empty-window", "cached", "cache-unverified", "document-denied",
-                     "metadata-invalid", "short-index", "prefetch-budget")
+                     "metadata-invalid", "short-index", "prefetch-budget", "rows-invalid")
 ACQUISITION_VARIANTS = ("observed", "none", "partial", "unavailable", "history", "capped")
 MAPPING_URL = "https://www.sec.gov/files/company_tickers_exchange.json"
 AAPL_SUBMISSIONS = "https://data.sec.gov/submissions/CIK0000320193.json"
@@ -145,6 +145,9 @@ def collect_semantic(raw, variant, *, dry_run=False):
     The shared mapping event and identical document bodies deliberately test
     different request/download versus distinct-capture accounting. These
     additional controls leave all original captured-source outputs unchanged.
+    ``rows-invalid`` is a verified issuer whose only in-window row is refused:
+    the collector observes zero metadata rows under partial coverage, the
+    shape the page must call unknown rather than a zero result.
     """
     assert variant in SEMANTIC_VARIANTS
     mapping = {"fields": ["cik", "name", "ticker", "exchange"], "data": [
@@ -156,11 +159,11 @@ def collect_semantic(raw, variant, *, dry_run=False):
         filings = [{"accessionNumber": f"{cik:010d}-25-000001", "filingDate": "2025-10-01",
                     "reportDate": "2025-10-01", "acceptanceDateTime": "2025-10-01T16:00:00Z",
                     "form": "10-K", "items": "", "primaryDocument": "old.htm"}]
-        if variant != "empty-window":
+        if variant not in ("empty-window", "rows-invalid"):
             filings.append({"accessionNumber": f"{cik:010d}-26-000001", "filingDate": "2026-10-09",
                             "reportDate": "2026-10-09", "acceptanceDateTime": "2026-10-09T16:00:00Z",
                             "form": "8-K", "items": "8.01", "primaryDocument": "current.htm"})
-        if variant == "metadata-invalid":
+        if variant in ("metadata-invalid", "rows-invalid"):
             filings.append({"accessionNumber": f"{cik:010d}-27-000001", "filingDate": "2026-10-09",
                             "reportDate": "2026-10-09", "acceptanceDateTime": "2027-10-09T16:00:00Z",
                             "form": "8-K", "items": "8.01", "primaryDocument": "future.htm"})

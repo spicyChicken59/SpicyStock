@@ -41,6 +41,7 @@ def set_aggregate(receipt, bundle):
     ("metadata-invalid", "partial", "partial", 5),
     ("short-index", "partial", "partial", 5),
     ("prefetch-budget", "unavailable", "unknown", 0),
+    ("rows-invalid", "partial", "partial", 3),
 ])
 def test_genuine_producer_states_reconcile(name, status, coverage, requests):
     receipt, bundle = packet("semantic-" + name)
@@ -58,6 +59,14 @@ def test_genuine_producer_states_reconcile(name, status, coverage, requests):
         assert all(not row["documents"] and not row["index"]["selected_accessions"] for row in bundle["issuers"])
     if name == "document-denied":
         assert all(row["errors"][0]["http_status"] == 403 for row in bundle["issuers"])
+    if name == "rows-invalid":
+        # A verified issuer whose only in-window row was refused: nothing observed, nothing
+        # checked, and the review block says zero rather than being left out.
+        for row in bundle["issuers"]:
+            assert row["identity"]["status"] == "verified" and row["index"]["metadata_count"] == 0
+            assert [error["code"] for error in row["errors"]] == ["metadata_invalid"]
+            assert row["index"]["acquisition_review"] == {"schema_version": 2, "observed_count": 0,
+                                                          "not_listed_count": 0, "filings": []}
 
 
 def test_all_existing_and_new_fixtures_pass_stdlib_validator():
@@ -76,7 +85,7 @@ def test_generator_reproduces_additive_controls_without_rewriting_originals():
     generator = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(generator)
     outputs = generator.build()
-    assert len(outputs) == 42
+    assert len(outputs) == 44
     assert all((FIXTURES / name).read_bytes() == raw for name, raw in outputs.items())
 
 

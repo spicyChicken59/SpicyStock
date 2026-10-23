@@ -105,7 +105,7 @@
   function filing(row, end) {
     require(keys(row, 'accession form filing_date report_date accepted_at primary_document items') && ACCESSION.test(row.accession) && text(row.form, 40) && day(row.filing_date) &&
       (row.report_date === null || day(row.report_date)) && Number.isFinite(instant(row.accepted_at)) && instant(row.accepted_at) <= end + 5000 &&
-      text(row.primary_document, 256) && /^[A-Za-z0-9_.-]+$/.test(row.primary_document) && !row.primary_document.includes('..') && text(row.items, 1024), 'Filing metadata is invalid.');
+      diagnosticBasename(row.primary_document) && text(row.items, 1024), 'Filing metadata is invalid.');
   }
   async function sha(raw) {
     require(w.crypto && w.crypto.subtle && w.TextEncoder, 'Exact source verification is unavailable in this browser.');
@@ -385,20 +385,27 @@
     if (mounted && receipt && state === 'loaded') mounted.querySelector('[data-issuer-status]').textContent = ageLabel();
   }
   // One section for the merger/tender-form review, whatever the receipt's
-  // generation: not_recorded (no block), unknown (version 2, unverified
-  // identity), none (version 2, verified, nothing observed) or observed. It
-  // reads counts and attributions off the block and adds no figure of its own.
+  // generation: not_recorded (no block), unknown (version 2: an unverified
+  // identity, or a verified index with no readable metadata row under partial
+  // coverage, which checked nothing), none (version 2, verified, rows observed
+  // or a complete empty window, no such form) or observed. It reads counts and
+  // attributions off the block and adds no figure of its own.
   function acquisitionReview(body, ident, index) {
     const review = index.acquisition_review, versioned = !!review && Object.hasOwn(review, 'schema_version');
-    const state = !review ? 'not_recorded' : versioned && ident.status !== 'verified' ? 'unknown' : review.observed_count ? 'observed' : 'none';
+    const unreadable = ident.status === 'verified' && index.metadata_count === 0 && index.coverage_status !== 'observed_window';
+    const state = !review ? 'not_recorded' : versioned && (ident.status !== 'verified' || unreadable) ? 'unknown' : review.observed_count ? 'observed' : 'none';
     const section = node('section', { 'data-acquisition-section': '', 'data-acquisition-state': state, 'data-acquisition-version': review ? (versioned ? String(review.schema_version) : '1') : 'none' });
     const incomplete = index.coverage_status !== 'observed_window' ? ' Incomplete index: missing or invalid metadata may omit other acquisition filings.' : '';
     if (state === 'not_recorded') {
       paragraph(section, 'Acquisition review:', 'No acquisition-form warning recorded in this bundle. This is not evidence that no acquisition exists; older collectors did not record these warnings and bounded metadata can miss events.');
     } else if (state === 'unknown') {
-      paragraph(section, 'Acquisition review:', 'Unknown. Issuer identity or submissions could not be verified, so merger and tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 and their amendments) were not checked. This is not event clearance; known event evidence above remains in force.');
+      paragraph(section, 'Acquisition review:', (unreadable
+        ? 'Unknown. The issuer is verified, but no metadata row of its SEC index was readable (index coverage: ' + index.coverage_status.replaceAll('_', ' ') + '), so merger and tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 and their amendments) were not checked.'
+        : 'Unknown. Issuer identity or submissions could not be verified, so merger and tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 and their amendments) were not checked.') + ' This is not event clearance; known event evidence above remains in force.');
     } else if (state === 'none') {
-      paragraph(section, 'Acquisition review:', 'No merger or tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 or their amendments) among the ' + index.metadata_count + ' observed metadata rows. Index coverage: ' + index.coverage_status.replaceAll('_', ' ') + '.' + incomplete + ' An empty list is not event clearance: bounded metadata can miss events, and known event evidence above remains in force.');
+      paragraph(section, 'Acquisition review:', (index.metadata_count === 0
+        ? 'No filings of any form were observed in the requested window (' + index.window_start + ' to ' + index.window_end + '), so no merger or tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 or their amendments) among them.'
+        : 'No merger or tender-offer forms (PREM14A, DEFM14A, SC TO-T, SC 14D9 or their amendments) among the ' + index.metadata_count + ' observed metadata rows.') + ' Index coverage: ' + index.coverage_status.replaceAll('_', ' ') + '.' + incomplete + ' An empty list is not event clearance: bounded metadata can miss events, and known event evidence above remains in force.');
     } else {
       paragraph(section, 'Acquisition review:', review.observed_count + ' acquisition-related form(s) observed; ' + review.filings.length + ' listed below; ' + (versioned ? review.not_listed_count : review.observed_count - review.filings.length) + ' not listed. Review before considering a trade. Form names alone do not establish a pending or completed acquisition, its terms, or clearance. Documents below cover selected current reports, not these forms.' + incomplete + (versioned ? '' : ' This older receipt lists forms without attributing each to its retained index source.'));
       for (const entry of review.filings) {
@@ -406,7 +413,7 @@
         const line = node('p', { class: 'sc-hint', 'data-acquisition-review': '' });
         line.append(link(item.form + ' · filed ' + item.filing_date, 'https://www.sec.gov/Archives/edgar/data/' + ident.cik + '/' + item.accession.replaceAll('-', '') + '/' + item.primary_document),
           d.createTextNode(' · SEC accepted ' + stamp(item.accepted_at) + ' · accession ' + item.accession + ' · metadata only; content unreviewed'));
-        if (src) line.append(d.createTextNode(' · read from the '), link('retained SEC submissions index', src.url), d.createTextNode(' retrieved / checked ' + stamp(src.fetched_at) + ' / ' + stamp(src.checked_at) + ' · ' + src.cache_status.replaceAll('_', ' ')));
+        if (src) line.append(d.createTextNode(' · read from the '), link(equal(src, ident.submissions_source) ? 'retained SEC submissions index' : 'retained older SEC submissions index', src.url), d.createTextNode(' retrieved / checked ' + stamp(src.fetched_at) + ' / ' + stamp(src.checked_at) + ' · ' + src.cache_status.replaceAll('_', ' ')));
         section.append(line);
       }
     }

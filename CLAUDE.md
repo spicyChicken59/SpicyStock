@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5130 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5131 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -11101,3 +11101,65 @@ looked at (one column on the phone, nothing sideways); gitleaks 8.24.3 with the
 repository's config over the 50 changed files: no leaks. `.env.example` was
 read: nothing here is configuration. The full suite, the chart check, the full
 smoke, the mutation passes and the review are recorded below as they finished.
+
+**Mutation passes**, the tree never written: page mutants through routed copies
+of `app-morning.js` and `app-issuer-evidence.js` (`SCSTOCK_MORNING`,
+`SCSTOCK_ISSUER_EVIDENCE`) judged by `--only cashpreview` and `--only issuer`;
+Python mutants in a full copy of the worktree, judged by the two issuer test
+files with the committed-fixture equality deselected, so each dies in the test
+that names its rule. The acknowledgement rule, five: the reset removed (4
+checks), the quote check alone reset (4), the reset made unconditional (8: the
+same-plan edit and the same-publication render both lose the checks) and
+`render()` clearing on every render (6) die; the control (a comment) passes
+565/565. The page's review block, eight: any version accepted (4), the index
+source unchecked (4), the omitted count unchecked (2), the amendments dropped
+(the producer's observed variant, whose forms are the amendments too, refuses to
+load), an unknown identity read as `none` (2), the version-1 branch refused (the
+synthetic version-1 bundle refuses to load) die; the control passes 600/600.
+The collector and validator, ten: the amendments dropped, a history source
+overriding the recent one, any version, the source unchecked, the omitted count
+unchecked, the order unchecked, version 1 refused and the block omitted on a
+zero count die, each in the test naming it; the docstring control passes
+120/120. **Two survived and both are equivalent**, the same rule in two
+readers: the browser's `observed_count === 0` clause under an unverified
+identity and the Python `_require` beside it. An unverified issuer's index is
+held to `metadata_count` 0 by the identity rule (`coverage()`, `_reconcile_row`),
+and the count rule bounds `observed_count` by `metadata_count` less the current
+reports, so a forged count is refused before either clause is reached. Both are
+kept as the statement of intent beside the arithmetic. The harness's Python
+phase first died on a missing `rsync`; it copies with `shutil.copytree` now.
+
+**The review, worked.** A workflow by execution over the pushed tip
+(`b2973b87`), three finders (the page, the Python, the morning desk). The page
+finder returned four, each reproduced here with its own read-only probe before
+anything was touched, then driven through the real collector where the finding
+named a shape. The medium one: a verified issuer whose index yielded no readable
+metadata row under partial coverage -- the collector writes `metadata_count` 0,
+`coverage_status` partial, `metadata_invalid` and a zero review block, proved by
+driving it over an index whose only in-window row has a future acceptance clock
+-- read as `none` and printed *No merger or tender-offer forms ... among the 0
+observed metadata rows*, a negative finding over a vacuous denominator. The
+state is `unknown` now (`unreadable` in `acquisitionReview()`), in its own words
+(*no metadata row of its SEC index was readable (index coverage: partial), so
+... were not checked*), and a complete window that held no filing of any form
+says so instead of counting forms among zero rows. The generator gains the
+variant through the real collector (`semantic-rows-invalid`; 44 fixtures, the
+42 byte-identical), the reconciliation test holds its shape, and the issuer
+suite holds both states. The lows: every version-2 index link read *retained
+SEC submissions index* when the retained source was the history file the same
+page calls *Older SEC submissions index* two paragraphs below (named by equality
+against the row's own sources now, both labels held in words, not only the
+href); the browser's `filing()` admitted a primary document of `.` -- a link to
+the accession directory, which Python's `BASENAME` refuses -- and the acquisition
+lines are the one place a reader is told the link IS the filing (it is the
+collector's basename rule now, through the module's own `diagnosticBasename`,
+and the dotted document is a refusal case); and the browser accepts
+`schema_version` 2.0 and `observed_count` 8.0 where Python refuses them, because
+`JSON.parse` cannot tell 2.0 from 2 -- a pre-existing class for every integer
+field, recorded in the schema document and README rather than guessed at from
+the raw text: the publisher's validator holds the typed contract before any
+publication. Six routed mutants over the three rules (the zero-row state back to
+`none`, the coverage clause dropped, the empty-window wording dropped, the label
+fixed either way, the old basename rule) die on the checks naming them; the
+comment control passes 615/615. The Python and morning finders are recorded
+below when they return.

@@ -1369,11 +1369,17 @@ so the reader tells four states apart and never guesses: observed, with up to
 twelve dated links newest first, the observed and omitted counts, and for
 each listed filing the exact retained SEC index it was read from (the
 submissions file or the one fetched history file) with its retrieval time;
-none, when a verified index showed no such form, which is said, not left out;
-unknown, when the issuer's identity or submissions could not be verified;
-and not recorded, for a bundle from before the warning existed. A version-1
-block (bare filings, written only when a form was observed) stays readable and
-is held to its own rules. These form names do not establish whether an
+none, when a verified index showed no such form, which is said, not left out
+(a complete window that held no filing of any form says so, rather than
+counting forms among zero rows); unknown, when the issuer's identity or
+submissions could not be verified, or when a verified index yielded no
+readable metadata row under partial coverage, so nothing was checked; and not
+recorded, for a bundle from before the warning existed. A version-1 block
+(bare filings, written only when a form was observed) stays readable and is
+held to its own rules. The browser reads JSON numbers, so it cannot tell `2.0`
+from `2` where the publisher's validator requires a typed integer; that
+validator runs before every publication, so the typed contract is held where
+the bytes are written, and the browser holds every other rule of the block. These form names do not establish whether an
 acquisition is pending or completed, its terms, or that the issuer is the
 target. Their document content remains unreviewed; the latest-three
 current-report excerpts do not cover these forms. Neither an empty list nor
