@@ -198,7 +198,14 @@
       require(r.status === expected, 'Issuer receipt status contradicts its retained rows.');
     }
   }
-  const newestFirst = rows => rows.slice().sort((a, b) => a.accepted_at === b.accepted_at ? (a.accession < b.accession ? 1 : a.accession > b.accession ? -1 : 0) : a.accepted_at < b.accepted_at ? 1 : -1);
+  const newestFirst = rows => rows.slice().sort((a, b) => {
+    // by the acceptance INSTANT, then the accession, as the publisher's
+    // validator orders them: a clock spelled under another offset is placed
+    // by what it means, not how it is written (every clock here has passed
+    // filing(), so both instants are finite)
+    const ta = instant(a.accepted_at), tb = instant(b.accepted_at);
+    return ta === tb ? (a.accession < b.accession ? 1 : a.accession > b.accession ? -1 : 0) : ta < tb ? 1 : -1;
+  });
   function validateAcquisitionReview(row, end, asOf) {
     // Absent: a bundle from before the warning, which recorded nothing and
     // clears nothing. Version 1 (no schema_version): the first collector's

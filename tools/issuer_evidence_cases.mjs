@@ -109,9 +109,13 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
         ['form', r => { r.filings[0].form = '10-K'; }],
         ['future', r => { r.filings[0].accepted_at = '2027-01-01T00:00:00Z'; }],
         ['old', r => { r.filings[0].filing_date = '2020-01-01'; }],
-        ['duplicate', r => { r.filings.push(r.filings[0]); r.observed_count = 2; }]
+        // the counts are kept consistent (one more metadata row for one more filing) so
+        // the uniqueness, overlap and ordering rules are what refuse, not the count
+        ['duplicate', (r, index) => { r.filings.push({ ...r.filings[0] }); r.observed_count = 2; index.metadata_count += 1; }],
+        ['overlap', (r, index) => { r.filings[0].accession = index.listed_filings[0].accession; }],
+        ['older first', (r, index) => { r.filings.unshift({ ...r.filings[0], accession: '0000320193-26-009098', accepted_at: '2026-09-01T10:00:00+00:00' }); r.observed_count = 2; index.metadata_count += 1; }]
       ]) {
-        transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review), withAcquisition);
+        transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review, b.issuers[0].index), withAcquisition);
         await page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(page);
         eq('acquisition invalid ' + name + ' rejected at ' + width, (await status(page)).state, 'unavailable');
       }
@@ -199,6 +203,11 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       ['altered source digest', x => { x.filings[0].index_source.raw_sha256 = '0'.repeat(64); }],
       ['out of window', x => { x.filings[0].filing.filing_date = '2025-01-01'; }],
       ['reversed chronology', x => { x.filings.reverse(); }],
+      // the last entry's clock respelled under -05:00 is the LATEST instant of the list,
+      // so the list is no longer newest first whatever the strings say
+      ['later instant under another offset', x => { x.filings[x.filings.length - 1].filing.accepted_at = '2026-09-01T15:00:00-05:00'; }],
+      ['extra entry key', x => { x.filings[0].note = 'x'; }],
+      ['missing entry source key', x => { delete x.filings[0].index_source; }],
       ['filing listed twice', (x, index) => { x.filings[0].filing.accession = index.listed_filings[0].accession; }]
     ]) {
       acquisitions.transport.current = changed(null, b => edit(b.issuers[0].index.acquisition_review, b.issuers[0].index), variants['acquisition-observed']);
@@ -206,9 +215,18 @@ export async function checkIssuerEvidence({ browser, base, open, check, eq, shot
       eq(name + ': resealed acquisition corruption is refused', (await status(acquisitions.page)).state, 'unavailable');
       eq(name + ': no unverified acquisition warning displayed', await acquisitions.page.locator('[data-acquisition-review]').count(), 0);
     }
+    // the same instant spelled under another offset is still newest first: the
+    // page orders by what the clock means, as the publisher's validator does
+    acquisitions.transport.current = changed(null, b => { b.issuers[0].index.acquisition_review.filings[0].filing.accepted_at = '2026-09-01T11:00:00-05:00'; }, variants['acquisition-observed']);
+    await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
+    eq('the same instant respelled under another offset still loads', (await status(acquisitions.page)).state, 'loaded');
+    eq('and is still read as an observed version-2 block', await acquisitions.page.locator('[data-acquisition-section]').evaluate(n => [n.getAttribute('data-acquisition-state'), n.getAttribute('data-acquisition-version')]), ['observed', '2']);
+    // AAPL's block copied onto ZIM: its eight observed forms exceed ZIM's one
+    // non-current metadata row, so the count rule refuses it (the source rule
+    // is held by the 'foreign index source' case above)
     acquisitions.transport.current = changed(null, b => { b.issuers[1].index.acquisition_review = structuredClone(b.issuers[0].index.acquisition_review); }, variants['acquisition-observed']);
     await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
-    eq('an observation on an unverified or foreign issuer is refused', (await status(acquisitions.page)).state, 'unavailable');
+    eq('a block whose counts exceed another issuer\u2019s index is refused', (await status(acquisitions.page)).state, 'unavailable');
     acquisitions.transport.current = variants['acquisition-observed'];
     await acquisitions.page.evaluate(() => SCStock.issuerEvidence.reload()); await wait(acquisitions.page);
     eq('valid acquisition receipt recovers after refusal controls', (await status(acquisitions.page)).state, 'loaded');

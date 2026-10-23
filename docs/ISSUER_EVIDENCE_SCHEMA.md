@@ -236,9 +236,11 @@ identity's `submissions_source` or an entry of `history_sources`) and is
 validated as a source. Accessions are unique and never among `listed_filings`;
 acceptance is no later than the collection instant and filing dates lie in the
 bounded window. Order is by the acceptance instant, so a clock spelled under
-another offset is ordered by what it means. Which retained index carried a
-filing is the collector's record, checked against its captures where they
-exist; the validator holds each `index_source` to the row's retained sources. A version-1 block (no `schema_version`, bare filings, present
+another offset is ordered by what it means, on the page as in the publisher's
+validator. Which retained index carried a filing is the collector's own record;
+the validator holds each `index_source` to one of the row's retained sources,
+and the tests replay the attribution against the collector's captured index
+bytes over the producer fixtures. A version-1 block (no `schema_version`, bare filings, present
 only when a form was observed, verified identity, the current form list, its
 own count, order and window rules) stays readable. A missing block is a bundle from before the warning:
 no record, never clearance. The page reads the block's state off the index

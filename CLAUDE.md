@@ -344,7 +344,7 @@ reaches zero settles there, and `record.r_multiple()` weights by quantity.
 The page and the mail say "open model plans" and "model allocation over
 configured sizing assumptions", never what the reader holds.
 
-The suite now collects 5139 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
+The suite now collects 5149 tests, the chart check remains separate, and the page smoke walks twelve fixtures. Historical measurement: 1107 tests, the chart check, and the page smoke
 over eleven fixtures walked through every view, stock, lens, search, the
 chooser and what its lens hides, the comparison and the pins a lens no
 longer shows, the map's own Compare column, the recorded evidence, the
@@ -10983,9 +10983,10 @@ at 13:21 UTC and dispatched `morning.yml` (run 39960745472, created 13:23:07 UTC
 13:23:41 UTC (`no_tickets`: the 22 October record is RED and admits no plan, so
 no provider was asked), the research collector wrote `docs/research-observations.json`
 at 13:23:48 (`no_research_rows`), and the persist job committed both
-(`6418f2a8`, `777a9917`) 97 seconds after the dispatch. The four scheduled
-morning crons were created 4.5 to 5.1 hours late (17:52 to 18:34 UTC) and each
-skipped every collection step. One in-window check that had nothing to quote is
+(`6418f2a8`, `777a9917`) 88 and 94 seconds after the dispatch was created (the
+persist job finished at 98). The four scheduled morning crons were created 4.1
+to 4.5 hours after their own slots (17:52 to 18:34 UTC; the winter pair's slots
+are 14:20 and 14:28) and each skipped every collection step. One in-window check that had nothing to quote is
 what the service has to show; the ten-session acceptance still needs a night
 with an admitted plan.
 
@@ -11031,12 +11032,30 @@ tonight's run:** that the API answers the pinned SDK's request again -- the
 
 ## Checkpoint, 23 Oct 2026 -- the paused handoff reconciled onto `main`: merger and tender forms under the shipped review block, and acknowledgements that belong to one plan
 
-**Revision.** Branch `claude/spicystock-market-data-vfd3o2` over the reader
-pin (PR #190, `17d2f092`). The checkpoint branch `codex/issuer-transaction-review`
-(`4cd163c3`, base `88e708f2`, handoff `FABLE_HANDOFF.md`) was read and its two
-changes carried onto current `main` selectively; nothing of it was merged or
-replayed wholesale, and `main` had advanced through PRs #185-#189 and twelve
-publications since its base. `docs/data.json`, `docs/picks.json`, the compact
+**PR #190, accepted.** Merged as `28513f27` on `main` with a merge commit over
+`503193ea`. The head `17d2f092` passed all seven checks (Tests run 40018042500,
+20:17–21:06 UTC: pytest, page, the gate, the native central case to 21:06 and
+stress to 20:48; both gitleaks runs). The diff touched nothing under `docs/`, so
+the publisher did not fire, correctly (as at #64, #174 and #177); Pages
+40024969508 deployed at 21:12 UTC; the merge commit's own Secret scan 40024970058
+and Tests run 40024969981 (21:11–21:29 UTC; the native cases skipped by the gate,
+as a merge's are) passed. The full suite under the pin here was 5000 passed, 34
+environment-gated skips and 35 failed, every failure `tests/test_historical_package.py`
+on a sandbox venv without `zstandard`; with it installed that file is 107 passed
+and 21 skipped, and CI's pytest on the same head was green. Not yet claimable:
+tonight's evening run under the pinned SDK, whose `run.reads` and
+`run.reader_usage` are the first live test of the fix.
+
+**Revision.** Branch `claude/spicystock-market-data-vfd3o2` restarted from
+`main` at `28513f27` (the merge of #190) and pushed as **PR #191**: four
+commits cherry-picked from the local worktree branch the reconciliation was
+built on, their trees equal byte for byte. The checkpoint branch
+`codex/issuer-transaction-review` (`4cd163c3`, base `88e708f2`, handoff
+`FABLE_HANDOFF.md`) was read and its two changes carried onto current `main`
+selectively; nothing of it was merged or replayed wholesale, and `main` had
+advanced through PRs #185-#190, five publications over four sessions (19
+October twice, then 20, 21 and 22 October) and twelve companion-receipt
+commits since its base. `docs/data.json`, `docs/picks.json`, the compact
 reader, every receipt, the history, the evidence objects, the quality ledger,
 the workflows and the vendored design system are untouched; no run, mail,
 dispatch, provider call or credential.
@@ -11091,8 +11110,9 @@ checks survive. Before it, an edit of the same plan's quantity recalculates the
 preview and keeps them. README says both.
 
 **Measured** (this sandbox, Python 3.12.3, anthropic 1.17.0, Node 22, Chromium
-through Playwright 1.63): the issuer Python files 340 passed
-(`test_issuer_acquisition_review` new, 61 cases); `tests/test_docs.py`,
+through Playwright 1.63): the six issuer Python test files 340 passed
+(`test_issuer_acquisition_review` new, 59 cases at that commit; 67 at the
+round-3 tip and 77 now); `tests/test_docs.py`,
 `test_workflows.py`, `test_publish_dashboard.py` and `test_secret_scan.py` 224
 passed with the count line at 5130; the issuer generator `--check` 42 current;
 the `issuer`, `cashpreview` and `morning` suites 1165/1165 with `--shots`
@@ -11105,22 +11125,26 @@ smoke, the mutation passes and the review are recorded below as they finished.
 **Mutation passes**, the tree never written: page mutants through routed copies
 of `app-morning.js` and `app-issuer-evidence.js` (`SCSTOCK_MORNING`,
 `SCSTOCK_ISSUER_EVIDENCE`) judged by `--only cashpreview` and `--only issuer`;
-Python mutants in a full copy of the worktree, judged by the two issuer test
-files with the committed-fixture equality deselected, so each dies in the test
-that names its rule. The acknowledgement rule, five: the reset removed (4
+Python mutants in a full copy of the worktree, judged by two issuer test files
+(`test_issuer_acquisition_review`, `test_issuer_evidence`) with the six
+committed-fixture equality cases deselected, so each dies in the test that
+names its rule. The acknowledgement rule, four: the reset removed (4
 checks), the quote check alone reset (4), the reset made unconditional (8: the
 same-plan edit and the same-publication render both lose the checks) and
 `render()` clearing on every render (6) die; the control (a comment) passes
-565/565. The page's review block, eight: any version accepted (4), the index
+565/565 under `--only cashpreview,morning` (305 and 260). The page's review
+block, seven: any version accepted (4), the index
 source unchecked (4), the omitted count unchecked (2), the amendments dropped
 (the producer's observed variant, whose forms are the amendments too, refuses to
 load), an unknown identity read as `none` (2), the version-1 branch refused (the
-synthetic version-1 bundle refuses to load) die; the control passes 600/600.
-The collector and validator, ten: the amendments dropped, a history source
+synthetic version-1 bundle refuses to load) die, and the unverified clause
+survives (below); the control passes 600/600. The collector and validator,
+nine: the amendments dropped, a history source
 overriding the recent one, any version, the source unchecked, the omitted count
 unchecked, the order unchecked, version 1 refused and the block omitted on a
-zero count die, each in the test naming it; the docstring control passes
-120/120. **Two survived and both are equivalent**, the same rule in two
+zero count die, each in the test naming it, and the unverified clause survives
+(below); the docstring control passes 120/120. **Two survived and both are
+equivalent**, the same rule in two
 readers: the browser's `observed_count === 0` clause under an unverified
 identity and the Python `_require` beside it. An unverified issuer's index is
 held to `metadata_count` 0 by the identity rule (`coverage()`, `_reconcile_row`),
@@ -11200,8 +11224,12 @@ source to one of the row's retained sources, and which file carried the filing
 is the collector's own record, checked against its captures where they exist
 -- and said a version-1 block is *held to its own rules* where it is held to
 the current form list (both sentences say what the code does, in README and
-the schema). The ninth was the replay: all fourteen bundles on `main`'s
-history validate under the new validator with their own receipts, the live
+the schema). The ninth was the replay: the eleven receipt versions in `main`'s
+ancestry validate under the new validator with the bundles they name, none
+carrying a block; the retention store keeps fourteen bundles, three of them
+(`0848ff98…`, `c20f9e4d…`, `f525a5f9…`) named only by receipts in 10 October
+commits outside `main`'s ancestry (`981e6792`, `3e1dfed6`, `f9b91d00`), each
+validating with that receipt and its record; the live
 pair passes `validate_for_publication`, and the observed and none variants
 differ only in the block, the sources that carried it and the counts. The
 morning finder's three were test holes: *new plan has no broker
@@ -11217,8 +11245,8 @@ later focus repaint all keep the four checks; a same-session revision of the
 same plan clears them, which is `render()`'s own rule.
 
 **The third mutation pass**, over this round's validator rules, each mutant in a
-copy of the worktree judged by the two issuer test files with the committed
-fixture equality deselected, so each dies in the test naming its rule: the
+copy of the worktree judged by the three issuer test files in full (172
+collected then, nothing deselected), so each dies in the test naming its rule: the
 unverified clause removed (dies in the forged-count test now), the count bound
 on the recent file alone (the two boundary cases), the block read before the
 listed reports -- in its original place and moved one require later (the
@@ -11227,5 +11255,84 @@ the clock's spelling (the other-offset case) and the overlap refused under
 *ordering* (the current-report case) all die; the control (a comment) passes
 172/172. On the page, through a routed copy of `app-morning.js` judged by
 `--only cashpreview`: the cutoff reason replaced by *Preview paused.* dies on
-both widths, 305/307. The tests-and-docs finder is recorded below when it
-returns.
+both widths, 305/307.
+
+**The fourth review, over the tests and the documents** -- the two lenses the
+starved workflow never judged -- a fresh workflow by execution over `699fafa4`:
+two finders and two skeptics a finding, the finders recording 35 single-rule
+breaks with the test that caught each. Seventeen findings (nine on the tests,
+eight on the documents), each reproduced here by execution before it was
+touched; every skeptic verdict in by the time of this commit upheld its
+finding, and the full tally is recorded on the pull request. **One was a page
+defect**: `newestFirst` ordered the review's filings by the SPELLING of
+`accepted_at` where the publisher orders by the instant, so a bundle whose last
+entry's clock was respelled under -05:00 (the latest instant) loaded on the
+page and was refused by Python, and one whose first entry was respelled to the
+SAME instant was refused by the page and accepted by Python -- README's "the
+browser holds every other rule of the block" and the schema's ordering sentence
+were false of the browser as committed. It compares `instant()` now, in both
+branches, and the issuer suite holds both cases. The tests, the shapes this
+file names: the shape/count corruption test accepted a `TypeError` or
+`KeyError`, so a validator raising through on `filings: None` -- the class this
+file names most, which round 3 had closed one function away -- stayed green
+(every case names its clause as a `ValueError` now, and `2.0`, `8.0` and `0.0`
+hold the typed-integer rule README leans on, which no test held); four
+version-1 rules (duplicate accession, the overlap with the listed reports, the
+window, the metadata relationship) were held by no test, the v1 duplicate case
+appending a copy the count rule refused first (each has a case that keeps the
+count consistent and names its clause); eight of twelve corruption cases
+matched the empty string, which pytest warns always passes (each names its
+clause, and the file runs under `-W error::pytest.PytestWarning`); the entry key
+set `{filing, index_source}` was held on neither side; the relationship test
+was refused by the bound clause (it is named for the bound now, with a second
+case the relationship alone refuses); two browser controls named rules they
+never reached (the v1 duplicate, refused by the count; a block copied onto a
+VERIFIED issuer, refused by its count and not by any identity or source rule),
+and the v1 final rule -- uniqueness, overlap, order -- had no browser case at
+all. Recorded, not fixed, three equivalents: the per-entry `_source` call, which
+the equality against the row's already-validated sources refuses first; the
+bound clause of the count rule, implied by the index's own metadata bound; and
+the v1 verified-identity clause, behind the identity and count rules as the v2
+one is. The documents: the fixtures README still said thirty outputs and eight
+semantic pairs (44 and nine, the six acquisition pairs and the rows-invalid
+variant unnamed); README said the validator holds the collector's captures to
+the file that carried a filing (only a test replays them); "twelve
+publications since its base" counted the companion-receipt commits (five
+publications over four sessions; twelve receipt commits); "61 cases" was 59;
+round 3's "172/172" was the three issuer files with nothing deselected; the
+first mutation pass's "five", "eight" and "ten" named four, seven and nine
+mutants with the survivors among them, and its 565/565 control was
+`--only cashpreview,morning`; "all fourteen bundles on `main`'s history
+validate with their own receipts" overstated what the ancestry carries (eleven
+receipt versions, and three retained bundles named only by 10 October receipts
+outside it, each re-validated here with that receipt and its record); and the
+morning-run figures in the reader-pin checkpoint and `PRODUCT_GOAL.md` measured
+the winter cron pair against the summer slots (4.1 to 4.5 hours against their
+own) and gave 97 seconds for commits that landed 88 and 94 seconds after the
+dispatch was created. Each sentence is corrected above and in its file.
+
+**The fourth mutation pass**, each Python mutant in its own copy of the
+worktree judged by the three issuer test files in full, each page mutant a
+routed copy judged by `--only issuer`: the v1 duplicate, overlap, window and
+relationship clauses deleted one at a time; the v2 entry key set loosened; the
+typed `schema_version` and `_count` loosened to admit a float; the `filings`
+list clause dropped; the v2 relationship dropped -- nine, all dead in the test
+naming the rule (the relationship in three, its new case among them). On the
+page: the order back to the spelling (3 checks, the respelled-instant case
+among them), the v1 final rule removed (6), its uniqueness half (2) and its
+overlap half (2), the entry keys loosened (2) -- all dead. The `_source` call
+dropped survives, equivalent as recorded; the two controls (a comment each)
+survive at 182 and 627.
+
+**Measured** (this sandbox, Python 3.12.3, Node 22, Chromium through Playwright
+1.63, on the round-4 tree): the three issuer test files 182 passed under
+`-W error::pytest.PytestWarning` (`test_issuer_acquisition_review` 77 cases);
+`tests/test_docs.py` passes with the count line at 5149; the `issuer` suite
+627/627 (615 at `699fafa4`), `cashpreview` 307/307 and `morning` 260/260; the
+issuer generator `--check` 44 current (no fixture moved). The full suite at
+`699fafa4` was 5105 passed and 34 environment-gated skips in 22 m 00 s, and CI
+on that head passed all seven checks (Tests run 40025679322: pytest
+21:17–21:46 UTC, page 21:17–21:34, the gate, the native central case
+21:17–21:45 and stress 21:17–21:46; Secret scans 40025679311 and 40025525146).
+The full suite and the full smoke on the final tree, and its CI, are recorded
+on the pull request.

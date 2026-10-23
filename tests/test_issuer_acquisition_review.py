@@ -168,20 +168,45 @@ def test_legacy_receipt_without_optional_extension_remains_readable():
     assert all("acquisition_review" not in row["index"] for row in checked["issuers"])
 
 
-@pytest.mark.parametrize("field,value", [("schema_version", True), ("schema_version", 3), ("schema_version", 1),
-    ("observed_count", True), ("observed_count", -1), ("observed_count", 9),
-    ("not_listed_count", 1), ("not_listed_count", True), ("filings", None), ("pending", True)])
-def test_extension_shape_and_count_corruption_is_rejected_after_reseal(field, value):
+@pytest.mark.parametrize("field,value,message", [
+    ("schema_version", True, "acquisition review version"), ("schema_version", 3, "acquisition review version"),
+    ("schema_version", 1, "acquisition review version"), ("schema_version", 2.0, "acquisition review version"),
+    ("observed_count", True, "acquisition review count"), ("observed_count", -1, "acquisition review count"),
+    ("observed_count", 9, "acquisition review count"), ("observed_count", 8.0, "acquisition review count"),
+    ("not_listed_count", 1, "acquisition review count"), ("not_listed_count", True, "acquisition review count"),
+    ("not_listed_count", 0.0, "acquisition review count"), ("filings", None, "acquisition review count"),
+    ("pending", True, "issuer object keys")])
+def test_extension_shape_and_count_corruption_is_rejected_after_reseal(field, value, message):
+    """Each corruption is refused by the clause that names it, as a ValueError: a
+    TypeError or KeyError raised through validate_bundle() is the class this
+    repository names most and is a failure here, never an accepted refusal. The
+    floats hold the typed-integer rule (``type(...) is int``), which the browser
+    cannot hold and the publisher's validator must."""
     values = packet()
     warning(values)[field] = value
-    with pytest.raises((ValueError, TypeError, KeyError)):
+    with pytest.raises(ValueError, match=message):
         validate(values)
 
 
-@pytest.mark.parametrize("mutation", ["unsupported_form", "outside_window", "future_acceptance", "duplicate", "order",
-    "wrong_issuer", "wrong_digest", "wrong_size", "wrong_clock", "mapping_source", "current_report_accession",
-    "later_instant_other_offset"])
+MUTATION_REFUSALS = {
+    "unsupported_form": "acquisition review form/window", "outside_window": "acquisition review form/window",
+    "future_acceptance": "issuer future acceptance", "duplicate": "acquisition review form/window",
+    "order": "acquisition review ordering", "later_instant_other_offset": "acquisition review ordering",
+    "current_report_accession": "overlaps listed current reports",
+    # a source that is valid in itself but is not one the row retained is refused
+    # by the equality against the row's own sources, whatever field moved
+    "wrong_issuer": "source differs from retained index", "wrong_digest": "source differs from retained index",
+    "wrong_size": "source differs from retained index", "wrong_clock": "source differs from retained index",
+    "mapping_source": "source differs from retained index",
+    "extra_entry_key": "issuer object keys", "missing_entry_source": "issuer object keys",
+}
+
+
+@pytest.mark.parametrize("mutation", sorted(MUTATION_REFUSALS))
 def test_filing_or_source_corruption_is_rejected_after_reseal(mutation):
+    """Every case names the clause that refuses it: a rule renamed, reordered or
+    replaced by another refusal turns the case red (an empty ``match`` would
+    pass on any ValueError, which pytest itself warns about)."""
     values = packet()
     observed = warning(values)
     item = observed["filings"][0]
@@ -200,10 +225,18 @@ def test_filing_or_source_corruption_is_rejected_after_reseal(mutation):
         # the last entry's clock respelled under -05:00 is the LATEST instant of the
         # list, so the list is no longer newest first, whatever the strings say
         observed["filings"][-1]["filing"]["accepted_at"] = "2026-09-01T15:00:00-05:00"
-    expected = {"current_report_accession": "overlaps listed current reports", "later_instant_other_offset": "acquisition review ordering",
-                "order": "acquisition review ordering", "duplicate": "acquisition review form/window"}.get(mutation, "")
-    with pytest.raises(ValueError, match=expected):
+    elif mutation == "extra_entry_key": item["note"] = "x"
+    elif mutation == "missing_entry_source": del item["index_source"]
+    with pytest.raises(ValueError, match=MUTATION_REFUSALS[mutation]):
         validate(values)
+
+
+def test_the_same_instant_respelled_under_another_offset_is_still_newest_first():
+    """The order is the instant's, not the spelling's: the first entry's clock
+    written under -05:00 names the same instant and the list still validates."""
+    values = packet()
+    warning(values)["filings"][0]["filing"]["accepted_at"] = "2026-09-01T11:00:00-05:00"
+    assert aapl(validate(values))["index"]["acquisition_review"]["observed_count"] == 8
 
 
 def test_capped_list_cannot_silently_discard_an_observation():
@@ -253,19 +286,40 @@ def test_legacy_version_one_block_remains_readable():
     assert "schema_version" not in review and review["observed_count"] == 8 and len(review["filings"]) == 8
 
 
-@pytest.mark.parametrize("edit", [
-    lambda r: r.update(observed_count=0),
-    lambda r: r.update(not_listed_count=0),
-    lambda r: r["filings"][0].update(form="10-K"),
-    lambda r: r["filings"].reverse(),
-    lambda r: r["filings"].append(r["filings"][0]),
-])
-def test_legacy_version_one_block_is_held_to_its_own_rules(edit):
+def _ninth_v1_filing(block):
+    """A distinct ninth filing, accepted earlier than the eight, placed last: the
+    list stays unique, newest first and in the window, so only the metadata
+    relationship (9 + 4 listed current reports over a 12-row index) refuses."""
+    ninth = deepcopy(block["filings"][-1])
+    ninth.update(accession="0000320193-26-007999", accepted_at="2026-09-01T15:00:00+00:00")
+    block["filings"].append(ninth)
+    block["observed_count"] = 9
+
+
+V1_EDITS = {
+    "zero count": (lambda r, index: r.update(observed_count=0), "acquisition review count"),
+    "version-two key": (lambda r, index: r.update(not_listed_count=0), "issuer object keys"),
+    "unsupported form": (lambda r, index: r["filings"][0].update(form="10-K"), "acquisition review form/window"),
+    "outside window": (lambda r, index: r["filings"][0].update(filing_date="2025-10-09"), "acquisition review form/window"),
+    "oldest first": (lambda r, index: r["filings"].reverse(), "acquisition review ordering"),
+    # the last entry replaced by a copy of the first keeps the count consistent, so
+    # the duplicate rule is what refuses (an appended copy is refused by the count)
+    "duplicate accession": (lambda r, index: r["filings"].__setitem__(-1, deepcopy(r["filings"][0])), "acquisition review duplicate accession"),
+    "listed current report": (lambda r, index: r["filings"][0].update(accession=index["selected_accessions"][0]), "overlaps listed current reports"),
+    "over the metadata count": (lambda r, index: _ninth_v1_filing(r), "acquisition review count"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(V1_EDITS))
+def test_legacy_version_one_block_is_held_to_its_own_rules(name):
+    """Each version-1 rule is reached by a case that passes every rule before it,
+    and refused as a ValueError under the clause's own name."""
     values = packet()
     block = v1_block(values)
-    edit(block)
+    edit, message = V1_EDITS[name]
+    edit(block, aapl(values[1])["index"])
     aapl(values[1])["index"]["acquisition_review"] = block
-    with pytest.raises((ValueError, TypeError, KeyError)):
+    with pytest.raises(ValueError, match=message):
         validate(values)
 
 
@@ -318,13 +372,32 @@ def test_counts_past_the_recent_index_bound_validate_up_to_the_history_bound(obs
     assert aapl(validate(values))["index"]["acquisition_review"]["observed_count"] == observed
 
 
-def test_a_count_past_the_history_bound_is_refused_by_the_metadata_relationship():
+def test_a_count_past_the_history_bound_is_refused():
+    """observed_count over the recent-plus-history bound is refused by the count
+    rule. The bound clause cannot be isolated: the index's own metadata bound
+    keeps metadata_count within it, so an observed count past it also fails the
+    metadata relationship; the clause is kept as the statement of the bound."""
     values = packet("capped")
     index = aapl(values[1])["index"]
     bound = issuer.MAX_METADATA_ROWS * (1 + issuer.MAX_HISTORY_FILES)
     warning(values)["observed_count"] = bound + 1
     warning(values)["not_listed_count"] = bound + 1 - len(warning(values)["filings"])
     index["metadata_count"] = bound
+    with pytest.raises(ValueError, match="acquisition review count"):
+        validate(values)
+
+
+def test_a_count_within_the_bound_is_refused_by_the_metadata_relationship():
+    """observed_count inside the bound, with the listed current reports beside it
+    one more than the index's rows: only the relationship clause can refuse."""
+    values = packet("capped")
+    index = aapl(values[1])["index"]
+    bound = issuer.MAX_METADATA_ROWS * (1 + issuer.MAX_HISTORY_FILES)
+    observed = bound - index["eligible_current_report_count"] + 1
+    warning(values)["observed_count"] = observed
+    warning(values)["not_listed_count"] = observed - len(warning(values)["filings"])
+    index["metadata_count"] = bound
+    assert observed <= bound and observed + index["eligible_current_report_count"] > index["metadata_count"]
     with pytest.raises(ValueError, match="acquisition review count"):
         validate(values)
 

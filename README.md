@@ -1369,8 +1369,9 @@ so the reader tells four states apart and never guesses: observed, with up to
 twelve dated links newest first, the observed and omitted counts, and for
 each listed filing the retained SEC index the collector read it from (the
 submissions file or the one fetched history file) with its retrieval time,
-which the validator holds to one of the row's own retained sources and the
-collector's captures to the file that carried the filing;
+which the validator holds to one of the row's own retained sources (which
+file carried a filing is the collector's own record, replayed against its
+captured index bytes only by the tests over the producer fixtures);
 none, when a verified index showed no such form, which is said, not left out
 (a complete window that held no filing of any form says so, rather than
 counting forms among zero rows); unknown, when the issuer's identity or

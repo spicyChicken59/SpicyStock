@@ -612,8 +612,8 @@ remains blocked and is not included in this independent broker release.
 ## Current reconciliation — 23 October 2026
 
 The owner's claude.ai task dispatched `morning.yml` at 13:23 UTC (8:23 CT): the
-first morning check inside its window, with both receipts committed 97 seconds
-later. It had nothing to quote, because the 22 October record is RED with no
+first morning check inside its window, with both receipts committed 88 and 94
+seconds after the dispatch was created. It had nothing to quote, because the 22 October record is RED with no
 admitted plan; the ten-session acceptance still needs a night with one. The
 chart reader had been empty for two nights: the unpinned Anthropic SDK took
 2.1.0 on 21 and 22 October, whose API version refuses the `temperature` the
