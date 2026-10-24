@@ -84,7 +84,7 @@ def test_a_record_over_its_bound_is_refused_before_anything_is_installed_and_say
     # mailed by the stage it stopped at, not as missing inputs, and never with the size
     text = _rendered(fake_resend.sent[-1]["html"])
     assert fake_resend.sent[-1]["subject"].startswith("FAILED — no plan for ")
-    assert "It stopped at its publish stage, after the night's inputs were read;" in text
+    assert "It stopped at its publish stage, after its universe, fetch and session stages had passed;" in text
     assert report.PROBLEM_SENTENCES["coverage_thin"] not in text and said.group(1) not in text
 
 

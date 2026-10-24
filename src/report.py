@@ -72,10 +72,14 @@ RUN_STAGES: tuple[str, ...] = (
     "preflight", "universe", "fetch", "session", "followup", "breadth", "scan", "plan",
     "grade", "watchlist", "record", "publish", "email", "restamp", "history",
 )
-#: The stages that read the night's inputs. Only a run that stopped in one of
-#: them is mailed the ``coverage_thin`` sentence; a failure after them is not
-#: a missing input.
+#: The stages that read the night's inputs. A run that stopped in one of them
+#: failed there, and the notice carries the ``coverage_thin`` sentence for it.
 INPUT_STAGES: tuple[str, ...] = ("universe", "fetch", "session")
+#: The stages a run can stop at with nothing published, so the ones a failure
+#: notice can name: the inputs' and every one after them up to the publish.
+#: Preflight refuses before anything is read and mails nothing; a run that
+#: stopped past the publish mails the digest itself.
+NOTICE_STAGES: tuple[str, ...] = RUN_STAGES[RUN_STAGES.index(INPUT_STAGES[0]):RUN_STAGES.index("publish") + 1]
 
 # --- the vocabularies the record is validated against -------------------------
 
@@ -1250,15 +1254,18 @@ def digest_html(data: dict, problems: list[dict] | None = None) -> str:
 
 
 def stage_sentence(stage: Any) -> str | None:
-    """Where a run that did not publish stopped, in words the code owns: a
-    stage that read the night's inputs, or one after them, whose cause stays in
-    the run log. A word that is not one of ``RUN_STAGES`` is not printed."""
-    if not isinstance(stage, str) or stage not in RUN_STAGES:
+    """Where a run that did not publish stopped, in words the code owns: one
+    of the stages that read the night's inputs, or one after them, which says
+    those had passed and claims no cause -- a later failure can be the code's
+    or the data's. What it raised stays in the run log. A word that is not one
+    of ``NOTICE_STAGES`` is not printed."""
+    if not isinstance(stage, str) or stage not in NOTICE_STAGES:
         return None
+    log_clause = "what it raised is in the workflow's run log, not in this mail."
     if stage in INPUT_STAGES:
-        return f"It stopped at its {stage} stage, while reading the night's inputs."
-    return (f"It stopped at its {stage} stage, after the night's inputs were read; what it raised "
-            "is in the workflow's run log, not in this mail.")
+        return f"It stopped at its {stage} stage, one of the stages that read the night's inputs; {log_clause}"
+    passed = ", ".join(INPUT_STAGES[:-1]) + f" and {INPUT_STAGES[-1]}"
+    return f"It stopped at its {stage} stage, after its {passed} stages had passed; {log_clause}"
 
 
 def failure_html(run_type: str, problems: list[dict], expected: str, stage: str | None = None) -> str:

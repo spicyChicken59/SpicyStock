@@ -1234,8 +1234,10 @@ def notify_failure(rep: RunReport, dry_run: bool, expected: date) -> None:
         log.error("cannot mail the failure notice: delivery keys are missing")
         return
     try:
-        # A run that stopped reading its inputs is missing some; one that stopped
-        # after them is not, and the notice names its stage instead.
+        # A stop in a stage that reads the inputs is mailed the missing-inputs
+        # sentence; a stop after them is named by its stage and claims no cause,
+        # since a later failure can be the code's or the data's. Problems
+        # recorded earlier in the night go out as recorded.
         problems = list(rep.problems)
         if rep.stage in report.INPUT_STAGES:
             problems.append(report.problem(rep.stage, "coverage_thin", rep.failure or "run failed"))

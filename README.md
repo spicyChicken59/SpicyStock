@@ -1220,10 +1220,13 @@ publishing (the failure notice is mailed instead, when the failure came
 after preflight and the delivery keys are there), **2** degraded but
 published (a warning, not a red run), **3** published but the email failed.
 The failure notice names the stage the run stopped at, one of the words the
-code owns (`report.RUN_STAGES`), and carries the missing-inputs sentence only
-when it stopped while reading the night's inputs (`universe`, `fetch` or
-`session`); after them it says the inputs were read and that what the run
-raised is in the workflow's run log, which the mail never quotes.
+code owns (`report.NOTICE_STAGES`), and leaves what the run raised to the
+workflow's run log, which the mail never quotes. A run that stopped while
+reading the night's inputs (`universe`, `fetch` or `session`) is mailed the
+missing-inputs sentence for that failure; a stop after them says those stages
+had passed and claims no cause, since a later failure can be the code's or the
+data's. Problems the night recorded before it stopped go out as recorded, an
+earlier missing input among them.
 Preflight checks every variable the run reads, for presence and for a value
 the code understands, before anything is fetched or paid for.
 A degraded night names its problem with one of seven words —
