@@ -2,9 +2,11 @@
 
 Derivation is pure: source bytes, recommendation receipts and historical
 observations are never changed. Transport hashes bind exact UTF-8 bytes.
-Immutable observation objects retain a bounded old-tab grace window. Only
-expired objects tracked by this transport's ownership manifest are pruned;
-canonical records, histories, and unrelated evidence are never deleted.
+Immutable observation objects retain a bounded old-tab grace window; past the
+archive's capacity, the oldest owned objects inside it give way before a
+publication is refused. Only objects tracked by this transport's ownership
+manifest are pruned; canonical records, histories, and unrelated evidence are
+never deleted.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ from copy import deepcopy
 from datetime import date, timedelta
 import hashlib
 import json
+import logging
 import os
 from pathlib import Path
 import re
@@ -31,6 +34,9 @@ RETENTION_FILE = f"{OBSERVATION_DIR}/retention.json"
 RETENTION_DAYS = 21
 MAX_RETENTION_BYTES = 64 * 1024
 HEX = re.compile(r"[a-f0-9]{64}\Z")
+RETENTION_WARN_FRACTION = 0.8  # of the cap, after tonight's removals: the run log warns
+
+log = logging.getLogger("spicystock.reader")
 
 
 def _require(condition, message):
@@ -203,6 +209,7 @@ def _retention(stage, docs, ref, canonical_raw):
     # The formerly current object's grace begins when it is superseded, even
     # after a publication gap. A currently served old object is never expired.
     current = docs / READER_FILE
+    superseded = False
     if current.exists() or current.is_symlink():
         current_raw = _regular(current, MAX_READER_BYTES)
         expected_current, expected_old_observations = derive(
@@ -216,6 +223,7 @@ def _retention(stage, docs, ref, canonical_raw):
             _require(old_raw == expected_old_observations,
                      "current reader observation object is not verified")
         objects[old_ref["sha256"]] = {"last_session": as_of.isoformat(), "bytes": old_ref["bytes"]}
+        superseded = True
     objects[ref["sha256"]] = {"last_session": as_of.isoformat(), "bytes": ref["bytes"]}
     cutoff = (as_of - timedelta(days=RETENTION_DAYS)).isoformat()
     expired = {sha for sha, entry in objects.items() if entry["last_session"] < cutoff}
@@ -246,9 +254,32 @@ def _retention(stage, docs, ref, canonical_raw):
     added_bytes = 0 if not additions else len(raw)
     object_files = [p for p in files if p.name != "retention.json"]
     retained = [p for p in object_files if p not in removable]
-    _require(len(retained) + additions <= MAX_SIDECARS
-             and sum(path.stat().st_size for path in retained) + added_bytes <= MAX_ARCHIVE_BYTES,
-             "reader observation archive capacity exceeded; explicit retention decision required")
+
+    def fits():
+        return (len(retained) + additions <= MAX_SIDECARS
+                and sum(path.stat().st_size for path in retained) + added_bytes <= MAX_ARCHIVE_BYTES)
+
+    # Past the capacity, an old tab's copy gives way before tonight's
+    # publication does: the owned objects inside their grace leave oldest
+    # first, never the object served now or the one it replaces, and never a
+    # file whose bytes are not the object the manifest owns.
+    protected = {ref["sha256"]} | ({old_ref["sha256"]} if superseded else set())
+    evicted = []
+    for sha in sorted((sha for sha in objects if sha not in expired and sha not in protected),
+                      key=lambda sha: (objects[sha]["last_session"], sha)):
+        if fits():
+            break
+        path = archive / (sha + ".json")
+        if not path.exists():
+            continue
+        body = _regular(path, MAX_OBSERVATION_BYTES)
+        _require(_hash(body) == sha and len(body) == objects[sha]["bytes"],
+                 "reader object ownership differs; nothing was removed")
+        removable.append(path)
+        retained.remove(path)
+        evicted.append(sha)
+    expired |= set(evicted)
+    _require(fits(), "reader observation archive capacity exceeded; explicit retention decision required")
     # One new object may coexist with expired objects until the fixed files
     # commit. A failed cleanup cannot grow this working set without bound.
     _require(len(object_files) + additions <= MAX_SIDECARS + 1
@@ -261,7 +292,7 @@ def _retention(stage, docs, ref, canonical_raw):
     index_raw = _encode(index)
     _require(len(index_raw) <= MAX_RETENTION_BYTES, "reader retention manifest bytes exceed bound")
     _write(stage / RETENTION_FILE, index_raw)
-    return index, expired, additions
+    return index, expired, additions, evicted
 
 
 def _retain_object(stage, docs, ref, additions):
@@ -272,7 +303,8 @@ def _retain_object(stage, docs, ref, additions):
 
 
 def _prune_owned(stage, docs, index, expired):
-    """Prune owned expired cache files after successful fixed publication.
+    """Prune owned cache files after successful fixed publication: expired
+    ones, and any the capacity required inside their grace.
 
     Cleanup failure keeps ownership metadata for retry and is announced. The
     already verified publication remains usable; working-set bounds prevent
@@ -298,8 +330,9 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
 
     Canonical data is installed last. Ordinary rename failures roll fixed files
     back byte-for-byte. Process death between renames remains the existing
-    multi-file publication limitation. Only owned expired transport objects
-    are removed, after successful installation and outside the grace window.
+    multi-file publication limitation. Only owned transport objects are
+    removed, after successful installation: those outside the grace window,
+    and the oldest inside it when the capacity requires.
     """
     stage, docs = Path(stage), Path(docs)
     _require(list(names) in (["data.json"], ["picks.json", "data.json"], []),
@@ -309,7 +342,7 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
     ref = parse_reader(reader_raw)["retained_observations"]
     observations_raw = _regular(stage / ref["path"], MAX_OBSERVATION_BYTES)
     validate_bundle(canonical_raw, reader_raw, observations_raw)
-    index, expired, additions = _retention(stage, docs, ref, canonical_raw)
+    index, expired, additions, evicted = _retention(stage, docs, ref, canonical_raw)
     fixed_names = [RETENTION_FILE, READER_FILE, *names]
     previous = {}
     for name in fixed_names:
@@ -331,6 +364,22 @@ def install_publication(stage: Path, docs: Path, names: tuple[str, ...] | list[s
                 os.replace(stage / name, docs / name)
         raise
     _prune_owned(stage, docs, index, expired)
+    _log_archive(docs, evicted, index)
+
+
+def _log_archive(docs, evicted, index):
+    """What the run log says of the archive once tonight's removals are done."""
+    files = [path for path in (docs / OBSERVATION_DIR).iterdir()
+             if path.name != "retention.json" and path.is_file() and not path.is_symlink()]
+    held = sum(path.stat().st_size for path in files)
+    if evicted:
+        log.warning("Reader observation archive: %d objects inside their %d-day grace were removed, "
+                    "oldest first, so the publication fits the %d-byte cap (%d bytes; git keeps them).",
+                    len(evicted), RETENTION_DAYS, MAX_ARCHIVE_BYTES,
+                    sum(index["objects"][sha]["bytes"] for sha in evicted))
+    level = logging.WARNING if held > MAX_ARCHIVE_BYTES * RETENTION_WARN_FRACTION else logging.INFO
+    log.log(level, "Reader observation archive: %d objects, %d of %d bytes.",
+            len(files), held, MAX_ARCHIVE_BYTES)
 
 
 def write_publication(data: dict, docs: Path) -> None:

@@ -1752,7 +1752,16 @@ restamping as well as the initial write. Owned derived transport files have a
 21-calendar-day retention window measured against advancing publication-session
 dates, with the prior current object's session refreshed when it is superseded.
 The currently served file is always retained. This is not a guarantee of 21
-elapsed days after a late publication. Canonical history and evidence
+elapsed days after a late publication. The archive is capped at 84 objects and
+128 MiB. When a new object would pass the cap, owned objects still inside their
+window give way, oldest last-served session first: an old tab's deferred
+research then reads as unavailable, which it already handles, rather than the
+whole evening going unpublished. The object served now and the one it replaces
+never give way, an unknown file never does, and an owned file whose bytes are
+not the object its manifest names refuses the publication rather than being
+removed. Removals wait until the fixed files are installed, so a rollback keeps
+them. The run log states the archive against its cap and warns past 80% of it
+or when objects inside their window were removed. Canonical history and evidence
 are outside this cleanup. The committed-main publisher verifies the reader and
 its referenced sidecar before declaring the site updated.
 
