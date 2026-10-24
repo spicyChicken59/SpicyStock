@@ -1092,13 +1092,13 @@ def retain_publication(rep: RunReport, docs: Path, data: dict, rec: dict, frames
     never costs the night its ledger entry."""
     failure = None
     if not data.get("fixture"):
-        rep.stage = "history"
         try:
             history.publish((docs / DATA_FILE).read_bytes(), docs / "history")
         except Exception as exc:  # noqa: BLE001 -- named below, after the ledger
             failure = exc
     rep.quality_ledger = quality_ledger.capture(docs=docs, rec=rec, frames=frames, stats=stats, minutes=minutes)
     if failure is not None:
+        rep.stage = "history"
         rep.fail(failure)
 
 
