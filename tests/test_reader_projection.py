@@ -664,6 +664,33 @@ def test_an_object_removed_for_capacity_whose_manifest_write_failed_is_retired_n
     reader.check_assets(docs)
 
 
+def test_two_failed_cleanups_in_a_row_leave_a_manifest_the_next_night_still_reads(tmp_path, monkeypatch, capsys):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    refs = five_days(tmp_path, docs)
+    monkeypatch.setattr(reader, "MAX_SIDECARS", 5)
+    original = Path.unlink
+    def fail(path, *args, **kwargs):
+        if path.parent == docs / reader.OBSERVATION_DIR: raise OSError("injected cleanup failure")
+        return original(path, *args, **kwargs)
+    # Night six: the removal fails and leaves its file.
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "unlink", fail)
+        sixth = publish_dated(tmp_path, docs, date(2026, 3, 7), 6)
+    # Night seven: the early retry removes the files; the manifest rename fails.
+    with monkeypatch.context() as patch:
+        fail_cleanup_rename(docs, patch)
+        seventh = publish_dated(tmp_path, docs, date(2026, 3, 8), 7)
+    assert capsys.readouterr().out.count("verified publication is intact") == 2
+    index = json.loads((docs / reader.RETENTION_FILE).read_bytes())
+    assert len(index["objects"]) == reader.MAX_SIDECARS + 2
+    eighth = publish_dated(tmp_path, docs, date(2026, 3, 9), 8)
+    on_disk = {p.stem for p in (docs / reader.OBSERVATION_DIR).iterdir() if p.name != "retention.json"}
+    assert on_disk == {r["sha256"] for r in refs[3:] + [sixth, seventh, eighth]}
+    assert set(json.loads((docs / reader.RETENTION_FILE).read_bytes())["objects"]) == on_disk
+    reader.check_assets(docs)
+
+
 @pytest.mark.parametrize("persistent", [False, True])
 def test_a_failed_removal_at_the_cap_is_retried_before_the_next_night_is_refused(
         persistent, tmp_path, monkeypatch, capsys, caplog):
