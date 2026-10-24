@@ -100,6 +100,32 @@ def test_every_fixture_carries_the_block_its_record_re_derives(path):
     report.validate(data)
 
 
+def test_a_refused_request_is_counted_under_its_own_review_stage():
+    """A selected name whose request the API refused as invalid (the 21 and 22
+    October 2026 nights) stops at review_request: the stage, its group and its
+    label travel in the block the record carries, and the count sums with the
+    rest. Written from a fixture whose regime admits the name to review."""
+    data = load(FIXTURES[0])
+    admitted = funnel.admitted_grades(data)
+    row = next(b for b in data["bursts"] if isinstance(b.get("claude"), dict) and b.get("grade_mechanical") in admitted
+               and not b.get("vetoes") and (b.get("review_selection") or {}).get("selected"))
+    before = funnel.build(data)["reaction"]["stages"]
+    row["claude"] = {**row["claude"], "source": grader.SOURCE_FALLBACK, "grade": None,
+                     "error": "anthropic.BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type': "
+                              "'invalid_request_error', 'message': 'temperature: Extra inputs are not permitted'}, "
+                              "'request_id': 'req_1'}"}
+    row["grade"] = row["grade_mechanical"]
+    row["reader_coverage"] = reader_coverage.FALLBACK
+    block = funnel.build(data)
+    stages = block["reaction"]["stages"]
+    assert funnel.reaction_stage(row, admitted, data.get("cash_budget") or {}, data.get("trades") or []) == "review_request"
+    assert stages["review_request"] == before["review_request"] + 1 == 1
+    assert sum(stages.values()) == block["reaction"]["discovered"] == len(data["bursts"])
+    assert block["groups"]["review_request"] == "review"
+    assert block["labels"]["review_request"] == "review request refused by the API as invalid (HTTP 400)"
+    assert "review_request" in funnel.REACTION_STAGES and "review_request" not in funnel.ANTICIPATION_STAGES
+
+
 def test_a_block_written_under_other_stages_is_read_for_what_it_recorded_and_held_to_nothing():
     """Every publication before 24 Oct 2026 archived funnel version 1, whose
     stages had no word for a request the API refused: it is not asked for

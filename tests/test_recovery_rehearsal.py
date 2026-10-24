@@ -48,7 +48,7 @@ def test_a_clean_night_publishes_two_tickets_and_the_retry_slot_is_then_refused(
     assert pub["session"] == "2026-09-04" and pub["status"] == "ok" and pub["email"] == "delivered"
     assert pub["trades"] == ["AAA", "AAB"] and pub["reaction_tickets"] == 2 and pub["anticipation_tickets"] == 1
     assert pub["reads"] == {"requested": 2, "done": 2, "verdict": "complete",
-                            "causes": {"refused": 0, "format": 0, "account": 0, "credit": 0, "transport": 0}}
+                            "causes": {"refused": 0, "format": 0, "account": 0, "credit": 0, "request": 0, "transport": 0}}
     assert n["calls"]["reader_calls"] == 2 and n["calls"]["bars_requests"] == 1 and n["calls"]["mails"] == 1
     assert n["calls"]["mail_subjects"][0].startswith("Trade next session. 2 A-quality bursts.")
     assert n["previous"] == {"publication": None, "outcome": "none"} and n["files_changed"] > 0
